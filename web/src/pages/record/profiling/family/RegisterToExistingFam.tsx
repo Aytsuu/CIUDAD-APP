@@ -4,7 +4,6 @@ import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { MoveLeft, Users, UserPlus, UsersRound, MoveRight } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { showErrorToast } from "@/components/ui/toast"
 
@@ -12,7 +11,6 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
   // -------------------- HANDLERS ----------------------
   // Submit function
   const handleContinue = async () => {
-    console.log(tab_params?.form.getValues().familySchema)
     if (!(await tab_params?.form.trigger(["familySchema"]))) {
       showErrorToast("Please fill out all required fields to continue")
       return

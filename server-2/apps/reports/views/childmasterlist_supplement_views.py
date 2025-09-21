@@ -275,7 +275,7 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
                 age_months = (datetime.now().year - dob.year) * 12 + (datetime.now().month - dob.month)
                 
                 mother_name = self._get_mother_info(child)
-                address_info = ChildHealthReportUtils.get_patient_address(child.patrec.pat_id)
+                address_info = get_patient_address(child.patrec.pat_id)
                 family_no = child.family_no or 'N/A'
                 feeding_type = child.type_of_feeding or 'N/A'
 

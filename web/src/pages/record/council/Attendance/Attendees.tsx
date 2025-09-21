@@ -7,11 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import MarkAttendeesSchema from "@/form-schema/council/markAttendees";
-import { useGetAttendees } from "../Calendar/queries/fetchqueries";
-import { useAddAttendee } from "../Calendar/queries/addqueries";
-import { useUpdateAttendee } from "../Calendar/queries/updatequeries";
+import { useGetAttendees } from "../Calendar/queries/councilEventfetchqueries";
+import { useAddAttendee } from "../Calendar/queries/councilEventaddqueries";
+import { useUpdateAttendee } from "../Calendar/queries/councilEventupdatequeries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { AttendeesProps } from "../Calendar/ce-att-types";
+import { AttendeesProps } from "../Calendar/councilEventTypes";
 
 function Attendees({ isEditMode, onEditToggle, onSave, ceId }: AttendeesProps) {
   if (!ceId) {

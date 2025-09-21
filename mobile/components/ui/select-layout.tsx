@@ -136,11 +136,11 @@ export const SelectLayout: React.FC<ModalSelectProps> = ({
 
   return (
     <View className={className}>
-      {label && <Text className="text-[12px] font-PoppinsRegular text-gray-700">{label}</Text>}
+      {label && <Text className="text-sm mb-2">{label}</Text>}
 
       <TouchableOpacity
         ref={dropdownRef}
-        className={`flex-row items-center justify-between px-3 py-3 border rounded-md bg-white min-h-[45px] ${
+        className={`flex-row items-center justify-between px-3 py-3 border rounded-xl bg-white h-[45px] ${
           error ? "border-red-500" : disabled ? "border-gray-200 bg-gray-50" : "border-gray-300"
         }`}
         onPress={openDropdown}

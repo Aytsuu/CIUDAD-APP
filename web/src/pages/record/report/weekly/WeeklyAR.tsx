@@ -3,13 +3,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2 } from "lucide-react"
+import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2, Plus } from "lucide-react"
 import { useGetWeeklyAR } from "../queries/reportFetch"
 import { getAllWeeksInMonth, getMonthName, getMonths, getRangeOfDaysInWeek, getWeekNumber, hasWeekPassed } from "@/helpers/dateHelper"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import RecentWeeklyAR from "./RecentWeeklyAR"
-import MissedWeeklyAR from "./MissedWeeklyAR"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { Button } from "@/components/ui/button/button"
 
 export default function WeeklyAR() {
   const navigate = useNavigate()
@@ -39,7 +39,6 @@ export default function WeeklyAR() {
   }
 
   const yearOptions = getYearOptions()
-
   const months = getMonths
 
   // Filter data by selected year
@@ -82,10 +81,13 @@ export default function WeeklyAR() {
           .sort((a, b) => a.weekNo - b.weekNo),
         missingWeeks: missingWeeks.sort((a, b) => a - b),
         missedWeeksPassed: missedWeeksPassed.length,
+        allWeeksInMonth: allWeeksInMonth,
         hasData: monthData.length > 0,
       }
     })
     .filter((monthData) => monthData.hasData || monthData.missingWeeks.length > 0)
+
+  {process.env.NODE_ENV === 'development' && console.log(organizedData)}
 
   // Get recent reports (last 7 days or most recent 10 items) for selected year
   const recentReports = filteredWeeklyAR
@@ -101,7 +103,7 @@ export default function WeeklyAR() {
           <div className="flex items-center justify-center h-64">
             <div className="text-muted-foreground">
               <Loader2 className="w-full text-center animate-spin mb-2"/>
-              Please wait while we load the your report records...
+              Please wait while we load your report records...
             </div>
           </div>
         </div>
@@ -168,7 +170,7 @@ export default function WeeklyAR() {
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
-                  {organizedData.map(({ month, weeks }) => (
+                  {organizedData.map(({ month, weeks, missedWeeksPassed, missingWeeks, allWeeksInMonth }) => (
                     <AccordionItem key={month} value={month} className="border-b last:border-b-0">
                       <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 hover:no-underline ">
                         <div className="flex items-center gap-3">
@@ -177,13 +179,126 @@ export default function WeeklyAR() {
                             {month} {selectedYear}
                           </span>
                           <Badge variant="outline" className="ml-2">
-                            {weeks.length} {weeks.length === 1 ? "Week" : "Weeks"}
+                            {weeks.length} / {allWeeksInMonth.length} Weeks
                           </Badge>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="px-6 pb-4">
                         <Accordion type="single" collapsible className="w-full">
-                          {weeks.map(({ weekNo, data }) => (
+                          {allWeeksInMonth.map((week) => {
+
+                            if(weeks.map(({weekNo}) => weekNo).includes(week)) {
+                              const filter = weeks.filter(({weekNo}) => weekNo == week)[0];
+                              const { weekNo, data } = filter;
+                              return (
+                                <AccordionItem
+                                  key={`week-${week}`}
+                                  value={`week-${week}`}
+                                  className="border-b last:border-b-0"
+                                >
+                                  <AccordionTrigger className="py-3 hover:bg-muted/30 hover:no-underline">
+                                    <div className="flex items-center justify-between w-full mr-4">
+                                      <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        <span className="font-medium">Week {weekNo}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        {data.map((war, index) => (
+                                          <Badge
+                                            key={index}
+                                            variant={"outline"}
+                                            className={`text-white border-none ${
+                                              war.war_files.length > 0 ? "bg-green-500" : "bg-orange-500"
+                                            }`}
+                                          >
+                                            {war.war_files.length > 0 ? "Signed" : "Unsigned"}
+                                          </Badge>
+                                        ))}
+                                        <Badge variant="secondary">
+                                          {data.reduce((total, war) => total + war.war_composition.length, 0)} Reports
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                  </AccordionTrigger>
+                                  <AccordionContent className="pt-2 pb-3">
+                                    <div className="space-y-2">
+                                      {data.map((war, arIndex) => (
+                                        <>
+                                          <div key={`${month}-week-${weekNo}-ar-${arIndex}`} className="space-y-1">
+                                            {war.war_composition.map((comp: any, compIndex: number) => (
+                                              <div
+                                                key={`${month}-week-${weekNo}-ar-${arIndex}-comp-${compIndex}`}
+                                                className="flex items-center justify-between p-3 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors"
+                                              >
+                                                <div className="flex items-center gap-2">
+                                                  <div className="w-2 h-2 bg-primary rounded-full" />
+                                                  <span className="font-mono text-sm">Report No. {comp.ar.id}</span>
+                                                  {comp.ar.ar_title && (
+                                                    <span className="text-sm text-muted-foreground">
+                                                      - {comp.ar.ar_title}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          {arIndex + 1 == data.length && (
+                                            <div className="w-full flex justify-end">
+                                              <label
+                                                className="flex gap-2 cursor-pointer"
+                                                onClick={() => {
+                                                  navigate("/report/acknowledgement/document", {
+                                                    state: {
+                                                      params: {
+                                                        type: "WAR",
+                                                        data: {
+                                                        ...war,
+                                                        reportPeriod: getRangeOfDaysInWeek(weekNo, month, selectedYear)
+                                                        },
+                                                      },
+                                                    },
+                                                  })
+                                                }}
+                                              >
+                                                <span>View</span>
+                                                <MoveRight />
+                                              </label>
+                                            </div>
+                                          )}
+                                        </>
+                                      ))}
+                                    </div>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              )
+                            }
+
+                            if((missingWeeks.includes(week) && missedWeeksPassed >= week) || week == getWeekNumber(new Date().toDateString())) {
+                              return (
+                                <div className="flex items-center justify-between w-full mr-4">
+                                  <div className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-black/40" />
+                                    <span className="font-medium text-black/40">Week {week}</span>
+                                  </div>
+                                  <Link to={"missing-report/create"}
+                                    state={{
+                                      params: {
+                                        year: selectedYear,
+                                        month: month,
+                                        week: week,
+                                      }
+                                    }}
+                                  >
+                                    <Button variant={"link"} className="text-black/40 text-[13px] hover:text-black/80">
+                                      <Plus />
+                                      Create
+                                    </Button>
+                                  </Link>
+                                </div>
+                              )
+                            }            
+                          })}
+                          {/* {weeks.map(({ weekNo, data }) => (
                             <AccordionItem
                               key={`week-${weekNo}`}
                               value={`week-${weekNo}`}
@@ -263,7 +378,7 @@ export default function WeeklyAR() {
                                 </div>
                               </AccordionContent>
                             </AccordionItem>
-                          ))}
+                          ))} */}
                         </Accordion>
                       </AccordionContent>
                     </AccordionItem>
@@ -280,7 +395,7 @@ export default function WeeklyAR() {
           <RecentWeeklyAR recentReports={recentReports} />
 
           {/* Missed Weekly Reports */}
-          <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} />
+          {/* <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} /> */}
         </div>
       </div>
     </MainLayoutComponent>

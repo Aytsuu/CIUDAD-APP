@@ -86,6 +86,10 @@ function IncomeCreateForm() {
       });
       return;
     }
+
+    if(!values.inc_additional_notes){
+        values.inc_additional_notes = "None";
+    }    
     
     const AllValues = {
       ...values,
@@ -99,7 +103,7 @@ function IncomeCreateForm() {
 
   return (
     <_ScreenLayout
-      header="Create Income Entry"
+      headerBetweenAction={<Text className="text-[13px]">Create Income Entry</Text>}
       headerAlign="left"
 
       showBackButton={true}
@@ -128,7 +132,7 @@ function IncomeCreateForm() {
       }
       stickyFooter={true}
     >
-        <View className="w-full px-4">
+        <View className="w-full px-4 pt-5">
 
             <FormDateAndTimeInput
               control={form.control}

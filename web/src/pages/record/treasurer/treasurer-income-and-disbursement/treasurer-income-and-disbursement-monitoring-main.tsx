@@ -18,7 +18,7 @@ import {
 import {
   useGetIncomeImages,
   useGetDisbursementImages
-} from "./queries/fetchqueries";
+} from "./queries/incDisb-fetchqueries";
 import {
   useArchiveIncomeImage,
   useRestoreIncomeImage,
@@ -28,9 +28,9 @@ import {
   usePermanentDeleteDisbursementImage,
   usePermanentDeleteIncomeFolder,
   usePermanentDeleteDisbursementFolder,
-} from "./queries/delqueries";
+} from "./queries/incDisb-delqueries";
 import { formatDate } from "@/helpers/dateHelper";
-import { ImageItem, Album, IncomeImage, DisbursementImage } from "./inc-disb-types";
+import { ImageItem, Album, IncomeImage, DisbursementImage } from "./incDisb-types";
 
 function IncomeandDisbursementView() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,17 +132,26 @@ function IncomeandDisbursementView() {
     }
 
     if (searchQuery) {
-      result = result.filter((album) => {
-        const searchableText = [
-          String(album.id),
-          album.inf_name || "",
-          album.dis_name || "",
-        ]
-          .join(" ")
-          .toLowerCase();
-        return searchableText.includes(searchQuery.toLowerCase());
-      });
-    }
+        result = result.filter((album) => {
+          // Get description from the first image
+          const firstImageDesc = album.images.length > 0 
+            ? album.images[0].type === "income" 
+              ? (album.images[0] as IncomeImage).inf_desc || ""
+              : (album.images[0] as DisbursementImage).dis_desc || ""
+            : "";
+
+          const searchableText = [
+            String(album.id),
+            album.inf_name || "",
+            album.dis_name || "",
+            firstImageDesc,
+          ]
+            .join(" ")
+            .toLowerCase();
+          
+          return searchableText.includes(searchQuery.toLowerCase());
+        });
+      }
 
     return result;
   }, [albums, selectedYear, viewMode, searchQuery]);

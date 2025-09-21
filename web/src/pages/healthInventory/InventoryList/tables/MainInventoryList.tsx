@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import FirstAidList from "./FirstAidList";
 import MedicineList from "./MedicineList";
@@ -16,22 +16,22 @@ const TabConfig = [
   {
     id: "medicine",
     icon: Pill,
-    label: "Medicine",
+    label: "Medicine"
   },
   {
     id: "antigen",
     icon: Syringe,
-    label: "Antigen",
+    label: "Antigen"
   },
   {
     id: "commodity",
     icon: Package,
-    label: "Commodity",
+    label: "Commodity"
   },
   {
     id: "firstaid",
     icon: Bandage,
-    label: "First Aid",
+    label: "First Aid"
   }
 ] as const;
 
@@ -62,7 +62,7 @@ export default function MainInventoryList() {
 
   // Update counts when API data changes
   useEffect(() => {
-    setCounts(prev => ({
+    setCounts((prev) => ({
       ...prev,
       medicine: medicinelistcount?.count || 0,
       commodity: commoditylistcount?.count || 0
@@ -70,7 +70,7 @@ export default function MainInventoryList() {
   }, [medicinelistcount, commoditylistcount]);
 
   const getTitle = () => {
-    const tab = TabConfig.find(t => t.id === selectedView);
+    const tab = TabConfig.find((t) => t.id === selectedView);
     return `${tab?.label} List` || "Inventory List";
   };
 
@@ -85,51 +85,40 @@ export default function MainInventoryList() {
       <Card>
         <div className="relative">
           <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as TabType)} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6 h-auto rounded-md bg-white border border-gray-200 shadow-sm">
-                {TabConfig.map((tab) => {
-                  const Icon = tab.icon;
-                  const count = counts[tab.id];
-                  const isLoading = tab.id === "medicine" ? isLoadingMedicineCount : 
-                                  tab.id === "commodity" ? isLoadingCommodityCount : false;
-                  const isActive = selectedView === tab.id;
-                  
-                  return (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className={`flex items-center justify-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm data-[state=active]:rounded-md border border-transparent transition-all ${
-                        isActive ? "text-primary" : "text-gray-600"
-                      }`}
-                    >
-                      <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-gray-600"}`} />
-                      <span className={isActive ? "text-primary" : "text-gray-600"}>{tab.label}</span>
-                      <span className={`ml-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                        isActive ? "bg-primary/20 text-primary" : "bg-gray-100 text-gray-600"
-                      }`}>
-                        {getCountDisplay(count, isLoading)}
-                      </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
+            <TabsList className="grid w-full grid-cols-4 mb-6 h-auto rounded-md bg-white border border-gray-200 shadow-sm">
+              {TabConfig.map((tab) => {
+                const Icon = tab.icon;
+                const count = counts[tab.id];
+                const isLoading = tab.id === "medicine" ? isLoadingMedicineCount : tab.id === "commodity" ? isLoadingCommodityCount : false;
+                const isActive = selectedView === tab.id;
 
-              <div className="relative p-4">
-                <TabsContent value="medicine" className="mt-0">
-                  <MedicineList />
-                </TabsContent>
-                
-                <TabsContent value="antigen" className="mt-0">
-                  <AntigenList />
-                </TabsContent>
-                
-                <TabsContent value="commodity" className="mt-0">
-                  <CommodityList />
-                </TabsContent>
-                
-                <TabsContent value="firstaid" className="mt-0">
-                  <FirstAidList />
-                </TabsContent>
-              </div>
+                return (
+                  <TabsTrigger key={tab.id} value={tab.id} className={`flex items-center justify-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm data-[state=active]:rounded-md border border-transparent transition-all ${isActive ? "text-primary" : "text-gray-600"}`}>
+                    <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-gray-600"}`} />
+                    <span className={isActive ? "text-primary" : "text-gray-600"}>{tab.label}</span>
+                    <span className={`ml-1 text-xs font-medium px-2 py-0.5 rounded-full ${isActive ? "bg-primary/20 text-primary" : "bg-gray-100 text-gray-600"}`}>{getCountDisplay(count, isLoading)}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+
+            <div className="relative p-4">
+              <TabsContent value="medicine" className="mt-0">
+                <MedicineList />
+              </TabsContent>
+
+              <TabsContent value="antigen" className="mt-0">
+                <AntigenList />
+              </TabsContent>
+
+              <TabsContent value="commodity" className="mt-0">
+                <CommodityList />
+              </TabsContent>
+
+              <TabsContent value="firstaid" className="mt-0">
+                <FirstAidList />
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
       </Card>

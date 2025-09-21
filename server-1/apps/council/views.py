@@ -10,11 +10,13 @@ from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
 from apps.treasurer.models import Purpose_And_Rates
+# from apps.gad.models import ProjectProposalLog
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.exceptions import NotFound
-
+from rest_framework import generics, status
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +46,13 @@ class UpdateTemplateByPrIdView(generics.UpdateAPIView):
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
+    permission_classes = [AllowAny]
 
 class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     lookup_field = 'ce_id'
+    permission_classes = [AllowAny]
 
     def get_object(self):
         # Use the lookup_field (ce_id) from URL kwargs
@@ -90,6 +94,7 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
     queryset = CouncilScheduling.objects.filter(ce_is_archive=True)
     serializer_class = CouncilSchedulingSerializer
     lookup_field = 'ce_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -100,15 +105,18 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
 class AttendeesView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
 class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
     lookup_field = 'atn_id'
+    permission_classes = [AllowAny]
 
 class AttendeesBulkView(generics.GenericAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         ce_id = request.data.get('ce_id')
@@ -137,6 +145,7 @@ class AttendeesBulkView(generics.GenericAPIView):
 class AttendanceSheetListView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
+    permission_classes = [AllowAny]
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -153,10 +162,26 @@ class AttendanceSheetListView(generics.ListCreateAPIView):
             
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        ce_id = kwargs.get('ce_id') or request.data.get('ce_id')
+        files = request.data.get('files', [])
+        
+        if not ce_id:
+            return Response({"error": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not files:
+            return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer()
+        serializer._upload_file(files, ce_id=ce_id)
+        
+        return Response({"message": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
+
 class AttendanceSheetDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
+    permission_classes = [AllowAny]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -176,6 +201,7 @@ class RestoreAttendanceView(generics.UpdateAPIView):
     queryset = CouncilAttendance.objects.filter(att_is_archive=True)
     serializer_class = CouncilAttendanceSerializer
     lookup_field = 'att_id'
+    permission_classes = [AllowAny]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -186,6 +212,7 @@ class RestoreAttendanceView(generics.UpdateAPIView):
 
 class StaffAttendanceRankingView(generics.ListAPIView):
     serializer_class = StaffAttendanceRankingSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Aggregate present attendees by atn_name for non-archived events
@@ -209,6 +236,7 @@ class StaffAttendanceRankingView(generics.ListAPIView):
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     queryset = Staff.objects.select_related('pos', 'rp__per').only(
         'staff_id',
         'rp__per__per_fname',
@@ -219,8 +247,55 @@ class StaffListView(generics.ListAPIView):
 
 #TEMPLATE
 class TemplateView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
+
+
+class TemplateFileView(generics.ListCreateAPIView):
+    serializer_class = TemplateFileSerializer
+    queryset = TemplateFile.objects.all()
+
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     temp_id = self.request.query_params.get('temp_id')
+    #     if temp_id:
+    #         queryset = queryset.filter(temp_id=temp_id)
+    #     return queryset    
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        temp_id = self.request.query_params.get('temp_id')
+        logo_type = self.request.query_params.get('logoType')  # Add this
+        
+        if temp_id:
+            queryset = queryset.filter(temp_id=temp_id)
+        if logo_type:  # Add this filter
+            queryset = queryset.filter(tf_logoType=logo_type)
+            
+        return queryset    
+
+    def create(self, request, *args, **kwargs):
+        # Get iet_num from either query params or request data
+        temp_id = request.query_params.get('temp_id') or request.data.get('temp_id')
+        
+        if not temp_id:
+            return Response(
+                {"error": "temp_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, temp_id=temp_id)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
+
+
+class TemplateFileDetailView(generics.RetrieveDestroyAPIView):
+    queryset = TemplateFile.objects.all()
+    serializer_class = TemplateFileSerializer
+    lookup_field = 'tf_id' 
 
 
 class SummonTemplateView(APIView):
@@ -280,9 +355,28 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 
  # =================================  RESOLUTION =================================
 
+# class ResolutionView(generics.ListCreateAPIView):
+#     serializer_class = ResolutionSerializer
+#     queryset = Resolution.objects.all()
+
 class ResolutionView(generics.ListCreateAPIView):
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        # Check if we need to generate a resolution number
+        res_num = request.data.get('res_num', '').strip()
+        
+        if not res_num:
+            # Generate automatic resolution number using the model method
+            request.data['res_num'] = Resolution.generate_resolution_number()
+        
+        # Continue with the normal creation process
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class DeleteResolutionView(generics.DestroyAPIView):
@@ -324,6 +418,23 @@ class ResolutionFileView(generics.ListCreateAPIView):
             queryset = queryset.filter(res_num=res_num)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        # Get res_num from either query params or request data
+        res_num = request.query_params.get('res_num') or request.data.get('res_num')
+        
+        if not res_num:
+            return Response(
+                {"error": "res_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, res_num=res_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
+
+
 # Deleting Res File or replace if updated
 class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
     queryset = ResolutionFile.objects.all()
@@ -342,6 +453,22 @@ class ResolutionSupDocsView(generics.ListCreateAPIView):
         if res_num:
             queryset = queryset.filter(res_num=res_num)
         return queryset
+    
+    def create(self, request, *args, **kwargs):
+        # Get res_num from either query params or request data
+        res_num = request.query_params.get('res_num') or request.data.get('res_num')
+        
+        if not res_num:
+            return Response(
+                {"error": "res_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, res_num=res_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)      
 
 
 class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
@@ -350,28 +477,45 @@ class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
     lookup_field = 'rsd_id'     
 
 
+class ApprovedGADProposalsView(generics.ListAPIView):
+    serializer_class = GADProposalSerializer
+    
+    def get_queryset(self):
+        # Get only approved proposals
+        approved_logs = ProjectProposalLog.objects.filter(
+            gprl_status='Approved'
+        ).select_related('gpr__dev')
+        
+        # Get unique approved proposals
+        approved_proposal_ids = approved_logs.values_list('gpr_id', flat=True).distinct()
+        return ProjectProposal.objects.filter(gpr_id__in=approved_proposal_ids)
+
+
 class PurposeRatesListView(generics.ListCreateAPIView):
     queryset = Purpose_And_Rates.objects.all()
     serializer_class = PurposeRatesListViewSerializer
     
+# =================== MINUTES OF MEETING VIEWS ======================
 
-# ==================== MINUTES OF MEETING=======================
 class MinutesOfMeetingView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
-    queryset = MinutesOfMeeting.objects.all()
+    queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
     queryset = MinutesOfMeeting.objects.all()
     serializer_class = MinutesOfMeetingSerializer
     lookup_field = 'mom_id'
 
-class MOMAreaOfFocusView(generics.ListCreateAPIView):
-    serializer_class = MOMAreaOfFocusSerializer
-    queryset = MOMAreaOfFocus.objects.all()
-
 class MOMFileView(generics.ListCreateAPIView):
-    serializer_class = MOMFileSerialzer
+    serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(serializer.errors) 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
     serializer_class = MinutesOfMeetingSerializer
@@ -395,19 +539,14 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
         return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
     
 
-class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
-    serializer_class = MOMFileSerialzer
+class DeleteMOMFileView(generics.DestroyAPIView):
+    serializer_class = MOMFileViewSerializer    
     queryset = MOMFile.objects.all()
-    lookup_field = 'momf_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+    def get_object(self):
+        mom_id = self.kwargs.get('mom_id')
+        return get_object_or_404(MOMFile, mom_id=mom_id)
+
 
 class DeleteMOMAreaOfFocusView(APIView):
     def delete(self, request, mom_id):
@@ -418,14 +557,9 @@ class DeleteMOMAreaOfFocusView(APIView):
             {"detail": f"{deleted_count} area(s) of focus deleted."},
             status=status.HTTP_204_NO_CONTENT
         )
-    
-
-class MOMSuppDocView(generics.ListCreateAPIView):
-    serializer_class = MOMSuppDocSerializer
-    query_set = MOMSuppDoc.objects.all()
 
 class MeetingSuppDocsView(generics.ListAPIView):
-    serializer_class = MOMSuppDocSerializer
+    serializer_class = MOMSuppDocViewSerializer
     
     def get_queryset(self):
         mom_id = self.kwargs['mom_id']
@@ -433,24 +567,153 @@ class MeetingSuppDocsView(generics.ListAPIView):
 
 class DeleteMOMSuppDocView(generics.DestroyAPIView):
     queryset = MOMSuppDoc.objects.all()
-    serializer_class = MOMSuppDocSerializer
+    serializer_class = MOMSuppDocViewSerializer
     lookup_field = 'momsp_id'
 
+class MOMSuppDocView(generics.ListCreateAPIView):
+    serializer_class = MOMSuppDocCreateSerializer
+    query_set = MOMSuppDoc.objects.all()
 
-# ==================== ORDINANCE =======================
-# Ordinance Views (moved from secretary app)
+
+# ================================== ORDINANCE VIEWS (from secretary) =================================
 
 class OrdinanceListView(generics.ListCreateAPIView):
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
 
     def get_queryset(self):
-        return Ordinance.objects.filter(ord_is_archive=False)
+        return Ordinance.objects.filter(
+            ord_is_archive=False
+        )
+    
+    def create(self, request, *args, **kwargs):
+        # Extract of_id from request data
+        of_id = request.data.get('of_id')
+        print(f"Received of_id: {of_id}")
+        print(f"Full request data: {request.data}")
+        
+        # Remove of_id from data to avoid serializer issues
+        ordinance_data = request.data.copy()
+        if 'of_id' in ordinance_data:
+            del ordinance_data['of_id']
+        
+        serializer = self.get_serializer(data=ordinance_data)
+        serializer.is_valid(raise_exception=True)
+        ordinance = serializer.save()
+        print(f"Created ordinance: {ordinance.ord_num}")
+        
+        # Link file if provided
+        if of_id:
+            try:
+                file_obj = OrdinanceFile.objects.get(of_id=of_id)
+                ordinance.of_id = file_obj
+                ordinance.save()
+                print(f"Linked file {of_id} to ordinance {ordinance.ord_num}")
+            except OrdinanceFile.DoesNotExist:
+                print(f"File with of_id {of_id} does not exist")
+                pass  # File doesn't exist, continue without linking
+        else:
+            print("No of_id provided, ordinance created without file")
+        
+        # Log the activity
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            # Get staff member from the ordinance or request
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff = Staff.objects.filter(staff_id=staff_id).first()
+            
+            if staff:
+                # Create activity log
+                create_activity_log(
+                    act_type="Ordinance Created",
+                    act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {ordinance.ord_category}",
+                    staff=staff,
+                    record_id=ordinance.ord_num,
+                    feat_name="Ordinance Management"
+                )
+                logger.info(f"Activity logged for ordinance creation: {ordinance.ord_num}")
+            else:
+                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for ordinance creation: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
+    
+    def update(self, request, *args, **kwargs):
+        ordinance = self.get_object()
+        serializer = self.get_serializer(ordinance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        updated_ordinance = serializer.save()
+        
+        # Log the activity
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            # Get staff member from the ordinance or request
+            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff = Staff.objects.filter(staff_id=staff_id).first()
+            
+            if staff:
+                # Create activity log
+                create_activity_log(
+                    act_type="Ordinance Updated",
+                    act_description=f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated",
+                    staff=staff,
+                    record_id=updated_ordinance.ord_num,
+                    feat_name="Ordinance Management"
+                )
+                logger.info(f"Activity logged for ordinance update: {updated_ordinance.ord_num}")
+            else:
+                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for ordinance update: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, *args, **kwargs):
+        ordinance = self.get_object()
+        ordinance_num = ordinance.ord_num
+        ordinance_title = ordinance.ord_title
+        
+        # Log the activity before deletion
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            # Get staff member from the ordinance or request
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff = Staff.objects.filter(staff_id=staff_id).first()
+            
+            if staff:
+                # Create activity log
+                create_activity_log(
+                    act_type="Ordinance Deleted",
+                    act_description=f"Ordinance {ordinance_num} '{ordinance_title}' deleted",
+                    staff=staff,
+                    record_id=ordinance_num,
+                    feat_name="Ordinance Management"
+                )
+                logger.info(f"Activity logged for ordinance deletion: {ordinance_num}")
+            else:
+                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for ordinance deletion: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
+        return super().destroy(request, *args, **kwargs)
 
 class OrdinanceArchiveView(generics.UpdateAPIView):
     queryset = Ordinance.objects.all()
@@ -461,63 +724,66 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
         ordinance = self.get_object()
         ordinance.ord_is_archive = True
         ordinance.save()
+        
+        # Log the activity
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            # Get staff member from the ordinance or request
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff = Staff.objects.filter(staff_id=staff_id).first()
+            
+            if staff:
+                # Create activity log
+                create_activity_log(
+                    act_type="Ordinance Archived",
+                    act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' archived",
+                    staff=staff,
+                    record_id=ordinance.ord_num,
+                    feat_name="Ordinance Management"
+                )
+                logger.info(f"Activity logged for ordinance archiving: {ordinance.ord_num}")
+            else:
+                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for ordinance archiving: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
         return Response({'message': 'Ordinance archived successfully'})
 
-class OrdinanceSupplementaryDocListView(generics.ListCreateAPIView):
-    queryset = OrdinanceSupplementaryDoc.objects.all()
-    serializer_class = OrdinanceSupplementaryDocSerializer
+## Supplementary document views removed (unused)
 
-    def get_queryset(self):
-        return OrdinanceSupplementaryDoc.objects.filter(osd_is_archive=False)
+## Ordinance Template views removed (unused)
 
-class OrdinanceSupplementaryDocDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = OrdinanceSupplementaryDoc.objects.all()
-    serializer_class = OrdinanceSupplementaryDocSerializer
-
-class OrdinanceSupplementaryDocArchiveView(generics.UpdateAPIView):
-    queryset = OrdinanceSupplementaryDoc.objects.all()
-    serializer_class = OrdinanceSupplementaryDocSerializer
-
-    def update(self, request, *args, **kwargs):
-        doc = self.get_object()
-        doc.osd_is_archive = True
-        doc.save()
-        return Response({'message': 'Supplementary document archived successfully'})
-
-# Template Views
-class OrdinanceTemplateListView(generics.ListCreateAPIView):
-    queryset = OrdinanceTemplate.objects.all()
-    serializer_class = OrdinanceTemplateSerializer
-
-    def get_queryset(self):
-        return OrdinanceTemplate.objects.filter(is_active=True)
+# Ordinance File Views
+class OrdinanceFileView(generics.ListCreateAPIView):
+    queryset = OrdinanceFile.objects.all()
+    serializer_class = OrdinanceFileSerializer
 
     def create(self, request, *args, **kwargs):
-        # Create template data
-        template_data = {
-            'title': request.data.get('title'),
-            'template_body': request.data.get('template_body'),
-            'with_seal': request.data.get('with_seal', 'false').lower() == 'true',
-            'with_signature': request.data.get('with_signature', 'false').lower() == 'true',
-            'pdf_url': request.data.get('pdf_url'),
+        # Get file data from request
+        file_data = {
+            'of_name': request.data.get('of_name'),
+            'of_type': request.data.get('of_type'),
+            'of_path': request.data.get('of_path'),
+            'of_url': request.data.get('of_url')
         }
-
-        serializer = self.get_serializer(data=template_data)
-        serializer.is_valid(raise_exception=True)
-        template = serializer.save()
-
+        
+        print(f"Creating ordinance file with data: {file_data}")
+        
+        serializer = self.get_serializer(data=file_data)
+        if not serializer.is_valid():
+            print(f"Serializer errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        file_obj = serializer.save()
+        print(f"Created ordinance file with ID: {file_obj.of_id}")
+        
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class OrdinanceTemplateDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = OrdinanceTemplate.objects.all()
-    serializer_class = OrdinanceTemplateSerializer
-
-class OrdinanceTemplateArchiveView(generics.UpdateAPIView):
-    queryset = OrdinanceTemplate.objects.all()
-    serializer_class = OrdinanceTemplateSerializer
-
-    def update(self, request, *args, **kwargs):
-        template = self.get_object()
-        template.is_active = False
-        template.save()
-        return Response({'message': 'Template archived successfully'}) 
+class OrdinanceFileDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = OrdinanceFile.objects.all()
+    serializer_class = OrdinanceFileSerializer
+    lookup_field = 'of_id'

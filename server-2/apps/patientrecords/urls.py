@@ -38,6 +38,7 @@ urlpatterns = [
     path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
+    path('body-measurements/<str:pat_id>/', BodyMeasurementView.as_view(), name='body-measurements-by-patient'),
    
     path("findings/", FindingView.as_view(), name="findings"),
 
@@ -67,8 +68,8 @@ urlpatterns = [
 
     #DISABLITY
     
-    path('disability/', ListDisabilityView.as_view(), name='list-disability'),
-    path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
+    # path('disability/', ListDisabilityView.as_view(), name='list-disability'),
+    # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
 

@@ -13,15 +13,15 @@ class IRBaseSerializer(serializers.ModelSerializer):
 
 class IRTableSerializer(serializers.ModelSerializer):
   ir_reported_by = serializers.SerializerMethodField()
-  ir_sitio = serializers.CharField(source="add.sitio.sitio_name")
-  ir_street = serializers.CharField(source="add.add_street")
   ir_time = serializers.SerializerMethodField()
   ir_type = serializers.CharField(source="rt.rt_label")
+  files = serializers.SerializerMethodField()
 
   class Meta: 
     model = IncidentReport
-    fields = ['ir_id', 'ir_sitio', 'ir_street', 'ir_add_details', 'ir_type',
-             'ir_time', 'ir_date', 'ir_reported_by']
+    fields = ['ir_id', 'ir_area', 'ir_involved', 'ir_add_details', 'ir_type',
+             'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
+             'files']
     
   def get_ir_time(self, obj):
     if obj.ir_time:
@@ -32,36 +32,35 @@ class IRTableSerializer(serializers.ModelSerializer):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
+  
+  def get_files(self, obj):
+    files = [
+      {
+        'id': file.irf_id,
+        'name': file.irf_name,
+        'type': file.irf_type,
+        'url': file.irf_url
+      }
+      for file in obj.report_files.filter(ir=obj.ir_id)]
+    
+    return files
 
 class IRCreateSerializer(serializers.ModelSerializer):
-  ir_street = serializers.CharField(write_only=True, required=False)
-  ir_sitio = serializers.CharField(write_only=True, required=False)
   ir_type = serializers.CharField(write_only=True, required=False)
   ir_other_type = serializers.CharField(write_only=True, required=False)
-  rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False, write_only=True)
-  add = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), required=False, write_only=True)
   rp = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), required=True)
   files = FileInputSerializer(write_only=True, many=True, required=False)
    
   class Meta:
     model = IncidentReport
-    fields = ['ir_add_details', 'ir_street', 'ir_sitio', 
-              'ir_type', 'ir_other_type', 'rt', 'rp', 'add',
-              'files']
+    fields = ['ir_add_details','ir_type', 'ir_date', 'ir_time', 'ir_involved', 
+              'ir_other_type', 'ir_severity', 'ir_area', 'rp', 'files']
 
   def create(self, validated_data):
-    sitio = validated_data.pop('ir_sitio', None)
-    street = validated_data.pop('ir_street', None)
     report_type = validated_data.pop('ir_type', None)
     other_report_type = validated_data.pop('ir_other_type', None)
-    files = validated_data.get('files', [])
-
-    # ir_time = validated_data.get('ir_time')
-    # if isinstance(ir_time, str):
-    #   parsed_time = datetime.datetime.strptime(ir_time, "%I:%M %p").time()
-    #   validated_data['ir_time'] = parsed_time
+    files = validated_data.pop('files', [])
       
-    
     if other_report_type:
       existing_rep_type = ReportType.objects.filter(rt_label=other_report_type).first()
 
@@ -77,31 +76,12 @@ class IRCreateSerializer(serializers.ModelSerializer):
         new_rep_type.save()
         validated_data['rt'] = new_rep_type
     else: 
-      existing_rep_type = ReportType.objects.filter(rt_label=report_type).first()
+      existing_rep_type = ReportType.objects.filter(rt_label__iexact=report_type).first()
+      print(existing_rep_type)
       validated_data['rt'] = existing_rep_type
 
-    if sitio and street:
-      existing_add = Address.objects.filter(
-          sitio=sitio.lower(), add_street=street
-      ).first()
-
-      if existing_add:
-        validated_data['add'] = existing_add
-      else:
-        new_address = {
-            'add_province': 'Cebu',
-            'add_city': 'Cebu City',
-            'add_barangay': 'San Roque',
-            'sitio': sitio.lower(),
-            'add_street': street
-        }
-        print(new_address)
-        address_serializer = AddressBaseSerializer(data=new_address)
-        address_serializer.is_valid(raise_exception=True)
-        address = address_serializer.save()
-        validated_data['add'] = address
-
-    incident_report = IncidentReport.objects.create(**validated_data)
+    incident_report = IncidentReport(**validated_data)
+    incident_report.save()
 
     if files:
       report_files = []
@@ -110,7 +90,7 @@ class IRCreateSerializer(serializers.ModelSerializer):
           ir=incident_report,
           irf_name=file_data['name'],
           irf_type=file_data['type'],
-          irf_path=f'ir/{file_data['name']}'
+          irf_path = f"ir/{file_data['name']}"
         )
 
         url = upload_to_storage(file_data, "report-bucket", 'ir')
@@ -120,4 +100,3 @@ class IRCreateSerializer(serializers.ModelSerializer):
       IncidentReportFile.objects.bulk_create(report_files)
       
     return incident_report
-    

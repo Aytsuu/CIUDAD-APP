@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useMemo, useEffect } from "react"
 import { ArrowUpDown, Search, FileInput, AlertCircle, Loader2, FileText } from "lucide-react"
@@ -17,30 +17,30 @@ import { useLoading } from "@/context/LoadingContext"
 
 import { getAgeInUnit } from "@/helpers/ageCalculator"
 
-import ScheduleTab from "./appointments-tab"
+import ScheduleTab from "./appointments-tab";
 
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 
 // main component
 export default function ScheduleRecords() {
   type ScheduleRecord = {
-    id: number
+    id: number;
     patient: {
-      firstName: string
-      lastName: string
-      middleName: string
-      gender: string
-      age: number
-      ageTime: string
-      patientId: string
-    }
-    scheduledDate: string
-    purpose: string
-    status: "Pending" | "Completed" | "Missed" | "Cancelled"
-    sitio: string
-    type: "Transient" | "Resident"
-    patrecType: string
-  }
+      firstName: string;
+      lastName: string;
+      middleName: string;
+      gender: string;
+      age: number;
+      ageTime: string;
+      patientId: string;
+    };
+    scheduledDate: string;
+    purpose: string;
+    status: "Pending" | "Completed" | "Missed" | "Cancelled";
+    sitio: string;
+    type: "Transient" | "Resident";
+    patrecType: string;
+  };
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -51,8 +51,13 @@ export default function ScheduleRecords() {
 
   const { showLoading, hideLoading } = useLoading(); // for loading state
 
-  // fetch data 
-  const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
+  // fetch data
+  const {
+    data: paginatedData,
+    isLoading,
+    error,
+    refetch
+  } = useAllFollowUpVisits({
     page,
     page_size: pageSize,
     status: selectedFilter !== "All" ? selectedFilter : undefined,
@@ -80,27 +85,28 @@ export default function ScheduleRecords() {
   const transformedData = useMemo((): ScheduleRecord[] => {
     if (!paginatedData?.results) return [];
 
-    return paginatedData.results.map((visit: any) => {
-      try {
-        const patientDetails = visit.patient_details
-        if (!patientDetails) {
-          console.warn("No patient details found for visit:", visit)
-          return null
-        }
+    return paginatedData.results
+      .map((visit: any) => {
+        try {
+          const patientDetails = visit.patient_details;
+          if (!patientDetails) {
+            console.warn("No patient details found for visit:", visit);
+            return null;
+          }
 
         const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
         const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patientInfo.per_dob || "")
         const address = patientDetails.address || {}
 
 
-        const formatDate = (dateStr: string) => {
-          if (!dateStr) return new Date().toISOString().split("T")[0]
-          try {
-            return new Date(dateStr).toISOString().split("T")[0]
-          } catch {
-            return dateStr
-          }
-        }
+          const formatDate = (dateStr: string) => {
+            if (!dateStr) return new Date().toISOString().split("T")[0];
+            try {
+              return new Date(dateStr).toISOString().split("T")[0];
+            } catch {
+              return dateStr;
+            }
+          };
 
         const record: ScheduleRecord = {
           id: visit.followv_id || visit.id || 0,
@@ -132,8 +138,8 @@ export default function ScheduleRecords() {
   const totalPages = Math.ceil((paginatedData?.count || 0) / pageSize)
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage)
-  }
+    setPage(newPage);
+  };
 
   const handleSearch = (search: string) => {
     setSearchTerm(search)
@@ -162,16 +168,16 @@ export default function ScheduleRecords() {
 
   // determine if missed 
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const appointmentDate = new Date(scheduledDate)
-    appointmentDate.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const appointmentDate = new Date(scheduledDate);
+    appointmentDate.setHours(0, 0, 0, 0);
 
     if (appointmentDate < today && currentStatus === "Pending") {
-      return "Missed"
+      return "Missed";
     }
-    return currentStatus
-  }
+    return currentStatus;
+  };
 
   const columns: ColumnDef<ScheduleRecord>[] = [
     {
@@ -183,21 +189,18 @@ export default function ScheduleRecords() {
             {row.index + 1}
           </div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
-        const patient = row.original.patient
-        const fullName = `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim()
+        const patient = row.original.patient;
+        const fullName = `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
 
         return (
           <div className="flex justify-start min-w-[200px] px-2">
@@ -208,16 +211,13 @@ export default function ScheduleRecords() {
               </div>
             </div>
           </div>
-        )
-      },
+        );
+      }
     },
     {
       accessorKey: "scheduledDate",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Scheduled Date <ArrowUpDown size={15} />
         </div>
       ),
@@ -227,7 +227,7 @@ export default function ScheduleRecords() {
             <div className="font-medium">{row.original.scheduledDate}</div>
           </div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "purpose",
@@ -236,13 +236,13 @@ export default function ScheduleRecords() {
         <div className="flex justify-start min-w-[150px] px-2">
           <div className="w-full break-words">{row.original.purpose}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status)
+        const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status);
         const statusColors = {
           pending: "bg-yellow-100 text-yellow-800 text-transform: capitalize",
           completed: "bg-green-100 text-green-800 text-transform: capitalize",
@@ -252,14 +252,10 @@ export default function ScheduleRecords() {
 
         return (
           <div className="flex justify-center min-w-[100px] px-2">
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[actualStatus as keyof typeof statusColors]}`}
-            >
-              {actualStatus}
-            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[actualStatus as keyof typeof statusColors]}`}>{actualStatus}</span>
           </div>
-        )
-      },
+        );
+      }
     },
     {
       accessorKey: "sitio",
@@ -268,7 +264,7 @@ export default function ScheduleRecords() {
         <div className="flex justify-center min-w-[120px] px-2">
           <div className="text-center w-full">{row.original.sitio}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "type",
@@ -277,7 +273,7 @@ export default function ScheduleRecords() {
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.type}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "action",
@@ -300,9 +296,9 @@ export default function ScheduleRecords() {
             />
           </TooltipProvider>
         </div>
-      ),
-    },
-  ]
+      )
+    }
+  ];
 
   const filter = [
     { id: "All", name: "All" },
@@ -315,31 +311,23 @@ export default function ScheduleRecords() {
 
   // Export to CSV
   const exportToCSV = () => {
-    const headers = ["ID", "Patient Name", "Date", "Purpose", "Status", "Sitio", "Type"]
-    const csvData = transformedData.map((record:any) => {
-      const fullName = `${record.patient.lastName}, ${record.patient.firstName} ${record.patient.middleName}`
-      const actualStatus = getAppointmentStatus(record.scheduledDate, record.status)
-      return [
-        record.id,
-        fullName,
-        record.scheduledDate,
-        record.purpose,
-        actualStatus,
-        record.sitio,
-        record.type,
-      ]
-    })
+    const headers = ["ID", "Patient Name", "Date", "Purpose", "Status", "Sitio", "Type"];
+    const csvData = transformedData.map((record: any) => {
+      const fullName = `${record.patient.lastName}, ${record.patient.firstName} ${record.patient.middleName}`;
+      const actualStatus = getAppointmentStatus(record.scheduledDate, record.status);
+      return [record.id, fullName, record.scheduledDate, record.purpose, actualStatus, record.sitio, record.type];
+    });
 
-    const csvContent = [headers, ...csvData].map((row) => row.map((field:any) => `"${field}"`).join(",")).join("\n")
+    const csvContent = [headers, ...csvData].map((row) => row.map((field: any) => `"${field}"`).join(",")).join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "follow-up-visits.csv"
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "follow-up-visits.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (isLoading) {
@@ -362,7 +350,7 @@ export default function ScheduleRecords() {
           </Button>
         </div>
       </LayoutWithBack>
-    )
+    );
   }
 
   const showLoadingState = isLoading || isTimeFrameLoading;
@@ -383,26 +371,13 @@ export default function ScheduleRecords() {
           </div>
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
-          
           <div className="flex flex-col md:flex-row gap-4 w-full">
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input
-                  placeholder="Search schedules..."
-                  className="pl-10 w-full bg-white"
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                />
+                <Input placeholder="Search schedules..." className="pl-10 w-full bg-white" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
               </div>
-              <SelectLayout
-                placeholder="Select status"
-                label=""
-                className="w-full md:w-[200px] bg-white text-black"
-                options={filter}
-                value={selectedFilter}
-                onChange={handleFilterChange}
-              />
+              <SelectLayout placeholder="Select status" label="" className="w-full md:w-[200px] bg-white text-black" options={filter} value={selectedFilter} onChange={handleFilterChange} />
             </div>
           </div>
         </div>
@@ -411,12 +386,7 @@ export default function ScheduleRecords() {
           <div className="w-full h-auto sm:h-16 bg- flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-14 h-8"
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              />
+              <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
@@ -460,18 +430,10 @@ export default function ScheduleRecords() {
             </p>
 
             {/* Pagination */}
-            <div className="w-full sm:w-auto flex justify-center">
-              {totalPages > 1 && (
-                <PaginationLayout
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              )}
-            </div>
+            <div className="w-full sm:w-auto flex justify-center">{totalPages > 1 && <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />}</div>
           </div>
         </div>
       </div>
     </LayoutWithBack>
-  )
+  );
 }

@@ -1,16 +1,14 @@
 import { z } from "zod";
 
-export const passwordFormat = z.string()
-  .min(8, { message: "Password must be at least 8 characters long" })
-  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
-  .regex(/[0-9]/, { message: "Password must contain at least one number" })
-
 export const accountFormSchema = z.object({
-  username: z.string()
-    .min(1, "Username is required")
-    .min(6, "Username must be atleast 6 letters"),
-  email: z.string().optional(),
+  email: z.string()
+    .email({ message: "Invalid email (ex. juanlitoy243@gmail.com)" })
+    .refine((val) => {
+      const domain = val.split("@")[1] || "";
+      return domain.includes(".") && domain.split(".").pop()!.length <= 4; // common TLDs
+    }, {
+      message: "Invalid email domain",
+    }),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(
@@ -20,14 +18,41 @@ export const accountFormSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
-  password: passwordFormat,
+  password: z.string()
+    .superRefine((val, ctx) => {
+      const errors = [];
+      
+      if (val.length < 6) {
+        errors.push("Password must be at least 6 characters long");
+      }
+      
+      if (!/[a-z]/.test(val)) {
+        errors.push("Password must contain at least one lowercase letter");
+      }
+      
+      if (!/[A-Z]/.test(val)) {
+        errors.push("Password must contain at least one uppercase letter");
+      }
+      
+      if (!/\d/.test(val)) {
+        errors.push("Password must contain at least one number");
+      }
+      
+      if (errors.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: errors.join("\n"), // Using newline instead of comma
+        });
+      }
+    }),
+
   confirmPassword: z.string()
     .min(1, "Confirm Password is required")
 })
 .refine((data) => data.password === data.confirmPassword, {
   message: "Password does not match",
   path: ["confirmPassword"]
-})
+});
 
 export const accountUpdateSchema = z.object({
   email: z
@@ -35,7 +60,33 @@ export const accountUpdateSchema = z.object({
     .email({ message: "Invalid email address" })
     .optional(  ),
 
-  newPassword: passwordFormat,
+  newPassword: z.string()
+    .superRefine((val, ctx) => {
+      const errors = [];
+      
+      if (val.length < 6) {
+        errors.push("Password must be at least 6 characters long");
+      }
+      
+      if (!/[a-z]/.test(val)) {
+        errors.push("Password must contain at least one lowercase letter");
+      }
+      
+      if (!/[A-Z]/.test(val)) {
+        errors.push("Password must contain at least one uppercase letter");
+      }
+      
+      if (!/\d/.test(val)) {
+        errors.push("Password must contain at least one number");
+      }
+      
+      if (errors.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: errors.join("\n"), // Using newline instead of comma
+        });
+      }
+    }),
 
   profile_image: z
     .instanceof(File, { message: "Please upload a file" })
@@ -73,18 +124,40 @@ export const addressSchema = z.object({
 
 export const personalInfoSchema = z.object({
   per_id: z.string(),
-  per_lname: z.string().min(1, "Last Name is required"),
-  per_fname: z.string().min(1, "First Name is required"),
-  per_mname: z.string(),
   per_suffix: z.string(),
-  per_dob: z.string().date("Date of birth must be a valid date"),
   per_sex: z.string().min(1, "Sex is required"),
+  per_dob: z.string().min(1, "Date of Birth is required"),
   per_status: z.string().min(1, "Status is required"),
-  per_edAttainment: z.string(),
   per_religion: z.string().min(1, "Religion is required"),
-  per_contact: z.string().min(1, "Contact is required"),
+  
+  per_lname: z.string()
+    .min(1, "Last Name is required")
+    .min(2, "Last Name must be at least 2 letters"),
+
+  per_fname: z.string()
+    .min(1, "First Name is required")
+    .min(2, "First Name must be at least 2 letters"),
+
+  per_mname: z.string()
+    .refine((val) => val === "" || val.length >= 2, "Middle Name must be at least 2 letters")
+    .optional(),
+
+  per_edAttainment: z.string()
+    .refine((val) => val === "" || val.length >= 2, {
+      message: "Educational Attainment must be at least 2 letters",
+    })
+    .optional(),
+
+  per_contact: z.string()
+    .min(1, "Contact is required")
+    .regex(
+      /^09\d{9}$/,
+      "Must be a valid mobile number (e.g., 09171234567)"
+    )
+    .refine((val) => val.length === 11, {
+      message: "Must be 11 digits (e.g., 09171234567)",
+    }),
   per_disability: z.string(),
-  per_occupation: z.string(),
   per_addresses: z.object({
     list: z.array(addressSchema).default([]),
     new: addressSchema
@@ -146,5 +219,20 @@ export const RegistrationFormSchema = z.object({
     new: personalInfoSchema.extend({
       role: z.string()
     })
+  }),
+  businessRespondent: z.object({
+    br_lname: z.string()
+    .min(1, "Last Name is required")
+    .min(2, "Last Name must be at least 2 letters"),
+
+    br_fname: z.string()
+      .min(1, "First Name is required")
+      .min(2, "First Name must be at least 2 letters"),
+
+    br_mname: z.string()
+      .refine((val) => val === "" || val.length >= 2, "Middle Name must be at least 2 letters")
+      .optional(),
+    br_sex: z.string().min(1, "Sex is required"),
+    br_dob: z.string().min(1, "Date of Birth is required"),
   })
 })

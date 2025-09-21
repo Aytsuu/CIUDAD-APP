@@ -75,9 +75,11 @@ export const initialFormData: FormData = {
   address: "",
   landmarks: "",
   dateNewbornScreening: "",
-  disabilityTypes: [],
+  newbornInitiatedbf: false,
+  nbscreening_result: "",
   edemaSeverity: "None",
   BFdates: [],
+  BFchecks:[],
   vitalSigns: [],
   medicines: [],
   anemic: {
@@ -102,7 +104,6 @@ export const initialFormData: FormData = {
     muac_status: "",
   },
   vaccines: [],
-  // hasExistingVaccination: false,
   existingVaccines: [],
   created_at: "",
   chhist_status: "",
@@ -193,29 +194,26 @@ mode: "newchildhealthrecord" | "addnewchildhealthrecord";
 isSubmitting: boolean;
 newVitalSigns: VitalSignType[];
 setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
+status: string;
+}
+
+
+export interface BFCheck {
+  ebf_id?: number;
+  ebf_date: string;
+  created_at?: string;
+  chhist?: number;
 }
 
 
 
-
-
 export type Page2Props = {
-onPrevious: () => void
-onNext: () => void
-updateFormData: (data: Partial<FormData>) => void
-formData: FormData
-historicalBFdates: string[]
-patientHistoricalDisabilities: {
-  id: number
-  pd_id: number
-  status: string
-  disability_details: {
-    disability_id: number
-    disability_name: string
-    created_at: string
-  }
-}[] // Type for historical disabilities
-mode: "newchildhealthrecord" | "addnewchildhealthrecord" 
+onPrevious: () => void;
+onNext: () => void;
+updateFormData: (data: Partial<FormData>) => void;
+formData: FormData;
+historicalBFChecks: BFCheck[];// Add this new prop
+mode: "newchildhealthrecord" | "addnewchildhealthrecord";
 }
 
 

@@ -9,12 +9,16 @@ from datetime import datetime
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from .models import Budget_Plan_Detail, Budget_Plan
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
 class BudgetPlanView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
     queryset = Budget_Plan.objects.all()
 
 class BudgetPlanDetailView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     queryset = Budget_Plan_Detail.objects.all()
 
@@ -30,6 +34,7 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
         
 
 class BudgetPlanHistoryView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanHistorySerializer
     queryset = Budget_Plan_History.objects.all()
 
@@ -58,10 +63,12 @@ class BudgetPlanHistoryView(generics.ListCreateAPIView):
 
         
 class BudgetPlanFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanFileCreateSerializer
     queryset = BudgetPlan_File.objects.all()
 
 class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanFileViewSerializer
 
     def get_queryset(self):
@@ -73,6 +80,7 @@ class BudgetPlanFileRetrieveView(generics.ListCreateAPIView):
 
 
 class PreviousYearBudgetPlanView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
     
     def get_object(self):
@@ -87,6 +95,7 @@ class PreviousYearBudgetPlanView(generics.RetrieveAPIView):
         return previous_year_plan
 
 class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     
     def get_queryset(self):
@@ -103,11 +112,13 @@ class PreviousYearBudgetPlanDetailsView(generics.ListAPIView):
         return Budget_Plan_Detail.objects.filter(plan_id=previous_year_plan.plan_id)
     
 class DeleteBudgetPlanFile(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = BudgetPlan_File.objects.all()
     serializer_class = BudgetPlanFileViewSerializer
     lookup_field = 'bpf_id'
 
 class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Budget_Plan.objects.all()
     serializer_class = BudgetPlanSerializer
     lookup_field = 'plan_id'
@@ -138,10 +149,202 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
 # -------------------------------- INCOME & DISBURSEMENT ------------------------------------
-class IncomeFolderListView(generics.ListAPIView):
+class ImageBaseView: #helper function
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        queryset = self.model.objects.all()
+        archive_status = self.request.query_params.get('archive', None)
+        folder_id = self.request.query_params.get('folder', None)
+        
+        # Filter by archive status
+        if archive_status == 'true':
+            queryset = queryset.filter(**{f'{self.archive_field}': True})
+        elif archive_status == 'false':
+            queryset = queryset.filter(**{f'{self.archive_field}': False})
+        
+        # Filter by folder if provided
+        if folder_id:
+            if hasattr(self.model, 'inf_num'):  # For Income images
+                queryset = queryset.filter(inf_num=folder_id)
+            elif hasattr(self.model, 'dis_num'):  # For Disbursement images
+                queryset = queryset.filter(dis_num=folder_id)
+            
+        return queryset
+
+    def perform_archive_unarchive(self, instance, archive):
+        setattr(instance, self.archive_field, archive)
+        instance.save()
+        
+        # Update parent folder status
+        if hasattr(instance, 'inf_num'):  # Income image
+            folder = instance.inf_num
+            folder.inf_is_archive = not Income_Image.objects.filter(
+                inf_num=folder, 
+                infi_is_archive=False
+            ).exists()
+            folder.save()
+        elif hasattr(instance, 'dis_num'):  # Disbursement image
+            folder = instance.dis_num
+            folder.dis_is_archive = not Disbursement_Image.objects.filter(
+                dis_num=folder, 
+                disf_is_archive=False
+            ).exists()
+            folder.save()
+
+    def perform_destroy(self, instance):
+        # Get folder reference before deletion
+        folder = None
+        if hasattr(instance, 'inf_num'):
+            folder = instance.inf_num
+        elif hasattr(instance, 'dis_num'):
+            folder = instance.dis_num
+        
+        instance.delete()
+        
+        # Check if folder is now empty and delete if needed
+        if folder:
+            if hasattr(folder, 'inf_num') and not Income_Image.objects.filter(inf_num=folder).exists():
+                folder.delete()
+            elif hasattr(folder, 'dis_num') and not Disbursement_Image.objects.filter(dis_num=folder).exists():
+                folder.delete()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            self.perform_destroy(instance)
+            return Response(
+                {"message": f"{self.model.__name__} permanently deleted"}, 
+                status=status.HTTP_200_OK
+            )
+        else:
+            self.perform_archive_unarchive(instance, True)
+            return Response(
+                {"message": f"{self.model.__name__} archived"}, 
+                status=status.HTTP_200_OK
+            )
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if request.data.get('restore'):
+            self.perform_archive_unarchive(instance, False)
+            return Response(
+                {"message": f"{self.model.__name__} restored"},
+                status=status.HTTP_200_OK
+            )
+        return super().patch(request, *args, **kwargs)
+
+class Income_ImageListView(ImageBaseView, generics.ListCreateAPIView):
+    model = Income_Image
+    serializer_class = Income_ImageSerializers
+    archive_field = 'infi_is_archive'
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        """Handle both single image and bulk image upload"""
+        inf_num = request.data.get('inf_num')
+        files = request.data.get('files', [])
+        
+        if not inf_num:
+            return Response(
+                {"error": "inf_num is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if files:
+            # Bulk upload
+            serializer = self.get_serializer()
+            try:
+                uploaded_images = serializer._upload_files(files, inf_num)
+                return Response(
+                    {
+                        "message": f"{len(uploaded_images)} images uploaded successfully",
+                        "uploaded_count": len(uploaded_images)
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            except serializers.ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Single image upload (traditional way)
+            return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        inf_num = self.request.data.get('inf_num')
+        try:
+            folder = Income_File_Folder.objects.get(inf_num=inf_num)
+            serializer.save(
+                inf_num=folder,
+                staff=self.request.user.staff if hasattr(self.request.user, 'staff') else None
+            )
+        except Income_File_Folder.DoesNotExist:
+            raise serializers.ValidationError("Invalid income folder ID")
+
+class Income_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
+    model = Income_Image
+    serializer_class = Income_ImageSerializers
+    lookup_field = 'infi_num'
+    archive_field = 'infi_is_archive'
+    permission_classes = [AllowAny]
+
+class Disbursement_ImageListView(ImageBaseView, generics.ListCreateAPIView):
+    model = Disbursement_Image
+    serializer_class = Disbursement_ImageSerializers
+    archive_field = 'disf_is_archive'
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        """Handle both single image and bulk image upload"""
+        dis_num = request.data.get('dis_num')
+        files = request.data.get('files', [])
+        
+        if not dis_num:
+            return Response(
+                {"error": "dis_num is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if files:
+            # Bulk upload
+            serializer = self.get_serializer()
+            try:
+                uploaded_images = serializer._upload_files(files, dis_num)
+                return Response(
+                    {
+                        "message": f"{len(uploaded_images)} images uploaded successfully",
+                        "uploaded_count": len(uploaded_images)
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            except serializers.ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Single image upload (traditional way)
+            return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        dis_num = self.request.data.get('dis_num')
+        try:
+            folder = Disbursement_File_Folder.objects.get(dis_num=dis_num)
+            serializer.save(
+                dis_num=folder,
+                staff=self.request.user.staff if hasattr(self.request.user, 'staff') else None
+            )
+        except Disbursement_File_Folder.DoesNotExist:
+            raise serializers.ValidationError("Invalid disbursement folder ID")
+
+class Disbursement_ImageView(ImageBaseView, generics.RetrieveUpdateDestroyAPIView):
+    model = Disbursement_Image
+    serializer_class = Disbursement_ImageSerializers
+    lookup_field = 'disf_num'
+    archive_field = 'disf_is_archive'
+    permission_classes = [AllowAny]
+
+class IncomeFolderListView(generics.ListCreateAPIView):
     serializer_class = Income_Folder_Serializer
     permission_classes = [AllowAny]
 
@@ -160,43 +363,20 @@ class IncomeFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = Income_Folder_Serializer
     queryset = Income_File_Folder.objects.all()
     lookup_field = 'inf_num'
+    lookup_url_kwarg = 'inf_num'
     permission_classes = [AllowAny]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
-        
-        if permanent:
-            # First delete all images in the folder
-            Income_Image.objects.filter(inf_num=instance).delete()
-            # Then delete the folder
-            instance.delete()
-            return Response({"message": "Income folder and all images permanently deleted"}, 
-                          status=status.HTTP_204_NO_CONTENT)
-        else:
-            # Archive folder and all its images
-            instance.inf_is_archive = True
-            instance.save()
-            Income_Image.objects.filter(inf_num=instance).update(infi_is_archive=True)
-            return Response({"message": "Income folder and all images archived"}, 
-                          status=status.HTTP_200_OK)
-
-class RestoreIncomeFolderView(generics.UpdateAPIView):
-    queryset = Income_File_Folder.objects.filter(inf_is_archive=True)
-    serializer_class = Income_Folder_Serializer
-    lookup_field = 'inf_num'
-    permission_classes = [AllowAny]
-
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.inf_is_archive = False
+        # Archive all images first
+        Income_Image.objects.filter(inf_num=instance).update(infi_is_archive=True)
+        # Then archive the folder
+        instance.inf_is_archive = True
         instance.save()
-        # Restore all images in this folder
-        Income_Image.objects.filter(inf_num=instance).update(infi_is_archive=False)
-        return Response({"message": "Income folder and all images restored"}, 
+        return Response({"message": "Income folder and all images archived"}, 
                       status=status.HTTP_200_OK)
 
-class DisbursementFolderListView(generics.ListAPIView):
+class DisbursementFolderListView(generics.ListCreateAPIView):
     serializer_class = Disbursement_Folder_Serializer
     permission_classes = [AllowAny]
 
@@ -215,133 +395,99 @@ class DisbursementFolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = Disbursement_Folder_Serializer
     queryset = Disbursement_File_Folder.objects.all()
     lookup_field = 'dis_num'
+    lookup_url_kwarg = 'dis_num'
     permission_classes = [AllowAny]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
-        
-        if permanent:
-            # First delete all images in the folder
-            Disbursement_Image.objects.filter(dis_num=instance).delete()
-            # Then delete the folder
-            instance.delete()
-            return Response({"message": "Disbursement folder and all images permanently deleted"}, 
-                          status=status.HTTP_204_NO_CONTENT)
-        else:
-            # Archive folder and all its images
-            instance.dis_is_archive = True
-            instance.save()
-            Disbursement_Image.objects.filter(dis_num=instance).update(disf_is_archive=True)
-            return Response({"message": "Disbursement folder and all images archived"}, 
-                          status=status.HTTP_200_OK)
-
-class RestoreDisbursementFolderView(generics.UpdateAPIView):
-    queryset = Disbursement_File_Folder.objects.filter(dis_is_archive=True)
-    serializer_class = Disbursement_Folder_Serializer
-    lookup_field = 'dis_num'
-    permission_classes = [AllowAny]
-
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.dis_is_archive = False
+        # Archive all images first
+        Disbursement_Image.objects.filter(dis_num=instance).update(disf_is_archive=True)
+        # Then archive the folder
+        instance.dis_is_archive = True
         instance.save()
-        # Restore all images in this folder
-        Disbursement_Image.objects.filter(dis_num=instance).update(disf_is_archive=False)
-        return Response({"message": "Disbursement folder and all images restored"}, 
+        return Response({"message": "Disbursement folder and all images archived"}, 
                       status=status.HTTP_200_OK)
 
-class Income_ImageListView(generics.ListAPIView):
-    serializer_class = Income_ImageSerializers
-    queryset = Income_Image.objects.filter(infi_is_archive=False)  # Exclude archived
+class PermanentDeleteFolder(APIView):
     permission_classes = [AllowAny]
 
-    def get_queryset(self):
-        queryset = Income_Image.objects.all()
-        archive_status = self.request.query_params.get('archive', None)
-        
-        if archive_status == 'true':
-            queryset = queryset.filter(infi_is_archive=True)
-        elif archive_status == 'false':
-            queryset = queryset.filter(infi_is_archive=False)
+    def delete(self, request, pk, *args, **kwargs):
+        if 'income' in request.path:
+            folder = get_object_or_404(Income_File_Folder, pk=pk)
+            images = Income_Image.objects.filter(inf_num=folder)
             
-        return queryset
-
-class Income_ImageView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = Income_ImageSerializers
-    queryset = Income_Image.objects.all()
-    lookup_field = 'infi_num'
-    permission_classes = [AllowAny]
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
-        
-        if permanent:
-            instance.delete()
-            return Response({"message": "Income image permanently deleted"}, 
-                          status=status.HTTP_204_NO_CONTENT)
+            if all(img.infi_is_archive for img in images):
+                images.delete()
+                if not Income_Image.objects.filter(inf_num=folder).exists():
+                    folder.delete()
+                    return Response(
+                        {"message": "Income folder and all images permanently deleted"},
+                        status=status.HTTP_200_OK
+                    )
+                return Response(
+                    {"message": "All archived income images deleted (folder kept)"},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                archived_images = images.filter(infi_is_archive=True)
+                count = archived_images.count()
+                archived_images.delete()
+                if not Income_Image.objects.filter(inf_num=folder).exists():
+                    folder.delete()
+                    return Response(
+                        {"message": f"{count} archived income images deleted and empty folder removed"},
+                        status=status.HTTP_200_OK
+                    )
+                folder.inf_is_archive = not Income_Image.objects.filter(
+                    inf_num=folder, 
+                    infi_is_archive=False
+                ).exists()
+                folder.save()
+                return Response(
+                    {"message": f"{count} archived income images deleted"},
+                    status=status.HTTP_200_OK
+                )
         else:
-            instance.infi_is_archive = True
-            instance.save()
-            return Response({"message": "Income image archived"}, 
-                          status=status.HTTP_200_OK)
-
-class Disbursement_ImageListView(generics.ListAPIView):
-    serializer_class = Disbursement_ImageSerializers
-    queryset = Disbursement_Image.objects.filter(disf_is_archive=False)  # Exclude archived
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        queryset = Disbursement_Image.objects.all()
-        archive_status = self.request.query_params.get('archive', None)
-        
-        if archive_status == 'true':
-            queryset = queryset.filter(disf_is_archive=True)
-        elif archive_status == 'false':
-            queryset = queryset.filter(disf_is_archive=False)
+            # Similar logic for disbursement
+            folder = get_object_or_404(Disbursement_File_Folder, pk=pk)
+            images = Disbursement_Image.objects.filter(dis_num=folder)
             
-        return queryset
-
-class Disbursement_ImageView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = Disbursement_ImageSerializers
-    queryset = Disbursement_Image.objects.all()
-    lookup_field = 'disf_num'
-    permission_classes = [AllowAny]
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
-        
-        if permanent:
-            instance.delete()
-            return Response({"message": "Disbursement image permanently deleted"}, 
-                          status=status.HTTP_204_NO_CONTENT)
-        else:
-            instance.disf_is_archive = True
-            instance.save()
-            return Response({"message": "Disbursement image archived"}, 
-                          status=status.HTTP_200_OK)
-
+            if all(img.disf_is_archive for img in images):
+                images.delete()
+                if not Disbursement_Image.objects.filter(dis_num=folder).exists():
+                    folder.delete()
+                    return Response(
+                        {"message": "Disbursement folder and all images permanently deleted"},
+                        status=status.HTTP_200_OK
+                    )
+                return Response(
+                    {"message": "All archived disbursement images deleted (folder kept)"},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                archived_images = images.filter(disf_is_archive=True)
+                count = archived_images.count()
+                archived_images.delete()
+                if not Disbursement_Image.objects.filter(dis_num=folder).exists():
+                    folder.delete()
+                    return Response(
+                        {"message": f"{count} archived disbursement images deleted and empty folder removed"},
+                        status=status.HTTP_200_OK
+                    )
+                folder.dis_is_archive = not Disbursement_Image.objects.filter(
+                    dis_num=folder, 
+                    disf_is_archive=False
+                ).exists()
+                folder.save()
+                return Response(
+                    {"message": f"{count} archived disbursement images deleted"},
+                    status=status.HTTP_200_OK
+                )
+            
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 
 class ExpenseParticulartView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_ParticularSerializers
     queryset = Expense_Particular.objects.all()
 
@@ -356,6 +502,7 @@ class ExpenseParticulartView(generics.ListCreateAPIView):
             return super().create(request, *args, **kwargs) 
         
 class UpdateExpenseParticularView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_ParticularSerializers
     lookup_field = 'exp_id'
 
@@ -375,8 +522,29 @@ class UpdateExpenseParticularView(generics.RetrieveUpdateAPIView):
         return super().update(request, *args, **kwargs)
     
 
+class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Budget_Plan_DetailSerializer
+    lookup_field = 'dtl_id'
+
+    def get_queryset(self):
+        year = self.kwargs['year']
+        queryset = Budget_Plan_Detail.objects.filter(plan__plan_year=year)
+
+        if not queryset.exists():
+            raise NotFound(detail=f"No budget plan found for the year {year}.")
+
+        return queryset
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True) 
+        return super().update(request, *args, **kwargs)
+
 
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
 
     def get_queryset(self):
@@ -388,6 +556,7 @@ class Income_Expense_TrackingView(generics.ListCreateAPIView):
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers    
     queryset = Income_Expense_Tracking.objects.all()
 
@@ -396,6 +565,7 @@ class DeleteIncomeExpenseView(generics.DestroyAPIView):
         return get_object_or_404(Income_Expense_Tracking, iet_num=iet_num) 
 
 class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
     queryset = Income_Expense_Tracking.objects.all()
     lookup_field = 'iet_num'
@@ -424,6 +594,7 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
     
 
 class GetParticularsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
 
     def get_queryset(self):
@@ -441,6 +612,7 @@ class GetParticularsView(generics.ListAPIView):
 
 
 class GetExpenseParticularsView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Expense_ParticularSerializers
 
     def get_queryset(self):
@@ -457,6 +629,16 @@ class GetExpenseParticularsView(generics.ListAPIView):
         return Expense_Particular.objects.none()
     
 
+class Expense_LogView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Expense_LogSerializers
+
+    def get_queryset(self):
+        # Get year from query params (default to current year if not provided)
+        year = self.request.query_params.get('year', datetime.now().year)
+        return Expense_Log.objects.filter(
+            Q(el_datetime__year=year)
+        ).select_related('iet_num')
 
 # ------------------------- INCOME --------------------------------------
 
@@ -468,6 +650,7 @@ class GetExpenseParticularsView(generics.ListAPIView):
 
 
 class Income_TrackingView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
     def get_queryset(self):
         # Get year from query params (default to current year if not provided)
@@ -478,6 +661,7 @@ class Income_TrackingView(generics.ListCreateAPIView):
 
 
 class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
     queryset = Income_Tracking.objects.all()
     lookup_field = 'inc_num'
@@ -492,6 +676,7 @@ class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
 
 
 class DeleteIncomeTrackingView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers    
     queryset = Income_Tracking.objects.all()
 
@@ -503,11 +688,13 @@ class DeleteIncomeTrackingView(generics.DestroyAPIView):
 # ------ INCOME PARTICULAR
 
 class Income_ParticularView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_ParticularSerializers
     queryset = Income_Particular.objects.all()
 
 
 class DeleteIncome_ParticularView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_ParticularSerializers
     queryset = Income_Particular.objects.all()   
 
@@ -519,12 +706,14 @@ class DeleteIncome_ParticularView(generics.DestroyAPIView):
 # ---------- INCOME EXPENSE MAIN
 
 class Income_Expense_MainView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
     # queryset = Income_Expense_Main.objects.all()
     queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
 
 
 class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
     # queryset = Income_Expense_Main.objects.all()
     queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
@@ -544,6 +733,7 @@ class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
 # ------------- INCOME_EXPENSE FILE FOLDER
 
 class Income_Expense_FileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Income_Expense_FileSerializers
     queryset = Income_Expense_File.objects.all()
 
@@ -554,7 +744,25 @@ class Income_Expense_FileView(generics.ListCreateAPIView):
             queryset = queryset.filter(iet_num=iet_num)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        # Get iet_num from either query params or request data
+        iet_num = request.query_params.get('iet_num') or request.data.get('iet_num')
+        
+        if not iet_num:
+            return Response(
+                {"error": "iet_num is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Call your serializer's upload method
+        files = request.data.get('files', [])
+        self.get_serializer()._upload_files(files, iet_num=iet_num)
+        
+        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
+
+
 class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Income_Expense_File.objects.all()
     serializer_class = Income_Expense_FileSerializers
     lookup_field = 'ief_id' 
@@ -562,10 +770,12 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 #---------------RATES
 
 class Annual_Gross_SalesView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = Annual_Gross_Sales.objects.all()
+    queryset = Annual_Gross_Sales.objects.all().order_by('-ags_date')
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
     queryset = Annual_Gross_Sales.objects.all()
     lookup_field = 'ags_id'
@@ -580,11 +790,13 @@ class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     
 
 class Purpose_And_RatesView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
-    queryset = Purpose_And_Rates.objects.all()
+    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')
 
 
 class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     queryset = Purpose_And_Rates.objects.all()
     lookup_field = 'pr_id'
@@ -598,6 +810,42 @@ class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class PurposeAndRateByParamsView(APIView):
+    def get(self, request):
+        pr_purpose = request.query_params.get('pr_purpose')
+        pr_category = request.query_params.get('pr_category')
+        pr_is_archive = request.query_params.get('pr_is_archive')
+        
+        # Validation and query logic same as above
+        if not all([pr_purpose, pr_category, pr_is_archive]):
+            return Response(
+                {'error': 'All parameters are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            pr_is_archive_bool = pr_is_archive.lower() == 'true' if isinstance(pr_is_archive, str) else bool(pr_is_archive)
+        except:
+            return Response(
+                {'error': 'Invalid pr_is_archive value'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            purpose_rate = Purpose_And_Rates.objects.get(
+                pr_purpose=pr_purpose,
+                pr_category=pr_category,
+                pr_is_archive=pr_is_archive_bool
+            )
+            serializer = Purpose_And_RatesSerializers(purpose_rate)
+            return Response(serializer.data)
+            
+        except Purpose_And_Rates.DoesNotExist:
+            return Response(
+                {'error': 'Record not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
 
 #---------------  RECEIPTS
 
@@ -606,10 +854,16 @@ class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):
 #     queryset = Invoice.objects.all()
 
 class InvoiceView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
+    
+    # Use the correct field names that exist in your Invoice model
     queryset = Invoice.objects.select_related(
-        'cr_id__rp_id__per'  # This ensures efficient querying
+        'bpr_id__rp_id__per',  # For business permit requests
+        'nrc_id',              # For non-resident certificate requests
+        'cr_id__rp_id__per'       # For resident certificates
     ).all()
+
 
 # Clearance Request Views
 class ClearanceRequestListView(generics.ListAPIView):
@@ -618,15 +872,15 @@ class ClearanceRequestListView(generics.ListAPIView):
 
     def get_queryset(self):
         from apps.clerk.models import ClerkCertificate
-        queryset = ClerkCertificate.objects.select_related('rp').prefetch_related('clerk_invoices').all()
+        queryset = ClerkCertificate.objects.select_related('rp_id').all()
         
         # Search functionality
         search_query = self.request.query_params.get('search', None)
         if search_query:
             queryset = queryset.filter(
                 Q(cr_id__icontains=search_query) |
-                Q(rp__per_fname__icontains=search_query) |
-                Q(rp__per_lname__icontains=search_query) |
+                Q(rp_id__per__per_fname__icontains=search_query) |
+                Q(rp_id__per__per_lname__icontains=search_query) |
                 Q(req_type__icontains=search_query)
             )
         
@@ -640,7 +894,7 @@ class ClearanceRequestDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         from apps.clerk.models import ClerkCertificate
-        return ClerkCertificate.objects.select_related('rp').prefetch_related('clerk_invoices').all()
+        return ClerkCertificate.objects.select_related('rp_id').all()
 
 
 class UpdatePaymentStatusView(generics.UpdateAPIView):
@@ -659,6 +913,61 @@ class UpdatePaymentStatusView(generics.UpdateAPIView):
         if serializer.is_valid():
             instance.req_payment_status = serializer.validated_data['payment_status']
             instance.save()
+
+            # --- AUTO CREATE RECEIPT FOR ANY PAID ---
+            try:
+                if instance.req_payment_status == "Paid":
+                    from apps.treasurer.models import Invoice
+                    if not Invoice.objects.filter(cr_id=instance).exists():
+                        # Generate next available inv_num
+                        try:
+                            highest_num = Invoice.objects.aggregate(
+                                max_num=models.Max('inv_num')
+                            )['max_num'] or 0
+                            next_num = highest_num + 1
+                        except Exception as e:
+                            # Fallback: use current timestamp as ID
+                            import time
+                            next_num = int(time.time())
+                        
+                        Invoice.objects.create(
+                            inv_num=next_num,
+                            cr_id=instance,
+                            inv_serial_num=f"INV-{instance.cr_id}",  # You can improve this serial logic
+                            inv_amount=0,  # Set correct amount if available
+                            inv_nat_of_collection=instance.req_type or "",
+                            inv_status="Paid",  # Set status to Paid since payment is complete
+                        )
+                        
+                        # Log the auto-created invoice activity
+                        try:
+                            from apps.act_log.utils import create_activity_log
+                            from apps.administration.models import Staff
+                            
+                            # Get staff member from the clearance request
+                            staff_id = getattr(instance.ra_id, 'staff_id', '00003250722') if instance.ra_id else '00003250722'
+                            staff = Staff.objects.filter(staff_id=staff_id).first()
+                            
+                            if staff:
+                                # Create activity log
+                                create_activity_log(
+                                    act_type="Auto-Invoice Created",
+                                    act_description=f"Auto-generated invoice INV-{instance.cr_id} created for {instance.req_type} payment",
+                                    staff=staff,
+                                    record_id=f"INV-{instance.cr_id}",
+                                    feat_name="Payment Processing"
+                                )
+                                logger.info(f"Activity logged for auto-invoice creation: INV-{instance.cr_id}")
+                            else:
+                                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                                
+                        except Exception as log_error:
+                            logger.error(f"Failed to log activity for auto-invoice creation: {str(log_error)}")
+                            # Don't fail the request if logging fails
+            except Exception as e:
+                import logging
+                logging.error(f"Auto-create invoice failed: {e}")
+            # --- END AUTO CREATE RECEIPT ---
             
             # Return the updated clearance request
             detail_serializer = ClearanceRequestDetailSerializer(instance)
@@ -689,3 +998,12 @@ class PaymentStatisticsView(generics.ListAPIView):
         }
         
         return Response(statistics, status=status.HTTP_200_OK)
+
+# Clearance Request Views
+class ResidentNameListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ResidentNameSerializer
+    
+    def get_queryset(self):
+        from apps.profiling.models import ResidentProfile
+        return ResidentProfile.objects.select_related('per').all()  

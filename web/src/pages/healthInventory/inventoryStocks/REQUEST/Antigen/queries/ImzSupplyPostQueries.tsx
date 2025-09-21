@@ -1,6 +1,5 @@
-// src/services/immunization/hooks/useImmunizationStockMutations.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createImmunizationStock } from "../restful-api/ImzSupplyPostAPI";
+import { createImmunizationStock } from "../restful-api/post";
 import { useNavigate } from "react-router";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 

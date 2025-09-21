@@ -5,25 +5,51 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod"
 import PermitClearanceFormSchema from "@/form-schema/permitClearance-schema";
 import { useForm } from "react-hook-form";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { createPermitClearance } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/permitClearancePostAPI";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-search";
+import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/permitClearanceFetchQueries";
+import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
+import { useGetAnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
+import { FormSelect } from "@/components/ui/form/form-select";
 
-const annualGrossSales = [
-    { id: "0", name: "0000000" }
-];
 
-const purposeOptions = [
-    { id: "1", name: "Commercial Building Permit" },
-    { id: "2", name: "Residential Permit" },
-    { id: "3", name: "Business Permit" },
-    { id: "4", name: "Water Connection Permit (Commercial)" },
-    { id: "5", name: "Water Connection Permit (Residential)" },
-    { id: "6", name: "Electrical Permit Connection (Commercial)" },
-];
 
-function PermitClearanceForm() {
+interface PermitClearanceFormProps {
+    onSuccess?: () => void;
+}
+
+function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const { user } = useAuth();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const queryClient = useQueryClient();
+    const staffId = user?.staff?.staff_id as string | undefined;
+    
+    
+    // Add error handling for the queries
+    const { data: businesses = [], isLoading: businessLoading, error: businessError } = useGetBusinesses();
+    const { data: permitPurposes = [], isLoading: purposesLoading, error: purposesError } = useGetPermitPurposes();
+    const { data: residents = [], isLoading: residentLoading} = useGetResidents();
+    const { data: grossSales = [], isLoading: _grossSalesLoading } = useGetAnnualGrossSales();
+    
+    // Log any errors
+    if (businessError) {
+        console.error("Business loading error:", businessError);
+    }
+    if (purposesError) {
+        console.error("Purposes loading error:", purposesError);
+    }
+
+    // fetches only records where the archive status is false
+    const annualGrossSalesOptions = grossSales
+    .filter(grossSales => grossSales.ags_is_archive === false)
+    .map(grossSales => ({
+        id: grossSales.ags_id.toString(),
+        name: `₱${grossSales.ags_minimum} - ₱${grossSales.ags_maximum}`
+    }));
     
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
         resolver: zodResolver(PermitClearanceFormSchema),
@@ -33,145 +59,271 @@ function PermitClearanceForm() {
             requestor: "",
             address: "",
             grossSales: "",
-            purposes: [],
+            purposes: "",
+            rp_id: "",
         },
     })
 
-    const onSubmit = (values: z.infer<typeof PermitClearanceFormSchema>) => {
+    // Function to get business address when business is selected
+    const getBusinessAddress = (businessValue: string) => {
+        console.log("getBusinessAddress called with businessValue:", businessValue);
+        console.log("Available businesses:", businesses);
+        
+        
+        let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
+        
+        // If not found by ID, try to find by name
+        if (!selectedBusiness) {
+            selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
+        }
+        
+        console.log("Selected business:", selectedBusiness);
+        
+        const address = selectedBusiness?.address || selectedBusiness?.bus_street || '';
+        console.log("Resolved address:", address);
+        
+        return address;
+    }
+
+    // Function to get business requestor when business is selected
+    // const getBusinessRequestor = (businessValue: string) => {
+    //     console.log("getBusinessRequestor called with businessValue:", businessValue);
+        
+    //     // Try to find by ID first
+    //     let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
+        
+    //     // If not found by ID, try to find by name
+    //     if (!selectedBusiness) {
+    //         selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
+    //     }
+        
+    //     console.log("Selected business for requestor:", selectedBusiness);
+        
+    //     const requestor = selectedBusiness?.requestor || '';
+    //     console.log("Resolved requestor:", requestor);
+        
+    //     return requestor;
+    // }
+
+    const onSubmit = async (values: z.infer<typeof PermitClearanceFormSchema>) => {
         try {
-            // Get staff_id from current user using the correct pattern
-            const staffId = user?.staff?.staff_id;
+            setIsSubmitting(true);
             
             if (!staffId) {
-                toast.error("Staff information not available. Please log in again.");
+                toast.error("Missing staff ID. Please re-login and try again.");
                 return;
             }
 
             const payload = {
-                ...values,
-                staff: staffId  // Use the current user's staff_id
+                ...values
             };
             
             console.log("Permit Clearance Data:", payload);
-            // TODO: Add API call here
+            
+         
+            await createPermitClearance(payload, staffId);
+            console.log("Permit clearance created successfully");
+            
+            toast.success("Permit clearance created successfully!");
+            
+      
+            form.reset();
+            
+           
+            await queryClient.invalidateQueries({ queryKey: ["permitClearances"] });
+            
+        
+            if (onSuccess) {
+                onSuccess();
+            }
+            
         } catch (error) {
             console.error('Error creating permit clearance:', error);
             toast.error("Failed to create permit clearance. Please try again.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
+    
+    console.log("PermitClearanceForm rendering", { businesses, permitPurposes, businessLoading, purposesLoading });
     
     return(
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="grid max-w-3xl mx-auto gap-7">
+                <div className="flex flex-col max-w-3xl mx-auto gap-7">
+                    <FormField
+                        control={form.control}
+                        name="serialNo"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Serial No. </FormLabel>
+                                <FormControl>
+                                    <Input {...field} type="number" placeholder="e.g.(123456)" className="w-full"></Input>
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}>
+                    </FormField>
+
+                    <FormField
+                        control={form.control}
+                        name="businessName"
+                        render={({field}) =>(
+                            <FormItem>
+                                <FormLabel>Business Name</FormLabel>
+                                <FormControl>
+                                    <ComboboxInput
+                                        value={field.value}
+                                        options={businesses}
+                                        isLoading={businessLoading}
+                                        label=""
+                                        placeholder="Search business"
+                                        emptyText="No businesses found"
+                                        onSelect={(value: string, selectedOption: any) => {
+                                            console.log("Business selected with value:", value);
+                                            console.log("Selected option:", selectedOption);
+                                            field.onChange(value);
+                                            
+                                           
+                                            let selectedBusiness = businesses.find((business: any) => business.bus_id === value);
+                                            
+                                          
+                                            if (!selectedBusiness) {
+                                                selectedBusiness = businesses.find((business: any) => business.bus_name === value);
+                                            }
+                                            
+                                            console.log("Found selected business:", selectedBusiness);
+                                            if (selectedBusiness) {
+                                               
+                                                const address = selectedBusiness.address || selectedBusiness.bus_street || '';
+                                              
+                                                form.setValue("address", address);
+                                                
+                                               
+                                                const requestor = selectedBusiness.requestor || '';
+                                              
+                                                form.setValue("requestor", requestor);
+                                            }
+                                        }}
+                                        onCustomInput={(value: string) => {
+                                            field.onChange(value);
+                                        }}
+                                        displayKey="bus_name"
+                                        valueKey="bus_id"
+                                    />
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}>
+                    </FormField>
+
                     <div className="grid grid-cols-2 gap-5 w-full">
-                        <div>
-                            <FormField
-                                control={form.control}
-                                name="serialNo"
-                                render={({field}) => (
-                                    <FormItem>
-                                        <FormLabel>Serial No. </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} type="number" placeholder="e.g.(123456)"></Input>
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}>
-                            </FormField>
-                        </div>
-
-                        <div>
-                            <FormField
-                                control={form.control}
-                                name="businessName"
-                                render={({field}) =>(
-                                    <FormItem>
-                                        <FormLabel>Business Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter business name"></Input>
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}>
-                            </FormField>
-                        </div>
-
-                        <div>
-                            <FormField
-                                control={form.control}
-                                name="address"
-                                render={({field})=>(
-                                    <FormItem>
-                                        <FormLabel>Address</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter business address"></Input>
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}>
-                            </FormField>
-                        </div>
-
-                        <div>
-                            <FormField
-                                control={form.control}
-                                name="grossSales"
-                                render={({field})=> (
-                                    <FormItem>
-                                        <FormLabel>Gross Sales</FormLabel>
-                                        <FormControl>
-                                            <SelectLayout {...field} className="w-full" options={annualGrossSales} label="" placeholder="Select Annual Gross Sales" value={field.value} onChange={field.onChange}></SelectLayout>
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}>
-                            </FormField>
-                        </div>
-
-                        <div>
-                            <FormField
-                                control={form.control}
-                                name="requestor"
-                                render={({field}) =>(
-                                    <FormItem>
-                                        <FormLabel>Requestor</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter requestor name"></Input>
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}>
-                            </FormField>
-                        </div>
-                    </div>
-
-                    <div>       
-                        <FormField
+                        <FormSelect
                             control={form.control}
-                            name="purposes"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Select purpose(s):</FormLabel>
-                                    <FormControl>
-                                        <SelectLayout
-                                            {...field}
-                                            className="w-full"
-                                            options={purposeOptions}
-                                            label=""
-                                            placeholder="Select a purpose"
-                                            value={Array.isArray(field.value) ? field.value[0] || "" : field.value}
-                                            onChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <FormMessage/>
-                                </FormItem>
-                            )}
+                            name="grossSales"
+                            options={annualGrossSalesOptions}
+                            // isLoading={grossSalesLoading}
+                            label="Annual Gross Sales"
                         />
+
+                        <FormField
+                        control={form.control}
+                        name="requestor"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel>Requestor:</FormLabel>
+                                <FormControl>
+                                  
+                                    <ComboboxInput
+                                         value={field.value}
+                                         options={residents}
+                                         isLoading={residentLoading}
+                                         label=""
+                                         placeholder="Search resident by name"
+                                         emptyText="No residents found"
+                                         onSelect={(value: string, item: any) => {
+                                             field.onChange(value);
+                                             form.setValue('rp_id', item?.rp_id || '');
+                                         }}
+                                         onCustomInput={(value: string) => {
+                                             field.onChange(value);
+                                             form.setValue('rp_id', '');
+                                         }}
+                                         displayKey="full_name"
+                                         valueKey="full_name"
+                                         additionalDataKey="rp_id" 
+                                     />
+                                
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}>
+                        </FormField>        
                     </div>
+
+                    {/* Display business address automatically */}
+                    <FormField
+                        control={form.control}
+                        name="address"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Business Address</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        {...field} 
+                                        value={getBusinessAddress(form.watch("businessName")) || field.value}
+                                        placeholder="Selecting a business will auto-fill the address." 
+                                        className="w-full bg-gray-50" 
+                                        readOnly
+                                    />
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+
+                                         <div className="relative mb-8">       
+                         <FormField
+                              control={form.control}
+                              name="purposes"
+                              render={({ field }) => (
+                                  <FormItem>
+                                      <FormLabel>Select purpose(s):</FormLabel>
+                                      <FormControl>
+                                          <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
+                                             <ComboboxInput
+                                                  value={field.value || ''}
+                                                  options={permitPurposes
+                                                      .filter((purpose: any) => purpose.pr_category === 'Permit Clearance')
+                                                      .map((purpose: any) => ({
+                                                          id: purpose.pr_id,
+                                                          name: purpose.pr_purpose
+                                                      }))}
+                                                  isLoading={purposesLoading}
+                                                  label=""
+                                                  placeholder="Select purpose..."
+                                                  emptyText="No purposes found"
+                                                  onSelect={(value: string, _: any) => {
+                                                      field.onChange(value);
+                                                  }}
+                                                  onCustomInput={(value: string) => {
+                                                      field.onChange(value);
+                                                  }}
+                                                  displayKey="name"
+                                                  valueKey="id"
+                                              />
+                                         </div>
+                                     </FormControl>
+                                     <FormMessage className="mt-2" />
+                                 </FormItem>
+                             )}
+                         />
+                     </div>
 
                     <div className="flex justify-end">
-                        <Button>Proceed</Button>
+                        <Button disabled={isSubmitting}>
+                            {isSubmitting ? "Creating..." : "Proceed"}
+                        </Button>
                     </div>
                 </div>
             </form>

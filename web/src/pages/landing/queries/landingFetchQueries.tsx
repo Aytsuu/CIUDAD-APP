@@ -15,3 +15,4 @@ export const useBrgyCouncil = () => {
     staleTime: 5000
   })
 }
+

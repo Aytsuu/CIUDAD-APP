@@ -11,7 +11,26 @@ const DataRequirement = z.union([
 ]).transform((val) => String(val));
 
 export const ProjectProposalSchema = z.object({
-  projectTitle: z.string().min(1, "Project Title is required"),
+  selectedDevProject: z.object({
+    dev_id: z.number(),
+    project_title: z.string(),
+    participants: z.array(
+    z.object({
+      category: z.string().min(1, "Category is required"),
+      count: z.union([z.string(), z.number()]),
+    })
+  ),
+    budget_items: z.array(z.object({
+      name: z.string(),
+      pax: z.union([z.number(), z.string()]),
+      amount: DataRequirement
+    })),
+    dev_client: z.string().optional(),
+    dev_issue: z.string().optional(),
+    dev_date: z.string().optional(),
+  }).refine(data => data.dev_id > 0, {
+    message: "Please select a development plan project"
+  }),
   background: z.string().min(1, "Background is required"),
   objectives: z
     .array(z.string().min(1, "Objective cannot be empty"))
@@ -24,7 +43,7 @@ export const ProjectProposalSchema = z.object({
       })
     )
     .min(1, "At least one participant category is required"),
-  date: z.string().min(1, "Date is required"),
+  date: z.string().min(1, "Date is required"), 
   venue: z.string().min(1, "Venue is required"),
   budgetItems: z
     .array(
@@ -45,7 +64,8 @@ export const ProjectProposalSchema = z.object({
       })
     )
     .min(1, "At least one signatory is required"),
-  paperSize: z.enum(["a4", "letter", "legal"]),
   headerImage: z.array(z.any()).optional(),
   supportingDocs: z.array(z.any()).optional(),
 });
+
+export type ProjectProposalFormValues = z.infer<typeof ProjectProposalSchema>;

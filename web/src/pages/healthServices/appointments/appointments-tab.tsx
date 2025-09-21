@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 interface ScheduleTabProps {
-	onTimeFrameChange: (timeFrame: string) => void;
+  onTimeFrameChange: (timeFrame: string) => void;
 }
 
 export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): JSX.Element {

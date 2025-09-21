@@ -1,10 +1,9 @@
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { getARFormSchema } from "@/form-schema/report-schema";
+import { ARFormSchema } from "@/form-schema/report-schema";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { Button } from "@/components/ui/button/button";
 import React from "react";
@@ -17,18 +16,14 @@ export default function ARForm({
   mediaFiles, 
   isSubmitting,
   activeVideoId,
-  selected,
-  sitio,
   setActiveVideoId,
   setMediaFiles,
   submit
 } : {
-  form: UseFormReturn<z.infer<ReturnType<typeof getARFormSchema>>>;
+  form: UseFormReturn<z.infer<typeof ARFormSchema>>;
   mediaFiles: MediaUploadType;
   isSubmitting: boolean;
   activeVideoId: string;
-  selected?: string;
-  sitio?: any
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   submit: () => void;
@@ -37,14 +32,9 @@ export default function ARForm({
   return (
     <>
       {/* First row: Name, Location, and Sitio fields */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-6 gap-4">
         <FormInput control={form.control} name="ar_title" label="Name of Incident/Activity" placeholder="Enter incident/activity name" className="col-span-2"/>
-        {!selected && 
-          <>
-            <FormSelect control={form.control} name="ir_sitio" label="Sitio" options={sitio}/>
-            <FormInput control={form.control} name="ir_street" label="Street" placeholder="Enter street address"/>
-          </>
-        }
+        <FormInput control={form.control} name="ar_area" label="Area" placeholder="Enter the exact location" className="col-span-2"/>
         <FormDateTimeInput control={form.control} name="ar_date_started" label="Date Started" type="date"/>
         <FormDateTimeInput control={form.control} name="ar_time_started" label="Time Started" type="time" />
         <FormDateTimeInput control={form.control} name="ar_date_completed" label="Date Completed" type="date"/>
@@ -64,6 +54,7 @@ export default function ARForm({
           activeVideoId={activeVideoId}
           setActiveVideoId={setActiveVideoId}
           setMediaFiles={setMediaFiles}
+          acceptableFiles="image"
         />
       </div>
 

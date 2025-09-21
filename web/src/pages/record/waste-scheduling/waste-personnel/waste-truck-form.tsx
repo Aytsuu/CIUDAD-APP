@@ -18,8 +18,10 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { TruckStatus, TruckData } from "./waste-personnel-types";
+import { useAuth } from "@/context/AuthContext";
 
 const TruckManagement = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
   const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
@@ -40,6 +42,7 @@ const TruckManagement = () => {
       truck_capacity: "",
       truck_status: "Operational",
       truck_last_maint: new Date().toISOString().split("T")[0],
+      staff: user?.staff?.staff_id || "00001250909",
     },
   });
 
@@ -59,6 +62,7 @@ const TruckManagement = () => {
     const parsedValues = {
       ...values,
       truck_capacity: String(values.truck_capacity).replace(/,/g, ""),
+      staff: user?.staff?.staff_id || "00001250909",
     };
 
     if (currentTruck) {
@@ -331,18 +335,6 @@ const TruckManagement = () => {
         description=""
         mainContent={
           <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
-            <div className="pb-2">
-              <h2 className="text-lg font-semibold">
-                {isReadOnly
-                  ? "TRUCK DETAILS"
-                  : currentTruck
-                  ? "EDIT TRUCK"
-                  : "ADD NEW TRUCK"}
-              </h2>
-              <p className="text-xs text-black/50">
-                Fill out all necessary fields
-              </p>
-            </div>
             <div className="grid gap-4">
               <Form {...form}>
                 <form

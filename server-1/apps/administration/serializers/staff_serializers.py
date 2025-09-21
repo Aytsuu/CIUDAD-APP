@@ -4,11 +4,27 @@ from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
 from apps.account.models import Account
+from ..double_queries import PostQueries
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = Staff
     fields = '__all__'
+  
+class StaffAccountSerializer(serializers.ModelSerializer):
+  pos = serializers.CharField(source="pos.pos_title")
+  assignments = serializers.SerializerMethodField()
+
+  class Meta:
+    model = Staff
+    fields = ['staff_id', 'staff_type', 'pos', 'assignments']
+  
+  def get_assignments(self, obj):
+    assigned = [feat.feat_name for feat in Feature.objects.all()] \
+      if obj.pos.pos_title.lower() == "admin" \
+      else [ assi.feat.feat_name for assi in Assignment.objects.filter(pos=obj.pos.pos_id)]
+    return assigned
+
 
 class StaffMinimalSerializer(serializers.ModelSerializer):
     rp = serializers.SerializerMethodField()
@@ -44,22 +60,6 @@ class StaffTableSerializer(serializers.ModelSerializer):
     if family_comp and family_comp.fam:
       return family_comp.fam.fam_id
     return None
-  
-class StaffFullSerializer(serializers.ModelSerializer):
-  pos = PositionBaseSerializer(read_only=True)
-  rp = serializers.SerializerMethodField()
-  rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
-  pos_id = serializers.PrimaryKeyRelatedField(queryset=Position.objects.all(), write_only=True, source="pos")
-  assignments = AssignmentMinimalSerializer(many=True, read_only=True)
-
-  class Meta:
-      model = Staff
-      fields = '__all__'
-
-  def get_rp(self, obj):
-      from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
-      return ResidentPersonalInfoSerializer(obj.rp).data
-  
 
 class StaffCreateSerializer(serializers.ModelSerializer):
   class Meta:
@@ -74,6 +74,17 @@ class StaffCreateSerializer(serializers.ModelSerializer):
     if len(holders) < max_holders:
       register = Staff(**validated_data)
       register.save()
+
+      # Perform double query
+      request = self.context.get("request")
+      double_queries = PostQueries()
+      response = double_queries.staff(request.data)
+      if not response.ok:
+        try:
+            error_detail = response.json()
+        except ValueError:
+            error_detail = response.text
+        raise serializers.ValidationError({"error": error_detail})
       return register
 
     return None

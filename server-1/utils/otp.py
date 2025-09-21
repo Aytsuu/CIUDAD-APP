@@ -1,8 +1,9 @@
-import random
+import secrets
 from django.core.mail import send_mail
 
-def generate_otp(length=6):
-    return str(random.randint(10**(length-1), (10**length)-1))
+def generate_otp():
+    otp = str(secrets.randbelow(10 ** 6)).zfill(6)
+    return otp
 
 def send_otp_email(email, otp):
     subject = "Your OTP Code"

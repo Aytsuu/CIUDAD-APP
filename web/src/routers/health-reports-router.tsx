@@ -42,6 +42,10 @@ import CommodityInventoryReportsTabs from "@/pages/healthServices/Reports/invent
 import FirstAidInventoryReportsTabs from "@/pages/healthServices/Reports/inventory/firstaid/Main";
 import AntigenInventoryReportsTabs from "@/pages/healthServices/Reports/inventory/antigen/Main";
 
+
+
+import MonthlyNewChildrenRecords from "@/pages/healthServices/Reports/newchildren-list-report/monthly";
+import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/Reports/newchildren-list-report/records";
 export const reports_router = [
   {
     path: "/bhw-monthly-reports",
@@ -181,4 +185,13 @@ export const reports_router = [
     element: <AntigenInventoryReportsTabs />
   },
  
+  {
+    path: "/monthly-new-children-records",
+    element: <MonthlyNewChildrenRecords />
+  },
+  {
+    path: "/monthly-new-children-records/details",
+    element: <MonthlyNewChildrenRecordsDetails />
+  }
+
 ];

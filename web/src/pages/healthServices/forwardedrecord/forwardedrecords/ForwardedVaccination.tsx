@@ -94,14 +94,12 @@ export default function ForwardedVaccinationRecordsTable() {
   const { data: forwardedRecords, isLoading } = useQuery({
     queryKey: ["forwardedVaccinationRecords"],
     queryFn: async () => {
-      const response = await api2.get(
-        "/vaccination/forwarded-vaccination-records/"
-      );
+      const response = await api2.get("/vaccination/forwarded-vaccination-records/");
       if (!response) {
         throw new Error("Failed to fetch forwarded vaccination records");
       }
       return response.data as ForwardedVaccinationRecord[];
-    },
+    }
   });
 
   const formatForwardedData = useCallback((): FormattedForwardedRecord[] => {
@@ -119,16 +117,10 @@ export default function ForwardedVaccinationRecordsTable() {
         vacStck_id: record.vaccine_stock?.vacStck_id || 0,
         vaccineName: vaccineInfo.vac_name || "Unknown Vaccine",
         maxDoses: vaccineInfo.no_of_doses || 0,
-        patientName: `${personalInfo.per_lname || ""}, ${
-          personalInfo.per_fname || ""
-        } ${personalInfo.per_mname || ""}`.trim(),
+        patientName: `${personalInfo.per_lname || ""}, ${personalInfo.per_fname || ""} ${personalInfo.per_mname || ""}`.trim(),
         patientSex: personalInfo.per_sex || "N/A",
-        patientAge: personalInfo.per_dob
-          ? calculateAge(personalInfo.per_dob)
-          : "N/A",
-        address: `${addressInfo.add_street || ""}, ${
-          addressInfo.add_barangay || ""
-        }, ${addressInfo.add_city || ""}`,
+        patientAge: personalInfo.per_dob ? calculateAge(personalInfo.per_dob) : "N/A",
+        address: `${addressInfo.add_street || ""}, ${addressInfo.add_barangay || ""}, ${addressInfo.add_city || ""}`,
         dob: personalInfo.per_dob || "N/A",
         sitio: addressInfo.add_sitio || "N/A",
         doseNo: record.vachist_doseNo || 0,
@@ -141,7 +133,7 @@ export default function ForwardedVaccinationRecordsTable() {
         pat_id: record.patient?.pat_id || "",
         pat_type: record.patient?.pat_type || "",
         vital_id: record.vital_id || 0,
-        vacStck_qty_avail: record.vaccine_stock?.vacStck_qty_avail || 0,
+        vacStck_qty_avail: record.vaccine_stock?.vacStck_qty_avail || 0
       };
     });
   }, [forwardedRecords]);
@@ -157,169 +149,129 @@ export default function ForwardedVaccinationRecordsTable() {
   }, [searchQuery, formatForwardedData]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-const columns: ColumnDef<FormattedForwardedRecord>[] = [
+  const columns: ColumnDef<FormattedForwardedRecord>[] = [
     {
-        accessorKey: "id",
-        header: "ID",
-        cell: ({ row, table }) => (
-            <div className="flex justify-center bg-blue-50  rounded-md  py-2 px-3   ">
-                {table.getSortedRowModel().flatRows.indexOf(row) + 1}
-            </div>
-        ),
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row, table }) => <div className="flex justify-center bg-blue-50  rounded-md  py-2 px-3   ">{table.getSortedRowModel().flatRows.indexOf(row) + 1}</div>
     },
-    
+
     {
-        accessorKey: "vaccineName",
-        header: ({ column }) => (
-            <div
-                className="flex items-center gap-2 cursor-pointer justify-center"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      accessorKey: "vaccineName",
+      header: ({ column }) => (
+        <div className="flex items-center gap-2 cursor-pointer justify-center" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Vaccine Name <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="flex justify-center min-w-[100px] px-2">{row.original.vaccineName}</div>
+    },
+    {
+      accessorKey: "patientName",
+      header: ({ column }) => (
+        <div className="flex items-center gap-2 cursor-pointer justify-center" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="flex flex-col w-full text-center">
+            <div className="font-medium truncate">{row.original.patientName}</div>
+            <div className="text-sm text-darkGray">
+              {row.original.patientSex}, {row.original.patientAge}
+            </div>
+          </div>
+        </div>
+      )
+    },
+
+    {
+      accessorKey: "address",
+      header: "Address",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[90px] px-2">
+          <div className="w-full truncate text-center">{row.original.address}</div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "sitio",
+      header: "Sitio",
+      cell: ({ row }) => <div className="flex justify-center min-w-[120px] px-2">{row.original.sitio}</div>
+    },
+    {
+      accessorKey: "doseNo",
+      header: "Dose No.",
+      cell: ({ row }) => <div className="flex justify-center min-w-[100px] px-2">{row.original.doseNo === 1 ? "1st Dose" : row.original.doseNo === 2 ? "2nd Dose" : row.original.doseNo === 3 ? "3rd Dose" : `${row.original.doseNo}th Dose`}</div>
+    },
+
+    {
+      accessorKey: "dateForwarded",
+      header: "Date Forwarded",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[150px] px-2">
+          {new Date(row.original.dateForwarded).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+          })}
+        </div>
+      )
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" size="sm" className="h-8">
+            <Link
+              to="/forwarded-vaccination-form"
+              state={{
+                params: {
+                  patientData: {
+                    pat_id: row.original.pat_id,
+                    pat_type: row.original.pat_type,
+                    age: row.original.patientAge,
+                    addressFull: row.original.address,
+                    address: {
+                      add_street: row.original.address.split(", ")[0] || "",
+                      add_barangay: row.original.address.split(", ")[1] || "",
+                      add_city: row.original.address.split(", ")[2] || "",
+                      add_province: "",
+                      sitio: row.original.sitio
+                    },
+                    households: [{ hh_id: "" }],
+                    personal_info: {
+                      per_fname: row.original.patientName.split(", ")[1]?.split(" ")[0] || "",
+                      per_mname: row.original.patientName.split(", ")[1]?.split(" ")[1] || "",
+                      per_lname: row.original.patientName.split(", ")[0] || "",
+                      per_dob: row.original.dob,
+                      per_sex: row.original.patientSex
+                    }
+                  },
+                  vaccineName: row.original.vaccineName,
+                  vaccineType: row.original.vac_type,
+                  vaccineDose: row.original.doseNo,
+                  vachist_id: row.original.id,
+                  vacStck_id: row.original.vacStck_id,
+                  patrec_id: row.original.patrec_id,
+                  maxDoses: row.original.maxDoses,
+                  vacStck_qty_avail: row.original.vacStck_qty_avail,
+                  vacrec_id: row.original.vacrec_id,
+                  existing_followv_id: row.original.existing_followv_id,
+                  follow_up_visit: row.original.follow_up_visit,
+                  vacrec_details: row.original.vacrec_details
+                }
+              }}
             >
-                Vaccine Name <ArrowUpDown size={15} />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex justify-center min-w-[100px] px-2">
-                {row.original.vaccineName}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "patientName",
-        header: ({ column }) => (
-            <div
-                className="flex items-center gap-2 cursor-pointer justify-center"
-                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-                Patient <ArrowUpDown size={15} />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="flex justify-center min-w-[100px] px-2">
-                <div className="flex flex-col w-full text-center">
-                    <div className="font-medium truncate">
-                        {row.original.patientName}
-                    </div>
-                    <div className="text-sm text-darkGray">
-                        {row.original.patientSex}, {row.original.patientAge}
-                    </div>
-                </div>
-            </div>
-        ),
-    },
-  
-
-    {
-        accessorKey: "address",
-        header: "Address",
-        cell: ({ row }) => (
-            <div className="flex justify-center min-w-[90px] px-2">
-                <div className="w-full truncate text-center">{row.original.address}</div>
-            </div>
-        ),
-    },
-    {
-        accessorKey: "sitio",
-        header: "Sitio",
-        cell: ({ row }) => (
-            <div className="flex justify-center min-w-[120px] px-2">
-                {row.original.sitio}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "doseNo",
-        header: "Dose No.",
-        cell: ({ row }) => (
-            <div className="flex justify-center min-w-[100px] px-2">
-                {row.original.doseNo === 1
-                    ? "1st Dose"
-                    : row.original.doseNo === 2
-                    ? "2nd Dose"
-                    : row.original.doseNo === 3
-                    ? "3rd Dose"
-                    : `${row.original.doseNo}th Dose`}
-            </div>
-        ),
-    },
-
-    {
-        accessorKey: "dateForwarded",
-        header: "Date Forwarded",
-        cell: ({ row }) => (
-            <div className="flex justify-center min-w-[150px] px-2">
-                {new Date(row.original.dateForwarded).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                })}
-            </div>
-        ),
-    },
-    {
-        accessorKey: "action",
-        header: "Action",
-        cell: ({ row }) => (
-            <div className="flex justify-center gap-2">
-                <Button variant="outline" size="sm" className="h-8">
-                    <Link
-                        to="/forwarded-vaccination-form"
-                        state={{
-                            params: {
-                                patientData: {
-                                    pat_id: row.original.pat_id,
-                                    pat_type: row.original.pat_type,
-                                    age: row.original.patientAge,
-                                    addressFull: row.original.address,
-                                    address: {
-                                        add_street: row.original.address.split(", ")[0] || "",
-                                        add_barangay: row.original.address.split(", ")[1] || "",
-                                        add_city: row.original.address.split(", ")[2] || "",
-                                        add_province: "",
-                                        sitio: row.original.sitio,
-                                    },
-                                    households: [{ hh_id: "" }],
-                                    personal_info: {
-                                        per_fname:
-                                            row.original.patientName
-                                                .split(", ")[1]
-                                                ?.split(" ")[0] || "",
-                                        per_mname:
-                                            row.original.patientName
-                                                .split(", ")[1]
-                                                ?.split(" ")[1] || "",
-                                        per_lname: row.original.patientName.split(", ")[0] || "",
-                                        per_dob: row.original.dob,
-                                        per_sex: row.original.patientSex,
-                                    },
-                                },
-                                vaccineName: row.original.vaccineName,
-                                vaccineType: row.original.vac_type,
-                                vaccineDose: row.original.doseNo,
-                                vachist_id: row.original.id,
-                                vacStck_id: row.original.vacStck_id,
-                                patrec_id: row.original.patrec_id,
-                                maxDoses: row.original.maxDoses,
-                                vacStck_qty_avail: row.original.vacStck_qty_avail,
-                                vacrec_id: row.original.vacrec_id,
-                                existing_followv_id: row.original.existing_followv_id,
-                                follow_up_visit: row.original.follow_up_visit,
-                                vacrec_details: row.original.vacrec_details,
-                            },
-                        }}
-                    >
-                        View Details
-                    </Link>
-                </Button>
-            </div>
-        ),
-    },
-];
+              View Details
+            </Link>
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   if (isLoading) {
     return (
@@ -339,16 +291,8 @@ const columns: ColumnDef<FormattedForwardedRecord>[] = [
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search by name, vaccine, or sitio..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search by name, vaccine, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
           </div>
         </div>
@@ -377,18 +321,11 @@ const columns: ColumnDef<FormattedForwardedRecord>[] = [
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} records
+              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} records
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>

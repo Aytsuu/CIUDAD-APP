@@ -3,6 +3,24 @@ from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
 
+class ProfilingAbstractModel(models.Model):
+    class Meta:
+        abstract = True
+    
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if(
+                isinstance(field, (models.CharField, models.TextField))
+                and not field.primary_key
+                and field.editable
+            ):
+                val = getattr(self, field.name)
+                if isinstance(val, str):
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+
+
+
 class Sitio(models.Model):
     sitio_id = models.CharField(max_length=100, primary_key=True)
     sitio_name = models.CharField(max_length=100)

@@ -53,7 +53,7 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
           mainContent={
               <SummonSuppDocForm 
                 // ca_id={ca_id} 
-                onSuccess={() => setIsDialogOpen(false)} 
+                // onSuccess={() => setIsDialogOpen(false)} 
               />}
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
@@ -111,7 +111,7 @@ export default function SummonSuppDocs({ ca_id }: { ca_id: string }) {
                             csd_id={doc.csd_id}
                             csd_url={doc.csd_url}
                             csd_description = {doc.csd_description}
-                            onSuccess={() => setEditingRowId(null)}
+                            // onSuccess={() => setEditingRowId(null)}
                           />
                         }
                         isOpen={editingRowId === Number(doc.csd_id)}

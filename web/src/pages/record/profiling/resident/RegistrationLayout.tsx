@@ -81,7 +81,6 @@ export default function RegistrationLayout() {
     for(const step of newList) {
       const nextStep = currentStep + stepCounter
       if(nextStep !== step) {
-        console.log(nextStep)
         setCurrentStep(nextStep)
         return;
       }
@@ -198,6 +197,7 @@ export default function RegistrationLayout() {
 
     const {per_id, ...personal} = personalSchema
     const {files, ...business} = businessSchema
+    const {confirm_password, ...account} = accountSchema
     
     const newFiles = files?.map((media: any) => ({
       name: media.name,
@@ -214,9 +214,9 @@ export default function RegistrationLayout() {
           noFamily,
           noBusiness,
           capitalizeAllFields(personal),
-          accountSchema,
+          account,
           houseSchema,
-          livingSoloSchema,
+          {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,
           capitalizeAllFields(business),
           newFiles
@@ -230,7 +230,7 @@ export default function RegistrationLayout() {
           noBusiness,
           personalSchema,
           houseSchema,
-          livingSoloSchema,
+          {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,
           business,
           newFiles

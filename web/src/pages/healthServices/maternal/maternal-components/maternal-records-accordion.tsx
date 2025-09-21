@@ -1,48 +1,48 @@
-"use client"
+"use client";
 
 import { Link } from "react-router-dom"
 import { Calendar, CheckCircle2, Eye, HeartHandshake } from "lucide-react"
 import type { JSX } from "react"
 
-import { Button } from "@/components/ui/button/button"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TooltipProvider } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button/button";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface Patient {
-  pat_id: string
-  age?: number
+  pat_id: string;
+  age?: number;
   personal_info: {
     per_fname: string;
     per_lname: string;
     per_mname: string;
     per_sex: string;
-    per_dob?: string
-    ageTime?: "yrs"
-  }
+    per_dob?: string;
+    ageTime?: "yrs";
+  };
   address?: {
-    add_street?: string
-    add_barangay?: string
-    add_city?: string
-    add_province?: string
-    add_external_sitio?: string
-  }
-  sitio?: string
-  pat_type: string
-  patrec_type?: string
+    add_street?: string;
+    add_barangay?: string;
+    add_city?: string;
+    add_province?: string;
+    add_external_sitio?: string;
+  };
+  sitio?: string;
+  pat_type: string;
+  patrec_type?: string;
 }
 
 interface MaternalRecord {
-  id: string
-  pregnancyId: string
-  dateCreated: string
-  address: string
-  sitio: string
-  type: "Transient" | "Resident"
-  recordType: "Prenatal" | "Postpartum Care"
-  status: "Active" | "Completed" | "Pregnancy Loss"
-  gestationalWeek?: number
+  id: string;
+  pregnancyId: string;
+  dateCreated: string;
+  address: string;
+  sitio: string;
+  type: "Transient" | "Resident";
+  recordType: "Prenatal" | "Postpartum Care";
+  status: "Active" | "Completed" | "Pregnancy Loss";
+  gestationalWeek?: number;
   gestationalFormatted?: string;
   expectedDueDate?: string
   deliveryDate?: string
@@ -60,18 +60,18 @@ interface MaternalRecord {
     ppa_nurses_notes: string;
     created_at: string;
     updated_at: string;
-  }[]
+  }[];
 }
 
 interface PregnancyGroup {
-  pregnancyId: string
-  status: "Active" | "Completed" | "Pregnancy Loss"
-  startDate: string
-  expectedDueDate?: string
-  deliveryDate?: string
-  records: MaternalRecord[]
-  hasPrenatal: boolean
-  hasPostpartum: boolean
+  pregnancyId: string;
+  status: "Active" | "Completed" | "Pregnancy Loss";
+  startDate: string;
+  expectedDueDate?: string;
+  deliveryDate?: string;
+  records: MaternalRecord[];
+  hasPrenatal: boolean;
+  hasPostpartum: boolean;
 }
 
 interface PregnancyAccordionProps {
@@ -98,7 +98,7 @@ export function PregnancyAccordion({
       <div className="p-8 text-center text-gray-500">
         <p>No pregnancy records found</p>
       </div>
-    )
+    );
   }
 
   // const handleCompletePregnancy = (pregnancyId: string) => {
@@ -111,9 +111,9 @@ export function PregnancyAccordion({
 
   const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
     if (onCompleteRecord) {
-      onCompleteRecord(recordId, recordType)
+      onCompleteRecord(recordId, recordType);
     } else {
-      console.log(`Completing record: ${recordId} of type ${recordType} (no onCompleteRecord prop provided)`)
+      console.log(`Completing record: ${recordId} of type ${recordType} (no onCompleteRecord prop provided)`);
     }
   }
 
@@ -126,26 +126,22 @@ export function PregnancyAccordion({
   }
   
   // determine if a record should have a complete button
-  const shouldShowCompleteButton = (
-    record: MaternalRecord,
-    pregnancy: PregnancyGroup,
-    sortedRecords: MaternalRecord[],
-  ) => {
+  const shouldShowCompleteButton = (record: MaternalRecord, pregnancy: PregnancyGroup, sortedRecords: MaternalRecord[]) => {
     // No complete button for Pregnancy Loss status
     if (pregnancy.status === "Pregnancy Loss") {
-      return false
+      return false;
     }
 
-    const latestRecord = sortedRecords[0]
+    const latestRecord = sortedRecords[0];
 
     // Show complete button for prenatal records if prenatal_end_date is not present and it's the latest record (Active pregnancies only)
     if (record.recordType === "Prenatal" && !record.prenatal_end_date && record.id === latestRecord.id && pregnancy.status === "Active") {
-      return true
+      return true;
     }
 
     // Show complete button for postpartum records if postpartum_end_date is not present and it's the latest record (Active or Completed pregnancies)
     if (record.recordType === "Postpartum Care" && !record.postpartum_end_date && record.id === latestRecord.id) {
-      return true
+      return true;
     }
 
     return false
@@ -170,10 +166,7 @@ export function PregnancyAccordion({
     <TooltipProvider>
       <Accordion type="single" collapsible className="w-full p-4">
         {pregnancyGroups.map((pregnancy) => {
-
-          const sortedRecords = pregnancy.records.sort(
-            (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
-          )
+          const sortedRecords = pregnancy.records.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
           return (
             <AccordionItem key={pregnancy.pregnancyId} value={pregnancy.pregnancyId} className="border shadow-lg rounded-lg mb-4">
@@ -190,12 +183,8 @@ export function PregnancyAccordion({
                           <Calendar className="w-4 h-4" />
                           Started: {new Date(pregnancy.startDate).toLocaleDateString()}
                         </span>
-                        {pregnancy.expectedDueDate && (
-                          <span>Due: {new Date(pregnancy.expectedDueDate).toLocaleDateString()}</span>
-                        )}
-                        {pregnancy.deliveryDate && (
-                          <span>Delivered: {new Date(pregnancy.deliveryDate).toLocaleDateString()}</span>
-                        )}
+                        {pregnancy.expectedDueDate && <span>Due: {new Date(pregnancy.expectedDueDate).toLocaleDateString()}</span>}
+                        {pregnancy.deliveryDate && <span>Delivered: {new Date(pregnancy.deliveryDate).toLocaleDateString()}</span>}
                       </div>
                     </div>
                   </div>
@@ -203,7 +192,6 @@ export function PregnancyAccordion({
                     {pregnancy.hasPrenatal && getRecordTypeBadge("Prenatal")}
                     {pregnancy.hasPostpartum && getRecordTypeBadge("Postpartum Care")}
                     <span className="text-sm text-gray-500">({pregnancy.records.length === 1 ? pregnancy.records.length + " record" : pregnancy.records.length + " records"})</span>
-                    
                   </div>
                 </div>
               </AccordionTrigger>
@@ -335,14 +323,14 @@ export function PregnancyAccordion({
                           </div>
                         </CardContent>
                       </Card>
-                    )
+                    );
                   })}
                 </div>
               </AccordionContent>
             </AccordionItem>
-          )
+          );
         })}
       </Accordion>
     </TooltipProvider>
-  )
+  );
 }

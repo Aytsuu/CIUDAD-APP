@@ -1,6 +1,6 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native"
+import { Text, TouchableOpacity, View } from "react-native"
 import ScreenLayout from "../_ScreenLayout"
-import { router, useRouter } from "expo-router"
+import { useRouter } from "expo-router"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import {ChevronRight} from "@/lib/icons/ChevronRight"
 
@@ -17,11 +17,6 @@ export default () => {
     title: "Certification Request",
      description: "Request official certification documents for personal or legal use.",
      route: "/(request)/certification-request/cert-choices"
-  },
-  {
-    title: "Medicine Request",
-     description: "",
-     route: ""
   },
   {
     title: "Maternal Appointment",

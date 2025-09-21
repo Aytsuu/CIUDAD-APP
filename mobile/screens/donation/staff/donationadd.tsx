@@ -10,7 +10,7 @@ import { useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {  ChevronLeft } from 'lucide-react-native';
 import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
-import { useAddDonation, useGetPersonalList } from './queries';
+import { useAddDonation, useGetPersonalList } from './donation-queries';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';

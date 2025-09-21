@@ -24,42 +24,58 @@ export const ViewProjectProposal: React.FC<ViewProjectProposalProps> = ({
     isMounted.current = true;
     setIsGenerating(true);
     setGenerationError(false);
+    
 
-    const generateAndSetPdf = async () => {
-      try {
-        const pdfUrl = await generateProposalPdf({
-          projectTitle: project.projectTitle || "Untitled Project",
-          background: project.background || "",
-          objectives: project.objectives || [],
-          participants: project.participants.map(p => ({...p,
-            count: p.count.toString()
-          })),
-          date: project.date || "",
-          venue: project.venue || "",
-          budgetItems: project.budgetItems.map(item => ({
-          ...item,
-          amount: item.amount.toString()
-        })),
-          monitoringEvaluation: project.monitoringEvaluation || "",
-          signatories: project.signatories || [],
-          paperSize: project.paperSize || "a4",
-          headerImage: effectiveHeaderImage,
-        }, true);
-
-        if (isMounted.current) {
-          setPdfUrl(pdfUrl);
-          setIsGenerating(false);
-          onLoad?.();
-        }
-      } catch (error) {
-        console.error("PDF generation failed:", error);
-        if (isMounted.current) {
-          setGenerationError(true);
-          setIsGenerating(false);
-          onError?.();
-        }
-      }
+const generateAndSetPdf = async () => {
+  try {
+    const pdfData = {
+      projectTitle: project.projectTitle,
+      background: project.background || "",
+      objectives: project.objectives || [],
+      participants: (Array.isArray(project.participants) ? project.participants : [])
+        .map(p => {
+          if (typeof p === 'string') {
+            return { category: p, count: "0" };
+          }
+          const participant = p as { category?: string; count?: string | number };
+          return {
+            category: participant.category || "",
+            count: typeof participant.count === 'number' 
+              ? participant.count.toString() 
+              : participant.count || "0"
+          };
+        }),
+      date: project.date || "",
+      venue: project.venue || "",
+      budgetItems: Array.isArray(project.budgetItems)
+        ? project.budgetItems.map(item => ({
+            name: item.name || "",
+            pax: typeof item.pax === 'number' ? item.pax.toString() : item.pax || "",
+            amount: typeof item.amount === 'number' ? item.amount.toString() : item.amount || "0"
+          }))
+        : [{ name: "", pax: "", amount: "0" }],
+      
+      monitoringEvaluation: project.monitoringEvaluation || "",
+      signatories: project.signatories || [],
+      headerImage: project.headerImage || null,
     };
+
+    const pdfUrl = await generateProposalPdf(pdfData, true);
+    
+    if (isMounted.current) {
+      setPdfUrl(pdfUrl);
+      setIsGenerating(false);
+      onLoad?.();
+    }
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+    if (isMounted.current) {
+      setGenerationError(true);
+      setIsGenerating(false);
+      onError?.();
+    }
+  }
+};
 
     generateAndSetPdf();
 

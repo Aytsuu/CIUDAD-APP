@@ -1,566 +1,19 @@
-"use client"
-import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react"
-import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema"
-
-// WHO Weight For Height (WFH) Tables for Boys 24-60 months
-export  const WFH_BOYS_TABLE: Record<number, {
-  severelyCutoff: number;
-  wastedFrom: number;
-  wastedTo: number;
-  normalFrom: number;
-  normalTo: number;
-  overweightFrom: number;
-  overweightTo: number;
-  obeseFrom: number;
-}> = {
-  65.5: { severelyCutoff: 5.9, wastedFrom: 6.0, wastedTo: 6.3, normalFrom: 6.4, normalTo: 8.9, overweightFrom: 9.0, overweightTo: 9.8, obeseFrom: 9.9 },
-  66: { severelyCutoff: 6.0, wastedFrom: 6.1, wastedTo: 6.4, normalFrom: 6.5, normalTo: 9.1, overweightFrom: 9.2, overweightTo: 9.9, obeseFrom: 10.0 },
-  66.5: { severelyCutoff: 6.0, wastedFrom: 6.1, wastedTo: 6.5, normalFrom: 6.6, normalTo: 9.2, overweightFrom: 9.3, overweightTo: 10.1, obeseFrom: 10.2 },
-  67: { severelyCutoff: 6.1, wastedFrom: 6.2, wastedTo: 6.6, normalFrom: 6.7, normalTo: 9.4, overweightFrom: 9.5, overweightTo: 10.2, obeseFrom: 10.3 },
-  67.5: { severelyCutoff: 6.2, wastedFrom: 6.3, wastedTo: 6.7, normalFrom: 6.8, normalTo: 9.5, overweightFrom: 9.6, overweightTo: 10.4, obeseFrom: 10.5 },
-  68: { severelyCutoff: 6.3, wastedFrom: 6.4, wastedTo: 6.8, normalFrom: 6.9, normalTo: 9.6, overweightFrom: 9.7, overweightTo: 10.5, obeseFrom: 10.6 },
-  68.5: { severelyCutoff: 6.4, wastedFrom: 6.5, wastedTo: 6.9, normalFrom: 7.0, normalTo: 9.8, overweightFrom: 9.9, overweightTo: 10.7, obeseFrom: 10.8 },
-  69: { severelyCutoff: 6.5, wastedFrom: 6.6, wastedTo: 7.0, normalFrom: 7.1, normalTo: 9.9, overweightFrom: 10.0, overweightTo: 10.8, obeseFrom: 10.9 },
-  69.5: { severelyCutoff: 6.6, wastedFrom: 6.7, wastedTo: 7.1, normalFrom: 7.2, normalTo: 10.0, overweightFrom: 10.1, overweightTo: 11.0, obeseFrom: 11.1 },
-  70: { severelyCutoff: 6.7, wastedFrom: 6.8, wastedTo: 7.2, normalFrom: 7.3, normalTo: 10.2, overweightFrom: 10.3, overweightTo: 11.1, obeseFrom: 11.2 },
-  70.5: { severelyCutoff: 6.8, wastedFrom: 6.9, wastedTo: 7.3, normalFrom: 7.4, normalTo: 10.3, overweightFrom: 10.4, overweightTo: 11.3, obeseFrom: 11.4 },
-  71: { severelyCutoff: 6.8, wastedFrom: 6.9, wastedTo: 7.4, normalFrom: 7.5, normalTo: 10.4, overweightFrom: 10.5, overweightTo: 11.4, obeseFrom: 11.5 },
-  71.5: { severelyCutoff: 6.9, wastedFrom: 7.0, wastedTo: 7.5, normalFrom: 7.6, normalTo: 10.6, overweightFrom: 10.7, overweightTo: 11.6, obeseFrom: 11.7 },
-  72: { severelyCutoff: 7.0, wastedFrom: 7.1, wastedTo: 7.6, normalFrom: 7.7, normalTo: 10.7, overweightFrom: 10.8, overweightTo: 11.7, obeseFrom: 11.8 },
-  72.5: { severelyCutoff: 7.1, wastedFrom: 7.2, wastedTo: 7.7, normalFrom: 7.8, normalTo: 10.8, overweightFrom: 10.9, overweightTo: 11.8, obeseFrom: 11.9 },
-  73: { severelyCutoff: 7.2, wastedFrom: 7.3, wastedTo: 7.8, normalFrom: 7.9, normalTo: 11.0, overweightFrom: 11.1, overweightTo: 12.0, obeseFrom: 12.1 },
-  73.5: { severelyCutoff: 7.3, wastedFrom: 7.4, wastedTo: 7.8, normalFrom: 7.9, normalTo: 11.1, overweightFrom: 11.2, overweightTo: 12.1, obeseFrom: 12.2 },
-  74: { severelyCutoff: 7.3, wastedFrom: 7.4, wastedTo: 7.9, normalFrom: 8.0, normalTo: 11.2, overweightFrom: 11.3, overweightTo: 12.2, obeseFrom: 12.3 },
-  74.5: { severelyCutoff: 7.4, wastedFrom: 7.5, wastedTo: 8.0, normalFrom: 8.1, normalTo: 11.3, overweightFrom: 11.4, overweightTo: 12.4, obeseFrom: 12.5 },
-  75: { severelyCutoff: 7.5, wastedFrom: 7.6, wastedTo: 8.1, normalFrom: 8.2, normalTo: 11.4, overweightFrom: 11.5, overweightTo: 12.5, obeseFrom: 12.6 },
-  75.5: { severelyCutoff: 7.6, wastedFrom: 7.7, wastedTo: 8.2, normalFrom: 8.3, normalTo: 11.6, overweightFrom: 11.7, overweightTo: 12.6, obeseFrom: 12.7 },
-  76: { severelyCutoff: 7.6, wastedFrom: 7.7, wastedTo: 8.3, normalFrom: 8.4, normalTo: 11.7, overweightFrom: 11.8, overweightTo: 12.8, obeseFrom: 12.9 },
-  76.5: { severelyCutoff: 7.7, wastedFrom: 7.8, wastedTo: 8.4, normalFrom: 8.5, normalTo: 11.8, overweightFrom: 11.9, overweightTo: 12.9, obeseFrom: 13.0 },
-  77: { severelyCutoff: 7.8, wastedFrom: 7.9, wastedTo: 8.4, normalFrom: 8.5, normalTo: 11.9, overweightFrom: 12.0, overweightTo: 13.0, obeseFrom: 13.1 },
-  77.5: { severelyCutoff: 7.9, wastedFrom: 8.0, wastedTo: 8.5, normalFrom: 8.6, normalTo: 12.0, overweightFrom: 12.1, overweightTo: 13.1, obeseFrom: 13.2 },
-  78: { severelyCutoff: 7.9, wastedFrom: 8.0, wastedTo: 8.6, normalFrom: 8.7, normalTo: 12.1, overweightFrom: 12.2, overweightTo: 13.3, obeseFrom: 13.4 },
-  78.5: { severelyCutoff: 8.0, wastedFrom: 8.1, wastedTo: 8.7, normalFrom: 8.8, normalTo: 12.2, overweightFrom: 12.3, overweightTo: 13.4, obeseFrom: 13.5 },
-  79: { severelyCutoff: 8.1, wastedFrom: 8.2, wastedTo: 8.7, normalFrom: 8.8, normalTo: 12.3, overweightFrom: 12.4, overweightTo: 13.5, obeseFrom: 13.6 },
-  79.5: { severelyCutoff: 8.2, wastedFrom: 8.3, wastedTo: 8.8, normalFrom: 8.9, normalTo: 12.4, overweightFrom: 12.5, overweightTo: 13.6, obeseFrom: 13.7 },
-  80: { severelyCutoff: 8.2, wastedFrom: 8.3, wastedTo: 8.9, normalFrom: 9.0, normalTo: 12.6, overweightFrom: 12.7, overweightTo: 13.7, obeseFrom: 13.8 },
-  80.5: { severelyCutoff: 8.3, wastedFrom: 8.4, wastedTo: 9.0, normalFrom: 9.1, normalTo: 12.7, overweightFrom: 12.8, overweightTo: 13.8, obeseFrom: 13.9 },
-  81: { severelyCutoff: 8.4, wastedFrom: 8.5, wastedTo: 9.1, normalFrom: 9.2, normalTo: 12.8, overweightFrom: 12.9, overweightTo: 14.0, obeseFrom: 14.1 },
-  81.5: { severelyCutoff: 8.5, wastedFrom: 8.6, wastedTo: 9.2, normalFrom: 9.3, normalTo: 12.9, overweightFrom: 13.0, overweightTo: 14.1, obeseFrom: 14.2 },
-  82: { severelyCutoff: 8.6, wastedFrom: 8.7, wastedTo: 9.2, normalFrom: 9.3, normalTo: 13.0, overweightFrom: 13.1, overweightTo: 14.2, obeseFrom: 14.3 },
-  82.5: { severelyCutoff: 8.5, wastedFrom: 8.6, wastedTo: 9.3, normalFrom: 9.4, normalTo: 13.1, overweightFrom: 13.2, overweightTo: 14.4, obeseFrom: 14.5 },
-  83: { severelyCutoff: 8.7, wastedFrom: 8.8, wastedTo: 9.4, normalFrom: 9.5, normalTo: 13.3, overweightFrom: 13.4, overweightTo: 14.5, obeseFrom: 14.6 },
-  83.5: { severelyCutoff: 8.8, wastedFrom: 8.9, wastedTo: 9.5, normalFrom: 9.6, normalTo: 13.4, overweightFrom: 13.5, overweightTo: 14.6, obeseFrom: 14.7 },
-  84: { severelyCutoff: 8.9, wastedFrom: 9.0, wastedTo: 9.6, normalFrom: 9.7, normalTo: 13.5, overweightFrom: 13.6, overweightTo: 14.8, obeseFrom: 14.9 },
-  84.5: { severelyCutoff: 9.0, wastedFrom: 9.1, wastedTo: 9.8, normalFrom: 9.9, normalTo: 13.7, overweightFrom: 13.8, overweightTo: 14.9, obeseFrom: 15.0 },
-  85: { severelyCutoff: 9.1, wastedFrom: 9.2, wastedTo: 9.9, normalFrom: 10.0, normalTo: 13.8, overweightFrom: 13.9, overweightTo: 15.1, obeseFrom: 15.2 },
-  85.5: { severelyCutoff: 9.2, wastedFrom: 9.3, wastedTo: 10.0, normalFrom: 10.1, normalTo: 13.9, overweightFrom: 14.0, overweightTo: 15.2, obeseFrom: 15.3 },
-  86: { severelyCutoff: 9.3, wastedFrom: 9.4, wastedTo: 10.1, normalFrom: 10.2, normalTo: 14.1, overweightFrom: 14.2, overweightTo: 15.4, obeseFrom: 15.5 },
-  86.5: { severelyCutoff: 9.4, wastedFrom: 9.5, wastedTo: 10.2, normalFrom: 10.3, normalTo: 14.2, overweightFrom: 14.3, overweightTo: 15.5, obeseFrom: 15.6 },
-  87: { severelyCutoff: 9.5, wastedFrom: 9.6, wastedTo: 10.3, normalFrom: 10.4, normalTo: 14.4, overweightFrom: 14.5, overweightTo: 15.7, obeseFrom: 15.8 },
-  87.5: { severelyCutoff: 9.6, wastedFrom: 9.7, wastedTo: 10.4, normalFrom: 10.5, normalTo: 14.5, overweightFrom: 14.6, overweightTo: 15.8, obeseFrom: 15.9 },
-  88: { severelyCutoff: 9.7, wastedFrom: 9.8, wastedTo: 10.5, normalFrom: 10.6, normalTo: 14.7, overweightFrom: 14.8, overweightTo: 16.0, obeseFrom: 16.1 },
-  88.5: { severelyCutoff: 9.8, wastedFrom: 9.9, wastedTo: 10.6, normalFrom: 10.7, normalTo: 14.8, overweightFrom: 14.9, overweightTo: 16.1, obeseFrom: 16.2 },
-  89: { severelyCutoff: 9.9, wastedFrom: 10.0, wastedTo: 10.7, normalFrom: 10.8, normalTo: 14.9, overweightFrom: 15.0, overweightTo: 16.3, obeseFrom: 16.4 },
-  89.5: { severelyCutoff: 10.0, wastedFrom: 10.1, wastedTo: 10.8, normalFrom: 10.9, normalTo: 15.1, overweightFrom: 15.2, overweightTo: 16.4, obeseFrom: 16.5 },
-  90: { severelyCutoff: 10.1, wastedFrom: 10.2, wastedTo: 10.9, normalFrom: 11.0, normalTo: 15.2, overweightFrom: 15.3, overweightTo: 16.6, obeseFrom: 16.7 },
-  90.5: { severelyCutoff: 10.2, wastedFrom: 10.3, wastedTo: 11.0, normalFrom: 11.1, normalTo: 15.3, overweightFrom: 15.4, overweightTo: 16.7, obeseFrom: 16.8 },
-  91: { severelyCutoff: 10.3, wastedFrom: 10.4, wastedTo: 11.1, normalFrom: 11.2, normalTo: 15.5, overweightFrom: 15.6, overweightTo: 16.9, obeseFrom: 17.0 },
-  91.5: { severelyCutoff: 10.4, wastedFrom: 10.5, wastedTo: 11.2, normalFrom: 11.3, normalTo: 15.6, overweightFrom: 15.7, overweightTo: 17.0, obeseFrom: 17.1 },
-  92: { severelyCutoff: 10.5, wastedFrom: 10.6, wastedTo: 11.3, normalFrom: 11.4, normalTo: 15.8, overweightFrom: 15.9, overweightTo: 17.2, obeseFrom: 17.3 },
-  92.5: { severelyCutoff: 10.6, wastedFrom: 10.7, wastedTo: 11.4, normalFrom: 11.5, normalTo: 15.9, overweightFrom: 16.0, overweightTo: 17.3, obeseFrom: 17.4 },
-  93: { severelyCutoff: 10.7, wastedFrom: 10.8, wastedTo: 11.5, normalFrom: 11.6, normalTo: 16.0, overweightFrom: 16.1, overweightTo: 17.5, obeseFrom: 17.6 },
-  93.5: { severelyCutoff: 10.8, wastedFrom: 10.9, wastedTo: 11.6, normalFrom: 11.7, normalTo: 16.2, overweightFrom: 16.3, overweightTo: 17.6, obeseFrom: 17.7 },
-  94: { severelyCutoff: 10.9, wastedFrom: 11.0, wastedTo: 11.7, normalFrom: 11.8, normalTo: 16.3, overweightFrom: 16.4, overweightTo: 17.8, obeseFrom: 17.9 },
-  94.5: { severelyCutoff: 11.0, wastedFrom: 11.1, wastedTo: 11.8, normalFrom: 11.9, normalTo: 16.5, overweightFrom: 16.6, overweightTo: 17.9, obeseFrom: 18.0 },
-  95: { severelyCutoff: 11.0, wastedFrom: 11.1, wastedTo: 11.9, normalFrom: 12.0, normalTo: 16.6, overweightFrom: 16.7, overweightTo: 18.1, obeseFrom: 18.2 },
-  95.5: { severelyCutoff: 11.1, wastedFrom: 11.2, wastedTo: 12.0, normalFrom: 12.1, normalTo: 16.7, overweightFrom: 16.8, overweightTo: 18.3, obeseFrom: 18.4 },
-  96: { severelyCutoff: 11.2, wastedFrom: 11.3, wastedTo: 12.1, normalFrom: 12.2, normalTo: 16.9, overweightFrom: 17.0, overweightTo: 18.4, obeseFrom: 18.5 },
-  96.5: { severelyCutoff: 11.3, wastedFrom: 11.4, wastedTo: 12.2, normalFrom: 12.3, normalTo: 17.1, overweightFrom: 17.2, overweightTo: 18.6, obeseFrom: 18.7 },
-  97: { severelyCutoff: 11.4, wastedFrom: 11.5, wastedTo: 12.3, normalFrom: 12.4, normalTo: 17.2, overweightFrom: 17.3, overweightTo: 18.8, obeseFrom: 18.9 },
-  97.5: { severelyCutoff: 11.5, wastedFrom: 11.6, wastedTo: 12.4, normalFrom: 12.5, normalTo: 17.4, overweightFrom: 17.5, overweightTo: 18.9, obeseFrom: 19.0 },
-  98: { severelyCutoff: 11.6, wastedFrom: 11.7, wastedTo: 12.5, normalFrom: 12.6, normalTo: 17.5, overweightFrom: 17.6, overweightTo: 19.1, obeseFrom: 19.2 },
-  98.5: { severelyCutoff: 11.7, wastedFrom: 11.8, wastedTo: 12.7, normalFrom: 12.8, normalTo: 17.7, overweightFrom: 17.8, overweightTo: 19.3, obeseFrom: 19.4 },
-  99: { severelyCutoff: 11.8, wastedFrom: 11.9, wastedTo: 12.8, normalFrom: 12.9, normalTo: 17.9, overweightFrom: 18.0, overweightTo: 19.5, obeseFrom: 19.6 },
-  99.5: { severelyCutoff: 11.9, wastedFrom: 12.0, wastedTo: 12.9, normalFrom: 13.0, normalTo: 18.0, overweightFrom: 18.1, overweightTo: 19.7, obeseFrom: 19.8 },
-  100: { severelyCutoff: 12.0, wastedFrom: 12.1, wastedTo: 13.0, normalFrom: 13.1, normalTo: 18.2, overweightFrom: 18.3, overweightTo: 19.9, obeseFrom: 20.0 },
-  100.5: { severelyCutoff: 12.1, wastedFrom: 12.2, wastedTo: 13.1, normalFrom: 13.2, normalTo: 18.4, overweightFrom: 18.5, overweightTo: 20.1, obeseFrom: 20.2 },
-  101: { severelyCutoff: 12.2, wastedFrom: 12.3, wastedTo: 13.2, normalFrom: 13.3, normalTo: 18.5, overweightFrom: 18.6, overweightTo: 20.3, obeseFrom: 20.4 },
-  101.5: { severelyCutoff: 12.3, wastedFrom: 12.4, wastedTo: 13.3, normalFrom: 13.4, normalTo: 18.7, overweightFrom: 18.8, overweightTo: 20.5, obeseFrom: 20.6 },
-  102: { severelyCutoff: 12.4, wastedFrom: 12.5, wastedTo: 13.5, normalFrom: 13.6, normalTo: 18.9, overweightFrom: 19.0, overweightTo: 20.7, obeseFrom: 20.8 },
-  102.5: { severelyCutoff: 12.5, wastedFrom: 12.6, wastedTo: 13.6, normalFrom: 13.7, normalTo: 19.1, overweightFrom: 19.2, overweightTo: 20.9, obeseFrom: 21.0 },
-  103: { severelyCutoff: 12.7, wastedFrom: 12.8, wastedTo: 13.7, normalFrom: 13.8, normalTo: 19.3, overweightFrom: 19.4, overweightTo: 21.1, obeseFrom: 21.2 },
-  103.5: { severelyCutoff: 12.8, wastedFrom: 12.9, wastedTo: 13.8, normalFrom: 13.9, normalTo: 19.5, overweightFrom: 19.6, overweightTo: 21.3, obeseFrom: 21.4 },
-  104: { severelyCutoff: 12.9, wastedFrom: 13.0, wastedTo: 13.9, normalFrom: 14.0, normalTo: 19.7, overweightFrom: 19.8, overweightTo: 21.6, obeseFrom: 21.7 },
-  104.5: { severelyCutoff: 13.0, wastedFrom: 13.1, wastedTo: 14.1, normalFrom: 14.2, normalTo: 19.9, overweightFrom: 20.0, overweightTo: 21.8, obeseFrom: 21.9 },
-  105: { severelyCutoff: 13.1, wastedFrom: 13.2, wastedTo: 14.2, normalFrom: 14.3, normalTo: 20.1, overweightFrom: 20.2, overweightTo: 22.0, obeseFrom: 22.1 },
-  105.5: { severelyCutoff: 13.2, wastedFrom: 13.3, wastedTo: 14.3, normalFrom: 14.4, normalTo: 20.3, overweightFrom: 20.4, overweightTo: 22.2, obeseFrom: 22.3 },
-  106: { severelyCutoff: 13.3, wastedFrom: 13.4, wastedTo: 14.4, normalFrom: 14.5, normalTo: 20.5, overweightFrom: 20.6, overweightTo: 22.5, obeseFrom: 22.6 },
-  106.5: { severelyCutoff: 13.4, wastedFrom: 13.5, wastedTo: 14.6, normalFrom: 14.7, normalTo: 20.7, overweightFrom: 20.8, overweightTo: 22.7, obeseFrom: 22.8 },
-  107: { severelyCutoff: 13.6, wastedFrom: 13.7, wastedTo: 14.7, normalFrom: 14.8, normalTo: 20.9, overweightFrom: 21.0, overweightTo: 22.9, obeseFrom: 23.0 },
-  107.5: { severelyCutoff: 13.7, wastedFrom: 13.8, wastedTo: 14.8, normalFrom: 14.9, normalTo: 21.1, overweightFrom: 21.2, overweightTo: 23.2, obeseFrom: 23.3 },
-  108: { severelyCutoff: 13.8, wastedFrom: 13.9, wastedTo: 15.0, normalFrom: 15.1, normalTo: 21.3, overweightFrom: 21.4, overweightTo: 23.4, obeseFrom: 23.5 },
-  108.5: { severelyCutoff: 13.9, wastedFrom: 14.0, wastedTo: 15.1, normalFrom: 15.2, normalTo: 21.5, overweightFrom: 21.6, overweightTo: 23.7, obeseFrom: 23.8 },
-  109: { severelyCutoff: 14.0, wastedFrom: 14.1, wastedTo: 15.2, normalFrom: 15.3, normalTo: 21.8, overweightFrom: 21.9, overweightTo: 23.9, obeseFrom: 24.0 },
-  109.5: { severelyCutoff: 14.2, wastedFrom: 14.3, wastedTo: 15.4, normalFrom: 15.5, normalTo: 22.0, overweightFrom: 22.1, overweightTo: 24.2, obeseFrom: 24.3 },
-  110: { severelyCutoff: 14.3, wastedFrom: 14.4, wastedTo: 15.5, normalFrom: 15.6, normalTo: 22.2, overweightFrom: 22.3, overweightTo: 24.4, obeseFrom: 24.5 },
-  110.5: { severelyCutoff: 14.4, wastedFrom: 14.5, wastedTo: 15.7, normalFrom: 15.8, normalTo: 22.4, overweightFrom: 22.5, overweightTo: 24.7, obeseFrom: 24.8 },
-  111: { severelyCutoff: 14.5, wastedFrom: 14.6, wastedTo: 15.8, normalFrom: 15.9, normalTo: 22.7, overweightFrom: 22.8, overweightTo: 25.0, obeseFrom: 25.1 },
-  111.5: { severelyCutoff: 14.7, wastedFrom: 14.8, wastedTo: 15.9, normalFrom: 16.0, normalTo: 22.9, overweightFrom: 23.0, overweightTo: 25.2, obeseFrom: 25.3 },
-  112: { severelyCutoff: 14.8, wastedFrom: 14.9, wastedTo: 16.1, normalFrom: 16.2, normalTo: 23.1, overweightFrom: 23.2, overweightTo: 25.5, obeseFrom: 25.6 },
-  112.5: { severelyCutoff: 14.9, wastedFrom: 15.0, wastedTo: 16.2, normalFrom: 16.3, normalTo: 23.4, overweightFrom: 23.5, overweightTo: 25.8, obeseFrom: 25.9 },
-  113: { severelyCutoff: 15.1, wastedFrom: 15.2, wastedTo: 16.4, normalFrom: 16.5, normalTo: 23.6, overweightFrom: 23.7, overweightTo: 26.0, obeseFrom: 26.1 },
-  113.5: { severelyCutoff: 15.2, wastedFrom: 15.3, wastedTo: 16.5, normalFrom: 16.6, normalTo: 23.9, overweightFrom: 24.0, overweightTo: 26.3, obeseFrom: 26.4 },
-  114: { severelyCutoff: 15.3, wastedFrom: 15.4, wastedTo: 16.7, normalFrom: 16.8, normalTo: 24.1, overweightFrom: 24.2, overweightTo: 26.6, obeseFrom: 26.7 },
-  114.5: { severelyCutoff: 15.5, wastedFrom: 15.6, wastedTo: 16.8, normalFrom: 16.9, normalTo: 24.4, overweightFrom: 24.5, overweightTo: 26.9, obeseFrom: 27.0 },
-  115: { severelyCutoff: 15.6, wastedFrom: 15.7, wastedTo: 17.0, normalFrom: 17.1, normalTo: 24.6, overweightFrom: 24.7, overweightTo: 27.2, obeseFrom: 27.3 },
-  115.5: { severelyCutoff: 15.7, wastedFrom: 15.8, wastedTo: 17.1, normalFrom: 17.2, normalTo: 24.9, overweightFrom: 25.0, overweightTo: 27.5, obeseFrom: 27.6 },
-  116: { severelyCutoff: 15.9, wastedFrom: 16.0, wastedTo: 17.3, normalFrom: 17.4, normalTo: 25.1, overweightFrom: 25.2, overweightTo: 27.8, obeseFrom: 27.9 },
-  116.5: { severelyCutoff: 16.0, wastedFrom: 16.1, wastedTo: 17.4, normalFrom: 17.5, normalTo: 25.4, overweightFrom: 25.5, overweightTo: 28.0, obeseFrom: 28.1 },
-  117: { severelyCutoff: 16.1, wastedFrom: 16.2, wastedTo: 17.6, normalFrom: 17.7, normalTo: 25.6, overweightFrom: 25.7, overweightTo: 28.3, obeseFrom: 28.4 },
-  117.5: { severelyCutoff: 16.3, wastedFrom: 16.4, wastedTo: 17.8, normalFrom: 17.9, normalTo: 25.9, overweightFrom: 26.0, overweightTo: 28.6, obeseFrom: 28.7 },
-  118: { severelyCutoff: 16.4, wastedFrom: 16.5, wastedTo: 17.9, normalFrom: 18.0, normalTo: 26.1, overweightFrom: 26.2, overweightTo: 28.9, obeseFrom: 29.0 },
-  118.5: { severelyCutoff: 16.6, wastedFrom: 16.7, wastedTo: 18.1, normalFrom: 18.2, normalTo: 26.4, overweightFrom: 26.5, overweightTo: 29.2, obeseFrom: 29.3 },
-  119: { severelyCutoff: 16.7, wastedFrom: 16.8, wastedTo: 18.2, normalFrom: 18.3, normalTo: 26.6, overweightFrom: 26.7, overweightTo: 29.5, obeseFrom: 29.6 },
-  119.5: { severelyCutoff: 16.8, wastedFrom: 16.9, wastedTo: 18.4, normalFrom: 18.5, normalTo: 26.9, overweightFrom: 27.0, overweightTo: 29.8, obeseFrom: 29.9 },
-  120: { severelyCutoff: 17.0, wastedFrom: 17.1, wastedTo: 18.5, normalFrom: 18.6, normalTo: 27.2, overweightFrom: 27.3, overweightTo: 30.1, obeseFrom: 30.2 }
-};
-
-// WHO Weight For Height (WFH) Tables for Girls 24-60 months
-const WFH_GIRLS_TABLE: Record<number, {
-  severelyCutoff: number;
-  wastedFrom: number;
-  wastedTo: number;
-  normalFrom: number;
-  normalTo: number;
-  overweightFrom: number;
-  overweightTo: number;
-  obeseFrom: number;
-}> = {
-  65: { severelyCutoff: 5.5, wastedFrom: 5.6, wastedTo: 6.0, normalFrom: 6.1, normalTo: 8.7, overweightFrom: 8.8, overweightTo: 9.7, obeseFrom: 9.8 },
-  65.5: { severelyCutoff: 5.6, wastedFrom: 5.7, wastedTo: 6.1, normalFrom: 6.2, normalTo: 8.9, overweightFrom: 9.0, overweightTo: 9.8, obeseFrom: 9.9 },
-  66: { severelyCutoff: 5.7, wastedFrom: 5.8, wastedTo: 6.2, normalFrom: 6.3, normalTo: 9.0, overweightFrom: 9.1, overweightTo: 10.0, obeseFrom: 10.1 },
-  66.5: { severelyCutoff: 5.7, wastedFrom: 5.8, wastedTo: 6.3, normalFrom: 6.4, normalTo: 9.1, overweightFrom: 9.2, overweightTo: 10.1, obeseFrom: 10.2 },
-  67: { severelyCutoff: 5.8, wastedFrom: 5.9, wastedTo: 6.3, normalFrom: 6.4, normalTo: 9.3, overweightFrom: 9.4, overweightTo: 10.2, obeseFrom: 10.3 },
-  67.5: { severelyCutoff: 5.9, wastedFrom: 6.0, wastedTo: 6.4, normalFrom: 6.5, normalTo: 9.4, overweightFrom: 9.5, overweightTo: 10.4, obeseFrom: 10.5 },
-  68: { severelyCutoff: 6.0, wastedFrom: 6.1, wastedTo: 6.5, normalFrom: 6.6, normalTo: 9.5, overweightFrom: 9.6, overweightTo: 10.5, obeseFrom: 10.6 },
-  68.5: { severelyCutoff: 6.1, wastedFrom: 6.2, wastedTo: 6.6, normalFrom: 6.7, normalTo: 9.7, overweightFrom: 9.8, overweightTo: 10.7, obeseFrom: 10.8 },
-  69: { severelyCutoff: 6.2, wastedFrom: 6.3, wastedTo: 6.7, normalFrom: 6.8, normalTo: 9.8, overweightFrom: 9.9, overweightTo: 10.8, obeseFrom: 10.9 },
-  69.5: { severelyCutoff: 6.2, wastedFrom: 6.3, wastedTo: 6.8, normalFrom: 6.9, normalTo: 9.9, overweightFrom: 10.0, overweightTo: 10.9, obeseFrom: 11.0 },
-  70: { severelyCutoff: 6.3, wastedFrom: 6.4, wastedTo: 6.9, normalFrom: 7.0, normalTo: 10.0, overweightFrom: 10.1, overweightTo: 11.1, obeseFrom: 11.2 },
-  70.5: { severelyCutoff: 6.4, wastedFrom: 6.5, wastedTo: 7.0, normalFrom: 7.1, normalTo: 10.1, overweightFrom: 10.2, overweightTo: 11.2, obeseFrom: 11.3 },
-  71: { severelyCutoff: 6.5, wastedFrom: 6.6, wastedTo: 7.0, normalFrom: 7.1, normalTo: 10.3, overweightFrom: 10.4, overweightTo: 11.3, obeseFrom: 11.4 },
-  71.5: { severelyCutoff: 6.6, wastedFrom: 6.7, wastedTo: 7.1, normalFrom: 7.2, normalTo: 10.4, overweightFrom: 10.5, overweightTo: 11.5, obeseFrom: 11.6 },
-  72: { severelyCutoff: 6.6, wastedFrom: 6.7, wastedTo: 7.2, normalFrom: 7.3, normalTo: 10.5, overweightFrom: 10.6, overweightTo: 11.6, obeseFrom: 11.7 },
-  72.5: { severelyCutoff: 6.7, wastedFrom: 6.8, wastedTo: 7.3, normalFrom: 7.4, normalTo: 10.6, overweightFrom: 10.7, overweightTo: 11.7, obeseFrom: 11.8 },
-  73: { severelyCutoff: 6.8, wastedFrom: 6.9, wastedTo: 7.4, normalFrom: 7.5, normalTo: 10.7, overweightFrom: 10.8, overweightTo: 11.8, obeseFrom: 11.9 },
-  73.5: { severelyCutoff: 6.9, wastedFrom: 7.0, wastedTo: 7.5, normalFrom: 7.6, normalTo: 10.8, overweightFrom: 10.9, overweightTo: 12.0, obeseFrom: 12.1 },
-  74: { severelyCutoff: 6.9, wastedFrom: 7.0, wastedTo: 7.5, normalFrom: 7.6, normalTo: 11.0, overweightFrom: 11.1, overweightTo: 12.1, obeseFrom: 12.2 },
-  74.5: { severelyCutoff: 7.0, wastedFrom: 7.1, wastedTo: 7.6, normalFrom: 7.7, normalTo: 11.1, overweightFrom: 11.2, overweightTo: 12.2, obeseFrom: 12.3 },
-  75: { severelyCutoff: 7.1, wastedFrom: 7.2, wastedTo: 7.7, normalFrom: 7.8, normalTo: 11.2, overweightFrom: 11.3, overweightTo: 12.3, obeseFrom: 12.4 },
-  75.5: { severelyCutoff: 7.1, wastedFrom: 7.2, wastedTo: 7.8, normalFrom: 7.9, normalTo: 11.3, overweightFrom: 11.4, overweightTo: 12.5, obeseFrom: 12.6 },
-  76: { severelyCutoff: 7.2, wastedFrom: 7.3, wastedTo: 7.9, normalFrom: 8.0, normalTo: 11.4, overweightFrom: 11.5, overweightTo: 12.6, obeseFrom: 12.7 },
-  76.5: { severelyCutoff: 7.3, wastedFrom: 7.4, wastedTo: 7.9, normalFrom: 8.0, normalTo: 11.5, overweightFrom: 11.6, overweightTo: 12.7, obeseFrom: 12.8 },
-  77: { severelyCutoff: 7.4, wastedFrom: 7.5, wastedTo: 8.0, normalFrom: 8.1, normalTo: 11.6, overweightFrom: 11.7, overweightTo: 12.8, obeseFrom: 12.9 },
-  77.5: { severelyCutoff: 7.4, wastedFrom: 7.5, wastedTo: 8.1, normalFrom: 8.2, normalTo: 11.7, overweightFrom: 11.8, overweightTo: 12.9, obeseFrom: 13.0 },
-  78: { severelyCutoff: 7.5, wastedFrom: 7.6, wastedTo: 8.2, normalFrom: 8.3, normalTo: 11.8, overweightFrom: 11.9, overweightTo: 13.1, obeseFrom: 13.2 },
-  78.5: { severelyCutoff: 7.6, wastedFrom: 7.7, wastedTo: 8.3, normalFrom: 8.4, normalTo: 12.0, overweightFrom: 12.1, overweightTo: 13.2, obeseFrom: 13.3 },
-  79: { severelyCutoff: 7.7, wastedFrom: 7.8, wastedTo: 8.3, normalFrom: 8.4, normalTo: 12.1, overweightFrom: 12.2, overweightTo: 13.3, obeseFrom: 13.4 },
-  79.5: { severelyCutoff: 7.7, wastedFrom: 7.8, wastedTo: 8.4, normalFrom: 8.5, normalTo: 12.2, overweightFrom: 12.3, overweightTo: 13.4, obeseFrom: 13.5 },
-  80: { severelyCutoff: 7.8, wastedFrom: 7.9, wastedTo: 8.5, normalFrom: 8.6, normalTo: 12.3, overweightFrom: 12.4, overweightTo: 13.6, obeseFrom: 13.7 },
-  80.5: { severelyCutoff: 7.9, wastedFrom: 8.0, wastedTo: 8.6, normalFrom: 8.7, normalTo: 12.4, overweightFrom: 12.5, overweightTo: 13.7, obeseFrom: 13.8 },
-  81: { severelyCutoff: 8.0, wastedFrom: 8.1, wastedTo: 8.7, normalFrom: 8.8, normalTo: 12.6, overweightFrom: 12.7, overweightTo: 13.9, obeseFrom: 14.0 },
-  81.5: { severelyCutoff: 8.1, wastedFrom: 8.2, wastedTo: 8.8, normalFrom: 8.9, normalTo: 12.7, overweightFrom: 12.8, overweightTo: 14.0, obeseFrom: 14.1 },
-  82: { severelyCutoff: 8.2, wastedFrom: 8.3, wastedTo: 8.9, normalFrom: 9.0, normalTo: 12.8, overweightFrom: 12.9, overweightTo: 14.1, obeseFrom: 14.2 },
-  82.5: { severelyCutoff: 8.3, wastedFrom: 8.4, wastedTo: 9.0, normalFrom: 9.1, normalTo: 13.0, overweightFrom: 13.1, overweightTo: 14.3, obeseFrom: 14.4 },
-  83: { severelyCutoff: 8.4, wastedFrom: 8.5, wastedTo: 9.1, normalFrom: 9.2, normalTo: 13.1, overweightFrom: 13.2, overweightTo: 14.5, obeseFrom: 14.6 },
-  83.5: { severelyCutoff: 8.4, wastedFrom: 8.5, wastedTo: 9.2, normalFrom: 9.3, normalTo: 13.3, overweightFrom: 13.4, overweightTo: 14.6, obeseFrom: 14.7 },
-  84: { severelyCutoff: 8.5, wastedFrom: 8.6, wastedTo: 9.3, normalFrom: 9.4, normalTo: 13.4, overweightFrom: 13.5, overweightTo: 14.8, obeseFrom: 14.9 },
-  84.5: { severelyCutoff: 8.6, wastedFrom: 8.7, wastedTo: 9.4, normalFrom: 9.5, normalTo: 13.5, overweightFrom: 13.6, overweightTo: 15.0, obeseFrom: 15.1 },
-  85: { severelyCutoff: 8.7, wastedFrom: 8.8, wastedTo: 9.5, normalFrom: 9.6, normalTo: 13.7, overweightFrom: 13.8, overweightTo: 15.1, obeseFrom: 15.2 },
-  85.5: { severelyCutoff: 8.8, wastedFrom: 8.9, wastedTo: 9.6, normalFrom: 9.7, normalTo: 13.8, overweightFrom: 13.9, overweightTo: 15.3, obeseFrom: 15.4 },
-  86: { severelyCutoff: 8.9, wastedFrom: 9.0, wastedTo: 9.7, normalFrom: 9.8, normalTo: 14.0, overweightFrom: 14.1, overweightTo: 15.4, obeseFrom: 15.5 },
-  86.5: { severelyCutoff: 9.0, wastedFrom: 9.1, wastedTo: 9.8, normalFrom: 9.9, normalTo: 14.1, overweightFrom: 14.2, overweightTo: 15.6, obeseFrom: 15.7 },
-  87: { severelyCutoff: 9.1, wastedFrom: 9.2, wastedTo: 9.9, normalFrom: 10.0, normalTo: 14.3, overweightFrom: 14.4, overweightTo: 15.8, obeseFrom: 15.9 },
-  87.5: { severelyCutoff: 9.2, wastedFrom: 9.3, wastedTo: 10.0, normalFrom: 10.1, normalTo: 14.4, overweightFrom: 14.5, overweightTo: 15.9, obeseFrom: 16.0 },
-  88: { severelyCutoff: 9.3, wastedFrom: 9.4, wastedTo: 10.1, normalFrom: 10.2, normalTo: 14.6, overweightFrom: 14.7, overweightTo: 16.1, obeseFrom: 16.2 },
-  88.5: { severelyCutoff: 9.4, wastedFrom: 9.5, wastedTo: 10.2, normalFrom: 10.3, normalTo: 14.7, overweightFrom: 14.8, overweightTo: 16.3, obeseFrom: 16.4 },
-  89: { severelyCutoff: 9.5, wastedFrom: 9.6, wastedTo: 10.3, normalFrom: 10.4, normalTo: 14.9, overweightFrom: 15.0, overweightTo: 16.4, obeseFrom: 16.5 },
-  89.5: { severelyCutoff: 9.6, wastedFrom: 9.7, wastedTo: 10.4, normalFrom: 10.5, normalTo: 15.0, overweightFrom: 15.1, overweightTo: 16.6, obeseFrom: 16.7 },
-  90: { severelyCutoff: 9.7, wastedFrom: 9.8, wastedTo: 10.5, normalFrom: 10.6, normalTo: 15.2, overweightFrom: 15.3, overweightTo: 16.8, obeseFrom: 16.9 },
-  90.5: { severelyCutoff: 9.8, wastedFrom: 9.9, wastedTo: 10.6, normalFrom: 10.7, normalTo: 15.3, overweightFrom: 15.4, overweightTo: 16.9, obeseFrom: 17.0 },
-  91: { severelyCutoff: 9.9, wastedFrom: 10.0, wastedTo: 10.7, normalFrom: 10.8, normalTo: 15.5, overweightFrom: 15.6, overweightTo: 17.1, obeseFrom: 17.2 },
-  91.5: { severelyCutoff: 10.0, wastedFrom: 10.1, wastedTo: 10.8, normalFrom: 10.9, normalTo: 15.6, overweightFrom: 15.7, overweightTo: 17.3, obeseFrom: 17.4 },
-  92: { severelyCutoff: 10.1, wastedFrom: 10.2, wastedTo: 10.9, normalFrom: 11.0, normalTo: 15.8, overweightFrom: 15.9, overweightTo: 17.4, obeseFrom: 17.5 },
-  92.5: { severelyCutoff: 10.2, wastedFrom: 10.3, wastedTo: 11.0, normalFrom: 11.1, normalTo: 15.9, overweightFrom: 16.0, overweightTo: 17.6, obeseFrom: 17.7 },
-  93: { severelyCutoff: 10.3, wastedFrom: 10.4, wastedTo: 11.2, normalFrom: 11.3, normalTo: 16.1, overweightFrom: 16.2, overweightTo: 17.8, obeseFrom: 17.9 },
-  93.5: { severelyCutoff: 10.4, wastedFrom: 10.5, wastedTo: 11.3, normalFrom: 11.4, normalTo: 16.3, overweightFrom: 16.4, overweightTo: 17.9, obeseFrom: 18.0 },
-  94: { severelyCutoff: 10.5, wastedFrom: 10.6, wastedTo: 11.4, normalFrom: 11.5, normalTo: 16.4, overweightFrom: 16.5, overweightTo: 18.1, obeseFrom: 18.2 },
-  94.5: { severelyCutoff: 10.6, wastedFrom: 10.7, wastedTo: 11.5, normalFrom: 11.6, normalTo: 16.6, overweightFrom: 16.7, overweightTo: 18.3, obeseFrom: 18.4 },
-  95: { severelyCutoff: 10.7, wastedFrom: 10.8, wastedTo: 11.6, normalFrom: 11.7, normalTo: 16.7, overweightFrom: 16.8, overweightTo: 18.5, obeseFrom: 18.6 },
-  95.5: { severelyCutoff: 10.7, wastedFrom: 10.8, wastedTo: 11.7, normalFrom: 11.8, normalTo: 16.9, overweightFrom: 17.0, overweightTo: 18.6, obeseFrom: 18.7 },
-  96: { severelyCutoff: 10.8, wastedFrom: 10.9, wastedTo: 11.8, normalFrom: 11.9, normalTo: 17.0, overweightFrom: 17.1, overweightTo: 18.8, obeseFrom: 18.9 },
-  96.5: { severelyCutoff: 10.9, wastedFrom: 11.0, wastedTo: 11.9, normalFrom: 12.0, normalTo: 17.2, overweightFrom: 17.3, overweightTo: 19.0, obeseFrom: 19.1 },
-  97: { severelyCutoff: 11.0, wastedFrom: 11.1, wastedTo: 12.0, normalFrom: 12.1, normalTo: 17.4, overweightFrom: 17.5, overweightTo: 19.2, obeseFrom: 19.3 },
-  97.5: { severelyCutoff: 11.1, wastedFrom: 11.2, wastedTo: 12.1, normalFrom: 12.2, normalTo: 17.5, overweightFrom: 17.6, overweightTo: 19.3, obeseFrom: 19.4 },
-  98: { severelyCutoff: 11.2, wastedFrom: 11.3, wastedTo: 12.2, normalFrom: 12.3, normalTo: 17.7, overweightFrom: 17.8, overweightTo: 19.5, obeseFrom: 19.6 },
-  98.5: { severelyCutoff: 11.3, wastedFrom: 11.4, wastedTo: 12.3, normalFrom: 12.4, normalTo: 17.9, overweightFrom: 18.0, overweightTo: 19.7, obeseFrom: 19.8 },
-  99: { severelyCutoff: 11.4, wastedFrom: 11.5, wastedTo: 12.4, normalFrom: 12.5, normalTo: 18.0, overweightFrom: 18.1, overweightTo: 19.9, obeseFrom: 20.0 },
-  99.5: { severelyCutoff: 11.5, wastedFrom: 11.6, wastedTo: 12.6, normalFrom: 12.7, normalTo: 18.2, overweightFrom: 18.3, overweightTo: 20.1, obeseFrom: 20.2 },
-  100: { severelyCutoff: 11.6, wastedFrom: 11.7, wastedTo: 12.7, normalFrom: 12.8, normalTo: 18.4, overweightFrom: 18.5, overweightTo: 20.3, obeseFrom: 20.4 },
-  100.5: { severelyCutoff: 11.8, wastedFrom: 11.9, wastedTo: 12.8, normalFrom: 12.9, normalTo: 18.6, overweightFrom: 18.7, overweightTo: 20.5, obeseFrom: 20.6 },
-  101: { severelyCutoff: 11.9, wastedFrom: 12.0, wastedTo: 12.9, normalFrom: 13.0, normalTo: 18.7, overweightFrom: 18.8, overweightTo: 20.7, obeseFrom: 20.8 },
-  101.5: { severelyCutoff: 12.0, wastedFrom: 12.1, wastedTo: 13.0, normalFrom: 13.1, normalTo: 18.9, overweightFrom: 19.0, overweightTo: 20.9, obeseFrom: 21.0 },
-  102: { severelyCutoff: 12.1, wastedFrom: 12.2, wastedTo: 13.2, normalFrom: 13.3, normalTo: 19.1, overweightFrom: 19.2, overweightTo: 21.1, obeseFrom: 21.2 },
-  102.5: { severelyCutoff: 12.2, wastedFrom: 12.3, wastedTo: 13.3, normalFrom: 13.4, normalTo: 19.3, overweightFrom: 19.4, overweightTo: 21.4, obeseFrom: 21.5 },
-  103: { severelyCutoff: 12.3, wastedFrom: 12.4, wastedTo: 13.4, normalFrom: 13.5, normalTo: 19.5, overweightFrom: 19.6, overweightTo: 21.6, obeseFrom: 21.7 },
-  103.5: { severelyCutoff: 12.4, wastedFrom: 12.5, wastedTo: 13.5, normalFrom: 13.6, normalTo: 19.7, overweightFrom: 19.8, overweightTo: 21.8, obeseFrom: 21.9 },
-  104: { severelyCutoff: 12.5, wastedFrom: 12.6, wastedTo: 13.7, normalFrom: 13.8, normalTo: 19.9, overweightFrom: 20.0, overweightTo: 22.0, obeseFrom: 22.1 },
-  104.5: { severelyCutoff: 12.7, wastedFrom: 12.8, wastedTo: 13.8, normalFrom: 13.9, normalTo: 20.1, overweightFrom: 20.2, overweightTo: 22.3, obeseFrom: 22.4 },
-  105: { severelyCutoff: 12.8, wastedFrom: 12.9, wastedTo: 13.9, normalFrom: 14.0, normalTo: 20.3, overweightFrom: 20.4, overweightTo: 22.5, obeseFrom: 22.6 },
-  105.5: { severelyCutoff: 12.9, wastedFrom: 13.0, wastedTo: 14.1, normalFrom: 14.2, normalTo: 20.5, overweightFrom: 20.6, overweightTo: 22.7, obeseFrom: 22.8 },
-  106: { severelyCutoff: 13.0, wastedFrom: 13.1, wastedTo: 14.2, normalFrom: 14.3, normalTo: 20.8, overweightFrom: 20.9, overweightTo: 23.0, obeseFrom: 23.1 },
-  106.5: { severelyCutoff: 13.2, wastedFrom: 13.3, wastedTo: 14.4, normalFrom: 14.5, normalTo: 21.0, overweightFrom: 21.1, overweightTo: 23.2, obeseFrom: 23.3 },
-  107: { severelyCutoff: 13.3, wastedFrom: 13.4, wastedTo: 14.5, normalFrom: 14.6, normalTo: 21.2, overweightFrom: 21.3, overweightTo: 23.5, obeseFrom: 23.6 },
-  107.5: { severelyCutoff: 13.4, wastedFrom: 13.5, wastedTo: 14.6, normalFrom: 14.7, normalTo: 21.4, overweightFrom: 21.5, overweightTo: 23.7, obeseFrom: 23.8 },
-  108: { severelyCutoff: 13.6, wastedFrom: 13.7, wastedTo: 14.8, normalFrom: 14.9, normalTo: 21.7, overweightFrom: 21.8, overweightTo: 24.0, obeseFrom: 24.1 },
-  108.5: { severelyCutoff: 13.7, wastedFrom: 13.8, wastedTo: 14.9, normalFrom: 15.0, normalTo: 21.9, overweightFrom: 22.0, overweightTo: 24.3, obeseFrom: 24.4 },
-  109: { severelyCutoff: 13.8, wastedFrom: 13.9, wastedTo: 15.1, normalFrom: 15.2, normalTo: 22.1, overweightFrom: 22.2, overweightTo: 24.5, obeseFrom: 24.6 },
-  109.5: { severelyCutoff: 14.0, wastedFrom: 14.1, wastedTo: 15.3, normalFrom: 15.4, normalTo: 22.4, overweightFrom: 22.5, overweightTo: 24.8, obeseFrom: 24.9 },
-  110: { severelyCutoff: 14.1, wastedFrom: 14.2, wastedTo: 15.4, normalFrom: 15.5, normalTo: 22.6, overweightFrom: 22.7, overweightTo: 25.1, obeseFrom: 25.2 },
-  110.5: { severelyCutoff: 14.3, wastedFrom: 14.4, wastedTo: 15.6, normalFrom: 15.7, normalTo: 22.9, overweightFrom: 23.0, overweightTo: 25.4, obeseFrom: 25.5 },
-  111: { severelyCutoff: 14.4, wastedFrom: 14.5, wastedTo: 15.7, normalFrom: 15.8, normalTo: 23.1, overweightFrom: 23.2, overweightTo: 25.7, obeseFrom: 25.8 },
-  111.5: { severelyCutoff: 14.6, wastedFrom: 14.7, wastedTo: 15.9, normalFrom: 16.0, normalTo: 23.4, overweightFrom: 23.5, overweightTo: 26.0, obeseFrom: 26.1 },
-  112: { severelyCutoff: 14.7, wastedFrom: 14.8, wastedTo: 16.1, normalFrom: 16.2, normalTo: 23.6, overweightFrom: 23.7, overweightTo: 26.2, obeseFrom: 26.3 }
-};
-
-// Complete WHO Length/Height for Age (L/HFA) Tables
-export const LFA_BOYS_TABLE: Record<number, {
-  severelyCutoff: number;
-  stuntedFrom: number;
-  stuntedTo: number;
-  normalFrom: number;
-  normalTo: number;
-  tall: number;
-}> = {
-  0: { severelyCutoff: 44.1, stuntedFrom: 44.2, stuntedTo: 46.0, normalFrom: 46.1, normalTo: 53.7, tall: 53.8 },
-  1: { severelyCutoff: 48.8, stuntedFrom: 48.9, stuntedTo: 50.7, normalFrom: 50.8, normalTo: 58.6, tall: 58.7 },
-  2: { severelyCutoff: 52.3, stuntedFrom: 52.4, stuntedTo: 54.3, normalFrom: 54.4, normalTo: 62.4, tall: 62.5 },
-  3: { severelyCutoff: 55.2, stuntedFrom: 55.3, stuntedTo: 57.2, normalFrom: 57.3, normalTo: 65.5, tall: 65.6 },
-  4: { severelyCutoff: 57.5, stuntedFrom: 57.6, stuntedTo: 59.6, normalFrom: 59.7, normalTo: 68.0, tall: 68.1 },
-  5: { severelyCutoff: 59.5, stuntedFrom: 59.6, stuntedTo: 61.6, normalFrom: 61.7, normalTo: 70.1, tall: 70.2 },
-  6: { severelyCutoff: 61.1, stuntedFrom: 61.2, stuntedTo: 63.2, normalFrom: 63.3, normalTo: 71.9, tall: 72.0 },
-  7: { severelyCutoff: 62.6, stuntedFrom: 62.7, stuntedTo: 64.7, normalFrom: 64.8, normalTo: 73.5, tall: 73.6 },
-  8: { severelyCutoff: 63.9, stuntedFrom: 64.0, stuntedTo: 66.1, normalFrom: 66.2, normalTo: 75.0, tall: 75.1 },
-  9: { severelyCutoff: 65.1, stuntedFrom: 65.2, stuntedTo: 67.4, normalFrom: 67.5, normalTo: 76.5, tall: 76.6 },
-  10: { severelyCutoff: 66.3, stuntedFrom: 66.4, stuntedTo: 68.6, normalFrom: 68.7, normalTo: 77.9, tall: 78.0 },
-  11: { severelyCutoff: 67.5, stuntedFrom: 67.6, stuntedTo: 69.8, normalFrom: 69.9, normalTo: 79.2, tall: 79.3 },
-  12: { severelyCutoff: 68.5, stuntedFrom: 68.6, stuntedTo: 70.9, normalFrom: 71.0, normalTo: 80.5, tall: 80.6 },
-  13: { severelyCutoff: 69.5, stuntedFrom: 69.6, stuntedTo: 72.0, normalFrom: 72.1, normalTo: 81.8, tall: 81.9 },
-  14: { severelyCutoff: 70.5, stuntedFrom: 70.6, stuntedTo: 73.0, normalFrom: 73.1, normalTo: 83.0, tall: 83.1 },
-  15: { severelyCutoff: 71.5, stuntedFrom: 71.6, stuntedTo: 74.0, normalFrom: 74.1, normalTo: 84.2, tall: 84.3 },
-  16: { severelyCutoff: 72.4, stuntedFrom: 72.5, stuntedTo: 74.9, normalFrom: 75.0, normalTo: 85.4, tall: 85.5 },
-  17: { severelyCutoff: 73.2, stuntedFrom: 73.3, stuntedTo: 75.9, normalFrom: 76.0, normalTo: 86.5, tall: 86.6 },
-  18: { severelyCutoff: 74.1, stuntedFrom: 74.2, stuntedTo: 76.8, normalFrom: 76.9, normalTo: 87.7, tall: 87.8 },
-  19: { severelyCutoff: 74.9, stuntedFrom: 75.0, stuntedTo: 77.6, normalFrom: 77.7, normalTo: 88.8, tall: 88.9 },
-  20: { severelyCutoff: 75.7, stuntedFrom: 75.8, stuntedTo: 78.5, normalFrom: 78.6, normalTo: 89.8, tall: 89.9 },
-  21: { severelyCutoff: 76.4, stuntedFrom: 76.5, stuntedTo: 79.3, normalFrom: 79.4, normalTo: 90.9, tall: 91.0 },
-  22: { severelyCutoff: 77.1, stuntedFrom: 77.2, stuntedTo: 80.1, normalFrom: 80.2, normalTo: 91.9, tall: 92.0 },
-  23: { severelyCutoff: 77.9, stuntedFrom: 78.0, stuntedTo: 80.9, normalFrom: 81.0, normalTo: 92.9, tall: 93.0 },
-  24: { severelyCutoff: 77.9, stuntedFrom: 78.0, stuntedTo: 80.9, normalFrom: 81.0, normalTo: 93.2, tall: 93.3 },
-  25: { severelyCutoff: 78.5, stuntedFrom: 78.6, stuntedTo: 81.6, normalFrom: 81.7, normalTo: 94.2, tall: 94.3 },
-  26: { severelyCutoff: 79.2, stuntedFrom: 79.3, stuntedTo: 82.4, normalFrom: 82.5, normalTo: 95.2, tall: 95.3 },
-  27: { severelyCutoff: 79.8, stuntedFrom: 79.9, stuntedTo: 83.0, normalFrom: 83.1, normalTo: 96.1, tall: 96.2 },
-  28: { severelyCutoff: 80.4, stuntedFrom: 80.5, stuntedTo: 83.7, normalFrom: 83.8, normalTo: 97.0, tall: 97.1 },
-  29: { severelyCutoff: 81.0, stuntedFrom: 81.1, stuntedTo: 84.4, normalFrom: 84.5, normalTo: 97.9, tall: 98.0 },
-  30: { severelyCutoff: 81.6, stuntedFrom: 81.7, stuntedTo: 85.0, normalFrom: 85.1, normalTo: 98.7, tall: 98.8 },
-  31: { severelyCutoff: 82.2, stuntedFrom: 82.3, stuntedTo: 85.6, normalFrom: 85.7, normalTo: 99.6, tall: 99.7 },
-  32: { severelyCutoff: 82.7, stuntedFrom: 82.8, stuntedTo: 86.3, normalFrom: 86.4, normalTo: 100.4, tall: 100.5 },
-  33: { severelyCutoff: 83.3, stuntedFrom: 83.4, stuntedTo: 86.8, normalFrom: 86.9, normalTo: 101.2, tall: 101.3 },
-  34: { severelyCutoff: 83.8, stuntedFrom: 83.9, stuntedTo: 87.4, normalFrom: 87.5, normalTo: 102.0, tall: 102.1 },
-  35: { severelyCutoff: 84.3, stuntedFrom: 84.4, stuntedTo: 88.0, normalFrom: 88.1, normalTo: 102.7, tall: 102.8 },
-  36: { severelyCutoff: 84.9, stuntedFrom: 85.0, stuntedTo: 88.6, normalFrom: 88.7, normalTo: 103.5, tall: 103.6 },
-  37: { severelyCutoff: 85.4, stuntedFrom: 85.5, stuntedTo: 89.1, normalFrom: 89.2, normalTo: 104.2, tall: 104.3 },
-  38: { severelyCutoff: 85.9, stuntedFrom: 86.0, stuntedTo: 89.7, normalFrom: 89.8, normalTo: 105.0, tall: 105.1 },
-  39: { severelyCutoff: 86.4, stuntedFrom: 86.5, stuntedTo: 90.2, normalFrom: 90.3, normalTo: 105.7, tall: 105.8 },
-  40: { severelyCutoff: 86.9, stuntedFrom: 87.0, stuntedTo: 90.8, normalFrom: 90.9, normalTo: 106.4, tall: 106.5 },
-  41: { severelyCutoff: 87.4, stuntedFrom: 87.5, stuntedTo: 91.3, normalFrom: 91.4, normalTo: 107.1, tall: 107.2 },
-  42: { severelyCutoff: 87.9, stuntedFrom: 88.0, stuntedTo: 91.8, normalFrom: 91.9, normalTo: 107.8, tall: 107.9 },
-  43: { severelyCutoff: 88.3, stuntedFrom: 88.4, stuntedTo: 92.3, normalFrom: 92.4, normalTo: 108.5, tall: 108.6 },
-  44: { severelyCutoff: 88.8, stuntedFrom: 88.9, stuntedTo: 92.9, normalFrom: 93.0, normalTo: 109.1, tall: 109.2 },
-  45: { severelyCutoff: 89.3, stuntedFrom: 89.4, stuntedTo: 93.4, normalFrom: 93.5, normalTo: 109.8, tall: 109.9 },
-  46: { severelyCutoff: 89.7, stuntedFrom: 89.8, stuntedTo: 93.9, normalFrom: 94.0, normalTo: 110.4, tall: 110.5 },
-  47: { severelyCutoff: 90.1, stuntedFrom: 90.2, stuntedTo: 94.4, normalFrom: 94.5, normalTo: 111.0, tall: 111.1 },
-  48: { severelyCutoff: 90.6, stuntedFrom: 90.7, stuntedTo: 94.8, normalFrom: 94.9, normalTo: 111.7, tall: 111.8 },
-  49: { severelyCutoff: 91.1, stuntedFrom: 91.2, stuntedTo: 95.3, normalFrom: 95.4, normalTo: 112.4, tall: 112.5 },
-  50: { severelyCutoff: 91.5, stuntedFrom: 91.6, stuntedTo: 95.8, normalFrom: 95.9, normalTo: 113.0, tall: 113.1 },
-  51: { severelyCutoff: 92.0, stuntedFrom: 92.1, stuntedTo: 96.3, normalFrom: 96.4, normalTo: 113.6, tall: 113.7 },
-  52: { severelyCutoff: 92.4, stuntedFrom: 92.5, stuntedTo: 96.8, normalFrom: 96.9, normalTo: 114.2, tall: 114.3 },
-  53: { severelyCutoff: 92.9, stuntedFrom: 93.0, stuntedTo: 97.3, normalFrom: 97.4, normalTo: 114.9, tall: 115.0 },
-  54: { severelyCutoff: 93.3, stuntedFrom: 93.4, stuntedTo: 97.7, normalFrom: 97.8, normalTo: 115.5, tall: 115.6 },
-  55: { severelyCutoff: 93.8, stuntedFrom: 93.9, stuntedTo: 98.2, normalFrom: 98.3, normalTo: 116.1, tall: 116.2 },
-  56: { severelyCutoff: 94.2, stuntedFrom: 94.3, stuntedTo: 98.7, normalFrom: 98.8, normalTo: 116.7, tall: 116.8 },
-  57: { severelyCutoff: 94.6, stuntedFrom: 94.7, stuntedTo: 99.2, normalFrom: 99.3, normalTo: 117.4, tall: 117.5 },
-  58: { severelyCutoff: 95.1, stuntedFrom: 95.2, stuntedTo: 99.6, normalFrom: 99.7, normalTo: 118.0, tall: 118.1 },
-  59: { severelyCutoff: 95.5, stuntedFrom: 95.6, stuntedTo: 100.1, normalFrom: 100.2, normalTo: 118.6, tall: 118.7 },
-  60: { severelyCutoff: 96.0, stuntedFrom: 96.1, stuntedTo: 100.6, normalFrom: 100.7, normalTo: 119.2, tall: 119.3 },
-  61: { severelyCutoff: 96.4, stuntedFrom: 96.5, stuntedTo: 101.0, normalFrom: 101.1, normalTo: 119.4, tall: 119.5 },
-  62: { severelyCutoff: 96.8, stuntedFrom: 96.9, stuntedTo: 101.5, normalFrom: 101.6, normalTo: 120.0, tall: 120.1 },
-  63: { severelyCutoff: 97.3, stuntedFrom: 97.4, stuntedTo: 101.9, normalFrom: 102.0, normalTo: 120.6, tall: 120.7 },
-  64: { severelyCutoff: 97.7, stuntedFrom: 97.8, stuntedTo: 102.4, normalFrom: 102.5, normalTo: 121.2, tall: 121.3 },
-  65: { severelyCutoff: 98.1, stuntedFrom: 98.2, stuntedTo: 102.9, normalFrom: 103.0, normalTo: 121.8, tall: 121.9 },
-  66: { severelyCutoff: 98.6, stuntedFrom: 98.7, stuntedTo: 103.3, normalFrom: 103.4, normalTo: 122.4, tall: 122.5 },
-  67: { severelyCutoff: 99.0, stuntedFrom: 99.1, stuntedTo: 103.8, normalFrom: 103.9, normalTo: 123.0, tall: 123.1 },
-  68: { severelyCutoff: 99.4, stuntedFrom: 99.5, stuntedTo: 104.2, normalFrom: 104.3, normalTo: 123.6, tall: 123.7 },
-  69: { severelyCutoff: 99.8, stuntedFrom: 99.9, stuntedTo: 104.7, normalFrom: 104.8, normalTo: 124.1, tall: 124.2 },
-  70: { severelyCutoff: 100.3, stuntedFrom: 100.4, stuntedTo: 105.1, normalFrom: 105.2, normalTo: 124.7, tall: 124.8 },
-  71: { severelyCutoff: 100.7, stuntedFrom: 100.8, stuntedTo: 105.6, normalFrom: 105.7, normalTo: 125.2, tall: 125.3 }
-};
-
-export const LFA_GIRLS_TABLE: Record<number, {
-  severelyCutoff: number;
-  stuntedFrom: number;
-  stuntedTo: number;
-  normalFrom: number;
-  normalTo: number;
-  tall: number;
-}> = {
-  0: { severelyCutoff: 43.5, stuntedFrom: 43.6, stuntedTo: 45.3, normalFrom: 45.4, normalTo: 52.9, tall: 53.0 },
-  1: { severelyCutoff: 47.7, stuntedFrom: 47.8, stuntedTo: 49.7, normalFrom: 49.8, normalTo: 57.6, tall: 57.7 },
-  2: { severelyCutoff: 50.9, stuntedFrom: 51.0, stuntedTo: 52.9, normalFrom: 53.0, normalTo: 61.1, tall: 61.2 },
-  3: { severelyCutoff: 53.4, stuntedFrom: 53.5, stuntedTo: 55.5, normalFrom: 55.6, normalTo: 64.0, tall: 64.1 },
-  4: { severelyCutoff: 55.5, stuntedFrom: 55.6, stuntedTo: 57.7, normalFrom: 57.8, normalTo: 66.4, tall: 66.5 },
-  5: { severelyCutoff: 57.3, stuntedFrom: 57.4, stuntedTo: 59.5, normalFrom: 59.6, normalTo: 68.5, tall: 68.6 },
-  6: { severelyCutoff: 58.8, stuntedFrom: 58.9, stuntedTo: 61.1, normalFrom: 61.2, normalTo: 70.3, tall: 70.4 },
-  7: { severelyCutoff: 60.2, stuntedFrom: 60.3, stuntedTo: 62.6, normalFrom: 62.7, normalTo: 71.9, tall: 72.0 },
-  8: { severelyCutoff: 61.6, stuntedFrom: 61.7, stuntedTo: 63.9, normalFrom: 64.0, normalTo: 73.5, tall: 73.6 },
-  9: { severelyCutoff: 62.8, stuntedFrom: 62.9, stuntedTo: 65.2, normalFrom: 65.3, normalTo: 75.0, tall: 75.1 },
-  10: { severelyCutoff: 64.0, stuntedFrom: 64.1, stuntedTo: 66.4, normalFrom: 66.5, normalTo: 76.4, tall: 76.5 },
-  11: { severelyCutoff: 65.1, stuntedFrom: 65.2, stuntedTo: 67.6, normalFrom: 67.7, normalTo: 77.8, tall: 77.9 },
-  12: { severelyCutoff: 66.2, stuntedFrom: 66.3, stuntedTo: 68.8, normalFrom: 68.9, normalTo: 79.2, tall: 79.3 },
-  13: { severelyCutoff: 67.2, stuntedFrom: 67.3, stuntedTo: 69.9, normalFrom: 70.0, normalTo: 80.5, tall: 80.6 },
-  14: { severelyCutoff: 68.2, stuntedFrom: 68.3, stuntedTo: 70.9, normalFrom: 71.0, normalTo: 81.7, tall: 81.8 },
-  15: { severelyCutoff: 69.2, stuntedFrom: 69.3, stuntedTo: 71.9, normalFrom: 72.0, normalTo: 83.0, tall: 83.1 },
-  16: { severelyCutoff: 70.1, stuntedFrom: 70.2, stuntedTo: 72.9, normalFrom: 73.0, normalTo: 84.2, tall: 84.3 },
-  17: { severelyCutoff: 71.0, stuntedFrom: 71.1, stuntedTo: 73.9, normalFrom: 74.0, normalTo: 85.4, tall: 85.5 },
-  18: { severelyCutoff: 71.9, stuntedFrom: 72.0, stuntedTo: 74.8, normalFrom: 74.9, normalTo: 86.5, tall: 86.6 },
-  19: { severelyCutoff: 72.7, stuntedFrom: 72.8, stuntedTo: 75.7, normalFrom: 75.8, normalTo: 87.6, tall: 87.7 },
-  20: { severelyCutoff: 73.6, stuntedFrom: 73.7, stuntedTo: 76.6, normalFrom: 76.7, normalTo: 88.7, tall: 88.8 },
-  21: { severelyCutoff: 74.4, stuntedFrom: 74.5, stuntedTo: 77.4, normalFrom: 77.5, normalTo: 89.8, tall: 89.9 },
-  22: { severelyCutoff: 75.1, stuntedFrom: 75.2, stuntedTo: 78.3, normalFrom: 78.4, normalTo: 90.8, tall: 90.9 },
-  23: { severelyCutoff: 75.9, stuntedFrom: 76.0, stuntedTo: 79.1, normalFrom: 79.2, normalTo: 91.9, tall: 92.0 },
-  24: { severelyCutoff: 75.9, stuntedFrom: 76.0, stuntedTo: 79.2, normalFrom: 79.3, normalTo: 92.2, tall: 92.3 },
-  25: { severelyCutoff: 76.7, stuntedFrom: 76.8, stuntedTo: 79.9, normalFrom: 80.0, normalTo: 93.1, tall: 93.2 },
-  26: { severelyCutoff: 77.4, stuntedFrom: 77.5, stuntedTo: 80.7, normalFrom: 80.8, normalTo: 94.1, tall: 94.2 },
-  27: { severelyCutoff: 78.0, stuntedFrom: 78.1, stuntedTo: 81.4, normalFrom: 81.5, normalTo: 95.0, tall: 95.1 },
-  28: { severelyCutoff: 78.7, stuntedFrom: 78.8, stuntedTo: 82.1, normalFrom: 82.2, normalTo: 96.0, tall: 96.1 },
-  29: { severelyCutoff: 79.4, stuntedFrom: 79.5, stuntedTo: 82.8, normalFrom: 82.9, normalTo: 96.9, tall: 97.0 },
-  30: { severelyCutoff: 80.0, stuntedFrom: 80.1, stuntedTo: 83.5, normalFrom: 83.6, normalTo: 97.7, tall: 97.8 },
-  31: { severelyCutoff: 80.6, stuntedFrom: 80.7, stuntedTo: 84.2, normalFrom: 84.3, normalTo: 98.6, tall: 98.7 },
-  32: { severelyCutoff: 81.2, stuntedFrom: 81.3, stuntedTo: 84.8, normalFrom: 84.9, normalTo: 99.4, tall: 99.5 },
-  33: { severelyCutoff: 81.8, stuntedFrom: 81.9, stuntedTo: 85.5, normalFrom: 85.6, normalTo: 100.3, tall: 100.4 },
-  34: { severelyCutoff: 82.4, stuntedFrom: 82.5, stuntedTo: 86.1, normalFrom: 86.2, normalTo: 101.1, tall: 101.2 },
-  35: { severelyCutoff: 83.0, stuntedFrom: 83.1, stuntedTo: 86.7, normalFrom: 86.8, normalTo: 101.9, tall: 102.0 },
-  36: { severelyCutoff: 83.5, stuntedFrom: 83.6, stuntedTo: 87.3, normalFrom: 87.4, normalTo: 102.7, tall: 102.8 },
-  37: { severelyCutoff: 84.1, stuntedFrom: 84.2, stuntedTo: 87.9, normalFrom: 88.0, normalTo: 103.4, tall: 103.5 },
-  38: { severelyCutoff: 84.6, stuntedFrom: 84.7, stuntedTo: 88.5, normalFrom: 88.6, normalTo: 104.2, tall: 104.3 },
-  39: { severelyCutoff: 85.2, stuntedFrom: 85.3, stuntedTo: 89.1, normalFrom: 89.2, normalTo: 105.0, tall: 105.1 },
-  40: { severelyCutoff: 85.7, stuntedFrom: 85.8, stuntedTo: 89.7, normalFrom: 89.8, normalTo: 105.7, tall: 105.8 },
-  41: { severelyCutoff: 86.2, stuntedFrom: 86.3, stuntedTo: 90.3, normalFrom: 90.4, normalTo: 106.4, tall: 106.5 },
-  42: { severelyCutoff: 86.7, stuntedFrom: 86.8, stuntedTo: 90.8, normalFrom: 90.9, normalTo: 107.2, tall: 107.3 },
-  43: { severelyCutoff: 87.3, stuntedFrom: 87.4, stuntedTo: 91.4, normalFrom: 91.5, normalTo: 107.9, tall: 108.0 },
-  44: { severelyCutoff: 87.8, stuntedFrom: 87.9, stuntedTo: 91.9, normalFrom: 92.0, normalTo: 108.6, tall: 108.7 },
-  45: { severelyCutoff: 88.3, stuntedFrom: 88.4, stuntedTo: 92.4, normalFrom: 92.5, normalTo: 109.3, tall: 109.4 },
-  46: { severelyCutoff: 88.8, stuntedFrom: 88.9, stuntedTo: 93.0, normalFrom: 93.1, normalTo: 110.0, tall: 110.1 },
-  47: { severelyCutoff: 89.2, stuntedFrom: 89.3, stuntedTo: 93.5, normalFrom: 93.6, normalTo: 110.7, tall: 110.8 },
-  48: { severelyCutoff: 89.7, stuntedFrom: 89.8, stuntedTo: 94.0, normalFrom: 94.1, normalTo: 111.3, tall: 111.4 },
-  49: { severelyCutoff: 90.2, stuntedFrom: 90.3, stuntedTo: 94.5, normalFrom: 94.6, normalTo: 112.0, tall: 112.1 },
-  50: { severelyCutoff: 90.6, stuntedFrom: 90.7, stuntedTo: 95.0, normalFrom: 95.1, normalTo: 112.7, tall: 112.8 },
-  51: { severelyCutoff: 91.1, stuntedFrom: 91.2, stuntedTo: 95.5, normalFrom: 95.6, normalTo: 113.3, tall: 113.4 },
-  52: { severelyCutoff: 91.6, stuntedFrom: 91.7, stuntedTo: 96.0, normalFrom: 96.1, normalTo: 114.0, tall: 114.1 },
-  53: { severelyCutoff: 92.0, stuntedFrom: 92.1, stuntedTo: 96.5, normalFrom: 96.6, normalTo: 114.6, tall: 114.7 },
-  54: { severelyCutoff: 92.5, stuntedFrom: 92.6, stuntedTo: 97.0, normalFrom: 97.1, normalTo: 115.2, tall: 115.3 },
-  55: { severelyCutoff: 92.9, stuntedFrom: 93.0, stuntedTo: 97.5, normalFrom: 97.6, normalTo: 115.9, tall: 116.0 },
-  56: { severelyCutoff: 93.3, stuntedFrom: 93.4, stuntedTo: 98.0, normalFrom: 98.1, normalTo: 116.5, tall: 116.6 },
-  57: { severelyCutoff: 93.8, stuntedFrom: 93.9, stuntedTo: 98.4, normalFrom: 98.5, normalTo: 117.1, tall: 117.2 },
-  58: { severelyCutoff: 94.2, stuntedFrom: 94.3, stuntedTo: 98.9, normalFrom: 99.0, normalTo: 117.7, tall: 117.8 },
-  59: { severelyCutoff: 94.6, stuntedFrom: 94.7, stuntedTo: 99.4, normalFrom: 99.5, normalTo: 118.3, tall: 118.4 }
-};
-
-export const WFA_GIRLS_TABLE: Record<number, {
-  severelyCutoff: number;
-  underweightFrom: number;
-  underweightTo: number;
-  normalFrom: number;
-  normalTo: number;
-  overweight: number;
-}> = {
-  0: { severelyCutoff: 2.0, underweightFrom: 2.1, underweightTo: 2.3, normalFrom: 2.4, normalTo: 4.2, overweight: 4.3 },
-  1: { severelyCutoff: 2.7, underweightFrom: 2.8, underweightTo: 3.1, normalFrom: 3.2, normalTo: 5.5, overweight: 5.6 },
-  2: { severelyCutoff: 3.4, underweightFrom: 3.5, underweightTo: 3.8, normalFrom: 3.9, normalTo: 6.6, overweight: 6.7 },
-  3: { severelyCutoff: 4.0, underweightFrom: 4.1, underweightTo: 4.4, normalFrom: 4.5, normalTo: 7.5, overweight: 7.6 },
-  4: { severelyCutoff: 4.4, underweightFrom: 4.5, underweightTo: 4.9, normalFrom: 5.0, normalTo: 8.2, overweight: 8.3 },
-  5: { severelyCutoff: 4.8, underweightFrom: 4.9, underweightTo: 5.3, normalFrom: 5.4, normalTo: 8.8, overweight: 8.9 },
-  6: { severelyCutoff: 5.1, underweightFrom: 5.2, underweightTo: 5.6, normalFrom: 5.7, normalTo: 9.3, overweight: 9.4 },
-  7: { severelyCutoff: 5.3, underweightFrom: 5.4, underweightTo: 5.9, normalFrom: 6.0, normalTo: 9.8, overweight: 9.9 },
-  8: { severelyCutoff: 5.6, underweightFrom: 5.7, underweightTo: 6.2, normalFrom: 6.3, normalTo: 10.2, overweight: 10.3 },
-  9: { severelyCutoff: 5.8, underweightFrom: 5.9, underweightTo: 6.4, normalFrom: 6.5, normalTo: 10.5, overweight: 10.6 },
-  10: { severelyCutoff: 5.9, underweightFrom: 6.0, underweightTo: 6.6, normalFrom: 6.7, normalTo: 10.9, overweight: 11.0 },
-  11: { severelyCutoff: 6.1, underweightFrom: 6.2, underweightTo: 6.8, normalFrom: 6.9, normalTo: 11.2, overweight: 11.3 },
-  12: { severelyCutoff: 6.3, underweightFrom: 6.4, underweightTo: 6.9, normalFrom: 7.0, normalTo: 11.5, overweight: 11.6 },
-  13: { severelyCutoff: 6.4, underweightFrom: 6.5, underweightTo: 7.1, normalFrom: 7.2, normalTo: 11.8, overweight: 11.9 },
-  14: { severelyCutoff: 6.6, underweightFrom: 6.7, underweightTo: 7.3, normalFrom: 7.4, normalTo: 12.1, overweight: 12.2 },
-  15: { severelyCutoff: 6.7, underweightFrom: 6.8, underweightTo: 7.5, normalFrom: 7.6, normalTo: 12.4, overweight: 12.5 },
-  16: { severelyCutoff: 6.9, underweightFrom: 7.0, underweightTo: 7.6, normalFrom: 7.7, normalTo: 12.6, overweight: 12.7 },
-  17: { severelyCutoff: 7.0, underweightFrom: 7.1, underweightTo: 7.8, normalFrom: 7.9, normalTo: 12.9, overweight: 13.0 },
-  18: { severelyCutoff: 7.2, underweightFrom: 7.3, underweightTo: 8.0, normalFrom: 8.1, normalTo: 13.2, overweight: 13.3 },
-  19: { severelyCutoff: 7.3, underweightFrom: 7.4, underweightTo: 8.1, normalFrom: 8.2, normalTo: 13.5, overweight: 13.6 },
-  20: { severelyCutoff: 7.5, underweightFrom: 7.6, underweightTo: 8.3, normalFrom: 8.4, normalTo: 13.7, overweight: 13.8 },
-  21: { severelyCutoff: 7.6, underweightFrom: 7.7, underweightTo: 8.5, normalFrom: 8.6, normalTo: 14.0, overweight: 14.1 },
-  22: { severelyCutoff: 7.8, underweightFrom: 7.9, underweightTo: 8.6, normalFrom: 8.7, normalTo: 14.3, overweight: 14.4 },
-  23: { severelyCutoff: 7.9, underweightFrom: 8.0, underweightTo: 8.8, normalFrom: 8.9, normalTo: 14.6, overweight: 14.7 },
-  24: { severelyCutoff: 8.1, underweightFrom: 8.2, underweightTo: 8.9, normalFrom: 9.0, normalTo: 14.8, overweight: 14.9 },
-  25: { severelyCutoff: 8.2, underweightFrom: 8.3, underweightTo: 9.1, normalFrom: 9.2, normalTo: 15.1, overweight: 15.2 },
-  26: { severelyCutoff: 8.4, underweightFrom: 8.5, underweightTo: 9.3, normalFrom: 9.4, normalTo: 15.4, overweight: 15.5 },
-  27: { severelyCutoff: 8.5, underweightFrom: 8.6, underweightTo: 9.4, normalFrom: 9.5, normalTo: 15.7, overweight: 15.8 },
-  28: { severelyCutoff: 8.6, underweightFrom: 8.7, underweightTo: 9.6, normalFrom: 9.7, normalTo: 16.0, overweight: 16.1 },
-  29: { severelyCutoff: 8.8, underweightFrom: 8.9, underweightTo: 9.7, normalFrom: 9.8, normalTo: 16.2, overweight: 16.3 },
-  30: { severelyCutoff: 8.9, underweightFrom: 9.0, underweightTo: 9.9, normalFrom: 10.0, normalTo: 16.5, overweight: 16.6 },
-  31: { severelyCutoff: 9.0, underweightFrom: 9.1, underweightTo: 10.0, normalFrom: 10.1, normalTo: 16.8, overweight: 16.9 },
-  32: { severelyCutoff: 9.1, underweightFrom: 9.2, underweightTo: 10.2, normalFrom: 10.3, normalTo: 17.1, overweight: 17.2 },
-  33: { severelyCutoff: 9.3, underweightFrom: 9.4, underweightTo: 10.3, normalFrom: 10.4, normalTo: 17.3, overweight: 17.4 },
-  34: { severelyCutoff: 9.4, underweightFrom: 9.5, underweightTo: 10.4, normalFrom: 10.5, normalTo: 17.6, overweight: 17.7 },
-  35: { severelyCutoff: 9.5, underweightFrom: 9.6, underweightTo: 10.6, normalFrom: 10.7, normalTo: 17.9, overweight: 18.0 },
-  36: { severelyCutoff: 9.6, underweightFrom: 9.7, underweightTo: 10.7, normalFrom: 10.8, normalTo: 18.1, overweight: 18.2 },
-  37: { severelyCutoff: 9.7, underweightFrom: 9.8, underweightTo: 10.8, normalFrom: 10.9, normalTo: 18.4, overweight: 18.5 },
-  38: { severelyCutoff: 9.8, underweightFrom: 9.9, underweightTo: 11.0, normalFrom: 11.1, normalTo: 18.7, overweight: 18.8 },
-  39: { severelyCutoff: 9.9, underweightFrom: 10.0, underweightTo: 11.1, normalFrom: 11.2, normalTo: 19.0, overweight: 19.1 },
-  40: { severelyCutoff: 10.1, underweightFrom: 10.2, underweightTo: 11.2, normalFrom: 11.3, normalTo: 19.2, overweight: 19.3 },
-  41: { severelyCutoff: 10.2, underweightFrom: 10.3, underweightTo: 11.4, normalFrom: 11.5, normalTo: 19.5, overweight: 19.6 },
-  42: { severelyCutoff: 10.3, underweightFrom: 10.4, underweightTo: 11.5, normalFrom: 11.6, normalTo: 19.8, overweight: 19.9 },
-  43: { severelyCutoff: 10.4, underweightFrom: 10.5, underweightTo: 11.6, normalFrom: 11.7, normalTo: 20.1, overweight: 20.2 },
-  44: { severelyCutoff: 10.5, underweightFrom: 10.6, underweightTo: 11.7, normalFrom: 11.8, normalTo: 20.4, overweight: 20.5 },
-  45: { severelyCutoff: 10.6, underweightFrom: 10.7, underweightTo: 11.9, normalFrom: 12.0, normalTo: 20.7, overweight: 20.8 },
-  46: { severelyCutoff: 10.7, underweightFrom: 10.8, underweightTo: 12.0, normalFrom: 12.1, normalTo: 20.9, overweight: 21.0 },
-  47: { severelyCutoff: 10.8, underweightFrom: 10.9, underweightTo: 12.1, normalFrom: 12.2, normalTo: 21.2, overweight: 21.3 },
-  48: { severelyCutoff: 10.9, underweightFrom: 11.0, underweightTo: 12.2, normalFrom: 12.3, normalTo: 21.5, overweight: 21.6 },
-  49: { severelyCutoff: 11.0, underweightFrom: 11.1, underweightTo: 12.3, normalFrom: 12.4, normalTo: 21.8, overweight: 21.9 },
-  50: { severelyCutoff: 11.1, underweightFrom: 11.2, underweightTo: 12.4, normalFrom: 12.5, normalTo: 22.1, overweight: 22.2 },
-  51: { severelyCutoff: 11.2, underweightFrom: 11.3, underweightTo: 12.6, normalFrom: 12.7, normalTo: 22.4, overweight: 22.5 },
-  52: { severelyCutoff: 11.3, underweightFrom: 11.4, underweightTo: 12.7, normalFrom: 12.8, normalTo: 22.6, overweight: 22.7 },
-  53: { severelyCutoff: 11.4, underweightFrom: 11.5, underweightTo: 12.8, normalFrom: 12.9, normalTo: 22.9, overweight: 23.0 },
-  54: { severelyCutoff: 11.5, underweightFrom: 11.6, underweightTo: 12.9, normalFrom: 13.0, normalTo: 23.2, overweight: 23.3 },
-  55: { severelyCutoff: 11.6, underweightFrom: 11.7, underweightTo: 13.1, normalFrom: 13.2, normalTo: 23.5, overweight: 23.6 },
-  56: { severelyCutoff: 11.7, underweightFrom: 11.8, underweightTo: 13.2, normalFrom: 13.3, normalTo: 23.8, overweight: 23.9 },
-  57: { severelyCutoff: 11.8, underweightFrom: 11.9, underweightTo: 13.3, normalFrom: 13.4, normalTo: 24.1, overweight: 24.2 },
-  58: { severelyCutoff: 11.9, underweightFrom: 12.0, underweightTo: 13.4, normalFrom: 13.5, normalTo: 24.4, overweight: 24.5 },
-  59: { severelyCutoff: 12.0, underweightFrom: 12.1, underweightTo: 13.5, normalFrom: 13.6, normalTo: 24.6, overweight: 24.7 },
-  60: { severelyCutoff: 12.1, underweightFrom: 12.2, underweightTo: 13.6, normalFrom: 13.7, normalTo: 24.7, overweight: 24.8 },
-  61: { severelyCutoff: 12.4, underweightFrom: 12.5, underweightTo: 13.9, normalFrom: 14.0, normalTo: 24.8, overweight: 24.9 },
-  62: { severelyCutoff: 12.5, underweightFrom: 12.6, underweightTo: 14.0, normalFrom: 14.1, normalTo: 25.1, overweight: 25.2 },
-  63: { severelyCutoff: 12.6, underweightFrom: 12.7, underweightTo: 14.1, normalFrom: 14.2, normalTo: 25.4, overweight: 25.5 },
-  64: { severelyCutoff: 12.7, underweightFrom: 12.8, underweightTo: 14.2, normalFrom: 14.3, normalTo: 25.6, overweight: 25.7 },
-  65: { severelyCutoff: 12.8, underweightFrom: 12.9, underweightTo: 14.3, normalFrom: 14.4, normalTo: 25.9, overweight: 26.0 },
-  66: { severelyCutoff: 12.9, underweightFrom: 13.0, underweightTo: 14.5, normalFrom: 14.6, normalTo: 26.2, overweight: 26.3 },
-  67: { severelyCutoff: 13.0, underweightFrom: 13.1, underweightTo: 14.6, normalFrom: 14.7, normalTo: 26.5, overweight: 26.6 },
-  68: { severelyCutoff: 13.1, underweightFrom: 13.2, underweightTo: 14.7, normalFrom: 14.8, normalTo: 26.7, overweight: 26.8 },
-  69: { severelyCutoff: 13.2, underweightFrom: 13.3, underweightTo: 14.8, normalFrom: 14.9, normalTo: 27.0, overweight: 27.1 },
-  70: { severelyCutoff: 13.3, underweightFrom: 13.4, underweightTo: 14.9, normalFrom: 15.0, normalTo: 27.3, overweight: 27.4 },
-  71: { severelyCutoff: 13.4, underweightFrom: 13.5, underweightTo: 15.1, normalFrom: 15.2, normalTo: 27.6, overweight: 27.7 }
-};
-
-export const WFA_BOYS_TABLE: Record<number, {
-  severelyCutoff: number;
-  underweightFrom: number;
-  underweightTo: number;
-  normalFrom: number;
-  normalTo: number;
-  overweight: number;
-}> = {
-  0: { severelyCutoff: 2.1, underweightFrom: 2.2, underweightTo: 2.4, normalFrom: 2.5, normalTo: 4.4, overweight: 4.5 },
-  1: { severelyCutoff: 2.9, underweightFrom: 3.0, underweightTo: 3.3, normalFrom: 3.4, normalTo: 5.8, overweight: 5.9 },
-  2: { severelyCutoff: 3.8, underweightFrom: 3.9, underweightTo: 4.2, normalFrom: 4.3, normalTo: 7.1, overweight: 7.2 },
-  3: { severelyCutoff: 4.4, underweightFrom: 4.5, underweightTo: 4.9, normalFrom: 5.0, normalTo: 8.0, overweight: 8.1 },
-  4: { severelyCutoff: 4.9, underweightFrom: 5.0, underweightTo: 5.5, normalFrom: 5.6, normalTo: 8.7, overweight: 8.8 },
-  5: { severelyCutoff: 5.3, underweightFrom: 5.4, underweightTo: 5.9, normalFrom: 6.0, normalTo: 9.3, overweight: 9.4 },
-  6: { severelyCutoff: 5.7, underweightFrom: 5.8, underweightTo: 6.3, normalFrom: 6.4, normalTo: 9.8, overweight: 9.9 },
-  7: { severelyCutoff: 5.9, underweightFrom: 6.0, underweightTo: 6.6, normalFrom: 6.7, normalTo: 10.3, overweight: 10.4 },
-  8: { severelyCutoff: 6.2, underweightFrom: 6.3, underweightTo: 6.8, normalFrom: 6.9, normalTo: 10.7, overweight: 10.8 },
-  9: { severelyCutoff: 6.4, underweightFrom: 6.5, underweightTo: 7.0, normalFrom: 7.1, normalTo: 11.0, overweight: 11.1 },
-  10: { severelyCutoff: 6.6, underweightFrom: 6.7, underweightTo: 7.3, normalFrom: 7.4, normalTo: 11.4, overweight: 11.5 },
-  11: { severelyCutoff: 6.8, underweightFrom: 6.9, underweightTo: 7.5, normalFrom: 7.6, normalTo: 11.7, overweight: 11.8 },
-  12: { severelyCutoff: 6.9, underweightFrom: 7.0, underweightTo: 7.6, normalFrom: 7.7, normalTo: 12.0, overweight: 12.1 },
-  13: { severelyCutoff: 7.1, underweightFrom: 7.2, underweightTo: 7.8, normalFrom: 7.9, normalTo: 12.3, overweight: 12.4 },
-  14: { severelyCutoff: 7.2, underweightFrom: 7.3, underweightTo: 8.0, normalFrom: 8.1, normalTo: 12.6, overweight: 12.7 },
-  15: { severelyCutoff: 7.4, underweightFrom: 7.5, underweightTo: 8.2, normalFrom: 8.3, normalTo: 12.8, overweight: 12.9 },
-  16: { severelyCutoff: 7.5, underweightFrom: 7.6, underweightTo: 8.3, normalFrom: 8.4, normalTo: 13.1, overweight: 13.2 },
-  17: { severelyCutoff: 7.7, underweightFrom: 7.8, underweightTo: 8.5, normalFrom: 8.6, normalTo: 13.4, overweight: 13.5 },
-  18: { severelyCutoff: 7.8, underweightFrom: 7.9, underweightTo: 8.7, normalFrom: 8.8, normalTo: 13.7, overweight: 13.8 },
-  19: { severelyCutoff: 8.0, underweightFrom: 8.1, underweightTo: 8.8, normalFrom: 8.9, normalTo: 13.9, overweight: 14.0 },
-  20: { severelyCutoff: 8.1, underweightFrom: 8.2, underweightTo: 9.0, normalFrom: 9.1, normalTo: 14.2, overweight: 14.3 },
-  21: { severelyCutoff: 8.2, underweightFrom: 8.3, underweightTo: 9.1, normalFrom: 9.2, normalTo: 14.5, overweight: 14.6 },
-  22: { severelyCutoff: 8.4, underweightFrom: 8.5, underweightTo: 9.3, normalFrom: 9.4, normalTo: 14.7, overweight: 14.8 },
-  23: { severelyCutoff: 8.5, underweightFrom: 8.6, underweightTo: 9.4, normalFrom: 9.5, normalTo: 15.0, overweight: 15.1 },
-  24: { severelyCutoff: 8.6, underweightFrom: 8.7, underweightTo: 9.6, normalFrom: 9.7, normalTo: 15.3, overweight: 15.4 },
-  25: { severelyCutoff: 8.8, underweightFrom: 8.9, underweightTo: 9.7, normalFrom: 9.8, normalTo: 15.5, overweight: 15.6 },
-  26: { severelyCutoff: 8.9, underweightFrom: 9.0, underweightTo: 9.9, normalFrom: 10.0, normalTo: 15.8, overweight: 15.9 },
-  27: { severelyCutoff: 9.0, underweightFrom: 9.1, underweightTo: 10.0, normalFrom: 10.1, normalTo: 16.1, overweight: 16.2 },
-  28: { severelyCutoff: 9.1, underweightFrom: 9.2, underweightTo: 10.1, normalFrom: 10.2, normalTo: 16.3, overweight: 16.4 },
-  29: { severelyCutoff: 9.2, underweightFrom: 9.3, underweightTo: 10.3, normalFrom: 10.4, normalTo: 16.6, overweight: 16.7 },
-  30: { severelyCutoff: 9.4, underweightFrom: 9.5, underweightTo: 10.4, normalFrom: 10.5, normalTo: 16.9, overweight: 17.0 },
-  31: { severelyCutoff: 9.5, underweightFrom: 9.6, underweightTo: 10.6, normalFrom: 10.7, normalTo: 17.1, overweight: 17.2 },
-  32: { severelyCutoff: 9.6, underweightFrom: 9.7, underweightTo: 10.7, normalFrom: 10.8, normalTo: 17.4, overweight: 17.5 },
-  33: { severelyCutoff: 9.7, underweightFrom: 9.8, underweightTo: 10.8, normalFrom: 10.9, normalTo: 17.6, overweight: 17.7 },
-  34: { severelyCutoff: 9.8, underweightFrom: 9.9, underweightTo: 10.9, normalFrom: 11.0, normalTo: 17.8, overweight: 17.9 },
-  35: { severelyCutoff: 9.9, underweightFrom: 10.0, underweightTo: 11.1, normalFrom: 11.2, normalTo: 18.1, overweight: 18.2 },
-  36: { severelyCutoff: 10.0, underweightFrom: 10.1, underweightTo: 11.2, normalFrom: 11.3, normalTo: 18.3, overweight: 18.4 },
-  37: { severelyCutoff: 10.1, underweightFrom: 10.2, underweightTo: 11.3, normalFrom: 11.4, normalTo: 18.6, overweight: 18.7 },
-  38: { severelyCutoff: 10.2, underweightFrom: 10.3, underweightTo: 11.4, normalFrom: 11.5, normalTo: 18.8, overweight: 18.9 },
-  39: { severelyCutoff: 10.3, underweightFrom: 10.4, underweightTo: 11.5, normalFrom: 11.6, normalTo: 19.0, overweight: 19.1 },
-  40: { severelyCutoff: 10.4, underweightFrom: 10.5, underweightTo: 11.7, normalFrom: 11.8, normalTo: 19.3, overweight: 19.4 },
-  41: { severelyCutoff: 10.5, underweightFrom: 10.6, underweightTo: 11.8, normalFrom: 11.9, normalTo: 19.5, overweight: 19.6 },
-  42: { severelyCutoff: 10.6, underweightFrom: 10.7, underweightTo: 11.9, normalFrom: 12.0, normalTo: 19.7, overweight: 19.8 },
-  43: { severelyCutoff: 10.7, underweightFrom: 10.8, underweightTo: 12.0, normalFrom: 12.1, normalTo: 20.0, overweight: 20.1 },
-  44: { severelyCutoff: 10.8, underweightFrom: 10.9, underweightTo: 12.1, normalFrom: 12.2, normalTo: 20.2, overweight: 20.3 },
-  45: { severelyCutoff: 10.9, underweightFrom: 11.0, underweightTo: 12.3, normalFrom: 12.4, normalTo: 20.5, overweight: 20.6 },
-  46: { severelyCutoff: 11.0, underweightFrom: 11.1, underweightTo: 12.4, normalFrom: 12.5, normalTo: 20.7, overweight: 20.8 },
-  47: { severelyCutoff: 11.1, underweightFrom: 11.2, underweightTo: 12.5, normalFrom: 12.6, normalTo: 20.9, overweight: 21.0 },
-  48: { severelyCutoff: 11.2, underweightFrom: 11.3, underweightTo: 12.6, normalFrom: 12.7, normalTo: 21.2, overweight: 21.3 },
-  49: { severelyCutoff: 11.3, underweightFrom: 11.4, underweightTo: 12.7, normalFrom: 12.8, normalTo: 21.4, overweight: 21.5 },
-  50: { severelyCutoff: 11.4, underweightFrom: 11.5, underweightTo: 12.8, normalFrom: 12.9, normalTo: 21.7, overweight: 21.8 },
-  51: { severelyCutoff: 11.5, underweightFrom: 11.6, underweightTo: 13.0, normalFrom: 13.1, normalTo: 21.9, overweight: 22.0 },
-  52: { severelyCutoff: 11.6, underweightFrom: 11.7, underweightTo: 13.1, normalFrom: 13.2, normalTo: 22.2, overweight: 22.3 },
-  53: { severelyCutoff: 11.7, underweightFrom: 11.8, underweightTo: 13.2, normalFrom: 13.3, normalTo: 22.4, overweight: 22.5 },
-  54: { severelyCutoff: 11.8, underweightFrom: 11.9, underweightTo: 13.3, normalFrom: 13.4, normalTo: 22.7, overweight: 22.8 },
-  55: { severelyCutoff: 11.9, underweightFrom: 12.0, underweightTo: 13.4, normalFrom: 13.5, normalTo: 22.9, overweight: 23.0 },
-  56: { severelyCutoff: 12.0, underweightFrom: 12.1, underweightTo: 13.5, normalFrom: 13.6, normalTo: 23.2, overweight: 23.3 },
-  57: { severelyCutoff: 12.1, underweightFrom: 12.2, underweightTo: 13.6, normalFrom: 13.7, normalTo: 23.4, overweight: 23.5 },
-  58: { severelyCutoff: 12.2, underweightFrom: 12.3, underweightTo: 13.7, normalFrom: 13.8, normalTo: 23.7, overweight: 23.8 },
-  59: { severelyCutoff: 12.3, underweightFrom: 12.4, underweightTo: 13.9, normalFrom: 14.0, normalTo: 23.9, overweight: 24.0 },
-  60: { severelyCutoff: 12.4, underweightFrom: 12.5, underweightTo: 14.0, normalFrom: 14.1, normalTo: 24.2, overweight: 24.3 },
-  61: { severelyCutoff: 12.7, underweightFrom: 12.8, underweightTo: 14.3, normalFrom: 14.4, normalTo: 24.3, overweight: 24.4 },
-  62: { severelyCutoff: 12.8, underweightFrom: 12.9, underweightTo: 14.4, normalFrom: 14.5, normalTo: 24.4, overweight: 24.5 },
-  63: { severelyCutoff: 13.0, underweightFrom: 13.1, underweightTo: 14.5, normalFrom: 14.6, normalTo: 24.7, overweight: 24.8 },
-  64: { severelyCutoff: 13.1, underweightFrom: 13.2, underweightTo: 14.7, normalFrom: 14.8, normalTo: 24.9, overweight: 25.0 },
-  65: { severelyCutoff: 13.2, underweightFrom: 13.3, underweightTo: 14.8, normalFrom: 14.9, normalTo: 25.2, overweight: 25.3 },
-  66: { severelyCutoff: 13.3, underweightFrom: 13.4, underweightTo: 14.9, normalFrom: 15.0, normalTo: 25.5, overweight: 25.6 },
-  67: { severelyCutoff: 13.4, underweightFrom: 13.5, underweightTo: 15.1, normalFrom: 15.2, normalTo: 25.7, overweight: 25.8 },
-  68: { severelyCutoff: 13.6, underweightFrom: 13.7, underweightTo: 15.2, normalFrom: 15.3, normalTo: 26.0, overweight: 26.1 },
-  69: { severelyCutoff: 13.7, underweightFrom: 13.8, underweightTo: 15.3, normalFrom: 15.4, normalTo: 26.3, overweight: 26.4 },
-  70: { severelyCutoff: 13.8, underweightFrom: 13.9, underweightTo: 15.5, normalFrom: 15.6, normalTo: 26.6, overweight: 26.7 },
-  71: { severelyCutoff: 13.9, underweightFrom: 14.0, underweightTo: 15.6, normalFrom: 15.7, normalTo: 26.8, overweight: 26.9 }
-};
+"use client";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
+import type { NutritionalStatusType } from "@/form-schema/chr-schema/chr-schema";
+import { LFA_GIRLS_TABLE, LFA_BOYS_TABLE, WFA_BOYS_TABLE, WFA_GIRLS_TABLE, WFH_BOYS_TABLE, WFH_GIRLS_TABLE } from "@/pages/healthServices/childservices/tables/who-tables";
 
 interface NutritionalStatusCalculatorProps {
-  weight?: number
-  height?: number
-  age?: string
-  muac?: number
-  onStatusChange: (status: NutritionalStatusType) => void
-  initialStatus?: NutritionalStatusType
-  gender?: 'Male' | 'Female'
+  weight?: number;
+  height?: number;
+  age?: string;
+  muac?: number;
+  onStatusChange: (status: NutritionalStatusType) => void;
+  initialStatus?: NutritionalStatusType;
+  gender?: "Male" | "Female";
 }
 
 interface AgeDetails {
@@ -570,42 +23,34 @@ interface AgeDetails {
   totalDays: number;
 }
 
-export function NutritionalStatusCalculator({
-  weight,
-  height,
-  age,
-  muac,
-  onStatusChange,
-  initialStatus,
-  gender = 'Male'
-}: NutritionalStatusCalculatorProps) {
+export function NutritionalStatusCalculator({ weight, height, age, muac, onStatusChange, initialStatus, gender = "Male" }: NutritionalStatusCalculatorProps) {
   const [nutritionalStatus, setNutritionalStatus] = useState<NutritionalStatusType>(
     initialStatus || {
       wfa: "",
       lhfa: "",
       wfh: "",
       muac: undefined,
-      muac_status: "",
-    },
-  )
-  const [manualMuac, setManualMuac] = useState<number | undefined>(muac)
+      muac_status: ""
+    }
+  );
+  const [manualMuac, setManualMuac] = useState<number | undefined>(muac);
 
   const parseAge = (ageStr: string): AgeDetails => {
     if (!ageStr) return { days: 0, weeks: 0, months: 0, totalDays: 0 };
-    
+
     const yearsMatch = ageStr.match(/(\d+)\s*year/i);
     const monthsMatch = ageStr.match(/(\d+)\s*month/i);
     const weeksMatch = ageStr.match(/(\d+)\s*week/i);
     const daysMatch = ageStr.match(/(\d+)\s*day/i);
-    
+
     const years = yearsMatch ? parseInt(yearsMatch[1]) : 0;
     const months = monthsMatch ? parseInt(monthsMatch[1]) : 0;
     const weeks = weeksMatch ? parseInt(weeksMatch[1]) : 0;
     const days = daysMatch ? parseInt(daysMatch[1]) : 0;
-    
-    const totalMonths = months + (years * 12);
-    const totalDays = days + (weeks * 7) + (totalMonths * 30.44);
-    
+
+    const totalMonths = months + years * 12;
+    const totalDays = days + weeks * 7 + totalMonths * 30.44;
+
     return {
       days,
       weeks,
@@ -617,113 +62,89 @@ export function NutritionalStatusCalculator({
   // Weight-for-Age (WFA) calculation using WHO tables
   const calculateWFA = (weight: number, age: AgeDetails): string => {
     if (!weight || age.months > 71) return ""; // WFA only valid up to 71 months
-    
-    const table = gender === 'Female' ? WFA_GIRLS_TABLE : WFA_BOYS_TABLE;
+
+    const table = gender === "Female" ? WFA_GIRLS_TABLE : WFA_BOYS_TABLE;
     const ageInMonths = Math.floor(age.months);
-    
+
     // Get the reference values for this age
     const referenceData = table[ageInMonths];
     if (!referenceData) return "";
-    
-    console.log('WFA Calculation:', {
-      weight,
-      ageInMonths,
-      gender,
-      referenceData,
-      classification: weight <= referenceData.severelyCutoff ? 'SUW' :
-                     weight <= referenceData.underweightTo ? 'UW' :
-                     weight >= referenceData.overweight ? 'OW' : 'N'
-    });
-    
+
     // Classify based on WHO cutoff points
     if (weight <= referenceData.severelyCutoff) return "SUW"; // Severely underweight (< -3 SD)
-    if (weight <= referenceData.underweightTo) return "UW";   // Underweight (-3 to -2 SD)
-    if (weight >= referenceData.overweight) return "OW";      // Overweight (> +2 SD)
-    return "N";                                               // Normal (-2 to +2 SD)
+    if (weight <= referenceData.underweightTo) return "UW"; // Underweight (-3 to -2 SD)
+    if (weight >= referenceData.overweight) return "OW"; // Overweight (> +2 SD)
+    return "N"; // Normal (-2 to +2 SD)
   };
 
   // Length/Height-for-Age (L/HFA) calculation using WHO tables
   const calculateLHFA = (height: number, age: AgeDetails): string => {
     if (!height || age.months > 71) return ""; // L/HFA only valid up to 71 months
-    
-    const table = gender === 'Female' ? LFA_GIRLS_TABLE : LFA_BOYS_TABLE;
+
+    const table = gender === "Female" ? LFA_GIRLS_TABLE : LFA_BOYS_TABLE;
     const ageInMonths = Math.floor(age.months);
-    
+
     // Get the reference values for this age
     const referenceData = table[ageInMonths];
     if (!referenceData) return "";
-    console.log("age", age.months)
-  
-    console.log('L/HFA Calculation:', {
-      height,
-      ageInMonths,
-      gender,
-      referenceData,
-      classification: height <= referenceData.severelyCutoff ? 'SST' :
-                     height <= referenceData.stuntedTo ? 'ST' :
-                     height >= referenceData.tall ? 'T' : 'N'
-    });
-    
+
     // Classify based on WHO cutoff points
     if (height <= referenceData.severelyCutoff) return "SST"; // Severely stunted (< -3 SD)
-    if (height <= referenceData.stuntedTo) return "ST";       // Stunted (-3 to -2 SD)
-    if (height >= referenceData.tall) return "T";             // Tall (> +2 SD)
-    return "N";                                               // Normal (-2 to +2 SD)
+    if (height <= referenceData.stuntedTo) return "ST"; // Stunted (-3 to -2 SD)
+    if (height >= referenceData.tall) return "T"; // Tall (> +2 SD)
+    return "N"; // Normal (-2 to +2 SD)
   };
 
   // Weight-for-Height (WFH) calculation using WHO tables
   const calculateWFH = (weight: number, height: number): string => {
     if (!weight || !height) return "";
-    
+
     // Only valid for ages 24-60 months (heights roughly 65-120 cm)
     if (height < 65 || height > 120) return "";
-    
-    const table = gender === 'Female' ? WFH_GIRLS_TABLE : WFH_BOYS_TABLE;
-    
+
+    const table = gender === "Female" ? WFH_GIRLS_TABLE : WFH_BOYS_TABLE;
+
     // Find the closest height in the table (round to nearest 0.5 cm)
     const roundedHeight = Math.round(height * 2) / 2;
     const referenceData = table[roundedHeight];
-    
+
     if (!referenceData) {
       // If exact height not found, try nearest values
-      const availableHeights = Object.keys(table).map(Number).sort((a, b) => a - b);
-      const closestHeight = availableHeights.reduce((prev, curr) => 
-        Math.abs(curr - height) < Math.abs(prev - height) ? curr : prev
-      );
+      const availableHeights = Object.keys(table)
+        .map(Number)
+        .sort((a, b) => a - b);
+      const closestHeight = availableHeights.reduce((prev, curr) => (Math.abs(curr - height) < Math.abs(prev - height) ? curr : prev));
       const closestData = table[closestHeight];
       if (!closestData) return "";
-      
 
       // Classify based on WHO WFH cutoff points
-      if (weight <= closestData.severelyCutoff) return "SW";        // Severely wasted (< -3 SD)
-      if (weight <= closestData.wastedTo) return "W";               // Wasted (-3 to -2 SD)
+      if (weight <= closestData.severelyCutoff) return "SW"; // Severely wasted (< -3 SD)
+      if (weight <= closestData.wastedTo) return "W"; // Wasted (-3 to -2 SD)
       if (weight >= closestData.overweightFrom && weight <= closestData.overweightTo) return "OW"; // Overweight (+2 to +3 SD)
-      if (weight >= closestData.obeseFrom) return "OB";             // Obese (> +3 SD)
-      return "N";                                                   // Normal (-2 to +2 SD)
+      if (weight >= closestData.obeseFrom) return "OB"; // Obese (> +3 SD)
+      return "N"; // Normal (-2 to +2 SD)
     }
-    
- 
+
     // Classify based on WHO WFH cutoff points
-    if (weight <= referenceData.severelyCutoff) return "SW";        // Severely wasted (< -3 SD)
-    if (weight <= referenceData.wastedTo) return "W";               // Wasted (-3 to -2 SD)
+    if (weight <= referenceData.severelyCutoff) return "SW"; // Severely wasted (< -3 SD)
+    if (weight <= referenceData.wastedTo) return "W"; // Wasted (-3 to -2 SD)
     if (weight >= referenceData.overweightFrom && weight <= referenceData.overweightTo) return "OW"; // Overweight (+2 to +3 SD)
-    if (weight >= referenceData.obeseFrom) return "OB";             // Obese (> +3 SD)
-    return "N";                                                     // Normal (-2 to +2 SD)
+    if (weight >= referenceData.obeseFrom) return "OB"; // Obese (> +3 SD)
+    return "N"; // Normal (-2 to +2 SD)
   };
 
   // MUAC classification
   const calculateMUACStatus = (muacValue: number, ageInMonths: number): string => {
     if (!muacValue || ageInMonths < 6 || ageInMonths > 59) return "";
-    
-    
-    if (muacValue < 11.5) return "SAM";    // Severe Acute Malnutrition
-    if (muacValue < 12.5) return "MAM";    // Moderate Acute Malnutrition
-    return "N";                            // Normal
+
+    if (muacValue < 11.5) return "SAM"; // Severe Acute Malnutrition
+    if (muacValue < 12.5) return "MAM"; // Moderate Acute Malnutrition
+    return "N"; // Normal
   };
 
   useEffect(() => {
     const ageDetails = parseAge(age || "");
-    
+
     const newStatus: NutritionalStatusType = {
       wfa: weight ? (calculateWFA(weight, ageDetails) as "" | "N" | "UW" | "SUW" | "OW" | undefined) : "",
       lhfa: height ? (calculateLHFA(height, ageDetails) as "" | "N" | "ST" | "SST" | "T" | undefined) : "",
@@ -731,7 +152,7 @@ export function NutritionalStatusCalculator({
       muac: manualMuac,
       muac_status: manualMuac ? (calculateMUACStatus(manualMuac, ageDetails.months) as "" | "N" | "MAM" | "SAM" | undefined) : ""
     };
-    
+
     setNutritionalStatus(newStatus);
     onStatusChange(newStatus);
   }, [weight, height, age, manualMuac, onStatusChange, gender]);
@@ -784,32 +205,32 @@ export function NutritionalStatusCalculator({
   const getDetailedDescription = (indicator: string, status: string) => {
     const descriptions = {
       wfa: {
-        "SUW": "Severely underweight (below -3 SD cutoff)",
-        "UW": "Underweight (-3 to -2 SD range)",
-        "N": "Normal weight for age (-2 to +2 SD)",
-        "OW": "Overweight (above +2 SD cutoff)"
+        SUW: "Severely underweight (below -3 SD cutoff)",
+        UW: "Underweight (-3 to -2 SD range)",
+        N: "Normal weight for age (-2 to +2 SD)",
+        OW: "Overweight (above +2 SD cutoff)"
       },
       lhfa: {
-        "SST": "Severely stunted (z-score < -3)",
-        "ST": "Stunted (z-score -3 to -2)",
-        "N": "Normal height for age (z-score -2 to +2)",
-        "T": "Tall for age (z-score > +2)"
+        SST: "Severely stunted (z-score < -3)",
+        ST: "Stunted (z-score -3 to -2)",
+        N: "Normal height for age (z-score -2 to +2)",
+        T: "Tall for age (z-score > +2)"
       },
       wfh: {
-        "SW": "Severely wasted (z-score < -3)",
-        "W": "Wasted (z-score -3 to -2)",
-        "N": "Normal weight for height (z-score -2 to +2)",
-        "OW": "Overweight (z-score +2 to +3)",
-        "OB": "Obese (z-score > +3)"
+        SW: "Severely wasted (z-score < -3)",
+        W: "Wasted (z-score -3 to -2)",
+        N: "Normal weight for height (z-score -2 to +2)",
+        OW: "Overweight (z-score +2 to +3)",
+        OB: "Obese (z-score > +3)"
       },
       muac: {
-        "SAM": "Severe Acute Malnutrition (MUAC < 11.5 cm)",
-        "MAM": "Moderate Acute Malnutrition (MUAC 11.5-12.4 cm)",
-        "N": "Normal (MUAC ≥ 12.5 cm)"
+        SAM: "Severe Acute Malnutrition (MUAC < 11.5 cm)",
+        MAM: "Moderate Acute Malnutrition (MUAC 11.5-12.4 cm)",
+        N: "Normal (MUAC ≥ 12.5 cm)"
       }
     };
-    
-    return descriptions[indicator as keyof typeof descriptions]?.[status as keyof typeof descriptions[keyof typeof descriptions]] || "No data";
+
+    return descriptions[indicator as keyof typeof descriptions]?.[status as keyof (typeof descriptions)[keyof typeof descriptions]] || "No data";
   };
 
   return (
@@ -840,9 +261,7 @@ export function NutritionalStatusCalculator({
                 onChange={(e) => setManualMuac(e.target.value ? Number.parseFloat(e.target.value) : undefined)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                * Manual input required (valid for children 6-59 months)
-              </p>
+              <p className="mt-1 text-xs text-gray-500">* Manual input required (valid for children 6-59 months)</p>
             </div>
           </div>
         </div>
@@ -857,11 +276,7 @@ export function NutritionalStatusCalculator({
                 {getStatusIcon(nutritionalStatus.wfa || "")}
                 <span className="font-medium">{nutritionalStatus.wfa || "N/A"}</span>
               </div>
-              <p className="text-xs mt-1">
-                {nutritionalStatus.wfa 
-                  ? getDetailedDescription("wfa", nutritionalStatus.wfa)
-                  : "No data available"}
-              </p>
+              <p className="text-xs mt-1">{nutritionalStatus.wfa ? getDetailedDescription("wfa", nutritionalStatus.wfa) : "No data available"}</p>
               {weight && <p className="text-xs mt-1 font-medium">{weight} kg</p>}
             </div>
           </div>
@@ -874,11 +289,7 @@ export function NutritionalStatusCalculator({
                 {getStatusIcon(nutritionalStatus.lhfa || "")}
                 <span className="font-medium">{nutritionalStatus.lhfa || "N/A"}</span>
               </div>
-              <p className="text-xs mt-1">
-                {nutritionalStatus.lhfa
-                  ? getDetailedDescription("lhfa", nutritionalStatus.lhfa)
-                  : "No data available"}
-              </p>
+              <p className="text-xs mt-1">{nutritionalStatus.lhfa ? getDetailedDescription("lhfa", nutritionalStatus.lhfa) : "No data available"}</p>
               {height && <p className="text-xs mt-1 font-medium">{height} cm</p>}
             </div>
           </div>
@@ -891,12 +302,12 @@ export function NutritionalStatusCalculator({
                 {getStatusIcon(nutritionalStatus.wfh || "")}
                 <span className="font-medium">{nutritionalStatus.wfh || "N/A"}</span>
               </div>
-              <p className="text-xs mt-1">
-                {nutritionalStatus.wfh
-                  ? getDetailedDescription("wfh", nutritionalStatus.wfh)
-                  : "No data available"}
-              </p>
-              {weight && height && <p className="text-xs mt-1 font-medium">{weight}kg / {height}cm</p>}
+              <p className="text-xs mt-1">{nutritionalStatus.wfh ? getDetailedDescription("wfh", nutritionalStatus.wfh) : "No data available"}</p>
+              {weight && height && (
+                <p className="text-xs mt-1 font-medium">
+                  {weight}kg / {height}cm
+                </p>
+              )}
             </div>
           </div>
 
@@ -908,11 +319,7 @@ export function NutritionalStatusCalculator({
                 {getStatusIcon(nutritionalStatus.muac_status || "")}
                 <span className="font-medium">{nutritionalStatus.muac_status || "N/A"}</span>
               </div>
-              <p className="text-xs mt-1">
-                {nutritionalStatus.muac_status
-                  ? getDetailedDescription("muac", nutritionalStatus.muac_status)
-                  : "No data available"}
-              </p>
+              <p className="text-xs mt-1">{nutritionalStatus.muac_status ? getDetailedDescription("muac", nutritionalStatus.muac_status) : "No data available"}</p>
               {manualMuac && <p className="text-xs mt-1 font-medium">{manualMuac} cm</p>}
             </div>
           </div>

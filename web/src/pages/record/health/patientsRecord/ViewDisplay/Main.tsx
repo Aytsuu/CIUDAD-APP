@@ -20,7 +20,7 @@ import { calculateAge } from "@/helpers/ageCalculator"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
-import {PatientData,ChildHealthRecord} from "./types"
+import { PatientData } from "./types"
 import PersonalInfoTab from "./PersonalInfoTab"
 import Records from "./Records"
 import VisitHistoryTab from "./VisitHistoryTab"
@@ -28,7 +28,7 @@ import VisitHistoryTab from "./VisitHistoryTab"
 // fetch queries
 import { useUpdatePatient } from "../queries/update"
 import { usePatientDetails } from "../queries/fetch"
-import { useChildHealthRecords } from "../queries/fetch"
+import { useChildData } from "../queries/fetch"
 import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
@@ -44,7 +44,7 @@ export default function ViewPatientRecord() {
   const { patientId } = location.state || {}
 
   const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "")
-  const { data: rawChildHealthRecords } = useChildHealthRecords(patientId);
+  const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
@@ -64,30 +64,30 @@ export default function ViewPatientRecord() {
   const updatePatientData = useUpdatePatient()
 
   const currentPatient = useMemo(() => {
-    if (!patientsData || !patientId) return null
+    if (!patientsData || !patientId) return null;
     if ("pat_id" in patientsData && patientsData.pat_id === patientId) {
-      return patientsData as PatientData
+      return patientsData as PatientData;
     }
-    const patientArray = Array.isArray(patientsData) ? patientsData : (patientsData.results ?? patientsData.data ?? [])
-    return patientArray.find((patient: PatientData) => patient.pat_id === patientId) ?? null
-  }, [patientsData, patientId])
+    const patientArray = Array.isArray(patientsData) ? patientsData : patientsData.results ?? patientsData.data ?? [];
+    return patientArray.find((patient: PatientData) => patient.pat_id === patientId) ?? null;
+  }, [patientsData, patientId]);
 
   useEffect(() => {
     if (currentPatient) {
-      console.log("Current Patient Data:", currentPatient)
-      console.log("Address Object:", currentPatient.address)
+      console.log("Current Patient Data:", currentPatient);
+      console.log("Address Object:", currentPatient.address);
       console.log("Individual Address Fields:", {
         street: currentPatient.address?.add_street,
         barangay: currentPatient.address?.add_barangay,
         city: currentPatient.address?.add_city,
         province: currentPatient.address?.add_province,
-        sitio: currentPatient.address?.add_sitio,
-      })
+        sitio: currentPatient.address?.add_sitio
+      });
     }
-  }, [currentPatient])
+  }, [currentPatient]);
 
   const patientData = useMemo(() => {
-    if (!currentPatient) return null
+    if (!currentPatient) return null;
     return {
       lastName: currentPatient.personal_info.per_lname,
       firstName: currentPatient.personal_info.per_fname,
@@ -102,16 +102,16 @@ export default function ViewPatientRecord() {
         sitio: currentPatient.address?.add_sitio || "",
         barangay: currentPatient.address?.add_barangay || "",
         city: currentPatient.address?.add_city || "",
-        province: currentPatient.address?.add_province || "",
+        province: currentPatient.address?.add_province || ""
       },
       philhealthId: currentPatient.personal_info.philhealth_id || "",
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
       chronicConditions: currentPatient.chronicConditions ?? "N/A",
       lastVisit: currentPatient.lastVisit ?? "",
-      visits: currentPatient.visits ?? [],
-    }
-  }, [currentPatient])
+      visits: currentPatient.visits ?? []
+    };
+  }, [currentPatient]);
 
   const form = useForm({
     resolver: zodResolver(patientRecordSchema),
@@ -124,36 +124,28 @@ export default function ViewPatientRecord() {
       dateOfBirth: "",
       patientType: "",
       houseNo: "",
-      address: { street: "", sitio: "", barangay: "", city: "", province: "" },
-    },
-  })
+      address: { street: "", sitio: "", barangay: "", city: "", province: "" }
+    }
+  });
 
   useEffect(() => {
-    if (patientData) form.reset(patientData)
-  }, [patientData, form])
+    if (patientData) form.reset(patientData);
+  }, [patientData, form]);
 
-  const getInitials = () => (patientData ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}` : "")
-
-
+  const getInitials = () => (patientData ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}` : "");
 
   const getFullAddress = () => {
-    if (!currentPatient || !currentPatient.address) return "No address provided"
-    const addressParts = [
-      currentPatient.address.add_street,
-      currentPatient.address.add_sitio,
-      currentPatient.address.add_barangay,
-      currentPatient.address.add_city,
-      currentPatient.address.add_province,
-    ].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a")
-    return addressParts.length > 0 ? addressParts.join(", ") : "No address provided"
-  }
+    if (!currentPatient || !currentPatient.address) return "No address provided";
+    const addressParts = [currentPatient.address.add_street, currentPatient.address.add_sitio, currentPatient.address.add_barangay, currentPatient.address.add_city, currentPatient.address.add_province].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a");
+    return addressParts.length > 0 ? addressParts.join(", ") : "No address provided";
+  };
 
   const getAddressField = (field: string | undefined | null): string => {
     if (!field || field.trim() === "" || field.toLowerCase() === "n/a") {
-      return ""
+      return "";
     }
-    return field.trim()
-  }
+    return field.trim();
+  };
 
   const patientLinkData = useMemo(() => {
     const linkData = {
@@ -166,12 +158,12 @@ export default function ViewPatientRecord() {
         add_barangay: getAddressField(currentPatient?.address?.add_barangay),
         add_city: getAddressField(currentPatient?.address?.add_city),
         add_province: getAddressField(currentPatient?.address?.add_province),
-        add_sitio: getAddressField(currentPatient?.address?.add_sitio),
+        add_sitio: getAddressField(currentPatient?.address?.add_sitio)
       },
       households: [
         {
-          hh_id: currentPatient?.households[0]?.hh_id ?? patientData?.houseNo ?? "",
-        },
+          hh_id: currentPatient?.households[0]?.hh_id ?? patientData?.houseNo ?? ""
+        }
       ],
       personal_info: {
         per_fname: currentPatient?.personal_info.per_fname ?? patientData?.firstName ?? "",
@@ -183,43 +175,42 @@ export default function ViewPatientRecord() {
       },
     }
 
-    return linkData
-  }, [currentPatient, patientData, patientId])
+    return linkData;
+  }, [currentPatient, patientData, patientId]);
 
   const formatFullAddressForChildHealth = (address: any): string => {
-    if (!address) return "No address provided"
-    const addressParts = [
-      address.add_street,
-      address.add_sitio,
-      address.add_barangay,
-      address.add_city,
-      address.add_province,
-    ].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a")
-    return addressParts.length > 0 ? addressParts.join(", ") : "No address provided"
-  }
+    if (!address) return "No address provided";
+    const addressParts = [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province].filter((part) => part && part.trim() !== "" && part.toLowerCase() !== "n/a");
+    return addressParts.length > 0 ? addressParts.join(", ") : "No address provided";
+  };
 
-  const formatChildHealthData = React.useCallback((): ChildHealthRecord[] => {
-    if (!rawChildHealthRecords || !rawChildHealthRecords.child_health_histories) return []
+  const formatChildHealthData = React.useCallback((): any[] => {
+    if (!rawChildHealthRecords || !rawChildHealthRecords.child_health_histories) return [];
+
     return rawChildHealthRecords.child_health_histories.map((record: any) => {
-      const chrecDetails = record.chrec_details || {}
-      const patrecDetails = chrecDetails.patrec_details || {}
-      const patDetails = patrecDetails.pat_details || {}
-      const childInfo = patDetails.personal_info || {}
-      const addressInfo = patDetails.address || {}
-      const familyHeadInfo = patDetails.family_head_info || {}
-      const motherInfo = familyHeadInfo.family_heads?.mother?.personal_info || {}
-      const fatherInfo = familyHeadInfo.family_heads?.father?.personal_info || {}
-      const vitalSigns = record.child_health_vital_signs?.[0]?.bm_details || {}
+      const chrecDetails = record.chrec_details || {};
+      const patrecDetails = chrecDetails.patrec_details || {};
+      const patDetails = patrecDetails.pat_details || {};
+      const childInfo = patDetails.personal_info || {}; // Ensure this is never null
+      const addressInfo = patDetails.address || {};
+      const familyHeadInfo = patDetails.family_head_info || {};
+      const motherInfo = familyHeadInfo.family_heads?.mother?.personal_info || {};
+      const fatherInfo = familyHeadInfo.family_heads?.father?.personal_info || {};
+      const vitalSigns = record.child_health_vital_signs?.[0]?.bm_details || {};
+
+      // Add null checks for critical properties
+      const dob = childInfo?.per_dob || "";
+      const age = dob ? calculateAge(dob).toString() : "";
 
       return {
         chrec_id: chrecDetails.chrec_id || 0,
         pat_id: patDetails.pat_id || "",
-        fname: childInfo.per_fname || "",
-        lname: childInfo.per_lname || "",
-        mname: childInfo.per_mname || "",
-        sex: childInfo.per_sex || "",
-        age: calculateAge(childInfo.per_dob).toString(),
-        dob: childInfo.per_dob || "",
+        fname: childInfo?.per_fname || "",
+        lname: childInfo?.per_lname || "",
+        mname: childInfo?.per_mname || "",
+        sex: childInfo?.per_sex || "",
+        age: age,
+        dob: dob,
         householdno: patDetails.households?.[0]?.hh_id || "",
         street: addressInfo.add_street || "",
         sitio: addressInfo.add_sitio || "",
@@ -247,22 +238,20 @@ export default function ViewPatientRecord() {
         place_of_delivery_type: chrecDetails.place_of_delivery_type || "",
         pod_location: chrecDetails.pod_location || "",
         birth_order: chrecDetails.birth_order || 0,
-        tt_status: record.tt_status || "",
-      }
-    })
-    
-  }, [rawChildHealthRecords])
+        tt_status: record.tt_status || ""
+      };
+    });
+  }, [rawChildHealthRecords]);
 
-
-  const formattedChildHealthData = formatChildHealthData()
+  const formattedChildHealthData = formatChildHealthData();
 
   const handleEdit = () => {
-    setIsEditable(true)
-  }
+    setIsEditable(true);
+  };
 
   const handleSaveEdit = async () => {
     try {
-      const formData = form.getValues()
+      const formData = form.getValues();
       if (!currentPatient?.trans_id) {
         showErrorToast("Cannot update: Missing transient ID.")
         return
@@ -297,7 +286,7 @@ export default function ViewPatientRecord() {
       console.error("Error saving patient data: ", error)
       showErrorToast("Failed to update patient data. Please try again.")
     }
-  }
+  };
 
   const handleCancelEdit = () => {
     if (patientData) form.reset(patientData)
@@ -307,10 +296,15 @@ export default function ViewPatientRecord() {
 
   if (isLoading) {
     return (
-        <div className="flex items-center justify-center">
+      <LayoutWithBack 
+        title="Patient Information and Records"
+        description="View patient information, medical records, and follow-up visits"
+      >
+        <div className="flex h-full items-center justify-center">
           <Loader2 className="animate-spin" /> Loading...
         </div>
-    )
+      </LayoutWithBack>
+            )
   }
 
   if (isError && !patientId) {
@@ -331,7 +325,7 @@ export default function ViewPatientRecord() {
           Go Back
         </Button>
       </div>
-    )
+    );
   }
 
   const isTransient = patientData?.patientType?.toLowerCase() === "transient"
@@ -389,43 +383,21 @@ export default function ViewPatientRecord() {
           contentClassName="p-4"
         />
       </div>
-      
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as "personal" | "medical" | "visits")}
-        className="ml-2"
-      >
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "personal" | "medical" | "visits")} className="ml-2">
         <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
-          <TabsTrigger
-            value="personal"
-            className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent ml-6"
-          >
+          <TabsTrigger value="personal" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent ml-6">
             Personal Information
           </TabsTrigger>
-          <TabsTrigger
-            value="medical"
-            className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
-          >
+          <TabsTrigger value="medical" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent">
             Records
           </TabsTrigger>
-          <TabsTrigger
-            value="visits"
-            className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
-          >
+          <TabsTrigger value="visits" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent">
             Follow up Visits
           </TabsTrigger>
         </TabsList>
 
-        {activeTab === "personal" && (
-          <PersonalInfoTab
-            form={form}
-            isEditable={isEditable}
-            isTransient={isTransient}
-            patientData={patientData}
-            handleSaveEdit={handleSaveEdit}
-            handleCancelEdit={handleCancelEdit}
-          />
-        )}
+        {activeTab === "personal" && <PersonalInfoTab form={form} isEditable={isEditable} isTransient={isTransient} patientData={patientData} handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} />}
 
         {activeTab === "medical" && (
           <Records
@@ -441,9 +413,7 @@ export default function ViewPatientRecord() {
           />
         )}
 
-        {activeTab === "visits" && (
-          <VisitHistoryTab completedData={completedData} pendingData={pendingData} />
-        )}
+        {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} />}
       </Tabs>
     </div>
     </LayoutWithBack>

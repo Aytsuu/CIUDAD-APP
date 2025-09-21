@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import { useCallback, useEffect, useState } from "react"
@@ -37,25 +37,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import MedicineDisplay from "@/components/ui/medicine-display"
 
 type PostpartumTableType = {
-  date: string
-  lochialDischarges?: string
-  bp: string
-  feeding: string
-  findings: string
-  nursesNotes: string | "None"
-}
+  date: string;
+  lochialDischarges?: string;
+  bp: string;
+  feeding: string;
+  findings: string;
+  nursesNotes: string | "None";
+};
 
 const calculateAge = (dob: string): number => {
-  const birthDate = new Date(dob)
-  const today = new Date()
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const monthDiff = today.getMonth() - birthDate.getMonth()
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
 
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--
+    age--;
   }
-  return age
-}
+  return age;
+};
 
 export default function PostpartumFormFirstPg({
   form,
@@ -164,8 +164,8 @@ export default function PostpartumFormFirstPg({
     setSelectedPatIdDisplay(patientId)
 
     if (!patient) {
-      setSelectedPatientId("")
-      setSelectedPatient(null)
+      setSelectedPatientId("");
+      setSelectedPatient(null);
       form.reset({
         mothersPersonalInfo: {
           familyNo: "",
@@ -182,8 +182,8 @@ export default function PostpartumFormFirstPg({
             sitio: "",
             barangay: "",
             city: "",
-            province: "",
-          },
+            province: ""
+          }
         },
         postpartumInfo: {
           dateOfDelivery: "",
@@ -199,20 +199,20 @@ export default function PostpartumFormFirstPg({
           dateBfInitiated: "",
           timeBfInitiated: "",
           nextVisitDate: "",
-          lochialDischarges: "",
+          lochialDischarges: ""
         },
         postpartumTable: {
           date: today,
           bp: {
             systolic: "",
-            diastolic: "",
+            diastolic: ""
           },
           feeding: "",
           findings: "",
-          nursesNotes: "",
-        },
-      })
-      return
+          nursesNotes: ""
+        }
+      });
+      return;
     }
 
     const actualPatientId = patient.pat_id
@@ -223,15 +223,15 @@ export default function PostpartumFormFirstPg({
       return
     }
 
-    setSelectedPatientId(actualPatientId)
-    setSelectedPatient(patient)
+    setSelectedPatientId(actualPatientId);
+    setSelectedPatient(patient);
 
     if (patient && patient.personal_info) {
-      const patientRole = patient.family?.fc_role?.toLowerCase()
-      const personalInfo = patient.personal_info
-      const address = patient.address
-      const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info
-      const spouse = patient.spouse_info?.spouse_info
+      const patientRole = patient.family?.fc_role?.toLowerCase();
+      const personalInfo = patient.personal_info;
+      const address = patient.address;
+      const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info;
+      const spouse = patient.spouse_info?.spouse_info;
 
       form.setValue("mothersPersonalInfo.familyNo", patient.family_head_info?.fam_id || "")
       form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "")
@@ -251,31 +251,31 @@ export default function PostpartumFormFirstPg({
           form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
           form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
         } else {
-          form.setValue("mothersPersonalInfo.husbandLName", "")
-          form.setValue("mothersPersonalInfo.husbandFName", "")
-          form.setValue("mothersPersonalInfo.husbandMName", "")
-          form.setValue("mothersPersonalInfo.husbandDob", "")
+          form.setValue("mothersPersonalInfo.husbandLName", "");
+          form.setValue("mothersPersonalInfo.husbandFName", "");
+          form.setValue("mothersPersonalInfo.husbandMName", "");
+          form.setValue("mothersPersonalInfo.husbandDob", "");
         }
       } else {
-        if(spouse){
-          form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
-          form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
-          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
-          form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "") 
+        if (spouse) {
+          form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "");
+          form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "");
+          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "");
+          form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "");
         } else {
-          form.setValue("mothersPersonalInfo.husbandLName", "")
-          form.setValue("mothersPersonalInfo.husbandFName", "")
-          form.setValue("mothersPersonalInfo.husbandMName", "")
-          form.setValue("mothersPersonalInfo.husbandDob", "")
+          form.setValue("mothersPersonalInfo.husbandLName", "");
+          form.setValue("mothersPersonalInfo.husbandFName", "");
+          form.setValue("mothersPersonalInfo.husbandMName", "");
+          form.setValue("mothersPersonalInfo.husbandDob", "");
         }
       }
 
       if (address) {
-        form.setValue("mothersPersonalInfo.address.street", address.add_street || "")
-        form.setValue("mothersPersonalInfo.address.sitio", address.add_sitio || "")
-        form.setValue("mothersPersonalInfo.address.barangay", address.add_barangay || "")
-        form.setValue("mothersPersonalInfo.address.city", address.add_city || "")
-        form.setValue("mothersPersonalInfo.address.province", address.add_province || "")
+        form.setValue("mothersPersonalInfo.address.street", address.add_street || "");
+        form.setValue("mothersPersonalInfo.address.sitio", address.add_sitio || "");
+        form.setValue("mothersPersonalInfo.address.barangay", address.add_barangay || "");
+        form.setValue("mothersPersonalInfo.address.city", address.add_city || "");
+        form.setValue("mothersPersonalInfo.address.province", address.add_province || "");
       }
     }
   }
@@ -335,76 +335,68 @@ export default function PostpartumFormFirstPg({
     {
       accessorKey: "date",
       header: "Date",
-      cell: ({ row }) => <div className="text-center">{row.original.date}</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.date}</div>
     },
     {
       accessorKey: "lochialDischarges",
       header: "Lochial Discharges",
-      cell: ({ row }) => <div className="text-center">{row.original.lochialDischarges}</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.lochialDischarges}</div>
     },
     {
       accessorKey: "bp",
       header: "BP",
-      cell: ({ row }) => <div className="text-center">{row.original.bp}</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.bp}</div>
     },
     {
       accessorKey: "feeding",
       header: "Feeding",
-      cell: ({ row }) => <div className="text-center">{row.original.feeding}</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.feeding}</div>
     },
     {
       accessorKey: "findings",
       header: "Findings",
-      cell: ({ row }) => <div className="text-center">{row.original.findings}</div>,
+      cell: ({ row }) => <div className="text-center">{row.original.findings}</div>
     },
     {
       accessorKey: "nursesNotes",
       header: "Nurses Notes",
-      cell: ({ row }) => <div className="text-center">{row.original.nursesNotes}</div>,
-    },
-  ]
+      cell: ({ row }) => <div className="text-center">{row.original.nursesNotes}</div>
+    }
+  ];
 
   // date setup
   const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
-    form.setValue("postpartumTable.date", today)
-  }, [setValue, today])
+    form.setValue("postpartumTable.date", today);
+  }, [setValue, today]);
 
   const addPostpartumCare = () => {
-    const date = getValues("postpartumTable.date")
-    const lochialDischarges = getValues("postpartumInfo.lochialDischarges")
-    const systolic = Number.parseInt(getValues("postpartumTable.bp.systolic"), 10)
-    const diastolic = Number.parseInt(getValues("postpartumTable.bp.diastolic"), 10)
-    const feeding = getValues("postpartumTable.feeding")
-    const findings = getValues("postpartumTable.findings")
-    const nursesNotes = getValues("postpartumTable.nursesNotes") || "None"
+    const date = getValues("postpartumTable.date");
+    const lochialDischarges = getValues("postpartumInfo.lochialDischarges");
+    const systolic = Number.parseInt(getValues("postpartumTable.bp.systolic"), 10);
+    const diastolic = Number.parseInt(getValues("postpartumTable.bp.diastolic"), 10);
+    const feeding = getValues("postpartumTable.feeding");
+    const findings = getValues("postpartumTable.findings");
+    const nursesNotes = getValues("postpartumTable.nursesNotes") || "None";
 
     const feedingOptions = [
       { id: "1", name: "Exclusive Breastfeeding" },
       { id: "2", name: "Mixed Feeding" },
-      { id: "3", name: "Formula Feeding" },
-    ]
+      { id: "3", name: "Formula Feeding" }
+    ];
 
     const lochialOptions = [
       { id: "1", name: "Lochia Rubra" },
       { id: "2", name: "Lochia Serosa" },
-      { id: "3", name: "Lochia Alba" },
-    ]
+      { id: "3", name: "Lochia Alba" }
+    ];
 
     // convert IDs to names
     const feedingName = feedingOptions.find((option) => option.id === feeding)?.name || feeding
     const lochialName = lochialOptions.find((option) => option.id === lochialDischarges)?.name || lochialDischarges
 
-    if (
-      date &&
-      !isNaN(systolic) &&
-      !isNaN(diastolic) &&
-      feeding &&
-      feeding !== "0" &&
-      lochialDischarges &&
-      lochialDischarges !== "0"
-    ) {
+    if (date && !isNaN(systolic) && !isNaN(diastolic) && feeding && feeding !== "0" && lochialDischarges && lochialDischarges !== "0") {
       setPostpartumCareData((prev) => [
         ...prev,
         {
@@ -413,9 +405,9 @@ export default function PostpartumFormFirstPg({
           bp: `${systolic} / ${diastolic}`,
           feeding: feedingName,
           findings: findings || "Normal",
-          nursesNotes: nursesNotes,
-        },
-      ])
+          nursesNotes: nursesNotes
+        }
+      ]);
 
       // clear form fields
       form.setValue("postpartumTable.date", today)
@@ -428,7 +420,7 @@ export default function PostpartumFormFirstPg({
     } else {
       showErrorToast("Please fill in all required fields for the assessment including lochial discharges")
     }
-  }
+  };
 
   const handleFormSubmit = async () => {
     setIsDialogOpen(false)
@@ -437,7 +429,7 @@ export default function PostpartumFormFirstPg({
     const formData = form.getValues()
 
     // Validate form data
-    const errors = validatePostpartumFormData(formData, selectedPatientId, postpartumCareData)
+    const errors = validatePostpartumFormData(formData, selectedPatientId, postpartumCareData);
 
     if (errors.length > 0) {
       setFormErrors(errors)
@@ -458,18 +450,18 @@ export default function PostpartumFormFirstPg({
       return
     }
 
-    setFormErrors([])
+    setFormErrors([]);
 
     try {
-      const transformedData = transformPostpartumFormData(formData, selectedPatientId, postpartumCareData)
+      const transformedData = transformPostpartumFormData(formData, selectedPatientId, postpartumCareData);
 
-      console.log("Submitting postpartum data:", transformedData)
+      console.log("Submitting postpartum data:", transformedData);
 
-      const success = await addPostpartumMutation.mutateAsync(transformedData)
+      const success = await addPostpartumMutation.mutateAsync(transformedData);
 
-      onSubmit()
+      onSubmit();
       if (success) {
-        navigate(-1)
+        navigate(-1);
       }
     } catch (error) {
       console.error("Error submitting postpartum form:", error)
@@ -477,7 +469,7 @@ export default function PostpartumFormFirstPg({
       setIsSubmitting(false)
       setIsDialogOpen(false)
     }
-  }
+  };
 
   const submit = () => {
     form.trigger(["mothersPersonalInfo", "postpartumInfo", "postpartumTable"]).then((isValid) => {
@@ -489,10 +481,10 @@ export default function PostpartumFormFirstPg({
       } else {
         console.log("Form validation failed")
       }
-    })
-  }
+    });
+  };
 
-  const nextVisitDate = form.watch("postpartumInfo.nextVisitDate")
+  const nextVisitDate = form.watch("postpartumInfo.nextVisitDate");
 
   return (
     <LayoutWithBack title="Postpartum Form" description="Fill out the postpartum form with the mother's information.">
@@ -519,23 +511,19 @@ export default function PostpartumFormFirstPg({
       <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
         <div className="pb-4">
           <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
+          <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
           <h2 className="text-3xl font-bold text-center mt-12">POSTPARTUM RECORD</h2>
         </div>
 
         <Form {...form}>
           <form
             onSubmit={(e) => {
-              e.preventDefault()
-              submit()
+              e.preventDefault();
+              submit();
             }}
           >
             <div className="flex mt-10">
-              <FormInput
-                control={form.control}
-                label="Family No."
-                name="mothersPersonalInfo.familyNo"
-                placeholder="Family No."
-              />
+              <FormInput control={form.control} label="Family No." name="mothersPersonalInfo.familyNo" placeholder="Family No." />
             </div>
 
             <div className="mt-10 mb-3">
@@ -543,82 +531,22 @@ export default function PostpartumFormFirstPg({
               <Separator className="mt-2" />
             </div>
             <div className="grid grid-cols-4 gap-4 mt-4">
-              <FormInput
-                control={form.control}
-                label="Last Name"
-                name="mothersPersonalInfo.motherLName"
-                placeholder="Last Name"
-              />
-              <FormInput
-                control={form.control}
-                label="First Name"
-                name="mothersPersonalInfo.motherFName"
-                placeholder="First Name"
-              />
-              <FormInput
-                control={form.control}
-                label="Middle Name"
-                name="mothersPersonalInfo.motherMName"
-                placeholder="Middle Name"
-              />
+              <FormInput control={form.control} label="Last Name" name="mothersPersonalInfo.motherLName" placeholder="Last Name" />
+              <FormInput control={form.control} label="First Name" name="mothersPersonalInfo.motherFName" placeholder="First Name" />
+              <FormInput control={form.control} label="Middle Name" name="mothersPersonalInfo.motherMName" placeholder="Middle Name" />
               <FormInput control={form.control} label="Age" name="mothersPersonalInfo.motherAge" placeholder="Age" />
 
-              <FormInput
-                control={form.control}
-                label="Husband's Last Name"
-                name="mothersPersonalInfo.husbandLName"
-                placeholder="Last Name (optional)"
-              />
-              <FormInput
-                control={form.control}
-                label="Husband's First Name"
-                name="mothersPersonalInfo.husbandFName"
-                placeholder="First Name (optional)"
-              />
-              <FormInput
-                control={form.control}
-                label="Husband's Middle Name"
-                name="mothersPersonalInfo.husbandMName"
-                placeholder="Middle Name (optional)"
-              />
-              <FormDateTimeInput
-                control={form.control}
-                type="date"
-                label="Husband's Date of Birth"
-                name="mothersPersonalInfo.husbandDob"
-              />
+              <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Last Name (optional)" />
+              <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="First Name (optional)" />
+              <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Middle Name (optional)" />
+              <FormDateTimeInput control={form.control} type="date" label="Husband's Date of Birth" name="mothersPersonalInfo.husbandDob" />
             </div>
             <div className="grid grid-cols-5 gap-4 mt-4">
-              <FormInput
-                control={form.control}
-                label="Street"
-                name="mothersPersonalInfo.address.street"
-                placeholder="Street"
-              />
-              <FormInput
-                control={form.control}
-                label="Sitio"
-                name="mothersPersonalInfo.address.sitio"
-                placeholder="Sitio"
-              />
-              <FormInput
-                control={form.control}
-                label="Barangay"
-                name="mothersPersonalInfo.address.barangay"
-                placeholder="Barangay"
-              />
-              <FormInput
-                control={form.control}
-                label="City"
-                name="mothersPersonalInfo.address.city"
-                placeholder="City"
-              />
-              <FormInput
-                control={form.control}
-                label="Province"
-                name="mothersPersonalInfo.address.province"
-                placeholder="Province"
-              />
+              <FormInput control={form.control} label="Street" name="mothersPersonalInfo.address.street" placeholder="Street" />
+              <FormInput control={form.control} label="Sitio" name="mothersPersonalInfo.address.sitio" placeholder="Sitio" />
+              <FormInput control={form.control} label="Barangay" name="mothersPersonalInfo.address.barangay" placeholder="Barangay" />
+              <FormInput control={form.control} label="City" name="mothersPersonalInfo.address.city" placeholder="City" />
+              <FormInput control={form.control} label="Province" name="mothersPersonalInfo.address.province" placeholder="Province" />
             </div>
 
             <div className="mt-10 mb-3">
@@ -626,40 +554,20 @@ export default function PostpartumFormFirstPg({
               <Separator className="mt-2" />
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <FormDateTimeInput
-                control={form.control}
-                label="Date of Delivery"
-                name="postpartumInfo.dateOfDelivery"
-                type="date"
-              />
-              <FormDateTimeInput
-                control={form.control}
-                label="Time of Delivery"
-                name="postpartumInfo.timeOfDelivery"
-                type="time"
-              />
-              <FormInput
-                control={form.control}
-                label="Place of Delivery"
-                name="postpartumInfo.placeOfDelivery"
-                placeholder="Place of Delivery"
-              />
+              <FormDateTimeInput control={form.control} label="Date of Delivery" name="postpartumInfo.dateOfDelivery" type="date" />
+              <FormDateTimeInput control={form.control} label="Time of Delivery" name="postpartumInfo.timeOfDelivery" type="time" />
+              <FormInput control={form.control} label="Place of Delivery" name="postpartumInfo.placeOfDelivery" placeholder="Place of Delivery" />
               <FormSelect
                 control={form.control}
                 label="Outcome"
                 name="postpartumInfo.outcome"
                 options={[
                   { id: "1", name: "Fullterm" },
-                  { id: "2", name: "Preterm" },
+                  { id: "2", name: "Preterm" }
                 ]}
               />
 
-              <FormInput
-                control={form.control}
-                label="Attended By"
-                name="postpartumInfo.attendedBy"
-                placeholder="Attended By"
-              />
+              <FormInput control={form.control} label="Attended By" name="postpartumInfo.attendedBy" placeholder="Attended By" />
               <FormSelect
                 control={form.control}
                 label="Tetanus Toxoid Status"
@@ -670,7 +578,7 @@ export default function PostpartumFormFirstPg({
                   { id: "tt3", name: "TT3" },
                   { id: "tt4", name: "TT4" },
                   { id: "tt5", name: "TT5" },
-                  { id: "fim", name: "FIM" },
+                  { id: "fim", name: "FIM" }
                 ]}
               />
               {/* <FormDateTimeInput
@@ -762,12 +670,7 @@ export default function PostpartumFormFirstPg({
               <Separator className="mt-2" />
             </div>
             <div className="flex flex-col gap-4 mt-4">
-              <FormDateTimeInput
-                control={form.control}
-                label="Date of next visit"
-                name="postpartumInfo.nextVisitDate"
-                type="date"
-              />
+              <FormDateTimeInput control={form.control} label="Date of next visit" name="postpartumInfo.nextVisitDate" type="date" />
               {nextVisitDate && ( // Only display if a date is selected
                 <div className="bg-gray-50 p-4 rounded-md border">
                   <p className="text-sm font-medium text-gray-700">Scheduled Follow-up:</p>
@@ -776,7 +679,7 @@ export default function PostpartumFormFirstPg({
                       ? new Date(nextVisitDate).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
-                          day: "numeric",
+                          day: "numeric"
                         })
                       : "N/A"}
                   </p>
@@ -798,18 +701,8 @@ export default function PostpartumFormFirstPg({
                 <Label className="text-black/70">Lochial Discharges</Label>
 
                 <div className="grid grid-cols-2 gap-4 mt-[8px]">
-                  <FormInput
-                    control={form.control}
-                    name="postpartumTable.bp.systolic"
-                    placeholder="Systolic"
-                    type="number"
-                  />
-                  <FormInput
-                    control={form.control}
-                    name="postpartumTable.bp.diastolic"
-                    placeholder="Diastolic"
-                    type="number"
-                  />
+                  <FormInput control={form.control} name="postpartumTable.bp.systolic" placeholder="Systolic" type="number" />
+                  <FormInput control={form.control} name="postpartumTable.bp.diastolic" placeholder="Diastolic" type="number" />
                 </div>
 
                 <FormSelect
@@ -818,7 +711,7 @@ export default function PostpartumFormFirstPg({
                   options={[
                     { id: "1", name: "Exclusive Breastfeeding" },
                     { id: "2", name: "Mixed Feeding" },
-                    { id: "3", name: "Formula Feeding" },
+                    { id: "3", name: "Formula Feeding" }
                   ]}
                 />
                 <FormSelect
@@ -828,23 +721,13 @@ export default function PostpartumFormFirstPg({
                   options={[
                     { id: "1", name: "Lochia Rubra" },
                     { id: "2", name: "Lochia Serosa" },
-                    { id: "3", name: "Lochia Alba" },
+                    { id: "3", name: "Lochia Alba" }
                   ]}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
-                <FormTextArea
-                  control={form.control}
-                  label="Findings"
-                  name="postpartumTable.findings"
-                  placeholder="Enter findings"
-                />
-                <FormTextArea
-                  control={form.control}
-                  label="Nurses Notes"
-                  name="postpartumTable.nursesNotes"
-                  placeholder="Enter nurses notes"
-                />
+                <FormTextArea control={form.control} label="Findings" name="postpartumTable.findings" placeholder="Enter findings" />
+                <FormTextArea control={form.control} label="Nurses Notes" name="postpartumTable.nursesNotes" placeholder="Enter nurses notes" />
               </div>
               <div className="mt-6 flex justify-end">
                 <Button type="button" onClick={addPostpartumCare}>
@@ -858,11 +741,7 @@ export default function PostpartumFormFirstPg({
             </div>
 
             <div className="mt-8 sm:mt-auto flex justify-end">
-              <Button
-                type="submit"
-                className="mt-4 mr-4 sm-w-32"
-                disabled={addPostpartumMutation.isPending || !selectedPatient}
-              >
+              <Button type="submit" className="mt-4 mr-4 sm-w-32" disabled={addPostpartumMutation.isPending || !selectedPatient}>
                 {addPostpartumMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit
               </Button>
@@ -879,5 +758,5 @@ export default function PostpartumFormFirstPg({
         </Form>
       </div>
     </LayoutWithBack>
-  )
+  );
 }

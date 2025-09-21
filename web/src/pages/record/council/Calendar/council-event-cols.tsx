@@ -3,7 +3,7 @@ import type { EventDetailColumn } from "@/components/ui/calendar/EventCalendar"
 import { type WasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries"
 import { formatTime } from "@/helpers/timeFormatter"
 import { format } from "date-fns";
-import { CouncilEvent } from "./ce-att-types";
+import { CouncilEvent } from "./councilEventTypes";
 
 export const hotspotColumns: EventDetailColumn<Hotspot>[] = [
   { accessorKey: "watchman", header: "Watchman" },
@@ -45,10 +45,4 @@ export const councilEventColumns: EventDetailColumn<CouncilEvent>[] = [
     cell: ({ row }) => format(new Date(row.original.ce_date), "MMM d, yyyy"),
   },
   { accessorKey: "ce_time", header: "Time" },
-  {
-  accessorKey: "ce_type",
-  header: "Type",
-  cell: (props: { row: { original: { ce_type: string } } }) =>
-    props.row.original.ce_type.charAt(0).toUpperCase() + props.row.original.ce_type.slice(1)
-}
 ];

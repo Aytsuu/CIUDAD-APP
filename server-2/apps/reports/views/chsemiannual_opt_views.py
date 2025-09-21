@@ -12,10 +12,10 @@ from apps.childhealthservices.models import *
 from apps.childhealthservices.serializers import *
 from ..utils import *
 from apps.patientrecords.models import *
+from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementSerializer
 from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import *
-
 
 
 class YearlySemiOPTChildHealthSummariesAPIView(APIView):
@@ -25,6 +25,7 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
     Only counts the LATEST records per child in each semi-annual period
     Filters automatically to children aged 0–71 months
     Includes both residents and transients
+    Only counts records where is_opt==TRUE
     """
     pagination_class = StandardResultsPagination
 
@@ -34,7 +35,7 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
             search_query = request.GET.get('search', '').strip()
 
             # Get all distinct years from the database
-            years_data = NutritionalStatus.objects.dates('created_at', 'year', order='DESC')
+            years_data = BodyMeasurement.objects.dates('created_at', 'year', order='DESC')
             
             formatted_data = []
             for year_date in years_data:
@@ -100,31 +101,37 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
         end_date = datetime(year, 12, 31, 23, 59, 59)
 
         # Get latest records for first semester (Jan-Jul) - both residents and transients
-        first_semi_latest = NutritionalStatus.objects.filter(
+        # Added is_opt=True filter
+        first_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
-            created_at__range=(start_date, mid_date)
-            # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+            created_at__range=(start_date, mid_date),
+            is_opt=True  # Filter for OPT records only
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get latest records for second semester (Aug-Dec) - both residents and transients
-        second_semi_latest = NutritionalStatus.objects.filter(
+        # Added is_opt=True filter
+        second_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
-            created_at__range=(mid_date + timedelta(seconds=1), end_date)
-            # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+            created_at__range=(mid_date + timedelta(seconds=1), end_date),
+            is_opt=True  # Filter for OPT records only
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get the actual records for first semester
-        first_semi_records = NutritionalStatus.objects.filter(
-            nutstat_id__in=Subquery(first_semi_latest)
+        # Added is_opt=True filter
+        first_semi_records = BodyMeasurement.objects.filter(
+            bm_id__in=Subquery(first_semi_latest),
+            is_opt=True  # Filter for OPT records only
         ).select_related(
-            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         )
 
         # Get the actual records for second semester
-        second_semi_records = NutritionalStatus.objects.filter(
-            nutstat_id__in=Subquery(second_semi_latest)
+        # Added is_opt=True filter
+        second_semi_records = BodyMeasurement.objects.filter(
+            bm_id__in=Subquery(second_semi_latest),
+            is_opt=True  # Filter for OPT records only
         ).select_related(
-            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         )
 
         def filter_children_by_age(records):
@@ -156,75 +163,49 @@ class YearlySemiOPTChildHealthSummariesAPIView(APIView):
         }
         
         
-        
 class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
     """
     API View to get semi-annual nutritional status report for a specific year
     Automatically filters to children aged 0–71 months
     Includes both residents and transients
     """
-    serializer_class = NutritionalStatusSerializerBase
+    serializer_class = BodyMeasurementSerializer
     pagination_class = StandardResultsPagination
-
-    def _calculate_age_in_months(self, dob, reference_date):
-        """
-        Calculate age in months based on date of birth and reference date
-        """
-        try:
-            if not dob or not reference_date:
-                return 0
-            
-            if hasattr(reference_date, 'date'):
-                reference_date = reference_date.date()
-            
-            if hasattr(dob, 'date'):
-                dob = dob.date()
-                
-            age_months = (reference_date.year - dob.year) * 12 + (reference_date.month - dob.month)
-            
-            if reference_date.day < dob.day:
-                age_months -= 1
-                
-            return max(0, age_months)
-            
-        except (AttributeError, TypeError, ValueError) as e:
-            print(f"Error calculating age: {e}")
-            return 0
 
     def get_queryset(self):
         year = self.kwargs.get('year')
         try:
             year = int(year)
         except ValueError:
-            return NutritionalStatus.objects.none()
+            return BodyMeasurement.objects.none()
 
         start_date = datetime(year, 1, 1)
         end_date = datetime(year + 1, 1, 1) - timedelta(microseconds=1)
 
         # Get latest records for first semester (Jan-Jul) - both residents and transients
-        first_semi_latest = NutritionalStatus.objects.filter(
+        first_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
+            is_opt=True,
             created_at__gte=start_date,
             created_at__month__lte=7,
             created_at__year=year
-            # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+        ).order_by('-created_at').values('bm_id')[:1]
 
         # Get latest records for second semester (Aug-Dec) - both residents and transients
-        second_semi_latest = NutritionalStatus.objects.filter(
+        second_semi_latest = BodyMeasurement.objects.filter(
             pat=OuterRef('pat'),
+            is_opt=True,
             created_at__month__gte=8,
             created_at__year=year,
             created_at__lte=end_date
-            # Removed pat__pat_type='Resident' filter
-        ).order_by('-created_at').values('nutstat_id')[:1]
+        ).order_by('-created_at').values('bm_id')[:1]
 
-        # Get all records first, then filter by age
-        latest_records = NutritionalStatus.objects.filter(
-            Q(nutstat_id__in=Subquery(first_semi_latest)) |
-            Q(nutstat_id__in=Subquery(second_semi_latest))
+        # Get all latest records
+        queryset = BodyMeasurement.objects.filter(
+            Q(bm_id=Subquery(first_semi_latest)) |
+            Q(bm_id=Subquery(second_semi_latest))
         ).select_related(
-            'bm', 'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'  # Added pat__trans_id
+            'pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'
         ).prefetch_related(
             Prefetch(
                 'pat__rp_id__per__personaladdress_set',
@@ -238,47 +219,9 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
             )
         ).order_by('pat', '-created_at')
 
-        # Filter by age 0-71 months using created_at date
-        filtered_records = []
-        seen_children = set()
-        
-        for record in latest_records:
-            if record.created_at:
-                # Get patient's date of birth - both residents and transients
-                pat = record.pat
-                dob = None
-                
-                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
-                    dob = pat.rp_id.per.per_dob
-                elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
-                    dob = pat.trans_id.tran_dob
-                
-                # Calculate age in months using created_at date
-                age_months = self._calculate_age_in_months(dob, record.created_at)
-                
-                # Filter to only 0–71 months old
-                if 0 <= age_months <= 71:
-                    month = record.created_at.month
-                    record.semi_period = '1st' if month <= 7 else '2nd'
-                    record.semi_label = 'First Semi (Jan-Jul)' if month <= 7 else 'Second Semi (Aug-Dec)'
-
-                    child_id = pat.pat_id
-                    
-                    # Only add if we haven't seen this child yet
-                    if child_id not in seen_children:
-                        seen_children.add(child_id)
-                        record.is_primary_record = True
-                        filtered_records.append(record)
-                    else:
-                        record.is_primary_record = False
-                        filtered_records.append(record)
-
-        return self._apply_filters(filtered_records)
-
-    def _apply_filters(self, records):
         # Track if any filter is applied
         filters_applied = False
-        original_count = len(records)
+        original_count = queryset.count()
 
         # Combined search (child/patient name, family number, and sitio)
         search_query = self.request.query_params.get('search', '').strip()
@@ -294,188 +237,63 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
         if combined_search_terms:
             filters_applied = True
             combined_search = ','.join(combined_search_terms)
-            records = self._apply_search_filter(records, combined_search)
-            if len(records) == 0 and original_count > 0:
-                return []
+            queryset = apply_search_filter_to_body_measurement(queryset, combined_search)
+            if queryset.count() == 0 and original_count > 0:
+                return BodyMeasurement.objects.none()
 
+        # Nutritional status search
         nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
         if nutritional_search:
             filters_applied = True
-            records = self._apply_nutritional_search(records, nutritional_search)
-            if len(records) == 0 and original_count > 0:
-                return []
+            queryset = apply_nutritional_search_to_body_measurement(queryset, nutritional_search)
+            if queryset.count() == 0 and original_count > 0:
+                return BodyMeasurement.objects.none()
 
-        semi_period = self.request.query_params.get('semi_period', '').strip()
-        if semi_period and semi_period in ['1st', '2nd']:
-            records = [r for r in records if getattr(r, 'semi_period', None) == semi_period]
-
-        # Add age range filter
-        age_range = self.request.query_params.get('age_range', '').strip()
+        # Age range filter (0-71 months default, but can be overridden)
+        age_range = self.request.query_params.get('age_range', '0-71').strip()
         if age_range:
             filters_applied = True
-            records = self._apply_age_filter(records, age_range)
-            if len(records) == 0 and original_count > 0:
-                return []
+            queryset = apply_age_filter_to_body_measurement(queryset, age_range)
+            if not queryset and original_count > 0:
+                return BodyMeasurement.objects.none()
 
-        return records
+        # Semi-period filter
+        semi_period = self.request.query_params.get('semi_period', '').strip()
+        if semi_period and semi_period in ['1st', '2nd']:
+            # Filter based on month
+            if semi_period == '1st':
+                queryset = queryset.filter(created_at__month__lte=7)
+            else:
+                queryset = queryset.filter(created_at__month__gte=8)
 
-    def _apply_age_filter(self, records, age_range):
-        """Apply age range filter to records list"""
-        try:
-            min_age, max_age = map(int, age_range.split('-'))
-            filtered_records = []
-            for record in records:
-                # Get patient's date of birth - both residents and transients
-                pat = record.pat
-                dob = None
-                
-                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
-                    dob = pat.rp_id.per.per_dob
-                elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
-                    dob = pat.trans_id.tran_dob
-                
-                # Calculate age in months
-                age_months = self._calculate_age_in_months(dob, record.created_at)
-                
-                if min_age <= age_months <= max_age:
-                    filtered_records.append(record)
-            return filtered_records
-        except ValueError:
-            return records
+        return queryset
 
-    def _apply_search_filter(self, records, search_query):
-        """Search by child/patient name, family number, and sitio - both residents and transients"""
-        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return records
-
-        filtered_records = []
-        
-        for record in records:
-            pat = record.pat
-            match_found = False
-            
-            for term in search_terms:
-                # Check child name - both residents and transients
-                if pat.pat_type == 'Resident' and hasattr(pat, 'rp_id') and pat.rp_id:
-                    per = pat.rp_id.per
-                    if (term.lower() in per.per_fname.lower() or 
-                        term.lower() in per.per_mname.lower() or 
-                        term.lower() in per.per_lname.lower()):
-                        match_found = True
-                        break
-                elif pat.pat_type == 'Transient' and hasattr(pat, 'trans_id') and pat.trans_id:
-                    trans = pat.trans_id
-                    if (term.lower() in trans.tran_fname.lower() or 
-                        term.lower() in trans.tran_mname.lower() or 
-                        term.lower() in trans.tran_lname.lower()):
-                        match_found = True
-                        break
-                
-                # Check family number (you might need to adjust this based on your data model)
-                # family_no = ... # Add logic if you have family number data
-                
-                # Check sitio
-                address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(pat)
-                if sitio and term.lower() in sitio.lower():
-                    match_found = True
-                    break
-            
-            if match_found:
-                filtered_records.append(record)
-
-        return filtered_records
-
-    def _apply_nutritional_search(self, records, search_query):
-        """Search by nutritional status"""
-        search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
-        if not search_terms:
-            return records
-        
-        filtered_records = []
-        for record in records:
-            for term in search_terms:
-                if (record.wfa and term in record.wfa.lower()) or \
-                   (record.lhfa and term in record.lhfa.lower()) or \
-                   (record.wfl and term in record.wfl.lower()) or \
-                   (record.muac_status and term in record.muac_status.lower()):
-                    filtered_records.append(record)
-                    break
-        return filtered_records
-
-    def _get_household_no(self, pat_obj):
-        """
-        Get household number for a patient based on the reference PatientSerializer logic
-        """
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                # Get the most recent family composition for this resident
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    return str(current_composition.fam_id.fam_no) if hasattr(current_composition.fam_id, 'fam_no') else 'N/A'
-            except Exception as e:
-                print(f"Error fetching household number for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        return 'N/A'
-
-    def _get_parents_info(self, pat_obj):
-        """
-        Get parents information for a patient based on the reference PatientSerializer logic
-        """
-        parents = {}
-        
-        if pat_obj.pat_type == 'Resident' and pat_obj.rp_id:
-            try:
-                # Get family head info similar to PatientSerializer
-                current_composition = FamilyComposition.objects.filter(
-                    rp=pat_obj.rp_id
-                ).order_by('-fam_id__fam_date_registered', '-fc_id').first()
-                
-                if current_composition:
-                    fam_id = current_composition.fam_id
-                    
-                    # Get all family members in the same family
-                    family_compositions = FamilyComposition.objects.filter(
-                        fam_id=fam_id
-                    ).select_related('rp', 'rp__per')
-                    
-                    for composition in family_compositions:
-                        role = composition.fc_role.lower()
-                        if role in ['mother', 'father'] and composition.rp and hasattr(composition.rp, 'per'):
-                            personal = composition.rp.per
-                            parents[role] = f"{personal.per_fname} {personal.per_mname} {personal.per_lname}"
-            except Exception as e:
-                print(f"Error fetching parents info for resident {pat_obj.rp_id.rp_id}: {str(e)}")
-        
-        elif pat_obj.pat_type == 'Transient' and pat_obj.trans_id:
-            trans = pat_obj.trans_id
-            if trans.mother_fname or trans.mother_lname:
-                parents['mother'] = f"{trans.mother_fname} {trans.mother_mname} {trans.mother_lname}".strip()
-            
-            if trans.father_fname or trans.father_lname:
-                parents['father'] = f"{trans.father_fname} {trans.father_mname} {trans.father_lname}".strip()
-        
-        return parents
-
-    def _format_report_data(self, data, queryset_objects=None):
+    def format_semi_annual_report_data(self, data, queryset_objects, year=None):
+        """Format BodyMeasurement data for semi-annual report output"""
         children_data = {}  # Group by child_id
         
         if queryset_objects:
             for i, entry in enumerate(data):
                 try:
-                    ns_obj = queryset_objects[i]
-                    pat = entry.get('patient_details', {})
+                    bm_obj = queryset_objects[i]
 
                     # Get child ID for grouping
-                    child_id = ns_obj.pat.pat_id
+                    child_id = bm_obj.pat.pat_id
+                    
+                    # Get child name from pat_details.personal_info
+                    pat_details = entry.get('pat_details', {})
+                    personal_info = pat_details.get('personal_info', {})
+                    
+                    child_fname = personal_info.get('per_fname', '')
+                    child_mname = personal_info.get('per_mname', '')
+                    child_lname = personal_info.get('per_lname', '')
+                    child_name = f"{child_fname} {child_mname} {child_lname}".strip()
 
-                    address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(ns_obj.pat)
+                    # Use utility function for address
+                    address, sitio, is_transient = get_patient_address(bm_obj.pat)
 
                     # Get patient's date of birth and created_at date
-                    pat_obj = ns_obj.pat
+                    pat_obj = bm_obj.pat
                     dob = None
                     sex = None
                     
@@ -486,48 +304,50 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                         dob = pat_obj.trans_id.tran_dob
                         sex = pat_obj.trans_id.tran_sex
                     
-                    # Calculate age in months
-                    age_in_months = self._calculate_age_in_months(dob, ns_obj.created_at)
+                    # Use utility function for age calculation
+                    age_in_months = calculate_age_in_months(dob, bm_obj.created_at)
 
-                    # Get household number using the same logic as PatientSerializer
-                    household_no = self._get_household_no(pat_obj)
+                    # Use utility function for household number
+                    household_no = get_household_no(pat_obj)
 
-                    # Get parents information using the same logic as PatientSerializer
-                    parents = self._get_parents_info(pat_obj)
+                    # Use utility function for parents information
+                    parents = get_parents_info(pat_obj)
 
                     # Format nutritional status
                     nutritional_status = {
-                        'wfa': ns_obj.wfa,
-                        'lhfa': ns_obj.lhfa,
-                        'wfl': ns_obj.wfl,
-                        'muac': ns_obj.muac,
-                        'edema': ns_obj.edemaSeverity,
-                        'muac_status': ns_obj.muac_status
+                        'wfa': bm_obj.wfa,
+                        'lhfa': bm_obj.lhfa,
+                        'wfl': bm_obj.wfl,
+                        'muac': bm_obj.muac,
+                        'edema': bm_obj.edemaSeverity,
+                        'muac_status': bm_obj.muac_status
                     }
 
-                    # Get semi-annual information
-                    semi_period = getattr(ns_obj, 'semi_period', 'Unknown')
+                    # Determine semi-annual period
+                    month = bm_obj.created_at.month
+                    semi_period = '1st' if month <= 7 else '2nd'
+                    semi_label = 'First Semi (Jan-Jul)' if month <= 7 else 'Second Semi (Aug-Dec)'
 
                     # Create weighing data for this semi-annual period
                     weighing_data = {
                         'date_of_weighing': entry.get('created_at', '')[:10],
                         'age_at_weighing': age_in_months,
-                        'weight': entry.get('bm_details', {}).get('weight'),
-                        'height': entry.get('bm_details', {}).get('height'),
+                        'weight': entry.get('weight'),
+                        'height': entry.get('height'),
                         'nutritional_status': nutritional_status,
-                        'type_of_feeding': 'N/A'  # Adjust if you have this data
+                        'type_of_feeding': 'N/A'
                     }
 
                     # Initialize child data if not exists
                     if child_id not in children_data:
                         children_data[child_id] = {
                             'child_id': child_id,
-                            'household_no': household_no,  # Now using the same logic as PatientSerializer
-                            'child_name': f"{pat.get('first_name', '')} {pat.get('middle_name', '')} {pat.get('last_name', '')}",
-                            'sex': sex,  # Now properly set based on patient type
-                            'date_of_birth': dob,  # Now properly set based on patient type
+                            'household_no': household_no,
+                            'child_name': child_name,
+                            'sex': sex,
+                            'date_of_birth': dob,
                             'age_in_months': age_in_months,
-                            'parents': parents,  # Now using the same logic as PatientSerializer
+                            'parents': parents,
                             'address': address,
                             'sitio': sitio,
                             'transient': is_transient,
@@ -558,8 +378,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
         both_periods_count = sum(1 for child in children_list 
                             if child['first_semi_annual'] and child['second_semi_annual'])
 
-        return {
-            'year': self.kwargs['year'],
+        result = {
             'summary': {
                 'total_children': len(children_list),
                 'children_with_first_semi': first_semi_count,
@@ -568,23 +387,24 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
             },
             'children_data': children_list
         }
+        
+        if year:
+            result['year'] = year
+            
+        return result
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         
-        # Filter queryset to only primary records for pagination count
-        primary_records = [record for record in queryset if getattr(record, 'is_primary_record', True)]
-        
-        page = self.paginate_queryset(primary_records)
+        # For semi-annual reports, we need to handle pagination differently
+        # since we group by children, not individual records
+        page = self.paginate_queryset(queryset)
         
         if page is not None:
-            # Get all records for the children in this page
-            child_ids_in_page = [record.pat.pat_id for record in page]
-            all_records_for_page = [record for record in queryset 
-                                  if record.pat.pat_id in child_ids_in_page]
-            
-            serializer = self.get_serializer(all_records_for_page, many=True)
-            return self.get_paginated_response(self._format_report_data(serializer.data, all_records_for_page))
+            serializer = self.get_serializer(page, many=True)
+            formatted_data = self.format_semi_annual_report_data(serializer.data, page, self.kwargs['year'])
+            return self.get_paginated_response(formatted_data)
         
         serializer = self.get_serializer(queryset, many=True)
-        return Response(self._format_report_data(serializer.data, queryset))
+        formatted_data = self.format_semi_annual_report_data(serializer.data, queryset, self.kwargs['year'])
+        return Response(formatted_data)

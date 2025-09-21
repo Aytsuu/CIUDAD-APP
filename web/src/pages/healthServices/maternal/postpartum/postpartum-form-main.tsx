@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import type { z } from "zod"
 import { FormProvider, useForm } from "react-hook-form"
@@ -36,8 +36,8 @@ export default function PostpartumForm() {
         sitio: "",
         barangay: "",
         city: "",
-        province: "",
-      },
+        province: ""
+      }
     },
     postpartumInfo: {
       dateOfDelivery: "",
@@ -53,13 +53,13 @@ export default function PostpartumForm() {
       dateBfInitiated: "",
       timeBfInitiated: "",
       nextVisitDate: "",
-      lochialDischarges: "",
+      lochialDischarges: ""
     },
     postpartumTable: {
       date: new Date().toLocaleDateString("en-CA"),
       bp: {
         systolic: "",
-        diastolic: "",
+        diastolic: ""
       },
       feeding: "",
       findings: "",
@@ -69,8 +69,8 @@ export default function PostpartumForm() {
 
   const form = useForm<z.infer<typeof PostPartumSchema>>({
     resolver: zodResolver(PostPartumSchema),
-    defaultValues,
-  })
+    defaultValues
+  });
 
   const submitPage = () => {
     setCurrentPage((prev) => prev + 1)
@@ -105,5 +105,5 @@ export default function PostpartumForm() {
           />}
       </FormProvider>
     </div>
-  )
+  );
 }

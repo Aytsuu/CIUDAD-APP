@@ -18,7 +18,7 @@ export type GarbagePickupTask = {
     sitio_name: string;
 }
 
-const driver_id = '5'
+const driver_id = '4'
 export const useGetGarbagePickupTasks = () => {
     return useQuery<GarbagePickupTask[]>({
         queryKey: ["garbagePickupTasks", driver_id], 
@@ -32,6 +32,7 @@ export type GarbageCompletedTasks = {
   garb_location: string;
   garb_requester: string;
   garb_waste_type: string;
+  dec_date: string;
   conf_resident_conf_date: string | null;  
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    

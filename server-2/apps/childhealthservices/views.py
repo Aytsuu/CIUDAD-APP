@@ -1,6 +1,7 @@
 # Standard library imports
 from collections import defaultdict
 from datetime import datetime, timedelta
+import logging
 
 # Django imports
 from django.db.models import (
@@ -343,251 +344,125 @@ class MonthlyNutritionalStatusViewChart(generics.ListAPIView):
         
         return queryset
     
+
+logger = logging.getLogger(__name__)
+
+class LatestVitalBMAPIView(APIView):
+    """
+    API to get the latest body measurement and vital signs data for a specific patient
+    pat_id is required in the URL path
+    """
     
-# class MonthlyOPTChildHealthSummariesAPIView(APIView):
-#     pagination_class = StandardResultsPagination
-
-#     def get(self, request):
-#         try:
-#             queryset = ChildHealthVitalSigns.objects.select_related(
-#                 'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec'
-#             ).order_by('-bm__created_at')
-
-#             # Search query (month name or year)
-#             search_query = request.GET.get('search', '').strip()
-
-#             # Filter by year or year-month
-#             year_param = request.GET.get('year', 'all')
-#             if year_param and year_param != 'all':
-#                 try:
-#                     if '-' in year_param:
-#                         year, month = map(int, year_param.split('-'))
-#                         queryset = queryset.filter(
-#                             bm__created_at__year=year,
-#                             bm__created_at__month=month
-#                         )
-#                     else:
-#                         year = int(year_param)
-#                         queryset = queryset.filter(bm__created_at__year=year)
-#                 except ValueError:
-#                     return Response({
-#                         'success': False,
-#                         'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
-#                     }, status=status.HTTP_400_BAD_REQUEST)
-
-#             # Annotate and count records per month
-#             monthly_data = queryset.annotate(
-#                 month=TruncMonth('bm__created_at')
-#             ).values('month').annotate(
-#                 record_count=Count('vital_id')
-#             ).order_by('-month')
-
-#             formatted_data = []
-#             for item in monthly_data:
-#                 month_str = item['month'].strftime('%Y-%m')
-#                 month_name = item['month'].strftime('%B %Y')
-
-#                 # Apply search filter if provided
-#                 if search_query and search_query.lower() not in month_name.lower():
-#                     continue
-
-#                 formatted_data.append({
-#                     'month': month_str,
-#                     'month_name': month_name,
-#                     'record_count': item['record_count']
-#                 })
-
-#             # Pagination
-#             paginator = self.pagination_class()
-#             page = paginator.paginate_queryset(formatted_data, request)
-#             if page is not None:
-#                 return paginator.get_paginated_response({
-#                     'success': True,
-#                     'data': page,
-#                     'total_months': len(formatted_data)
-#                 })
-
-#             return Response({
-#                 'success': True,
-#                 'data': formatted_data,
-#                 'total_months': len(formatted_data)
-#             }, status=status.HTTP_200_OK)
-
-#         except Exception as e:
-#             return Response({
-#                 'success': False,
-#                 'error': str(e)
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-   
+    def get(self, request, pat_id):
+        try:
+            # Validate that pat_id is provided
+            if not pat_id:
+                return Response({
+                    'success': False,
+                    'message': 'Patient ID is required',
+                    'data': None
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Build the base queryset with correct relationship chain
+            queryset = ChildHealthVitalSigns.objects.select_related(
+                'bm',
+                'vital',
+                'chhist',
+                'chhist__chrec',
+                'chhist__chrec__patrec',
+                'chhist__chrec__patrec__pat_id',
+                'chhist__chrec__patrec__pat_id__rp_id',
+                'chhist__chrec__patrec__pat_id__rp_id__per',
+                'chhist__chrec__patrec__pat_id__trans_id'
+            ).filter(
+                bm__isnull=False,
+                vital__isnull=False,
+                chhist__chrec__patrec__pat_id__pat_id=pat_id  # Filter by patient ID from URL
+            ).order_by('-created_at')
+            
+            # Get the latest record for this patient
+            latest_record = queryset.first()
+            
+            if not latest_record:
+                return Response({
+                    'success': False,
+                    'message': f'No vital signs or body measurements found for patient ID: {pat_id}',
+                    'data': None
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Debug logging (remove in production)
+            logger.info(f"Found latest record for patient {pat_id}")
+            logger.info(f"ChildHealthVitalSigns ID: {latest_record.chvital_id}")
+            logger.info(f"Record created at: {latest_record.created_at}")
+            
+            # Serialize the data
+            try:
+                serializer = LatestVitalBMSerializer(latest_record)
+                serialized_data = serializer.data
+                
+                # Add patient ID to response for confirmation
+                serialized_data['queried_patient_id'] = pat_id
+                
+            except Exception as serializer_error:
+                logger.error(f"Serializer error for patient {pat_id}: {serializer_error}")
+                return Response({
+                    'success': False,
+                    'error': f'Serializer error: {str(serializer_error)}',
+                    'message': 'Failed to serialize data'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response({
+                'success': True,
+                'message': f'Latest vital signs and body measurements retrieved successfully for patient {pat_id}',
+                'data': serialized_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"API error for patient {pat_id}: {e}")
+            return Response({
+                'success': False,
+                'error': str(e),
+                'message': f'Failed to retrieve latest vital signs and body measurements for patient {pat_id}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
-# class MonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
-#     serializer_class = OPTTrackingSerializer
-#     pagination_class = StandardResultsPagination
-
-#     def get_queryset(self):
-#         month = self.kwargs.get('month')
-#         try:
-#             year, month_num = map(int, month.split('-'))
-#             start_date = datetime(year, month_num, 1)
-#             end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
-#             end_date -= timedelta(microseconds=1)
-#         except ValueError:
-#             return ChildHealthVitalSigns.objects.none()
-
-#         queryset = ChildHealthVitalSigns.objects.filter(
-#             bm__created_at__gte=start_date,
-#             bm__created_at__lte=end_date
-#         ).select_related(
-#             'bm', 'chhist', 'chhist__chrec', 'chhist__chrec__patrec',
-#             'chhist__chrec__patrec__pat_id', 'chhist__chrec__patrec__pat_id__rp_id',
-#             'chhist__chrec__patrec__pat_id__rp_id__per', 'chhist__chrec__patrec__pat_id__trans_id',
-#             'chhist__chrec__patrec__pat_id__trans_id__tradd_id'
-#         ).prefetch_related(
-#             'nutritional_status',
-#             Prefetch(
-#                 'chhist__chrec__patrec__pat_id__rp_id__per__personaladdress_set',
-#                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
-#                 to_attr='prefetched_personal_addresses'
-#             ),
-#             Prefetch(
-#                 'chhist__chrec__patrec__pat_id__rp_id__household_set',
-#                 queryset=Household.objects.select_related('add', 'add__sitio'),
-#                 to_attr='prefetched_households'
-#             )
-#         ).order_by('bm__created_at')
-
-#         # Sitio search
-#         sitio_search = self.request.query_params.get('sitio', '').strip()
-#         if sitio_search:
-#             queryset = ChildHealthReportUtils.apply_sitio_search(queryset, sitio_search)
-
-#         # Nutritional status search
-#         nutritional_search = self.request.query_params.get('nutritional_status', '').strip()
-#         if nutritional_search:
-#             queryset = self._apply_nutritional_search(queryset, nutritional_search)
-
-#         age_range = self.request.query_params.get('age_range', '').strip()
-#         if age_range:
-#             queryset = self._apply_age_filter(queryset, age_range)
-
-#         return queryset
-
-#     def _apply_nutritional_search(self, queryset, search_query):
-#         """Search by nutritional status"""
-#         search_terms = [term.strip().lower() for term in search_query.split(',') if term.strip()]
-#         if not search_terms:
-#             return queryset
-
-#         status_query = Q()
-#         for term in search_terms:
-#             status_query |= (
-#                 Q(nutritional_status__wfa__iexact=term) |
-#                 Q(nutritional_status__lhfa__iexact=term) |
-#                 Q(nutritional_status__wfl__iexact=term) |
-#                 Q(nutritional_status__muac_status__iexact=term)
-#             )
-        
-#         return queryset.filter(status_query)
-
-#     def _apply_age_filter(self, queryset, age_range):
-#         """Apply age range filter to queryset"""
-#         try:
-#             min_age, max_age = map(int, age_range.split('-'))
-#             filtered_data = []
-#             for obj in queryset:
-#                 age_str = obj.bm.age if hasattr(obj, 'bm') and obj.bm else ''
-#                 age_months = ChildHealthReportUtils.parse_age_to_months(age_str)
-#                 if min_age <= age_months <= max_age:
-#                     filtered_data.append(obj)
-#             return filtered_data
-#         except ValueError:
-#             return queryset
-
-#     def _format_report_data(self, data, queryset_objects=None):
-#         report_data = []
-        
-#         if queryset_objects:
-#             for i, entry in enumerate(data):
-#                 try:
-#                     vs_obj = queryset_objects[i]
-#                     vs = entry['vital_signs']
-#                     chist = entry['chist_details']
-#                     patrec = chist['chrec_details']['patrec_details']['pat_details']
-
-#                     address, sitio, is_transient = ChildHealthReportUtils.get_patient_address(vs_obj.chhist.chrec.patrec.pat_id)
-
-#                     # Calculate age in whole months
-#                     age_in_months = 0
-#                     if vs.get('bm_details') and vs['bm_details'].get('age'):
-#                         age_str = vs['bm_details']['age']
-#                         age_in_months = ChildHealthReportUtils.parse_age_to_months(age_str)
-
-#                     # Format parents information
-#                     parents = {}
-#                     family_info = patrec.get('family_head_info', {})
-#                     if family_info.get('has_mother'):
-#                         mother = family_info['family_heads']['mother']['personal_info']
-#                         parents['mother'] = f"{mother['per_fname']} {mother['per_mname']} {mother['per_lname']}"
-#                     if family_info.get('has_father'):
-#                         father = family_info['family_heads']['father']['personal_info']
-#                         parents['father'] = f"{father['per_fname']} {father['per_mname']} {father['per_lname']}"
-
-#                     # Format nutritional status
-#                     nutritional_status = {}
-#                     if vs.get('nutritional_status'):
-#                         ns = vs['nutritional_status']
-#                         nutritional_status = {
-#                             'wfa': ns.get('wfa'),
-#                             'lhfa': ns.get('lhfa'),
-#                             'wfl': ns.get('wfl'),
-#                             'muac': ns.get('muac'),
-#                             'edema': ns.get('edemaSeverity'),
-#                             'muac_status': ns.get('muac_status')
-#                         }
-
-#                     report_entry = {
-#                         'household_no': chist['chrec_details'].get('family_no', 'N/A'),
-#                         'child_name': f"{patrec['personal_info']['per_fname']} {patrec['personal_info']['per_mname']} {patrec['personal_info']['per_lname']}",
-#                         'sex': patrec['personal_info']['per_sex'],
-#                         'date_of_birth': patrec['personal_info']['per_dob'],
-#                         'age_in_months': age_in_months,
-#                         'parents': parents,
-#                         'address': address,
-#                         'sitio': sitio,
-#                         'transient': is_transient,
-#                         'date_of_weighing': vs['bm_details']['created_at'][:10] if vs.get('bm_details') else None,
-#                         'age_at_weighing': vs['bm_details']['age'] if vs.get('bm_details') else None,
-#                         'weight': vs['bm_details']['weight'] if vs.get('bm_details') else None,
-#                         'height': vs['bm_details']['height'] if vs.get('bm_details') else None,
-#                         'nutritional_status': nutritional_status,
-#                         'type_of_feeding': chist['chrec_details'].get('type_of_feeding')
-#                     }
-
-#                     report_data.append(report_entry)
-#                 except Exception as e:
-#                     print(f"Error formatting report entry {i}: {e}")
-#                     continue
-
-#         return {
-#             'month': self.kwargs['month'],
-#             'total_entries': len(report_data),
-#             'report_data': report_data
-#         }
-
-#     def list(self, request, *args, **kwargs):
-#         queryset = self.filter_queryset(self.get_queryset())
-#         page = self.paginate_queryset(queryset)
-
-#         if page is not None:
-#             serializer = self.get_serializer(page, many=True)
-#             return self.get_paginated_response(self._format_report_data(serializer.data, page))
-
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response(self._format_report_data(serializer.data, queryset))
-
-
+class NextUFCNumberAPIView(APIView):
+    """
+    API to get the next available UFC number by finding the latest number and incrementing it by 1
+    Returns only the incremented number as a string
+    """
+    
+    def get(self, request):
+        """
+        GET method to retrieve the next UFC number
+        """
+        try:
+            # Get the latest UFC number (assuming ufc_no is numeric)
+            latest_ufc = ChildHealthrecord.objects.exclude(
+                ufc_no__isnull=True
+            ).exclude(
+                ufc_no=''
+            ).order_by('-ufc_no').values_list('ufc_no', flat=True).first()
+            
+            if latest_ufc:
+                try:
+                    # Convert to integer and increment by 1
+                    next_number = int(latest_ufc) + 1
+                except (ValueError, TypeError):
+                    # If conversion fails, start from 1
+                    next_number = 1
+            else:
+                # If no UFC numbers exist, start from 1
+                next_number = 1
+            
+            # Return just the incremented number as a string
+            return Response(str(next_number), status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            # Fallback: return "1" if anything goes wrong
+            return Response("1", status=status.HTTP_200_OK)
+    
 class ChildHealthTotalCountAPIView(APIView):
     def get(self, request):
         try:
@@ -604,3 +479,1266 @@ class ChildHealthTotalCountAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CompleteChildHealthRecordAPIView(APIView):
+    """
+    Comprehensive API endpoint that handles ALL child health record operations in one atomic transaction
+    """
+    
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            
+            # Extract all necessary data
+            submitted_data = data.get('submittedData', {})
+            staff_id = data.get('staff')
+            
+            # Validate required fields
+            if not submitted_data.get('pat_id'):
+                return Response({"error": "Patient ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if submitted_data.get('residenceType') == "Transient" and not submitted_data.get('trans_id'):
+                return Response({"error": "Transient ID is required for transient residents"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get staff instance if provided
+            staff_instance = None
+            if staff_id:
+                try:
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {staff_id} not found")
+            
+            # Handle transient updates if needed
+            if submitted_data.get('residenceType') == "Transient":
+                self._handle_transient_update(submitted_data)
+            
+            return self._handle_new_record_creation(submitted_data, staff_instance)
+                
+        except Exception as e:
+            return Response({
+                "error": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _handle_transient_update(self, submitted_data):
+        """Handle transient patient information updates"""
+        trans_id = submitted_data.get('trans_id')
+        if not trans_id:
+            return
+        
+        try:
+            transient = Transient.objects.get(trans_id=trans_id)
+            
+            # Update transient information
+            update_fields = [
+                'mother_fname', 'mother_lname', 'mother_mname', 'mother_age', 'mother_dob',
+                'father_fname', 'father_lname', 'father_mname', 'father_age', 'father_dob'
+            ]
+            
+            for field in update_fields:
+                if submitted_data.get(field.replace('_', '').replace('dob', '_dob')):
+                    setattr(transient, field, submitted_data.get(field.replace('_', '').replace('dob', '_dob')))
+            
+            transient.save()
+            
+        except Transient.DoesNotExist:
+            raise Exception(f"Transient with ID {trans_id} not found")
+    
+    def _handle_new_record_creation(self, submitted_data, staff_instance):
+        """Handle creation of completely new child health record"""
+        
+        # Get patient instance
+        try:
+            patient = Patient.objects.get(pat_id=submitted_data['pat_id'])
+        except Patient.DoesNotExist:
+            raise Exception(f"Patient with ID {submitted_data['pat_id']} not found")
+        
+        # Create patient record
+        patient_record = PatientRecord.objects.create(
+            pat_id=patient,
+            patrec_type="Child Health Record"
+        )
+        
+        # Create child health record
+        child_health_record = ChildHealthrecord.objects.create(
+            ufc_no=submitted_data.get('ufcNo', ''),
+            family_no=submitted_data.get('familyNo', ''),
+            place_of_delivery_type=submitted_data.get('placeOfDeliveryType'),
+            pod_location=submitted_data.get('placeOfDeliveryLocation', ''),
+            mother_occupation=submitted_data.get('motherOccupation', ''),
+            type_of_feeding=submitted_data.get('type_of_feeding'),
+            father_occupation=submitted_data.get('fatherOccupation', ''),
+            birth_order=submitted_data.get('birth_order', 0),
+            newborn_screening=submitted_data.get('dateNewbornScreening'),
+            staff=staff_instance,
+            patrec=patient_record,
+            landmarks=submitted_data.get('landmarks'),
+            nbscreening_results=submitted_data.get('nbscreening_results'), 
+            newbornInitiatedbf=submitted_data.get('newbornInitiatedbf', False)
+        )
+        
+        # Create child health history
+        child_health_history = ChildHealth_History.objects.create(
+            chrec=child_health_record,
+            status=submitted_data.get('status', 'recorded'),
+            tt_status=submitted_data.get('tt_status')
+        )
+        
+        # Handle follow-up visit
+        followv_id = None
+        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+            vital_sign = submitted_data['vitalSigns'][0]
+            if vital_sign.get('followUpVisit'):
+                follow_up_visit = FollowUpVisit.objects.create(
+                    followv_date=vital_sign['followUpVisit'],
+                    followv_description=vital_sign.get('follov_description', 'Follow Up for Child Health'),
+                    patrec=patient_record,
+                    followv_status="pending"
+                )
+                followv_id = follow_up_visit.followv_id
+        
+        # Create health notes
+        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+            vital_sign = submitted_data['vitalSigns'][0]
+            if vital_sign.get('notes'):
+                ChildHealthNotes.objects.create(
+                    chn_notes=vital_sign['notes'],
+                    followv_id=followv_id,
+                    chhist=child_health_history,
+                    staff=staff_instance
+                )
+        
+        # Create body measurements and vital signs
+        bmi_id = None
+        chvital_id = None
+        
+        if (submitted_data.get('vitalSigns') and 
+            len(submitted_data['vitalSigns']) == 1 and 
+            submitted_data['vitalSigns'][0].get('date') and
+            submitted_data.get('nutritionalStatus')):
+            
+            vital_sign = submitted_data['vitalSigns'][0]
+            nutritional_status = submitted_data['nutritionalStatus']
+            
+            # Create body measurement
+            body_measurement = BodyMeasurement.objects.create(
+                height=vital_sign.get('ht', Decimal('0.00')),
+                weight=vital_sign.get('wt', Decimal('0.00')),
+                wfa=nutritional_status.get('wfa', ''),
+                lhfa=nutritional_status.get('lhfa', ''),
+                wfl=nutritional_status.get('wfh', ''),
+                muac=str(nutritional_status.get('muac', '')),
+                muac_status=nutritional_status.get('muac_status', ''),
+                edemaSeverity=submitted_data.get('edemaSeverity', 'none'),
+                pat=patient,
+                remarks=vital_sign.get('remarks', ''),
+                is_opt=vital_sign.get('is_opt', False),
+                staff=staff_instance
+            )
+            bmi_id = body_measurement.bm_id
+        
+        # Create vital signs
+        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+            vital_sign = submitted_data['vitalSigns'][0]
+            vital_signs = VitalSigns.objects.create(
+                vital_temp=vital_sign.get('temp', ''),
+                staff=staff_instance,
+                patrec=patient_record
+            )
+            
+            # Create child health vital sign
+            child_vital_sign = ChildHealthVitalSigns.objects.create(
+                vital=vital_signs,
+                bm_id=bmi_id,
+                chhist=child_health_history
+            )
+            chvital_id = child_vital_sign.chvital_id
+        
+        # Handle breastfeeding dates
+        if submitted_data.get('BFdates'):
+            self._handle_breastfeeding_dates(submitted_data['BFdates'], child_health_history.chhist_id)
+        
+        # Handle supplement statuses (low birth weight and anemia)
+        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+            weight = submitted_data['vitalSigns'][0].get('wt')
+            if weight and float(weight) < 2.5 and submitted_data.get('birthwt'):
+                self._create_supplement_status(
+                    'birthwt', 
+                    submitted_data['birthwt'], 
+                    child_health_history.chhist_id, 
+                    weight
+                )
+            
+            if submitted_data.get('anemic', {}).get('is_anemic'):
+                self._create_supplement_status(
+                    'anemic', 
+                    submitted_data['anemic'], 
+                    child_health_history.chhist_id, 
+                    weight
+                )
+        
+        # Handle medicines
+        if submitted_data.get('medicines'):
+            self._handle_medicines(
+                submitted_data['medicines'], 
+                submitted_data['pat_id'], 
+                child_health_history.chhist_id, 
+                staff_instance
+            )
+        
+        return Response({
+            "success": True,
+            "message": "Child health record created successfully",
+            "patrec_id": patient_record.patrec_id,
+            "chrec_id": child_health_record.chrec_id,
+            "chhist_id": child_health_history.chhist_id,
+            "chvital_id": chvital_id,
+            "followv_id": followv_id
+        }, status=status.HTTP_201_CREATED)
+    
+    def _handle_breastfeeding_dates(self, bf_dates, chhist_id):
+        """Handle exclusive breastfeeding check dates"""
+        chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
+        for date in bf_dates:
+            ExclusiveBFCheck.objects.create(
+                chhist=chhist,
+                ebf_date=date
+            )
+    
+    def _handle_medicines(self, medicines, pat_id, chhist_id, staff_instance):
+        """Handle medicine processing in bulk"""
+        if not medicines:
+            return
+        
+        # Get patient and child health history instances
+        try:
+            patient = Patient.objects.get(pat_id=pat_id)
+            chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
+        except (Patient.DoesNotExist, ChildHealth_History.DoesNotExist) as e:
+            raise Exception(f"Required instance not found: {str(e)}")
+        
+        # Create single patient record for all medicines
+        patient_record = PatientRecord.objects.create(
+            pat_id=patient,
+            patrec_type="Medicine Record"
+        )
+        
+        # Process each medicine
+        for med in medicines:
+            minv_id = med.get('minv_id')
+            medrec_qty = med.get('medrec_qty', 0)
+            reason = med.get('reason', 'Child Health Supplement')
+            
+            if not minv_id or medrec_qty <= 0:
+                continue
+            
+            try:
+                # Get medicine inventory
+                medicine_inv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
+                
+                # Check stock
+                if medicine_inv.minv_qty_avail < medrec_qty:
+                    raise Exception(f"Insufficient stock for medicine {minv_id}")
+                
+                # Create medicine record
+                medicine_record = MedicineRecord.objects.create(
+                    patrec_id=patient_record,
+                    minv_id=medicine_inv,
+                    medrec_qty=medrec_qty,
+                    reason=reason,
+                    requested_at=timezone.now(),
+                    fulfilled_at=timezone.now(),
+                    staff=staff_instance
+                )
+                
+                # Update inventory
+                medicine_inv.minv_qty_avail -= medrec_qty
+                medicine_inv.save()
+                
+                # Create transaction
+                unit = medicine_inv.minv_qty_unit or 'pcs'
+                if unit.lower() == 'boxes':
+                    mdt_qty = f"{medrec_qty} pcs"
+                else:
+                    mdt_qty = f"{medrec_qty} {unit}"
+                
+                MedicineTransactions.objects.create(
+                    mdt_qty=mdt_qty,
+                    mdt_action="Deducted",
+                    staff=staff_instance,
+                    minv_id=medicine_inv
+                )
+                
+                # Create child health supplement relationship
+                ChildHealthSupplements.objects.create(
+                    chhist=chhist,
+                    medrec=medicine_record
+                )
+                
+            except MedicineInventory.DoesNotExist:
+                raise Exception(f"Medicine inventory {minv_id} not found")
+    
+    def _create_supplement_status(self, status_type, status_data, chhist_id, weight):
+        """Create supplement status record"""
+        chhist = ChildHealth_History.objects.get(chhist_id=chhist_id)
+        
+        ChildHealthSupplementsStatus.objects.create(
+            status_type=status_type,
+            date_seen=status_data.get('seen'),
+            date_given_iron=status_data.get('given_iron'),
+            chhist=chhist,
+            birthwt=Decimal(str(weight)) if weight else None,
+            date_completed=None
+        )
+        
+     
+     
+
+class UpdateChildHealthRecordAPIView(APIView):
+    """
+    API endpoint for updating child health records with all related data
+    """
+    
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        
+        # Extract main parameters
+        submitted_data = data.get('submittedData', {})
+        staff_id = data.get('staff')
+        todays_historical_record = data.get('todaysHistoricalRecord', {})
+        original_record = data.get('originalRecord', {})
+        
+        try:
+            # Validate required fields
+            if not submitted_data.get('pat_id'):
+                return Response(
+                    {"error": "Patient ID is required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if (submitted_data.get('residenceType') == 'Transient' and 
+                not submitted_data.get('trans_id')):
+                return Response(
+                    {"error": "Transient ID is required for transient residents"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get staff instance
+            staff_instance = None
+            if staff_id:
+                try:
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {staff_id} not found, continuing without staff")
+            
+            # Extract existing IDs
+            original_chrec_details = original_record.get('chrec_details', {})
+            original_patrec_details = original_chrec_details.get('patrec_details', {})
+            
+            old_chhist = original_record.get('chhist_id')
+            old_chrec_id = original_chrec_details.get('chrec_id')
+            old_patrec_id = original_patrec_details.get('patrec_id')
+            chnotes_id = todays_historical_record.get('chnotes_id')
+            
+            # Initialize return variables
+            patrec_id = old_patrec_id
+            chrec_id = old_chrec_id
+            current_chhist_id = old_chhist
+            chvital_id = None
+            followv_id = None
+            bmi_id = None
+            
+            # Check if this is a same-day update or new record
+            is_same_day_update = (
+                submitted_data.get('created_at') and 
+                self._is_same_day(submitted_data['created_at'])
+            )
+            
+            if is_same_day_update:
+                result = self._handle_same_day_update(
+                    submitted_data, staff_instance, todays_historical_record,
+                    original_record, current_chhist_id, chnotes_id, chrec_id
+                )
+            else:
+                result = self._handle_new_record_creation(
+                    submitted_data, staff_instance, chrec_id, patrec_id,
+                    original_record
+                )
+                current_chhist_id = result['chhist_id']
+                chvital_id = result.get('chvital_id')
+                followv_id = result.get('followv_id')
+                bmi_id = result.get('bmi_id')
+            
+            return Response({
+                "success": True,
+                "message": "Child health record updated successfully",
+                "data": {
+                    "patrec_id": patrec_id,
+                    "chrec_id": chrec_id,
+                    "chhist_id": current_chhist_id,
+                    "chvital_id": chvital_id,
+                    "followv_id": followv_id
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as error:
+            print(f"Error updating child health record: {str(error)}")
+            return Response({
+                "error": f"Failed to update child health record: {str(error)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _is_same_day(self, created_at_str):
+        """Check if the created_at date is the same as today"""
+        try:
+            from datetime import datetime
+            created_date = datetime.fromisoformat(created_at_str.replace('Z', '+00:00')).date()
+            return created_date == timezone.now().date()
+        except:
+            return False
+    
+    def _handle_same_day_update(self, submitted_data, staff_instance, 
+                        todays_historical_record, original_record, 
+                        current_chhist_id, chnotes_id, chrec_id):
+        """Handle updates for same-day records"""
+        
+        followv_id = None
+        
+        if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
+            vital_sign = submitted_data['vitalSigns'][0]
+            
+            # Handle follow-up visit
+            original_followv_id = todays_historical_record.get('followv_id')
+            follow_up_date = vital_sign.get('followUpVisit')
+            follow_up_description = vital_sign.get('follov_description')
+            notes_content = vital_sign.get('notes', '').strip()
+            
+            # Check if there's actual follow-up data
+            is_follow_up_data_present = follow_up_date or (follow_up_description and follow_up_description.strip())
+            
+            # Check if there's actual note content
+            has_note_content = notes_content and notes_content != ''
+            
+            # Only proceed if there's actual content to save
+            should_create_or_update_notes = has_note_content or is_follow_up_data_present
+            
+            if not should_create_or_update_notes:
+                # No content to save, skip note creation/update
+                print("No note content or follow-up data to save, skipping note operations")
+            else:
+                # Proceed with note operations only if there's actual content
+                if not original_followv_id and is_follow_up_data_present and not chnotes_id:
+                    # Create new follow-up visit
+                    follow_up = FollowUpVisit.objects.create(
+                        followv_date=follow_up_date or timezone.now().date(),
+                        created_at=timezone.now(),
+                        followv_description=follow_up_description or "Follow Up for Child Health",
+                        patrec_id=original_record['chrec_details']['patrec_details']['patrec_id'],
+                        followv_status="pending"
+                    )
+                    followv_id = follow_up.followv_id
+                    
+                    # Create child health notes only if there's actual content
+                    if has_note_content or is_follow_up_data_present:
+                        ChildHealthNotes.objects.create(
+                            chn_notes=notes_content,
+                            created_at=timezone.now(),
+                            followv_id=followv_id,
+                            chhist_id=current_chhist_id,
+                            staff=staff_instance
+                        )
+
+                elif has_note_content and not is_follow_up_data_present and not chnotes_id:
+                    # Only create notes if there's actual note content
+                    ChildHealthNotes.objects.create(
+                        chn_notes=notes_content,
+                        created_at=timezone.now(),
+                        followv_id=followv_id,
+                        chhist_id=current_chhist_id,
+                        staff=staff_instance
+                    )
+                    
+                elif not original_followv_id and is_follow_up_data_present and chnotes_id:
+                    # Create new follow-up visit
+                    follow_up = FollowUpVisit.objects.create(
+                        followv_date=follow_up_date or timezone.now().date(),
+                        created_at=timezone.now(),
+                        followv_description=follow_up_description or "Follow Up for Child Health",
+                        patrec_id=original_record['chrec_details']['patrec_details']['patrec_id'],
+                        followv_status="pending"
+                    )
+                    followv_id = follow_up.followv_id
+                    
+                    # Update existing child health notes only if there's content
+                    try:
+                        notes_instance = ChildHealthNotes.objects.get(chnotes_id=chnotes_id)
+                        # Only update if there's actual content or meaningful changes
+                        if has_note_content or is_follow_up_data_present:
+                            notes_instance.chn_notes = notes_content
+                            notes_instance.staff = staff_instance
+                            notes_instance.followv_id = followv_id
+                            notes_instance.save()  # This will trigger Simple History
+                    except ChildHealthNotes.DoesNotExist:
+                        # Fallback: create new notes only if there's actual content
+                        if has_note_content or is_follow_up_data_present:
+                            ChildHealthNotes.objects.create(
+                                chn_notes=notes_content,
+                                created_at=timezone.now(),
+                                followv_id=followv_id,
+                                chhist_id=current_chhist_id,
+                                staff=staff_instance
+                            )
+            
+                elif chnotes_id:
+                    # Update existing notes only if there's meaningful content or changes
+                    original_notes = todays_historical_record.get('notes', '').strip()
+                    
+                    # Check if there's a meaningful difference
+                    content_changed = notes_content != original_notes
+                    has_meaningful_content = has_note_content or is_follow_up_data_present
+                    
+                    if content_changed and has_meaningful_content:
+                        try:
+                            notes_instance = ChildHealthNotes.objects.get(chnotes_id=chnotes_id)
+                            notes_instance.chn_notes = notes_content
+                            notes_instance.staff = staff_instance
+                            notes_instance.save()  # This will trigger Simple History
+                            print(f"Updated existing notes: '{notes_content}'")
+                        except ChildHealthNotes.DoesNotExist:
+                            # Create new notes only if there's actual content
+                            if has_meaningful_content:
+                                ChildHealthNotes.objects.create(
+                                    chn_notes=notes_content,
+                                    created_at=timezone.now(),
+                                    followv_id=followv_id,
+                                    chhist_id=current_chhist_id,
+                                    staff=staff_instance
+                                )
+                    elif not has_meaningful_content and chnotes_id:
+                        # If there's no meaningful content but there's an existing note, 
+                        # consider if you want to delete it or leave it as is
+                        print("No meaningful content to update in existing notes")
+        
+        # Update child health history status
+        ChildHealth_History.objects.filter(chhist_id=current_chhist_id).update(
+            status=submitted_data.get('status', 'recorded')
+        )
+        
+        ChildHealthrecord.objects.filter(chrec_id=chrec_id).update(updated_at=timezone.now())
+        self._handle_breastfeeding_dates(submitted_data, current_chhist_id, original_record)
+        self._handle_medicines(submitted_data, staff_instance, current_chhist_id)
+        self._handle_historical_supplement_statuses(submitted_data, original_record)
+        return {"success": True}
+
+    def _handle_new_record_creation(self, submitted_data, staff_instance, 
+                                chrec_id, patrec_id, original_record):
+        """Handle creation of new child health records"""
+        
+        # Create new child health history
+        new_chhist = ChildHealth_History.objects.create(
+            created_at=timezone.now(),
+            chrec_id=chrec_id,
+            status=submitted_data.get('status', 'recorded'),
+            tt_status=submitted_data.get('tt_status')
+        )
+        current_chhist_id = new_chhist.chhist_id
+        
+        followv_id = None
+        bmi_id = None
+        chvital_id = None
+        
+        # Get notes and follow-up data
+        notes_text = ""
+        follow_up_date = None
+        follow_up_description = None
+        
+        if (submitted_data.get('vitalSigns') and 
+            len(submitted_data['vitalSigns']) > 0):
+            vital_sign = submitted_data['vitalSigns'][0]
+            notes_text = vital_sign.get('notes', '').strip()
+            follow_up_date = vital_sign.get('followUpVisit')
+            follow_up_description = vital_sign.get('follov_description', '').strip()
+        
+        # Handle follow-up visit if there's actual follow-up data
+        has_follow_up_data = follow_up_date or follow_up_description
+        if has_follow_up_data:
+            follow_up = FollowUpVisit.objects.create(
+                followv_date=follow_up_date or timezone.now().date(),
+                created_at=timezone.now(),
+                followv_description=follow_up_description or 'Follow Up for Child Health',
+                patrec_id=patrec_id,
+                followv_status="pending"
+            )
+            followv_id = follow_up.followv_id
+        
+        # Only create notes if there's actual content (notes or follow-up data)
+        has_note_content = notes_text and notes_text != ''
+        should_create_notes = has_note_content or has_follow_up_data
+        
+        if should_create_notes:
+            ChildHealthNotes.objects.create(
+                chn_notes=notes_text,
+                created_at=timezone.now(),
+                followv_id=followv_id,
+                chhist_id=current_chhist_id,
+                staff=staff_instance
+            )
+            print(f"Created notes with content: '{notes_text}' and follow-up: {bool(followv_id)}")
+        else:
+            print("No notes created - no meaningful content provided")
+        
+        # Handle vital signs and body measurements
+        if (submitted_data.get('vitalSigns') and 
+            len(submitted_data['vitalSigns']) == 1):
+            
+            vital = submitted_data['vitalSigns'][0]
+            
+            if (not vital.get('chvital_id') and 
+                vital.get('date') and 
+                submitted_data.get('nutritionalStatus')):
+                
+                # Create body measurements
+                body_measurement = BodyMeasurement.objects.create(
+                    height=Decimal(str(vital.get('ht', 0) or 0)),
+                    weight=Decimal(str(vital.get('wt', 0) or 0)),
+                    wfa=submitted_data['nutritionalStatus'].get('wfa', ''),
+                    lhfa=submitted_data['nutritionalStatus'].get('lhfa', ''),
+                    wfl=submitted_data['nutritionalStatus'].get('wfh', ''),
+                    muac=str(submitted_data['nutritionalStatus'].get('muac', '')),
+                    muac_status=submitted_data['nutritionalStatus'].get('muac_status', ''),
+                    edemaSeverity=submitted_data.get('edemaSeverity', 'none'),
+                    pat_id=submitted_data['pat_id'],
+                    remarks=vital.get('remarks', ''),
+                    is_opt=vital.get('is_opt', False),
+                    staff=staff_instance
+                )
+                bmi_id = body_measurement.bm_id
+        
+        # Handle vital signs creation and child vital sign relationship properly
+        if (submitted_data.get('vitalSigns', [{}])[0].get('temp')):
+            # Create vital signs
+            vital_signs = VitalSigns.objects.create(
+                vital_temp=submitted_data['vitalSigns'][0]['temp'],
+                staff=staff_instance,
+                patrec_id=patrec_id
+            )
+            
+            # Create child vital sign relationship
+            child_vital = ChildHealthVitalSigns.objects.create(
+                vital=vital_signs,
+                bm_id=bmi_id,
+                chhist_id=current_chhist_id
+            )
+            chvital_id = child_vital.chvital_id
+        
+        # Handle additional data
+        self._handle_breastfeeding_dates(submitted_data, current_chhist_id)
+        self._handle_low_birth_weight(submitted_data, current_chhist_id)
+        self._handle_medicines(submitted_data, staff_instance, current_chhist_id)
+        self._handle_anemia(submitted_data, current_chhist_id)
+        self._handle_historical_supplement_statuses(submitted_data, original_record)
+        
+        return {
+            "chhist_id": current_chhist_id,
+            "chvital_id": chvital_id,
+            "followv_id": followv_id,
+            "bmi_id": bmi_id
+        }
+        
+    def _handle_breastfeeding_dates(self, submitted_data, chhist_id, original_record=None):
+        """
+        Handle breastfeeding dates creation and updates
+        - Creates new BF checks for newly added dates
+        - Updates existing BF checks iexexf they've changed
+        """
+        submitted_bf_checks = submitted_data.get('BFchecks', [])
+        
+        if not submitted_bf_checks:
+            return
+        
+        print(f"Processing {len(submitted_bf_checks)} BF checks for chhist_id: {chhist_id}")
+        
+        # Process submitted BF checks
+        for bf_check in submitted_bf_checks:
+            ebf_id = bf_check.get('ebf_id')
+            ebf_date = bf_check.get('ebf_date')
+            chhist = bf_check.get('chhist')  # Note: using 'chhist' not 'chhist_id'
+            
+            if not ebf_date:
+                print(f"Skipping BF check {ebf_id} - no ebf_date provided")
+                continue
+                
+            if ebf_id:
+                # This is an existing BF check - try to update it
+                try:
+                    # First check if the record exists and get current data
+                    existing_bf = ExclusiveBFCheck.objects.filter(ebf_id=ebf_id).first()
+                    
+                    if existing_bf:
+                        # Check if the date has actually changed
+                        if existing_bf.ebf_date != ebf_date:
+                            # Update the existing record
+                            ExclusiveBFCheck.objects.filter(ebf_id=ebf_id).update(
+                                ebf_date=ebf_date
+                            )
+                            print(f"Updated BF check {ebf_id}: {existing_bf.ebf_date} -> {ebf_date}")
+                        else:
+                            print(f"BF check {ebf_id} date unchanged: {ebf_date}")
+                   
+                except Exception as e:
+                    print(f"Error handling BF check {ebf_id}: {str(e)}")
+                    continue
+            else:
+                # This is a new BF check - create it
+                try:
+                    # Check if a BF check with this date already exists for this chhist_id
+                    existing_check = ExclusiveBFCheck.objects.filter(
+                        chhist_id=chhist_id,
+                        ebf_date=ebf_date
+                    ).first()
+                    
+                    if existing_check:
+                        print(f"BF check for date {ebf_date} already exists with ID {existing_check.ebf_id}")
+                    else:
+                        new_bf_check = ExclusiveBFCheck.objects.create(
+                            chhist_id=chhist_id,
+                            ebf_date=ebf_date
+                        )
+                        print(f"Created new BF check {new_bf_check.ebf_id} with date: {ebf_date}")
+                        
+                except Exception as e:
+                    print(f"Error creating new BF check for date {ebf_date}: {str(e)}")
+                    continue
+
+        
+    def _handle_medicines(self, submitted_data, staff_instance, chhist_id):
+        """Handle medicine processing"""
+        if not submitted_data.get('medicines'):
+            return
+        
+        for med in submitted_data['medicines']:
+            try:
+                # Get patient
+                patient = Patient.objects.get(pat_id=submitted_data['pat_id'])
+                
+                # Create patient record
+                patient_record = PatientRecord.objects.create(
+                    pat_id=patient,
+                    patrec_type="Medicine Record"
+                )
+                
+                # Create medicine record
+                medicine_record = MedicineRecord.objects.create(
+                    patrec_id=patient_record,
+                    minv_id_id=med['minv_id'],
+                    medrec_qty=med['medrec_qty'],
+                    reason=med.get('reason', ''),
+                    requested_at=timezone.now(),
+                    fulfilled_at=timezone.now(),
+                    staff=staff_instance
+                )
+                
+                # Update medicine inventory
+                self._update_medicine_inventory(
+                    med['minv_id'], 
+                    med['medrec_qty'], 
+                    staff_instance
+                )
+                
+                # Create child health relationship
+                ChildHealthSupplements.objects.create(
+                    chhist_id=chhist_id,
+                    medrec=medicine_record
+                )
+                
+            except Exception as e:
+                print(f"Error processing medicine {med.get('minv_id')}: {str(e)}")
+                continue
+    
+    def _update_medicine_inventory(self, minv_id, quantity, staff_instance):
+        """Update medicine inventory and create transaction"""
+        try:
+            medicine_inv = MedicineInventory.objects.select_for_update().get(pk=minv_id)
+            
+            if medicine_inv.minv_qty_avail < quantity:
+                raise Exception(f"Insufficient stock for medicine {minv_id}")
+            
+            # Update inventory
+            medicine_inv.minv_qty_avail -= quantity
+            medicine_inv.save()
+            
+            # Create transaction record if you have this model
+            # Uncomment if you have MedicineTransactions model
+            # from apps.inventory.models import MedicineTransactions
+            # 
+            unit = medicine_inv.minv_qty_unit or 'pcs'
+            if medicine_inv.minv_qty_unit and medicine_inv.minv_qty_unit.lower() == 'boxes':
+                mdt_qty = f"{quantity} pcs"
+            else:
+                mdt_qty = f"{quantity} {unit}"
+            
+            MedicineTransactions.objects.create(
+                mdt_qty=mdt_qty,
+                mdt_action="Deducted",
+                staff=staff_instance,
+                minv_id=medicine_inv
+            )
+            
+        except MedicineInventory.DoesNotExist:
+            raise Exception(f"Medicine inventory {minv_id} not found")
+    
+    def _handle_low_birth_weight(self, submitted_data, chhist_id):
+        """Handle low birth weight supplement status"""
+        if not submitted_data.get('vitalSigns'):
+            return
+            
+        vital_sign = submitted_data['vitalSigns'][0]
+        weight = vital_sign.get('wt')
+        
+        if weight and float(weight) < 2.5:
+            birthwt_data = submitted_data.get('birthwt', {})
+            if birthwt_data.get('seen') or birthwt_data.get('given_iron'):
+                ChildHealthSupplementsStatus.objects.create(
+                    status_type='birthwt',
+                    date_seen=birthwt_data.get('seen'),
+                    date_given_iron=birthwt_data.get('given_iron'),
+                    chhist_id=chhist_id,
+                    created_at=timezone.now(),
+                    birthwt=Decimal(str(weight)),
+                    date_completed=None
+                )
+    
+    def _handle_anemia(self, submitted_data, chhist_id):
+        """Handle anemia supplement status"""
+        anemic_data = submitted_data.get('anemic', {})
+        
+        if anemic_data.get('is_anemic'):
+            weight = 0
+            if (submitted_data.get('vitalSigns') and 
+                len(submitted_data['vitalSigns']) > 0):
+                weight = submitted_data['vitalSigns'][0].get('wt', 0)
+            
+            ChildHealthSupplementsStatus.objects.create(
+                status_type='anemic',
+                date_seen=anemic_data.get('seen'),
+                date_given_iron=anemic_data.get('given_iron'),
+                chhist_id=chhist_id,
+                created_at=timezone.now(),
+                birthwt=Decimal(str(weight)) if weight else None,
+                date_completed=None
+            )
+    
+    def _handle_historical_supplement_statuses(self, submitted_data, original_record):
+        """Handle historical supplement status updates"""
+        historical_statuses = submitted_data.get('historicalSupplementStatuses', [])
+        if not historical_statuses:
+            return
+        
+        original_statuses = original_record.get('supplements_statuses', [])
+        
+        updates_to_process = []
+        
+        for status in historical_statuses:
+            if not status.get('chssupplementstat_id'):
+                continue
+            
+            # Find original status for comparison
+            original_status = next(
+                (s for s in original_statuses 
+                 if s.get('chssupplementstat_id') == status['chssupplementstat_id']),
+                None
+            )
+            
+            # Check if update is needed
+            is_new_record = not original_status
+            original_date = original_status.get('date_completed') if original_status else None
+            submitted_date = status.get('date_completed')
+            
+            has_changed = (
+                original_date != submitted_date and 
+                not (original_date is None and submitted_date is None)
+            )
+            
+            if is_new_record or has_changed:
+                updates_to_process.append({
+                    'chssupplementstat_id': status['chssupplementstat_id'],
+                    'date_completed': submitted_date
+                })
+        
+        # Bulk update
+        if updates_to_process:
+            try:
+                for update in updates_to_process:
+                    ChildHealthSupplementsStatus.objects.filter(
+                        chssupplementstat_id=update['chssupplementstat_id']
+                    ).update(
+                        date_completed=update['date_completed']
+                    )
+                    
+                print(f"Successfully updated {len(updates_to_process)} supplement status records")
+            except Exception as e:
+                print(f"Supplement status update failed: {str(e)}")
+                raise Exception(f"Failed to update supplement statuses: {str(e)}")
+    
+     
+     
+     
+        
+        
+class SaveImmunizationDataAPIView(APIView):
+    
+    def post(self, request):
+        """
+        Handle saving immunization data with rollback on error
+        """
+        try:
+            data = request.data
+            
+            # Extract parameters
+            form_data = data.get('data', {})
+            vaccines = data.get('vaccines', [])
+            existing_vaccines = data.get('existingVaccines', [])
+            child_health_record = data.get('ChildHealthRecord', {})
+            staff_id = data.get('staff_id')
+            pat_id = data.get('pat_id')
+            
+            # Validation
+            if not pat_id:
+                return Response(
+                    {"error": "Patient ID is required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if there's anything to process
+            has_vaccines = len(vaccines) > 0
+            has_existing_vaccines = len(existing_vaccines) > 0
+            has_notes = bool(form_data.get('notes', '').strip())
+            has_follow_up = bool(form_data.get('followUpVisit', '').strip())
+            
+            if not (has_vaccines or has_existing_vaccines or has_notes or has_follow_up):
+                return Response(
+                    {"message": "No changes have been made"}, 
+                    status=status.HTTP_200_OK
+                )
+            
+            # Start transaction with savepoint
+            with transaction.atomic():
+                created_records = self.save_immunization_data(
+                    form_data, vaccines, existing_vaccines, 
+                    child_health_record, staff_id, pat_id
+                )
+                
+                return Response({
+                    "message": "Immunization data saved successfully",
+                    "created_records": created_records
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to save immunization data: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def save_immunization_data(self, form_data, vaccines, existing_vaccines, child_health_record, staff_id, pat_id):
+        """
+        Save immunization data with proper transaction handling
+        """
+        created_records = {
+            'patrec_ids': [],
+            'vacrec_ids': [],
+            'vachist_ids': [],
+            'imt_ids': [],
+            'followv_ids': [],
+            'antigen_transaction_ids': [],
+            'notes_updated': False
+        }
+        
+        # Get required data
+        chhist_id = child_health_record.get('record', {}).get('chhist_id')
+        patrec_id = child_health_record.get('record', {}).get('chrec_details', {}).get('patrec_details', {}).get('patrec_id')
+        
+        if not chhist_id:
+            raise ValueError("Child health history ID is required")
+        
+        # Get staff instance if provided
+        staff_instance = None
+        if staff_id:
+            try:
+                staff_instance = Staff.objects.get(staff_id=staff_id)
+            except Staff.DoesNotExist:
+                raise ValueError(f"Staff with ID {staff_id} not found")
+        
+        # Get child health history instance
+        try:
+            chhist_instance = ChildHealth_History.objects.get(chhist_id=chhist_id)
+        except ChildHealth_History.DoesNotExist:
+            raise ValueError(f"Child health history with ID {chhist_id} not found")
+        
+        # Handle follow-up visit creation if needed
+        followv_instance = None
+        if form_data.get('followUpVisit', '').strip() or form_data.get('follov_description', '').strip():
+            if not patrec_id:
+                raise ValueError("Patient record ID is required for follow-up visit")
+            
+            try:
+                patrec_instance = PatientRecord.objects.get(patrec_id=patrec_id)
+                followv_instance = FollowUpVisit.objects.create(
+                    followv_date=self.parse_date(form_data.get('followUpVisit')),
+                    followv_description=form_data.get('follov_description', 'Vaccination Follow-up'),
+                    patrec=patrec_instance,
+                    followv_status='pending'
+                )
+                created_records['followv_ids'].append(followv_instance.followv_id)
+            except PatientRecord.DoesNotExist:
+                raise ValueError(f"Patient record with ID {patrec_id} not found")
+        
+        # Handle notes creation/update
+        if form_data.get('notes', '').strip():
+            self.handle_notes(
+                chhist_instance, 
+                form_data.get('notes'), 
+                followv_instance, 
+                staff_instance,
+                created_records
+            )
+        
+        # Process new vaccines
+        for vaccine in vaccines:
+            self.process_new_vaccine(
+                vaccine, child_health_record, staff_instance, 
+                pat_id, patrec_id, chhist_instance, created_records
+            )
+        
+        # Process existing vaccines
+        for existing_vaccine in existing_vaccines:
+            self.process_existing_vaccine(
+                existing_vaccine, child_health_record, staff_instance, 
+                pat_id, chhist_instance, created_records
+            )
+        
+        # Update child health history status
+        chhist_instance.status = 'recorded'
+        chhist_instance.save()
+        
+        return created_records
+    
+    def handle_notes(self, chhist_instance, notes_text, followv_instance, staff_instance, created_records):
+        """
+        Handle notes creation or update
+        """
+        # Check if notes already exist for this child health history
+        existing_notes = ChildHealthNotes.objects.filter(chhist=chhist_instance).first()
+        
+        if existing_notes:
+            # Update existing notes
+            existing_notes.chn_notes = notes_text
+            if followv_instance:
+                existing_notes.followv = followv_instance
+            if staff_instance:
+                existing_notes.staff = staff_instance
+            existing_notes.save()
+            created_records['notes_updated'] = True
+        else:
+            # Create new notes
+            ChildHealthNotes.objects.create(
+                chn_notes=notes_text,
+                chhist=chhist_instance,
+                followv=followv_instance,
+                staff=staff_instance
+            )
+    
+    def process_new_vaccine(self, vaccine, child_health_record, staff_instance, pat_id, patrec_id, chhist_instance, created_records):
+        """
+        Process a new vaccine administration
+        """
+        # Handle existing follow-up update if needed
+        if vaccine.get('existingFollowvId'):
+            try:
+                existing_followv = FollowUpVisit.objects.get(followv_id=vaccine['existingFollowvId'])
+                existing_followv.followv_status = 'completed'
+                existing_followv.completed_at = date.today()
+                existing_followv.save()
+            except FollowUpVisit.DoesNotExist:
+                pass
+        
+        # Get vaccine stock data
+        vaccine_stock = None
+        if vaccine.get('vacStck_id'):
+            try:
+                vaccine_stock = VaccineStock.objects.get(vacStck_id=vaccine['vacStck_id'])
+            except VaccineStock.DoesNotExist:
+                raise ValueError(f"Vaccine stock with ID {vaccine['vacStck_id']} not found")
+        
+        vaccine_type = vaccine_stock.vac_id.vac_type_choices if vaccine_stock else 'routine'
+        current_dose = int(vaccine.get('dose', 1))
+        total_doses = int(vaccine.get('totalDoses', 1))
+        
+        # Update vaccine stock if needed
+        if vaccine_stock:
+            if vaccine_stock.vacStck_qty_avail <= 0:
+                raise ValueError(f"Insufficient vaccine stock for {vaccine_stock.vac_id.vac_name}")
+            
+            vaccine_stock.vacStck_qty_avail -= 1
+            vaccine_stock.save()
+            
+            # Create antigen transaction
+            antigen_transaction = AntigenTransaction.objects.create(
+                antt_qty='1',
+                antt_action='dispensed',
+                vacStck_id=vaccine_stock,
+                staff=staff_instance
+            )
+            created_records['antigen_transaction_ids'].append(antigen_transaction.antt_id)
+        
+        # Create new records if needed
+        vacrec_id = vaccine.get('vacrec')
+        if (vaccine_type != 'routine' and current_dose == 1) or not vacrec_id:
+            # Create patient record
+            patient_instance = get_object_or_404(Patient, pat_id=pat_id)
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient_instance,
+                patrec_type='Vaccination Record',
+                # Note: staff field doesn't exist in PatientRecord model based on your schema
+            )
+            created_records['patrec_ids'].append(patient_record.patrec_id)
+            
+            # Create vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=total_doses
+            )
+            created_records['vacrec_ids'].append(vaccination_record.vacrec_id)
+            vacrec_id = vaccination_record.vacrec_id
+        else:
+            vaccination_record = get_object_or_404(VaccinationRecord, vacrec_id=vacrec_id)
+        
+        # Handle follow-up for vaccine
+        vaccine_followv_instance = None
+        is_routine = vaccine_type == 'routine'
+        is_last_dose = current_dose >= total_doses
+        
+        if vaccine.get('nextFollowUpDate') and (is_routine or not is_last_dose):
+            if not patrec_id:
+                raise ValueError("Patient record ID is required for vaccine follow-up")
+            
+            patrec_instance = get_object_or_404(PatientRecord, patrec_id=patrec_id)
+            vaccine_followv_instance = FollowUpVisit.objects.create(
+                followv_date=self.parse_date(vaccine.get('nextFollowUpDate')),
+                followv_description=f"{vaccine.get('vac_name', 'Vaccine')} Follow-up",
+                patrec=patrec_instance,
+                followv_status='pending'
+            )
+            created_records['followv_ids'].append(vaccine_followv_instance.followv_id)
+        
+        # Get vital signs
+        vital_instance = None
+        vital_signs = child_health_record.get('child_health_vital_signs', [])
+        if vital_signs and vital_signs[0].get('vital'):
+            try:
+                vital_instance = VitalSigns.objects.get(vital_id=vital_signs[0]['vital'])
+            except VitalSigns.DoesNotExist:
+                pass
+        
+        # Create vaccination history
+        vaccination_history = VaccinationHistory.objects.create(
+            vacrec=vaccination_record,
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=current_dose,
+            vachist_status='completed',
+            vital=vital_instance,
+            staff=staff_instance,
+            followv=vaccine_followv_instance,
+            date_administered=self.parse_date(vaccine.get('date')) or date.today()
+        )
+        created_records['vachist_ids'].append(vaccination_history.vachist_id)
+        
+        # Create immunization record
+        immunization_record = ChildHealthImmunizationHistory.objects.create(
+            vachist=vaccination_history,
+            chhist=chhist_instance,
+            hasExistingVaccination=False
+        )
+        created_records['imt_ids'].append(immunization_record.imt_id)
+    
+    def process_existing_vaccine(self, existing_vaccine, child_health_record, staff_instance, pat_id, chhist_instance, created_records):
+        """
+        Process an existing vaccine record
+        """
+        vaccine_type = existing_vaccine.get('vaccineType', 'routine')
+        current_dose = int(existing_vaccine.get('dose', 1))
+        total_doses = int(existing_vaccine.get('totalDoses', 1))
+        
+        # Create new records if needed
+        vacrec_id = existing_vaccine.get('vacrec')
+        if (vaccine_type != 'routine' and current_dose == 1) or not vacrec_id:
+            # Create patient record
+            patient_instance = get_object_or_404(Patient, pat_id=pat_id)
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient_instance,
+                patrec_type='Vaccination Record'
+            )
+            created_records['patrec_ids'].append(patient_record.patrec_id)
+            
+            # Create vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=total_doses
+            )
+            created_records['vacrec_ids'].append(vaccination_record.vacrec_id)
+            vacrec_id = vaccination_record.vacrec_id
+        else:
+            vaccination_record = get_object_or_404(VaccinationRecord, vacrec_id=vacrec_id)
+        
+        # Get vital signs
+        vital_instance = None
+        vital_signs = child_health_record.get('child_health_vital_signs', [])
+        if vital_signs and vital_signs[0].get('vital'):
+            try:
+                vital_instance = VitalSigns.objects.get(vital_id=vital_signs[0]['vital'])
+            except VitalSigns.DoesNotExist:
+                pass
+        
+        # Get vaccine list instance
+        vaccine_instance = None
+        if existing_vaccine.get('vac_id'):
+            try:
+                from apps.inventory.models import VaccineList
+                vaccine_instance = VaccineList.objects.get(vac_id=existing_vaccine['vac_id'])
+            except:
+                pass
+        
+        # Create vaccination history
+        vaccination_history = VaccinationHistory.objects.create(
+            vacrec=vaccination_record,
+            vac=vaccine_instance,
+            vachist_doseNo=current_dose,
+            vachist_status='completed',
+            vital=vital_instance,
+            staff=staff_instance,
+            followv=None,
+            date_administered=self.parse_date(existing_vaccine.get('date')) or date.today()
+        )
+        created_records['vachist_ids'].append(vaccination_history.vachist_id)
+        
+        # Create immunization record
+        immunization_record = ChildHealthImmunizationHistory.objects.create(
+            vachist=vaccination_history,
+            chhist=chhist_instance,
+            hasExistingVaccination=True
+        )
+        created_records['imt_ids'].append(immunization_record.imt_id)
+    
+    def parse_date(self, date_string):
+        """
+        Parse date string to date object
+        """
+        if not date_string:
+            return None
+        
+        try:
+            if isinstance(date_string, str):
+                return datetime.strptime(date_string, '%Y-%m-%d').date()
+            return date_string
+        except ValueError:
+            return None

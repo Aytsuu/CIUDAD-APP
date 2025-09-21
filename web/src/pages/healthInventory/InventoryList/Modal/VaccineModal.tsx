@@ -9,9 +9,9 @@ import { VaccineSchema, type VaccineType } from "@/form-schema/inventory/lists/i
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useSubmitVaccine } from "../queries/Antigen/VaccinePostQueries";
-import { useUpdateVaccine } from "../queries/Antigen/VaccinePutQueries";
-import { getVaccineList } from "../restful-api/Antigen/fetchAPI";
+import { useSubmitVaccine } from "../queries/Antigen/post-queries";
+import { useUpdateVaccine } from "../queries/Antigen/put-queries";
+import { getVaccineList } from "../restful-api/Antigen/fetch-api";
 import { toast } from "sonner";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { timeUnits, vaccineTypes } from "./types";
@@ -78,7 +78,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
     setValue,
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     getValues
   } = form;
 
@@ -326,14 +326,18 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
                   <Combobox
                     options={ageGroups.formatted}
                     value={loadingAgeGroups ? "" : isEditMode ? selectedAgeGroupId : ageGroup}
-                    onChange={isEditMode ? handleAgeGroupSelection : (id) => form.setValue("ageGroup", id)}
+                    onChange={(id) => {
+                      if (id) {
+                        isEditMode ? handleAgeGroupSelection(id) : form.setValue("ageGroup", id);
+                      }
+                    }}
                     triggerClassName="w-full mt-2"
                     placeholder={loadingAgeGroups ? "Loading..." : "Select age group"}
                     emptyMessage={
                       <div className="text-center">
                         <p className="text-sm text-gray-600"> No age groups found.</p>
                         <Link to="/age-group" className="text-sm text-teal-600 hover:underline">
-                           Manage Group
+                          Manage Group
                         </Link>
                       </div>
                     }

@@ -4,11 +4,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import CardLayout from "@/components/ui/card/card-layout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -16,7 +14,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
-import { useVaccineChart } from "@/pages/healthServices/Reports/vaccination-report/queries/fetchQueries";
+import { useVaccineChart } from "@/pages/healthServices/reports/vaccination-report/queries/fetchQueries";
+import CardLayout from "@/components/ui/card/card-layout";
 
 interface VaccineChartProps {
   initialMonth: string;
@@ -75,7 +74,7 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
   const CustomTooltip = ({
     active,
     payload,
-    label,
+    // label,
   }: {
     active?: boolean;
     payload?: any[];
@@ -214,7 +213,7 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
                       dataKey="count"
                       barSize={40}
                     >
-                      {displayData.map((entry, index) => (
+                      {displayData.map((_entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}

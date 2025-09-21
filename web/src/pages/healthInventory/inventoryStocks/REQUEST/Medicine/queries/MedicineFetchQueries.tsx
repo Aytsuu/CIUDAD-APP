@@ -1,14 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMedicineInventory,getMedicineStocks} from "../restful-api/MedicineGetAPI";
-
- export const useMedicineStocks = () => {
-    return useQuery({
-        queryKey: ["medicineinventorylist"],
-        queryFn: getMedicineInventory,
-        refetchOnMount: true,
-        staleTime: 0,
-    });
-};
+import { getMedicineStocks} from "../restful-api/MedicineGetAPI";
 
 
 

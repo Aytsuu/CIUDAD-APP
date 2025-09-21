@@ -7,7 +7,7 @@ import { useUpdateProfile } from "../../queries/profilingUpdateQueries"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card } from "@/components/ui/card"
 import { DataTable } from "@/components/ui/table/data-table"
-import { businessDetailsColumns, familyDetailsColumns, residentColumns } from "../ResidentColumns"
+import { businessDetailsColumns, familyDetailsColumns } from "../ResidentColumns"
 import {
   useFamilyMembers,
   useOwnedBusinesses,
@@ -19,7 +19,7 @@ import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
 import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
-import { Users, History, Clock, UsersRound, UserRound, Building, Eye, MoveRight } from "lucide-react"
+import { Users, History, Clock, UsersRound, UserRound, Building, MoveRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import { Label } from "@/components/ui/label"
@@ -29,11 +29,11 @@ import { ActivityIndicator } from "@/components/ui/activity-indicator"
 import { EmptyState } from "@/components/ui/empty-state"
 import { CardSidebar } from "@/components/ui/card-sidebar"
 import { Button } from "@/components/ui/button/button"
+import { Badge } from "@/components/ui/badge"
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
   const currentPath = location.pathname.split("/").pop() as string
-  console.log("current path:", currentPath)
   const navigate = useNavigate();
   const { user } = useAuth()
   const { showLoading, hideLoading } = useLoading()
@@ -58,6 +58,13 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const family = familyMembers?.results || []
   const businesses = ownedBusinesses?.results || []
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList])
+
+  // ---- Registered By ----
+  const registered_by = personalInfo?.registered_by?.split("-") || [];
+  const staffId = registered_by.length > 0 && registered_by[0];
+  const staffName = registered_by.length > 0 && registered_by[1];
+  const staffType = registered_by.length > 0 && registered_by[2];
+  const staffFam = registered_by.length > 0 && registered_by[3];
 
   const validator = React.useMemo(
     () =>
@@ -349,29 +356,60 @@ export default function ResidentViewForm({ params }: { params: any }) {
           {isLoadingPersonalInfo ? (
             <ActivityIndicator message="Loading personal information..." />
           ) : (
-            <Form {...form}>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  submit()
-                }}
-                className="flex flex-col gap-4"
-              >
-                <PersonalInfoForm
-                  formattedSitio={formattedSitio}
-                  addresses={addresses}
-                  validAddresses={validAddresses}
-                  setValidAddresses={setValidAddresses}
-                  setAddresses={setAddresses}
-                  form={form}
-                  formType={formType}
-                  isSubmitting={isSubmitting}
-                  submit={submit}
-                  isReadOnly={isReadOnly}
-                  setFormType={setFormType}
-                />
-              </form>
-            </Form>
+            <>
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    submit()
+                  }}
+                  className="flex flex-col gap-4"
+                >
+                  <PersonalInfoForm
+                    formattedSitio={formattedSitio}
+                    addresses={addresses}
+                    validAddresses={validAddresses}
+                    setValidAddresses={setValidAddresses}
+                    setAddresses={setAddresses}
+                    form={form}
+                    formType={formType}
+                    isSubmitting={isSubmitting}
+                    submit={submit}
+                    isReadOnly={isReadOnly}
+                    setFormType={setFormType}
+                  />
+                </form>
+              </Form>
+              {registered_by.length > 0 && <div className="flex">
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <Label className="text-xs font-medium text-black/50 uppercase tracking-wide">Registered By</Label>
+                    <Badge className="bg-green-500 hover:bg-green-500">{staffType}</Badge>
+                  </div>
+                  <div className="flex flex-col text-md font-semibold">
+                    <button
+                      onClick={() => {
+                        navigate("/profiling/resident/view/personal", {
+                          state: {
+                            params: {
+                              type: "viewing",
+                              data: {
+                                residentId: staffId,
+                                familyId: staffFam,
+                              },
+                            },
+                          },
+                        })
+                      }}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
+                    >
+                      {staffName || "N/A"}
+                    </button>
+                    <span className="text-[13px] text-gray-500">ID: {staffId}</span>
+                  </div>
+                </div>
+              </div>}
+            </>
           )}
         </Card>}
           

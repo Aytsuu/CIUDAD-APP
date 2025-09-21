@@ -4,5 +4,5 @@ export const template_router = [
     {
         path: '/templates-main',
         element: <TemplateMainPage /> 
-    },
+    }
 ]

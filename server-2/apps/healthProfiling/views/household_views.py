@@ -6,13 +6,12 @@ from apps.pagination import *
 
 class HouseholdListView(generics.ListAPIView):
   serializer_class = HouseholdListSerialzer
-  
-  def get_queryset(self):
-    hh_id = self.kwargs.get('hh_id', None)
-    if hh_id:
-      return Household.objects.filter(hh_id=hh_id)
+  queryset = Household.objects.all()
 
-    return Household.objects.all()
+class HouseholdDataView(generics.RetrieveAPIView):
+   serializer_class = HouseholdListSerialzer
+   queryset = Household.objects.all()
+   lookup_field = 'hh_id'
 
 class HouseholdTableView(generics.ListAPIView):
   serializer_class = HouseholdTableSerializer
@@ -53,7 +52,7 @@ class HouseholdTableView(generics.ListAPIView):
                 Q(rp__per__per_mname__icontains=search_query) |  
                 Q(family_count__icontains=search_query)
             ).distinct()
-            
+
         return queryset
 
 class HouseholdCreateView(generics.CreateAPIView):
@@ -69,6 +68,9 @@ class HouseholdUpdateView(generics.UpdateAPIView):
     serializer = self.get_serializer(instance, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Re-fetch the updated instance from the database (optional but recommended)
+        instance.refresh_from_db()
+        # Serialize the full instance
+        return Response(HouseholdListSerialzer(instance).data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
   

@@ -28,7 +28,19 @@ class ChildHealthrecord(models.Model):
     )
     birth_order = models.IntegerField(default=0)  # Birth order of the child
     pod_location = models.CharField(max_length=100, blank=True, null=True)  # Location of the place of delivery
-    
+    nbscreening_result = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        choices=[
+            ("normal", "Normal"),
+            ("referred", "Referred"),
+            ("done", "Done"),
+            ("with_results", "With Results"),
+            ("with_positive_results", "With Positive Results"),
+        ]
+    )
+    newbornInitiatedbf=models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='child_health_records')
@@ -120,10 +132,16 @@ class NutritionalStatus(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
     muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
+    remarks = models.TextField(blank=True, null=True)  # Additional remarks
+    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
+
+    
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories')
     # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
     # chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
     pat = models.ForeignKey(Patient,on_delete=models.CASCADE, related_name='child_health_histories' )
+   
+  
     class Meta:
         db_table = 'nutritional_status'
         

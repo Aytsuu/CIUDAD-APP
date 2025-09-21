@@ -8,16 +8,12 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
   {
     accessorKey: "patient",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Patient <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => {
-      const fullName =
-        `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
+      const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="flex flex-col w-full">
@@ -28,38 +24,29 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
           </div>
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "address",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Address <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => (
       <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">
-          {row.original.address
-            ? row.original.address
-            : "No address provided"}
-        </div>
+        <div className="w-full truncate">{row.original.address ? row.original.address : "No address provided"}</div>
       </div>
-    ),
+    )
   },
   {
     accessorKey: "sitio",
     header: "Sitio",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">
-          {row.original.sitio || "N/A"}
-        </div>
+        <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
       </div>
-    ),
+    )
   },
   {
     accessorKey: "type",
@@ -68,18 +55,16 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
       <div className="flex justify-center min-w-[100px] px-2">
         <div className="text-center w-full">{row.original.pat_type}</div>
       </div>
-    ),
+    )
   },
   {
     accessorKey: "vaccination_count",
     header: "No of Records",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">
-          {row.original.vaccination_count}
-        </div>
+        <div className="text-center w-full">{row.original.vaccination_count}</div>
       </div>
-    ),
+    )
   },
   {
     accessorKey: "action",
@@ -101,7 +86,7 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
                     add_barangay: row.original.barangay,
                     add_city: row.original.city,
                     add_province: row.original.province,
-                    add_sitio: row.original.sitio,
+                    add_sitio: row.original.sitio
                   },
                   households: [{ hh_id: row.original.householdno }],
                   personal_info: {
@@ -109,16 +94,16 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
                     per_mname: row.original.mname,
                     per_lname: row.original.lname,
                     per_dob: row.original.dob,
-                    per_sex: row.original.sex,
-                  },
-                },
-              },
+                    per_sex: row.original.sex
+                  }
+                }
+              }
             }}
           >
             View
           </Link>
         </div>
       </div>
-    ),
-  },
+    )
+  }
 ];

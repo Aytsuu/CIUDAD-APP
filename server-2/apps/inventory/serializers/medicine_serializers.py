@@ -52,3 +52,5 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
         model = MedicineTransactions
         fields = '__all__'
         
+        
+        

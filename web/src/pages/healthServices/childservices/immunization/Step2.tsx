@@ -7,7 +7,6 @@ import { Form } from "@/components/ui/form/form";
 import { toast } from "sonner";
 import { VitalSignType, VaccineRecord, ExistingVaccineRecord, ImmunizationFormData } from "@/form-schema/ImmunizationSchema";
 import { createImmunizationColumns } from "./columns";
-import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { calculateNextVisitDate } from "@/helpers/Calculatenextvisit";
 import { useAuth } from "@/context/AuthContext";
 import { NotesDialog } from "./NotesDialog";
@@ -18,7 +17,7 @@ import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import CardLayout from "@/components/ui/card/card-layout";
 
 export interface ImmunizationProps {
-  ChildHealthRecord: ChildHealthHistoryRecord;
+  ChildHealthRecord: any;
   historicalVitalSigns?: VitalSignType[];
   historicalNotes?: {
     date: string;
@@ -75,7 +74,6 @@ export default function Immunization({
   vaccinations = [],
   followUps = []
 }: ImmunizationProps) {
-  
   const [latestVitalSigns, setLatestVitalSigns] = useState<VitalSignType | null>(null);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
@@ -83,7 +81,7 @@ export default function Immunization({
   const [existingVaccines, setExistingVaccines] = useState<ExistingVaccineRecord[]>(propExistingVaccines);
   const [selectedVaccineId, setSelectedVaccineId] = useState<string>("");
   const [selectedVaccineListId, setSelectedVaccineListId] = useState<string>("");
-  const [vaccineOptions, setVaccineOptions] = useState<{ default: any[]; formatted: { id: string; name: string; quantity?: number }[] }>({ default: [], formatted: [] });
+  // const [vaccineOptions, setVaccineOptions] = useState<{ default: any[]; formatted: { id: string; name: string; quantity?: number }[] }>({ default: [], formatted: [] });
   const [vaccineListOptions, setVaccineListOptions] = useState<{ default: any[]; formatted: { id: string; name: string }[] }>({ default: [], formatted: [] });
   const [nextVisitDate, setNextVisitDate] = useState<string | null>(null);
   const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
@@ -92,7 +90,7 @@ export default function Immunization({
   const [existingVaccineTotalDoses, setExistingVaccineTotalDoses] = useState<number>(1);
   const [newVaccineErrors] = useState<{ vaccine?: string; dose?: string; date?: string }>({});
   const [existingVaccineErrors, setExistingVaccineErrors] = useState<{ vaccine?: string; dose?: string; date?: string }>({});
-  const pat_id = ChildHealthRecord?.chrec_details?.patrec_details?.pat_id.toString() || "";
+  const pat_id = ChildHealthRecord?.record?.chrec_details?.patrec_details?.pat_id.toString() || "";
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
   const [basicVaccineList, setBasicVaccineList] = useState<any[]>([]);
@@ -108,17 +106,17 @@ export default function Immunization({
     }
   }, [vaccinesListData]);
 
-  useEffect(() => {
-    if (vaccinesData) {
-      setVaccineOptions({
-        default: vaccinesData.default,
-        formatted: vaccinesData.formatted.map((vaccine) => ({
-          ...vaccine,
-          name: typeof vaccine.name === "string" ? vaccine.name : String(vaccine.name)
-        }))
-      });
-    }
-  }, [vaccinesData]);
+  // useEffect(() => {
+  //   if (vaccinesData) {
+  //     setVaccineOptions({
+  //       default: vaccinesData.default,
+  //       formatted: vaccinesData.formatted.map((vaccine) => ({
+  //         ...vaccine,
+  //         name: typeof vaccine.name === "string" ? vaccine.name : String(vaccine.name)
+  //       }))
+  //     });
+  //   }
+  // }, [vaccinesData]);
 
   useEffect(() => {
     setVaccines(propVaccines);
@@ -203,7 +201,6 @@ export default function Immunization({
   const handleVaccineChange = (value: string) => {
     form.setValue("vaccines.0.vaccineType", value);
     setisVaccineComplted(false);
-
     setSelectedVaccineId(value);
     setNextVisitDate(null);
     setNextVisitDescription(null);
@@ -212,18 +209,56 @@ export default function Immunization({
 
     if (!value) return;
 
-    const [vacStck_id, vac_id, vac_name] = value.split(",");
+    // Debug: Log the value to see what format it's in
+    console.log("Selected vaccine value:", value);
+
+    // Parse the value - adjust this based on your actual value format
+    let vacStck_id: any, vac_id: any, vac_name: any;
+
+    // If value is just the vac_id (single value)
+    if (!value.includes(",")) {
+      vac_id = value;
+      // Find the vaccine from the list
+      const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vac_id?.toString() === vac_id || v.vacStck_id?.toString() === vac_id);
+
+      if (selectedVaccine) {
+        vac_name = selectedVaccine.vac_name;
+        vacStck_id = selectedVaccine.vacStck_id?.toString() || vac_id;
+        // expiry_date = selectedVaccine.expiry_date || "";
+      }
+    } else {
+      // If value is in comma-separated format
+      [vacStck_id, vac_id, vac_name] = value.split(",");
+    }
+
     const numericVacId = parseInt(vac_id, 10);
 
-    const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vacStck_id === parseInt(vacStck_id, 10));
+    // Find the selected vaccine from your data
+    let selectedVaccine = null;
+
+    // First try to find in vaccinesData (vaccine stock)
+    if (vaccinesData?.default) {
+      selectedVaccine = vaccinesData.default.find((v: any) => v.vac_id === numericVacId || v.vacStck_id === parseInt(vacStck_id, 10));
+    }
+
+    // If not found in stock, try to find in vaccine list data
+    if (!selectedVaccine && vaccinesListData?.default) {
+      selectedVaccine = vaccinesListData.default.find((v: any) => v.vac_id === numericVacId);
+    }
 
     if (!selectedVaccine) {
-      console.error("Selected vaccine not found");
+      console.error("Selected vaccine not found. Available vaccines:", vaccinesData?.default);
+      console.error("Vaccine list data:", vaccinesListData?.default);
+      console.error("Looking for vac_id:", numericVacId);
       return;
     }
 
-    const { vaccinelist } = selectedVaccine;
+    console.log("Found selected vaccine:", selectedVaccine);
 
+    // Get vaccine properties - adjust based on your actual data structure
+    const vaccineInfo = selectedVaccine.vaccinelist || selectedVaccine;
+
+    // Calculate vaccine history for this vaccine
     const vaccineHistoryForThis = vaccineHistory.filter((record) => {
       const recordVacId = record.vacrec_details?.vacrec_vaccine || record.vaccine_stock?.vaccinelist?.vac_id || record.vac_details?.vac_id;
       return recordVacId === numericVacId;
@@ -232,8 +267,9 @@ export default function Immunization({
     let highestDose = 0;
     let existingVacrecId = "";
     let existingFollowvId = "";
-    let existingTotalDoses = vaccinelist.no_of_doses; // Default to vaccine list's total doses
+    let existingTotalDoses = vaccineInfo.no_of_doses || 1; // Default to vaccine's total doses
 
+    // Find the highest dose already given
     vaccineHistoryForThis.forEach((record) => {
       const doseNo = record.vachist_doseNo ? parseInt(record.vachist_doseNo) : 0;
       if (doseNo > highestDose) {
@@ -243,52 +279,71 @@ export default function Immunization({
 
         // Get total doses from vaccination record if available
         if (record.vacrec_details?.vacrec_totaldose) {
-          existingTotalDoses = record.vacrec_details?.vacrec_totaldose;
+          existingTotalDoses = record.vacrec_details.vacrec_totaldose;
         }
       }
     });
 
+    // Set form values
     form.setValue("vaccines.0.existingFollowvId", existingFollowvId);
     form.setValue("vaccines.0.vacrec", existingVacrecId);
     form.setValue("vaccines.0.totalDoses", existingTotalDoses.toString());
 
     const nextDose = highestDose + 1;
-    console.log("Vaccination Record", existingVacrecId);
+    console.log("Next dose number:", nextDose);
+    console.log("Total doses for vaccine:", existingTotalDoses);
 
     form.setValue("vaccines.0.dose", nextDose.toString());
-    // setCurrentDoseNumber(nextDose);
 
-    if (vaccinelist.no_of_doses) {
-      form.setValue("vaccines.0.totalDoses", vaccinelist.no_of_doses.toString());
+    // Set total doses
+    if (vaccineInfo.no_of_doses) {
+      form.setValue("vaccines.0.totalDoses", vaccineInfo.no_of_doses.toString());
       setCurrentVaccineTotalDoses(existingTotalDoses);
     }
 
-    const isCompleted = nextDose > vaccinelist.no_of_doses;
+    // Check if vaccine is completed
+    const isCompleted = nextDose > (vaccineInfo.no_of_doses || 1);
+    const disableSubmit = (isCompleted && vaccineInfo.vac_type_choices === "primary") || (vaccineInfo.vac_type_choices === "conditional" && isCompleted);
 
-    const disableSubmit = (isCompleted && vaccinelist.vac_type_choices === "primary") || (vaccinelist.vac_type_choices === "conditional" && isCompleted);
     setisVaccineComplted(disableSubmit);
+
     if (disableSubmit) {
-      toast.warning(`${vac_name} vaccine is already completed`);
+      toast.warning(`${vac_name || vaccineInfo.vac_name} vaccine is already completed`);
+      return; // Exit early if completed
     }
 
-    // setSelectedVaccineType(vaccinelist.vac_type_choices);
+    // Calculate next visit date based on vaccine type
+    console.log("Vaccine type:", vaccineInfo.vac_type_choices);
 
-    // Modified follow-up date calculation logic
-    if (vaccinelist.vac_type_choices === "routine") {
-      const { interval, time_unit } = vaccinelist.routine_frequency;
+    if (vaccineInfo.vac_type_choices === "routine" && vaccineInfo.routine_frequency) {
+      const { interval, time_unit } = vaccineInfo.routine_frequency;
+      console.log("Calculating routine follow-up:", interval, time_unit);
+
       const nextDate = calculateNextVisitDate(interval, time_unit, new Date().toISOString());
       setNextVisitDate(nextDate.toISOString().split("T")[0]);
-      setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
+      setNextVisitDescription(`Vaccination for ${vaccineInfo.vac_name}`);
       form.setValue("vaccines.0.nextFollowUpDate", nextDate.toISOString().split("T")[0]);
-    } else if (nextDose < vaccinelist.no_of_doses) {
+    } else if (nextDose < (vaccineInfo.no_of_doses || 1)) {
       // Only set follow-up for non-routine vaccines if not the last dose
-      const doseInterval = vaccinelist.intervals?.find((interval: any) => interval.dose_number === nextDose);
+      console.log("Looking for dose interval for next dose after current dose:", nextDose);
+      console.log("Available intervals:", vaccineInfo.intervals);
+
+      // Look for the interval that defines when the NEXT dose should be given
+      // The dose_number in intervals represents the dose that will be given next
+      const nextDoseNumber = nextDose + 1;
+      const doseInterval = vaccineInfo.intervals?.find((interval: any) => interval.dose_number === nextDoseNumber);
+
       if (doseInterval) {
+        console.log("Found interval for next dose:", doseInterval);
         const nextDate = calculateNextVisitDate(doseInterval.interval, doseInterval.time_unit, new Date().toISOString());
         setNextVisitDate(nextDate.toISOString().split("T")[0]);
-        setNextVisitDescription(`Dose ${nextDose + 1} of ${vaccinelist.vac_name}`);
+        setNextVisitDescription(`Dose ${nextDoseNumber} of ${vaccineInfo.vac_name}`);
         form.setValue("vaccines.0.nextFollowUpDate", nextDate.toISOString().split("T")[0]);
+      } else {
+        console.log("No interval found for next dose:", nextDoseNumber);
       }
+    } else {
+      console.log("Last dose - no follow-up needed");
     }
   };
 
@@ -455,7 +510,7 @@ export default function Immunization({
     form.setValue("existingVaccines", updatedExistingVaccines);
     toast.success("Existing vaccine removed successfully!");
   };
-  const handleUpdateVitalSign = (index: number, values: VitalSignType) => {
+  const handleUpdateVitalSign = (values: VitalSignType) => {
     const updatedVitalSigns = [...historicalVitalSigns];
     const existingIndex = updatedVitalSigns.findIndex((v) => v.date === values.date);
 
@@ -487,7 +542,7 @@ export default function Immunization({
 
   const handleSaveNotes = (data: VitalSignType) => {
     if (editingRowIndex !== null) {
-      handleUpdateVitalSign(editingRowIndex, {
+      handleUpdateVitalSign({
         date: data.date,
         age: data.age,
         ht: data.ht,

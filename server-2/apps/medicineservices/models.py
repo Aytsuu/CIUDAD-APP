@@ -11,8 +11,9 @@ class MedicineRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='medicine_requests',blank=True,null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='medicine_requests',blank=True,null=True)
-    status = models.CharField(max_length=20, default='pending')
-   
+    mode = models.CharField(default='walk-in', max_length=20) #walk-in or app 
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
         return f"MedicineRequest #{self.medreq_id}"
     def save(self, *args, **kwargs):
@@ -53,10 +54,15 @@ class MedicineRequestItem(models.Model):
     medreqitem_id = models.BigAutoField(primary_key=True)
     medreqitem_qty = models.PositiveIntegerField(default=0)
     reason = models.TextField(blank=True, null=True)  # (OP)    
-    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items')
+    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE, db_column='minv_id', related_name='medicine_request_items',null=True, blank=True)
     medreq_id = models.ForeignKey('MedicineRequest', on_delete=models.CASCADE, related_name='items',db_column='medreq_id')
     med= models.ForeignKey(Medicinelist, on_delete=models.CASCADE, related_name='medicine_request_items', db_column='med_id', blank=True, null=True)
     status = models.CharField(max_length=20, default='pending') #refered  or confirm
+    is_archived = models.BooleanField(default=False)
+    archive_reason = models.TextField(blank=True, null=True)  
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    
 
 
     def __str__(self):
@@ -64,6 +70,15 @@ class MedicineRequestItem(models.Model):
     class Meta:
         db_table = 'medicine_request_item'  
 
+class MedicineAllocation(models.Model):
+    alloc_id = models.BigAutoField(primary_key=True)
+    medreqitem = models.ForeignKey(MedicineRequestItem, on_delete=models.CASCADE, related_name="allocations")
+    minv= models.ForeignKey(MedicineInventory, on_delete=models.CASCADE)
+    allocated_qty = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'medicine_request_allocation'
 
 class MedicineRecord(models.Model):
     medrec_id = models.BigAutoField(primary_key=True)
@@ -83,6 +98,8 @@ class MedicineRecord(models.Model):
         return f"MedicineRecord #{self.medrec_id}"
     class Meta:
         db_table = 'medicine_record'
+
+
         
 class Medicine_File(models.Model): 
 

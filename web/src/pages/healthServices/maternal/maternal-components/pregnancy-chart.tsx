@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
 import { Clock, CheckCircle, HeartHandshake, Tally5 } from "lucide-react"
 
-
-interface PregnancyDataDetails{
+interface PregnancyDataDetails {
   pregnancy_id: string;
   status: string;
   created_at: string;
@@ -16,9 +15,9 @@ interface PregnancyDataDetails{
     pf_lmp: string;
     pf_edc: string;
     created_at: string;
-  }[]
+  }[];
   postpartum_record?: {
-    ppr_id:string;
+    ppr_id: string;
     delivery_date: string | "N/A";
     created_at: string;
     updated_at: string;
@@ -32,31 +31,30 @@ interface PregnancyDataDetails{
       ppa_nurses_notes: string;
       created_at: string;
       updated_at: string;
-    }[]
-  }[]
+    }[];
+  }[];
 }
 
 interface PregnancyChartProps {
-	pregnancies: PregnancyDataDetails[];
+  pregnancies: PregnancyDataDetails[];
 }
 
 export default function PregnancyChart({ pregnancies }: PregnancyChartProps) {
-	if (!pregnancies || pregnancies.length === 0) {
-		return <div className="text-center text-gray-500">No pregnancy data available</div>
-	}
-
-	const normalizeStatus = (statusRaw: string): "Active" | "Completed" | "Pregnancy Loss" => {
-    const s = statusRaw.toLowerCase()
-    if (s === "active") return "Active"
-    if (s === "completed") return "Completed"
-    return "Pregnancy Loss" // covers both "pregnancy loss" and any unknown variants
+  if (!pregnancies || pregnancies.length === 0) {
+    return <div className="text-center text-gray-500">No pregnancy data available</div>;
   }
 
+  const normalizeStatus = (statusRaw: string): "Active" | "Completed" | "Pregnancy Loss" => {
+    const s = statusRaw.toLowerCase();
+    if (s === "active") return "Active";
+    if (s === "completed") return "Completed";
+    return "Pregnancy Loss"; // covers both "pregnancy loss" and any unknown variants
+  };
+
   // Calculate counts using the normalized status
-  const activePregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Active").length;
-  const completedPregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Completed").length;
-  const pregnancyLoss = pregnancies.filter(p => normalizeStatus(p.status) === "Pregnancy Loss").length;
-	
+  const activePregnancies = pregnancies.filter((p) => normalizeStatus(p.status) === "Active").length;
+  const completedPregnancies = pregnancies.filter((p) => normalizeStatus(p.status) === "Completed").length;
+  const pregnancyLoss = pregnancies.filter((p) => normalizeStatus(p.status) === "Pregnancy Loss").length;
 
 	return (
 		<div className="bg-white rounded-sm shadow-md border border-gray-200">

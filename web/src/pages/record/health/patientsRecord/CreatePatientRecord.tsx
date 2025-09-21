@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
-import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { capitalize } from "@/helpers/capitalize"
 
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
@@ -53,17 +53,17 @@ export const capitalizeAllFields = (data: any): any => {
 
 // typescript interfaces
 interface ResidentProfile {
-  rp_id: string
+  rp_id: string;
   households: {
-    hh_id: string
-  }
+    hh_id: string;
+  };
   personal_info: {
-    per_lname: string
-    per_fname: string
-    per_mname: string
-    per_sex: string
-    per_contact: string
-    per_dob: string
+    per_lname: string;
+    per_fname: string;
+    per_mname: string;
+    per_sex: string;
+    per_contact: string;
+    per_dob: string;
     per_addresses: Array<{
       add_street: string
       add_barangay: string
@@ -76,19 +76,19 @@ interface ResidentProfile {
 }
 
 interface PatientCreationData {
-  pat_type: string
-  rp_id?: string
+  pat_type: string;
+  rp_id?: string;
   transient_data?: {
-    tran_lname: string
-    tran_fname: string
-    tran_mname?: string
-    tran_dob: string
-    tran_sex: string
-    tran_contact: string
-    tran_ed_attainment?: string
-    tran_religion?: string
-    tran_status?: string
-    tradd_id?: number
+    tran_lname: string;
+    tran_fname: string;
+    tran_mname?: string;
+    tran_dob: string;
+    tran_sex: string;
+    tran_contact: string;
+    tran_ed_attainment?: string;
+    tran_religion?: string;
+    tran_status?: string;
+    tradd_id?: number;
     address?: {
       tradd_street?: string
       tradd_sitio?: string
@@ -102,12 +102,12 @@ interface PatientCreationData {
 
 // main component
 export default function CreatePatientRecord() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const navigate = useNavigate()
-  const defaultValues = generateDefaultValues(patientRecordSchema)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedResidentId, setSelectedResidentId] = useState<string>("")
-  const [selectedTrAddtId, setSelectedTrAddId] = useState<number>(0)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const defaultValues = generateDefaultValues(patientRecordSchema);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedResidentId, setSelectedResidentId] = useState<string>("");
+  const [selectedTrAddtId, setSelectedTrAddId] = useState<number>(0);
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<z.infer<typeof patientRecordSchema>>({
@@ -151,7 +151,7 @@ export default function CreatePatientRecord() {
     setSelectedTrAddId(id)
     console.log("Selected Transient Address ID: ", id)
 
-    const selectedAddress = transAddress?.find((address : any) => address.tradd_id === id)
+    const selectedAddress = transAddress?.find((address: any) => address.tradd_id === id);
 
     if (selectedAddress) {
       form.setValue("address.street", selectedAddress.tradd_street || "")
@@ -160,14 +160,13 @@ export default function CreatePatientRecord() {
       form.setValue("address.city", selectedAddress.tradd_city || "")
       form.setValue("address.province", selectedAddress.tradd_province || "")
     } else {
-      form.setValue("address.street", "")
-      form.setValue("address.sitio", "")
-      form.setValue("address.barangay", "")
-      form.setValue("address.city", "")
-      form.setValue("address.province", "")
+      form.setValue("address.street", "");
+      form.setValue("address.sitio", "");
+      form.setValue("address.barangay", "");
+      form.setValue("address.city", "");
+      form.setValue("address.province", "");
     }
-  }
-  
+  };
 
   const persons = {
     default: residentsData || [],
@@ -212,6 +211,7 @@ export default function CreatePatientRecord() {
 
     if (selectedPatient && selectedPatient.personal_info) {
       console.log("Selected Patient:", selectedPatient);
+      console.log("Selected Patient:", selectedPatient);
 
       const personalInfo = selectedPatient.personal_info;
 
@@ -245,6 +245,11 @@ export default function CreatePatientRecord() {
         form.setValue("address.barangay", "");
         form.setValue("address.city", "");
         form.setValue("address.province", "");
+        form.setValue("address.street", "");
+        form.setValue("address.sitio", "");
+        form.setValue("address.barangay", "");
+        form.setValue("address.city", "");
+        form.setValue("address.province", "");
       }
     } else {
       form.setValue("lastName", "");
@@ -258,17 +263,17 @@ export default function CreatePatientRecord() {
     }
   }
 
-  const createNewPatient = useAddPatient()
+  const createNewPatient = useAddPatient();
   const handleCreatePatientId = async (patientData: PatientCreationData) => {
     try {
-      const result = await createNewPatient.mutateAsync(patientData)
+      const result = await createNewPatient.mutateAsync(patientData);
 
       if (result) {
         showSuccessToast("Patient record has been created successfully")
         return true
       } else {
-        toast("Patient record may have been created. Please refresh to verify.")
-        return false
+        toast("Patient record may have been created. Please refresh to verify.");
+        return false;
       }
     } catch (error) {
       console.error("Error creating patient record:", error)
@@ -280,51 +285,46 @@ export default function CreatePatientRecord() {
 
   // handles the form validation and opens the confirmation dialog
   const handleFormSubmit = async () => {
-    const formData = form.getValues()
+    const formData = form.getValues();
 
     if (formData.patientType === "resident" && !selectedResidentId) {
-      toast("Please select a resident first")
-      return
+      toast("Please select a resident first");
+      return;
     }
 
     if (formData.patientType === "transient") {
-      const requiredFields = ["lastName", "firstName", "dateOfBirth", "sex", "contact"]
-      const missingFields = requiredFields.filter((field) => !formData[field as keyof typeof formData])
+      const requiredFields = ["lastName", "firstName", "dateOfBirth", "sex", "contact"];
+      const missingFields = requiredFields.filter((field) => !formData[field as keyof typeof formData]);
 
       if (missingFields.length > 0) {
-        toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`)
-        return
+        toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`);
+        return;
       }
     }
 
-    setIsDialogOpen(true)
-  }
+    setIsDialogOpen(true);
+  };
 
   const confirmSubmit = async () => {
-    const formData = form.getValues()
+    const formData = form.getValues();
 
     setIsDialogOpen(false)
     setIsSubmitting(true)
     
     try {
-      const patientType =
-        formData.patientType === "resident"
-          ? "Resident"
-          : formData.patientType === "transient"
-            ? "Transient"
-            : "Resident"
-      const sexType = formData.sex === "female" ? "Female" : "Male"
-      form.setValue("houseNo", "N/A")
+      const patientType = formData.patientType === "resident" ? "Resident" : formData.patientType === "transient" ? "Transient" : "Resident";
+      const sexType = formData.sex === "female" ? "Female" : "Male";
+      form.setValue("houseNo", "N/A");
 
-      let patientData: PatientCreationData
+      let patientData: PatientCreationData;
 
       if (patientType === "Resident") {
         patientData = {
           pat_type: patientType,
-          rp_id: selectedResidentId,
-        }
+          rp_id: selectedResidentId
+        };
       } else {
-        const trPatientData: PatientCreationData['transient_data'] = {
+        const trPatientData: PatientCreationData["transient_data"] = {
           tran_lname: formData.lastName,
           tran_fname: formData.firstName,
           tran_mname: formData.middleName,
@@ -344,14 +344,14 @@ export default function CreatePatientRecord() {
             tradd_sitio: formData.address?.sitio || "",
             tradd_barangay: formData.address?.barangay || "",
             tradd_city: formData.address?.city || "",
-            tradd_province: formData.address?.province || "",
-          }
+            tradd_province: formData.address?.province || ""
+          };
         }
 
         patientData = {
           pat_type: patientType,
-          transient_data: trPatientData,
-        }
+          transient_data: trPatientData
+        };
       }
 
       const capitalizedData = capitalizeAllFields(patientData)
@@ -361,26 +361,26 @@ export default function CreatePatientRecord() {
       const success = await handleCreatePatientId(capitalizedData)
 
       if (success) {
-        form.reset(defaultValues)
-        setSelectedResidentId("")
-        setSelectedTrAddId(0)
-        navigate(-1)
+        form.reset(defaultValues);
+        setSelectedResidentId("");
+        setSelectedTrAddId(0);
+        navigate(-1);
       }
     } catch (error) {
-      toast("Failed to create patient record. Please try again.")
+      toast("Failed to create patient record. Please try again.");
     } finally {
-      setIsSubmitting(false)
-      setIsDialogOpen(false) 
+      setIsSubmitting(false);
+      setIsDialogOpen(false);
     }
-  }
+  };
 
   const isResident = () => {
-    return patientType === 'resident'
-  }
+    return patientType === "resident";
+  };
 
   const handleDialogClose = () => {
-    setIsDialogOpen(false)
-  }
+    setIsDialogOpen(false);
+  };
 
   return (
     <LayoutWithBack
@@ -497,16 +497,12 @@ export default function CreatePatientRecord() {
                           <Combobox
                             options={transientAddressOpt}
                             value={selectedTrAddtId ? selectedTrAddtId.toString() : ""}
-                            onChange={handleTransientAddressSelection}
+                            onChange={handleTransientAddressSelection || ""}
                             placeholder={transAddressLoading ? "Loading addresses..." : "Select an address for the transient patient"}
                             triggerClassName="font-normal w-full"
                             emptyMessage={
                               <div className="flex flex-col gap-2 justify-center items-center">
-                                <Label className="font-normal text-[13px]">
-                                  {transAddressLoading
-                                    ? "Loading..."
-                                    : "No Address was found. Please fill in the address details below."}
-                                </Label>
+                                <Label className="font-normal text-[13px]">{transAddressLoading ? "Loading..." : "No Address was found. Please fill in the address details below."}</Label>
                               </div>
                             }
                           />

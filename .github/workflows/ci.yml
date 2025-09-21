@@ -58,9 +58,8 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-      PAYMONGO_SECRET_KEY: ${{ secrets.PAYMONGO_SECRET_KEY }}
-      PAYMONGO_PUBLIC_KEY: ${{ secrets.PAYMONGO_PUBLIC_KEY }}
-      
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
@@ -74,6 +73,14 @@ jobs:
     defaults:
       run:
         working-directory: ./server-2
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
+      SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+      
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4

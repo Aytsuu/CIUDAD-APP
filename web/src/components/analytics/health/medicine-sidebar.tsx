@@ -1,8 +1,8 @@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Loader2, BarChart3, Pill, ChevronDown } from "lucide-react"
-import { format, parseISO } from "date-fns"
+import { format } from "date-fns"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { useMedicineChart } from "@/pages/healthServices/Reports/medicine-report/queries/fetchQueries"
+import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries"
 import { useState } from "react"
 
 
@@ -22,7 +22,7 @@ const COLORS = [
 export function MedicineDistributionSidebar() {
   const initialMonth= format(new Date(), "yyyy-MM")
   const { data, isLoading, error } = useMedicineChart(initialMonth)
-  const currentDate = parseISO(`${initialMonth}-01`)
+  // const currentDate = parseISO(`${initialMonth}-01`)
   const [showAll, setShowAll] = useState(false)
 
   // Transform and sort data

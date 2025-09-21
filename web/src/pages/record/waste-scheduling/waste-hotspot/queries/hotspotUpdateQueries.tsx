@@ -1,9 +1,10 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import z from "zod"
 import { editHotspot, archiveHotspot } from "../restful-API/hotspotPutAPI";
-import { CircleCheck } from "lucide-react";
 import { toast } from "sonner";
 import { WasteHotspotEditSchema } from "@/form-schema/waste-hots-form-schema";
+import { showSuccessToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 
 
 export const useEditHotspot = (onSuccess?: () => void) => {
@@ -22,21 +23,12 @@ export const useEditHotspot = (onSuccess?: () => void) => {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ['hotspots'] });
 
-                toast.loading('Updating Schedule...', {id: "editHotspot"});
-        
-                toast.success('Schedule Updated!', {
-                    id: "editHotspot",
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
+                showSuccessToast('Schedule Updated!');
                 onSuccess?.()
             },
             onError: (err) => {
                 console.error("Error updating schedule:", err);
-                toast.error(
-                    "Failed to update schedule. Please check the input data and try again.",
-                    { duration: 2000 }
-                );
+                showErrorToast("Failed to update schedule. Please check the input data and try again.");
             }
         })
 }

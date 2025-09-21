@@ -12,11 +12,19 @@ import { useModificationRequests, useOwnedBusinesses } from "./queries/businessG
 import { useAuth } from "@/contexts/AuthContext"
 import { MapPin } from "@/lib/icons/MapPin"
 import { FeedbackScreen } from "@/components/ui/feedback-screen"
+import { Search } from "@/lib/icons/Search"
+import { SearchInput } from "@/components/ui/search-input"
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default () => {
-  // ---------------- STATE INITIALIZATION -------------------
+  // =================== STATE INITIALIZATION ===================
   const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
+  const [searchInputVal, setSearchInputVal] = React.useState<string>('');
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [showSearch, setShowSearch] = React.useState<boolean>(false);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [pageSize, setPageSize] = React.useState<number>(20);
   const [selectedBusiness, setSelectedBusiness] = React.useState<Record<string, any> | null>(null);
   const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
   const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">('success');
@@ -29,9 +37,9 @@ export default () => {
   const businessList = ownedBusinesses?.results || []
   const hasBusinesses = (ownedBusinesses?.count || 0) > 0
 
-  // ---------------- SIDE EFFECTS -------------------  
+  // =================== SIDE EFFECTS ===================  
 
-  // ---------------- HANDLERS -------------------  
+  // =================== HANDLERS ===================  
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -42,6 +50,11 @@ export default () => {
     router.push('/(business)/add-business')
   }
 
+  const handleSearch = React.useCallback(() => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  }, [searchInputVal]);
+
   const handleBusinessPress = (business: Record<string, any>) => {
     if(business.bus_status === 'Pending'){
       setStatus('waiting');
@@ -50,7 +63,7 @@ export default () => {
     setSelectedBusiness(business);
   }
 
-  // ---------------- RENDER -------------------
+  // =================== RENDER HELPER ===================
   const feedbackContents: any = {
     waiting: {
       title: (
@@ -75,15 +88,6 @@ export default () => {
       )
     }
   }
-  
-  const LoadingScreen = () => (
-    <View className="flex-1 items-center justify-center px-6">
-      <ActivityIndicator size="large" color="#3B82F6" />
-      <Text className="text-gray-600 text-base mt-4 text-center">
-        Loading your businesses...
-      </Text>
-    </View>
-  )
 
   const EmptyState = () => (
     <View className="flex-1 items-center justify-center px-6 py-12">
@@ -186,10 +190,6 @@ export default () => {
   )
 
   const renderContent = () => {
-    if (isLoadingBusinesses || isLoadingRequests) {
-      return <LoadingScreen />
-    }
-
     if(showFeedback){
       return (
         <FeedbackScreen 
@@ -202,6 +202,11 @@ export default () => {
     }
     
     return hasBusinesses ? <BusinessList /> : <EmptyState />
+  }
+
+  // =================== MAIN RENDER ===================
+  if (isLoadingBusinesses || isLoadingRequests) {
+    return <LoadingState />
   }
 
   return (
@@ -222,18 +227,34 @@ export default () => {
       </Text>}
       rightAction={
         hasBusinesses && !isLoadingBusinesses && !selectedBusiness ? (
-          <TouchableOpacity
-            onPress={handleAddBusiness}
-            className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
-          >
-            <Plus size={24} className="text-white" />
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              onPress={handleAddBusiness}
+              className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
+            >
+              <Plus size={24} className="text-white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowSearch(!showSearch)}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <Search size={22} className="text-gray-700" />
+            </TouchableOpacity>
+          </View>
         ) : (
           <View className="w-10 h-10" />
         )
       }
     >
       <View className="flex-1">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
         {renderContent()}
       </View>
     </PageLayout>

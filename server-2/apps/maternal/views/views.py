@@ -296,6 +296,14 @@ def get_patient_prenatal_count(request, pat_id):
             pregnancy_id__in=pregnancies
         ).values('pregnancy_id').distinct().count()
 
+        pregnancies = Pregnancy.objects.filter(
+            pat_id=patient
+        )
+
+        pf_count = Prenatal_Form.objects.filter(
+            pregnancy_id__in=pregnancies
+        ).values('pregnancy_id').distinct().count()
+
 
         return Response({
             'pat_id': pat_id,

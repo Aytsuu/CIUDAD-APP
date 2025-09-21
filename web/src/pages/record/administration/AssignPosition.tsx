@@ -64,6 +64,7 @@ export default function AssignPosition({
       
       const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
       const positionId = form.getValues().assignPosition;
+      const staffType = user?.staff?.staff_type
 
       // If resident exists, assign position 
       if (residentId && residentId !== "undefined") {
@@ -72,8 +73,10 @@ export default function AssignPosition({
         // Assign staff position 
         await addStaff({
           residentId: residentId, 
-          positionId: positionId,
-          staffId: user?.staff?.staff_id || ""
+          positionId: positionId, 
+          staffId: user?.staff?.staff_id || "",
+          staffType: staffType?.toLowerCase() == "barangay staff" ? "BARANGAY STAFF" : "HEALTH STAFF"
+
         });
 
         deliverFeedback();
@@ -99,7 +102,8 @@ export default function AssignPosition({
         await addStaff({
           residentId: resident.rp_id, 
           positionId: positionId,
-          staffId: user?.staff?.staff_id || ""
+          staffId: user?.staff?.staff_id || "",
+          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
         });
 
         deliverFeedback();

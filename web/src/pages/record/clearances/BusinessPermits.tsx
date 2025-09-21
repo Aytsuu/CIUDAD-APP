@@ -1,130 +1,188 @@
 import { useState } from "react";
 // import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Search, ArrowUpDown } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import {Search, ArrowUpDown, Loader2, CheckCircle, Eye } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-// import { DataTable } from "@/components/ui/table/data-table";
+import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-// import AddBusinessDocument from "@/pages/record/clearances/CreateBusinessModal";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Button } from "@/components/ui/button/button";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { getBusinessPermit } from "@/pages/record/clearances/restful-api/businessGetAPI"; 
+import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busFetchQueries";
+import { toast } from "sonner";
+import TemplateMainPage from "../council/templates/template-main";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { useAuth } from "@/context/AuthContext";
 
-type BusinessDocument = {
-  permit_req_no: string;
-  business_details: {
-    bus_id: number;
-    bus_name: string;
-    bus_gross_sales: string;
-    bus_province: string;
-    bus_city: string;
-    bus_barangay: string;
-    bus_street: string;
-    bus_respondentLname: string;
-    bus_respondentFname: string;
-    bus_respondentMname: string;
-    bus_respondentSex: string;
-    bus_respondentDob: string;
-    bus_date_registered: string;
-    sitio_id: string;
-    staff_id: string;
-  };
-  req_sales_proof: string;
-  req_pay_method: string;
-  req_request_date: string;
-  req_claim_date: string;
-  req_status: string;
-  req_payment_status: string;
-  req_transac_id: string;
-  issued_permit: null | any;
-};
-
-export const columns: ColumnDef<BusinessDocument>[] = [
-  {
-    accessorKey: "permit_req_no",
-    header: ({ column }) => (
-      <div
-        className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Request No.
-        <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
-      </div>
-    ),
-    cell: ({ row }) => <div className="capitalize">{row.getValue("permit_req_no")}</div>,
-  },
-  {
-    accessorKey: "business_details.bus_name",
-    header: "Business Name",
-    cell: ({ row }) => <div className="capitalize">{row.original.business_details.bus_name}</div>,
-  },
-  {
-    accessorKey: "business_details",
-    header: "Address",
-    cell: ({ row }) => {
-      const details = row.original.business_details;
-      return (
-        <div>
-          {`${details.bus_street}, ${details.bus_barangay}, ${details.bus_city}, ${details.bus_province}`}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "req_sales_proof",
-    header: "Gross Sales",
-    cell: ({ row }) => <div>₱ {row.getValue("req_sales_proof")}</div>,
-  },
-  {
-    accessorKey: "req_pay_method",
-    header: "Payment Method",
-    cell: ({ row }) => <div>{row.getValue("req_pay_method")}</div>,
-  },
-  {
-    accessorKey: "req_request_date",
-    header: "Date Requested",
-    cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
-  },
-  {
-    accessorKey: "req_claim_date",
-    header: "Date to Claim",
-    cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
-  }
-];
+// Type imported from queries
 
 function BusinessDocumentPage() {
   // const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
-  const [_isModalOpen, _setIsModalOpen] = useState(false);
+  const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
 
-  // Fetch business data using React Query
-  const { data: businessDocuments } = useQuery({
-    queryKey: ["businessDocuments"],
+  const { data: businessPermits, isLoading, error } = useQuery<BusinessPermit[]>({
+    queryKey: ["businessPermits"],
     queryFn: getBusinessPermit,
   });
+
+  
+  const markAsIssuedMutation = useMutation<any, unknown, MarkBusinessPermitVariables>({
+    mutationFn: markBusinessPermitAsIssued,
+    onSuccess: (_data, variables) => {
+      toast.success(`Business permit ${variables.bpr_id} marked as printed successfully!`);
+      
+      queryClient.invalidateQueries({ queryKey: ["businessPermits"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || "Failed to mark business permit as printed");
+    },
+  });
+
+  const handleMarkAsPrinted = (permit: BusinessPermit) => {
+    markAsIssuedMutation.mutate({
+      bpr_id: permit.bpr_id,
+      staff_id: staffId, 
+    });
+  };
+
+  const handleViewFile = (permit: BusinessPermit) => {
+    console.log("Eye button clicked for permit:", permit);
+    console.log("Setting selectedPermit to:", permit);
+    setSelectedPermit(permit); 
+    console.log("selectedPermit state should now be:", permit);
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // const handleRowClick = (row: BusinessDocument) => {
-  //   navigate(`/record/clearances/ViewDocument/${row.permit_req_no}`, {
+  // const handleRowClick = (row: BusinessPermit) => {
+  //   navigate(`/record/clearances/BusinessPermitDocumentation/${row.bpr_id}`, {
   //     state: {
-  //       requestNo: row.permit_req_no,
-  //       purpose: row.issued_permit?.pr_purpose || row.business_details.bus_name,
+  //       requestNo: row.bpr_id,
+  //       businessName: row.business_name,
+  //       businessAddress: row.business_address, 
   //       paymentMethod: row.req_pay_method,
   //       dateRequested: row.req_request_date,
   //       dateClaim: row.req_claim_date,
   //       status: row.req_status,
   //       paymentStatus: row.req_payment_status,
   //       transactionId: row.req_transac_id,
-  //       type: row.business_details.bus_name,
-  //       rate: row.issued_permit?.ags_rate,
-  //       category: row.issued_permit?.pr_category,
+  //       grossSales: row.business_gross_sales,
+  //       purpose: row.req_purpose,
+  //       pr_id: row.pr_id, 
   //     },
   //   });
   // };
+
+  const columns: ColumnDef<BusinessPermit>[] = [
+    {
+      accessorKey: "bpr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="capitalize">{row.getValue("bpr_id")}</div>,
+    },
+    {
+      accessorKey: "business_name",
+      header: "Business Name",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
+    },
+    {
+      accessorKey: "req_sales_proof",
+      header: "Gross Sales",
+      cell: ({ row }) => <div>₱ {row.getValue("req_sales_proof")}</div>,
+    },
+    {
+      accessorKey: "req_pay_method",
+      header: "Payment Method",
+      cell: ({ }) => {
+        // Display "Walk-in" for all business permit requests
+        const value = "Walk-in";
+        const bg = "bg-[#eaffea]"; 
+        const text = "text-[#15803d]"; 
+        const border = "border border-[#b6e7c3]";
+        
+        return (
+          <span
+            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+          >
+            {value}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "req_request_date",
+      header: "Date Requested",
+      cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
+    },
+    // {
+    //   accessorKey: "req_claim_date",
+    //   header: "Date to Claim",
+    //   cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
+    // },
+
+    {
+      id: "actions",
+      header: () => (
+        <div className="w-full h-full flex justify-center items-center">
+          Actions
+        </div>
+      ),
+      cell: ({ row }) => {
+        const permit = row.original;
+        return (
+          <div className="flex justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <TooltipLayout
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewFile(permit)}
+                >
+                  <Eye size={16} />
+                </Button> 
+              }
+              content="View File"
+            />
+            
+            <ConfirmationModal
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 hover:text-white hover:bg-green-600 border-green-600"
+                >
+                  <CheckCircle size={16} className="mr-1" />
+                  Mark as Printed
+                </Button>
+              }
+              title="Mark Business Permit as Printed"
+              description={`Are you sure you want to mark business permit ${permit.bpr_id} as printed? This will move it to the Issued Business Permits page.`}
+              actionLabel="Mark as Printed"
+              onClick={() => handleMarkAsPrinted(permit)}
+            />
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -151,10 +209,7 @@ function BusinessDocumentPage() {
             placeholder="Filter by"
             label=""
             className="bg-white"
-            options={[
-              { id: "employment", name: "Employment" },
-              { id: "bir", name: "BIR" },
-            ]}
+            options={[]}
             value=""
             onChange={() => {}}
           />
@@ -172,15 +227,18 @@ function BusinessDocumentPage() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          {/* {isLoading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
             </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
-            <DataTable columns={columns} data={businessDocuments || []} onRowClick={handleRowClick} header={true} />
-          )} */}
+            <DataTable 
+            columns={columns} 
+            data={businessPermits || []}
+            header={true} />
+          )}
         </div>
       </div>
 
@@ -188,18 +246,39 @@ function BusinessDocumentPage() {
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         {/* Showing Rows Info */}
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {businessDocuments ? businessDocuments.length : 0} rows
+          Showing 1-10 of {businessPermits ? businessPermits.length : 0} rows
         </p>
 
         {/* Pagination */}
         <div className="w-full sm:w-auto flex justify-center">
           <PaginationLayout
-            totalPages={Math.ceil((businessDocuments?.length || 1) / 10)}
+            totalPages={Math.ceil((businessPermits?.length || 1) / 10)}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />
         </div>
       </div>
+
+      {/* Render Business Permit Template when a permit is selected */}
+      {selectedPermit && (
+        <DialogLayout
+          isOpen={!!selectedPermit}
+          onOpenChange={(open) => !open && setSelectedPermit(null)}
+          className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
+          title=""
+          description=""
+          mainContent={
+            <div className="w-full h-full">
+              <TemplateMainPage
+                businessName={selectedPermit.business_name || "Business"}
+                address={selectedPermit.business_address || "Address not available"}
+                purpose="bussClear"
+                issuedDate={new Date().toISOString()}
+              />
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }

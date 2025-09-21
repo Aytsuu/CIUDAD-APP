@@ -1,10 +1,10 @@
 import { api } from "@/api/api";
 
-// Fetch personal clearances from CLERK endpoint
+
 export const getPersonalClearances = async () => {
     try {
         const response = await api.get('/clerk/personal-clearances/');
-        return response.data;
+        return response.data
     } catch (error: any) {
         console.error("Failed to fetch personal clearances:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearances");
@@ -91,3 +91,14 @@ export const createPaymentIntent = async (crId: string) => {
         throw new Error(error.response?.data?.detail || "Failed to create payment intent");
     }
 };
+
+
+export const getNonResidentCertReq = async () => {
+    try{
+        const res = await api.get('/clerk/nonresident-personal-clearance/')
+
+        return res.data
+    }catch(err){
+        console.error(err)
+    }
+}

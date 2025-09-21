@@ -1,33 +1,33 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { voterRecord } from "../ProfilingTypes";
+import { VoterRecord } from "../ProfilingTypes";
 
-export const voterColumns: ColumnDef<voterRecord>[] = [
+export const voterColumns: ColumnDef<VoterRecord>[] = [
   {
     accessorKey: "voter_id",
-    header: "Voter ID"
+    header: "No.",
+    size: 20
   },
   {
-    accessorKey: "lname",
-    header: "Last Name"
+    accessorKey: "voter_name",
+    header: "Voter Name"
   },
   {
-    accessorKey: "fname",
-    header: "First Name"
+    accessorKey: "voter_address",
+    header: "Voter Address"
   },
   {
-    accessorKey: "mname",
-    header: "Middle Name"
+    accessorKey: "voter_category",
+    header: "Type",
+    size: 70
   },
   {
-    accessorKey: "suffix",
-    header: "Suffix"
-  },
-  {
-    accessorKey: "sex",
-    header: "Sex"
-  },
-  {
-    accessorKey: "dob",
-    header: "Date of Birth"
+    accessorKey: "voter_precinct",
+    header: "Precinct No.",
+    cell: ({ row }) => (
+      <p className="py-2">
+        {row.original.voter_precinct}
+      </p>
+    ),
+    size: 70
   },
 ]

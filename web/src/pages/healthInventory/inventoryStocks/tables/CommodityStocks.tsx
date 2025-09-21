@@ -12,10 +12,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { CommodityStocksColumns } from "./columns/CommodityCol";
 import { useNavigate } from "react-router-dom";
-import { useCommodityStocksTable } from "../REQUEST/Commodity/queries/CommodityFetchQueries";
+import { useCommodityStocksTable } from "../REQUEST/Commodity/queries/fetch-queries";
 import { useArchiveCommodityStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+import WastedModal from "../addstocksModal/WastedModal";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
 
@@ -31,6 +32,10 @@ export default function CommodityStocks() {
     isExpired: boolean;
     hasAvailableStock: boolean;
   } | null>(null);
+  
+  // New state for WastedModal
+  const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
   const queryClient = useQueryClient();
   const { mutate: archiveCommodityMutation } = useArchiveCommodityStocks();
@@ -64,6 +69,18 @@ export default function CommodityStocks() {
     setIsArchiveConfirmationOpen(true);
   };
 
+  // New handler for opening WastedModal
+  const handleOpenWastedModal = (record: any) => {
+    setSelectedRecord(record);
+    setIsWastedModalOpen(true);
+  };
+
+  // New handler for closing WastedModal
+  const handleCloseWastedModal = () => {
+    setIsWastedModalOpen(false);
+    setSelectedRecord(null);
+  };
+
   const confirmArchiveInventory = async () => {
     if (commodityToArchive !== null) {
       setIsArchiveConfirmationOpen(false);
@@ -73,15 +90,19 @@ export default function CommodityStocks() {
           isExpired: commodityToArchive.isExpired,
           hasAvailableStock: commodityToArchive.hasAvailableStock
         });
+        queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
+        showSuccessToast("Commodity archived successfully");
       } catch (error) {
         console.error("Failed to archive commodity:", error);
+        showErrorToast("Failed to archive commodity.");
       } finally {
         setCommodityToArchive(null);
       }
     }
   };
 
-  const columns = CommodityStocksColumns(handleArchiveInventory);
+  // Updated columns to include the wasted modal handler
+  const columns = CommodityStocksColumns(handleArchiveInventory, handleOpenWastedModal);
 
   if (error) {
     return (
@@ -226,6 +247,9 @@ export default function CommodityStocks() {
         title="Archive Commodity Item"
         description="Are you sure you want to archive this commodity? It will be preserved in the system but removed from active inventory."
       />
+
+      {/* Wasted Modal */}
+      <WastedModal isOpen={isWastedModalOpen} onClose={handleCloseWastedModal} record={selectedRecord} mode={"commodity"} />
     </>
   );
 }

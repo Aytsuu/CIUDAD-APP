@@ -18,13 +18,11 @@ urlpatterns = [
     
     # path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('vaccination-history/<int:vachist_id>/', DeleteUpdateVaccinationHistoryView.as_view(), name='vaccination-history-detail'),
-    path('unvaccinated-vaccines/<str:pat_id>/', UnvaccinatedVaccinesView.as_view(), name='unvaccinated-vaccines'),
     path('check-vaccine/<str:pat_id>/<int:vac_id>/', CheckVaccineExistsView.as_view(), name='check-vaccine'),
     path('patient-vaccine-followups/<str:pat_id>/', PatientVaccineFollowUpView.as_view(), name='patient-vaccine-followups'),
     path('child-followups/<str:pat_id>/', ChildHealthVaccineFollowUpView.as_view(), name='child-followups'),
     path('patient-info/<str:patrec_pat_id>/', GetPatientInfoFromVaccinationRecord.as_view()),
     path('vacrec-count/<str:pat_id>/', GetVaccinationCountView.as_view(), name='get-vaccination-count'),
-    path('residents/unvaccinated/', GetAllResidentsNotVaccinated.as_view(), name='unvaccinated-residents'),
     path('count-vaccinated/', CountVaccinatedByPatientTypeView.as_view(), name='count-vaccinated'),
     path('forwarded-vaccination-records/', ForwardedVaccinationHistoryView.as_view(), name='forwarded-vaccination-records'),
     path('forwarded-vaccination-count/', ForwardedVaccinationCountView.as_view(), name='pat_vaccination_records'),
@@ -35,6 +33,13 @@ urlpatterns = [
       
     path('child-vaccination/', BulkVaccinationCreateView.as_view(), name='child-vaccination'),
     
+    
+    
+    path('residents/unvaccinated/', GetAllResidentsNotVaccinated.as_view(), name='unvaccinated-residents'),
+    path('unvaccinated-vaccines/<str:pat_id>/', UnvaccinatedVaccinesView.as_view(), name='unvaccinated-vaccines'),
+    path('unvaccinated-residents-summary/', UnvaccinatedVaccinesSummaryView.as_view(), name='unvaccinated-residents-summary'),
+    path('unvaccinated-residents-detailssummary/<int:vac_id>/', UnvaccinatedVaccinesDetailsView.as_view(), name='unvaccinated-residents-details'),
+
     
     path('vaccination-records/monthly/', MonthlyVaccinationSummariesAPIView.as_view(), name='monthly_vaccination_records'),
     path('vaccination-reports/<str:month>/', MonthlyVaccinationRecordsDetailAPIView.as_view(), name='vaccination-reports'),

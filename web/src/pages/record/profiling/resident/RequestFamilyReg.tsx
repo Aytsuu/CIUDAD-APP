@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { FileText, Check, Info } from "lucide-react"
+import { Check, Info } from "lucide-react"
 import React from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
@@ -151,7 +151,7 @@ export default function RequestFamilyReg() {
         <CardHeader className="">
           <CardTitle>
             <p className="text-xl mb-1">Registration Request Overview</p>
-            <p className="text-[15px] font-normal opacity-80">Submitted on {formatDate(registrationData.req_date, "long")}</p>
+            <p className="text-[15px] font-normal opacity-80">Submitted on {formatDate(registrationData.req_date, "long" as any)}</p>
           </CardTitle>
         </CardHeader>
         <CardContent>

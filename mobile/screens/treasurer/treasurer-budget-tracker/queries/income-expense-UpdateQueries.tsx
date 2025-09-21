@@ -7,17 +7,24 @@ import IncomeFormSchema from "@/form-schema/treasurer/treasurer-income-schema";
 import { updateIncomeExpense } from "../request/income-expense-PutRequest";
 import { updateIncomeExpenseMain } from "../request/income-expense-PostRequest";
 import { updateExpenseParticular } from "../request/income-expense-PostRequest";
+import { expense_log } from "../request/income-expense-PostRequest";
 import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { updateIncomeTracking } from "../request/income-expense-PutRequest";
 import { updateIncomeMain } from "../request/income-expense-PostRequest";
 
-
+type FileData = {
+    id: string;
+    name: string;
+    type: string;
+    file?: string;
+};
 
 type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseFormSchema> & {
-  mediaFiles: any[];
+  files: FileData[]; 
   years: number;
   totalBudget: number;
   totalExpense: number;
+  returnAmount: number;
   proposedBud: number;
   particularId: number;
 };
@@ -38,23 +45,32 @@ export const useUpdateIncomeExpense = (
         iet_particulars: values.iet_particulars.split(' ')[0] // Get just the ID part
       };
       
-      // First update the main expense record
+      //1. update the main expense record
       await updateIncomeExpense(iet_num, submissionValues);
       
-      // Then handle file updates
-      await handleFileUpdates(iet_num, values.mediaFiles);
+      //2. Then handle file updates
+      await handleFileUpdates(iet_num, values.files);
 
-      //handle main update
+      //3. handle main update
       await updateIncomeExpenseMain(values.years, {
         totalBudget: values.totalBudget,
         totalExpense: values.totalExpense,
       });
   
-      //handle particular
+      //4. handle particular
       await updateExpenseParticular(values.particularId, {
         years: values.years,
         exp_proposed_budget: values.proposedBud,
       });
+
+      //5. add new expense log
+      if(values.returnAmount > 0){
+        await expense_log(iet_num, {
+          returnAmount: values.returnAmount,
+          el_proposed_budget: values.iet_amount,
+          el_actual_expense: values.iet_actual_amount
+        });
+      }        
       
       return iet_num;
     },
@@ -64,6 +80,7 @@ export const useUpdateIncomeExpense = (
         queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
         queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
         queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
+        queryClient.invalidateQueries({ queryKey: ['expense_log'] });
         
         toast.success('Expense entry updated');
       
@@ -100,10 +117,11 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
     await Promise.all(filesToAdd.map(file =>
       api.post('treasurer/inc-exp-file/', {
         iet_num,
-        ief_name: file.file?.name || `file-${Date.now()}`,
-        ief_type: file.type,
-        ief_path: file.path || '',
-        ief_url: file.publicUrl
+        files: [{
+          name: file.name,
+          type: file.type,
+          file: file.file // The actual file object
+        }]
       })
     ));
   } catch (err) {

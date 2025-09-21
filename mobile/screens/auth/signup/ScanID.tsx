@@ -84,7 +84,7 @@ export default function ScanID({ params }: { params: Record<string, any> }) {
       if (matched) {
         setScanStatus("✅ ID verified successfully!");
         setTimeout(() => {
-          params?.next(matched);
+          params?.next();
         }, 1000);
       } else {
         setScanStatus("❌ Could not verify ID. Please try again.");

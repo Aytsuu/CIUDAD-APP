@@ -1,8 +1,12 @@
 import AllMedicineRecords from "@/pages/healthServices/medicineservices/tables/AllMedicineRecords";
 import IndivMedicineRecord from "@/pages/healthServices/medicineservices/tables/IndivMedicineRecord";
-import MedicineRequests from "@/pages/healthServices/medicineservices/Request/request-table";
-import MedicineRequestDetail from "@/pages/healthServices/medicineservices/Request/request-details";
+import MedicineRequests from "@/pages/healthServices/medicineservices/Request/request-processing/request-table";
+import MedicineRequestDetail from "@/pages/healthServices/medicineservices/Request/request-processing/request-details";
 import MedicineRequestForm from "@/pages/healthServices/medicineservices/MedicineRequestForm";
+import MedicineRequestMain from "@/pages/healthServices/medicineservices/Request/Main";
+import MedicineRequestPendingItems from "@/pages/healthServices/medicineservices/Request/request-pending/request-pending-items";
+
+
 export const medicineRequest = [
   {
     path: "/all-medicine-records",
@@ -25,6 +29,14 @@ export const medicineRequest = [
   {
     path: "/medicine-request-form",
     element: <MedicineRequestForm />,
+  },
+  {
+    path: "/medicine-request",
+    element: <MedicineRequestMain />,
+  },
+  {
+    path:"/medicine-request/pending-items",
+    element:<MedicineRequestPendingItems/>
   }
   
 ];

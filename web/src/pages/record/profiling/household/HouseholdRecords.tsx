@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Download, Users, FileDown, Loader2 } from "lucide-react"
+import { Search, Plus, Download, Users, FileDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"

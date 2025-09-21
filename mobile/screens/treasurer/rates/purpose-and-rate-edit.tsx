@@ -50,7 +50,7 @@ export default function PurposeAndRateEditForm() {
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
             
                 {/* Form Section */}
-                <View className="mb-8">
+                <View className="mb-8 p-4">
 
                     <View className="space-y-4">
                         <FormInput

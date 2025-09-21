@@ -58,4 +58,3 @@ class InventoryUpdateView(generics.RetrieveUpdateAPIView):
        inv_id = self.kwargs.get('inv_id')
        obj = get_object_or_404(Inventory, inv_id = inv_id)
        return obj
-

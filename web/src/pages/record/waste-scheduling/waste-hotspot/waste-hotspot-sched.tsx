@@ -14,6 +14,7 @@ import { useGetWatchman } from './queries/hotspotFetchQueries';
 import { useGetSitio } from './queries/hotspotFetchQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAddHotspot } from './queries/hotspotInsertQueries';
+import { useAuth } from '@/context/AuthContext';
 
 const announcementOptions = [
     { id: "all", label: "All" },
@@ -28,7 +29,8 @@ const announcementOptions = [
 function WasteHotSched({onSuccess}: {
     onSuccess?: () => void;
 }) {
-    const {mutate: addHotspotAssignment} = useAddHotspot(onSuccess);
+    const {user} = useAuth();
+    const {mutate: addHotspotAssignment, isPending} = useAddHotspot(onSuccess);
     const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
     const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
     const watchmanOptions = fetchedWatchman.map(watchman => ({
@@ -51,6 +53,7 @@ function WasteHotSched({onSuccess}: {
             sitio: '', 
             selectedAnnouncements: [], 
             watchman: '',
+            staff_id: user?.staff?.staff_id
         },
     });
 
@@ -164,7 +167,7 @@ function WasteHotSched({onSuccess}: {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit">Save</Button>
+                    <Button type="submit" disabled={isPending}>{isPending? "Saving..." : "Save"}</Button>
                 </div>
             </form>
         </Form>

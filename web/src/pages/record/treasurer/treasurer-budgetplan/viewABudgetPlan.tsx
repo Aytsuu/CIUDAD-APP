@@ -17,6 +17,7 @@ import { useState } from "react";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "./budgetItemDefinition";
 import BudgetHeaderEditForm from "./budgetPlanForm/budgetHeaderEditForm";
 import BudgetItemEditForm from "./budgetPlanForm/budgetItemEditForm";
+import { formatDate } from "@/helpers/dateHelper";
 
 const styles = {
     mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -338,6 +339,13 @@ function ViewBudgetPlan(){
                 <div className="bg-white p-5 overflow-x-auto">
                     <TableLayout header={headerProp} rows={rowsProp} />
                 </div>
+
+                <span className="text-sm text-grat-600 italic flex justify-end gap-1">
+                    <div>Created By: {fetchedData?.staff_name}</div>
+                    <div className="">
+                           {fetchedData?.plan_issue_date && `on ${formatDate(fetchedData?.plan_issue_date, "long")}`}
+                    </div>
+                </span>
             </TabsContent>
 
             <TabsContent value="history" className={styles.tabContent}>

@@ -3,8 +3,8 @@ import { FormField, FormItem, FormMessage, FormControl, FormLabel, Form } from "
 import { useForm } from "react-hook-form";
 import { FirstAidType, FirstAidSchema } from "@/form-schema/inventory/lists/inventoryListSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAddFirstAid } from "../queries/firstAid/FirstAidPostQueries";
-import { useUpdateFirstAid } from "../queries/firstAid/FirstAidPutQueries";
+import { useAddFirstAid } from "../queries/firstAid/post-queries";
+import { useUpdateFirstAid } from "../queries/firstAid/put-queries";
 import { FormInput } from "@/components/ui/form/form-input";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useCategoriesFirstAid } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/FirstAidCategory";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
-import { useFirstAid } from "../queries/firstAid/FirstAidFetchQueries";
+import { useFirstAid } from "../queries/firstAid/fetch-queries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface FirstAidData {
@@ -117,13 +117,7 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
     return firstAids.some((fa) => fa.id !== currentId && fa?.fa_name?.trim()?.toLowerCase() === newFirstAid?.trim()?.toLowerCase());
   };
 
-  const hasChanges = (data: FirstAidType) => {
-    if (mode === "add") return true;
-    if (!initialData) return false;
-
-    return data.fa_name.trim().toLowerCase() !== initialData.fa_name.trim().toLowerCase() || String(data.cat_id) !== String(initialData.cat_id);
-  };
-
+ 
   const onSubmit = (data: FirstAidType) => {
     if (!data.cat_id) {
       toast.error("Please select a category");

@@ -10,16 +10,11 @@ export interface ProposalPdfData {
   budgetItems: Array<{ name: string; pax: string; amount: string }>;
   monitoringEvaluation: string;
   signatories: Array<{ name: string; position: string; type: string }>;
-  paperSize: string;
   headerImage?: string | null;
 }
 
 export const generateProposalPdf = async (data: ProposalPdfData, preview = false) => {
-  const pageSize = {
-    a4: [595.28, 841.89],
-    letter: [612, 792],
-    legal: [612, 1008],
-  }[data.paperSize] || [595.28, 841.89];
+  const pageSize = [612, 1008];
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -71,6 +66,8 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
     try {
       let dataUrl = data.headerImage;
       if (!dataUrl.startsWith("data:image")) {
+        dataUrl = decodeURIComponent(dataUrl);
+      dataUrl = dataUrl.split('?')[0];
         const response = await fetch(dataUrl, {
           mode: "cors",
           headers: {
@@ -238,7 +235,8 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
     data.budgetItems.forEach((item) => {
       if (item.name.trim()) {
         const amount = parseFloat(item.amount) || 0;
-        const paxCount = item.pax.trim() && item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1;
+        const paxText = item.pax.trim();
+        const paxCount = paxText ? parseInt(paxText.replace(/\D/g, '')) || 1 : 1;
         const total = paxCount * amount;
         grandTotal += total;
         yPos = addTableRow(

@@ -130,8 +130,8 @@ function DonationTracker() {
                   </div>
                 }
                 className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                title=""
-                description=""
+                title="Edit Donation"
+                description="Fill out all necessary fields"
                 mainContent={
                   <div className="w-full h-full">
                     <ClerkDonateView
@@ -219,8 +219,8 @@ function DonationTracker() {
             </Button>
           }
           className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-          title=""
-          description=""
+          title="Add Donation"
+          description="Fill out all necessary fields"
           mainContent={
             <div className="w-full h-full">
               <ClerkDonateCreate onSuccess={() => {

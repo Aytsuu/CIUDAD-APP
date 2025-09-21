@@ -155,3 +155,21 @@ export const useUpdateAccount = () => {
     }
   })
 }
+
+export const useLinkToVoter = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (residentId: string) => {
+      try {
+        const res = await api.patch(`profiling/resident/${residentId}/link-to-voter/`);
+        return res.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["residentsTableData"]});
+    }
+  })
+}
