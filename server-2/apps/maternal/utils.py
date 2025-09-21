@@ -5,10 +5,10 @@
 from apps.patientrecords.models import Spouse
 from apps.patientrecords.serializers.patients_serializers import *
 from apps.maternal.models import Pregnancy, Prenatal_Form
-from apps.maternal.serializer import *
+from apps.maternal.serializers.serializer import *
 
 
-def _check_medical_records_for_spouse(self, obj):
+def check_medical_records_for_spouse(self, obj):
     try:
         # family_planning_with_spouse = PostpartumRecord.objects.filter(
         #     patrec_id__pat_id=obj,
@@ -62,6 +62,7 @@ def _check_medical_records_for_spouse(self, obj):
             'allow_spouse_insertion': True,
             'reason': f'Error in medical records check: {str(e)}'
         }
+
 
 def handle_spouse_logic(patient, spouse_data):
     if not spouse_data:

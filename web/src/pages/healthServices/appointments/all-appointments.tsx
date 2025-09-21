@@ -341,7 +341,6 @@ export default function ScheduleRecords() {
     window.URL.revokeObjectURL(url)
   }
 
-  // Loading state for global spinner (optional)
   useEffect(() => {
     if (isLoading) {
       showLoading();

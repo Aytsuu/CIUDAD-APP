@@ -12,6 +12,7 @@ import {
   UserCog,
   ArrowUp,
   ArrowDown,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,7 +30,6 @@ import { Button } from "@/components/ui/button/button";
 
 import { usePatients } from "./queries/fetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
 
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -155,7 +155,7 @@ export const columns: ColumnDef<Report>[] = [
     header: "Action",
     cell: ({ row }) => (
       <Link
-        to="/view-patients-record"
+        to="/patientrecords/view"
         state={
           { patientId: row.getValue("id"), 
             patientData: {
@@ -279,7 +279,7 @@ export default function PatientsRecord() {
       title="Patients Records"
       description="Manage and view patients information"
     >
-      <div className="w-full">
+      <div className="w-full ">
         {/* Stats Cards with simplified design */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <CardLayout
@@ -388,7 +388,7 @@ export default function PatientsRecord() {
           </div>
           <div>
             <div className="flex ml-2">
-              <Link to="/create-patients-record">
+              <Link to="/patientrecords/form">
                 <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
                   <Plus size={15} /> Create
                 </Button>
@@ -427,9 +427,11 @@ export default function PatientsRecord() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full h-[30rem] overflow-x-auto">
+          <div className="bg-white w-full min-h-20 overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
+              <div className="flex items-center justify-center">
+                <Loader2 className="animate-spin" /> Loading...
+              </div>
             ) : (
               <DataTable columns={columns} data={currentData} />
             )}

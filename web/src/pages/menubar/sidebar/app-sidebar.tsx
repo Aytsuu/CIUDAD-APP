@@ -271,8 +271,8 @@ const items: BarangayBaseMenuItem[] = [
     title: "Announcement",
     url: "/announcement"
   },
- 
-  { title: "Patients Record", url: "/patients-record-main" },
+  { title: "BHW Daily Notes", url: "/bhw/notes" },
+  { title: "Patient Records", url: "/patientrecords" },
   { title: "Forwarded Records", url: "/forwarded-records" },
   {
     title: "Services",
@@ -283,12 +283,12 @@ const items: BarangayBaseMenuItem[] = [
       // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Maternal", url: "/maternalrecords" },
+      { title: "Maternal", url: "/services/maternalrecords" },
       { title: "Child Health", url: "/all-child-health-records" },
       { title: "Vaccination", url: "/VaccinationManagement" },
       { title: "Medicine", url: "/all-medicine-records" },
       { title: "Firstaid", url: "/all-firstaid-records" },
-      { title: "Schedules", url: "/health-appointments" }
+      { title: "Schedules", url: "/services/scheduled/follow-ups" }
     ]
   },
 
@@ -312,7 +312,7 @@ const items: BarangayBaseMenuItem[] = [
     ]
   },
 
-  { title: "Service Scheduler", url: "/health-services/scheduler" },
+  { title: "Service Scheduler", url: "/scheduler" },
   { title: "Reports", url: "/healthcare-reports" },
   {
     title: "Manage",

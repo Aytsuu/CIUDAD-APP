@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Search, RefreshCw, FileInput, Loader2 } from "lucide-react";
@@ -19,7 +19,7 @@ import {
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-
+import { useLoading } from "@/context/LoadingContext";
 
 import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
 
@@ -59,6 +59,7 @@ export default function MaternalAllRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
+  const { showLoading, hideLoading } = useLoading();
   const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords({
     page,
     page_size: pageSize,
@@ -76,6 +77,14 @@ export default function MaternalAllRecords() {
     { id: "resident", name: "Resident" },
     { id: "transient", name: "Transient" },
   ];
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
   
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
@@ -256,7 +265,7 @@ export default function MaternalAllRecords() {
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border border-gray text-black px-4 py-2 rounded-lg cursor-pointer ">
                   <Link
-                    to="/maternalindividualrecords"
+                    to="/services/maternalindividualrecords"
                     state={{
                       params: {
                         patientData: {
@@ -401,10 +410,10 @@ export default function MaternalAllRecords() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>
-                  <Link to="/prenatalform">Prenatal</Link>
+                  <Link to="/services/maternal/prenatal/form">Prenatal</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/postpartumform">Postpartum</Link>
+                  <Link to="/services/maternal/postpartum/form">Postpartum</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -414,7 +423,7 @@ export default function MaternalAllRecords() {
         {/*  */}
 
         {/* Table Container */}
-        <div className="h-full w-full rounded-md bg-white">
+        <div className="h-full w-full rounded-md ">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
@@ -442,7 +451,7 @@ export default function MaternalAllRecords() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
+          <div className="bg-white w-full min-h-20 overflow-x-auto">
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <Loader2 className="animate-spin" /> Loading...
@@ -475,3 +484,4 @@ export default function MaternalAllRecords() {
     </LayoutWithBack>
   );
 }
+

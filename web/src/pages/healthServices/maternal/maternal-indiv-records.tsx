@@ -437,7 +437,7 @@ export default function MaternalIndivRecords() {
               <DropdownMenuContent>
                 <DropdownMenuItem>
                   <Link 
-                    to="/prenatalform" 
+                    to="/services/maternal/prenatal/form" 
                     state={{ 
                       params : {
                         pregnancyData: selectedPatient, 
@@ -450,7 +450,7 @@ export default function MaternalIndivRecords() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link 
-                    to="/postpartumform" 
+                    to="/services/maternal/postpartum/form" 
                     state={{ 
                       params : {
                         pregnancyData: selectedPatient, 

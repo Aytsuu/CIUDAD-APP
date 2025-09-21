@@ -1,6 +1,8 @@
+from django import views
 from django.urls import path
-from . import views
-from .views import *
+from .views.views import *
+from apps.maternal.views import *
+from .views.postpartum_views import *
 
 urlpatterns=[
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),

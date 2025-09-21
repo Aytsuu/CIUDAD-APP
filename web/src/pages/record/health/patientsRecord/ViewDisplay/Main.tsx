@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
-import { ChevronLeft, Edit, AlertCircle } from "lucide-react"
+import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocation } from "react-router"
@@ -40,11 +40,10 @@ import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
   const [isEditable, setIsEditable] = useState(false)
-  // const { patientId } = useParams<{ patientId: string }>()
   const location = useLocation()
   const { patientId } = location.state || {}
 
-  const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
+  const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "")
   const { data: rawChildHealthRecords } = useChildHealthRecords(patientId);
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
@@ -304,6 +303,14 @@ export default function ViewPatientRecord() {
     if (patientData) form.reset(patientData)
     setIsEditable(false)
     toast("Edit cancelled. No changes were made.")
+  }
+
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center">
+          <Loader2 className="animate-spin" /> Loading...
+        </div>
+    )
   }
 
   if (isError && !patientId) {
