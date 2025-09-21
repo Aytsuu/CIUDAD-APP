@@ -51,6 +51,8 @@ urlpatterns = [
    
     path('illness/', IllnessView.as_view(), name="illness"),
     path('philhealth-formatted-illness/', PHIllnessAPIView.as_view(), name="philhealth-formatted-illness"),
+    path('patientPHIllnessCheck/<str:pat_id>/', PatientPHIllnessCheckSimpleAPIView.as_view(), name="patient-ph-illness-check-simple"),
+   
    
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),

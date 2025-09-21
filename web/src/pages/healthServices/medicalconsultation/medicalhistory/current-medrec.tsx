@@ -1,9 +1,9 @@
 import { useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
-import {  Printer } from "lucide-react";
-import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";;
-import PhysicalExamTable from "./philhealth-display" 
-
+import { Printer } from "lucide-react";
+import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
+import PhysicalExamTable from "./philhealth-display";
+import {useMedConPHHistory} from "../queries/fetchQueries";
 
 interface CurrentConsultationCardProps {
   consultation: any;
@@ -28,6 +28,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
   const bhw = `${consultation.staff_details?.rp?.per_fname || ""} ${consultation.staff_details?.rp?.per_lname || ""} ${consultation.staff_details?.rp?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
+  const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
 
   console.log("consultation data:", consultation);
 
@@ -539,12 +540,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* <PhilHealthSection consultation={consultation} patientData={patientData} /> */}
 
           {/* Physical Exam Table */}
-          <PhysicalExamTable 
-            consultation={consultation} 
-            patientData={patientData}
-            examSections={examSections} 
-            isPhysicalExamLoading={isPhysicalExamLoading} 
-          />
+          <PhysicalExamTable consultation={consultation} patientData={patientData} examSections={examSections} isPhysicalExamLoading={isPhysicalExamLoading} phHistoryData={phHistoryData} isLoading={!phHistoryData} isError={false} />
         </div>
       </div>
     </div>

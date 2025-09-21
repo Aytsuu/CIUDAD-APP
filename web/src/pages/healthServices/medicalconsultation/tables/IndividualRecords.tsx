@@ -16,6 +16,8 @@ import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFet
 import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
+import {useMedConPHHistory} from "../queries/fetchQueries";
+import PHIllnessTable from "../medicalhistory/past-medical-history";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
@@ -38,6 +40,9 @@ export default function InvMedicalConRecords() {
   // Use the consultation history hook with pagination
   const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
+  const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
+
+
 
   const medicalRecords = useMemo(() => {
     console.log("Medical Records Response:", medicalRecordsResponse);
@@ -129,6 +134,7 @@ export default function InvMedicalConRecords() {
           <PatientInfoCard patient={selectedPatientData} />
         </div>
       )}
+
 
       <div className="flex w-full flex-col md:flex-row gap-4">
         {/* Medical History Section */}

@@ -20,3 +20,5 @@ export const fetchPatientRecords = async () => {
     throw error; // Re-throw the error if you want to handle it in the component
   }
 };
+
+

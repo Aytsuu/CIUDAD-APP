@@ -260,9 +260,17 @@ class MedicalHistory(models.Model):
     year = models.CharField(max_length=255, null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(default="", blank=True, null=True)
     class Meta:
-        db_table = 'medical_history'         
-        
+        db_table = 'medical_history'   
+
+class FamilyPastMedicalHistory(models.Model):      
+    fammedhist_id= models.BigAutoField(primary_key=True)
+    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='ill_id')
+    remarks = models.TextField(default="", blank=True, null=True)
+    pat=models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='pat_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
@@ -277,7 +285,6 @@ class PESection(models.Model):
 
     class Meta:
         db_table = 'physical_exam_section'
-
 
 # Option under a section (e.g., "Normal skin color and texture")
 class PEOption(models.Model):
@@ -350,3 +357,4 @@ class PatientDisablity(models.Model):
 
     class Meta:
         db_table = 'patient_disability_history'
+ 
