@@ -136,10 +136,11 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   create_files = FileInputSerializer(write_only=True, many=True, required=False)
   rp = serializers.CharField(write_only=True, required=False)
   per = PersonalBaseSerializer(write_only=True, required=False)
+  br = serializers.CharField(write_only=True, required=False)
 
   class Meta:
     model = Business
-    fields = ['bus_name', 'rp', 'per', 'bus_gross_sales', 'bus_status', 'bus_date_verified',
+    fields = ['bus_name', 'rp', 'br', 'per', 'bus_gross_sales', 'bus_status', 'bus_date_verified',
               'bus_location', 'staff', 'modification_files', 'edit_files', 'create_files']
 
   @transaction.atomic
@@ -148,7 +149,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         create_files = validated_data.pop('create_files', [])
         rp = validated_data.pop('rp', None)
         per = validated_data.pop('per', None)
-        br = None
+        br = validated_data.pop('br', None)
 
         if per:
           br = BusinessRespondent.objects.create(
@@ -179,12 +180,12 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   def _create_business_instance(self, validated_data, rp, br):
       business = Business(
         rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-        br=br,
+        br=BusinessRespondent.objects.get(br_id=br) if br else None,
         bus_date_verified=date.today(),
         **validated_data
       )
 
-      business._history_user = validated_data['staff']
+      business._history_user = validated_data.get('staff', None)
       business.save()
       return business
   
