@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button/button";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, ArrowLeft } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, ArrowLeft, Venus } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 import NotificationBadge from "./my-schedules/notifbadge";
@@ -20,7 +20,7 @@ const Homepage = () => {
     { name: 'Child Health Records', route: 'admin/childhealth/overall', icon: Baby },
     { name: 'Family Planning', route: 'admin/familyplanning/overall', icon: Heart },
     { name: 'Animal Bites', route: 'admin/animalbites/overall', icon: Dog },
-    { name: 'Maternal Records', route: '/my-records/my-med-records', icon: UserCircle },
+    { name: 'Maternal Records', route: '/admin/maternal/overall', icon: Venus },
     { name: 'Medical Consultation', route: '(health)/medicine-request/my-requests', icon: Stethoscope },
     { name: 'Profiling', route: 'admin/medicinerequest/medicinerequest', icon: UserRoundPlus },
     { name: 'Patients Records', route: '/admin/patientrecords/patientrecords', icon: Users },
@@ -242,7 +242,7 @@ const Homepage = () => {
         </View>
 
         <View className="px-5 mt-4 mb-6">
-          <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Check</Text>
+          <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Manage</Text>
           <View className="flex-row flex-wrap justify-between">
             {modules.map((module, index) => {
               const Icon = module.icon;

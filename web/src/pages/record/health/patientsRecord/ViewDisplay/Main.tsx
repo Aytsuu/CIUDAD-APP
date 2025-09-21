@@ -1,58 +1,67 @@
-"use client";
-import { useState, useMemo, useEffect } from "react";
-import React from "react";
-import { ChevronLeft, Edit, AlertCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams } from "react-router";
-import { toast } from "sonner";
+"use client"
 
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CardLayout from "@/components/ui/card/card-layout";
-import { calculateAge } from "@/helpers/ageCalculator";
-import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
-import { PatientData } from "./types";
-import PersonalInfoTab from "./PersonalInfoTab";
-import Records from "./Records";
-import VisitHistoryTab from "./VisitHistoryTab";
-import { useUpdatePatient } from "../queries/update";
-import { usePatientDetails } from "../queries/fetch";
-import { useChildData } from "../queries/fetch";
-import { useMedConCount, useChildHealthRecordCount } from "../queries/count";
-import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
-import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
-import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
-import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
-import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
+import { useState, useMemo, useEffect } from "react"
+import React from "react"
+import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useLocation } from "react-router"
+import { toast } from "sonner"
+import { showSuccessToast } from "@/components/ui/toast"
+import { showErrorToast } from "@/components/ui/toast"
+
+import CardLayout from "@/components/ui/card/card-layout"
+import { Button } from "@/components/ui/button/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { calculateAge } from "@/helpers/ageCalculator"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+
+import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
+import { PatientData } from "./types"
+import PersonalInfoTab from "./PersonalInfoTab"
+import Records from "./Records"
+import VisitHistoryTab from "./VisitHistoryTab"
+
+// fetch queries
+import { useUpdatePatient } from "../queries/update"
+import { usePatientDetails } from "../queries/fetch"
+import { useChildData } from "../queries/fetch"
+import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
+import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
+import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
+import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries"
+import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv"
+import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries"
+
 
 export default function ViewPatientRecord() {
-  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal");
-  const [isEditable, setIsEditable] = useState(false);
-  const { patientId } = useParams<{ patientId: string }>();
-  const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "");
+  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
+  const [isEditable, setIsEditable] = useState(false)
+  const location = useLocation()
+  const { patientId } = location.state || {}
+
+  const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "")
   const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
-  const { data: medicineCountData } = useMedicineCount(patientId ?? "");
-  const medicineCount = medicineCountData?.medicinerecord_count;
-  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
-  const vaccinationCount = vaccinationCountData?.vaccination_count;
-  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
-  const firstAidCount = firstAidCountData?.firstaidrecord_count;
-  const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "");
-  const childHealthCountData = childHealthCount?.childhealthrecord_count;
-  const { data: medconCountData } = useMedConCount(patientId ?? "");
-  const medconCount = medconCountData?.medcon_count;
-  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
-  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
-  const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "");
-  const postpartumCount = postpartumCountData;
-  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "");
-  const prenatalCount = prenatalCountData;
-  const updatePatientData = useUpdatePatient();
+  const { data: medicineCountData } = useMedicineCount(patientId ?? "")
+  const medicineCount = medicineCountData?.medicinerecord_count
+  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
+  const vaccinationCount = vaccinationCountData?.vaccination_count
+  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
+  const firstAidCount = firstAidCountData?.firstaidrecord_count
+  const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
+  const childHealthCountData = childHealthCount?.childhealthrecord_count
+  const { data: medconCountData } = useMedConCount(patientId ?? "")
+  const medconCount = medconCountData?.medcon_count
+  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "")
+  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "")
+  const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
+  const postpartumCount = postpartumCountData
+  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
+  const prenatalCount = prenatalCountData
+  const updatePatientData = useUpdatePatient()
 
   const currentPatient = useMemo(() => {
     if (!patientsData || !patientId) return null;
@@ -95,6 +104,7 @@ export default function ViewPatientRecord() {
         city: currentPatient.address?.add_city || "",
         province: currentPatient.address?.add_province || ""
       },
+      philhealthId: currentPatient.personal_info.philhealth_id || "",
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
       chronicConditions: currentPatient.chronicConditions ?? "N/A",
@@ -138,8 +148,6 @@ export default function ViewPatientRecord() {
   };
 
   const patientLinkData = useMemo(() => {
-    console.log("Creating patientLinkData with currentPatient:", currentPatient);
-
     const linkData = {
       pat_id: currentPatient?.pat_id ?? patientId ?? "",
       pat_type: currentPatient?.pat_type ?? patientData?.patientType ?? "",
@@ -162,12 +170,10 @@ export default function ViewPatientRecord() {
         per_mname: currentPatient?.personal_info.per_mname ?? patientData?.middleName ?? "",
         per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
         per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
-        per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? ""
-      }
-    };
-
-    console.log("Generated patientLinkData:", linkData);
-    console.log("Address in patientLinkData:", linkData.address);
+        per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
+        philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? "",
+      },
+    }
 
     return linkData;
   }, [currentPatient, patientData, patientId]);
@@ -247,8 +253,8 @@ export default function ViewPatientRecord() {
     try {
       const formData = form.getValues();
       if (!currentPatient?.trans_id) {
-        toast.error("Cannot update: Missing transient ID.");
-        return;
+        showErrorToast("Cannot update: Missing transient ID.")
+        return
       }
       const updatedData = {
         pat_type: formData.patientType,
@@ -263,31 +269,45 @@ export default function ViewPatientRecord() {
           tran_status: "Active",
           tran_ed_attainment: "N/A",
           tran_religion: "N/A",
+          philhealth_id: formData.philhealthId,
           address: {
             tradd_street: formData.address.street,
             tradd_sitio: formData.address.sitio,
             tradd_barangay: formData.address.barangay,
             tradd_city: formData.address.city,
-            tradd_province: formData.address.province
-          }
-        }
-      };
-      await updatePatientData.mutateAsync(updatedData);
-      setIsEditable(false);
-      toast.success("Patient data updated successfully!");
+            tradd_province: formData.address.province,
+          },
+        },
+      }
+      await updatePatientData.mutateAsync(updatedData)
+      setIsEditable(false)
+      showSuccessToast("Patient data updated successfully!")
     } catch (error) {
-      console.error("Error saving patient data: ", error);
-      toast.error("Failed to update patient data. Please try again.");
+      console.error("Error saving patient data: ", error)
+      showErrorToast("Failed to update patient data. Please try again.")
     }
   };
 
   const handleCancelEdit = () => {
-    if (patientData) form.reset(patientData);
-    setIsEditable(false);
-    toast("Edit cancelled. No changes were made.");
-  };
+    if (patientData) form.reset(patientData)
+    setIsEditable(false)
+    toast("Edit cancelled. No changes were made.")
+  }
 
-  if (isError) {
+  if (isLoading) {
+    return (
+      <LayoutWithBack 
+        title="Patient Information and Records"
+        description="View patient information, medical records, and follow-up visits"
+      >
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="animate-spin" /> Loading...
+        </div>
+      </LayoutWithBack>
+            )
+  }
+
+  if (isError && !patientId) {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <Alert className="border-red-200 bg-red-50">
@@ -308,36 +328,15 @@ export default function ViewPatientRecord() {
     );
   }
 
-  if (!patientData) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg text-gray-500">No patient data available</p>
-      </div>
-    );
-  }
+  const isTransient = patientData?.patientType?.toLowerCase() === "transient"
 
-  const isTransient = patientData?.patientType?.toLowerCase() === "transient";
-
+  
   return (
+    <LayoutWithBack
+      title="Patient Information and Records"
+      description="View patient information, medical records, and follow-up visits  "
+    >
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <Button variant="outline" onClick={() => window.history.back()}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex flex-col">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patient Record</h1>
-          <p className="text-xs sm:text-sm text-darkGray">View patient information</p>
-        </div>
-        <div className="flex gap-2 sm:ml-auto">
-          {isTransient && activeTab === "personal" && (
-            <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
-              <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
-            </Button>
-          )}
-        </div>
-      </div>
-      <Separator className="bg-gray mb-4 sm:mb-6" />
       <div className="mb-6">
         <CardLayout
           title=""
@@ -348,21 +347,36 @@ export default function ViewPatientRecord() {
                 <AvatarFallback className="bg-primary/10 text-primary text-xl">{getInitials()}</AvatarFallback>
               </Avatar>
               <div className="space-y-1">
-                <h2 className="text-xl font-semibold">{`${patientData.firstName} ${patientData.middleName ? patientData.middleName + " " : ""}${patientData.lastName}`}</h2>
+                <h2 className="text-xl font-semibold">
+                  {`${patientData?.firstName} ${
+                    patientData?.middleName ? patientData.middleName + " " : ""
+                  }${patientData?.lastName}`}
+                </h2>
                 <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                   <span>
                     ID: <span className="font-medium text-foreground">{patientId}</span>
                   </span>
                   <span>•</span>
-                  <span>{calculateAge(patientData.dateOfBirth)}</span>
+                  <span>{calculateAge(patientData?.dateOfBirth)}</span>
                   <span>•</span>
-                  <span>{patientData.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
+                  <span>{patientData?.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Badge variant={patientData.patientType === "Resident" ? "default" : "secondary"}>{patientData.patientType}</Badge>
+                  <Badge variant={patientData?.patientType === "Resident" ? "default" : "secondary"}>
+                    {patientData?.patientType}
+                  </Badge>
                 </div>
               </div>
+              <div className="flex gap-2 sm:ml-auto">
+                {isTransient && activeTab === "personal" && isEditable == false && (
+                  <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
+                    <Edit className="h-4 w-4" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </Button>
+                )}
+              </div>
             </div>
+            
           }
           cardClassName="border shadow-sm rounded-lg"
           headerClassName="hidden"
@@ -402,5 +416,6 @@ export default function ViewPatientRecord() {
         {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} />}
       </Tabs>
     </div>
-  );
+    </LayoutWithBack>
+  )
 }
