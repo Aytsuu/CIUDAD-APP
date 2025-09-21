@@ -144,7 +144,7 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   const onSubmit = async (data: DisbursementFormValues) => {
     try {
       setErrorMessage(null);
-
+      const staffId = user?.staff?.staff_id || null;
       const formattedParticulars = data.dis_particulars
         .filter(p => p.forPayment.trim() !== "")
         .map(p => ({
@@ -177,7 +177,7 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
         dis_or_num: data.dis_or_num,
         dis_paydate: data.dis_paydate,
         dis_payacc: formattedPayAcc,
-        staff: data.staff,
+        staff: staffId,
       };
 
       const newFiles: FileInput[] = files

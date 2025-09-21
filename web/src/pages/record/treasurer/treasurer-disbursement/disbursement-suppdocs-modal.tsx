@@ -96,7 +96,8 @@ export function DocumentCard({
             )}
           </div>
         )}
-        {doc.disf_url?.startsWith("image/") && doc.disf_url ? (
+        {/* KEY CHANGE: Use disf_type instead of filename detection */}
+        {doc.disf_type?.startsWith("image/") && doc.disf_url ? (
           <a
             href={doc.disf_url}
             target="_blank"
@@ -134,7 +135,7 @@ export function DocumentCard({
         )}
       </div>
       <p className="mt-2 text-sm text-gray-500 text-center">
-        {displayName} {isArchived}
+        {displayName} {isArchived && "(Archived)"}
       </p>
     </div>
   );
