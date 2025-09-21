@@ -17,7 +17,7 @@ export interface AuthState {
     error: string | null;
     hasCheckedAuth: boolean;
     otpSent: boolean;
-    email: string | null;
+    email: Record<string, any> | null;
     phone: string | null;
 }
 

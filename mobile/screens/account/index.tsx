@@ -48,7 +48,7 @@ export default () => {
     {
       name: "Settings",
       icon: Settings,
-      route: "/(account)/settings"
+      route: "/(account)/settings/"
     },
   ]
 
@@ -74,8 +74,6 @@ export default () => {
     ]);
   };
   
-  console.log(user)
-
   return (
     <PageLayout 
       leftAction={<View className="w-10 h-10" />}

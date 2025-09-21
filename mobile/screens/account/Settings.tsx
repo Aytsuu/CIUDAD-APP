@@ -39,25 +39,27 @@ export default function Settings() {
             <Phone width={35} height={20}/>
             <Text className="text-[14px] text-gray-800">Phone Number</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(account)/settings/change-phone")}>
             <Text className="text-sm font-medium text-primaryBlue">Change</Text>
           </TouchableOpacity>
         </View>
+
         <View className="flex-row items-center justify-between py-3">
           <View className="flex-row items-center gap-2">
             <Mail width={35} height={20}/>
             <Text className="text-[14px] text-gray-800">Email Address</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(account)/settings/change-email")}>
             <Text className="text-sm font-medium text-primaryBlue">Change</Text>
           </TouchableOpacity>
         </View>
+
         <View className="flex-row items-center justify-between py-3">
           <View className="flex-row items-center gap-2">
             <SecurityLock width={35} height={20}/>
-            <Text className="text-[14px] text-gray-800">Phone Number</Text>
+            <Text className="text-[14px] text-gray-800">Password</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(account)/settings/change-password")}>
             <Text className="text-sm font-medium text-primaryBlue">Change</Text>
           </TouchableOpacity>
         </View>
