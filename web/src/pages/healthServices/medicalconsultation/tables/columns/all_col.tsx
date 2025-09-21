@@ -97,7 +97,8 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
             per_mname: row.original.mname,
             per_lname: row.original.lname,
             per_dob: row.original.dob,
-            per_sex: row.original.sex
+            per_sex: row.original.sex,
+            per_contact: row.original.contact
           }
         };
 

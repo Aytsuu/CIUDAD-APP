@@ -114,7 +114,7 @@ export const getAllTransientAddresses = async () => {
 
 export const getChildData = async (id: any): Promise<any> => {
 	try {
-		const res = await api2.get(`child-health/records/by-patient/${id}/`);
+		const res = await api2.get(`/child-health/records/by-patient/${id}/`);
 		if (res.status !== 200) {
 			throw new Error("Failed to fetch child data");
 		}

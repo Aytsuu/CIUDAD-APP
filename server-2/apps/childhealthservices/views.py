@@ -417,7 +417,7 @@ class ChildHealthRecordByPatIDView(APIView):
                 patrec__patrec_type="Child Health Record"
             )
         except ChildHealthrecord.DoesNotExist:
-            return Response({"detail": "Child health record not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Child health record not found."})
 
         serializer = ChildHealthrecordSerializerFull(chrec)
         return Response(serializer.data)

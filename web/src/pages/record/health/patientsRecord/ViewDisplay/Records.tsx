@@ -4,6 +4,8 @@ import { SyringeIcon, Pill, Baby, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton"; // Assuming you have a Skeleton component
+import { FaDog, FaFirstAid } from "react-icons/fa";
+import { MdPregnantWoman } from "react-icons/md";
 
 // Define the ChildHealthRecord interface as it's used in InvChildHealthRecords
 
@@ -80,7 +82,7 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
               ) : (
                 <>
                   {vaccinationCount !== 0 && (
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-sky-100">
+                    <div className="p-4 rounded-lg border border-sky-200">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-blue-100 rounded-lg">
@@ -90,7 +92,6 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                             <h3 className="text-lg font-semibold text-gray-900">Vaccination</h3>
                             <div className="flex items-center space-x-4 mt-1">
                               <span className="text-sm text-gray-600 bg-sky-100 px-2 py-1 rounded-md">{vaccinationCount !== undefined ? vaccinationCount : "0"} Records</span>
-                              <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
@@ -113,7 +114,6 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                             <h3 className="text-lg font-semibold text-gray-900">Medicine</h3>
                             <div className="flex items-center space-x-4 mt-1">
                               <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">{medicineCount !== undefined ? medicineCount : "0"} Records</span>
-                              <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
@@ -126,22 +126,21 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                     </div>
                   )}
                   {firstAidCount !== 0 && (
-                    <div className="p-4 rounded-lg border border-purple-200">
+                    <div className="p-4 rounded-lg border border-red-200">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 rounded-lg">
-                            <Pill className="w-5 h-5 text-purple-600" />
+                            <FaFirstAid className="w-5 h-5 text-red-600" />
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">First Aid</h3>
                             <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">{firstAidCount !== undefined ? firstAidCount : "0"} Records</span>
-                              <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                              <span className="text-sm text-gray-600 bg-red-200 px-2 py-1 rounded-md">{firstAidCount !== undefined ? firstAidCount : "0"} Records</span>
                             </div>
                           </div>
                         </div>
                         <Link to="/services/firstaid/records" state={{ params: { patientData: patientLinkData } }}>
-                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-red-300 text-red-700 font-medium">
                             View Details
                           </Button>
                         </Link>
@@ -149,7 +148,7 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                     </div>
                   )}
                   {medicalconCount !== 0 && (
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+                    <div className="p-4 rounded-lg border border-green-300">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-green-100 rounded-lg">
@@ -159,7 +158,6 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                             <h3 className="text-lg font-semibold text-gray-900">Medical Consultation</h3>
                             <div className="flex items-center space-x-4 mt-1">
                               <span className="text-sm text-gray-600 bg-green-200 px-2 py-1 rounded-md">{medicalconCount !== undefined ? medicalconCount : "0"} Records</span>
-                              <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
                             </div>
                           </div>
                         </div>
@@ -172,7 +170,7 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                     </div>
                   )}
                   {postpartumCount !== 0 && (
-                    <div className="p-4 rounded-lg border border-pink-200 bg-pink-100">
+                    <div className="p-4 rounded-lg border border-pink-200 ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 rounded-lg bg-pink-200">
@@ -196,7 +194,7 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                   )}
 
                   {famplanCount !== 0 && (
-                    <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-100">
+                    <div className="p-4 rounded-lg border border-yellow-200 ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 rounded-lg bg-yellow-200">
@@ -219,11 +217,11 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                   )}
 
                   {animalbitesCount !== 0 && (
-                    <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-100">
+                    <div className="p-4 rounded-lg border border-yellow-200 ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 rounded-lg bg-yellow-200">
-                            <Baby className="w-5 h-5 text-yellow-600" />
+                            <FaDog className="w-5 h-5 text-yellow-600" />
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Animal Bites</h3>
@@ -270,11 +268,11 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                   )}
 
                   {prenatalCount !== 0 && (
-                    <div className="p-4 rounded-lg border border-red-200 bg-red-100">
+                    <div className="p-4 rounded-lg border border-red-200 ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 rounded-lg bg-red-200">
-                            <Heart className="w-5 h-5 text-red-600" />
+                            <MdPregnantWoman className="w-5 h-5 text-red-600" />
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">Prenatal Care</h3>

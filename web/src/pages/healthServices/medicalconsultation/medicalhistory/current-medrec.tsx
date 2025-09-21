@@ -1,8 +1,9 @@
 import { useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Printer } from "lucide-react";
-import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
-import { Checkbox } from "@/components/ui/checkbox";
+import {  Printer } from "lucide-react";
+import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";;
+import PhysicalExamTable from "./philhealth-display" 
+
 
 interface CurrentConsultationCardProps {
   consultation: any;
@@ -78,14 +79,6 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
     console.log("Processed exam sections:", sections);
     return sections;
   }, [sectionsQuery.data, optionsQuery.data, selectedPhysicalExamOptions]);
-
-  // Function to split options into two balanced columns
-  const splitOptionsIntoColumns = (options: any[]) => {
-    const midIndex = Math.ceil(options.length / 2);
-    const firstColumn = options.slice(0, midIndex);
-    const secondColumn = options.slice(midIndex);
-    return { firstColumn, secondColumn };
-  };
 
   const handlePrint = () => {
     if (!printRef.current) return;
@@ -349,7 +342,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
               <span className="font-bold text-black text-sm">Name:</span>
               <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm truncate">{`${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_lname}`}</span>
+                <span className="text-sm truncate">{` ${patientData?.personal_info?.per_lname} ${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_mname || ""} ${patientData?.personal_info?.per_suffix || ""}`}</span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
@@ -542,56 +535,16 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             </div>
           </div>
 
-          <div>
-            <span className="font-bold text-black text-sm">Individual Health Profile:</span>
+          {/* PhilHealth Section */}
+          {/* <PhilHealthSection consultation={consultation} patientData={patientData} /> */}
 
-            {/* <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                /> */}
-
-            <div></div>
-          </div>
-
-          {/* Physical Examination Results */}
-          {!isPhysicalExamLoading && examSections.length > 0 && (
-            <div className="py-4 mt-4">
-              <h5 className="text-md font-bold mb-2">Pertitnent Findings Per System</h5>
-
-              <table className="pe-table border border-black w-full">
-                <tbody>
-                  {examSections.map((section: any) => {
-                    const { firstColumn, secondColumn } = splitOptionsIntoColumns(section.options);
-
-                    return (
-                      <tr key={section.pe_section_id}>
-                        <td className="font-bold border border-black" style={{ width: "25%", verticalAlign: "top" }}>
-                          <div className="p-2"> {section.title}</div>
-                        </td>
-                        <td className="border border-black" style={{ width: "37.5%", verticalAlign: "top" }}>
-                          {firstColumn.map((option: any) => (
-                            <div key={option.pe_option_id} className={option.isSelected ? "pe-finding" : "pe-option"}>
-                              {option.isSelected ? "✓ " : "__"}
-                              {option.text}
-                            </div>
-                          ))}
-                        </td>
-                        <td className="border border-black" style={{ width: "37.5%", verticalAlign: "top" }}>
-                          {secondColumn.map((option: any) => (
-                            <div key={option.pe_option_id} className={option.isSelected ? "pe-finding" : "pe-option"}>
-                              {option.isSelected ? "✓ " : "__"}
-                              {option.text}
-                            </div>
-                          ))}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {/* Physical Exam Table */}
+          <PhysicalExamTable 
+            consultation={consultation} 
+            patientData={patientData}
+            examSections={examSections} 
+            isPhysicalExamLoading={isPhysicalExamLoading} 
+          />
         </div>
       </div>
     </div>

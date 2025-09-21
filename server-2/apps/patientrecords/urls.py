@@ -50,6 +50,7 @@ urlpatterns = [
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
+    path('philhealth-formatted-illness/', PHIllnessAPIView.as_view(), name="philhealth-formatted-illness"),
    
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),

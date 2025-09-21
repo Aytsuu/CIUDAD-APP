@@ -85,7 +85,7 @@ export default function AllMedicalConsRecord() {
     }
   }, [apiResponse, pageSize]);
 
-  const formatMedicalData = React.useCallback((): MedicalRecord[] => {
+  const formatMedicalData = React.useCallback((): any[] => {
     if (!medicalRecords || !Array.isArray(medicalRecords)) {
       return [];
     }
@@ -121,7 +121,8 @@ export default function AllMedicalConsRecord() {
         province: address.add_province || "",
         pat_type: record.pat_type || details.pat_type || "",
         address: addressString,
-        medicalrec_count: record.medicalrec_count || 0
+        medicalrec_count: record.medicalrec_count || 0,
+        contact: info.per_contact || ""
       };
     });
   }, [medicalRecords]);

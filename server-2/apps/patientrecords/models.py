@@ -251,7 +251,7 @@ class Finding(models.Model):
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'finding'
-
+ 
 
 
 class MedicalHistory(models.Model):
@@ -261,7 +261,7 @@ class MedicalHistory(models.Model):
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
-        db_table = 'medical_history'  
+        db_table = 'medical_history'         
         
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)

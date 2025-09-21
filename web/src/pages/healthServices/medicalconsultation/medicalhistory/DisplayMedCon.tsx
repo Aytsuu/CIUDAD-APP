@@ -29,6 +29,7 @@ export default function DisplayMedicalConsultation() {
     return data.results
       .map((history: any) => ({
         // Keep all your existing fields
+        ...history,
         patrec: history.patrec,
         medrec_id: history.medrec_id,
         medrec_status: history.medrec_status,
