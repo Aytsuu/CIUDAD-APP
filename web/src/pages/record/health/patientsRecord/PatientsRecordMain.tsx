@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Plus,
   FileInput,
@@ -27,9 +26,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+
+import { getAgeInUnit } from "@/helpers/ageCalculator";
+import { capitalize } from "@/helpers/capitalize";
 
 import { usePatients } from "./queries/fetch";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -40,6 +42,10 @@ type Report = {
   lastName: string;
   firstName: string;
   mi: string;
+  age: {
+    ageNumber: number;
+    ageUnit: string;
+  };
   type: string;
   noOfRecords?: number; 
 };
@@ -52,11 +58,23 @@ interface Patients {
     per_fname: string;
     per_lname: string;
     per_mname: string;
+    per_dob: string;
   };
 
   address: {
     add_sitio?: string;
   };
+}
+
+const getPatType = (type: string) => {
+  switch(type.toLowerCase()){
+    case "resident":
+      return 'bg-blue-500 w-24 p-1 rounded-md font-semibold text-white'
+    case "transient":
+      return 'border border-black/40 w-24 p-1 rounded-md font-semibold text-black'
+    default:
+      return 'bg-gray-500 text-white'
+  }
 }
 
 // Define the columns for the data table
@@ -110,7 +128,7 @@ export const columns: ColumnDef<Report>[] = [
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("lastName")}
+        {capitalize(row.getValue("lastName"))}
       </div>
     ),
   },
@@ -127,7 +145,7 @@ export const columns: ColumnDef<Report>[] = [
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("firstName")}
+        {capitalize(row.getValue("firstName"))}
       </div>
     ),
   },
@@ -135,14 +153,30 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "mi",
     header: "Middle Name",
     cell: ({ row }) => (
-      <div className="hidden xl:block">{row.getValue("mi")}</div>
+      <div className="hidden xl:block">{capitalize(row.getValue("mi"))}</div>
     ),
+  },
+  {
+    accessorKey: "age",
+    header: "Age",
+    cell: ({ row }) => {
+      const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
+      return (
+        <div className="hidden xl:block">
+          {ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
-      <div className="hidden xl:block">{row.getValue("type")}</div>
+      <div className="flex items-center justify-center">
+        <div className={getPatType(row.getValue("type"))}>
+          {row.getValue("type")}
+        </div>
+      </div>
     ),
   },
   {
@@ -177,36 +211,88 @@ export const columns: ColumnDef<Report>[] = [
   },
 ];
 
-const transformPatientsToReports = (patients: Patients[]): Report[] => {
-  return patients.map((patient) => ({
-    id: patient.pat_id.toString(),
-    sitio: patient.address?.add_sitio || "Unknown",
-    lastName: patient.personal_info?.per_lname || "",
-    firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "",
-    type: patient.pat_type || "Resident",
-  }));
-};
+function getBestAgeUnit(dob: string): { value: number; unit: string } {
+  const years = getAgeInUnit(dob, "years");
+  if (years > 0) return { value: years, unit: years === 1 ? "yr" : "yrs" };
 
+  const months = getAgeInUnit(dob, "months");
+  if (months > 0) return { value: months, unit: months === 1 ? "mo" : "mos" };
+
+  const weeks = getAgeInUnit(dob, "weeks");
+  if (weeks > 0) return { value: weeks, unit: weeks === 1 ? "wk" : "wks" };
+
+  const days = getAgeInUnit(dob, "days");
+  return { value: days, unit: days === 1 ? "day" : "days" };
+}
+
+// main component
 export default function PatientsRecord() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<Report[]>([]);
-  const [currentData, setCurrentData] = useState<Report[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [filterBy, setFilterBy] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const { data: patientData, isLoading } = usePatients();
+  const { data: patientData, isLoading } = usePatients({ 
+    page, 
+    page_size: pageSize, 
+    status: selectedFilter !== " All" ? selectedFilter : undefined, 
+    search: searchTerm || undefined
+  });
+
+  const totalPages = Math.ceil((patientData?.count || 0) / pageSize);
+
+
+  // filter options 
+  const filter = [
+    { id: "all", name: "All" },
+    { id: "resident", name: "Resident" },
+    { id: "transient", name: "Transient" },
+  ]
+
+  // searching and pagination handlers
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search)
+    setPage(1)
+  }
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter)
+    setPage(1) 
+  }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setPage(1) 
+  }
+
+  const transformPatientsToReports = (patients: Patients[]): Report[] => {
+    return patients.map((patient) => {
+      const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patient.personal_info?.per_dob || "");
+      return {
+        id: patient.pat_id.toString(),
+        sitio: patient.address?.add_sitio || "Unknown",
+        lastName: patient.personal_info?.per_lname || "",
+        firstName: patient.personal_info?.per_fname || "",
+        mi: patient.personal_info?.per_mname || "",
+        age: { ageNumber: ageInfo, ageUnit: ageUnit},
+        type: patient.pat_type || "Resident",
+      };
+    });
+  };
 
   const transformedPatients = useMemo(() => {
-    if (!patientData) return [];
-    return transformPatientsToReports(patientData);
+    if (!patientData?.results) return [];
+    return transformPatientsToReports(patientData.results);
   }, [patientData]);
 
   const patientDataset = transformedPatients;
 
   const totalPatients = patientDataset.length;
+
   const residents = patientDataset.filter((patient) =>
     patient.type.includes("Resident")
   ).length;
@@ -218,61 +304,6 @@ export default function PatientsRecord() {
   const transientPercentage =
     totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
-  useEffect(() => {
-    if (!patientDataset.length) {
-      setFilteredData([]);
-      setTotalPages(0);
-      return;
-    }
-
-    const filtered = patientDataset.filter((report) => {
-      const searchText =
-        `${report.id} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.type}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-
-    let filteredDataTemp = filtered;
-    if (filterBy === "resident") {
-      filteredDataTemp = filteredDataTemp.filter((report) =>
-        report.type.includes("Resident")
-      );
-    } else if (filterBy === "transient") {
-      filteredDataTemp = filteredDataTemp.filter((report) =>
-        report.type.includes("Transient")
-      );
-    }
-
-    setFilteredData(filteredDataTemp);
-    setTotalPages(Math.ceil(filteredDataTemp.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize, filterBy, patientDataset]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number.parseInt(event.target.value);
-    if (!isNaN(value) && value > 0) {
-      setPageSize(value);
-    } else {
-      setPageSize(10); // Default to 10 if invalid input
-    }
-  };
-
-  // Handle page change from the pagination component
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
 
   return (
     <LayoutWithBack
@@ -367,8 +398,8 @@ export default function PatientsRecord() {
               <Input
                 placeholder="Search..."
                 className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                value={searchQuery}
-                onChange={handleSearchChange}
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
             <div className="w-48">
@@ -376,13 +407,9 @@ export default function PatientsRecord() {
                 placeholder="Filter by"
                 label=""
                 className="bg-white"
-                options={[
-                  { id: "all", name: "All" },
-                  { id: "resident", name: "Resident" },
-                  { id: "transient", name: "Transient" },
-                ]}
-                value={filterBy}
-                onChange={setFilterBy}
+                options={filter}
+                value={selectedFilter}
+                onChange={handleFilterChange}
               />
             </div>
           </div>
@@ -406,8 +433,7 @@ export default function PatientsRecord() {
                 type="number"
                 className="w-14 h-6"
                 value={pageSize}
-                onChange={handlePageSizeChange}
-                min="1"
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
@@ -433,25 +459,23 @@ export default function PatientsRecord() {
                 <Loader2 className="animate-spin" /> Loading...
               </div>
             ) : (
-              <DataTable columns={columns} data={currentData} />
+              <DataTable columns={columns} data={transformedPatients} />
             )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows
             </p>
 
-            {/* Custom Pagination component instead of PaginationLayout */}
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
+              {totalPages > 1 && (
+                <PaginationLayout
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
             </div>
           </div>
         </div>

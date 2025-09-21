@@ -10,6 +10,8 @@ import {
  } from "../restful-api/get";
 import { AppointmentFilters } from "../restful-api/get";
 
+import { PatientFilters } from "../restful-api/get";
+
 export const useChildData = (id: any,) => {
 	return useQuery({
 		queryKey: ['childData', id],
@@ -49,12 +51,13 @@ export const patientQueryKey = {
 	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
 }
 
-export const usePatients = (options = {}) => {
+export const usePatients = (filters: PatientFilters, options = {}) => {
 	return useQuery({
 		queryKey: patientQueryKey.lists(),
-		queryFn: getPatients,
+		queryFn: () => getPatients(filters),
 		staleTime: 30 * 1,
 		retry: 3,
+		refetchInterval: 3000,
 		...options
 	})
 }

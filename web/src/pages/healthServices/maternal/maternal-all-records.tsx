@@ -429,7 +429,7 @@ export default function MaternalAllRecords() {
               <p className="text-xs sm:text-sm">Show</p>
               <Input
                 type="number"
-                className="w-16 h-8"
+                className="w-14 h-6"
                 defaultValue={pageSize}
                 onChange={(e) => handlePageSizeChange(Number(e.target.value))}
               />

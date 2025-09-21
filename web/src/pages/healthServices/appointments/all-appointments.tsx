@@ -79,7 +79,6 @@ export default function ScheduleRecords() {
     const days = getAgeInUnit(dob, "days");
     return { value: days, unit: days === 1 ? "day" : "days" };
   }
-  
 
   // Transform the Django API data to match our ScheduleRecord type
   const transformedData = useMemo((): ScheduleRecord[] => {
