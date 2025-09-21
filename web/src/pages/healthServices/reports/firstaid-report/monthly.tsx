@@ -4,7 +4,7 @@ import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
-import { useFirstAidRecords } from "./queries/fetchQueries";
+import { useFirstAidRecords } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
@@ -131,7 +131,7 @@ export default function MonthlyFirstAidRecords() {
                           month_name: monthName,
                         }}
                         navigateTo={{
-                          path: "/monthly-firstaid-details",
+                          path: "/reports/monthly-firstaid/records",
                           state: {
                             month: record.month,
                             monthName: monthName,

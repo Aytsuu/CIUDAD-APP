@@ -66,6 +66,8 @@ export const getMedicalConsultationColumns = (patientData: any | null): ColumnDe
     accessorKey: "chiefcomplaint",
     header: "ChiefComplaint",
     cell: ({ row }) => {
+      console.log("FUCKKER", row.original)
+      
       return (
         <div className="flex flex-col w-full items-center">
           <div className="text-sm font-medium  w-[200px]">{row.original.medrec_chief_complaint || "N/A"}</div>
@@ -86,8 +88,9 @@ export const getMedicalConsultationColumns = (patientData: any | null): ColumnDe
     header: "Actions",
     cell: ({ row }) => (
       <div className="flex justify-center gap-2">
+        
         <Link
-          to="/DisplayMedicalConsultation"
+          to="/services/medical-consultation/records/history"
           state={{
             params: { MedicalConsultation: row.original, patientData }
           }}

@@ -19,7 +19,7 @@ const sexOptions: { label: string; value: string }[] = [
   { label: "Female", value: "female" },
 ]
 
-const civilStatusOptions: { label: string; value: string }[] = [
+export const civilStatusOptions: { label: string; value: string }[] = [
   { label: "Single", value: "single" },
   { label: "Married", value: "married" },
   { label: "Widowed", value: "widowed" },

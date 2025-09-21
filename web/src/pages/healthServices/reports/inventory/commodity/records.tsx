@@ -74,7 +74,7 @@ export default function MonthlyCommodityDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
-  const handleExportPDF = () => exportToPDF(prepareExportData(), `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  const handleExportPDF = () => exportToPDF( `commodity_inventory_${monthName}_${new Date().toISOString().slice(0, 10)}`);
 
   // Print handler
   const handlePrint = () => {

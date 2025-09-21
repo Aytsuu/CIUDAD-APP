@@ -220,7 +220,7 @@ export default function AllMedicineRecords() {
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
               <Link
-                to="/medicine-request-form"
+                to="/services/medicine/form"
                 state={{
                   params: {
                     mode: "fromallrecordtable"

@@ -227,7 +227,7 @@ export default function AllMedicalConsRecord() {
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
               <Link
-                to="/medical-consultation-form"
+                to="/services/medical-consultation/form"
                 state={{
                   params: {
                     mode: "fromallrecordtable"

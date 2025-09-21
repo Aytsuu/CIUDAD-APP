@@ -34,13 +34,10 @@ import FirstAidProblemDetails from "@/pages/healthServices/reports/inventory/fir
 import CommodityProblemDetails from "@/pages/healthServices/reports/inventory/commodity/expoutstock/records";
 import AntigenProblemDetails from "@/pages/healthServices/reports/inventory/antigen/expoutstock/records";
 
-
 import MedicineInventoryReportsTabs from "@/pages/healthServices/reports/inventory/medicine/Main";
 import CommodityInventoryReportsTabs from "@/pages/healthServices/reports/inventory/commodity/Main";
 import FirstAidInventoryReportsTabs from "@/pages/healthServices/reports/inventory/firstaid/Main";
 import AntigenInventoryReportsTabs from "@/pages/healthServices/reports/inventory/antigen/Main";
-
-
 
 import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/newchildren-list-report/records";
@@ -50,46 +47,40 @@ export const reports_router = [
     element: <BHWMonthlyReport />
   },
   {
-    path: "/healthcare-reports",
+    path: "/reports",
     element: <HealthcareReports />
   },
   {
-    path: "/monthly-medicine-records",
+    path: "/reports/monthly-medicine",
     element: <MonthlyMedicineRecords />
   },
-  { path: "/monthly-medicine-details", element: <MonthlyMedicineDetails /> },
+  { path: "/reports/monthly-medicine/records", element: <MonthlyMedicineDetails /> },
   {
-    path: "/monthly-firstaid-records",
+    path: "/reports/monthly-firstaid",
     element: <MonthlyFirstAidRecords />
   },
-  { path: "/monthly-firstaid-details", element: <MonthlyFirstAidDetails /> },
+  { path: "/reports/monthly-firstaid/records", element: <MonthlyFirstAidDetails /> },
   {
     path: "/edit-monthly-recipient-list",
     element: <EditMonthlyRecipientList />
   },
   {
-    path: "/monthly-vaccine-records",
+    path: "/reports/monthly-vaccination",
     element: <MonthlyVaccineRecords />
   },
   {
-    path: "/monthly-vaccination-details",
+    path: "/reports/monthly-vaccination/records",
     element: <MonthlyVaccinationDetails />
   },
 
+  
   //  INVENTORY REPORTS
-  { path: "/inventory-monthly-medicine-records", element: <InventoryMonthlyMedicineRecords /> },
+  { path: "/reports/monthly-inventory-medicine", element: <InventoryMonthlyMedicineRecords /> },
   {
-    path: "/inventory-monthly-medicine-details",
+    path: "/reports/monthly-inventory-medicine/records",
     element: <InventoryMonthlyMedicineDetails />
   },
-  {
-    path: "/inventory-monthly-commodity-records",
-    element: <InventoryMonthlyCommodityRecords />
-  },
-  {
-    path: "/inventory-monthly-commodity-details",
-    element: <MonthlyCommodityDetails />
-  },
+
   {
     path: "/inventory-monthly-firstaid-records",
     element: <MonthlyInventoryFirstAidRecords />
@@ -154,22 +145,29 @@ export const reports_router = [
     element: <FirstAidProblemDetails />
   },
 
-  {
-    path: "/commodity-expired-out-of-stock-summary/details",
-    element: <CommodityProblemDetails />
-  },
+ 
   {
     path: "/antigen-expired-out-of-stock-summary/details",
-    element: <AntigenProblemDetails /> 
+    element: <AntigenProblemDetails />
   },
   {
     path: "/medicine-inventory-reports",
     element: <MedicineInventoryReportsTabs />
   },
   {
-    path: "/commodity-inventory-reports",
+    path: "/reports/inventory/monthly-commodity",
     element: <CommodityInventoryReportsTabs />
   },
+  {
+    path: "/reports/inventory/monthly-commodity/transaction-records",
+    element: <MonthlyCommodityDetails />
+  },
+  {
+    path: "/reports/inventory/monthly-commodity/expoutstock-records",
+    element: <CommodityProblemDetails />
+  },
+
+
   {
     path: "/firstaid-inventory-reports",
     element: <FirstAidInventoryReportsTabs />
@@ -178,7 +176,7 @@ export const reports_router = [
     path: "/antigen-inventory-reports",
     element: <AntigenInventoryReportsTabs />
   },
- 
+
   {
     path: "/monthly-new-children-records",
     element: <MonthlyNewChildrenRecords />
@@ -187,5 +185,4 @@ export const reports_router = [
     path: "/monthly-new-children-records/details",
     element: <MonthlyNewChildrenRecordsDetails />
   }
-
 ];

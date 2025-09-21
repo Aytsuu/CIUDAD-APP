@@ -11,18 +11,18 @@ import ArchiveMainInventoryStocks from "@/pages/healthServices/archive/Inventory
 import MainInventory from "@/pages/healthInventory/inventoryStocks/tables/MainTable";
 
 export const healthinventory = [
-  { path: "/mainInventoryList", element: <MainInventoryList /> },
-  { path: "/main-inventory", element: <MainInventory /> },
+  { path: "/inventory/list", element: <MainInventoryList /> },
+  { path: "/inventory/stocks", element: <MainInventory /> },
   { path: "/main-inventory-stocks", element: <MainInventoryStocks /> },
   { path: "/transactionMainInventoryList", element: <TransactionMainInventoryList /> },
   { path: "/addImmunizationSupplies", element: <AddImmunizationSupplies /> },
 
   // STOCKS
-  { path: "/addMedicineStock", element: <AddMedicineStock /> },
-  { path: "/addFirstAidStock", element: <AddFirstAidStock /> },
-  { path: "/addCommodityStock", element: <AddCommodityStock /> },
-  { path: "/addVaccineStock", element: <AddVaccineStock /> },
-  { path: "/addImzSupplyStock", element: <AddImzSupplyStock /> },
+  { path: "/inventory/stocks/add-medicine", element: <AddMedicineStock /> },
+  { path: "/inventory/stocks/add-firstaid", element: <AddFirstAidStock /> },
+  { path: "/inventory/stocks/add-commodity", element: <AddCommodityStock /> },
+  { path: "/inventory/stocks/add-vaccine", element: <AddVaccineStock /> },
+  { path: "/inventory/stocks/add-immunization-supply", element: <AddImzSupplyStock /> },
 
   { path: "/archiveMainInventoryStocks", element: <ArchiveMainInventoryStocks /> }
 ];

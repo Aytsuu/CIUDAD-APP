@@ -144,7 +144,7 @@ export default function MedicalConsultationFlow() {
     <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
       <>
         <div className="flex justify-end mb-4">
-          <Link to="/invMedicalRecord" state={{ params: { patientData, mode: "doctor" } }}>
+          <Link to="/services/medical-consultation/records" state={{ params: { patientData, mode: "doctor" } }}>
             <Button className="flex gap-2 items-center text-white">
               <History className="w-4 h-4" /> View History
             </Button>

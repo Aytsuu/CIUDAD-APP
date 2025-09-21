@@ -51,8 +51,8 @@ urlpatterns = [
     path('submit-vaccination-records/', VaccinationSubmissionView.as_view(), name='vaccination-records-list'),
     path("vaccination-completion/",VaccinationCompletionAPIView.as_view(),name="vaccine-completion-create"),
     path('to-be-administered/<str:assigned_to>/', TobeAdministeredVaccinationView.as_view(), name='administered_vaccination'),
-
-    
+ 
+         
 
 
 ]

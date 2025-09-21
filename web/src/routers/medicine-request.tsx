@@ -23,7 +23,7 @@ export const medicineRequest = [
   },
 
   {
-    path: "/medicine-request-form",
+    path: "/services/medicine/form",
     element: <MedicineRequestForm />,
   },
   {

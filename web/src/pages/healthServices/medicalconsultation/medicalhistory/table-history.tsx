@@ -179,16 +179,51 @@ export function ConsultationHistoryTable({
                   .map((item) => item.trim())
                   .filter(Boolean)
               : [];
+            
+            // Group by keyword (part before colon)
+            const grouped: { [key: string]: string[] } = {};
+            
+            formattedValue.forEach((item) => {
+              const colonIndex = item.indexOf(':');
+              if (colonIndex > -1) {
+                const keyword = item.substring(0, colonIndex).trim();
+                const itemValue = item.substring(colonIndex + 1).trim();
+                if (!grouped[keyword]) {
+                  grouped[keyword] = [];
+                }
+                grouped[keyword].push(itemValue);
+              } else {
+                // If no colon, treat as standalone item
+                if (!grouped['Other']) {
+                  grouped['Other'] = [];
+                }
+                grouped['Other'].push(item);
+              }
+            });
+            
+            // Convert grouped object to array for display
+            const groupedArray = Object.entries(grouped).map(([keyword, values]) => ({
+              keyword,
+              content: keyword !== 'Other' ? values.join(', ') : values.join(', '),
+              hasKeyword: keyword !== 'Other'
+            }));
+            
             return (
-              <div className="text-justify pr-4">
-                {formattedValue.length > 0 ? (
+              <div className="text-start ">
+                {groupedArray.length > 0 ? (
                   <ul className="list-disc list-inside text-sm sm:text-base">
-                    {formattedValue.map((item, index) => (
+                    {groupedArray.map((item, index) => (
                       <li
                         key={index}
                         className="whitespace-normal break-words"
                       >
-                        {item}
+                        {item.hasKeyword ? (
+                          <>
+                            <strong>{item.keyword}:</strong> {item.content}
+                          </>
+                        ) : (
+                          item.content
+                        )}
                       </li>
                     ))}
                   </ul>

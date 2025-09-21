@@ -29,19 +29,6 @@ interface PatientLinkData {
   };
 }
 
-interface MedicalHistoryTabProps {
-  vaccinationCount: number | undefined;
-  medicineCount: number | undefined;
-  firstAidCount: number | undefined;
-  postpartumCount: number | undefined;
-  medicalconCount: number | undefined;
-  patientLinkData: PatientLinkData;
-  childHealthCount?: number | undefined;
-  childHealthRecords: any[];
-  prenatalCount: number | undefined;
-  childHistoryLoading?: boolean;
-}
-
 // Skeleton component for loading state
 const ChildHealthSkeleton = () => (
   <div className="p-4 rounded-lg border border-pink-200">
@@ -60,18 +47,7 @@ const ChildHealthSkeleton = () => (
   </div>
 );
 
-export default function Records({
-  vaccinationCount,
-  medicineCount,
-  firstAidCount,
-  postpartumCount,
-  medicalconCount,
-  patientLinkData,
-  childHealthCount,
-  childHealthRecords,
-  prenatalCount,
-  childHistoryLoading
-}: MedicalHistoryTabProps) {
+export default function Records({ vaccinationCount, medicineCount, firstAidCount, postpartumCount, medicalconCount, patientLinkData, childHealthCount, childHealthRecords, prenatalCount, childHistoryLoading, famplanCount, animalbitesCount }: any) {
   // Determine if there's at least one child health record to pass
   const firstChildHealthRecord = childHealthRecords.length > 0 ? childHealthRecords[0] : null;
 
@@ -83,7 +59,9 @@ export default function Records({
     (!postpartumCount || postpartumCount === 0) &&
     (!medicalconCount || medicalconCount === 0) &&
     (!childHealthCount || childHealthCount === 0) &&
-    (!prenatalCount || prenatalCount === 0);
+    (!prenatalCount || prenatalCount === 0) &&
+    (!famplanCount || famplanCount === 0) &&
+    (!animalbitesCount || animalbitesCount === 0);
 
   return (
     <Tabs defaultValue="medical">
@@ -116,7 +94,7 @@ export default function Records({
                             </div>
                           </div>
                         </div>
-                        <Link to="//services/vaccination/records" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                        <Link to="/services/vaccination/records" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
                           <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium">
                             View Details
                           </Button>
@@ -162,7 +140,7 @@ export default function Records({
                             </div>
                           </div>
                         </div>
-                        <Link to="/indiv-firstaid-records" state={{ params: { patientData: patientLinkData } }}>
+                        <Link to="/services/firstaid/records" state={{ params: { patientData: patientLinkData } }}>
                           <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
                             View Details
                           </Button>
@@ -185,7 +163,7 @@ export default function Records({
                             </div>
                           </div>
                         </div>
-                        <Link to="/invMedicalRecord" state={{ params: { patientData: patientLinkData } }}>
+                        <Link to="/services/medical-consultation/records" state={{ params: { patientData: patientLinkData } }}>
                           <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-green-300 text-green-700 font-medium">
                             View Details
                           </Button>
@@ -216,7 +194,53 @@ export default function Records({
                       </div>
                     </div>
                   )}
-                  
+
+                  {famplanCount !== 0 && (
+                    <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-yellow-200">
+                            <Baby className="w-5 h-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Family Planning</h3>
+                            <div className="flex items-center space-x-4 mt-1">
+                              <span className="text-sm text-gray-600 bg-yellow-200 px-2 py-1 rounded-md">{famplanCount !== undefined ? famplanCount : "0"} Records</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Link to="/fammilyplannifrouterari" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-yellow-300 text-yellow-700 font-medium">
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {animalbitesCount !== 0 && (
+                    <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-yellow-200">
+                            <Baby className="w-5 h-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Animal Bites</h3>
+                            <div className="flex items-center space-x-4 mt-1">
+                              <span className="text-sm text-gray-600 bg-yellow-200 px-2 py-1 rounded-md">{animalbitesCount !== undefined ? animalbitesCount : "0"} Records</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Link to="/animalbites" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                          <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-yellow-300 text-yellow-700 font-medium">
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Child Health Record with Skeleton Loading */}
                   {childHistoryLoading ? (
                     <ChildHealthSkeleton />
@@ -235,16 +259,8 @@ export default function Records({
                               </div>
                             </div>
                           </div>
-                          <Link
-                            to="/services/childhealthrecords/records"
-                            state={{ ChildHealthRecord: firstChildHealthRecord }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
-                              disabled={!firstChildHealthRecord}
-                            >
+                          <Link to="/services/childhealthrecords/records" state={{ ChildHealthRecord: firstChildHealthRecord }}>
+                            <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium" disabled={!firstChildHealthRecord}>
                               View Details
                             </Button>
                           </Link>
@@ -252,7 +268,7 @@ export default function Records({
                       </div>
                     )
                   )}
-                  
+
                   {prenatalCount !== 0 && (
                     <div className="p-4 rounded-lg border border-red-200 bg-red-100">
                       <div className="flex items-center justify-between">

@@ -111,7 +111,7 @@ export default function IndivMedicineRecords() {
             <div>
               <Button className="w-full sm:w-auto">
                 <Link
-                  to="/medicine-request-form"
+                  to="/services/medicine/form"
                   state={{
                     params: {
                       mode: "fromindivrecord",

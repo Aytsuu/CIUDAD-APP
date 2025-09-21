@@ -118,27 +118,27 @@ export const nonPhilHealthSchema = z.object({
   weight: weightSchema,
   vital_temp: temperatureSchema,
   medrec_chief_complaint: z.string().default(""),
-  doctor: z.string().min(1, "Doctor is required"),
   
   // PhilHealth membership status - changed to boolean for radio button
-  is_philhealthmember: z.boolean().optional().default(false),
   
   // Additional fields that show when PhilHealth member is selected
-  is_withatch: z.boolean().optional().default(false),
-  marital_status: z.string().optional().default("N/A"),
-  is_dependent: z.boolean().optional().default(false),
-  lmp: z.string().optional().default("N/A"),
-  obscore_g: z.string().optional().default("0"),
-  obscore_p: z.string().optional().default("0"),
-  tpal: z.string().optional().default("0-0-0-0"),
-  tt_status: z.string().optional().default("N/A"),
-  ogtt_result: z.string().optional().default("N/A"),
-  contraceptive_used: z.string().optional().default("N/A"),
-  smk_stickused_aday: z.string().optional().default("N/A"),
-  smk_yrs: z.string().optional().default("N/A"),
-  is_passive: z.boolean().optional().default(false),
-  alchl_bottleused_aday: z.string().optional().default("N/A"),
+  
   selectedDoctorStaffId: z.string().optional().default(""),
+  is_phrecord: z.boolean().optional().default(false),
+  phil_pin:z.number().optional(),
+  iswith_atc: z.boolean().optional().default(false),
+  dependent_or_member: z.string().optional().default(""),
+  lmp: z.string().optional().default(""),
+  obscore_g: z.string().optional().default(""),
+  obscore_p: z.string().optional().default(""),
+  tpal: z.string().optional().default(""),
+  tt_status: z.string().optional().default(""),
+  ogtt_result: z.string().optional().default(""),
+  contraceptive_used: z.string().optional().default(""),
+  smk_sticks_per_day: z.string().optional().default(""),
+  smk_years: z.string().optional().default(""),
+  is_passive_smoker: z.boolean().optional().default(false),
+  alcohol_bottles_per_day: z.string().optional().default(""),
 });
 
 export type nonPhilHealthType = z.infer<typeof nonPhilHealthSchema>;

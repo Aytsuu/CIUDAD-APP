@@ -45,7 +45,7 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
             'rp_id__per', 
             'trans_id'
         ).prefetch_related(
-            'rp_id__per__personaladdress_set__add__sitio',
+            'rp_id__per__personal_addresses__add__sitio',
             'patient_records__medical_consultation_record'
         ).distinct().order_by('-medicalrec_count')
         

@@ -14,6 +14,9 @@ from .views.disability_views import *
 from apps.administration.views.staff_views import HealthStaffListView
 
 urlpatterns = [
+    
+    
+    path("patient-resident-exist/<str:rp_id>/", PatientByRPView.as_view(), name="check-resident-exist"),
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),

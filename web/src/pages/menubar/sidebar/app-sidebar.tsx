@@ -188,13 +188,13 @@ const healthItems: BaseMenuItem[] = [
     url: "/",
     items: [
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Medical Consultation ", url: "/allMedRecords" },
+      { title: "Medical Consultation ", url: "/services/medical-consultation" },
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Maternal", url: "/maternalrecords" },
       { title: "Child Health", url: "/services/childhealthrecords" },
       { title: "Vaccination", url: "/services/vaccination" },
       { title: "Medicine", url: "/services/medicine" },
-      { title: "Firstaid", url: "/all-firstaid-records" },
+      { title: "Firstaid", url: "/services/firstaid" },
       { title: "Schedules", url: "/health-appointments" }
     ]
   },
@@ -203,12 +203,12 @@ const healthItems: BaseMenuItem[] = [
     title: "Inventory",
     url: "/",
     items: [
-      { title: "Inventory List", url: "/mainInventoryList" },
-      { title: "Inventory Stocks", url: "/main-inventory" }
+      { title: "Inventory List", url: "/inventory/list" },
+      { title: "Inventory Stocks", url: "/inventory/stocks" }
     ]
   },
   {
-    title: "Manage Request",
+    title: "Request",
     url: "/",
     items: [
       {
@@ -220,7 +220,7 @@ const healthItems: BaseMenuItem[] = [
   },
 
   { title: "Service Scheduler", url: "/health-services/scheduler" },
-  { title: "Reports", url: "/healthcare-reports" },
+  { title: "Reports", url: "/reports" },
   {
     title: "Manage",
     url: "/",

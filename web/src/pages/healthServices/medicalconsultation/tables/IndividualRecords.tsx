@@ -40,11 +40,14 @@ export default function InvMedicalConRecords() {
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
 
   const medicalRecords = useMemo(() => {
+    console.log("Medical Records Response:", medicalRecordsResponse);
+
     return medicalRecordsResponse?.results || medicalRecordsResponse || [];
   }, [medicalRecordsResponse]);
 
   const totalCount = medicalRecordsResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
 
   const getMedicalHistoryCardsData = useCallback(() => {
     if (isMedHistoryLoading) {
@@ -232,7 +235,7 @@ export default function InvMedicalConRecords() {
 
         {mode !== "doctor" && (
           <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>
-            <Link to="/medical-consultation-form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
+            <Link to="/services/medical-consultation/form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
               New Consultation Record
             </Link>
           </Button>

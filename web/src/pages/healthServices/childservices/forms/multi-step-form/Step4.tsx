@@ -24,7 +24,7 @@ import { LastPageProps } from "./types";
 import { isToday } from "@/helpers/isToday";
 import { useChildLatestVitals } from "../queries/fetchQueries";
 import { VitalSignFormCard, VitalSignsCardView } from "./vitalsisgns-card";
-import { fetchStaffWithPositions } from "@/pages/healthServices/Reports/firstaid-report/queries/fetchQueries";
+import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Combobox } from "@/components/ui/combobox";
 
 export default function LastPage({

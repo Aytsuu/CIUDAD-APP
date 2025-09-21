@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput, ChevronLeft, Users, Home, UserCheck, Loader2 } from "lucide-react";
+import { ArrowUpDown, Search, FileInput, Users, Home, UserCheck, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -234,7 +234,7 @@ export default function AllFirstAidRecords() {
         return (
           <ViewButton
             onClick={() => {
-              navigate("/indiv-firstaid-records", {
+              navigate("/services/firstaid/records", {
                 state: {
                   params: {
                     patientData
@@ -249,7 +249,7 @@ export default function AllFirstAidRecords() {
   ];
 
   return (
-   <MainLayoutComponent title="All First Aid Records" description="Manage and view first aid records" >
+   <MainLayoutComponent title="First Aid Records" description="Manage and view first aid records" >
      <div className="w-full h-full flex flex-col">
       
 

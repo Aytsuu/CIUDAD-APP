@@ -176,7 +176,7 @@ export default function InvChildHealthRecords() {
 
   const navigateToUpdateLatest = () => {
     if (latestRecord && childData) {
-      navigate("/services/childhealthrecords/records/form", {
+      navigate("/services/childhealthrecords/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,

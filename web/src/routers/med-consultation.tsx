@@ -9,21 +9,21 @@ export const medicalConsultation = [
  
  
   {
-    path: "/allMedRecords",
+    path: "/services/medical-consultation",
     element: <AllMedicalConsRecord />,
   },
   {
-    path: "/invMedicalRecord",
+    path: "/services/medical-consultation/records",
     element: <InvMedicalConRecords />,
   },
 
   
   {
-    path:"/DisplayMedicalConsultation",
+    path:"/services/medical-consultation/records/history",
     element: <DisplayMedicalConsultation/>
   },
   {
-    path: "/medical-consultation-form",
+    path: "/services/medical-consultation/form",
     element: <MedicalConsultationForm />,
   }
 

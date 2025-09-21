@@ -50,8 +50,8 @@ class ChildHealthRecordsView(generics.ListAPIView):
             'patrec__pat_id__rp_id__per',
             'patrec__pat_id__trans_id'
         ).prefetch_related(
-            'patrec__pat_id__rp_id__per__personaladdress_set',
-            'patrec__pat_id__rp_id__per__personaladdress_set__add',
+            'patrec__pat_id__rp_id__per__personaladdress',
+            'patrec__pat_id__rp_id__per__personaladdres__add',
             'child_health_histories'
         ).order_by('-created_at')
         
@@ -90,9 +90,9 @@ class ChildHealthRecordsView(generics.ListAPIView):
             Q(patrec__pat_id__rp_id__per__per_mname__icontains=search_term) |
             Q(family_no__icontains=search_term) |
             Q(ufc_no__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personaladdress_set__add__add_sitio__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personaladdress_set__add__add_street__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personaladdress_set__add__add_barangay__icontains=search_term)
+            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_sitio__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_street__icontains=search_term) |
+            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_barangay__icontains=search_term)
         )
     
     def _apply_status_filter(self, queryset, status):

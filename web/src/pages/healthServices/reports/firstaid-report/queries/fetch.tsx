@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getFirstAidChart, getStaffList } from "@/pages/healthServices/Reports/firstaid-report/restful-api/getAPI";
 import { toast } from "sonner";
-import { getFirstaidRecords, getFirstaidReports } from "@/pages/healthServices/Reports/firstaid-report/restful-api/getAPI";
+import { getStaffList,getFirstaidReports,getFirstaidRecords,getFirstAidChart } from "@/pages/healthServices/reports/firstaid-report/restful-api/getAPI";
+
 
 export const useFirstAidRecords = (page: number, pageSize: number, searchQuery: string, yearFilter: string) => {
   return useQuery({
