@@ -89,10 +89,18 @@ class PersonalModification(AbstractModels):
     pm_id = models.BigAutoField(primary_key=True)
     pm_lname = models.CharField(max_length=50, null=True)
     pm_fname = models.CharField(max_length=50, null=True)
+    pm_mname = models.CharField(max_length=50, null=True)
+    pm_suffix = models.CharField(max_length=50, null=True)
     pm_dob = models.DateField(null=True)
     pm_sex = models.CharField(max_length=50, null=True)
+    pm_status = models.CharField(max_length=50, null=True)
+    pm_edAttainment = models.CharField(max_length=50, null=True)
+    pm_religion = models.CharField(max_length=50, null=True)
+    pm_contact = models.CharField(max_length=50, null=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
 
+    class Meta:
+        db_table = 'personal_modification'
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
