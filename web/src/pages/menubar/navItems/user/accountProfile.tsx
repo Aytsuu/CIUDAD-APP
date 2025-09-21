@@ -77,7 +77,7 @@ export default function AccountProfile(): JSX.Element {
       />
       <div className="flex flex-col max-w-[180px]">
         <p className="font-medium truncate">
-          {`${user?.resident?.per?.per_fname} ${user?.resident?.per?.per_lname}`}
+          {`${user?.personal?.per_fname} ${user?.personal?.per_lname}`}
         </p>
         <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
       </div>
@@ -94,7 +94,7 @@ export default function AccountProfile(): JSX.Element {
             className="w-8 h-8 rounded-full"
           />
           <h2 className="hidden sm:block text-sm font-medium">
-            {`${user?.resident?.per?.per_fname} ${user?.resident?.per?.per_lname}`}
+            {`${user?.personal?.per_fname} ${user?.personal?.per_lname}`}
           </h2>
         </PopoverTrigger>
         <PopoverContent className="absolute right-0 top-2 p-0 w-64 z-50 bg-white rounded-md shadow-lg">
