@@ -3,9 +3,9 @@ from apps.account.models import Account
 from django.contrib.auth import authenticate
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileFullSerializer
 from apps.administration.serializers.staff_serializers import StaffAccountSerializer
-from apps.administration.serializers.assignment_serializers import AssignmentBaseSerializer
-from apps.administration.serializers.feature_serializers import FeatureBaseSerializer
-from apps.administration.models import Staff, Assignment, Feature, Position
+from apps.administration.models import Staff
+from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
+from apps.profiling.serializers.business_serializers import BusinessRespondentBaseSerializer
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer  
@@ -53,17 +53,9 @@ class UserAccountSerializer(serializers.ModelSerializer):
     def get_personal(self, obj):
         personal = None
         if obj.rp:
-            personal = {
-                'fname': obj.rp.per.per_fname,
-                'lname': obj.rp.per.per_lname,
-                'mname': obj.rp.per.per_mname
-            }
+            personal = PersonalBaseSerializer(obj.rp.per).data
         else:
-            personal = {
-                'fname': obj.br.br_fname,
-                'lname': obj.br.br_lname,
-                'mname': obj.br.br_mname
-            }
+            personal = BusinessRespondentBaseSerializer(obj.br).data
         return personal
         
 class AuthResponseSerializer(serializers.Serializer):
