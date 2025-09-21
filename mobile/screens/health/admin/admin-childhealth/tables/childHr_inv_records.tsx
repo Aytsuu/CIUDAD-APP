@@ -6,7 +6,7 @@ import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";

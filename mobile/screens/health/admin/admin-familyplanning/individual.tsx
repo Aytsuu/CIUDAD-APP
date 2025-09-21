@@ -18,7 +18,7 @@ import {
 } from "lucide-react-native";
 import { router, useRouter } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "/button";
 import { Badge } from "@/components/ui/badge";
 import { useRoute } from "@react-navigation/native";
 import PageLayout from "@/screens/_PageLayout";

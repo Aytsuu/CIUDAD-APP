@@ -16,7 +16,8 @@ import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } fro
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails, useFamilyDataHealth } from "./family-profling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
-import { useSubmitEnvironmentalForm, useSubmitSurveyIdentificationForm, useSubmitNCDRecord, useSubmitTBRecord } from "./family-profling/queries/profilingAddQueries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { submitEnvironmentalForm, submitSurveyIdentificationForm, createNCDRecord, createTBRecord } from "./family-profling/restful-api/profiingPostAPI";
 // These imports are currently unused but may be needed when implementing step 4
 import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
 import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
@@ -32,31 +33,67 @@ export default function HealthFamilyForm() {
   const navigate = useNavigate();
   const { data: householdsListHealth, isLoading: isLoadingHouseholds } = useHouseholdsListHealth();
   const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsListHealth(); 
-  const [currentStep, setCurrentStep] = React.useState<number>(4);
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
   // const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
   const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
   const [selectedRespondentId, setSelectedRespondentId] = React.useState<string>(""); 
-  const [famId, setFamId] = React.useState<string>("250918000010-R"); 
+  const [famId, setFamId] = React.useState<string>(""); 
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isValidating, setIsValidating] = React.useState<boolean>(false);
   
-  // State to track survey submission (no longer needed with integrated approach)
-  // const [surveySubmitted, setSurveySubmitted] = React.useState<boolean>(false);
   
   // Ref for survey form to access its data
   const surveyFormRef = React.useRef<SurveyIdentificationFormHandle>(null);
   
-  // Mutation hooks for data submission
-  const submitEnvironmentalMutation = useSubmitEnvironmentalForm();
-  const submitSurveyMutation = useSubmitSurveyIdentificationForm();
-  const submitNCDMutation = useSubmitNCDRecord();
-  const submitTBMutation = useSubmitTBRecord();
+  // Mutation hooks for data submission (custom versions without individual toasts)
+  const queryClient = useQueryClient();
+  
+  const submitEnvironmentalMutation = useMutation({
+    mutationFn: (payload: {
+      household_id: string;
+      water_supply?: { type: 'level1' | 'level2' | 'level3' };
+      sanitary_facility?: { facility_type: string; toilet_facility_type: string };
+      waste_management?: { waste_management_type: string; description?: string };
+    }) => submitEnvironmentalForm(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['environmentalData'] });
+      // No individual toast - will show consolidated toast at the end
+    }
+  });
+  
+  const submitSurveyMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => submitSurveyIdentificationForm(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["surveyIdentificationList"] });
+      queryClient.invalidateQueries({ queryKey: ["surveyIdentificationByFamily"] });
+      queryClient.invalidateQueries({ queryKey: ["surveyIdentificationFormData"] });
+      // No individual toast - will show consolidated toast at the end
+    },
+  });
+  
+  const submitNCDMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => createNCDRecord(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ncdRecordsList"] });
+      queryClient.invalidateQueries({ queryKey: ["ncdRecordsByFamily"] });
+      // No individual toast - will show consolidated toast at the end
+    },
+  });
+  
+  const submitTBMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => createTBRecord(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tbRecordsList"] });
+      queryClient.invalidateQueries({ queryKey: ["tbRecordsByFamily"] });
+      // No individual toast - will show consolidated toast at the end
+    },
+  });
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
     defaultValues: defaultValues.current,
@@ -430,7 +467,7 @@ export default function HealthFamilyForm() {
 
         console.log('Submitting environmental data:', environmentalPayload);
         await submitEnvironmentalMutation.mutateAsync(environmentalPayload);
-        toast.success("Environmental data submitted successfully!");
+        // Removed individual toast - will show consolidated toast at the end
       }
 
       // 2. Submit NCD Records (Step 4) - if any records exist
@@ -465,7 +502,7 @@ export default function HealthFamilyForm() {
             }
           }
         }
-        toast.success(`${formData.ncdRecords.list.length} NCD records submitted successfully!`);
+        // Removed individual toast - will show consolidated toast at the end
       }
 
       // 3. Submit TB Records (Step 4) - if any records exist
@@ -487,7 +524,7 @@ export default function HealthFamilyForm() {
             await submitTBMutation.mutateAsync(tbPayload);
           }
         }
-        toast.success(`${formData.tbRecords.list.length} TB surveillance records submitted successfully!`);
+        // Removed individual toast - will show consolidated toast at the end
       }
 
       // 4. Submit Survey Identification Form (Step 5)
@@ -508,7 +545,7 @@ export default function HealthFamilyForm() {
           
           console.log('Submitting survey data:', surveyPayload);
           await submitSurveyMutation.mutateAsync(surveyPayload);
-          toast.success("Survey identification submitted successfully!");
+          // Removed individual toast - will show consolidated toast at the end
         } else {
           console.log('Survey form is not valid');
           toast.warning("Please complete the survey identification form");
@@ -519,19 +556,32 @@ export default function HealthFamilyForm() {
       }
 
       // 5. Final success message and navigation
-      const allCompleted = 
-        (formData.environmentalForm && householdId) || 
-        (formData.ncdRecords?.list?.length > 0) || 
-        (formData.tbRecords?.list?.length > 0) || 
-        (surveyFormRef.current?.isFormValid());
-        
-      if (allCompleted) {
-        toast.success("Health family profiling data submitted successfully!");
+      const submissionSummary = [];
+      
+      if (formData.environmentalForm && householdId) {
+        submissionSummary.push("Environmental data");
+      }
+      
+      if (formData.ncdRecords?.list?.length > 0) {
+        submissionSummary.push(`${formData.ncdRecords.list.length} NCD record(s)`);
+      }
+      
+      if (formData.tbRecords?.list?.length > 0) {
+        submissionSummary.push(`${formData.tbRecords.list.length} TB surveillance record(s)`);
+      }
+      
+      if (surveyFormRef.current?.isFormValid()) {
+        submissionSummary.push("Survey identification");
+      }
+      
+      if (submissionSummary.length > 0) {
+        const summaryText = submissionSummary.join(", ");
+        toast.success(`Health family profiling completed successfully! Submitted: ${summaryText}`);
         console.log('Health Family Profiling completed successfully!');
         
         // Navigate back to family page after a short delay to show success message
         setTimeout(() => {
-          navigate("/family");
+          navigate("/profiling/family");
         }, 2000); // 2 second delay
       } else {
         toast.info("Please fill out the required forms before submitting");

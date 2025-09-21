@@ -23,7 +23,7 @@ import {
 } from 'lucide-react-native';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Text as UIText } from '@/components/ui/text';
 import { useChildHealthRecords } from '../forms/queries/fetchQueries';
 import { calculateAge } from '@/helpers/ageCalculator';
