@@ -27,7 +27,7 @@ const authSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
-        setOtpSent: (state, action: PayloadAction<{sent: boolean; email?: string}>) =>{
+        setOtpSent: (state, action: PayloadAction<{sent: boolean; email?: Record<string, any>}>) =>{
             state.otpSent = action.payload.sent;
             if(action.payload.email) {
                 state.email = action.payload.email;

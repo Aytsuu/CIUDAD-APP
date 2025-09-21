@@ -1,4 +1,4 @@
-import { useState } from "react"
+import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Button } from "@/components/ui/button/button"
@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus } from "lucide-react"
-import React from "react"
 import { useLocation, useNavigate } from "react-router"
 import { useGetARByDate } from "../queries/reportFetch"
 import { formatDate, getRangeOfDaysInWeek, lastDayOfTheWeek, monthNameToNumber } from "@/helpers/dateHelper"
@@ -35,8 +34,8 @@ export default function CreateMissingWeeks() {
   const { mutateAsync: addWAR } = useAddWAR();
   const { mutateAsync: addWARComp } = useAddWARComp();
   
-  const [selectedReports, setSelectedReports] = useState<string[]>([])
-  const [isCreating, setIsCreating] = useState(false)
+  const [selectedReports, setSelectedReports] = React.useState<string[]>([])
+  const [isCreating, setIsCreating] = React.useState(false)
 
   // Handle individual checkbox change
   const handleReportSelection = (reportId: string, checked: boolean) => {
