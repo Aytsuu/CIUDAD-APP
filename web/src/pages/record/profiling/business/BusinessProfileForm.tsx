@@ -29,7 +29,6 @@ export default function BusinessProfileForm({
   isModificationRequest,
   formattedResidents,
   formType,
-  sitio,
   form,
   isSubmitting,
   isReadOnly,
