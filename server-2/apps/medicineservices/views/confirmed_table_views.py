@@ -50,10 +50,10 @@ class MedicineRequestProcessingTableView(generics.ListCreateAPIView):
             'items__minv_id',  # Medicine inventory
             'items__minv_id__med_id',  # Medicine details
             'items__med',  # Alternative medicine reference
-            'pat_id__rp_id__per__personaladdress_set__add',  # Patient addresses
-            'pat_id__rp_id__per__personaladdress_set__add__sitio',  # Patient sitios
-            'rp_id__per__personaladdress_set__add',  # Physician addresses
-            'rp_id__per__personaladdress_set__add__sitio',  # Physician sitios
+            'pat_id__rp_id__per__personal_addresses__add',  # Patient addresses
+            'pat_id__rp_id__per__personal_addresses__add__sitio',  # Patient sitios
+            'rp_id__per__personal_addresses__add',  # Physician addresses
+            'rp_id__per__personal_addresses__add__sitio',  # Physician sitios
         ).order_by('-requested_at')
         
         # Apply search filter if provided

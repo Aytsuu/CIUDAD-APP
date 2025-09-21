@@ -337,7 +337,6 @@ class CreateChildServiceMedicineRecordView(generics.CreateAPIView):
             raise Exception(f"Medicine record with ID {medrec_id} not found")
             
 
-
 class CreateMedicineRequestAllocationAPIView(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -347,16 +346,32 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             staff_id = request.data.get('staff_id')
             mode = request.data.get('mode', 'app')  # Default to 'app' if not provided
             signature = request.data.get('signature', '')
+            pat_id_str = request.data.get('pat_id')  # This is the patient ID string
+            
+            print(f"Received pat_id: {pat_id_str}")
+            
             if not medreq_id:
                 return Response({"error": "Medicine Request ID is required"}, status=status.HTTP_400_BAD_REQUEST)
             
             if not selected_medicines or not isinstance(selected_medicines, list):
                 return Response({"error": "Selected medicines list is required"}, status=status.HTTP_400_BAD_REQUEST)
             
+            if not pat_id_str:
+                return Response({"error": "Patient ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
             try:
                 medicine_request = MedicineRequest.objects.get(medreq_id=medreq_id)
             except MedicineRequest.DoesNotExist:
                 return Response({"error": "Medicine Request not found"}, status=status.HTTP_404_NOT_FOUND) 
+            
+            # Get Patient instance using the patient ID string
+            try:
+                patient_instance = Patient.objects.get(pat_id=pat_id_str)
+                print(f"Patient found: {patient_instance}")
+            except Patient.DoesNotExist:
+                return Response({
+                    "error": f"Patient with ID {pat_id_str} not found"
+                }, status=status.HTTP_404_NOT_FOUND)
             
             # Get Staff instance if staff_id is provided
             staff_instance = None
@@ -368,6 +383,19 @@ class CreateMedicineRequestAllocationAPIView(APIView):
             
             medicine_records = []
             medicine_transactions = []
+            patient_record = None  # Initialize outside the loop
+            
+            # Create patient record once (outside the medicine loop)
+            try:
+                patient_record = PatientRecord.objects.create(
+                    pat_id=patient_instance,  # Use the Patient instance, not the string
+                    patrec_type="Medicine Record",
+                )
+                print(f"Patient record created: {patient_record.patrec_id}")
+            except Exception as e:
+                return Response({
+                    "error": f"Failed to create patient record: {str(e)}"
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Process each selected medicine
             for medicine in selected_medicines:
@@ -389,36 +417,34 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                             "error": f"Insufficient stock for {medicine_inventory.med_id.med_name}. Available: {medicine_inventory.minv_qty_avail}, Requested: {medrec_qty}"
                         }, status=status.HTTP_400_BAD_REQUEST)
                     
-                    request_item = None
-                    request_item = MedicineRequestItem.objects.get(
+                    # Get and update request item
+                    try:
+                        request_item = MedicineRequestItem.objects.get(
                             medreqitem_id=medreqitem_id,
                             medreq_id=medicine_request
                         )
-                    request_item.status = 'completed'
-                    request_item.save()
+                        request_item.status = 'completed'
+                        request_item.save()
+                    except MedicineRequestItem.DoesNotExist:
+                        return Response({
+                            "error": f"Medicine request item with ID {medreqitem_id} not found"
+                        }, status=status.HTTP_404_NOT_FOUND)
                 
-                 
+                    # Create medicine allocation for app mode
                     if mode == 'app':
                         MedicineAllocation.objects.create(
                             medreqitem=request_item,
                             minv=medicine_inventory,
                             allocated_qty=medrec_qty
                         )
-                        
                     
-                    # Create patient record for walk-in mode (only once)
-                    patient_record = PatientRecord.objects.create(
-                            pat_id=medicine_request.pat_id,
-                            patrec_type="Medicine Record",
-                        )
-                  
-                    # Create medicine record
+                    # Create medicine record (use the patient_record created above)
                     medicine_record = MedicineRecord.objects.create(
                         medrec_qty=medrec_qty,
                         reason=reason,
                         requested_at=medicine_request.requested_at if hasattr(medicine_request, 'requested_at') else request.data.get('requested_at', timezone.now()),
                         fulfilled_at=timezone.now(),
-                        patrec_id=patient_record,
+                        patrec_id=patient_record,  # Use the PatientRecord instance
                         staff=staff_instance,
                         medreq_id=medicine_request,
                         minv_id=medicine_inventory,
@@ -442,6 +468,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                     )
                     medicine_transactions.append(medicine_transaction)
                     
+                    # Update inventory based on mode
                     if mode == 'walk-in':
                         medicine_inventory.minv_qty_avail -= medrec_qty
                         medicine_inventory.temporary_deduction -= medrec_qty
@@ -449,15 +476,18 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                     else:
                         medicine_inventory.minv_qty_avail -= medrec_qty
                         medicine_inventory.save()
-
                     
                 except MedicineInventory.DoesNotExist:
                     return Response({
                         "error": f"Medicine inventory with ID {minv_id} not found"
                     }, status=status.HTTP_404_NOT_FOUND)
+                except Exception as e:
+                    return Response({
+                        "error": f"Error processing medicine {minv_id}: {str(e)}"
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                         
+            # Update medicine request status
             medicine_request.status = 'completed'
-           
             medicine_request.save()
             
             response_data = {
@@ -466,25 +496,22 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                 "medreq_id": medreq_id,
                 "mode": mode,
                 "medicine_records_created": len(medicine_records),
-                "medicine_transactions_created": len(medicine_transactions)
+                "medicine_transactions_created": len(medicine_transactions),
+                "pat_id": pat_id_str,
+                "patrec_id": patient_record.patrec_id if patient_record else None
             }
-            
-            # Add patient record ID if created
-            if patient_record:
-                response_data["patrec_id"] = patient_record.patrec_id
             
             return Response(response_data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
+            print(f"Unexpected error: {str(e)}")
             return Response({
                 "error": f"An error occurred: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
             
     
 #=========== MEDICINE REQUEST WEB PROCESSING --REQ THROUGH DOCTORS END =========
-class CreateMedicineRequestProcessingView(generics.ListCreateAPIView):
+class CreateMedicineRequestProcessingView(generics.ListCreateAPIView): 
     serializer_class = MedicineRequestSerializer
     
     @transaction.atomic
