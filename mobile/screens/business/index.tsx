@@ -30,9 +30,8 @@ export default () => {
   const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">('success');
   const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests();
   const { data: ownedBusinesses, isLoading: isLoadingBusinesses, refetch } = useOwnedBusinesses({
-    br: 5
+    ...(user?.rp ? { rp: user?.rp } : { br: user?.br })
   })
-
 
   const businessList = ownedBusinesses?.results || []
   const hasBusinesses = (ownedBusinesses?.count || 0) > 0
@@ -56,7 +55,7 @@ export default () => {
   }, [searchInputVal]);
 
   const handleBusinessPress = (business: Record<string, any>) => {
-    if(business.bus_status === 'Pending'){
+    if(business.bus_status === 'PENDING'){
       setStatus('waiting');
       setShowFeedback(true);
     }
@@ -134,7 +133,7 @@ export default () => {
           business: JSON.stringify(business)
         }
       })}
-      className="bg-white p-5 border-b border-gray-100"
+      className="bg-white p-6 border-b border-gray-100"
     >
       <View className="flex-1 justify-between">
         <View className="flex-row items-center mb-2">
@@ -155,7 +154,7 @@ export default () => {
             <Text className="text-sm text-gray-600">Gross Sales: ₱ {business.bus_gross_sales?.toLocaleString() || '0'}</Text>
             <View className="flex-row items-center gap-1">
               <MapPin size={16} className="text-gray-500"/>
-              <Text className="text-sm text-gray-600">{business.bus_street}, Sitio {business.sitio}</Text>
+              <Text className="text-sm text-gray-600">{business.bus_location}</Text>
             </View>
           </View>
           <ChevronRight size={20} className="text-gray-500"/>
@@ -227,12 +226,12 @@ export default () => {
       </Text>}
       rightAction={
         hasBusinesses && !isLoadingBusinesses && !selectedBusiness ? (
-          <View>
+          <View className="flex-row gap-3">
             <TouchableOpacity
               onPress={handleAddBusiness}
-              className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
             >
-              <Plus size={24} className="text-white" />
+              <Plus size={24} className="text-primaryBlue" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowSearch(!showSearch)}

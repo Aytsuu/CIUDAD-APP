@@ -152,14 +152,10 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const populateFields = React.useCallback(() => {
     if (!businessInfo) return
 
-    // If respondent is a resident
-    // const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
-
     const fields = [
       { key: "bus_name", value: businessInfo.bus_name },
       { key: "bus_gross_sales", value: String(businessInfo.bus_gross_sales) },
-      { key: "bus_street", value: businessInfo.bus_street },
-      { key: "sitio", value: businessInfo.sitio },
+      { key: "bus_location", value: businessInfo.bus_location },
     ]
 
     fields.forEach(({ key, value }) => {
