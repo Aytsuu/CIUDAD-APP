@@ -1,5 +1,27 @@
+import { useQuery} from "@tanstack/react-query";
+import { getPatientByResidentId } from "../animalbites/api/get-api";
+import { getFPRecordsByPatientId } from "./get-api";
 import { useState, useEffect } from "react"
 import { api2 } from "@/api/api"
+
+export const usePatientByResidentId = (rp_id: string, options = {}) => {
+  return useQuery({
+    queryKey: ['patientByResident', rp_id],
+    queryFn: () => getPatientByResidentId(rp_id),
+    enabled: !!rp_id, 
+    ...options
+  });
+};
+
+export const useFPRecordsByPatientId = (pat_id: string | null, options = {}) => {
+  return useQuery({
+    queryKey: ["fpRecordsByPatient", pat_id],
+    queryFn: () => getFPRecordsByPatientId(pat_id!),
+    enabled: !!pat_id, 
+    ...options,
+  });
+};
+
 
 interface CommodityItem {
   id: number

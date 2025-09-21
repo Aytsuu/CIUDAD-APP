@@ -1,10 +1,18 @@
 import { api2 } from "@/api/api"
 
+// interfaces
+export interface PatientFilters {
+  page?: number;
+	page_size?: number;
+	status?: string;
+	search?: string;
+}
+
 // fetch residents
 export const getResident = async () => {
 	 try {
-		  const res = await api2.get("/patientrecords/residents-available/")
-		  return res.data || [];
+		const res = await api2.get("/patientrecords/residents-available/")
+		return res.data || [];
 	 } catch (error) {
 		  console.error("Error fetching residents:", error);
         
@@ -18,13 +26,23 @@ export const getResident = async () => {
 
 
 // fetch patients
-export const getPatients = async () => {
+export const getPatients = async (filters: PatientFilters = {}) => {
     try {
-        const res = await api2.get("patientrecords/patient/");
-        return res.data || []; 
+		const params = new URLSearchParams();
+
+		if(filters.page) params.append('page', filters.page.toString());
+		if(filters.page_size) params.append('page_size', filters.page_size.toString());
+		if(filters.status && filters.status !== 'All') params.append('status', filters.status);
+		if(filters.search) params.append('search', filters.search);
+
+		const queryString = params.toString();
+		const url = queryString ? `/patientrecords/patient/view/create/?${queryString}` : "/patientrecords/patient/view/create/"
+
+        const res = await api2.get(url);
+        return res.data || {count: 0, next: null, previous: null, results: []}; 
     } catch (error) {
         console.error("Network Error:", error);
-        return []; 
+        return {count: 0, next: null, previous: null, results: []}; 
     }
 };
 
@@ -69,7 +87,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
 
 	const queryString = params.toString();
 	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}/` 
+		? `patientrecords/follow-up-visits-all/?${queryString}` 
 		: "patientrecords/follow-up-visits-all/";
 
     const res = await api2.get(url)

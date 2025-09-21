@@ -13,7 +13,7 @@ import PageLayout from "@/screens/_PageLayout";
 // Define FPRecord type
 interface FPRecord {
   fprecord: number;
-  patient_id: string;
+  // patient_id: string;
   client_id: string;
   patient_name: string;
   patient_age: number;
@@ -22,7 +22,7 @@ interface FPRecord {
   created_at: string;
 }
 
-const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }) => (
+const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: any; label: string; value: string; iconColor?: string }) => (
   <View className="flex-row items-center py-2">
     <View className="w-5 h-5 mr-3">
       <Icon size={16} color={iconColor} />

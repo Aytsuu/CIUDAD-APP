@@ -3,8 +3,8 @@ import { View, Text, Image, TouchableOpacity, ScrollView,StatusBar, ActivityIndi
 import { FontAwesome } from "@expo/vector-icons"
 import { ArrowLeft, Package, AlertCircle } from "lucide-react-native"
 import { router } from "expo-router"
-import { useCommodities } from "./useInventory"
 import { LoadingState } from "@/components/ui/loading-state"
+import { useCommodities } from "./get-query"
 
 
 export default function FamilyPlanning() {

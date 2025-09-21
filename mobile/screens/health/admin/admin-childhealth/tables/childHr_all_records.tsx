@@ -174,7 +174,7 @@ const ChildHealthCard: React.FC<{
 
 export default function AllChildHealthRecords() {
   const router = useRouter();
-  const { data: childHealthRecords, isLoading, isFetching, refetch, error } = useChildHealthRecords();
+  const { data: childHealthRecords, isLoading, refetch, error } = useChildHealthRecords();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);

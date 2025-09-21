@@ -34,8 +34,10 @@ type TabType = "pending" | "cancelled" | "ready_for_pickup" | "completed";
 
 // API Functions
 const fetchUserAllMedicineItems = async (userId: string, isResident: boolean = true): Promise<MedicineRequestItem[]> => {
+
   const param = isResident ? `rp_id=${userId}&include_archived=true` : `pat_id=${userId}&include_archived=true`;
   const endpoint = isResident ? '/medicine/user-all-items/' : '/medicine/user-pending-items/';
+  
   const response = await api2.get(`${endpoint}?${param}`);
   const results = response.data.results || [];
   console.log('API Response (All Items):', results); // Debug: Check all statuses

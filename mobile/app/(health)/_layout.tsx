@@ -48,8 +48,9 @@ export default () => {
                 <Stack.Screen name="family-planning/fp-dashboard" options={{headerShown:false}}/>
                 <Stack.Screen name="family-planning/fp-details" options={{headerShown:false}}/>
                 <Stack.Screen name="my-schedules/my-schedules" options={{headerShown:false}}/>
-            
-            
+                <Stack.Screen name="family-planning/fp-record" options={{headerShown:false}}/>
+                
+
                 <Stack.Screen name="medicine-request/request-details" options={{headerShown: false}}/>
                 <Stack.Screen name="medicine-request/admin-request" options={{headerShown: false}}/>
                 <Stack.Screen name="animalbite/my-records" options={{headerShown: false}}/>

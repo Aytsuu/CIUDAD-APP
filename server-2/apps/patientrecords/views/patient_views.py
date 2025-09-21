@@ -14,6 +14,7 @@ from apps.healthProfiling.serializers.resident_profile_serializers import Reside
 from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer, TransientAddressSerializer
 from ..models import *
 from ..serializers.followvisits_serializers import *
+from ...pagination import StandardResultsPagination
 
 
 @api_view(['GET'])
@@ -34,6 +35,7 @@ class TransientAddressView(generics.ListAPIView):
 
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
+    pagination_class = StandardResultsPagination
     queryset = Patient.objects.all()
 
     def create(self, request, *args, **kwargs):
@@ -108,6 +110,10 @@ class PatientView(generics.ListCreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     
+                philhealth_id = transient_data.get('philhealth_id', '')
+                if philhealth_id is None:
+                    philhealth_id = ''
+
                 try:    
                     dob_str = transient_data['tran_dob']
                     if isinstance(dob_str, str):
@@ -197,6 +203,7 @@ class PatientView(generics.ListCreateAPIView):
                             ('tran_status', transient_data['tran_status']),
                             ('tran_ed_attainment', transient_data['tran_ed_attainment']),
                             ('tran_religion', transient_data['tran_religion']),
+                            ('philhealth_id', transient_data.get('philhealth_id', '')),
                         ]
 
                         has_changes = False
@@ -255,6 +262,7 @@ class PatientView(generics.ListCreateAPIView):
                         tran_ed_attainment=transient_data['tran_ed_attainment'],
                         tran_religion=transient_data['tran_religion'],
                         tran_contact=transient_data['tran_contact'],
+                        philhealth_id=philhealth_id,
                         tradd_id=transient_address
                     )
                 
@@ -262,9 +270,6 @@ class PatientView(generics.ListCreateAPIView):
                     try:
                         patient = Patient.objects.get(trans_id=transient)
                         print(f'Found existing patient: {patient.pat_id} for transient: {trans_id}')
-                        # if patient.pat_status != "Active":
-                        #     patient.pat_status = "Active"
-                        #     patient.save()
                     
                     except Patient.DoesNotExist:
                         patient_data = {
@@ -299,7 +304,7 @@ class PatientView(generics.ListCreateAPIView):
             )
 
     def get_queryset(self):
-        return Patient.objects.select_related(
+        queryset = Patient.objects.select_related(
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
@@ -308,6 +313,38 @@ class PatientView(generics.ListCreateAPIView):
             ),
             'rp_id__household_set',
         ).filter(pat_status='Active')
+
+        params = self.request.query_params
+        status = params.get('status')
+        search = params.get('search')
+
+        from django.db.models import Q
+        filters = Q()
+
+        if status and status.lower() not in ["all", ""]:
+            filters &= Q(pat_type=status)
+
+        if search:
+            search = search.strip()
+            if search:
+                search_filters = Q()
+                search_filters |= (
+                    Q(rp_id__per__per_fname__icontains=search) |
+                    Q(rp_id__per__per_mname__icontains=search) |
+                    Q(rp_id__per__per_lname__icontains=search)
+                )
+                search_filters |= (
+                    Q(trans_id__tran_fname__icontains=search) |
+                    Q(trans_id__tran_lname__icontains=search) |
+                    Q(trans_id__tran_mname__icontains=search)
+                )
+                filters &= search_filters
+
+        if filters:
+            queryset = queryset.filter(filters)
+
+        return queryset
+    
 
 class PatientDetailView(generics.RetrieveAPIView):
     serializer_class = PatientSerializer
@@ -330,6 +367,41 @@ class PatientDetailView(generics.RetrieveAPIView):
             return super().get_object()
         except Patient.DoesNotExist:
             raise Http404("Patient not found")
+
+class PatientUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
+    lookup_field = 'pat_id'
+
+    def patch(self, request, *args, **kwargs):
+        try: 
+            patient = self.get_object()
+
+            if patient.pat_type == 'Transient' and patient.trans_id:
+                transient_data = request.data.get('transient_data', {})
+                transient = patient.trans_id
+
+                update_fields = {
+                    'tran_lname': transient_data.get('tran_lname'),
+                    'tran_fname': transient_data.get('tran_fname'),
+                    'tran_mname': transient_data.get('tran_mname'),
+                    'tran_suffix': transient_data.get('tran_suffix'),
+                    'tran_dob': transient_data.get('tran_dob'),
+                    'tran_sex': transient_data.get('tran_sex'),
+                    'tran_contact': transient_data.get('tran_contact'),
+                    'philhealth_id': transient_data.get('philhealth_id', ''),
+                }
+
+                for field, value in update_fields.items():
+                    setattr(transient, field, value)
+        
+        except Exception as e:
+            print(f"Error updating transient patient: {str(e)}")
+            return Response(
+                {'error': f'Failed to update transient patient: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer
