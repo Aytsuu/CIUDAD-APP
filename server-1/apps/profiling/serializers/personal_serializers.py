@@ -210,4 +210,8 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
                 ).delete()
         
         return instance
-    
+
+class PersonalModificationBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersonalModification
+        fields = '__all__'

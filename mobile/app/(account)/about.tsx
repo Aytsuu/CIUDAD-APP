@@ -1,4 +1,5 @@
-import About from "@/screens/account/About";
+import About from "@/screens/account/About"
+
 
 export default () => {
   return <About />
