@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from "react-native"
+import { View, Text, Image, TouchableOpacity, ScrollView,StatusBar, ActivityIndicator, RefreshControl } from "react-native"
 import { FontAwesome } from "@expo/vector-icons"
 import { ArrowLeft, Package, AlertCircle } from "lucide-react-native"
 import { router } from "expo-router"
@@ -21,6 +21,8 @@ if (isLoading) {
 
   return (
     <ScrollView className="bg-white" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      
+            <StatusBar barStyle="light-content" backgroundColor="transparent" />
       <View>
         <Image
           source={require("@/assets/images/Health/Home/family.jpg")}
@@ -31,7 +33,7 @@ if (isLoading) {
 
         <TouchableOpacity
           onPress={() => router.back()}
-          className="absolute top-12 left-4 bg-white/20 p-2 rounded-full z-10"
+          className="absolute top-12 left-4 p-2 z-10"
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>

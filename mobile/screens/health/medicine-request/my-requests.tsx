@@ -1,30 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-  Modal,
-  TextInput,
-  FlatList,
-} from 'react-native';
+import { View,Text,TouchableOpacity,RefreshControl,Alert,Modal,TextInput,FlatList} from 'react-native';
 import { router } from 'expo-router';
-import {
-  ChevronLeft,
-  XCircle,
-  Package,
-  RefreshCw,
-  Trash2,
-  Search,
-  Pill,
-  Calendar,
-  Clock,
-  FileText,
-  AlertCircle,
-} from 'lucide-react-native';
+import { ChevronLeft,XCircle,Package,RefreshCw,Trash2,Search,Pill,Calendar,FileText,AlertCircle, } from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
@@ -313,12 +290,13 @@ const CancelModal: React.FC<{
   isPending: boolean;
 }> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending }) => {
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent>
       <View className="flex-1 justify-center items-center bg-black/50 p-4">
         <View className="bg-white rounded-lg w-full max-w-md p-6">
           <Text className="text-lg font-semibold text-gray-900 mb-2">Cancel Request</Text>
           <Text className="text-sm text-gray-600 mb-4">
-            Are you sure you want to cancel "{item?.med_details?.med_name}"? Provide a reason:
+            Are you sure you want to cancel? 
+            <Text className="font-bold text-red-700"> This cannot be undone.</Text>
           </Text>
           <TextInput
             value={cancellationReason}

@@ -7,7 +7,7 @@ import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
 import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
-import { getPatientRecordsByPatId } from "./api/get-api"
+import { getPatientByResidentId, getPatientRecordsByPatId } from "./api/get-api"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"
@@ -37,21 +37,30 @@ type PatientRecordDetail = {
 }
 
 export default function MyAnimalBiteRecordsScreen() {
-  const { user } = useAuth()
-  const rp_id = user?.resident?.rp_id
-  const queryClient = useQueryClient()
-
-  const { 
-    data: records = [], 
-    isLoading, 
-    isError, 
-    error, 
-    refetch, 
-  } = useQuery<PatientRecordDetail[],Error>({
-    queryKey: ["myAnimalbiteRecord", rp_id],
-    queryFn: () => getPatientRecordsByPatId(rp_id),
+  const { user } = useAuth();
+  const rp_id = user?.resident?.rp_id;
+  
+  // First, get the patient details using the resident ID
+  const { data: patientData } = useQuery({
+    queryKey: ["patientByResidentId", rp_id],
+    queryFn: () => getPatientByResidentId(rp_id),
     enabled: !!rp_id,
-  })
+  });
+
+  // Then, use the patient ID from the first query to fetch records
+  const patient_id = patientData?.pat_id;
+
+  const {
+    data: records = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<PatientRecordDetail[], Error>({
+    queryKey: ["myAnimalbiteRecord", patient_id],
+    queryFn: () => getPatientRecordsByPatId(patient_id),
+    enabled: !!patient_id, // This query will only run once patient_id is available
+  });
 
   const [refreshing, setRefreshing] = React.useState(false)
 

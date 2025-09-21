@@ -20,7 +20,7 @@ class SignUpEmailOTPView(APIView):
         otp = generate_otp()
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         
-        send_email(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
+        send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
         
         return Response({'message': 'OTP sent to email'}, status=status.HTTP_200_OK)                 
             
@@ -38,7 +38,6 @@ class LogInEmailOTPView(APIView):
 
         return Response({'error': "Email do not exist. Signup to access the Barangay CIUDAD's services"}, status=status.HTTP_400_BAD_REQUEST)
         
-        
 class ValidateEmailOTPView(APIView):
     permission_classes = [AllowAny]
     
@@ -50,8 +49,3 @@ class ValidateEmailOTPView(APIView):
             return Response({'message': 'OTP is valid'}, status=status.HTTP_200_OK)
         
         return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-    
-
-        
-            
-        

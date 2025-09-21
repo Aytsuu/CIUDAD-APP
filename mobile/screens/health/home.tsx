@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button/button";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, ArrowLeft } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 import NotificationBadge from "./my-schedules/notifbadge";
@@ -65,6 +65,7 @@ const Homepage = () => {
       {/* Original Header */}
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
+           
           <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
           <Text className="text-white text-base mt-1">How can we help you today?</Text>
         </View>

@@ -11,6 +11,7 @@ from .views.medicalhistory_views import *
 from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
+from .views.mobile_views import *
 from apps.administration.views.staff_views import HealthStaffListView
 
 urlpatterns = [
@@ -72,6 +73,9 @@ urlpatterns = [
     # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
-
+    
+    # Mobile url
+    path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
+    path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
 ]
 

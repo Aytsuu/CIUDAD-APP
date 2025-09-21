@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { getResident, getPatients, getPatientDetails, AppointmentFilters, getAllFollowUpVisits, getAllTransientAddresses, checkPatientExistsGet, getChildData } from "./get";
+import { getResident, getPatients, getPatientDetails, AppointmentFilters, getAllFollowUpVisits, getAllTransientAddresses, checkPatientExistsGet, getChildData, getAppointmentsByResidentId } from "./get";
 export const useChildData = (id: any,) => {
 	return useQuery({
 		queryKey: ['childData', id],
@@ -79,6 +79,23 @@ export const useAllFollowUpVisits = (filters: AppointmentFilters, options = {}) 
   })
 }
 
+export const appointmentQueryKey = {
+  allAppointments: ["appointments"],
+  byResidentId: (rp_id: string) => [...appointmentQueryKey.allAppointments, "byResident", rp_id]
+};
+
+
+export const useAppointmentsByResidentId = (rp_id: string, options = {}) => {
+  return useQuery({
+    queryKey: appointmentQueryKey.byResidentId(rp_id),
+    queryFn: () => getAppointmentsByResidentId(rp_id),
+    enabled: !!rp_id, // This ensures the query only runs when the rp_id is available
+    staleTime: 60 * 2,
+    retry: 3,
+    placeholderData: keepPreviousData,
+    ...options,
+  });
+};
 
 // transient address query keys
 export const transientAddressQueryKey = {
