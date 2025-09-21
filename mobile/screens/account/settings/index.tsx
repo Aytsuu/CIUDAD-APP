@@ -1,5 +1,4 @@
 import { TouchableOpacity, View, Text } from "react-native";
-import PageLayout from "../_PageLayout";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { router } from "expo-router";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
@@ -7,8 +6,9 @@ import UserLock from '@/assets/icons/essentials/user-lock.svg'
 import Phone from '@/assets/icons/essentials/phone.svg'
 import Mail from '@/assets/icons/essentials/mail.svg'
 import SecurityLock from '@/assets/icons/essentials/security-lock.svg'
+import PageLayout from "@/screens/_PageLayout";
 
-export default function Settings() {
+export default () => {
   return (
     <PageLayout
       leftAction={
@@ -26,7 +26,7 @@ export default function Settings() {
         <TouchableOpacity
           className="flex-row items-center justify-between py-3"
           activeOpacity={1}
-          
+          onPress={() => router.push("/(account)/settings/personal")}
         >
           <View className="flex-row items-center gap-2">
             <UserLock width={35} height={20}/>

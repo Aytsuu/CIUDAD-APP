@@ -48,21 +48,11 @@ export const FaceRecognition = React.forwardRef<FaceRecognitionCamHandle, FaceRe
             })
 
             try {
-              const values = type == "individual" ? 
-                          getValues('personalInfoSchema') : 
-                          getValues('businessRespondent') as any
+              const values = type == "business" ? 
+                        getValues('businessRespondent') : 
+                        getValues('personalInfoSchema') as any
   
               switch(type) {
-                case 'individual':
-                  const residentMatchFace = await postFaceData({
-                    lname: values.per_lname.toUpperCase().trim(),
-                    fname: values.per_fname.toUpperCase().trim(),
-                    ...(values.per_mname != "" && {mname: values.per_mname?.toUpperCase().trim()}),
-                    dob: values.per_dob,
-                    image: `data:image/jpeg;base64,${base64Data}`
-                  });
-  
-                  return residentMatchFace
                 case 'business':
                   const busRespondentMatchFace = await postFaceData({
                     lname: values.br_lname.toUpperCase().trim(),
@@ -73,6 +63,16 @@ export const FaceRecognition = React.forwardRef<FaceRecognitionCamHandle, FaceRe
                   });
   
                   return busRespondentMatchFace
+                default:
+                  const residentMatchFace = await postFaceData({
+                    lname: values.per_lname.toUpperCase().trim(),
+                    fname: values.per_fname.toUpperCase().trim(),
+                    ...(values.per_mname != "" && {mname: values.per_mname?.toUpperCase().trim()}),
+                    dob: values.per_dob,
+                    image: `data:image/jpeg;base64,${base64Data}`
+                  });
+  
+                  return residentMatchFace
               }
               
             } catch (err) {

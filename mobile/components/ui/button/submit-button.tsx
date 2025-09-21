@@ -10,7 +10,7 @@ export const SubmitButton = ({
 } : {
   submittingLabel?: string
   buttonLabel?: string
-  isSubmitting: boolean
+  isSubmitting?: boolean
   handleSubmit: () => void
 }) => {
   return (

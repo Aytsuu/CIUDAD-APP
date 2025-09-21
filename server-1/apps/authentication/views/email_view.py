@@ -15,7 +15,7 @@ class emailOTPView(APIView):
     def post(self, request):
         email = request.data.get('email')
         auth_type = request.data.get('type')
-        print(email)
+        print(request.data)
         if auth_type == 'signin':
             if not Account.objects.filter(email=email).exists():
                 raise serializers.ValidationError({"email" : "Email is not registered."})

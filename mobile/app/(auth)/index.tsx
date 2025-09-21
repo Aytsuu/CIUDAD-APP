@@ -1,3 +1,4 @@
+import Personal from "@/screens/account/settings/personal";
 import App from "@/screens/auth/login";
 
 // Makes the Error Overlay dissapear
