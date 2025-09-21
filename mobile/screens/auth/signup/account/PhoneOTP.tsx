@@ -1,22 +1,14 @@
 import { useToastContext } from "@/components/ui/toast";
-import PageLayout from "@/screens/_PageLayout";
 import React from "react";
 import {
-  ScrollView,
   View,
   Text,
   TouchableOpacity,
-  TextInput,
 } from "react-native";
 import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Button } from "@/components/ui/button";
 import { useSendOTP } from "../../queries/authPostQueries";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { router } from "expo-router";
-import { X } from "@/lib/icons/X";
 import { SubmitButton } from "@/components/ui/button/submit-button";
 
 export default function PhoneOTP({ params }: { params: Record<string, any> }) {
@@ -45,6 +37,10 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
     if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify();
     else setInvalidOTP(false);
   }, [otpInput]);
+
+  React.useEffect(() => {
+    if(!modalVisible) setInvalidOTP(false);
+  }, [modalVisible])
 
   // ====================== HANDLERS ======================
   const verify = () => {

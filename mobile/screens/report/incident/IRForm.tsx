@@ -364,13 +364,7 @@ export default function IncidentReportForm() {
       headerTitle={<Text className="text-black text-[13px]">Report an Incident</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView
-        className="flex-1 px-6 py-2"
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        overScrollMode="never"
-        keyboardShouldPersistTaps="handled"
-      >
+      <View className="flex-1 px-6 py-2">
         {/* Form Fields */}
         <View className="flex-1 gap-2">
           {/* Incident Type Selection */}
@@ -438,7 +432,7 @@ export default function IncidentReportForm() {
             Your report will be reviewed by our team within 24 hours
           </Text>
         </View>
-      </ScrollView>
+      </View>
       <LoadingModal 
         visible={isSubmitting}
       />
