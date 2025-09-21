@@ -207,31 +207,28 @@ export default function OverallMaternalRecordScreen() {
                         </View>
                         <View className="flex-row items-center mt-1 gap-8">
                            <View className="flex-col gap-1">
-                              <Text className="text-sm text-slate-500">
+                              {/* <Text className="text-sm text-slate-500">
                                  Patient Type
-                              </Text>
+                              </Text> */}
                               <View
                                  className={getBadgeVariant(item.pat_type)}
                               >
-                                 <Text className="text-[12px] text-white text-center">{item.pat_type.toUpperCase()}</Text>
+                                 <Text className="text-[12px] text-white text-center">{item.pat_type}</Text>
                               </View>
                            </View>
                            <View className="flex-col gap-1">
                               <Text className="text-sm text-slate-500">
                                  Date of Birth 
                               </Text>
-                              <View className="bg-orange-500 px-2 py-1 rounded-md">
-                                 <Text className="text-[12px] text-white">
-                                    {dobLong(item.personal_info.per_dob ?? "")}
-                                 </Text>
-                              </View>
-                              
+                              <Text className="text-[12px] text-black">
+                                 {dobLong(item.personal_info.per_dob ?? "")}
+                              </Text>
                            </View>
                            <View className="flex-col gap-1">
                               <Text className="text-sm text-slate-500">
                                  Age:
                               </Text>
-                              <Text className="bg-green-600 px-2 py-1 rounded text-[12px] text-white">
+                              <Text className="text-[12px] text-black">
                                  {AgeCalculation(item.personal_info.per_dob ?? "")} yrs old
                               </Text>
                            </View>
