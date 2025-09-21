@@ -41,7 +41,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Business.objects.filter(~Q(bus_status='Pending')).select_related(
+    queryset = Business.objects.filter(~Q(bus_status='PENDING')).select_related(
       'staff',
     ).prefetch_related(
       'business_files'
@@ -73,7 +73,7 @@ class PendingBusinessTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Business.objects.filter(bus_status='Pending')
+    queryset = Business.objects.filter(bus_status='PENDING')
 
     return queryset
   
@@ -196,7 +196,6 @@ class BusinessModificationCreateView(generics.CreateAPIView):
         status=status.HTTP_200_OK
     )
 
-
 class BusinessModificationListView(generics.ListAPIView):
   permission_classes = [AllowAny]
   serializer_class = BusinessModificationListSerializer
@@ -228,6 +227,6 @@ class BusinessHistoryView(APIView):
     bus_id = request.query_params.get('bus_id', None)
 
     if bus_id:
-      query = Business.history.filter(bus_id=bus_id, bus_status='Active')
+      query = Business.history.filter(bus_id=bus_id, bus_status='ACTIVE')
       return Response(data=BusinessHistoryBaseSerializer(query, many=True).data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_404_NOT_FOUND)

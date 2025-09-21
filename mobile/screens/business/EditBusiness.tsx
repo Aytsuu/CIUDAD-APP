@@ -21,8 +21,6 @@ export default function EditBusiness() {
   const { data: sitioList } = useGetSitio();
   const { mutateAsync: addBusinessModification } = useAddBusinessModification();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const [showFeedback, setShowFeedback] = React.useState<boolean>(false); 
-  const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">("success");
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
 
@@ -41,8 +39,7 @@ export default function EditBusiness() {
       const fields = [
         {key: 'bus_name', val: business.bus_name},
         {key: 'bus_gross_sales', val: business.bus_gross_sales},
-        {key: 'sitio', val: business.sitio.toLowerCase()},
-        {key: 'bus_street', val: business.bus_street},
+        {key: 'bus_location', val: business.bus_location},
       ]
 
       fields.map((f: any) => 
@@ -53,7 +50,7 @@ export default function EditBusiness() {
 
   // ----------------------- HANDLERS -------------------------
   const submit = async () => {
-    const formIsValid = await trigger(['bus_gross_sales', 'bus_name', 'bus_street', 'sitio']);
+    const formIsValid = await trigger(['bus_gross_sales', 'bus_name', 'bus_location']);
 
     if(!formIsValid) {
       return;
@@ -67,8 +64,7 @@ export default function EditBusiness() {
       const initialVals = {
         bus_name: business.bus_name,
         bus_gross_sales: String(business.bus_gross_sales),
-        sitio: business.sitio.toLowerCase(),
-        bus_street: business.bus_street
+        bus_location: business.bus_location
       }
       const values = getValues();
 
@@ -81,8 +77,7 @@ export default function EditBusiness() {
       await addBusinessModification({
         bm_updated_name: values.bus_name,
         bm_updated_gs: values.bus_gross_sales,
-        sitio: values.sitio,
-        street: values.bus_street,
+        bm_updated_loc: values.bus_location,
         bus: business.bus_id,
         files: selectedImages.map((img: any) => ({
           name: img.name,
@@ -91,84 +86,15 @@ export default function EditBusiness() {
         }))
       });
 
-      setIsSubmitting(false);
-      setStatus('success')
-      setShowFeedback(true)
+      router.back();
     } catch (err) {
+      toast.error("Failed to submit request. Please try again.")
+    } finally {
       setIsSubmitting(false);
-      setStatus('failure')
-      setShowFeedback(true)
     }
   }
 
   // ----------------------- RENDER -------------------------
-  const FeedbackContents: any = {
-    success: {
-      title: (
-        <View className="flex">
-          <Text className={`text-[18px] text-gray-800 font-PoppinsSemiBold text-center`}>
-            Submitted Successfully
-          </Text>
-          <Text className={`text-[15px] text-gray-800 font-PoppinsRegular text-center`}>
-            Your request has been delivered!
-          </Text>
-        </View>
-      ),
-      content: (
-        <View className="flex-1 justify-end">
-          <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
-            onPress={() => {
-              setSelectedImages([]);
-              setShowFeedback(false)
-              router.back();
-            }}
-          >
-            <Text className="text-white text-base font-semibold">
-              Ok, continue
-            </Text>
-          </Button>
-        </View>
-      )
-    },
-    failure: {
-      content: (
-        <View className="flex-1 justify-end">
-          <View className="flex-row gap-2">
-            <Button variant={"outline"} className={`rounded-xl native:h-[45px]`}
-              onPress={() => router.replace('/(auth)')}
-            >
-              <Text className="text-gray-900 text-base font-semibold">
-                Cancel
-              </Text>
-            </Button>
-            <Button className={`flex-1 bg-primaryBlue rounded-xl native:h-[45px]`}
-              onPress={() => {
-                setShowFeedback(false)
-                setTimeout(() => {
-                  submit();
-                }, 0)
-              }}
-            >
-              <Text className="text-white text-base font-semibold">
-                Try Again
-              </Text>
-            </Button>
-          </View>
-        </View>
-      )
-    },
-  }
-
-  if(showFeedback) {
-    return (
-      <FeedbackScreen 
-        status={status}
-        title={FeedbackContents[status].title}
-        content={FeedbackContents[status].content}
-      />
-    )
-  }
-
   return (
     <>
       <BusinessForm
@@ -179,10 +105,7 @@ export default function EditBusiness() {
         setSelectedImages={setSelectedImages}
         submit={submit}
       />
-      <LoadingModal
-        visible={isSubmitting}
-        message="Submitting business registration..."
-      />
+      <LoadingModal visible={isSubmitting}/>
     </>
   )
 }
