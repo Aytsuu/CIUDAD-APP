@@ -7,7 +7,7 @@ import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { PhysicalExam } from "@/components/ui/physical-exam";
 import { Loader2, ChevronLeft } from "lucide-react";
 import { ExamSection } from "@/pages/healthServices/doctor/types";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SoapFormFieldsProps {
   form: any;
@@ -15,8 +15,8 @@ interface SoapFormFieldsProps {
   setExamSections: (sections: ExamSection[]) => void;
   medicineStocksOptions: any[];
   isMedicineLoading: boolean;
-  isPhysicalExamLoading: boolean; // Add this prop
-  hasPhysicalExamError: boolean; // Add this prop
+  isPhysicalExamLoading: boolean;
+  hasPhysicalExamError: boolean;
   selectedMedicines: any[];
   onSelectedMedicinesChange: (medicines: any[]) => void;
   currentPage: number;
@@ -26,6 +26,11 @@ interface SoapFormFieldsProps {
   onBack: () => void;
   isSubmitting: boolean;
   onSubmit: (e?: React.BaseSyntheticEvent) => void;
+  // New props for medicine search and pagination
+  medicineSearchParams: any;
+  medicinePagination: any;
+  onMedicineSearch: (searchTerm: string) => void;
+  onMedicinePageChange: (page: number) => void;
 }
 
 export default function SoapFormFields({
@@ -44,7 +49,12 @@ export default function SoapFormFields({
   onAssessmentUpdate,
   onBack,
   isSubmitting,
-  onSubmit
+  onSubmit,
+  // New props
+  medicineSearchParams,
+  medicinePagination,
+  onMedicineSearch,
+  onMedicinePageChange
 }: SoapFormFieldsProps) {
   return (
     <Form {...form}>
@@ -59,7 +69,7 @@ export default function SoapFormFields({
           {/* Physical Exam with Skeleton Loading */}
           <div className="space-y-3">
             <h2 className="text-lg font-medium text-darkBlue2">Physical Exam</h2>
-            
+
             {isPhysicalExamLoading ? (
               // Skeleton Loading for Physical Exam
               <div className="space-y-4 bg-white rounded-lg p-4 border">
@@ -74,7 +84,7 @@ export default function SoapFormFields({
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Skeleton className="h-6 w-1/3 bg-gray-200" />
                   <div className="space-y-2">
@@ -86,7 +96,7 @@ export default function SoapFormFields({
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Skeleton className="h-6 w-1/3 bg-gray-200" />
                   <div className="space-y-2">
@@ -117,13 +127,17 @@ export default function SoapFormFields({
           {/* Medicines */}
           <div className="space-y-3">
             <h2 className="text-lg font-medium text-darkBlue2">Plan Treatment (Treatment)</h2>
-            <MedicineDisplay 
-              medicines={medicineStocksOptions || []} 
-              initialSelectedMedicines={selectedMedicines} 
-              onSelectedMedicinesChange={onSelectedMedicinesChange} 
-              itemsPerPage={5} 
-              currentPage={currentPage} 
-              onPageChange={onPageChange}  
+            <MedicineDisplay
+              medicines={medicineStocksOptions}
+              initialSelectedMedicines={selectedMedicines}
+              onSelectedMedicinesChange={onSelectedMedicinesChange}
+              itemsPerPage={medicineSearchParams.pageSize}
+              currentPage={medicineSearchParams.page}
+              onPageChange={onMedicinePageChange}
+              onSearch={onMedicineSearch}
+              searchQuery={medicineSearchParams.search}
+              totalPages={medicinePagination?.totalPages}
+              totalItems={medicinePagination?.totalItems}
               isLoading={isMedicineLoading}
             />
           </div>
@@ -152,14 +166,6 @@ export default function SoapFormFields({
               <FormTextArea label="Clinical Impressions" control={form.control} name="assessment_summary" placeholder="Enter clinical impressions, diagnosis, etc." className="min-h-[180px] text-sm w-full" rows={7} />
             </div>
           </div>
-
-          {/* Follow-up */}
-          {/* <div className="space-y-3">
-            <h2 className="text-lg font-medium text-darkBlue2">Follow-up</h2>
-            <div className="w-full md:w-1/2 lg:w-1/3">
-              <FormDateTimeInput control={form.control} name="followv" label="Next Follow-up Visit Date" type="date" />
-            </div>
-          </div> */}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">

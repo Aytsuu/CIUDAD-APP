@@ -36,12 +36,40 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
   const [examSections, setExamSections] = useState<ExamSection[]>([]);
   const isUpdatingFromChild = useRef(false);
 
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock(true);
+  // Use the medicine stocks with loading state - UPDATED for backend pagination
+  const [medicineSearchParams, setMedicineSearchParams] = useState<any>({
+    page: 1,
+    pageSize: 10,
+    search: '',
+    is_temp: true,
+  });
+  
+  const { data: medicineData, isLoading: isMedicineLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
 
   // Get loading states from the queries
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
   const hasPhysicalExamError = sectionsQuery.isError || optionsQuery.isError;
+
+  // Extract medicines and pagination info
+  const medicineStocksOptions = medicineData?.medicines || [];
+  const medicinePagination = medicineData?.pagination;
+
+  // Add handlers for search and pagination
+  const handleMedicineSearch = (searchTerm: string) => {
+    setMedicineSearchParams((prev: any) => ({
+      ...prev,
+      search: searchTerm,
+      page: 1, // Reset to first page when searching
+    }));
+  };
+
+  const handleMedicinePageChange = (page: number) => {
+    setMedicineSearchParams((prev: any) => ({
+      ...prev,
+      page,
+    }));
+  };
 
   const form = useForm<SoapFormType>({
     resolver: zodResolver(soapSchema),
@@ -81,6 +109,19 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
     }
   }, [initialData, form, patientData]);
 
+  // Add cleanup effect for form data updates
+  useEffect(() => {
+    return () => {
+      if (onFormDataUpdate) {
+        const currentValues = form.getValues();
+        onFormDataUpdate({
+          ...currentValues,
+          selectedMedicines
+        });
+      }
+    };
+  }, [form, selectedMedicines, onFormDataUpdate]);
+
   const handleSelectedMedicinesChange = useCallback(
     (updated: any[]) => {
       if (isUpdatingFromChild.current) {
@@ -88,8 +129,8 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         return;
       }
 
-      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
-      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id.localeCompare(b.minv_id)));
+      const currentJson = JSON.stringify(selectedMedicines.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
+      const updatedJson = JSON.stringify(updated.sort((a, b) => a.minv_id?.localeCompare(b.minv_id)));
 
       if (currentJson === updatedJson) {
         return;
@@ -106,12 +147,13 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         updated.length > 0
           ? updated.map((med) => {
               const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-              return `- ${stock?.name} ${stock?.dosage} (${med.medrec_qty} ${stock?.unit}) ${med.reason}`;
+              return `- ${stock?.name || 'Unknown'} ${stock?.dosage || ''} (${med.medrec_qty} ${stock?.unit || 'units'}) ${med.reason || ''}`;
             })
           : [];
 
       const newSummary = [...summaryWithoutMeds, ...medLines].join("\n");
 
+      isUpdatingFromChild.current = true;
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",
@@ -230,6 +272,11 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         onBack={handleBack}
         isSubmitting={isSubmitting}
         onSubmit={form.handleSubmit(onSubmit)}
+        // Pass the new props for medicine search and pagination
+        medicineSearchParams={medicineSearchParams}
+        medicinePagination={medicinePagination}
+        onMedicineSearch={handleMedicineSearch}
+        onMedicinePageChange={handleMedicinePageChange}
       />
     </div>
   );

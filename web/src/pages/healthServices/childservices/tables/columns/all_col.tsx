@@ -2,7 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ChildHealthRecord } from "../../forms/muti-step-form/types";
+import { ChildHealthRecord } from "../../forms/multi-step-form/types";
 
 export const childColumns: ColumnDef<ChildHealthRecord>[] = [
   {
