@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react"
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
-import { Plus, X, Calendar, CheckSquare, Square } from "lucide-react-native"
+import { Plus, X, Calendar, CheckSquare, Square, ChevronLeft } from "lucide-react-native"
 import type { ServiceScheduleFormProps, WeeklySchedule, DailySchedule, ServiceTimeSlots } from "./schedule-types"
 import { useAddDay, useAddScheduler, useAddService } from "./queries/schedulerAddQueries"
 import { useGetDays, useGetServices } from "./queries/schedulerFetchQueries"
 import { useDeleteService, useDeleteDay } from "./queries/schedulerDeleteQueries"
+import PageLayout from "@/screens/_PageLayout"
+import { router } from "expo-router"
 
 // Custom Checkbox component with better visual feedback
 interface CustomCheckboxProps {
@@ -295,14 +297,23 @@ export default function ServiceScheduleForm({
 
 
   return (
-    // Card
+     <PageLayout
+             leftAction={
+               <TouchableOpacity
+                 onPress={() => router.back()}
+                 className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+               >
+                 <ChevronLeft size={24} color="#374151" />
+               </TouchableOpacity>
+             }
+             headerTitle={<Text className="text-gray-900 text-lg font-semibold">Weekly Service Schedule Editor</Text>}
+             rightAction={<View className="w-10 h-10" />}
+           >
     <View className="w-full bg-white rounded-lg shadow-md overflow-hidden flex-1"> {/* flex-1 to allow ScrollView */}
       {/* CardHeader */}
       <View className="p-4 pb-2">
-        {/* CardTitle */}
-        <Text className="text-xl font-semibold text-gray-800">Weekly Service Schedule Editor</Text>
-        {/* CardDescription */}
-        <Text className="text-sm text-gray-500 mt-1">Manage service availability and add new services or days as needed.</Text>
+      
+        <Text className="text-sm text-gray-500">Manage service availability and add new services or days as needed.</Text>
       </View>
       
       <ScrollView className="flex-1 p-4"> {/* Scrollable content */}
@@ -538,5 +549,6 @@ export default function ServiceScheduleForm({
         </TouchableOpacity>
       </ScrollView>
     </View>
+    </PageLayout>
   )
 }

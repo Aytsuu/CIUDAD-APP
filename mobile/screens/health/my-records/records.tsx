@@ -60,16 +60,16 @@ export default function Records() {
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
       icon: Dog,
-      image: require('@/assets/images/Health/Home/animalbites.jpg'),
+      image: require('@/assets/images/Health/Home/vaccination.jpg'),
       color: '#1E40AF'
     },
      {
       id: 6,
       name: 'First Aid Records',
       description: 'View animal bite treatment records',
-      route: '/animalbite/my-records/',
+      route: '/first-aid/my-records',
       icon: Dog,
-      image: require('@/assets/images/Health/Home/animalbites.jpg'),
+      image: require('@/assets/images/Health/Home/first-aid.jpg'),
       color: '#1E40AF'
     },
      {
@@ -78,7 +78,7 @@ export default function Records() {
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
       icon: Dog,
-      image: require('@/assets/images/Health/Home/animalbites.jpg'),
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
       color: '#1E40AF'
     },
   ];

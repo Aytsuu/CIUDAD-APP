@@ -1,14 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  ActivityIndicator,
-  SafeAreaView,
-  FlatList,
-  Dimensions
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator,SafeAreaView,FlatList,} from "react-native";
 import { ChevronLeft, ChevronRight, History, Baby } from "lucide-react-native";
 import { ChildHealthHistoryRecord } from "./types";
 import { getSupplementStatusesFields } from "./config";
