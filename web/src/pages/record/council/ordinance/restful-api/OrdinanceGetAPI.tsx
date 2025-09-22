@@ -11,6 +11,7 @@ export interface Ordinance {
     ord_details: string;
     ord_year: number;
     ord_is_archive: boolean;
+    ord_repealed?: boolean;
     file?: any;
     staff?: any;
     ord_parent?: string; // ord_num of the parent ordinance (if this is an amendment)

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Ordinance, getAllOrdinances, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders } from './restful-api/OrdinanceGetAPI';
+import { Ordinance, getAllOrdinances, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders, updateOrdinance } from './restful-api/OrdinanceGetAPI';
 import { useNavigate } from 'react-router-dom';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
@@ -43,6 +43,9 @@ function OrdinancePage() {
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
+    const [repealDialogOpen, setRepealDialogOpen] = useState(false);
+    const [ordinanceToToggle, setOrdinanceToToggle] = useState<OrdinanceItem | null>(null);
+    const [creationMode, setCreationMode] = useState<'new' | 'amend' | 'repeal'>('new');
     
     // New states for ordinance amendment functionality
     const [selectedExistingOrdinance, setSelectedExistingOrdinance] = useState<string>("new");
@@ -147,7 +150,8 @@ function OrdinancePage() {
             ordinanceDate: "",
             ordinanceCategory: "",
             ordinanceDetails: "",
-            ordinanceFile: ""
+            ordinanceFile: "",
+            ord_repealed: false
         },
     });
 
@@ -168,6 +172,7 @@ function OrdinancePage() {
 
     const ordinanceOptions = ordinanceItems
         .filter(ord => ord.ord_num && ord.ord_num.trim() !== '') // Filter out any items with empty ord_num
+        .filter(ord => !ord.ord_repealed) // Exclude repealed ordinances from amendment selection
         .map(ord => ({
             id: ord.ord_num,
             name: `${ord.ord_num} - ${ord.ord_title} (${ord.ord_year})`
@@ -229,6 +234,26 @@ function OrdinancePage() {
             toast.error('Failed to fetch ordinances');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const requestToggleRepealed = (item: OrdinanceItem) => {
+        setOrdinanceToToggle(item);
+        setRepealDialogOpen(true);
+    };
+
+    const confirmToggleRepealed = async () => {
+        if (!ordinanceToToggle) return;
+        try {
+            const newValue = !Boolean(ordinanceToToggle.ord_repealed);
+            await updateOrdinance(ordinanceToToggle.ord_num, { ord_repealed: newValue });
+            toast.success(newValue ? 'Ordinance marked as repealed' : 'Ordinance un-repealed');
+            setRepealDialogOpen(false);
+            setOrdinanceToToggle(null);
+            fetchAllItems();
+        } catch (e) {
+            console.error('Failed to toggle repeal:', e);
+            toast.error('Failed to update ordinance repeal status');
         }
     };
 
@@ -314,8 +339,27 @@ function OrdinancePage() {
         // Set loading state to true
         setIsCreatingOrdinance(true);
         
-        // If this is an amendment, add the relationship data
-        if (selectedExistingOrdinance && selectedExistingOrdinance !== "new") {
+        // Based on creation mode
+        if (creationMode === 'amend') {
+            if (!selectedExistingOrdinance || selectedExistingOrdinance === 'new') {
+                toast.error('Please select an ordinance to amend.');
+                setIsCreatingOrdinance(false);
+                return;
+            }
+            // If new ordinance marked repealed, block amendment creation
+            if (values.ord_repealed) {
+                toast.error('A repealed ordinance cannot be created as an amendment.');
+                setIsCreatingOrdinance(false);
+                return;
+            }
+
+            // Also block if selected parent is repealed (client-side check based on loaded data)
+            const parent = ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance);
+            if (parent && parent.ord_repealed) {
+                toast.error('Cannot amend a repealed ordinance.');
+                setIsCreatingOrdinance(false);
+                return;
+            }
             // Count existing amendments for this parent
             const existingAmendments = ordinanceItems.filter(ord => 
                 ord.ord_parent === selectedExistingOrdinance || 
@@ -324,6 +368,7 @@ function OrdinancePage() {
             
             const amendmentData = {
                 ...values,
+                ord_repealed: false,
                 ord_parent: selectedExistingOrdinance,
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
@@ -331,9 +376,25 @@ function OrdinancePage() {
             console.log("Creating amendment with data:", amendmentData);
             console.log("Sending to addOrdinance:", { values: amendmentData, mediaFiles });
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
+        } else if (creationMode === 'repeal') {
+            if (!selectedExistingOrdinance || selectedExistingOrdinance === 'new') {
+                toast.error('Please select an ordinance to repeal.');
+                setIsCreatingOrdinance(false);
+                return;
+            }
+            const repealData = {
+                ...values,
+                ord_repealed: true,
+                // Link to the ordinance being repealed (optional business rule)
+                ord_parent: selectedExistingOrdinance,
+                ord_is_ammend: false,
+            };
+            console.log("Creating repeal with data:", repealData);
+            addOrdinance({ values: repealData, mediaFiles }, { onError: handleOrdinanceError });
         } else {
             console.log("Creating new standalone ordinance");
-            addOrdinance({ values, mediaFiles }, { onError: handleOrdinanceError });
+            const newData = { ...values, ord_repealed: false } as any;
+            addOrdinance({ values: newData, mediaFiles }, { onError: handleOrdinanceError });
         }
     };
 
@@ -646,6 +707,11 @@ function OrdinancePage() {
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                 <span className="font-semibold">ORD:</span> {folder.baseOrdinance.ord_num}
                                             </span>
+                                            {folder.baseOrdinance.ord_repealed && (
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    Repealed
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -703,6 +769,20 @@ function OrdinancePage() {
                                                     </Button>
                                                 }
                                                 content={folder.baseOrdinance.aiAnalysisResult ? 'View AI Analysis Results' : 'Run AI Analysis'}
+                                            />
+
+                                            <TooltipLayout
+                                                trigger={
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => requestToggleRepealed(folder.baseOrdinance)}
+                                                        className="h-8 px-3 text-xs hover:bg-red-50 hover:border-red-300"
+                                                    >
+                                                        {folder.baseOrdinance.ord_repealed ? 'Un-repeal' : 'Mark Repealed'}
+                                                    </Button>
+                                                }
+                                                content={folder.baseOrdinance.ord_repealed ? 'Mark as active again' : 'Mark this ordinance as repealed'}
                                             />
 
                                             <TooltipLayout
@@ -794,6 +874,33 @@ function OrdinancePage() {
                 }
             />
 
+            {/* Repeal Confirmation Dialog */}
+            <DialogLayout
+                isOpen={repealDialogOpen}
+                onOpenChange={setRepealDialogOpen}
+                className="max-w-md"
+                title={ordinanceToToggle?.ord_repealed ? 'Un-repeal Ordinance' : 'Mark as Repealed'}
+                description={ordinanceToToggle?.ord_repealed ?
+                    `This will mark ${ordinanceToToggle?.ord_num} as active again.` :
+                    `This will mark ${ordinanceToToggle?.ord_num} as repealed. It cannot be amended while repealed.`}
+                mainContent={
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setRepealDialogOpen(false);
+                                setOrdinanceToToggle(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={confirmToggleRepealed}>
+                            Confirm
+                        </Button>
+                    </div>
+                }
+            />
+
             {/* Upload Ordinance Dialog */}
             <DialogLayout
                 isOpen={uploadDialogOpen}
@@ -805,50 +912,42 @@ function OrdinancePage() {
                     <div className="max-h-[80vh] overflow-y-auto p-4">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleUploadSubmit)} className="space-y-4">
-                                {/* Existing Ordinance Selection */}
-                                <div className={`border rounded-lg p-4 mb-4 ${
-                                    selectedExistingOrdinance && selectedExistingOrdinance !== "new" 
-                                        ? "bg-green-50 border-green-200" 
-                                        : "bg-blue-50 border-blue-200"
-                                }`}>
-                                    <h3 className={`text-lg font-semibold mb-3 ${
-                                        selectedExistingOrdinance && selectedExistingOrdinance !== "new" 
-                                            ? "text-green-900" 
-                                            : "text-blue-900"
-                                    }`}>
-                                        {selectedExistingOrdinance && selectedExistingOrdinance !== "new" 
-                                            ? "Amendment Mode Active" 
-                                            : "Ordinance Amendment Setup"
-                                        }
-                                    </h3>
-                                    <p className={`text-sm mb-4 ${
-                                        selectedExistingOrdinance && selectedExistingOrdinance !== "new" 
-                                            ? "text-green-700" 
-                                            : "text-blue-700"
-                                    }`}>
-                                        {selectedExistingOrdinance && selectedExistingOrdinance !== "new" 
-                                            ? `This ordinance will be created as an amendment to "${ordinanceItems.find(ord => ord.ord_num === selectedExistingOrdinance)?.ord_title || selectedExistingOrdinance}" and will appear in the same folder.`
-                                            : "If you're adding an ordinance on top of an existing one, select the base ordinance below:"
-                                        }
+                                {/* Creation Mode Selection */}
+                                <div className="border rounded-lg p-4 mb-4 bg-blue-50 border-blue-200">
+                                    <h3 className="text-lg font-semibold mb-3 text-blue-900">Upload Ordinance</h3>
+                                    <p className="text-sm mb-4 text-blue-700">
+                                        Choose to create a new ordinance, amend an existing one, or file a repeal.
                                     </p>
-                                    
-                                    <div className="w-full">
-                                        <SelectLayout
-                                            className="w-full"
-                                            label=""
-                                            placeholder="Choose an existing ordinance to amend or build upon"
-                                            options={[
-                                                {id: "new", name: "Create New Ordinance (No Amendment)"},
-                                                ...ordinanceOptions
-                                            ]}
-                                            value={selectedExistingOrdinance}
-                                            onChange={(value) => {
-                                                setSelectedExistingOrdinance(value);
-                                            }}
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                                        <Button variant={creationMode === 'new' ? 'default' : 'outline'} onClick={() => {
+                                            setCreationMode('new');
+                                            setSelectedExistingOrdinance('new');
+                                            form.setValue('ord_repealed', false);
+                                        }}>New</Button>
+                                        <Button variant={creationMode === 'amend' ? 'default' : 'outline'} onClick={() => {
+                                            setCreationMode('amend');
+                                            form.setValue('ord_repealed', false);
+                                        }}>Amend</Button>
+                                        <Button variant={creationMode === 'repeal' ? 'default' : 'outline'} onClick={() => {
+                                            setCreationMode('repeal');
+                                            form.setValue('ord_repealed', true);
+                                        }}>Repeal</Button>
                                     </div>
 
-
+                                    {(creationMode === 'amend' || creationMode === 'repeal') && (
+                                        <div className="w-full">
+                                            <SelectLayout
+                                                className="w-full"
+                                                label={creationMode === 'amend' ? 'Select ordinance to amend' : 'Select ordinance to repeal'}
+                                                placeholder={creationMode === 'amend' ? 'Choose ordinance to amend' : 'Choose ordinance to repeal'}
+                                                options={ordinanceOptions}
+                                                value={selectedExistingOrdinance === 'new' ? '' : selectedExistingOrdinance}
+                                                onChange={(value) => {
+                                                    setSelectedExistingOrdinance(value || 'new');
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Title Field */}
@@ -903,6 +1002,8 @@ function OrdinancePage() {
                                         </FormItem>
                                     )}
                                 />
+
+                                {/* Repealed flag is controlled by creation mode; no manual checkbox */}
 
                                 {/* File Upload Field */}
                                 <FormField

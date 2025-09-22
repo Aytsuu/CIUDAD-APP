@@ -10,6 +10,7 @@ export interface OrdinanceUploadData {
         ordinanceCategory: string;
         ordinanceDetails: string;
         ordinanceFile: string;
+        ord_repealed?: boolean;
         // Amendment-related fields
         ord_parent?: string;
         ord_is_ammend?: boolean;

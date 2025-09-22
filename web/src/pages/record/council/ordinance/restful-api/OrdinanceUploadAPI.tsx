@@ -147,6 +147,7 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
             ord_details: ordinanceInfo.ordinanceDetails,
             ord_year: year,
             ord_is_archive: false,
+            ord_repealed: Boolean(ordinanceInfo.ord_repealed),
             staff: "00003250722", // Default staff ID
             of_id: fileId
         };
