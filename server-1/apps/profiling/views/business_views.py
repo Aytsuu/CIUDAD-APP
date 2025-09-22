@@ -175,11 +175,19 @@ class SpecificOwnerView(generics.ListAPIView):
       br = self.request.query_params.get('br')
 
       if rp:
-          return Business.objects.filter(rp=rp)
+          queryset = Business.objects.filter(rp=rp)
       elif br:
-          return Business.objects.filter(br=br)
+          queryset = Business.objects.filter(br=br)
       else:
-          return Business.objects.none()
+          queryset = Business.objects.none()
+
+      search = self.request.query_params.get("search", "").strip()
+      if search:
+        queryset = queryset.filter(
+          Q(bus_name__icontains=search)
+        )
+      
+      return queryset
 
 class BusinessModificationCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
@@ -199,7 +207,7 @@ class BusinessModificationCreateView(generics.CreateAPIView):
 class BusinessModificationListView(generics.ListAPIView):
   permission_classes = [AllowAny]
   serializer_class = BusinessModificationListSerializer
-  queryset = BusinessModification.objects.filter(bm_status=None)
+  queryset = BusinessModification.objects.all()
 
 class BusinessModificationDeleteView(generics.DestroyAPIView):
   permission_classes = [AllowAny]

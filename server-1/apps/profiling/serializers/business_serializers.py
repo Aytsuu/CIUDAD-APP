@@ -49,7 +49,7 @@ class BusinessTableSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = Business
-    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_location',
+    fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_location', 'bus_status',
               'bus_date_of_registration', 'bus_date_verified', 'respondent', 
               'rp', 'br']
     
@@ -325,7 +325,7 @@ class BusinessModificationListSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = BusinessModification
-    fields = ['bm_id', 'bm_updated_name', 'bm_updated_gs', 'bm_updated_loc',
+    fields = ['bm_id', 'bm_updated_name', 'bm_updated_gs', 'bm_status', 'bm_updated_loc',
                'bm_submitted_at', 'current_details', 'respondent' , 'files']
   
   def get_respondent(self, obj):
