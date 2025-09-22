@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useDeleteAnnouncement } from "./queries/announcementDeleteQueries"
-// --- CHANGED: Use the new hook for created/received ---
 import { useGetCreatedReceivedAnnouncements } from "./queries/announcementFetchQueries"
 import { Button } from "@/components/ui/button/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -25,16 +24,16 @@ function AnnouncementTracker() {
   const [currentPage, setCurrentPage] = useState(1)
   const [filter, setFilter] = useState<string>("")
 
-  // --- CHANGED: Get staff_id from auth and use new hook ---
   const { user } = useAuth()
   const staff_id = user?.staff?.staff_id
+
   const { data, isLoading } = useGetCreatedReceivedAnnouncements(staff_id || "")
   const createdAnnouncements = data?.created || []
   const receivedAnnouncements = data?.received || []
 
-  const { mutate: deleteEntry } = useDeleteAnnouncement()
+  const { mutate: deleteEntry } = useDeleteAnnouncement(staff_id || "")
 
-  const handleDelete = async (ann_id: number) => {
+  const handleDelete = (ann_id: number) => {
     deleteEntry(ann_id)
   }
 
@@ -54,46 +53,48 @@ function AnnouncementTracker() {
     }).format(date)
   }
 
-  // --- CHANGED: Filter created/received separately ---
+  // filtering, sorting, pagination... (unchanged)
   const filterAnnouncements = (arr: any[]) =>
-    arr.filter((announcement) =>
-      announcement.ann_title?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .filter((a) => {
-      if (filter === "dateRecent") return true // sorting handled below
-      if (filter === "toSms") return a.ann_to_sms === true
-      if (filter === "toEmail") return a.ann_to_email === true
-      if (filter === "general") return a.ann_type === "general"
-      if (filter === "public") return a.ann_type === "public"
-      if (filter === "event") return a.ann_type === "event"
-      return true
-    })
+    arr
+      .filter((announcement) =>
+        announcement.ann_title?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .filter((a) => {
+        if (filter === "dateRecent") return true
+        if (filter === "toSms") return a.ann_to_sms === true
+        if (filter === "toEmail") return a.ann_to_email === true
+        if (filter === "general") return a.ann_type === "general"
+        if (filter === "public") return a.ann_type === "public"
+        if (filter === "event") return a.ann_type === "event"
+        return true
+      })
 
   let filteredCreated = filterAnnouncements(createdAnnouncements)
   let filteredReceived = filterAnnouncements(receivedAnnouncements)
 
   if (filter === "dateRecent") {
     filteredCreated = [...filteredCreated].sort(
-      (a, b) => new Date(b.ann_created_at).getTime() - new Date(a.ann_created_at).getTime(),
+      (a, b) => new Date(b.ann_created_at).getTime() - new Date(a.ann_created_at).getTime()
     )
     filteredReceived = [...filteredReceived].sort(
-      (a, b) => new Date(b.ann_created_at).getTime() - new Date(a.ann_created_at).getTime(),
+      (a, b) => new Date(b.ann_created_at).getTime() - new Date(a.ann_created_at).getTime()
     )
   }
 
-  // --- CHANGED: Pagination for each list ---
   const createdPaginatedData = filteredCreated.slice(
     (currentPage - 1) * Math.ceil(pageSize / 2),
-    currentPage * Math.ceil(pageSize / 2),
+    currentPage * Math.ceil(pageSize / 2)
   )
   const receivedPaginatedData = filteredReceived.slice(
     (currentPage - 1) * Math.ceil(pageSize / 2),
-    currentPage * Math.ceil(pageSize / 2),
+    currentPage * Math.ceil(pageSize / 2)
   )
 
   const totalCreated = filteredCreated.length
   const totalReceived = filteredReceived.length
-  const totalPages = Math.ceil(Math.max(totalCreated, totalReceived) / Math.ceil(pageSize / 2))
+  const totalPages = Math.ceil(
+    Math.max(totalCreated, totalReceived) / Math.ceil(pageSize / 2)
+  )
 
   const getBadgeVariant = (type: string) => {
     switch (type) {

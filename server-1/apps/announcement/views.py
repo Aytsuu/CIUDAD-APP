@@ -31,48 +31,59 @@ class AnnouncementCreatedReceivedView(APIView):
     def get(self, request, staff_id):
         print(f"FETCHING CREATED + RECEIVED ANNOUNCEMENTS for staff_id={staff_id}")
 
+        search = request.query_params.get("search", "").strip().lower()
+        filter_param = request.query_params.get("filter", "").strip()
+
         # Staff + Position
         staff = Staff.objects.filter(staff_id=staff_id).select_related("pos").first()
         staff_pos_title = getattr(getattr(staff, "pos", None), "pos_title", None)
-
         if staff_pos_title:
             staff_pos_title = staff_pos_title.upper().strip()
 
-        print(f" Staff found: {getattr(staff, 'staff_id', None)}, pos={staff_pos_title}")
-
-        # Announcements created by this staff
+        # Announcements created
         created = Announcement.objects.filter(staff__staff_id=staff_id)
-        created_data = AnnouncementCreateSerializer(created, many=True).data
-        print(f"Created count: {created.count()}")
 
+        # Announcements received
         received_ids = AnnouncementRecipient.objects.filter(
             Q(ar_category=staff_id) | Q(ar_type__iexact=staff_pos_title)
         ).values_list("ann_id", flat=True).distinct()
 
         received = Announcement.objects.filter(ann_id__in=received_ids)
-        print(f"Received by staff_id/pos count: {received.count()}")
-
         public_announcements = Announcement.objects.filter(ann_type="public")
         received = received.union(public_announcements)
-        print(f"Public announcements count: {public_announcements.count()}")
 
-        #Include created announcements if they also match staff position
-        overlap = created.filter(ann_id__in=received.values_list("ann_id", flat=True))
-        received = received.union(overlap)
+        # Apply filters (backend side)
+        def apply_filters(queryset):
+            if search:
+                queryset = queryset.filter(ann_title__icontains=search)
 
+            if filter_param == "toSms":
+                queryset = queryset.filter(ann_to_sms=True)
+            elif filter_param == "toEmail":
+                queryset = queryset.filter(ann_to_email=True)
+            elif filter_param == "general":
+                queryset = queryset.filter(ann_type="general")
+            elif filter_param == "public":
+                queryset = queryset.filter(ann_type="public")
+            elif filter_param == "event":
+                queryset = queryset.filter(ann_type="event")
+            elif filter_param == "dateRecent":
+                queryset = queryset.order_by("-ann_created_at")
+
+            return queryset
+
+        created = apply_filters(created)
+        received = apply_filters(received)
+
+        created_data = AnnouncementCreateSerializer(created, many=True).data
         received_data = AnnouncementCreateSerializer(received, many=True).data
-
-        # Debug all recipients
-        all_recs = AnnouncementRecipient.objects.all()
-        print("All AnnouncementRecipient entries:")
-        for rec in all_recs:
-            print(f"   - ann_id={rec.ann_id}, ar_type={rec.ar_type}, ar_category={rec.ar_category}")
 
         return Response({
             "created": created_data,
             "received": received_data,
             "staff_pos_title": staff_pos_title,
         })
+
 
 
 class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
