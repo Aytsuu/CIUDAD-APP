@@ -16,8 +16,15 @@ export const getPersonalCertifications = async (residentId: string) => {
       api.get(`clerk/personal-clearances/`, { params: { page_size: 1000 } }).catch(() => ({ data: [] })),
     ]);
     const combined = [...toList(certRes.data), ...toList(personalRes.data)];
+    // Dedupe by cr_id to avoid double entries from multiple sources
+    const byId: Record<string, any> = {};
+    for (const item of combined) {
+      const key = String(item?.cr_id ?? '');
+      if (key && !byId[key]) byId[key] = item;
+    }
+    const merged = Object.values(byId);
     const resident = String(residentId).trim();
-    const list = combined.filter((item: any) => {
+    const list = merged.filter((item: any) => {
       const rpCandidates = [item?.rp_id, item?.rp, item?.resident_id, item?.requester]
         .map((v: any) => (v == null ? '' : String(v))).map((s: string) => s.trim());
       const matchesResident = rpCandidates.includes(resident);
