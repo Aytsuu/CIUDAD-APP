@@ -1,11 +1,10 @@
-import { ScrollView, TouchableOpacity, View, Text } from "react-native";
+import { TouchableOpacity, View, Text } from "react-native";
 import PageLayout from "../_PageLayout";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { router } from "expo-router";
 import { FormInput } from "@/components/ui/form/form-input";
 import React from "react";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
-import { Button } from "@/components/ui/button";
 import { Control } from "react-hook-form";
 import { SubmitButton } from "@/components/ui/button/submit-button";
 
@@ -18,11 +17,11 @@ export default function BusinessForm({
 } : {
   header: string
   control: Control <any>
-  formattedSitio: any
   selectedImages: MediaItem[]
   setSelectedImages: React.Dispatch<React.SetStateAction<MediaItem[]>>
   submit: () => void
 }) {
+  const type = header.split(" ")[0].toLowerCase();
   return (
     <PageLayout
       leftAction={
@@ -37,13 +36,6 @@ export default function BusinessForm({
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 px-6 py-2">
-        {/* Form Section Header */}
-        {/* <View className="mb-6">
-          <Text className="text-sm text-gray-900">
-            Please provide accurate information about your business
-          </Text>
-        </View> */}
-
         {/* Form Fields */}
         <View className="grid gap-2">
           <FormInput control={control} name="bus_name" label="Business Name" placeholder="Enter your business name" returnKeyType="next" />
@@ -79,7 +71,7 @@ export default function BusinessForm({
         <View className="pt-4 pb-8 bg-white border-t border-gray-100">
           <SubmitButton 
             handleSubmit={submit}
-            buttonLabel="Submit Registration"
+            buttonLabel={`Submit ${type == "add" ? "Registration" : "Request"}`}
           />
   
           <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">

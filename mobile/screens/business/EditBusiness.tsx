@@ -1,14 +1,11 @@
-import { View, Text } from "react-native";
 import { useBusinessFormContext } from "@/contexts/BusinessFormContext";
 import { useGetSitio } from "../_global_queries/Retrieve";
 import React from "react";
 import { formatSitio } from "@/helpers/formatSitio";
 import { MediaItem } from "@/components/ui/media-picker";
-import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useToastContext } from "@/components/ui/toast";
 import { useAddBusinessModification } from "./queries/businessAddQueries";
-import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import BusinessForm from "./BusinessForm";
 import { router, useLocalSearchParams } from "expo-router";
 import isEqual from 'lodash.isequal'
@@ -18,11 +15,9 @@ export default function EditBusiness() {
   const params = useLocalSearchParams()
   const { toast } = useToastContext();
   const { control, trigger, getValues, setValue } = useBusinessFormContext();
-  const { data: sitioList } = useGetSitio();
   const { mutateAsync: addBusinessModification } = useAddBusinessModification();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
-  const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
 
   const business = React.useMemo(() => {
     try {
@@ -100,7 +95,6 @@ export default function EditBusiness() {
       <BusinessForm
         header="Edit a Business"
         control={control}
-        formattedSitio={formattedSitio}
         selectedImages={selectedImages}
         setSelectedImages={setSelectedImages}
         submit={submit}
