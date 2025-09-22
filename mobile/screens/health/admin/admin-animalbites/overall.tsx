@@ -4,7 +4,7 @@ import { Search, ChevronLeft, AlertCircle, Package, User, Calendar, FileText, Us
 import { Text } from "@/components/ui/text"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button"
 import { Link, router } from "expo-router"
 import { format } from "date-fns"
 import { useAnimalBitePatientSummary } from "./db-request/get-query"
