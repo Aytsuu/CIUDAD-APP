@@ -26,8 +26,12 @@ export const api = axios.create({
 // });
 
 export const api2 = axios.create({
-  baseURL: process.env.EXPO_API_URL2,
-  timeout: 10000,
+  baseURL: Constants.expoConfig?.extra?.apiUrl2,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
 });
 
 setupApiInterceptor(api)

@@ -1,12 +1,10 @@
 import { useAuth } from "./context/AuthContext";
-import { UserPosition } from "./context/auth-types";
 import { Navigate, useLocation } from "react-router";
 import React from "react";
 
 interface ProtectedRouteProps {
-  requiredFeature: UserPosition;
+  requiredFeature?: string;
   children: React.ReactNode;
-  alternativePositions?: UserPosition[]; // This is for routes accessible by multiple positions
 }
 
 export const ProtectedRoute = ({
@@ -27,21 +25,14 @@ export const ProtectedRoute = ({
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
-  //   const hasAccess =
-  //     user?.staff?.pos.pos_title === requiredPosition ||
-  //     alternativePositions.includes(user?.staff?.pos.pos_title);
-
-  const hasAccess = user?.staff?.assignments?.some(
-    (assignment: any) =>
-      assignment.pos.pos_title === requiredFeature
-  );
+  
+  const hasAccess = user?.staff?.assignments?.includes(requiredFeature) || user?.staff?.pos?.toLowerCase() == "admin"
   
   if (!hasAccess) {
     console.warn(
       `Position access denied Required: ${requiredFeature}, User has: ${user?.staff?.pos.pos_title}`
     );
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/page_not_found" replace />;
   }
 
   return <>{children}</>;
