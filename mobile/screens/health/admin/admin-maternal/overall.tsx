@@ -10,9 +10,8 @@ import { LoadingState } from "@/components/ui/loading-state";
 import PageLayout from "@/screens/_PageLayout";
 import { AgeCalculation } from "@/helpers/ageCalculator";
 
-import { useMaternalRecords } from "./queries/maternalFETCH";
+import { useMaternalRecords, useMaternalCount } from "./queries/maternalFETCH";
 
-// Removed FPRecord interface, using maternalRecords below
 
 interface maternalRecords {
    pat_id: string;
@@ -137,7 +136,7 @@ const MaternalRecordCard: React.FC<{
                 <User color="white" size={20} />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
+                <Text className="font-semibold text-lg text-gray-900 capitalize">
                   {record.personal_info?.per_fname} {record.personal_info?.per_lname}
                 </Text>
                 <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
@@ -164,7 +163,7 @@ const MaternalRecordCard: React.FC<{
           <View className="flex-row items-center">
             <MapPinHouse size={16} color="#6B7280" />
             <Text className="ml-2 text-gray-600 text-sm">
-              Address: <Text className="font-medium text-gray-900">
+              Address: <Text className="font-medium text-gray-900 capitalize">
                 {record.address.add_street ?? ''} {record.address.add_barangay ?? ''} {record.address.add_city ?? ''} {record.address.add_province ?? ''}
               </Text>
             </Text>
@@ -176,52 +175,54 @@ const MaternalRecordCard: React.FC<{
 };
 
 export default function OverallMaternalRecordsScreen() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // Input value
+  const [searchQuery, setSearchQuery] = useState(""); // Debounced search value for API
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
   const pageSize = 10; 
 
-  const { data: maternalData, isLoading, isError, refetch } = useMaternalRecords({
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1); // Reset to page 1 when searching
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Map tab values to API expected values
+  const getStatusForAPI = (tab: TabType) => {
+    if (tab === "all") return undefined;
+    // Capitalize first letter to match API expectation
+    return tab.charAt(0).toUpperCase() + tab.slice(1);
+  };
+
+  const { data: maternalData, isLoading, isError, refetch, isFetching } = useMaternalRecords({
     page,
     page_size: pageSize,
     search: searchQuery || undefined,
-    status: activeTab !== "all" ? activeTab : undefined,
+    status: getStatusForAPI(activeTab),
   });
 
-//   const { data: activePregnanciesCount } = useActivepregnanciesCount();
+  const { data: maternalCount } = useMaternalCount();
   
-//   const activePregnancies = activePregnanciesCount.active_pregnancies || 0;
   const maternalRecordss = maternalData?.results || [];
   const totalMCount = maternalData?.count || 0;
   const totalMPages = Math.ceil(totalMCount / pageSize);
 
   const filteredData = useMemo(() => {
-    let result = maternalRecordss;
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      result = result.filter(
-        (record: maternalRecords) =>
-          `${record.personal_info?.per_fname ?? ''} ${record.personal_info?.per_lname ?? ''}`.toLowerCase().includes(lowerCaseQuery) ||
-          record.pat_id.toLowerCase().includes(lowerCaseQuery)
-      );
-    }
-    if (activeTab !== 'all') {
-      result = result.filter((record: maternalRecords) =>
-        record.pat_type.toLowerCase() === activeTab
-      );
-    }
-    return result;
-  }, [maternalRecordss, searchQuery, activeTab]);
+    return maternalRecordss;
+  }, [maternalRecordss, activeTab, searchQuery]);
 
   const counts = useMemo(() => {
     return {
-      all: totalMCount,
-      resident: maternalRecordss.filter((r: maternalRecords) => r.pat_type === 'Resident').length,
-      transient: maternalRecordss.filter((r: maternalRecords) => r.pat_type === 'Transient').length,
+      all: maternalCount?.total_patients || 0,
+      resident: maternalCount?.resident_patients || 0,
+      transient: maternalCount?.transient_patients || 0,
     };
-  }, [totalMCount, maternalRecordss]);
+  }, [maternalCount]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -250,7 +251,13 @@ export default function OverallMaternalRecordsScreen() {
     }
   };
 
-  if (isLoading) {
+  // Reset to page 1 when tab changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
+  // Show loading only on initial load, not during search typing
+  if (isLoading && !searchInput && !isFetching) {
     return <LoadingState />;
   }
 
@@ -307,8 +314,8 @@ export default function OverallMaternalRecordsScreen() {
               className="flex-1 ml-3 text-gray-800 text-base"
               placeholder="Search records..."
               placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
+              value={searchInput}
+              onChangeText={setSearchInput}
             />
           </View>
         </View>
@@ -317,13 +324,22 @@ export default function OverallMaternalRecordsScreen() {
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
         {/* Records List */}
-        {filteredData.length === 0 ? (
+        {isLoading && searchInput === "" ? (
+          <View className="flex-1 h-40 justify-center items-center">
+            <LoadingState />
+          </View>
+        ) : filteredData.length === 0 ? (
           <View className="px-4">
             <Card className="bg-white border-slate-200">
                <CardContent className="items-center justify-center py-12">
                   <FileText size={48} color="#94a3b8" />
                   <Text className="text-lg font-medium text-slate-900 mt-4">
                   No records found
+                  </Text>
+                  <Text className="text-gray-600 text-center mt-2">
+                    {searchQuery
+                      ? `No ${activeTab} records match your search.`
+                      : `No ${activeTab} records found.`}
                   </Text>
                </CardContent>
             </Card>
@@ -343,6 +359,15 @@ export default function OverallMaternalRecordsScreen() {
                 record={item}
                 onPress={() => handleRecordPress(item.pat_id)}
               />
+            )}
+            ListHeaderComponent={() => (
+              // Show a subtle loading indicator while searching
+              isFetching && searchInput ? (
+                <View className="flex-row items-center justify-center py-2 mb-3">
+                  <RefreshCw size={16} color="#6B7280" className="animate-spin" />
+                  <Text className="ml-2 text-gray-600 text-sm">Searching...</Text>
+                </View>
+              ) : null
             )}
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">

@@ -30,10 +30,10 @@ export const getMaternalRecords = async (filters: MaternalPatientFilters = {}) =
 }
 
 // active pregnancies count
-export const getActivePregnanciesCount = async () => {
+export const getMaternalCount = async () => {
   try {
-    const res = await api2.get("maternal/pregnancy_count/")
-    return res.data.active_pregnancy_count || 0;
+    const res = await api2.get("maternal/counts/")
+    return res.data || 0;
   } catch (error) {
     console.error("Error fetching active pregnancies count: ", error);
     throw error;

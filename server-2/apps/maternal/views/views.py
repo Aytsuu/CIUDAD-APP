@@ -261,17 +261,29 @@ class MaternalPatientListView(generics.ListAPIView):
 class MaternalCountView(generics.ListAPIView):
     def get(self, request):
         try:
-            total_patients = Patient.objects.filter(
-                Exists(Pregnancy.objects.filter(
-                    pat_id=OuterRef('pat_id')
-                ))
-            ).distinct().count()
+            # Get all unique pat_ids from Pregnancy
+            pregnancy_pat_ids = Pregnancy.objects.values_list('pat_id', flat=True)
+            resident_set = set()
+            transient_set = set()
+            for pat_id in pregnancy_pat_ids:
+                pat_id_str = str(pat_id)
+                if pat_id_str.startswith('PR'):
+                    resident_set.add(pat_id_str)
+                elif pat_id_str.startswith('PT'):
+                    transient_set.add(pat_id_str)
+
+            resident_patients = len(resident_set)
+            transient_patients = len(transient_set)
+            total_patients = resident_patients + transient_patients
             active_pregnancy_count = Pregnancy.objects.filter(status='active').count()
 
             return Response({
                 'total_patients': total_patients,
-                'active_pregnancies': active_pregnancy_count
+                'active_pregnancies': active_pregnancy_count,
+                'resident_patients': resident_patients,
+                'transient_patients': transient_patients,
             }, status=status.HTTP_200_OK)
+        
         except Exception as e:
             logger.error(f"Error fetching counts: {str(e)}")
             return Response({

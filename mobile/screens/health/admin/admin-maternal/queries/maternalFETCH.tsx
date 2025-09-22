@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMaternalRecords, getActivePregnanciesCount } from "../restful-api/maternalGET";
+import { getMaternalRecords, getMaternalCount } from "../restful-api/maternalGET";
 
 import { MaternalPatientFilters } from "../restful-api/maternalGET";
 
@@ -15,10 +15,10 @@ export const useMaternalRecords = (filters: MaternalPatientFilters, options = {}
 	});
 }
 
-export const useActivepregnanciesCount = () => {
+export const useMaternalCount = () => {
 	return useQuery({
 		queryKey: ["activePregnanciesCount"],
-		queryFn: getActivePregnanciesCount,
+		queryFn: getMaternalCount,
 		staleTime: 60 * 1, 
 		retry: 2,
 	})

@@ -17,7 +17,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import { useMaternalRecords, useActivepregnanciesCount } from "./queries/maternalFETCH";
+import { useMaternalRecords, useMaternalCount } from "./queries/maternalFETCH";
 import { AgeCalculation } from "@/helpers/ageCalculator";
 import { date } from "zod";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -49,6 +49,10 @@ interface maternalRecords {
    patrec_type?: string;
 }
 
+// capitalize first letter of each word
+const capitalizeWords = (str: string) => {
+   return str.replace(/\b\w/g, char => char.toUpperCase());
+}
   
 // main component
 export default function IndividualMaternalRecordScreen() {
@@ -61,7 +65,7 @@ export default function IndividualMaternalRecordScreen() {
       [pageSize]: pageSize,
       search: searchQuery,
    });
-   const { data: activePregnancies, isLoading: activePregnanciesLoading } = useActivepregnanciesCount();
+   const { data: activePregnancies, isLoading: activePregnanciesLoading } = useMaternalCount();
 
    const activePregnanciesCount = activePregnancies || 0;
    const maternalPatientsCount = maternalRecords?.count || 0;   
@@ -218,7 +222,7 @@ export default function IndividualMaternalRecordScreen() {
                               <View
                                  className={getBadgeVariant(item.pat_type)}
                               >
-                                 <Text className="text-[12px] text-white text-center">{item.pat_type.toUpperCase()}</Text>
+                                 <Text className="text-[12px] text-white text-center">{item.pat_type}</Text>
                               </View>
                            </View>
                            <View className="flex-col gap-1">
