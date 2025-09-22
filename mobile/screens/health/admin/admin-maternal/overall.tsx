@@ -186,7 +186,7 @@ export default function OverallMaternalRecordsScreen() {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);
       setPage(1); 
-    }, 1); 
+    }); 
 
     return () => clearTimeout(timer);
   }, [searchInput]);
