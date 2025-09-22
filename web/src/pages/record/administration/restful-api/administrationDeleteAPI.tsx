@@ -1,12 +1,9 @@
-import { api, api2 } from "@/api/api";
+import { api } from "@/api/api";
 
 // Delete a position in both main and health APIs
 export const deletePosition = async (selectedPosition: string) => {
   try {
     const res = await api.delete(
-      `administration/position/delete/${selectedPosition}/`
-    );
-    await api2.delete(
       `administration/position/delete/${selectedPosition}/`
     );
     return res.status;
@@ -23,9 +20,6 @@ export const deleteAssignedFeature = async (
 ) => {
   try {
     const res = await api.delete(
-      `administration/assignment/delete/${featureId}/${selectedPosition}/`
-    );
-    await api2.delete(
       `administration/assignment/delete/${featureId}/${selectedPosition}/`
     );
     return res.status;
