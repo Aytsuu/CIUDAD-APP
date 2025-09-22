@@ -173,13 +173,13 @@ class ComplaintCreateView(APIView):
                         folder = "images" if file_data.content_type.split("/")[0] == "image" else "documents"
                         url = upload_to_storage(file_data, "complaint-bucket", folder)
 
-                        complaint_file = Complaint_File(
+                        complaint_files = Complaint_File(
                             comp=complaint,
                             comp_file_name=file_data.name,
                             comp_file_type=file_data.content_type,
                             comp_file_url=url,
                         )
-                        complaint_files.append(complaint_file)
+                        complaint_files.append(complaint_files)
 
                     if complaint_files:
                         Complaint_File.objects.bulk_create(complaint_files)

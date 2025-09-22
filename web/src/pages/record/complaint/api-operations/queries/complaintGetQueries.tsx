@@ -62,7 +62,6 @@ export const useSearchComplainants = (query: string) => {
   });
 };
 
-// Create a new hook for fetching all residents
 export const useAllResidents = () => {
   return useQuery({
     queryKey: ["all-residents"],
@@ -76,6 +75,6 @@ export const useAllResidents = () => {
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };

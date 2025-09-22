@@ -64,7 +64,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             result.append(complainant_data)
         return result
     
-    def get_accused_persons(self, obj):
+    def get_accused(self, obj):
         """Get all accused persons for this complaint"""
         accused = obj.complaintaccused_set.all()
         result = []

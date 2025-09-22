@@ -13,7 +13,7 @@ import { setupApiInterceptor } from "./interceptor";
 // });
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.8:8000",
+  baseURL: "http://localhost:8000",
   withCredentials: true, 
   headers: {
     "Content-Type": "application/json",

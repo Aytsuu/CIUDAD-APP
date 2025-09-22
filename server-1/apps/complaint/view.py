@@ -34,7 +34,7 @@ class ComplaintListView(generics.ListAPIView):
             queryset = Complaint.objects.prefetch_related(
                 'complaintcomplainant_set__cpnt__rp_id',
                 # 'complaintaccused_set__acsd__rp_id',
-                'complaint_file',
+                'files',
                 'staff'
             ).filter(comp_is_archive=False).order_by('-comp_created_at')
             

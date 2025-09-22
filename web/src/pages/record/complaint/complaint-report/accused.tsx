@@ -32,13 +32,10 @@ export const AccusedInfo = () => {
   // Watch current accused data
   const currentAccused = watch(`accused.${activeTab}`);
   const accusedType = currentAccused?.type || "manual";
-  const selectedGender = watch(`accused.${activeTab}.acsd_gender`);
 
   const genderOptions = [
     { id: "Male", name: "Male" },
     { id: "Female", name: "Female" },
-    { id: "Other", name: "Other" },
-    { id: "Prefer not to say", name: "Prefer not to say" },
   ];
   
   useEffect(() => {
@@ -49,7 +46,6 @@ export const AccusedInfo = () => {
         acsd_name: "",
         acsd_age: "",
         acsd_gender: "",
-        genderInput: "",
         acsd_description: "",
         acsd_address: "",
         address: {
@@ -72,7 +68,6 @@ export const AccusedInfo = () => {
       acsd_name: "",
       acsd_age: "",
       acsd_gender: "",
-      genderInput: "",
       acsd_description: "",
       acsd_address: "",
       address: {
@@ -105,7 +100,6 @@ export const AccusedInfo = () => {
     setValue(`accused.${activeTab}.acsd_name`, resident.cpnt_name);
     setValue(`accused.${activeTab}.acsd_age`, resident.cpnt_age);
     setValue(`accused.${activeTab}.acsd_gender`, resident.cpnt_gender);
-    setValue(`accused.${activeTab}.genderInput`, resident.cpnt_gender);
     setValue(`accused.${activeTab}.acsd_description`, `Resident: ${resident.cpnt_name}`);
     setValue(`accused.${activeTab}.acsd_address`, resident.cpnt_address || "");
     
@@ -230,7 +224,7 @@ export const AccusedInfo = () => {
               label="Select Resident (Optional)"
               placeholder="Search or select a resident..."
               emptyText="No residents found."
-              onSelect={(displayValue, item) => {
+              onSelect={(item) => {
                 if (item) {
                   selectResidentAccused(item);
                 }
@@ -272,7 +266,7 @@ export const AccusedInfo = () => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Gender:</span>
-                  <p className="text-gray-900">{currentAccused.genderInput || currentAccused.acsd_gender}</p>
+                  <p className="text-gray-900">{currentAccused.acsd_gender}</p>
                 </div>
                 <div className="md:col-span-2">
                   <span className="font-medium text-gray-700">Address:</span>
@@ -293,12 +287,12 @@ export const AccusedInfo = () => {
             <FormInput
               control={control}
               name={`accused.${activeTab}.acsd_name`}
-              label="Full Name (If known)/Alias *"
+              label="Full Name *"
               placeholder="Enter name or alias"
               readOnly={accusedType === "resident"}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={control}
                 name={`accused.${activeTab}.acsd_age`}
@@ -329,58 +323,28 @@ export const AccusedInfo = () => {
                 )}
               />
 
-              <div>
-                <FormLabel className="font-semibold text-black/50">
-                  Gender *
-                </FormLabel>
-                <div className="flex mt-2">
-                  <div className="flex-shrink-0 w-32">
-                    <FormField
-                      control={control}
-                      name={`accused.${activeTab}.acsd_gender`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <SelectLayout
-                              placeholder="Select gender"
-                              label=""
-                              options={genderOptions}
-                              value={field.value || ""}
-                              onChange={(value) => {
-                                field.onChange(value);
-                                if (value === "Other") {
-                                  setValue(`accused.${activeTab}.genderInput`, "");
-                                } else {
-                                  setValue(`accused.${activeTab}.genderInput`, value);
-                                }
-                              }}
-                              className="h-9"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="flex-1 ml-2">
-                    <FormInput
-                      control={control}
-                      name={`accused.${activeTab}.genderInput`}
-                      placeholder={
-                        selectedGender === "Other"
-                          ? "Enter gender"
-                          : "Auto-filled from selection"
-                      }
-                      readOnly={selectedGender !== "Other" || accusedType === "resident"}
-                      className={`${
-                        selectedGender !== "Other" || accusedType === "resident"
-                          ? "bg-gray-100 cursor-not-allowed"
-                          : ""
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
+              <FormField
+                control={control}
+                name={`accused.${activeTab}.acsd_gender`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-black/50">
+                      Gender *
+                    </FormLabel>
+                    <FormControl>
+                      <SelectLayout
+                        placeholder="Select gender"
+                        label=""
+                        options={genderOptions}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        className="h-10"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <FormField
