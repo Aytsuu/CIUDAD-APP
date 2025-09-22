@@ -11,9 +11,10 @@ export const useSubmitSoapForm = () => {
 
   return useMutation({
     mutationFn: async ({ formData, checkupData, staffId }: any) => {
+      console.log("Submitting SOAP form with data:", formData, checkupData, staffId);
       const payload = {
         staff_id: staffId,
-        patrec_id: checkupData?.patrec,
+        patrec_id: checkupData?.chrec_details?.patrec,
         chhist_id: checkupData?.chhist_id,
         chvital_id: checkupData?.child_health_vital_signs?.[0]?.chvital_id,
 
@@ -62,6 +63,7 @@ export const useSubmitSoapForm = () => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      
       navigate(-1);
     },
     onError: (error: Error) => {

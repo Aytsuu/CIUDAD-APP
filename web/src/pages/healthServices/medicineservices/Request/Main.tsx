@@ -41,7 +41,7 @@ export default function MedicineRequestMain() {
               <TabsList className="w-full grid grid-cols-2 gap-2 h-auto p-1">
                 <TabsTrigger value="requests" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <ClipboardList className="h-4 w-4" />
-                  <span>Requests</span>
+                  <span>For Pick Up</span>
                 </TabsTrigger>
                 <TabsTrigger value="pending" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <Clock className="h-4 w-4" />

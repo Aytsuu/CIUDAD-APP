@@ -147,7 +147,7 @@ class CombinedHealthRecordsView(APIView):
         
         # Apply assigned_to filter
         if assigned_to:
-            child_health_queryset = child_health_queryset.filter(assigned_to_id=assigned_to)
+            child_health_queryset = child_health_queryset.filter(assigned_to_id=assigned_to, status="check-up")
             med_consult_queryset = med_consult_queryset.filter(assigned_to_id=assigned_to)
         
         # Apply search filter
@@ -625,7 +625,7 @@ class SoapFormSubmissionView(APIView):
                 # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
                     minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('medreqitem_qty', 0)
+                    requested_qty = medicine.get('medrec_qty', 0)
                     
                     # Update MedicineInventory with temporary deduction
                     if minv_id and requested_qty > 0:
@@ -756,7 +756,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
                     minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('quantity', 0)  # Note: using 'quantity' key for child health
+                    requested_qty = medicine.get('medrec_qty', 0)  # Note: using 'quantity' key for child health
                     
                     # Update MedicineInventory with temporary deduction
                     if minv_id and requested_qty > 0:

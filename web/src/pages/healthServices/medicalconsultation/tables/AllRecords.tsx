@@ -15,6 +15,9 @@ import { ExportButton } from "@/components/ui/export";
 import { useDebounce } from "@/hooks/use-debounce";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { FilterSitio } from "../../reports/filter-sitio";
+import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 
 export default function AllMedicalConsRecord() {
   const navigate = useNavigate();
@@ -22,29 +25,47 @@ export default function AllMedicalConsRecord() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   const { showLoading, hideLoading } = useLoading();
+
+  // Fetch sitio data
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
+  
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchQuery || "";
+    
+    // If sitios are selected, add them to the search query with COMMA separation
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+    
+    return query || undefined;
+  }, [debouncedSearchQuery, selectedSitios]);
 
   // Build query parameters
   const queryParams = useMemo(
     () => ({
       page: currentPage,
       page_size: pageSize,
-      search: debouncedSearchQuery || undefined,
+      search: combinedSearchQuery,
       patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
     }),
-    [currentPage, pageSize, debouncedSearchQuery, patientTypeFilter]
+    [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
   );
 
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useMedicalRecord(queryParams);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchQuery, patientTypeFilter]);
 
   useEffect(() => {
     if (isLoading) {
@@ -150,6 +171,27 @@ export default function AllMedicalConsRecord() {
   }, [medicalRecords]);
 
   const { residents, transients } = calculateCounts();
+  
+  // Sitio filter handlers
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
+  
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
+  
+  const handleManualSitioSearch = (value: string) => {
+    // Not used since we're using the main search field
+  };
 
   return (
     <>
@@ -210,7 +252,12 @@ export default function AllMedicalConsRecord() {
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search by name, patient ID, household number, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <Input 
+                placeholder="Search by name, patient ID, household number, address, or sitio..." 
+                className="pl-10 bg-white w-full" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
             </div>
             <SelectLayout
               placeholder="Filter records"
@@ -223,6 +270,15 @@ export default function AllMedicalConsRecord() {
               ]}
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
+            />
+            <FilterSitio 
+              sitios={sitios} 
+              isLoading={isLoadingSitios} 
+              selectedSitios={selectedSitios} 
+              onSitioSelection={handleSitioSelection} 
+              onSelectAll={handleSelectAllSitios} 
+              onManualSearch={handleManualSitioSearch}
+              manualSearchValue=""
             />
           </div>
           <div className="w-full sm:w-auto">
@@ -240,6 +296,18 @@ export default function AllMedicalConsRecord() {
             </Button>
           </div>
         </div>
+        
+        {/* Selected Filters Chips */}
+        {selectedSitios.length > 0 && (
+          <SelectedFiltersChips 
+            items={selectedSitios} 
+            onRemove={(sitio:any) => handleSitioSelection(sitio, false)} 
+            onClearAll={() => setSelectedSitios([])} 
+            label="Filtered by sitios" 
+            chipColor="bg-blue-100" 
+            textColor="text-blue-800" 
+          />
+        )}
 
         <div className="h-full w-full">
           <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">

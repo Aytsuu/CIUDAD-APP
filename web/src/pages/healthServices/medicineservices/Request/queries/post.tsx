@@ -48,6 +48,8 @@ export const useCreateMedicineAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords"] });
       queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
+
 
 
       console.log("Allocation successful:", data);

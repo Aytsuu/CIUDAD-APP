@@ -750,7 +750,7 @@ export default function MedicineRequestDetail() {
             ) : (
               <>
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Process Allocation ({selectedMedicines.length})   
+                Submit ({selectedMedicines.length})   
               </>
             )}
           </Button>
