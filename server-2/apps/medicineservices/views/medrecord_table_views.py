@@ -9,8 +9,6 @@ from django.db.models.functions import TruncMonth
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
-
-
 from ..serializers import *
 from django.db import transaction, IntegrityError
 from django.utils.timezone import now
@@ -20,17 +18,56 @@ from apps.reports.serializers import *
 from pagination import *
 from django.db.models import Q, Prefetch
 from utils import * 
+from apps.medicalConsultation.utils import *
 
 
 
 class PatientMedicineRecordsTableView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        return Patient.objects.filter(
-            Q(patient_records__medicine_records__patrec_id__isnull=False) 
-        ).distinct()
-
+        # Base queryset with annotations for medicine count
+        queryset = Patient.objects.annotate(
+            medicine_count=Count(
+                'patient_records__medicine_records',
+                distinct=True
+            )
+        ).filter(
+            Q(patient_records__medicine_records__patrec_id__isnull=False)
+        ).select_related(
+          'rp_id__per',         
+          'trans_id',             
+            'trans_id__tradd_id'   
+        
+        ).distinct().order_by('-medicine_count')
+        
+       
+        
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query and len(search_query) >= 2:
+            queryset = apply_patient_search_filter(queryset, search_query)
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search and patient_type_search != 'all':
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
+        
+        return queryset
+    
+    
+ 
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
         
 class MedicineRecordTableView(APIView):
     pagination_class = StandardResultsPagination
@@ -64,16 +101,16 @@ class MedicineRecordTableView(APIView):
                     Q(minv_id__med_id__cat__cat_name__icontains=search_query)
                 )
             
-            # Prepare response data
+            # Prepare response data 
             records_data = []
-            
+              
             for record in medicine_records:
                 # Get associated files using the related name
                 file_data = [
                     {
                         'medf_id': file.medf_id,
                         'medf_name': file.medf_name,
-                        'medf_type': file.medf_type,
+                        'medf_type': file.medf_type,  
                         'medf_url': file.medf_url,
                         'created_at': file.created_at
                     }

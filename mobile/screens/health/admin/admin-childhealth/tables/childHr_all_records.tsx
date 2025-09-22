@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, TouchableOpacity, TextInput, FlatList, RefreshControl, } from 'react-native';
 import { useRouter } from 'expo-router';
 import {  Search, MapPin, Calendar, Baby, Heart, ChevronLeft, Users, AlertCircle,RefreshCw} from 'lucide-react-native';
 import { Text as UIText } from '@/components/ui/text';

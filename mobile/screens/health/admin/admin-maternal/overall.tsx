@@ -175,27 +175,24 @@ const MaternalRecordCard: React.FC<{
 };
 
 export default function OverallMaternalRecordsScreen() {
-  const [searchInput, setSearchInput] = useState(""); // Input value
-  const [searchQuery, setSearchQuery] = useState(""); // Debounced search value for API
+  const [searchInput, setSearchInput] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
   const pageSize = 10; 
 
-  // Debounce search input
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);
-      setPage(1); // Reset to page 1 when searching
-    }, 500); // 500ms delay
+      setPage(1); 
+    }, 100); 
 
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Map tab values to API expected values
   const getStatusForAPI = (tab: TabType) => {
     if (tab === "all") return undefined;
-    // Capitalize first letter to match API expectation
     return tab.charAt(0).toUpperCase() + tab.slice(1);
   };
 
@@ -292,6 +289,11 @@ export default function OverallMaternalRecordsScreen() {
     );
   }
 
+
+   if (isLoading && searchInput === "") {
+      return <LoadingState />;
+   }
+
   return (
     <PageLayout
       leftAction={
@@ -324,11 +326,7 @@ export default function OverallMaternalRecordsScreen() {
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
         {/* Records List */}
-        {isLoading && searchInput === "" ? (
-          <View className="flex-1 h-40 justify-center items-center">
-            <LoadingState />
-          </View>
-        ) : filteredData.length === 0 ? (
+        {filteredData.length === 0 ? (
           <View className="px-4">
             <Card className="bg-white border-slate-200">
                <CardContent className="items-center justify-center py-12">
@@ -359,15 +357,6 @@ export default function OverallMaternalRecordsScreen() {
                 record={item}
                 onPress={() => handleRecordPress(item.pat_id)}
               />
-            )}
-            ListHeaderComponent={() => (
-              // Show a subtle loading indicator while searching
-              isFetching && searchInput ? (
-                <View className="flex-row items-center justify-center py-2 mb-3">
-                  <RefreshCw size={16} color="#6B7280" className="animate-spin" />
-                  <Text className="ml-2 text-gray-600 text-sm">Searching...</Text>
-                </View>
-              ) : null
             )}
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">

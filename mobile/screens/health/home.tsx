@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, Venus, NotebookPen } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, Venus, BriefcaseMedical, SyringeIcon, NotebookPen } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 import NotificationBadge from "./my-schedules/notifbadge";
@@ -27,7 +27,11 @@ const Homepage = () => {
     { name: 'Schedules', route: 'admin/schedules/all-appointment', icon: Calendar },
     { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },
     { name: 'BHW Daily Field', route: '', icon: NotebookPen },
-    // { name: 'Transactions', route: 'admin/inventory/transaction', icon: Archive },
+    { name: 'First Aid', route: 'admin/first-aid/overall', icon: BriefcaseMedical},
+    { name: 'Vaccination', route: 'admin/vaccination/overall', icon: SyringeIcon},
+    { name: 'Medicine', route: 'admin/medicinerecords/overall', icon: BriefcaseMedical},
+
+
   ];
 
   const quickActions = [
