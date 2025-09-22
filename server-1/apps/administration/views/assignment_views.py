@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from ..models import Assignment
 from ..serializers.assignment_serializers import *
-from ..double_queries import PostQueries
+from ..double_queries import *
 
 class AssignmentView(generics.ListCreateAPIView):
     serializer_class = AssignmentMinimalSerializer
@@ -46,16 +46,13 @@ class AssignmentDeleteView(generics.DestroyAPIView):
         pos_id = self.kwargs.get('pos')
 
         obj = get_object_or_404(Assignment, feat_id=feat_id, pos_id=pos_id)
-        return obj
-    
-class AssignmentUpdateView(generics.UpdateAPIView):
-    serializer_class = AssignmentBaseSerializer
-    queryset = Assignment.objects.all()
-    lookup_field = 'assi_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        return Response(data=AssignmentMinimalSerializer(instance).data,status=status.HTTP_200_OK)
+        double_queries = DeleteQueries()
+        response = double_queries.assignment(feat_id, pos_id)
+        if not response.ok:
+            try:
+                error_detail = response.json()
+            except ValueError:
+                error_detail = response.text
+            raise serializers.ValidationError({'error': error_detail})
+        return obj
