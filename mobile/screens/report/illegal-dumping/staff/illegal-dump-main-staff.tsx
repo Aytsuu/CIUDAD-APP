@@ -203,6 +203,7 @@ export default function WasteIllegalDumping() {
       }
       headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Illegal Dumping Reports</Text>}
       rightAction={<View className="w-10 h-10 rounded-full items-center justify-center" />}
+      wrapScroll={false}
     >
       <View className="flex-1 px-4">
         {/* Search and Filters */}
