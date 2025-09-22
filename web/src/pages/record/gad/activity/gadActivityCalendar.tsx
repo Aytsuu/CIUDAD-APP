@@ -9,11 +9,12 @@ import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queri
 import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries";
 import { hotspotColumns, wasteColColumns } from "../../waste-scheduling/event-columns/event-cols";
 import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
+import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 
 
 const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set<number>) => {
   return annualDevPlans
-    .filter((plan: any) => devIdsWithProposals.has(plan.dev_id))
+    .filter((plan: any) => Boolean(plan?.dev_mandated) || devIdsWithProposals.has(plan.dev_id))
     .map((plan: any) => ({
       id: plan.dev_id,
       title: plan.dev_client,
@@ -31,8 +32,13 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
     }));
 };
 
-const createDevIdsWithProposals = (projectProposals: any[]) => {
-  return new Set(projectProposals.map((proposal: any) => proposal.devId).filter(Boolean));
+const createDevIdsWithProposals = (projectProposals: any[], resolutions: any[]) => {
+  const resolutionGprIds = new Set((resolutions || []).map((r: any) => r.gpr_id).filter(Boolean));
+  return new Set(
+    (projectProposals || [])
+      .filter((p: any) => p?.devId && p?.gprId && resolutionGprIds.has(p.gprId))
+      .map((p: any) => p.devId)
+  );
 };
 
 const filterCalendarEvents = (councilEvents: any[]) => {
@@ -217,8 +223,9 @@ function GADActivityPage() {
   const currentYear = new Date().getFullYear();
   const { data: annualDevPlans = [], isLoading: isAnnualDevPlansLoading } = useGetAnnualDevPlansByYear(currentYear);
   
-  // Fetch project proposals to filter annual dev plans
+  // Fetch project proposals and resolutions to filter annual dev plans
   const { data: projectProposals = [], isLoading: isProjectProposalsLoading } = useGetProjectProposals();
+  const { data: resolutions = [], isLoading: isResolutionsLoading } = useResolution();
  
   const { data: wasteEventData = [], isLoading: isWasteEventLoading } = useQuery({
     queryKey: ['wasteEvents'],
@@ -233,8 +240,8 @@ function GADActivityPage() {
 
   // Create a set of dev_ids that have project proposals
   const devIdsWithProposals = useMemo(() => {
-    return createDevIdsWithProposals(projectProposals);
-  }, [projectProposals]);
+    return createDevIdsWithProposals(projectProposals, resolutions);
+  }, [projectProposals, resolutions]);
 
   // Transform annual development plans for calendar display - only include those with project proposals
   const transformedAnnualDevPlans = useMemo(() => {
@@ -250,7 +257,7 @@ function GADActivityPage() {
     wasteCollectionData
   );
 
-  if (isLoading || isAnnualDevPlansLoading || isProjectProposalsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
+  if (isLoading || isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">

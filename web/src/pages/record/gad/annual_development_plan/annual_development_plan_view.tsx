@@ -160,7 +160,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
           <p>No development plans found for this year.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white rounded border border-gray-200">
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh] bg-white rounded border border-gray-200">
           <table className="min-w-full text-sm border border-gray-200 border-collapse">
             <colgroup>
               <col className="w-48" />

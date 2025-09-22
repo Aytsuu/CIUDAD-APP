@@ -48,6 +48,7 @@ export default function AnnualDevelopmentPlanCreate() {
       dev_indicator: "",
       dev_budget_items: "0",
       dev_gad_budget: "0",
+      dev_mandated: false,
       staff: staffId || "",
     }
   });
@@ -261,7 +262,7 @@ export default function AnnualDevelopmentPlanCreate() {
                 <Checkbox
                   checked={form.watch("dev_mandated") || false}
                   onCheckedChange={(checked) => {
-                    form.setValue("dev_mandated", checked as boolean);
+                    form.setValue("dev_mandated", Boolean(checked));
                   }}
                 />
                 <label className="text-sm font-medium text-gray-700">Mandated</label>
