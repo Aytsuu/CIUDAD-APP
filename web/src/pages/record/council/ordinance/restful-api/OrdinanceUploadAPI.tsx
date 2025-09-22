@@ -104,6 +104,12 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
         // Extract year from date
         const date = new Date(ordinanceInfo.ordinanceDate);
         const year = date.getFullYear();
+        
+        // Helper: generate an ordinance number if needed (YEAR-XXXX)
+        const generateOrdNum = () => {
+            const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return `${year}-${rand}`;
+        };
 
         // 1. Handle file upload first if exists
         let fileId = null;
@@ -151,6 +157,13 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
             staff: "00003250722", // Default staff ID
             of_id: fileId
         };
+
+        // Ensure the new ordinance (amendment/repeal/new) has its own ordinance number if backend requires it
+        if (!ordinanceInfo.ord_num || String(ordinanceInfo.ord_num).trim() === '') {
+            ordinanceData.ord_num = generateOrdNum();
+        } else {
+            ordinanceData.ord_num = ordinanceInfo.ord_num;
+        }
 
         // Add amendment-related fields if this is an amendment
         if (ordinanceInfo.ord_parent && ordinanceInfo.ord_parent !== "new") {

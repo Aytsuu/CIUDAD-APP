@@ -771,19 +771,6 @@ function OrdinancePage() {
                                                 content={folder.baseOrdinance.aiAnalysisResult ? 'View AI Analysis Results' : 'Run AI Analysis'}
                                             />
 
-                                            <TooltipLayout
-                                                trigger={
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => requestToggleRepealed(folder.baseOrdinance)}
-                                                        className="h-8 px-3 text-xs hover:bg-red-50 hover:border-red-300"
-                                                    >
-                                                        {folder.baseOrdinance.ord_repealed ? 'Un-repeal' : 'Mark Repealed'}
-                                                    </Button>
-                                                }
-                                                content={folder.baseOrdinance.ord_repealed ? 'Mark as active again' : 'Mark this ordinance as repealed'}
-                                            />
 
                                             <TooltipLayout
                                                 trigger={
@@ -919,22 +906,52 @@ function OrdinancePage() {
                                         Choose to create a new ordinance, amend an existing one, or file a repeal.
                                     </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                                        <Button variant={creationMode === 'new' ? 'default' : 'outline'} onClick={() => {
-                                            setCreationMode('new');
-                                            setSelectedExistingOrdinance('new');
-                                            form.setValue('ord_repealed', false);
-                                        }}>New</Button>
-                                        <Button variant={creationMode === 'amend' ? 'default' : 'outline'} onClick={() => {
-                                            setCreationMode('amend');
-                                            form.setValue('ord_repealed', false);
-                                        }}>Amend</Button>
-                                        <Button variant={creationMode === 'repeal' ? 'default' : 'outline'} onClick={() => {
-                                            setCreationMode('repeal');
-                                            form.setValue('ord_repealed', true);
-                                        }}>Repeal</Button>
+                                        {(() => {
+                                            const canTargetExisting = ordinanceOptions.length > 0;
+                                            const handleSetMode = (mode: 'new' | 'amend' | 'repeal') => {
+                                                if ((mode === 'amend' || mode === 'repeal') && !canTargetExisting) {
+                                                    return; // prevent switching when no eligible ordinances
+                                                }
+                                                setCreationMode(mode);
+                                                if (mode === 'new') {
+                                                    setSelectedExistingOrdinance('new');
+                                                    form.setValue('ord_repealed', false);
+                                                } else if (mode === 'amend') {
+                                                    form.setValue('ord_repealed', false);
+                                                } else if (mode === 'repeal') {
+                                                    form.setValue('ord_repealed', true);
+                                                }
+                                            };
+                                            return (
+                                                <>
+                                                    <Button
+                                                        variant={creationMode === 'new' ? 'default' : 'outline'}
+                                                        onClick={() => handleSetMode('new')}
+                                                    >
+                                                        New
+                                                    </Button>
+                                                    <Button
+                                                        variant={creationMode === 'amend' ? 'default' : 'outline'}
+                                                        disabled={!canTargetExisting}
+                                                        onClick={() => handleSetMode('amend')}
+                                                        title={!canTargetExisting ? 'No eligible ordinances to amend' : undefined}
+                                                    >
+                                                        Amend
+                                                    </Button>
+                                                    <Button
+                                                        variant={creationMode === 'repeal' ? 'default' : 'outline'}
+                                                        disabled={!canTargetExisting}
+                                                        onClick={() => handleSetMode('repeal')}
+                                                        title={!canTargetExisting ? 'No eligible ordinances to repeal' : undefined}
+                                                    >
+                                                        Repeal
+                                                    </Button>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
 
-                                    {(creationMode === 'amend' || creationMode === 'repeal') && (
+                                    {(creationMode === 'amend' || creationMode === 'repeal') && ordinanceOptions.length > 0 && (
                                         <div className="w-full">
                                             <SelectLayout
                                                 className="w-full"
@@ -946,6 +963,11 @@ function OrdinancePage() {
                                                     setSelectedExistingOrdinance(value || 'new');
                                                 }}
                                             />
+                                        </div>
+                                    )}
+                                    {(creationMode === 'amend' || creationMode === 'repeal') && ordinanceOptions.length === 0 && (
+                                        <div className="text-xs text-red-600">
+                                            There are no eligible ordinances to {creationMode === 'amend' ? 'amend' : 'repeal'}.
                                         </div>
                                     )}
                                 </div>
@@ -1166,12 +1188,17 @@ function OrdinancePage() {
                                     </div>
                                 </div>
 
-                                {/* Amendments */}
-                                {selectedFolder.amendments.length > 0 && (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between border-b pb-2">
-                                            <h3 className="text-lg font-semibold text-gray-800">Amendments ({selectedFolder.amendments.length})</h3>
-                                        </div>
+                                {/* Amendments & Repeals separated */}
+                                {selectedFolder.amendments.length > 0 && (() => {
+                                    const amendmentItems = selectedFolder.amendments.filter(a => Boolean(a.ord_is_ammend));
+                                    const repealItems = selectedFolder.amendments.filter(a => Boolean(a.ord_repealed) && !Boolean(a.ord_is_ammend));
+                                    return (
+                                    <div className="space-y-6">
+                                        {amendmentItems.length > 0 && (
+                                            <>
+                                                <div className="flex items-center justify-between border-b pb-2">
+                                                    <h3 className="text-lg font-semibold text-gray-800">Amendments ({amendmentItems.length})</h3>
+                                                </div>
 
                                         {/* Amendment Comparison Results */}
                                         {selectedFolder.amendmentComparisonResult && (
@@ -1230,7 +1257,7 @@ function OrdinancePage() {
                                             </div>
                                         )}
 
-                                        {selectedFolder.amendments.map((amendment, index) => (
+                                        {amendmentItems.map((amendment, index) => (
                                             <div key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -1285,8 +1312,67 @@ function OrdinancePage() {
                                                 </div>
                                             </div>
                                         ))}
+                                        </>
+                                        )}
+
+                                        {repealItems.length > 0 && (
+                                            <>
+                                                <div className="flex items-center justify-between border-b pb-2">
+                                                    <h3 className="text-lg font-semibold text-gray-800">Repeals ({repealItems.length})</h3>
+                                                </div>
+                                                {repealItems.map((repeal) => (
+                                                    <div key={repeal.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                            <span className="text-sm font-semibold text-red-700">Repeal</span>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleOpenAIAnalysis(repeal)}
+                                                                    disabled={!aiService || individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id}
+                                                                    className="text-xs px-3 py-1 h-7"
+                                                                >
+                                                                    {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
+                                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                    ) : (
+                                                                        <Brain className="h-3 w-3 mr-1" />
+                                                                    )}
+                                                                    {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id) ? 'Analyzing...' : 'Analyze'}
+                                                                </Button>
+
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        if (repeal.file && repeal.file.file_url) {
+                                                                            window.open(repeal.file.file_url, '_blank');
+                                                                        } else {
+                                                                            toast.error('No file available to view');
+                                                                        }
+                                                                    }}
+                                                                    className="text-xs px-3 py-1 h-7"
+                                                                >
+                                                                    <Eye className="h-3 w-3 mr-1" />
+                                                                    View File
+                                                                </Button>
+                                                            </div>
+
+                                                            <div className="text font-medium text-lg">{repeal.ord_title}</div>
+                                                            <div className="text-xs text-gray-600">ORD: {repeal.ord_num} • {repeal.ord_date_created}</div>
+                                                            <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                                                                {repeal.ord_details || 'No details available'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </>
+                                        )}
                                     </div>
-                                )}
+                                    )})()}
                             </div>
                         )}
                     </div>

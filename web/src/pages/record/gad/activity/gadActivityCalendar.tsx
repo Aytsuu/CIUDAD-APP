@@ -11,7 +11,6 @@ import { hotspotColumns, wasteColColumns } from "../../waste-scheduling/event-co
 import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 
-
 const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set<number>) => {
   return annualDevPlans
     .filter((plan: any) => Boolean(plan?.dev_mandated) || devIdsWithProposals.has(plan.dev_id))

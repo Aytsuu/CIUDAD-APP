@@ -279,12 +279,17 @@ function ViewOrdinance({
                                 </div>
                             </div>
 
-                            {/* Amendments */}
-                            {folder.amendments.length > 0 && (
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between border-b pb-2">
-                                        <h3 className="text-lg font-semibold text-gray-800">Amendments ({folder.amendments.length})</h3>
-                                    </div>
+                            {/* Amendments and Repeals separated */}
+                            {folder.amendments.length > 0 && (() => {
+                                const amendmentItems = folder.amendments.filter(a => Boolean(a.ord_is_ammend));
+                                const repealItems = folder.amendments.filter(a => Boolean(a.ord_repealed) && !Boolean(a.ord_is_ammend));
+                                return (
+                                <div className="space-y-6">
+                                    {amendmentItems.length > 0 && (
+                                        <>
+                                            <div className="flex items-center justify-between border-b pb-2">
+                                                <h3 className="text-lg font-semibold text-gray-800">Amendments ({amendmentItems.length})</h3>
+                                            </div>
 
                                     {/* Amendment Comparison Results */}
                                     {folder.amendmentComparisonResult && (
@@ -343,7 +348,7 @@ function ViewOrdinance({
                                         </div>
                                     )}
 
-                                    {folder.amendments.map((amendment, index) => (
+                                    {amendmentItems.map((amendment, index) => (
                                         <div key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -394,8 +399,67 @@ function ViewOrdinance({
                                             </div>
                                         </div>
                                     ))}
+                                    </>
+                                    )}
+
+                                    {repealItems.length > 0 && (
+                                        <>
+                                            <div className="flex items-center justify-between border-b pb-2">
+                                                <h3 className="text-lg font-semibold text-gray-800">Repeals ({repealItems.length})</h3>
+                                            </div>
+                                            {repealItems.map((repeal) => (
+                                                <div key={repeal.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                        <span className="text-sm font-semibold text-red-700">Repeal</span>
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleOpenAIAnalysis(repeal)}
+                                                                disabled={!aiService || individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id}
+                                                                className="text-xs px-3 py-1 h-7"
+                                                            >
+                                                                {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id) ? (
+                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                ) : (
+                                                                    <Brain className="h-3 w-3 mr-1" />
+                                                                )}
+                                                                {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id) ? 'Analyzing...' : 'Analyze'}
+                                                            </Button>
+
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    if (repeal.file && repeal.file.file_url) {
+                                                                        window.open(repeal.file.file_url, '_blank');
+                                                                    } else {
+                                                                        toast.error('No file available to view');
+                                                                    }
+                                                                }}
+                                                                className="text-xs px-3 py-1 h-7"
+                                                            >
+                                                                <Eye className="h-3 w-3 mr-1" />
+                                                                View File
+                                                            </Button>
+                                                        </div>
+
+                                                        <div className="text font-medium text-lg">{repeal.ord_title}</div>
+                                                        <div className="text-xs text-gray-600">ORD: {repeal.ord_num} • {repeal.ord_date_created}</div>
+                                                        <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                                                            {repeal.ord_details || 'No details available'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
                                 </div>
-                            )}
+                                )})()}
                         </div>
                     </div>
                 }
