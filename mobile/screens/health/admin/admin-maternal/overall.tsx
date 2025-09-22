@@ -1,19 +1,16 @@
 import React, { useState, useMemo, act } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Users, UserCheck, UserPlus, RefreshCw } from "lucide-react-native";
+import { router } from "expo-router";
+import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Users, MapPinHouse, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button/button";
-import { router } from "expo-router";
-import { format } from "date-fns";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-// import { getFPPatientsCounts, getFPRecordsList } from "../admin-familyplanning/GetRequest";
-import PageLayout from "@/screens/_PageLayout";
+import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 
+import PageLayout from "@/screens/_PageLayout";
+import { AgeCalculation } from "@/helpers/ageCalculator";
+
 import { useMaternalRecords } from "./queries/maternalFETCH";
-import { useActivepregnanciesCount } from "./queries/maternalFETCH";
 
 // Removed FPRecord interface, using maternalRecords below
 
@@ -41,7 +38,7 @@ interface maternalRecords {
 
    pat_type: "Transient" | "Resident";
    patrec_type?: string;
-   pregnancy_count?: number;
+   completed_pregnancy_count?: number;
 }
 
 
@@ -154,17 +151,18 @@ const MaternalRecordCard: React.FC<{
         <View className="flex-row items-center mb-3">
           <Users size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
-            Age: <Text className="font-medium text-gray-900">{record.age}</Text> • {record.personal_info?.per_sex}
+            Age: <Text className="font-medium text-gray-900">{AgeCalculation(record?.personal_info?.per_dob ?? "")}</Text> • {record.personal_info?.per_sex}
           </Text>
         </View>
         <View className="flex-row items-center mb-3">
           <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
-            Pregnancy Count: <Text className="font-medium text-gray-900">{record.pregnancy_count ?? 'N/A'}</Text>
+            Completed Pregnancies: <Text className="font-medium text-gray-900">{record.completed_pregnancy_count ?? 'N/A'}</Text>
           </Text>
         </View>
         {record.address && (
           <View className="flex-row items-center">
+            <MapPinHouse size={16} color="#6B7280" />
             <Text className="ml-2 text-gray-600 text-sm">
               Address: <Text className="font-medium text-gray-900">
                 {record.address.add_street ?? ''} {record.address.add_barangay ?? ''} {record.address.add_city ?? ''} {record.address.add_province ?? ''}
@@ -185,8 +183,6 @@ export default function OverallMaternalRecordsScreen() {
   const [page, setPage] = useState(1);
   const pageSize = 10; 
 
-  const queryClient = useQueryClient();
-
   const { data: maternalData, isLoading, isError, refetch } = useMaternalRecords({
     page,
     page_size: pageSize,
@@ -194,9 +190,9 @@ export default function OverallMaternalRecordsScreen() {
     status: activeTab !== "all" ? activeTab : undefined,
   });
 
-  const { data: activePregnanciesCount } = useActivepregnanciesCount();
+//   const { data: activePregnanciesCount } = useActivepregnanciesCount();
   
-  const activePregnancies = activePregnanciesCount.active_pregnancy_count || 0;
+//   const activePregnancies = activePregnanciesCount.active_pregnancies || 0;
   const maternalRecordss = maternalData?.results || [];
   const totalMCount = maternalData?.count || 0;
   const totalMPages = Math.ceil(totalMCount / pageSize);
@@ -220,7 +216,6 @@ export default function OverallMaternalRecordsScreen() {
   }, [maternalRecordss, searchQuery, activeTab]);
 
   const counts = useMemo(() => {
-    // If you have resident/transient counts from backend, use them here
     return {
       all: totalMCount,
       resident: maternalRecordss.filter((r: maternalRecords) => r.pat_type === 'Resident').length,
@@ -323,13 +318,16 @@ export default function OverallMaternalRecordsScreen() {
 
         {/* Records List */}
         {filteredData.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-6">
-            <FileText size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
-            <Text className="text-gray-600 text-center mt-2">
-              There are no maternal records available yet.
-            </Text>
-          </View>
+          <View className="px-4">
+            <Card className="bg-white border-slate-200">
+               <CardContent className="items-center justify-center py-12">
+                  <FileText size={48} color="#94a3b8" />
+                  <Text className="text-lg font-medium text-slate-900 mt-4">
+                  No records found
+                  </Text>
+               </CardContent>
+            </Card>
+         </View>
         ) : (
           <FlatList
             data={filteredData}

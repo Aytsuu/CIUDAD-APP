@@ -4,8 +4,8 @@ interface ScheduleTabProps {
   onTimeFrameChange: (timeFrame: string) => void;
 }
 
-export default function ScheduleTab({ onTimeFrameChange }: ScheduleTabProps): JSX.Element {
-  const [selectedTimeFrame, setSelectedTimeFrame] = useState("today");
+export default function ScheduleTab({ onTimeFrameChange } : ScheduleTabProps): JSX.Element {
+   const [selectedTimeFrame, setSelectedTimeFrame] = useState("all");
 
 	const handleTimeFrameChange = (timeFrame: string) => {
 		setSelectedTimeFrame(timeFrame);

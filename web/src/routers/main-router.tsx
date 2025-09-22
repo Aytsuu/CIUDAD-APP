@@ -38,8 +38,9 @@ import { withTransition } from '@/helpers/withTransition';
 import { viewprofile_router } from "./Account-settings";
 import { template_router } from './template-router';
 import { clearances_router } from './clearances-router';
-import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
+import { team_router } from "./team-router";
 // import { ProtectedRoute } from "@/ProtectedRoutes";
+import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -58,6 +59,7 @@ export const main_router: RouteObject[] = [
         path: "announcement",
         element: <AnnouncementDashboard />,
       },
+      ...team_router,
       ...administration_router,
       ...profiling_router,
       ...report_router,
@@ -109,10 +111,8 @@ export const main_router: RouteObject[] = [
       ...health_schedule_routes,
       ...viewprofile_router,
       ...template_router,
-      ...clearances_router,      
+      ...clearances_router,
       ...bhw_daily_notes_router,
-      ...reports_router,
     ])
     }
 ]
-

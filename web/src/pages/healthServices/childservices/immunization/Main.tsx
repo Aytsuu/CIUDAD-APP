@@ -5,7 +5,6 @@ import Immunization from "./Step2";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Loader2 } from "lucide-react";
-// import { ChildHealthHistoryRecord } from "../../childservices/viewrecords/types";
 import { VitalSignType, VaccineRecord, ExistingVaccineRecord } from "../../../../form-schema/ImmunizationSchema";
 import { useVaccinesListImmunization } from "./queries/fetchQueries";
 import { getVaccinationRecordById } from "../../vaccination/restful-api/get";

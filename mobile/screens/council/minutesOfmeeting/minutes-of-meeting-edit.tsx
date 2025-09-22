@@ -6,7 +6,7 @@ import { z } from "zod";
 import { ChevronLeft } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import _ScreenLayout from "@/screens/_ScreenLayout";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input";

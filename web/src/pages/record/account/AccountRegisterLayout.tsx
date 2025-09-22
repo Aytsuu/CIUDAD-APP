@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import type { z } from "zod"
 import { accountFormSchema } from "@/form-schema/account-schema"
 import AccountRegistrationForm from "./AccountRegistrationForm"
-import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Mail, Lock, User, CircleUserRound } from "lucide-react"
 import { useAddAccount } from "./queries/accountAddQueries"
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/button/button"
 import { useLocation } from "react-router"
 import { Separator } from "@/components/ui/separator"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import axios from "axios"
 
 export default function AccountRegistrationLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   const location = useLocation()
@@ -27,7 +27,9 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
 
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
-    defaultValues: generateDefaultValues(accountFormSchema._def.schema)
+    defaultValues: {
+      'email': null
+    }
   })
 
   // ==================== HANDLERS ======================
@@ -70,6 +72,21 @@ export default function AccountRegistrationLayout({ tab_params }: { tab_params?:
       }
     } catch (error) {
       console.error("Error creating account:", error)
+      if(axios.isAxiosError(error) && error.response) {
+        if(error.response.data.phone) {
+          form.setError("phone", {
+            type: "server",
+            message: error.response.data.phone
+          })
+        }
+
+        if(error.response.data.email) {
+          form.setError("email", {
+            type: "server",
+            message: error.response.data.email
+          })
+        }
+      }
       showErrorToast("Failed to create account. Please try again.")
     } finally {
       setIsSubmitting(false)

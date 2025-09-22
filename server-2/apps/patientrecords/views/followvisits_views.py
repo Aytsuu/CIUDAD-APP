@@ -44,48 +44,63 @@ class AllFollowUpVisitsView(generics.ListAPIView):
             'patrec__pat_id__rp_id',
             'patrec__pat_id__rp_id__per',
             'patrec__pat_id__trans_id'
-        ).all(  )
+        ).all( )
 
         # filtering options 
-        status = self.request.query_params.get('status')
-        search = self.request.query_params.get('search')
-        time_frame = self.request.query_params.get('time_frame')
+        params = self.request.query_params
+        status = params.get('status')
+        search = params.get('search')
+        time_frame = params.get('time_frame')
 
-        if status and status != 'All':
-            queryset = queryset.filter(followv_status=status)
-        
+        filters = Q()
+
+        if status and status.lower() not in ['all', '']:
+            filters &= Q(followv_status__iexact=status)
+
         if search:
-            queryset = queryset.filter(
-                Q(patrec__pat_id__rp_id__per__per_fname__icontains=search) |
-                Q(patrec__pat_id__rp_id__per__per_lname__icontains=search) |
-                Q(patrec__pat_id__trans_id__tran_fname__icontains=search) |
-                Q(patrec__pat_id__trans_id__tran_lname__icontains=search) |
-                Q(followv_description__icontains=search)
-            )
+            search = search.strip()
+            if search:
+                search_filters = Q()
+
+                search_filters |= (
+                    Q(patrec__pat_id__rp_id__per__per_fname__icontains=search) |
+                    Q(patrec__pat_id__rp_id__per__per_lname__icontains=search) 
+                )
+
+                search_filters |= (
+                    Q(patrec__pat_id__trans_id__tran_fname__icontains=search) |
+                    Q(patrec__pat_id__trans_id__tran_lname__icontains=search) 
+                )
+
+                search_filters |= Q(followv_description__icontains=search)
+
+                filters &= search_filters
         
         if time_frame:
             today = timezone.now().date()
+            date_filters = None
 
             if time_frame == 'today':
-                queryset = queryset.filter(followv_date=today)
+                date_filters = Q(followv_date=today)
                 
             elif time_frame == 'thisWeek':
-                start_week = today - timedelta(days=today.weekday()) # Monday 
-                end_week = start_week + timedelta(days=6) # Sunday
-                queryset = queryset.filter(followv_date__range=[start_week, end_week])
+                date_filters = Q(
+                    followv_date__week=today.isocalendar()[1],
+                    followv_date__year=today.year
+                )
 
             elif time_frame == 'thisMonth':
-                start_month = today.replace(day=1)
-                if today.month == 12:
-                    end_month = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
-                else:
-                    end_month = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
-
-                queryset = queryset.filter(
-                    followv_date__range=[start_month, end_month]
+                date_filters = Q(
+                    followv_date__month=today.month,
+                    followv_date__year=today.year
                 )
-        return queryset.order_by('-followv_date')
+            if date_filters:
+                filters &= date_filters
 
+        if filters:
+            queryset = queryset.filter(filters)
+
+        return queryset.order_by('followv_date')
 
 
 class DeleteUpdateFollowUpVisitView(generics.RetrieveUpdateDestroyAPIView):

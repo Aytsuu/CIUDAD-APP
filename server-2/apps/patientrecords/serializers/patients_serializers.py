@@ -41,6 +41,7 @@ class PatientSerializer(serializers.ModelSerializer):
     spouse_info = serializers.SerializerMethodField()
     # family_planning_record = serializers.SerializerMethodField()
     additional_info = serializers.SerializerMethodField()
+    completed_pregnancy_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Patient

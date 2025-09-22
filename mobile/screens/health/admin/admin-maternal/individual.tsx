@@ -14,12 +14,13 @@ import {
 } from "lucide-react-native";
 import PageLayout from "@/screens/_PageLayout";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useMaternalRecords, useActivepregnanciesCount } from "./queries/maternalFETCH";
 import { AgeCalculation } from "@/helpers/ageCalculator";
 import { date } from "zod";
+import { LoadingState } from "@/components/ui/loading-state";
 
 // interface for maternal records
 interface maternalRecords {
@@ -55,7 +56,11 @@ export default function IndividualMaternalRecordScreen() {
    const [pageSize, setPageSize] = useState(10);
    const [currentPage, setCurrentPage] = useState(1);
 
-   const { data: maternalRecords, isLoading: maternalPatientsLoading } = useMaternalRecords();
+   const { data: maternalRecords, isLoading: maternalPatientsLoading } = useMaternalRecords({
+      page: currentPage,
+      [pageSize]: pageSize,
+      search: searchQuery,
+   });
    const { data: activePregnancies, isLoading: activePregnanciesLoading } = useActivepregnanciesCount();
 
    const activePregnanciesCount = activePregnancies || 0;
@@ -259,17 +264,17 @@ export default function IndividualMaternalRecordScreen() {
 
    const renderEmpty = () => (
       <View className="px-4">
-      <Card className="bg-white border-slate-200">
-         <CardContent className="items-center justify-center py-12">
-            <FileText size={48} color="#94a3b8" />
-            <Text className="text-lg font-medium text-slate-900 mt-4">
-            No records found
-            </Text>
-            <Text className="text-slate-500 text-center mt-2">
-            Try adjusting your search or filter criteria
-            </Text>
-         </CardContent>
-      </Card>
+         <Card className="bg-white border-slate-200">
+            <CardContent className="items-center justify-center py-12">
+               <FileText size={48} color="#94a3b8" />
+               <Text className="text-lg font-medium text-slate-900 mt-4">
+               No records found
+               </Text>
+               <Text className="text-slate-500 text-center mt-2">
+               Try adjusting your search or filter criteria
+               </Text>
+            </CardContent>
+         </Card>
       </View>
    );
 
@@ -324,9 +329,7 @@ export default function IndividualMaternalRecordScreen() {
    // loading conditions
    if (maternalPatientsLoading || activePregnanciesLoading) {
       return (
-         <View>
-            <Text>Loading...</Text>
-         </View>
+         <  LoadingState />
       )
    }
 

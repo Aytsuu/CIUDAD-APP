@@ -4,40 +4,45 @@ import PrenatalForm from "@/pages/healthServices/maternal/prenatal/prenatal-form
 import PrenatalViewingOne from "@/pages/healthServices/maternal/prenatal/prenatal-history/form-history/prenatal-viewing-one";
 import PrenatalIndivHistory from "@/pages/healthServices/maternal/prenatal/prenatal-history/prenatal-indiv-history";
 import PostpartumForm from "@/pages/healthServices/maternal/postpartum/postpartum-form-main";
-import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/postpartum-history/form-history/pospartum-viewing";
+import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/postpartum-history/form-history/postpartum-viewing";
+import PostpartumCareHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-care-history";
 import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-indiv-history";
 
 export const maternal_router = [
     {
-        path: "/maternalrecords",
+        path: "/services/maternalrecords",
         element: <MaternalAllRecords />,
     },
     {
-        path: "/maternalindividualrecords",
+        path: "/services/maternalindividualrecords",
         element: <MaternalIndivRecords />,
     },
     {
-        path: "/prenatalform",
+        path: "/services/maternal/prenatal/form",
         element: <PrenatalForm />,
     },
     {
-        path: "/prenatalviewing",
-        element: <PrenatalViewingOne />,
-    },
-    {
-        path: "/postpartumform",
-        element: <PostpartumForm />
-    },
-    {
-        path: "/prenatalindividualhistory",
+        path: "/services/maternal/prenatal/history",
         element: <PrenatalIndivHistory />
     },
     {
-        path: "/postpartumindividualhistory",
+        path: "/services/maternal/prenatal/view",
+        element: <PrenatalViewingOne />,
+    },
+    {
+        path: "/services/maternal/postpartum/form",
+        element: <PostpartumForm />
+    },
+    {
+        path: "/services/maternal/postpartum/history",
         element: <PostpartumIndivHistory />
     },
     {
-        path: "/postpartumviewing",
+        path: "/services/maternal/postpartumcare/history",
+        element: <PostpartumCareHistory />
+    },
+    {
+        path: "/services/maternal/postpartum/view",
         element: <PostpartumViewing />,
     }
 ]

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText, Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
 import { router, useRouter } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query";
 import PageLayout from "@/screens/_PageLayout";
@@ -38,7 +38,8 @@ const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: an
 export default function MyFpRecordsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  // If 'resident' is not part of User type, add a type guard or update the type definition
+  const rp_id = (user && 'resident' in user && (user as any).resident?.rp_id) || null;
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
   const [isComparing, setIsComparing] = useState(false);
 

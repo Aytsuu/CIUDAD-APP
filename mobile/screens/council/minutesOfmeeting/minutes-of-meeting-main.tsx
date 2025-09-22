@@ -8,7 +8,7 @@ import React from "react"
 import { SearchInput } from "@/components/ui/search-input"
 import { useGetMinutesOfMeetingRecords, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button"
 import { formatAreaOfFocus } from "@/helpers/wordFormatter"
 
 export default function MinutesOfMeetingMain() {

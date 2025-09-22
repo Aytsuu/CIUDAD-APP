@@ -19,7 +19,6 @@ import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/Reports/inve
 import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/Reports/inventory/firstaid/records";
 import MonthlyInventoryAntigenRecords from "@/pages/healthServices/Reports/inventory/antigen/monthly";
 import MonthlyInventoryAntigenDetails from "@/pages/healthServices/Reports/inventory/antigen/records";
-
 // OPT
 import MonthlyOPTRecords from "@/pages/healthServices/Reports/opt-tracking/monthly";
 import MonthlyOPTDetails from "@/pages/healthServices/Reports/opt-tracking/records";

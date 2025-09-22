@@ -1,6 +1,6 @@
 // components/columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { DocumentModal } from "../../tables/columns/inv-med-col";
 import { Reject } from "./reject";

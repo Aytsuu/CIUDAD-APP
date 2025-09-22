@@ -3,14 +3,12 @@ import React, { useState, useMemo, useEffect, useContext } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide-react-native";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
-import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
+// import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
 
 // Hooks and types
 import { ChrRecords } from "./types";

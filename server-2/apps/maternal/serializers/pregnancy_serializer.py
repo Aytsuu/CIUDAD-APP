@@ -2,7 +2,7 @@ from rest_framework import serializers
 from datetime import date
 
 from apps.maternal.models import *
-from apps.maternal.serializer import *
+from apps.maternal.serializers.serializer import *
 
 # for maternal accordion view
 class PregnancyDetailSerializer(serializers.ModelSerializer):
@@ -43,7 +43,7 @@ class PregnancyDetailSerializer(serializers.ModelSerializer):
             print(f'Error getting prenatal care: {str(e)}')
             return []
 
-
+# for completing pregnancy status
 class PregnancyCompleteStatusSerializer(serializers.ModelSerializer):
     pat_id = serializers.CharField(write_only=True, required=True)
 

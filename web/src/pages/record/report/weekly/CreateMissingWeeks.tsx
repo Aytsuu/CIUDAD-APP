@@ -1,4 +1,4 @@
-import { useState } from "react"
+import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Button } from "@/components/ui/button/button"
@@ -6,27 +6,24 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus, Check } from "lucide-react"
-import React from "react"
-import { useLocation } from "react-router"
+import { Calendar, MapPin, FileText, CheckCircle2, Loader2, Plus } from "lucide-react"
+import { useLocation, useNavigate } from "react-router"
 import { useGetARByDate } from "../queries/reportFetch"
 import { formatDate, getRangeOfDaysInWeek, lastDayOfTheWeek, monthNameToNumber } from "@/helpers/dateHelper"
 import { useAddWAR, useAddWARComp } from "../queries/reportAdd"
-import { toast } from "sonner"
 import { useAuth } from "@/context/AuthContext"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal"
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 
 export default function CreateMissingWeeks() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation()
   const params = React.useMemo(() => location.state?.params, [location.state])
   const year = React.useMemo(() => params?.year || new Date().getFullYear(), [params])
   const month = React.useMemo(() => params?.month || "", [params])
   const week = React.useMemo(() => params?.week || 0, [params])
-  const range = React.useMemo(() => 
-    getRangeOfDaysInWeek(week, month, year, true) as {start_day: number, end_day: number}, 
-  [year, month, week])
-
-  console.log(range)
+  const range = getRangeOfDaysInWeek(week, month, year, true) as {start_day: number, end_day: number}
 
   const { data: ARByDate, isLoading } = useGetARByDate(
     year, 
@@ -35,11 +32,10 @@ export default function CreateMissingWeeks() {
     range?.end_day
   )
   const { mutateAsync: addWAR } = useAddWAR();
-    const { mutateAsync: addWARComp } = useAddWARComp();
+  const { mutateAsync: addWARComp } = useAddWARComp();
   
-
-  const [selectedReports, setSelectedReports] = useState<string[]>([])
-  const [isCreating, setIsCreating] = useState(false)
+  const [selectedReports, setSelectedReports] = React.useState<string[]>([])
+  const [isCreating, setIsCreating] = React.useState(false)
 
   // Handle individual checkbox change
   const handleReportSelection = (reportId: string, checked: boolean) => {
@@ -57,37 +53,39 @@ export default function CreateMissingWeeks() {
 
   // Handle weekly report creation
   const handleCreateWeeklyReport = async () => {
-    if (selectedReports.length === 0) return
-    setIsCreating(true);
-    addWAR({
-      war_created_for: lastDayOfTheWeek(
-        week, monthNameToNumber(month) as number, 
-        year),
-      staff: user?.staff?.staff_id
-    }, {
-      onSuccess: (data) => {
-        const compositions = selectedReports.map((id) => ({
-          ar: id,
-          war: data.war_id,
-        }))
+    if (selectedReports.length === 0) {
+      showErrorToast("Please select atleast 1 report.")
+      return
+    }
 
-        addWARComp(compositions, {
-          onSuccess: () => {
-            toast("Weekly AR created successfully", {
-              icon: <Check size={24} className="text-green-500" />,
-              style: {
-                border: "1px solid rgb(187, 247, 208)",
-                padding: "16px",
-                color: "#166534",
-                background: "#f0fdf4",
-              },
-            })
-            setIsCreating(false);
-            setSelectedReports([]);
-          },
-        })
-      },
-    })
+    setIsCreating(true);
+    try {
+      addWAR({
+        war_created_for: lastDayOfTheWeek(
+          week, monthNameToNumber(month) as number, 
+          year),
+        staff: user?.staff?.staff_id
+      }, {
+        onSuccess: (data) => {
+          const compositions = selectedReports.map((id) => ({
+            ar: id,
+            war: data.war_id,
+          }))
+
+          addWARComp(compositions, {
+            onSuccess: () => {
+              showSuccessToast("Weekly AR created successfully")
+              setSelectedReports([])
+              navigate(-1)
+            },
+          })
+        },
+      })
+    } catch (err) {
+      showErrorToast("Failed to create weekly AR. Please try again.")
+    } finally {
+      setIsCreating(false);
+    }
   }
 
   if (isLoading) {
@@ -139,9 +137,33 @@ export default function CreateMissingWeeks() {
                   Select acknowledgment reports to include in the weekly report
                 </p>
               </div>
-              <Badge variant="secondary">
-                {ARByDate.length} {ARByDate.length === 1 ? "Report" : "Reports"}
-              </Badge>
+  
+              {/* Action Button */}
+              <div className="flex gap-2">
+                <Badge variant="outline" className="border-none">
+                  {ARByDate.length} {ARByDate.length === 1 ? "Report" : "Reports"}
+                </Badge>
+                <ConfirmationModal 
+                  trigger={
+                    <Button size="lg">
+                      {isCreating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Weekly AR ({selectedReports.length})
+                        </>
+                      )}
+                    </Button>
+                  }
+                  title="Create Confirmation"
+                  description="Are you sure you want to create weekly AR?"
+                  onClick={handleCreateWeeklyReport}
+                />
+              </div>
             </div>
             <Separator />
             <div className="flex items-center gap-4">
@@ -192,8 +214,8 @@ export default function CreateMissingWeeks() {
                               <p className="text-sm text-muted-foreground mt-1">ID: {report.id}</p>
                             </div>
                             <Badge
-                              variant={report.status === "Completed" ? "default" : "secondary"}
-                              className={report.status === "Completed" ? "bg-green-500" : ""}
+                              variant={report.status.toLowerCase() === "signed" ? "default" : "secondary"}
+                              className={report.status.toLowerCase() === "signed" ? "bg-green-500" : ""}
                             >
                               {report.status}
                             </Badge>
@@ -268,28 +290,6 @@ export default function CreateMissingWeeks() {
             </ScrollArea>
           </CardContent>
         </Card>
-
-        {/* Action Button */}
-        <div className="flex justify-end">
-          <Button
-            onClick={handleCreateWeeklyReport}
-            disabled={selectedReports.length === 0 || isCreating} 
-            size="lg"
-            className="min-w-[200px]"
-          >
-            {isCreating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Weekly Report ({selectedReports.length})
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </LayoutWithBack>
   )

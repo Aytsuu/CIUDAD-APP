@@ -9,7 +9,7 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useArchiveMinutesOfMeeting, useRestoreMinutesOfMeeting } from "./queries/MOMUpdateQueries";
 import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries";
 import { useState } from "react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { formatAreaOfFocus } from "@/helpers/wordFormatter";
 
 export default function MinutesOfMeetingView() {

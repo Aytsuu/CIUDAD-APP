@@ -137,11 +137,9 @@ export const useVerifyOTPMutation = () => {
 export const useSendEmailOTPMutation = () => {
   const dispatch = useAppDispatch();
   
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: async (email) => {
-      console.log('📧 Sending Email OTP to:', email);
-      const response = await api.post('authentication/email/sendOtp/', { email });
-      console.log('✅ Email OTP sent successfully');
+  return useMutation<{ message: string }, Error, Record<string, any>>({
+    mutationFn: async (data) => {
+      const response = await api.post('authentication/email/sendOtp/', data);
       return response.data;
     },
     onMutate: () => {

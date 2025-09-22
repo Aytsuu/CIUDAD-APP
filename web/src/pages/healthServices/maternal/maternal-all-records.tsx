@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, Search, RefreshCw, FileInput, Loader2 } from "lucide-react";
+import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
+import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
 
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
@@ -16,14 +19,9 @@ import {
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { ArrowUpDown, Search, RefreshCw } from "lucide-react";
-import { FileInput } from "lucide-react";
-import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
-import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
-import { TableSkeleton } from "../skeleton/table-skeleton";
+import { useLoading } from "@/context/LoadingContext";
 
-import { useMaternalRecords } from "./queries/maternalFetchQueries";
-import { useActivepregnanciesCount } from "./queries/maternalFetchQueries";
+import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
 
 
 export default function MaternalAllRecords() {
@@ -51,18 +49,62 @@ export default function MaternalAllRecords() {
 
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
+    pregnancy_count?: number;
   }
 
   
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [entriesCount, setEntriesCount] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords();
-  const { data: activePregnancies } = useActivepregnanciesCount();
-  const activePregnanciesCount = activePregnancies || 0;
+  const { showLoading, hideLoading } = useLoading();
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords({
+    page,
+    page_size: pageSize,
+    status: selectedFilter !== " All" ? selectedFilter : undefined,
+    search: searchTerm || undefined
+  });
+  const { data: maternalCountsData } = useMaternalCounts();
 
+  const totalMaternalCount = maternalCountsData?.total_patients || 0;
+  const activePregnanciesCount = maternalCountsData?.active_pregnancies || 0;
+  const totalPages = Math.ceil((maternalRecordsData?.count || 0) / pageSize);
+
+  const filter = [
+    { id: "all", name: "All" },
+    { id: "resident", name: "Resident" },
+    { id: "transient", name: "Transient" },
+  ];
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+  
+  // searching and pagination handlers
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search)
+    setPage(1)
+  }
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter)
+    setPage(1) 
+  }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setPage(1) 
+  }
   
   const calculateAge = (dob: string): number => {
     const birthDate = new Date(dob);
@@ -79,10 +121,10 @@ export default function MaternalAllRecords() {
     return age;
   };
 
-  const transformData = (maternalData: any[]): maternalRecords[] => {
-    if (!maternalData || !Array.isArray(maternalData)) return [];
+  const transformData = useMemo((): maternalRecords[] => {
+    if (!maternalRecordsData?.results) return [];
 
-    return maternalData.map((record) => {
+    return maternalRecordsData.results.map((record:any) => {
       const personalInfo = record.personal_info;
       const dateOfBirth = personalInfo?.per_dob || "";
 
@@ -119,7 +161,7 @@ export default function MaternalAllRecords() {
         pat_type: record.pat_type || "N/A",
       };
     });
-  };
+  }, [maternalRecordsData]);
 
   const columns: ColumnDef<maternalRecords>[] = [
     {
@@ -223,7 +265,7 @@ export default function MaternalAllRecords() {
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border border-gray text-black px-4 py-2 rounded-lg cursor-pointer ">
                   <Link
-                    to="/maternalindividualrecords"
+                    to="/services/maternalindividualrecords"
                     state={{
                       params: {
                         patientData: {
@@ -256,37 +298,8 @@ export default function MaternalAllRecords() {
     },
   ];
 
-  const data = transformData(maternalRecordsData);
-
-  const filter = [
-    { id: "All", name: "All" },
-    { id: "Resident", name: "Resident" },
-    { id: "Transient", name: "Transient" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
-  const filteredData = data.filter((item) => {
-    const matchesSearchTerm =
-      searchTerm === "" ||
-      `${item.personal_info.per_fname} ${item.personal_info.per_lname} ${item.personal_info.per_mname}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      item.pat_id.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesFilter =
-      selectedFilter === "All" || item.pat_type === selectedFilter;
-
-    return matchesSearchTerm && matchesFilter;
-  });
-
-  const totalRecords = filteredData.length;
-
-  const totalEntries = Math.ceil(filteredData.length / entriesCount);
-  const maternalPagination = filteredData.slice(
-    (currentPage - 1) * entriesCount,
-    currentPage * entriesCount
-  );
-
+  
+  
   const handleRefetching = async () => {
     try {
       setIsRefetching(true);
@@ -312,7 +325,7 @@ export default function MaternalAllRecords() {
               content={
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{totalRecords}</span>
+                    <span className="text-2xl font-bold">{totalMaternalCount}</span>
                     <span className="text-xs text-muted-foreground">
                       Total patients
                     </span>
@@ -376,16 +389,16 @@ export default function MaternalAllRecords() {
                   placeholder="Search..."
                   className="pl-10 w-full bg-white"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
               <SelectLayout
                 placeholder="Select filter"
-                label=""
+                label="All"
                 className="w-full md:w-[200px] bg-white text-black"
                 options={filter}
                 value={selectedFilter}
-                onChange={setSelectedFilter}
+                onChange={handleFilterChange}
               />
             </div>
           </div>
@@ -397,10 +410,10 @@ export default function MaternalAllRecords() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>
-                  <Link to="/prenatalform">Prenatal</Link>
+                  <Link to="/services/maternal/prenatal/form">Prenatal</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/postpartumform">Postpartum</Link>
+                  <Link to="/services/maternal/postpartum/form">Postpartum</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -410,15 +423,15 @@ export default function MaternalAllRecords() {
         {/*  */}
 
         {/* Table Container */}
-        <div className="h-full w-full rounded-md">
+        <div className="h-full w-full rounded-md ">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
                 type="number"
-                className="w-16 h-8"
-                defaultValue={entriesCount}
-                onChange={(e) => setEntriesCount(Number(e.target.value))}
+                className="w-14 h-6"
+                defaultValue={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
@@ -438,28 +451,30 @@ export default function MaternalAllRecords() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
+          <div className="bg-white w-full min-h-20 overflow-x-auto">
             {isLoading ? (
-    <TableSkeleton columns={columns} rowCount={5} />
-  ) : (
-              <DataTable columns={columns} data={filteredData} />
+              <div className="flex items-center justify-center">
+                <Loader2 className="animate-spin" /> Loading...
+              </div>
+            ) : (
+              <DataTable columns={columns} data={transformData} />
             )}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing 1-{Math.min(entriesCount || 10, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, maternalRecordsData?.count) || 0} of {maternalRecordsData?.count} rows
+
             </p>
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
-              {maternalPagination.length > 0 && (
+              {totalPages > 1 && (
                 <PaginationLayout
-                  currentPage={currentPage}
-                  totalPages={totalEntries}
-                  onPageChange={setCurrentPage}
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
                 />
               )}
             </div>
@@ -469,3 +484,4 @@ export default function MaternalAllRecords() {
     </LayoutWithBack>
   );
 }
+

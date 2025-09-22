@@ -1,169 +1,144 @@
-import { Card, CardContent } from "@/components/ui/card";
+// In prenatal-indiv-history.tsx - remove mock data and use real API data
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { BsChevronLeft } from "react-icons/bs";
-import { useNavigate, useLocation } from "react-router";
-import { FileText } from "lucide-react";
-import { MdOutlinePregnantWoman } from "react-icons/md";
-import { PostpartumHistoryTable } from "../../maternal-components/postpartum-history";
-import { useEffect, useState } from "react";
+import { Loader2, Printer } from "lucide-react";
 
-interface PostpartumVisit {
+import PostpartumViewing from "./form-history/postpartum-viewing";
+import PostpartumCareHistory from "./postpartum-care-history";
+
+import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
+
+
+interface PrenatalVisit {
   date: string;
-  lochialDischarges: string;
+  aog: string;
+  weight: string;
   bloodPressure: string;
-  feedings: string;
-  findings: string;
-  nursesNotes: string;
-}
-
-interface PostpartumAssessment {
-  ppa_id: string;
-  ppa_date: string;
-  ppa_lochial_discharges: string;
-  ppa_blood_pressure: string;
-  ppa_feedings: string;
-  ppa_findings: string;
-  ppa_nurses_notes: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Patient {
-  pat_id: string;
-  personal_info: {
-    per_fname: string;
-    per_lname: string;
-    per_mname: string;
+  leopoldsFindings: {
+    fundalHeight: string;
+    fetalHeartbeat: string;
+    fetalPosition: string;
+  };
+  notes: {
+    complaint: string;
+    advice: string;
+  };
+  changes?: {
+    weight?: boolean;
+    bloodPressure?: boolean;
+    fundalHeight?: boolean;
+    fetalHeartbeat?: boolean;
+    fetalPosition?: boolean;
   };
 }
 
 export default function PostpartumIndivHistory() {
-  const [postpartumData, setPostpartumData] = useState<PostpartumVisit[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [recordId, setRecordId] = useState<string>("");
-  const [hasRealData, setHasRealData] = useState<boolean>(false);
-  
   const location = useLocation();
-  const navigate = useNavigate();
+  const { patientData, pregnancyId, visitNumber, recordId } = location.state?.params || {};
 
-  // Mock data for demonstration when no real data is available
-  const mockPostpartumData: PostpartumVisit[] = [
-    {
-      date: "April 10, 2025",
-      lochialDischarges: "Moderate, reddish-brown",
-      bloodPressure: "120/80 mmHg",
-      feedings: "Breastfeeding every 2-3 hours",
-      findings: "Uterus firm and well-contracted, fundus at umbilicus level",
-      nursesNotes: "Mother reports mild afterpains, advised on normal healing process. Good latch observed during feeding."
-    },
-    {
-      date: "April 15, 2025",
-      lochialDischarges: "Light, pinkish-brown",
-      bloodPressure: "118/76 mmHg",
-      feedings: "Combination feeding - breast & formula 4 oz every 4 hrs",
-      findings: "No signs of infection, episiotomy healing well",
-      nursesNotes: "Baby feeding well, weight gain on track. Mother feeling more confident with feeding routine."
-    },
-    {
-      date: "April 22, 2025",
-      lochialDischarges: "Minimal, yellowish-white",
-      bloodPressure: "115/72 mmHg",
-      feedings: "Breastfeeding established, supplementing as needed",
-      findings: "Complete uterine involution, no abnormal discharge",
-      nursesNotes: "Excellent recovery progress. Mother ready for discharge from postpartum care. Provided follow-up instructions."
-    }
-  ];
+  // fetching
+  const { data: prenatalCareData, isLoading, error } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "");
 
-  useEffect(() => {
-    if (location.state?.params) {
-      const { patientData, recordId: passedRecordId, postpartumRecord } = location.state.params;
-      
-      setSelectedPatient(patientData);  
-      setRecordId(passedRecordId);
-      console.log(recordId)
-      
-      // If postpartum record data is passed directly
-      if (postpartumRecord?.postpartum_assessment && postpartumRecord.postpartum_assessment.length > 0) {
-        const formattedData = postpartumRecord.postpartum_assessment.map((assessment: PostpartumAssessment) => ({
-          date: new Date(assessment.ppa_date).toLocaleDateString(),
-          lochialDischarges: assessment.ppa_lochial_discharges || "N/A",
-          bloodPressure: assessment.ppa_blood_pressure || "N/A",
-          feedings: assessment.ppa_feedings || "N/A",
-          findings: assessment.ppa_findings || "N/A",
-          nursesNotes: assessment.ppa_nurses_notes || "N/A"
-        }));
-        setPostpartumData(formattedData);
-        setHasRealData(true);
-      } else {
-        // Use mock data when no real data is available
-        setPostpartumData(mockPostpartumData);
-        setHasRealData(false);
+  // Get records up to the selected visit number
+  const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || [];
+
+  // Transform API data to PrenatalVisit format
+  const transformedData: PrenatalVisit[] = recordsToShow.flatMap((record: any) => 
+    record.prenatal_care_entries.map((entry: any) => ({
+      date: new Date(entry.pfpc_date).toLocaleDateString(),
+      aog: `${entry.pfpc_aog_weeks || 0}w ${entry.pfpc_aog_days || 0}d`,
+      weight: `${entry.weight || entry.pfpc_weight || 0} kg`,
+      bloodPressure: `${entry.bp_systolic || entry.pfpc_bp_systolic || 0}/${entry.bp_diastolic || entry.pfpc_bp_diastolic || 0}`,
+      leopoldsFindings: {
+        fundalHeight: entry.pfpc_fundal_height || "N/A",
+        fetalHeartbeat: entry.pfpc_fetal_heart_rate || "N/A",
+        fetalPosition: entry.pfpc_fetal_position || "N/A"
+      },
+      notes: {
+        complaint: entry.pfpc_complaints || "No complaints",
+        advice: entry.pfpc_advises || "No specific advice"
       }
-    } else {
-      // Use mock data as fallback
-      setPostpartumData(mockPostpartumData);
-      setHasRealData(false);
-    }
-  }, [location.state]);
+    }))
+  );
 
-  const hasData = postpartumData && postpartumData.length > 0;
+  // Sort data chronologically (oldest first for change detection)
+  const chronologicalData = [...transformedData].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  const detectChanges = (currentVisit: PrenatalVisit, previousVisit: PrenatalVisit | null): PrenatalVisit => {
+    if (!previousVisit) {
+      return { ...currentVisit, changes: {} };
+    }
+
+    const changes = {
+      weight: currentVisit.weight !== previousVisit.weight,
+      bloodPressure: currentVisit.bloodPressure !== previousVisit.bloodPressure,
+      fundalHeight: currentVisit.leopoldsFindings.fundalHeight !== previousVisit.leopoldsFindings.fundalHeight,
+      fetalHeartbeat: currentVisit.leopoldsFindings.fetalHeartbeat !== previousVisit.leopoldsFindings.fetalHeartbeat,
+      fetalPosition: currentVisit.leopoldsFindings.fetalPosition !== previousVisit.leopoldsFindings.fetalPosition,
+    };
+
+    return { ...currentVisit, changes };
+  };
+
+  // Process data to detect changes
+  const processedPrenatalData = chronologicalData.map((visit, index) => {
+    const previousVisit = index > 0 ? chronologicalData[index - 1] : null;
+    return detectChanges(visit, previousVisit);
+  });
+
+  const hasData = processedPrenatalData && processedPrenatalData.length > 0;
+
+  if (isLoading) {
+    return (
+      <LayoutWithBack 
+        title="Postpartum Visit Records"
+        description="Loading prenatal care history..."
+      >
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="animate-spin h-8 w-8 mr-2">Loading records...</Loader2>
+        </div>
+      </LayoutWithBack>
+    );
+  }
+
+  if (error) {
+    return (
+      <LayoutWithBack 
+        title="Postpartum Visit Records"
+        description="Error loading prenatal care history"
+      >
+        <div className="text-center text-red-600">
+          Failed to load prenatal care history. Please try again.
+        </div>
+      </LayoutWithBack>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Back Button */}
-      <div className="flex items-center mb-2">
-        <Button className="text-black p-2" variant={"outline"} onClick={() => navigate(-1)}>
-          <BsChevronLeft />
-        </Button>
-      </div>
-
-      {/* Clinical Header */}
-      <div className="flex flex-col items-center gap-4 bg-slate-50 border border-slate-200 rounded-lg p-3">
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2">
-            <MdOutlinePregnantWoman className="h-6 w-6 " />
-            <h2 className="text-xl font-semibold text-black">Postpartum Visit Records</h2>
-          </div>
-          <p className="text-slate-600 text-sm font-medium">
-            Complete record of postpartum visits and clinical notes
-            {selectedPatient && (
-              <span className="block mt-1">
-                Patient: {selectedPatient.personal_info.per_fname} {selectedPatient.personal_info.per_lname}
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Postpartum History Table */}
-      {hasData ? (
-        <div className="space-y-4">
-          {!hasRealData && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <h4 className="font-medium text-blue-800">Sample Data Display</h4>
-              </div>
-              <p className="text-blue-700 text-sm">
-                The following data is for demonstration purposes only. No actual postpartum assessment records were found for this patient.
-              </p>
+    <LayoutWithBack 
+      title="Postpartum Visit Records"
+      description="Complete record of prenatal visits and clinical notes"
+    >
+        <div className="bg-white p-3 space-y-2">
+            <div className="flex justify-end pr-4 my-5">
+                <Button variant="outline"><Printer/> Print</Button>
             </div>
-          )}
-          <PostpartumHistoryTable data={postpartumData} />
+
+            <div className="w-full">
+                <div className="flex items-center justify-center">
+                    <PostpartumViewing/>
+                </div>
+                <div>
+                    <PostpartumCareHistory/>
+                </div>
+            </div>
         </div>
-      ) : (
-        <Card className="text-center py-16 border-slate-200">
-          <CardContent>
-            <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-700 mb-2">
-              No Clinical Records Available
-            </h3>
-            <p className="text-slate-500">
-              No postpartum examination records have been documented for this patient.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    </LayoutWithBack>
   );
 }

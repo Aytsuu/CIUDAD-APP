@@ -19,7 +19,7 @@ from apps.patientrecords.serializers.bodymesurement_serializers import *
 from apps.patientrecords.serializers.vitalsigns_serializers import *
 from apps.patientrecords.serializers.followvisits_serializers import *
 from apps.patientrecords.serializers.obstetrical_serializers import *
-from apps.maternal.serializer import PreviousPregnancyCreateSerializer
+from apps.maternal.serializers.serializer import PreviousPregnancyCreateSerializer
 from apps.patientrecords.serializers.spouse_serializers import *
 from apps.inventory.models import CommodityList, CommodityInventory # Import CommodityList and CommodityInventory
 from .api_functions import get_checkbox_name_from_illness

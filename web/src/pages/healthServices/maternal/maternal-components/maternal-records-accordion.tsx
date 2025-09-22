@@ -221,8 +221,8 @@ export function PregnancyAccordion({
                                     <Link
                                       to={
                                         record.recordType === "Prenatal"
-                                          ? "/prenatalindividualhistory"
-                                          : "/postpartumindividualhistory"
+                                          ? "/services/maternal/prenatal/history"
+                                          : "/services/maternal/postpartum/history"
                                       }
                                       state={{ 
                                         params: { 
