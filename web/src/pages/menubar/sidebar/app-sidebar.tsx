@@ -17,231 +17,8 @@ import { capitalize } from "@/helpers/capitalize";
 interface BaseMenuItem {
   title: string;
   url?: string;
-  items?: BaseMenuItem[];   
+  items?: BaseMenuItem[];
 }
-
-// Menu items with unlimited nesting support
-const barangayItems: BaseMenuItem[] = [
-  {
-    title: "Report",
-    url: "/",
-    items: [
-      { title: "Incident", url: "/report/incident"},
-      { title: "Acknowledgement", url: "/report/acknowledgement"},
-      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
-      { title: "Securado", url: "/report/securado"}  
-    ],
-  },
-  {
-    title: "Complaint",
-    url: "/complaint",
-  },
-  {
-    title: "Team",
-    url: "/team",
-  },
-  {
-    title: "Summon & Case Tracker",
-    url: "/",
-    items: [
-      { title: "Request List", url: "/request-list"},
-      { title: "Summon Calendar", url: "/summon-calendar"},
-      { title: "Cases", url: "/summon-cases"},
-    ]
-  },
-  {
-    title: "Donation",
-    url: "/donation-record",
-  },
-  {
-    title: "GAD",
-    url: "/",
-    items: [
-      { title: "Activity", url: "/gad-activity"},
-      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-      { title: "Project Proposal", url: "/gad-project-proposal"},
-      { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
-    ],
-  },
-  {
-    title: "Council",
-    url: "/",
-    items: [
-      { title: "Council Events", url: "/calendar-page" },
-      { title: "Attendance", url: "/attendance-page" },
-      { title: "Ordinance", url: "/ord-page" },
-      { title: "Resolution", url: "/res-page" },
-      { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Document Template", url: "/templates-main"}
-    ],
-  },
-  {
-    title: "Finance",
-    url: "/",
-    items: [
-      { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      {
-        title: "Income & Expense Tracking",
-        url: "/treasurer-income-expense-main",
-      },
-      {
-        title: "Disbursement Voucher",
-        url: "/treasurer-disbursement",
-      },
-      {
-        title: "Payment Request",
-        url: "/",
-        items: [
-          { title: "Personal & Others", url: "/treasurer-personal-and-others" },
-          { title: "Permit", url: "/treasurer-permit" },
-          { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Rates", url: "/treasurer-rates" },
-        ],
-      },
-      { title: "Receipts", url: "/treasurer-receipts" },
-    ],
-  },
-  {
-    title: "Certificate and Clearances",
-
-    url: "/",
-    items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Clearance", url: "record/clearances/businesspermit" },
-      { title: "Service Charge", url: "record/clearances/servicecharge" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-      
-      
-    ],
-  },
-    {
-    title: "Waste",
-    url: "/",
-    items: [
-      { title: "Waste Personnel & Collection Vehicle", url: "/waste-personnel"},
-      { title: "Calendar", url: "/waste-calendar-scheduling"},
-      { title: "Illegal Dumping Reports", url: "/waste-illegaldumping-report"},
-      { title: "Garbage Pickup Request", url: "/garbage-pickup-request"},
-    ],
-  },
-  {
-    title: "Announcement",
-    url: "/announcement",
-  },
-  {
-    title: "Activity Log",
-    url: "/record/activity-log",
-
-  },
-];
-
-// Menu items with unlimited nesting support
-const healthItems: BaseMenuItem[] = [
-  // {
-  //   title: "Dashboard",
-  //   url: "/dashboard"
-  // },
-
-  // {
-  //   title: "Administration",
-  //   url: "/administration"
-  // },
-  // {
-  //   title: "Profiling",
-  //   url: "/",
-  //   items: [
-  //     { title: "All", url: "/profiling/all" },
-  //     {
-  //       title: "Resident",
-  //       url: "/profiling/resident",
-  //       items: [
-  //         { title: "Family", url: "/profiling/family" },
-  //         { title: "Household", url: "/profiling/household" }
-  //       ]
-  //     },
-  //     { title: "Voters", url: "/profiling/voters" },
-  //     {
-  //       title: "Business",
-  //       url: "/profiling/business/record",
-  //       items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
-  //     }
-  //   ]
-  // },
- 
-  {
-    title: "Announcement",
-    url: "/announcement"
-  },
- 
-  { title: "Patients Record", url: "/patients-record-main" },
-
-  {
-    title: "Services",
-    url: "/",
-    items: [
-      // {
-      //   title: "Forwarded Records",
-      //   url: "/",
-      //   anotherItems: [
-      //     {
-      //       title: "Child Immunization",
-      //       url: "/forwarded-child-health-immunization",
-      //     },
-      //     { title: "Vaccine Waitlist", url: "/forwarded-vaccine-waitlist" },
-      //     { title: "Step 2: Vitals Queue  ", url: "/forwarded-vitals-queue" },
-      //     {
-      //       title: "Medical Consultaion",
-      //       url: "/forwarded-medical-consultation",
-      //     },
-      //   ],
-      // },
-      { title: "Forwarded Records", url: "/forwarded-records" },
-      { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Medical Consultation ", url: "/allMedRecords" },
-      { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Maternal", url: "/maternalrecords" },
-      { title: "Child Health", url: "/all-child-health-records" },
-      { title: "Vaccination", url: "/VaccinationManagement" },
-      { title: "Medicine", url: "/all-medicine-records" },
-      { title: "Firstaid", url: "/all-firstaid-records" },
-      { title: "Schedules", url: "/health-appointments" }
-    ]
-  },
-
-  {
-    title: "Inventory",
-    url: "/",
-    items: [
-      { title: "Inventory List", url: "/mainInventoryList" },
-      { title: "Inventory Stocks", url: "/main-inventory" }
-    ]
-  },
-  {
-    title: "Manage Request",
-    url: "/",
-    items: [
-      {
-        title: "Medicine Request",
-        url: "/medicine-request"
-      },
-      { title: "Medical Consultation", url: "/" }
-    ]
-  },
-
-  { title: "Service Scheduler", url: "/health-services/scheduler" },
-  { title: "Reports", url: "/healthcare-reports" },
-  {
-    title: "Manage",
-    url: "/",
-    items: [
-      {
-        title: "Manage age group",
-        url: "/age-group"
-      },
-      { title: "Medical Consultation", url: "/" }
-    ]
-  },
-];
 
 interface MenuItemComponentProps {
   item: BaseMenuItem;
@@ -260,26 +37,26 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const hasSubItems = item.items && item.items.length > 0;
   const isActive = activeItem === item.title;
-  const currentPath = location.pathname.split('/').pop() as string;
-  
+  const currentPath = location.pathname.split("/").pop() as string;
+
   // Auto-set active item based on current path
   useEffect(() => {
-    if (item.url && item.url.split('/').pop() === currentPath) {
+    if (item.url && item.url.split("/").pop() === currentPath) {
       setActiveItem(capitalize(item.title) as string);
     }
   }, [currentPath, item.url, item.title, setActiveItem]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (hasSubItems && (!item.url || item.url === '/')) {
+
+    if (hasSubItems && (!item.url || item.url === "/")) {
       // Toggle submenu for items without navigable URLs
       setIsOpen(!isOpen);
       setActiveItem(item.title);
-    } else if (item.url && item.url !== '/') {
+    } else if (item.url && item.url !== "/") {
       // Navigate to URL
       setActiveItem(item.title);
       navigate(item.url);
@@ -293,8 +70,8 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   };
 
   // Calculate indentation based on nesting level
-  const indentClass = level > 0 ? `pl-${level * 4}` : '';
-  
+  const indentClass = level > 0 ? `pl-${level * 4}` : "";
+
   // Base styles
   const baseStyles = `flex items-center px-4 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${
     isActive
@@ -343,7 +120,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
     <SidebarMenuItem>
       <div className={indentClass}>
         <SidebarMenuButton asChild className="w-full">
-          {item.url && item.url !== '/' ? (
+          {item.url && item.url !== "/" ? (
             <Link
               to={item.url}
               className={baseStyles}
@@ -369,17 +146,214 @@ export function AppSidebar() {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
 
-  const items: BaseMenuItem[] = [
+  const featureValidator = (requiredFeature?: string) => {
+    if(!requiredFeature) return user?.staff?.pos?.toLowerCase() == "admin"
+
+    return user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) || 
+                      user?.staff?.pos?.toLowerCase() == "admin"
+  }
+
+  // BARANGAY FEATURES
+  const barangayItems: BaseMenuItem[] = [
     {
-      title: "Dashboard",
-      url: "/dashboard"
+      title: "Calendar",
+      url: "/waste-calendar-scheduling",
+    },
+    ...(featureValidator("report") ? [{
+      title: "Report",
+      url: "/",
+      items: [
+        { title: "Incident", url: "/report/incident" },
+        { title: "Acknowledgement", url: "/report/acknowledgement" },
+        {
+          title: "Weekly Accomplishment",
+          url: "/report/weekly-accomplishment",
+        },
+        { title: "Securado", url: "/report/securado" },
+      ],
+    }] : []),
+    ...(featureValidator("complaint") ? [
+      {
+        title: "Complaint",
+        url: "/complaint",
+      }
+    ] : []),
+    {
+      title: "Team",
+      url: "/team",
+    },
+    ...(featureValidator("summon & case tracker") ? [{
+      title: "Summon & Case Tracker",
+      url: "/",
+      items: [
+        { title: "Request List", url: "/request-list" },
+        { title: "Summon Calendar", url: "/summon-calendar" },
+        { title: "Cases", url: "/summon-cases" },
+      ],
+    }] : []),
+    ...(featureValidator("gad") ? [{
+      title: "GAD",
+      url: "/",
+      items: [
+        { title: "Budget Tracker", url: "/gad-budget-tracker-main" },
+        { title: "Project Proposal", url: "/gad-project-proposal" },
+        {
+          title: "Annual Development Plan",
+          url: "/gad-annual-development-plan",
+        },
+        { title: "Activity", url: "/gad-activity" },
+      ],
+    }] : []),
+    ...(featureValidator("council") ? [{
+      title: "Council",
+      url: "/",
+      items: [
+        { title: "Council Events", url: "/calendar-page" },
+        { title: "Attendance", url: "/attendance-page" },
+        { title: "Ordinance", url: "/ord-page" },
+        { title: "Resolution", url: "/res-page" },
+        { title: "Minutes of Meeting", url: "/mom-page" },
+        { title: "Document Template", url: "/templates-main" },
+      ],
+    }] : []),
+    ...(featureValidator("finance") ? [{
+      title: "Finance",
+      url: "/",
+      items: [
+        { title: "Budget Plan", url: "/treasurer-budget-plan" },
+        {
+          title: "Income & Expense Tracking",
+          url: "/treasurer-income-expense-main",
+        },
+        {
+          title: "Income & Disbursement",
+          url: "/treasurer-income-and-disbursement",
+        },
+        {
+          title: "Payment Request",
+          url: "/",
+          items: [
+            {
+              title: "Personal & Others",
+              url: "/treasurer-personal-and-others",
+            },
+            { title: "Permit", url: "/treasurer-permit" },
+            { title: "Service Charge", url: "/treasurer-service-charge" },
+            { title: "Rates", url: "/treasurer-rates" },
+          ],
+        },
+        { title: "Receipts", url: "/treasurer-receipts" },
+      ],
+    }] : []),
+    ...(featureValidator("certificate & clearances") ? [{
+      title: "Certificate & Clearances",
+      url: "/",
+      items: [
+        { title: "Certifications", url: "record/clearances/certification" },
+        { title: "Business Permits", url: "record/clearances/businesspermit" },
+        {
+          title: "Issued Certificates",
+          url: "record/clearances/issuedcertificates",
+        },
+      ],
+    }] : []),
+    ...(featureValidator("donation") ? [{
+      title: "Donation",
+      url: "/donation-record",
+    }] : []),
+    ...(featureValidator("waste") ? [{
+      title: "Illegal Dumping Reports",
+      url: "/waste-illegaldumping-report",
+    },
+    {
+      title: "Garbage Pickup Request",
+      url: "/garbage-pickup-request",
+    },
+    {
+      title: "Waste Personnel & Collection Vehicle",
+      url: "/waste-personnel",
+    }] : []),
+    {
+      title: "Announcement",
+      url: "/announcement",
+    },
+    {
+      title: "Activity Log",
+      url: "/record/activity-log",
+    },
+  ];
+
+  // HEALTH FEATURES
+  const healthItems: BaseMenuItem[] = [
+    {
+      title: "Announcement",
+      url: "/announcement",
+    },
+
+    { title: "Patients Record", url: "/patients-record-main" },
+
+    {
+      title: "Services",
+      url: "/",
+      items: [
+        { title: "Forwarded Records", url: "/forwarded-records" },
+        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Medical Consultation ", url: "/allMedRecords" },
+        { title: "Family Planning", url: "/FamPlanning_table" },
+        { title: "Maternal", url: "/maternalrecords" },
+        { title: "Child Health", url: "/all-child-health-records" },
+        { title: "Vaccination", url: "/VaccinationManagement" },
+        { title: "Medicine", url: "/all-medicine-records" },
+        { title: "Firstaid", url: "/all-firstaid-records" },
+        { title: "Schedules", url: "/health-appointments" },
+      ],
     },
 
     {
-      title: "Administration",
-      url: "/administration"
+      title: "Inventory",
+      url: "/",
+      items: [
+        { title: "Inventory List", url: "/mainInventoryList" },
+        { title: "Inventory Stocks", url: "/main-inventory" },
+      ],
     },
     {
+      title: "Manage Request",
+      url: "/",
+      items: [
+        {
+          title: "Medicine Request",
+          url: "/medicine-request",
+        },
+        { title: "Medical Consultation", url: "/" },
+      ],
+    },
+
+    { title: "Service Scheduler", url: "/health-services/scheduler" },
+    { title: "Reports", url: "/healthcare-reports" },
+    {
+      title: "Manage",
+      url: "/",
+      items: [
+        {
+          title: "Manage age group",
+          url: "/age-group",
+        },
+        { title: "Medical Consultation", url: "/" },
+      ],
+    },
+  ];
+
+  const items: BaseMenuItem[] = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+    },
+    ...(featureValidator() ? [{
+      title: "Administration",
+      url: "/administration",
+    }] : []),
+    ...(featureValidator("profiling") ? [{
       title: "Profiling",
       url: "/",
       items: [
@@ -389,25 +363,26 @@ export function AppSidebar() {
           url: "/profiling/resident",
           items: [
             { title: "Family", url: "/profiling/family" },
-            { title: "Household", url: "/profiling/household" }
-          ]
+            { title: "Household", url: "/profiling/household" },
+          ],
         },
         { title: "Voters", url: "/profiling/voters" },
         {
           title: "Business",
           url: "/profiling/business/record",
-          items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
-        }
-      ]
-    },
-    ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff" ? barangayItems : healthItems)
-  ]
-
-  // Uncomment and modify this if you want to use assignedFeatures instead of hardcoded items
-  // const dynamicItems: BaseMenuItem[] = assignedFeatures?.map((item: any) => ({
-  //   title: item.feat.feat_name,
-  //   url: item.feat.feat_url,
-  // })) || items;
+          items: [
+            {
+              title: "Respondent",
+              url: "/profiling/business/record/respondent",
+            },
+          ],
+        },
+      ],
+    }] : []),
+    ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
+      ? barangayItems
+      : healthItems),
+  ];
 
   return (
     <Sidebar className="border-none">
