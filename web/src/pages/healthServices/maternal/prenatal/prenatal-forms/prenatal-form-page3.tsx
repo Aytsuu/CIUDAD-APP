@@ -264,15 +264,6 @@ export default function PrenatalFormThirdPg({
                 <div className="flex flex-col">
                   <h3 className="text-md font-semibold mt-2 p-5">SCHEDULE FOR FOLLOW-UP VISIT</h3>
                   <div className="px-8">
-                    {/* <div className="mb-4 p-2 bg-green-100 border border-green-300 rounded text-green-700 text-sm">
-                      <strong>📋 Prenatal Visit Guidelines:</strong>
-                      <ul className="mt-1 ml-4 list-disc text-xs">
-                        <li>Months 1-6 (Weeks 4-28): Monthly visits (6 total)</li>
-                        <li>Months 7-8 (Weeks 28-36): Bi-weekly visits (4 total)</li>
-                        <li>Month 9 (Weeks 36-40): Weekly visits (4-5 total)</li>
-                      </ul>
-                    </div> */}
-
                     {/* AOG Input Section */}
                     <div className="flex gap-3 mb-4">
                       <FormInput

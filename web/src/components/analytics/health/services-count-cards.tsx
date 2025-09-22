@@ -4,7 +4,8 @@ import {
   useGetFirstAidTotalRecords,
   useGetMedicineTotalRecords,
   useGetVaccinationTotalRecords,
-  useGetMedicalConsultationTotalRecords
+  useGetMedicalConsultationTotalRecords,
+  useGetMaternalTotalRecords,
 } from "./queries/services-count-queries";
 
 const healthCards = [
@@ -33,6 +34,11 @@ const healthCards = [
       title: "Consultations",
       description: "Medical consultations",
       queryHook: useGetMedicalConsultationTotalRecords,
+    },
+    {
+      title: "Consultations",
+      description: "Maternal Health Records",
+      queryHook: useGetMaternalTotalRecords,
     },
   ];
 export const ServicesHealthRecordsSectionCards = () => {

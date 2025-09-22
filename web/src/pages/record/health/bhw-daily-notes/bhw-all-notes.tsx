@@ -10,14 +10,21 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 
-
+interface NoteDiv {
+      date: string;
+      description: string;
+   }
+   
 export default function BHWAllNotes() {
 
    const [searchTerm, setSearchTerm] = useState("");
 
-   interface NoteDiv {
-      date: string;
-      description: string;
+   const dateString = (date:string) => {
+      return new Date(date).toLocaleDateString('en-PH', {
+         year: 'numeric',
+         month: 'long',
+         day: 'numeric',
+      })
    }
 
    const mockData: NoteDiv[] = [
@@ -55,11 +62,20 @@ export default function BHWAllNotes() {
                      onChange={(e) => setSearchTerm(e.target.value)}
                   />
                </div>
-               <Link to="/bhw-note-form">
+               <Link to="/bhw/form">
                   <Button variant="default">
                      <Plus size={15} /> Create
                   </Button>
                </Link>
+            </div>
+            
+            <div>
+               {mockData.map((note, index) => (
+                  <div key={index} className="border border-gray-300 p-4 rounded-lg mt-4">
+                     <div className="font-semibold">{dateString(note.date)}</div>
+                     <div className="text-gray-600">{note.description}</div>
+                  </div>
+               ))}
             </div>
          </div>
       </LayoutWithBack>
