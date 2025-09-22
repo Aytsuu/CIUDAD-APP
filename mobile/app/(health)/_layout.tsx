@@ -45,7 +45,7 @@ export default () => {
                 <Stack.Screen name="admin/animalbites/overall" options={{ headerShown: false }} />
 
 
-                <Stack.Screen name="admin/patientsrecord/patientsrecord" options={{ headerShown: false }} />
+                <Stack.Screen name="admin/patientsrecord/patientrecords" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/medicinerequest/medicinerequest" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/requestspage" options={{ headerShown: false }} />
 
