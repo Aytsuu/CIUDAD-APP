@@ -175,10 +175,6 @@ const CertForm: React.FC = () => {
         </View>
       )}
 
-
-      
-
-      
       {error && (
         <Text className="text-red-500 mb-2 text-sm">{error}</Text>
       )}
