@@ -2,31 +2,18 @@ import React, { useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { getFPCompleteRecord, getFPRecordsForPatient } from "./GetRequest";
-import { 
-  ArrowLeft, 
-  FileText, 
-  Calendar, 
-  User, 
-  Activity, 
-  GitCompare, 
-  Loader2, 
-  AlertCircle,
-  Clock,
-  Stethoscope,
-  ChevronRight,
-  ChevronLeft
-} from "lucide-react-native";
+import {  FileText, Calendar, User, GitCompare, Loader2, AlertCircle,Stethoscope,ChevronRight,ChevronLeft} from "lucide-react-native";
 import { router, useRouter } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button/button";
+// import { Badge } from "@/components/ui/badge";
 import { useRoute } from "@react-navigation/native";
 import PageLayout from "@/screens/_PageLayout";
 
 // Define FPRecord type
 interface FPRecord {
   fprecord: number;
-  patient_id: string;
+  // patient_id: string;
   client_id: string;
   patient_name: string;
   patient_age: number;
@@ -35,7 +22,7 @@ interface FPRecord {
   created_at: string;
 }
 
-const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }) => (
+const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: any; label: string; value: string; iconColor?: string }) => (
   <View className="flex-row items-center py-2">
     <View className="w-5 h-5 mr-3">
       <Icon size={16} color={iconColor} />

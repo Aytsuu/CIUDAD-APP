@@ -1,28 +1,6 @@
 import React, { useState, useMemo } from "react"
-import {
-  View,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  RefreshControl,
-  FlatList,
-  ScrollView,
-} from "react-native"
-import {
-  Search,
-  ArrowLeft,
-  AlertCircle,
-  Calendar,
-  User,
-  FileText,
-  Clock,
-  Users,
-  TrendingUp,
-  Filter,
-  ChevronLeft,
-  MapPin,
-  RefreshCw,
-} from "lucide-react-native"
+import { View,TouchableOpacity,TextInput,RefreshControl,FlatList} from "react-native"
+import { Search,AlertCircle,Calendar,User,FileText,ChevronLeft,MapPin,RefreshCw} from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"

@@ -11,13 +11,14 @@ import {
   Pressable
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { getIndividualMedicineRecords } from "../admin/admin-medicinerequest/restful-api/getAPI";
 import { AlertCircle, Pill, ChevronLeft, Search } from "lucide-react-native";
+import { router } from "expo-router";
 
 // Document Modal Component for viewing medicine documents
 const DocumentModal = ({ files, isOpen, onClose, isLoading = false }) => {
@@ -235,7 +236,7 @@ export default function IndivMedicineRecords({ navigation:any }) {
           <Button 
             variant="outline" 
             size="sm"
-            onPress={() => navigation.goBack()}
+            onPress={() => router.back()}
             className="mr-3"
           >
             <ChevronLeft className="text-black" />
@@ -289,7 +290,7 @@ export default function IndivMedicineRecords({ navigation:any }) {
               {debouncedSearch ? "No records found for your search" : "No medicine records found"}
             </Text>
             {!debouncedSearch && (
-              <Button onPress={() => navigation.navigate('MedicineRequestForm')}>
+              <Button onPress={() => router.push('MedicineRequestForm')}>
                 Request Medicine
               </Button>
             )}

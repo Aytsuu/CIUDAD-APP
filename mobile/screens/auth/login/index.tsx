@@ -10,8 +10,6 @@ import { SignupOptions } from "./SignupOptions";
 import { useToastContext } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-// import CiudadLogo from "@/assets/images/CIUDADLogo.svg";
-
 const SignupOptionsMemo = memo(SignupOptions);
 
 const { width } = Dimensions.get("window");

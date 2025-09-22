@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import React from "react"
-import { ChevronLeft, Edit, AlertCircle } from "lucide-react"
+import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocation } from "react-router"
@@ -20,7 +20,7 @@ import { calculateAge } from "@/helpers/ageCalculator"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
 import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
-import {PatientData,ChildHealthRecord} from "./types"
+import { PatientData } from "./types"
 import PersonalInfoTab from "./PersonalInfoTab"
 import Records from "./Records"
 import VisitHistoryTab from "./VisitHistoryTab"
@@ -28,7 +28,7 @@ import VisitHistoryTab from "./VisitHistoryTab"
 // fetch queries
 import { useUpdatePatient } from "../queries/update"
 import { usePatientDetails } from "../queries/fetch"
-import { useChildHealthRecords } from "../queries/fetch"
+import { useChildData } from "../queries/fetch"
 import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
@@ -40,12 +40,11 @@ import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
   const [isEditable, setIsEditable] = useState(false)
-  // const { patientId } = useParams<{ patientId: string }>()
   const location = useLocation()
   const { patientId } = location.state || {}
 
-  const { data: patientsData, error, isError } = usePatientDetails(patientId ?? "")
-  const { data: rawChildHealthRecords, isLoading: isLoadingChildHealthRecords } = useChildHealthRecords(patientId);
+  const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "")
+  const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
   const { data: medicineCountData } = useMedicineCount(patientId ?? "")
   const medicineCount = medicineCountData?.medicinerecord_count
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
@@ -290,10 +289,23 @@ export default function ViewPatientRecord() {
   };
 
   const handleCancelEdit = () => {
-    if (patientData) form.reset(patientData);
-    setIsEditable(false);
-    toast("Edit cancelled. No changes were made.");
-  };
+    if (patientData) form.reset(patientData)
+    setIsEditable(false)
+    toast("Edit cancelled. No changes were made.")
+  }
+
+  if (isLoading) {
+    return (
+      <LayoutWithBack 
+        title="Patient Information and Records"
+        description="View patient information, medical records, and follow-up visits"
+      >
+        <div className="flex h-full items-center justify-center">
+          <Loader2 className="animate-spin" /> Loading...
+        </div>
+      </LayoutWithBack>
+            )
+  }
 
   if (isError && !patientId) {
     return (

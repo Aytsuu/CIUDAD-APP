@@ -41,15 +41,9 @@ interface PersonalInfoTabProps {
   handleCancelEdit: () => void;
 }
 
-export default function PersonalInfoTab({
-  form,
-  isEditable,
-  isTransient,
-  handleSaveEdit,
-  handleCancelEdit,
-}: PersonalInfoTabProps) {
-
+export default function PersonalInfoTab({ form, isEditable, isTransient, handleSaveEdit, handleCancelEdit }: PersonalInfoTabProps) {
   form.setValue("philhealthId", form.getValues("philhealthId") || "");
+
   return (
     <TabsContent value="personal" className="mt-0">
       <CardLayout
@@ -282,12 +276,7 @@ export default function PersonalInfoTab({
       />
       {isTransient && isEditable && (
         <div className="flex justify-end mt-6 space-x-2 pb-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCancelEdit}
-            className="bg-white text-gray-700 hover:bg-gray-50"
-          >
+          <Button variant="outline" size="sm" onClick={handleCancelEdit} className="bg-white text-gray-700 hover:bg-gray-50">
             Cancel
           </Button>
           <Button size="sm" className="bg-buttonBlue hover:bg-buttonBlue/90 text-white" onClick={handleSaveEdit}>

@@ -2,25 +2,28 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { processFirstRequest } from "./processSubmit";
-import { showSuccessToast,showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 export const useFirstRequestMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: (data: { data: any }) => 
-      processFirstRequest(data.data), // Destructure the data property
+    mutationFn: ({ data }: { data: any;}) => {
+      return processFirstRequest(data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["firstaidcount"] });
       queryClient.invalidateQueries({ queryKey: ["firstAidRecords"] });
       queryClient.invalidateQueries({ queryKey: ["patientFirstAidDetails"] });
-      showSuccessToast("Submitted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["firstaidtransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["firstaidStocks"] });
+      showSuccessToast("First Aid request submitted successfully!");
       navigate(-1);
     },
-    onError: (error: unknown) => {
-      console.error("Submission failed completely:", error);
-      showErrorToast("Submission failed")
-    
+    onError: (error: Error) => {
+      console.error("Submission failed:", error);
+      showErrorToast(error.message || "Failed to submit first aid request. Please try again.");
     },
   });
 };

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from ..models import *
+from ..double_queries import PostQueries
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -70,7 +71,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     read_only_fields = ['hh_id', 'hh_date_registered']
 
   def create(self, validated_data):
-    return Household.objects.create(
+    household = Household.objects.create(
       hh_id = self.generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
@@ -78,6 +79,18 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
       rp = validated_data['rp'],
       staff = validated_data['staff']
     )
+
+    # Perform double query
+    double_queries = PostQueries()
+    response = double_queries.household(validated_data)
+    if not response.ok:
+      try:
+          error_detail = response.json()
+      except ValueError:
+          error_detail = response.text
+      raise serializers.ValidationError({"error": error_detail})
+
+    return household
 
   def generate_hh_no(self):
     next_val = Household.objects.count() + 1

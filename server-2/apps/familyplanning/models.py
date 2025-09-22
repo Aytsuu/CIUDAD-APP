@@ -12,9 +12,9 @@ class FP_Record(models.Model):
     # nhts = models.BooleanField(default=False)
     fourps = models.BooleanField(default=False)
     plan_more_children = models.BooleanField(default=False)
-    avg_monthly_income = models.CharField(max_length=15)
+    avg_monthly_income = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
-    occupation = models.CharField(max_length=30, null=True, blank=True)
+    occupation = models.CharField(max_length=50, null=True, blank=True)
     
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='fp_records')
     spouse = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='fp_records',null=True, blank=True)
@@ -29,7 +29,7 @@ class FP_Record(models.Model):
     def __str__(self):
         return f"FP Record {self.fprecord_id} for Patient {self.pat.pat_id}"
 
-        
+   
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)
     fpt_client_type = models.CharField(max_length=50)
@@ -88,19 +88,19 @@ class FP_RiskVaw(models.Model):
 class FP_Physical_Exam(models.Model):
     fp_pe_id = models.AutoField(primary_key=True)
 
-    SKIN_EXAM_CHOICES = [("normal", "Normal"),("pale", "Pale"),("yellowish", "Yellowish"),("hematoma", "Hematoma")]
-    CONJUNCTIVA_EXAM_CHOICES = [("normal", "Normal"),("pale", "Pale"),("yellowish", "Yellowish")]
-    NECK_EXAM_CHOICES = [("normal", "Normal"),("neck_mass", "Neck Mass"),("enlarged_lymph_nodes", "Enlarged Lymph Nodes")]
-    BREAST_EXAM_CHOICES = [("normal", "Normal"),("mass", "Mass"),("nipple_discharge", "Nipple Discharge")]
-    ABDOMEN_EXAM_CHOICES = [("normal", "Normal"),("abdominal_mass", "Abdominal Mass"),("varicosities", "Varicosities")]
-    EXTREMITIES_EXAM_CHOICES = [("normal", "Normal"),("edema", "Edema"),("varicosities", "Varicosities")]
-    
-    skin_exam = models.CharField(max_length=50, choices=SKIN_EXAM_CHOICES, null=True,blank=True)
-    conjunctiva_exam = models.CharField(max_length=50, choices=CONJUNCTIVA_EXAM_CHOICES,null=True,blank=True)
-    neck_exam = models.CharField(max_length=30, choices=NECK_EXAM_CHOICES,null=True,blank=True)
-    breast_exam = models.CharField(max_length=30, choices=BREAST_EXAM_CHOICES,null=True,blank=True)
-    abdomen_exam = models.CharField(max_length=30, choices=ABDOMEN_EXAM_CHOICES,null=True,blank=True)
-    extremities_exam = models.CharField(max_length=30, choices=EXTREMITIES_EXAM_CHOICES,null=True,blank=True)
+    # SKIN_EXAM_CHOICES = [("normal", "Normal"),("pale", "Pale"),("yellowish", "Yellowish"),("hematoma", "Hematoma")]
+    # CONJUNCTIVA_EXAM_CHOICES = [("normal", "Normal"),("pale", "Pale"),("yellowish", "Yellowish")]
+    # NECK_EXAM_CHOICES = [("normal", "Normal"),("neck_mass", "Neck Mass"),("enlarged_lymph_nodes", "Enlarged Lymph Nodes")]
+    # BREAST_EXAM_CHOICES = [("normal", "Normal"),("mass", "Mass"),("nipple_discharge", "Nipple Discharge")]
+    # ABDOMEN_EXAM_CHOICES = [("normal", "Normal"),("abdominal_mass", "Abdominal Mass"),("varicosities", "Varicosities")]
+    # EXTREMITIES_EXAM_CHOICES = [("normal", "Normal"),("edema", "Edema"),("varicosities", "Varicosities")]
+
+    skin_exam = models.CharField(max_length=50, default="Normal", null=True, blank=True)
+    conjunctiva_exam = models.CharField(max_length=50, default="Normal", null=True, blank=True)
+    neck_exam = models.CharField(max_length=30, default="Normal", null=True, blank=True)
+    breast_exam = models.CharField(max_length=30, default="Normal", null=True, blank=True)
+    abdomen_exam = models.CharField(max_length=30, default="Normal", null=True, blank=True)
+    extremities_exam = models.CharField(max_length=30, default="Normal", null=True, blank=True)
 
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE, related_name="fp_physical_exam")
     bm = models.ForeignKey(BodyMeasurement,on_delete=models.CASCADE,null=True)

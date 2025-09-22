@@ -128,8 +128,6 @@ export const personalInfoSchema = z.object({
   per_sex: z.string().min(1, "Sex is required"),
   per_dob: z.string().min(1, "Date of Birth is required"),
   per_status: z.string().min(1, "Status is required"),
-  per_address: z.string().min(1, 'Address is required'),
-  per_edAttainment: z.string(),
   per_religion: z.string().min(1, "Religion is required"),
   
   per_lname: z.string()
@@ -167,13 +165,11 @@ export const personalInfoSchema = z.object({
 })  
 
 export const uploadIdSchema = z.object({
-  selected: z.string().min(1, "ID selection is required"),
-  imageURI: z.string()
-
+  selected: z.string().min(1, "ID type selection is required"),
 })
 
 export const photoSchema = z.object({
-  imageURI: z.string()
+  list: z.array(fileSchema).default([]),
 })
 
 

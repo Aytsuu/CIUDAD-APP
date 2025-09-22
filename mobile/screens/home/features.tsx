@@ -40,11 +40,6 @@ export const features: FeatureType[] = [
     route: "/(profiling)",
     users: ["profiling"]
   },
-  { 
-    name: "Profiling",
-    icon: <Profiling width={30} height={30}/>,
-    route: "/(profiling)"
-  },
   {
     name: "Business",
     icon: <Business width={30} height={30}/>,
@@ -54,9 +49,9 @@ export const features: FeatureType[] = [
   {
     name: "Health",
     icon: <Health width={30} height={30}/>,
-    route: "/(health)"
+    route: "/(health)",
+    users: [User.resident]
   },
- 
   {
     name: "Securado",
     icon: <Securado width={30} height={30}/>,

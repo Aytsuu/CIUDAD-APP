@@ -13,6 +13,7 @@ from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
 from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer, TransientAddressSerializer
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
+from ...pagination import StandardResultsPagination
 
 
 @api_view(['GET'])
@@ -33,6 +34,7 @@ class TransientAddressView(generics.ListAPIView):
 
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
+    pagination_class = StandardResultsPagination
     queryset = Patient.objects.all()
 
     def create(self, request, *args, **kwargs):
@@ -267,9 +269,6 @@ class PatientView(generics.ListCreateAPIView):
                     try:
                         patient = Patient.objects.get(trans_id=transient)
                         print(f'Found existing patient: {patient.pat_id} for transient: {trans_id}')
-                        # if patient.pat_status != "Active":
-                        #     patient.pat_status = "Active"
-                        #     patient.save()
                     
                     except Patient.DoesNotExist:
                         patient_data = {
@@ -304,7 +303,7 @@ class PatientView(generics.ListCreateAPIView):
             )
 
     def get_queryset(self):
-        return Patient.objects.select_related(
+        queryset = Patient.objects.select_related(
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
@@ -313,6 +312,38 @@ class PatientView(generics.ListCreateAPIView):
             ),
             'rp_id__household_set',
         ).filter(pat_status='Active')
+
+        params = self.request.query_params
+        status = params.get('status')
+        search = params.get('search')
+
+        from django.db.models import Q
+        filters = Q()
+
+        if status and status.lower() not in ["all", ""]:
+            filters &= Q(pat_type=status)
+
+        if search:
+            search = search.strip()
+            if search:
+                search_filters = Q()
+                search_filters |= (
+                    Q(rp_id__per__per_fname__icontains=search) |
+                    Q(rp_id__per__per_mname__icontains=search) |
+                    Q(rp_id__per__per_lname__icontains=search)
+                )
+                search_filters |= (
+                    Q(trans_id__tran_fname__icontains=search) |
+                    Q(trans_id__tran_lname__icontains=search) |
+                    Q(trans_id__tran_mname__icontains=search)
+                )
+                filters &= search_filters
+
+        if filters:
+            queryset = queryset.filter(filters)
+
+        return queryset
+    
 
 class PatientDetailView(generics.RetrieveAPIView):
     serializer_class = PatientSerializer

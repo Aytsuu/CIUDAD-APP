@@ -80,7 +80,16 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
   }
 }
 
-
+export const getAppointmentsByResidentId = async (rp_id: string) => {
+  try {
+    // You will need to create this endpoint in your backend
+    const res = await api2.get(`patientrecords/appointments/by-resident/${rp_id}/`);
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching appointments by resident ID:", error);
+    return [];
+  }
+};
 // fetch all transient addresses
 export const getAllTransientAddresses = async () => {
 	try {

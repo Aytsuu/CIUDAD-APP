@@ -110,10 +110,10 @@ export const FollowUpTimeline: React.FC<FollowUpTimelineProps> = ({ records }) =
   });
 
   // Get recent records with follow-ups
-  const recentRecords = records
-    .filter(record => record.dateOfFollowUp)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+  // const recentRecords = records
+  //   .filter(record => record.dateOfFollowUp)
+  //   .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  //   .slice(0, 5);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

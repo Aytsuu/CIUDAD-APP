@@ -4,11 +4,11 @@ import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
-import { useFirstAidRecords } from "./queries/fetchQueries";
 import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useFirstAidRecords } from "./queries/fetchQueries";
 
 export default function MonthlyFirstAidRecords() {
   const { showLoading, hideLoading } = useLoading();
@@ -113,7 +113,7 @@ export default function MonthlyFirstAidRecords() {
                 </div>
               ) : monthlyData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {monthlyData.map((record: any) => {
+                  {monthlyData.map((record:any) => {
                     const monthName = new Date(record.month + "-01").toLocaleString(
                       "default",
                       {

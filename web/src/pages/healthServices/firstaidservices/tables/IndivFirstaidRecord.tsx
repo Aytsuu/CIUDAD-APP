@@ -158,7 +158,7 @@ export default function IndivFirstAidRecords() {
               <Heart className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800 pr-2">Total Medical Consultations</p>
+              <p className="text-sm font-medium text-gray-800 pr-2">Total First Aid Record</p>
             </div>
             <p className="text-2xl font-bold text-gray-900">{firstAidCount !== undefined ? firstAidCount : "0"}</p>
           </div>

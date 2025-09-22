@@ -180,3 +180,14 @@ export const getPatientRecordsByReferralId = async (referralId: string) => {
     return []
   }
 }
+
+export const getPatientByResidentId = async (rpId: string) => {
+  try {
+    const res = await api2.get(`patientrecords/patient/by-resident/${rpId}/`);
+    console.log("✅ Patient by resident ID fetched successfully:", res.data);
+    return res.data;
+  } catch (error) {
+    handleApiError(error, `Fetch Patient by Resident ID: ${rpId}`);
+    return null;
+  }
+};

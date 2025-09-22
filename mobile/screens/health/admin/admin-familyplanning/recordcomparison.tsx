@@ -177,7 +177,7 @@ const RecordComparisonScreen: React.FC = () => {
             <FieldRow label="Full Term" value1={record1.obstetrical_history?.fullTerm} value2={record2.obstetrical_history?.fullTerm} />
             <FieldRow label="Premature" value1={record1.obstetrical_history?.premature} value2={record2.obstetrical_history?.premature} />
             <FieldRow label="Abortion" value1={record1.obstetrical_history?.abortion} value2={record2.obstetrical_history?.abortion} />
-            <FieldRow label="Living Children" value1={record1.obstetrical_history?.livingChildren} value2={record2.obstetrical_history?.livingChildren} />
+            <FieldRow label="Living Children" value1={record1.obstetrical_history?.numOfLivingChildren} value2={record2.obstetrical_history?.numOfLivingChildren} />
             <FieldRow label="Last Delivery Date" value1={record1.obstetrical_history?.lastDeliveryDate} value2={record2.obstetrical_history?.lastDeliveryDate} />
             <FieldRow label="Type of Last Delivery" value1={record1.obstetrical_history?.typeOfLastDelivery} value2={record2.obstetrical_history?.typeOfLastDelivery} />
             <FieldRow label="Last Menstrual Period" value1={record1.obstetrical_history?.lastMenstrualPeriod} value2={record2.obstetrical_history?.lastMenstrualPeriod} />

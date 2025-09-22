@@ -80,7 +80,7 @@ export const useSubmitAnimalBiteReferralMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: submitAnimalBiteReferral,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Get the patient ID from the submitted data
       const patientId = variables.pat_id;
       

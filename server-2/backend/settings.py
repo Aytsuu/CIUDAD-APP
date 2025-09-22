@@ -1,6 +1,3 @@
-# # ---------------------------------------------------
-# # PRODUCTION SERVER
-# # ---------------------------------------------------
 
 # from pathlib import Path
 # from datetime import timedelta
@@ -551,9 +548,6 @@ LOGGING = {
 
 
 
-
-
-
 # ---------------------------------------------------
 # DEVELOPMENT SERVER
 # ------------------------------------------------
@@ -577,27 +571,45 @@ LOGGING = {
 
 # # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
+# # SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
+# # ALLOWED_HOSTS = ['localhost', '*']
+# # ALLOWED_HOSTS = ['localhost', '*']
 
-# # ========================
-# # SUPABASE CONFIGURATION
-# # ========================
+
+
 # SUPABASE_CONFIG = {
-#     'URL': config('SUPABASE_URL'),
-#     'ANON_KEY': config('SUPABASE_ANON_KEY'),
-#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-#     'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
+#     'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+#     'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+#     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
 #     'JWT_ALGORITHM': 'HS256',
 #     'JWT_AUDIENCE': 'authenticated',
 # }
 
-# # Individual SUPABASE settings for compatibility with utils/supabase_client.py
-# SUPABASE_URL = config('SUPABASE_URL')
-# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
-# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
+# SUPABASE_URL = SUPABASE_CONFIG['SUPABASE_URL']
+# SUPABASE_ANON_KEY = SUPABASE_CONFIG['SUPABASE_ANON_KEY']
+# SUPABASE_SERVICE_ROLE_KEY = SUPABASE_CONFIG['SERVICE_ROLE_KEY']
+# SUPABASE_JWT_SECRET = SUPABASE_CONFIG['JWT_SECRET']
+
+# SUPABASE_PROJECT_ID = SUPABASE_CONFIG['SUPABASE_PROJECT_ID']
+# if not DEBUG:
+#     required_keys = {
+#         'SUPABASE_URL': SUPABASE_URL,
+#         'SUPABASE_ANON_KEY': SUPABASE_ANON_KEY,
+#         'SUPABASE_SERVICE_ROLE_KEY': SUPABASE_SERVICE_ROLE_KEY,
+#         'SUPABASE_JWT_SECRET': SUPABASE_JWT_SECRET,
+#     }
+
+#     for key, value in required_keys.items():
+#         if not value or value in ['http://localhost:54321', 'anon-dev-key', 'service-role-dev-key', 'dev-jwt-secret']:
+#             raise ValueError(f"[Supabase config error] {key} is missing or using a fallback value in production.")
+
+
+# # Application definition
 
 # # ========================
 # # FIREBASE CONFIGURATION
@@ -608,9 +620,6 @@ LOGGING = {
 #     cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
 #     firebase_admin.initialize_app(cred)
 
-# # ========================
-# # APPLICATION DEFINITION
-# # ========================
 # INSTALLED_APPS = [
 #     'django.contrib.admin',
 #     'django.contrib.auth',
@@ -618,33 +627,50 @@ LOGGING = {
 #     'django.contrib.sessions',
 #     'django.contrib.messages',
 #     'django.contrib.staticfiles',
+
 #     'rest_framework',
 #     'corsheaders',
+    
 #     'rest_framework_simplejwt',
 #     'rest_framework.authtoken',
+
 #     'apps.healthProfiling',
 #     'apps.inventory',
 #     'apps.maternal',
 #     'apps.vaccination',
+#     # 'apps.profiling',
 #     'apps.administration',
+#     # 'apps.account',
+#     # 'apps.waste',
+#     # 'apps.profiling',
 #     'apps.familyplanning',
 #     'apps.animalbites',
+#     # 'apps.account',
+#     'apps.authentication',
 #     'apps.patientrecords',
+
 #     'backend.firebase.notifications',
+#     'detection',
+#     # 'apps.gad'
+#     'apps.account',
 #     'apps.medicalConsultation',
 #     'apps.medicineservices',
 #     'apps.firstaid',
 #     'apps.childhealthservices',
 #     'apps.servicescheduler',
 #     'apps.reports',
+#     'apps.file',
+#     "simple_history",
+
 # ]
 
-
+# # REST_FRAMEWORK = {
+# #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+# #     'PAGE_SIZE': 10,  # default page size
+# # }
 
 # MIDDLEWARE = [
-#     'corsheaders.middleware.CorsMiddleware', 
 #     'django.middleware.security.SecurityMiddleware',
-#     'whitenoise.middleware.WhiteNoiseMiddleware', 
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
 #     'corsheaders.middleware.CorsMiddleware',
@@ -652,7 +678,15 @@ LOGGING = {
 #     'django.contrib.auth.middleware.AuthenticationMiddleware',
 #     'django.contrib.messages.middleware.MessageMiddleware',
 #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#     # 'apps.authentication.middleware.AccountMiddleware',
 #     "django.middleware.gzip.GZipMiddleware",  
+#     'simple_history.middleware.HistoryRequestMiddleware',
+
+# ]
+
+# AUTHENTICATION_BACKENDS = [
+#     'apps.authentication.backends.SupabaseAuthBackend',
+#     'django.contrib.auth.backends.ModelBackend',
 # ]
 
 # ROOT_URLCONF = 'backend.urls'
@@ -673,6 +707,7 @@ LOGGING = {
 #     },
 # ]
 
+# WSGI_APPLICATION = 'backend.wsgi.application'
 # ASGI_APPLICATION = 'backend.asgi.application'
 
 # # Database
@@ -707,44 +742,63 @@ LOGGING = {
 # ]
 
 
-# # ========================
-# # INTERNATIONALIZATION
-# # ========================
+# # Internationalization
+# # https://docs.djangoproject.com/en/5.1/topics/i18n/
+
 # LANGUAGE_CODE = 'en-us'
-# TIME_ZONE = 'Asia/Manila'
+
+# TIME_ZONE = 'UTC'
+
 # USE_I18N = True
-# USE_L10N = True
-# USE_TZ = True 
+
+# USE_TZ = True
 
 
-# # ========================
-# # STATIC FILES
-# # ========================
+# # Static files (CSS, JavaScript, Images)
+# # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
 # STATIC_URL = 'static/'
-# if not DEBUG:
-#     # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
-#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-#     # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
-#     # and renames the files with unique names for each version to support long-term caching
-#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# # DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
+
+# # Default primary key field type
+# # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # # ========================
-# # CORS SETTINGS
+# # REST FRAMEWORK
 # # ========================
+# REST_FRAMEWORK = {
+#     # 'DEFAULT_AUTHENTICATION_CLASSES': [
+#     #     'apps.authentication.backends.SupabaseAuthBackend',
+#     # ],
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         # 'rest_framework.permissions.IsAuthenticated',
+#     ],
+# }
+
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:3000",
 #     "http://localhost:5173",
-#     "https://ciudad-app-server-2.onrender.com",
-#     "http://127.0.0.1:5173",  # Add this for Vite sometimes
+#     config('FRONTEND_URL', default='http://localhost:3000'),
 # ]
-
 # ALLOWED_HOSTS = ['*'] 
-# CORS_ALLOW_ALL_ORIGINS = True # disable in production
-# CORS_ALLOW_CREDENTIALS = True # false in production
+# CORS_ALLOW_ALL_ORIGINS= True
+# CORS_ALLOW_CREDENTIALS= True
 
+
+
+# # JWT Authentication Settings
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+# }
+
+# CORS_ALLOW_CREDENTIALS = True
 # CORS_ALLOW_HEADERS = [
 #     'accept',
 #     'accept-encoding',
@@ -769,6 +823,8 @@ LOGGING = {
 #     'POST',
 #     'PUT',
 # ]
+# CORS_ALLOW_HEADERS = ["*"]
+
 
 # CORS_PREFLIGHT_MAX_AGE = 86400
 

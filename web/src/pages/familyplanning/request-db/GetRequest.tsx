@@ -27,6 +27,47 @@ export interface FPPatientsCount {
   minor_fp_patients: number;
 }
 
+// Define the structure for the paginated response from the backend
+// This interface describes the object returned by your Django REST Framework's pagination
+export interface PaginatedFPRecords {
+  count: number; // Total number of items across all pages
+  next: string | null; // URL for the next page, or null if no next page
+  previous: string | null; // URL for the previous page, or null if no previous page
+  results: FPRecord[]; // The actual list of records for the current page
+}
+
+// Define the structure for a single FPRecord as it comes from the backend
+// This should match the structure of the objects within the 'results' array
+export interface FPRecord {
+  fprecord_id: number;
+  patient_id: string;
+  client_id: string;
+  patient_name: string;
+  patient_age: number;
+  client_type: string;
+  patient_type: string;
+  method_used: string;
+  created_at: string;
+  sex: string;
+  record_count?: number;
+  subtype: string;
+}
+
+export interface PaginatedFPRecords {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: FPRecord[];
+}
+
+// Define parameters for fetching FP records
+export interface GetFPRecordsParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  client_type?: string;
+}
+
 export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
   try {
     const response = await api2.get("/familyplanning/patient-counts/");
@@ -36,7 +77,16 @@ export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
     throw error;
   }
 };
-
+export const getFPRecordsList = async (params: GetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
+  try {
+    const response = await api2.get("familyplanning/overall-records/", { params });
+    
+    return response.data;
+  } catch (err) {
+    console.error("Error fetching FP records for overall table:", err);
+    return { count: 0, next: null, previous: null, results: [] };
+  }
+};
 export const getAllFPRecordsForPatient = async (patrec_id: any) => {
   try{
     const res = await api2.get(`/familyplanning/get_all_fp_records_for_patient/${patrec_id}`);
@@ -48,34 +98,43 @@ export const getAllFPRecordsForPatient = async (patrec_id: any) => {
 
   };  
 
-// Updated getFPRecordsList to match the new backend structure for the overall table
-export const getFPRecordsList = async () => {
-  try {
-    const response = await api2.get("familyplanning/overall-records/")
-    const fpRecords = response.data
-    const transformedData = fpRecords.map((record: any) => {
-      return {
-        fprecord_id: record.fprecord,
-        patient_id: record.patient_id, // Ensure patient_id is mapped
-        client_id: record.client_id || "N/A",
-        patient_name: record.patient_name || "N/A",
-        patient_age: record.patient_age || "N/A",
-        patient_type: record.patient_type || "N/A",
-        client_type: record.client_type || "N/A",
-        method_used: record.method_used || "N/A",
-        subtype: record.subTypeOfClient || "N/A",
-        created_at: record.created_at || "N/A",
-        sex: record.sex || "Unknown",
-        record_count: record.record_count || 0, // Ensure record_count is mapped
-      }
-    })
+// // Updated getFPRecordsList to accept pagination and filter parameters
+// export const getFPRecordsList = async (params: GetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
+//   try {
+//     const response = await api2.get("familyplanning/overall-records/", { params });
+//     const { count, next, previous, results } = response.data;
 
-    return transformedData
-  } catch (err) {
-    console.error("Error fetching FP records for overall table:", err)
-    return []
-  }
-}
+//     // The transformation logic here should match the FPRecord interface defined above
+//     // and the data structure returned by your Django backend's `list` method.
+//     const transformedResults: FPRecord[] = results.map((record: any) => {
+//       return {
+//         fprecord_id: record.fprecord_id,
+//         patient_id: record.patient_id,
+//         client_id: record.client_id || "N/A",
+//         patient_name: record.patient_name || "N/A",
+//         patient_age: record.patient_age || "N/A",
+//         patient_type: record.patient_type || "N/A",
+//         client_type: record.client_type || "N/A",
+//         method_used: record.method_used || "N/A",
+//         subtype: record.subtype || "N/A", // Ensure this matches the backend's output
+//         created_at: record.created_at || "N/A",
+//         sex: record.sex || "Unknown",
+//         record_count: record.record_count || 0,
+//       };
+//     });
+
+//     return {
+//       count,
+//       next,
+//       previous,
+//       results: transformedResults,
+//     };
+//   } catch (err) {
+//     console.error("Error fetching FP records for overall table:", err);
+//     // Return a default paginated structure on error
+//     return { count: 0, next: null, previous: null, results: [] };
+//   }
+// };
 
 export interface FullFPRecordDetail {
   fprecord_id: number;
@@ -191,8 +250,8 @@ export const fetchIllnesses = async (): Promise<Illness[]> => {
     const response = await api2.get("/familyplanning/illnesses/")
     return response.data
   } catch (error) {
-    console.error("Error fetching illnesses:", error)
-    throw error
+    console.error("Error fetching illnesses:", error);
+    throw error;
   }
 }
 
@@ -208,8 +267,8 @@ export const createMedicalHistoryRecords = async (
     })
     return response.data
   } catch (error) {
-    console.error("Error creating medical history records:", error)
-    throw error
+    console.error("Error creating medical history records:", error);
+    throw error;
   }
 }
 
@@ -219,8 +278,8 @@ export const fetchPatientMedicalHistory = async (patrec_id: number): Promise<Med
     const response = await api2.get(`/familyplanning/medical-history/${patrec_id}/`)
     return response.data
   } catch (error) {
-    console.error("Error fetching patient medical history:", error)
-    throw error
+    console.error("Error fetching patient medical history:", error);
+    throw error;
   }
 }
 
@@ -240,8 +299,8 @@ export const getPatients = async () => {
     const response = await api2.get("patientrecords/patient")
     return response.data
   } catch (err) {
-    console.error("Error fetching patients:", err)
-    return []
+    console.error("Error fetching patients:", err);
+    return [];
   }
 }
 
@@ -250,8 +309,8 @@ export const getFPRecordsForPatient = async (patientId: string | number): Promis
     const response = await api2.get(`familyplanning/fp-records-by-patient/${patientId}/`)
     return response.data
   } catch (err) {
-    console.error(`❌ Error fetching all FP records for patient ${patientId}:`, err)
-    return []
+    console.error(`❌ Error fetching all FP records for patient ${patientId}:`, err);
+    return [];
   }
 }
 
@@ -265,8 +324,8 @@ export const getLatestCompleteFPRecordForPatient = async (patientId: string): Pr
       console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
       return null; // Return null if no existing record, so the form can load defaults
     }
-    console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err)
-    throw err // Re-throw other errors
+    console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err);
+    throw err; // Re-throw other errors
   }
 }
 
@@ -276,7 +335,7 @@ export const getFPCompleteRecord = async (fprecord_id: number): Promise<any> => 
     const response = await api2.get(`familyplanning/complete-fp-record/${fprecord_id}/`)
     return response.data
   } catch (err) {
-    console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err)
-    throw err
+    console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err);
+    throw err;
   }
 }

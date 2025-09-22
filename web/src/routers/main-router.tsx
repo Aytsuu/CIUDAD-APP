@@ -1,3 +1,4 @@
+import MainLayout from "@/layout/MainLayout";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import AnnouncementDashboard from "@/pages/announcement/AnnouncementList";
 
@@ -32,12 +33,11 @@ import { medicineRequest } from "./medicine-request";
 import { forwardedhealthrecord_router } from "./forwardedhealthrecords";
 import { firstaid_router } from "./firstaid-router";
 import { health_schedule_routes } from "./health-schedules-router";
+import { summon_router } from "./summon-router";
 import { withTransition } from '@/helpers/withTransition';
 import { viewprofile_router } from "./Account-settings";
 import { template_router } from './template-router';
-import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
-import MainLayout from "@/layout/MainLayout";
 import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 // import { ProtectedRoute } from "@/ProtectedRoutes";
 
@@ -61,17 +61,17 @@ export const main_router: RouteObject[] = [
       ...administration_router,
       ...profiling_router,
       ...report_router,
-      ...complaint_router.map((route) => ({
-        ...route,
-        // element: (
-        //   <ProtectedRoute
-        //     requiredPosition="tanod"
-        //     alternativePositions={["Admin", "Emergency Response Head", "Barangay Captain"]}
-        //   >
-        //     {route.element}
-        //   </ProtectedRoute>
-        // ),
-      })),
+      // ...complaint_router.map((route) => ({
+      //   ...route,
+      //   element: (
+      //     <ProtectedRoute
+      //       requiredPosition="tanod"
+      //       alternativePositions={["admin", "Emergency Response Head", "Barangay Captain"]}
+      //     >
+      //       {route.element}
+      //     </ProtectedRoute>
+      //   ),
+      // })),
       ...complaint_router,
       ...ord_router,
       ...res_router,
@@ -94,6 +94,7 @@ export const main_router: RouteObject[] = [
       ...childHealthServices,
       ...gad_router,
       ...bites_route,
+      ...reports_router,
       ...announcement_route,
       ...famplanning_route,
       ...healthinventory,

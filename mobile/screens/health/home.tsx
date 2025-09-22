@@ -66,6 +66,7 @@ const Homepage = () => {
       {/* Original Header */}
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
+           
           <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
           <Text className="text-white text-base mt-1">How can we help you today?</Text>
         </View>

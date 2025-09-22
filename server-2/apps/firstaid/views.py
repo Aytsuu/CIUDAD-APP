@@ -40,6 +40,154 @@ class CreateFirstaidRecordView(generics.CreateAPIView):
     queryset = FirstAidRecord.objects.all()
     
 
+class CreateFirstAidRequestView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        try:
+            # Extract data from request
+            pat_id = request.data.get('pat_id')
+            signature = request.data.get('signature')
+            firstaid_items = request.data.get('firstaid', [])
+            staff_id = request.data.get('staff_id')
+            
+            print(f"Received first aid request: pat_id={pat_id}, items={len(firstaid_items)}")
+            
+            if not pat_id:
+                return Response({"error": "pat_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not firstaid_items:
+                return Response({"error": "At least one first aid item is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 1. Get the Patient instance
+            try:
+                patient = Patient.objects.get(pat_id=pat_id)
+            except Patient.DoesNotExist:
+                return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # 2. Get Staff instance if staff_id is provided
+            staff_instance = None
+            if staff_id:
+                try:
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {staff_id} not found, continuing without staff")
+            
+            # 3. Create patient record
+            patient_record = PatientRecord.objects.create(
+                pat_id=patient,
+                patrec_type="First Aid Request",
+            )
+            
+            # 4. Process each first aid item
+            firstaid_records = []
+            inventory_updates = {}  # Store original quantities for rollback
+            firstaid_transactions = []  # Store transactions
+            
+            for item_data in firstaid_items:
+                finv_id = item_data.get('finv_id')
+                qty = item_data.get('qty', 0)
+                reason = item_data.get('reason', '')
+                
+                if not finv_id or qty is None:
+                    continue
+                
+                # Check first aid inventory
+                try:
+                    firstaid_inv = FirstAidInventory.objects.get(finv_id=finv_id)
+                    
+                    # Handle unit conversion
+                    unit = firstaid_inv.finv_qty_unit
+                    if unit == "boxes":
+                        unit = "pc/s"
+                    
+                    # Store original quantity for rollback
+                    inventory_updates[finv_id] = {
+                        'firstaid_inv': firstaid_inv,
+                        'original_qty': firstaid_inv.finv_qty_avail
+                    }
+                    
+                    # Handle zero quantity case
+                    if qty == 0:
+                        # Create record without updating inventory
+                        firstaid_record = FirstAidRecord.objects.create(
+                            patrec=patient_record,
+                            finv=firstaid_inv,
+                            qty=f"0 {unit}",
+                            reason=reason,
+                            signature=signature,
+                            created_at=timezone.now(),
+                            staff=staff_instance
+                        )
+                        firstaid_records.append(firstaid_record)
+                        continue
+                    
+                    # Check stock for non-zero quantities
+                    if firstaid_inv.finv_qty_avail < qty:
+                        raise Exception(f"Insufficient stock for First Aid ID {finv_id}. Available: {firstaid_inv.finv_qty_avail}, Requested: {qty}")
+                    
+                    # Update inventory
+                    firstaid_inv.finv_qty_avail -= qty
+                    firstaid_inv.save()
+                    
+                    # Update inventory timestamp if available - FIXED HERE
+                    # Use inv_id directly instead of inv_detail
+                    try:
+                        # Access the related Inventory object through the inv_id field
+                        inventory = firstaid_inv.inv_id
+                        if inventory:
+                            inventory.updated_at = timezone.now()
+                            inventory.save()
+                    except Exception as e:
+                        print(f"Could not update inventory timestamp: {str(e)}")
+                    
+                    # Create first aid transaction
+                    firstaid_transaction = FirstAidTransactions.objects.create(
+                        fat_qty=f"{qty} {unit}",
+                        fat_action="Deducted (FirstAid Request)",
+                        staff=staff_instance,
+                        finv_id=firstaid_inv
+                    )
+                    firstaid_transactions.append(firstaid_transaction)
+                    
+                    # Create first aid record
+                    firstaid_record = FirstAidRecord.objects.create(
+                        patrec=patient_record,
+                        finv=firstaid_inv,
+                        qty=f"{qty} {unit}",
+                        reason=reason,
+                        signature=signature,
+                        created_at=timezone.now(),
+                        staff=staff_instance
+                    )
+                    firstaid_records.append(firstaid_record)
+                    
+                except FirstAidInventory.DoesNotExist:
+                    raise Exception(f"First Aid ID {finv_id} not found in inventory")
+            
+            return Response({
+                "message": "First Aid request created successfully",
+                "patrec_id": patient_record.patrec_id,
+                "firstaid_records_created": len(firstaid_records),
+                "firstaid_transactions_created": len(firstaid_transactions)
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            
+            # Manual inventory rollback
+            try:
+                for finv_id, update_info in inventory_updates.items():
+                    firstaid_inv = update_info['firstaid_inv']
+                    original_qty = update_info['original_qty']
+                    firstaid_inv.finv_qty_avail = original_qty
+                    firstaid_inv.save()
+                    print(f"Rolled back inventory for first aid {finv_id} to {original_qty}")
+            except Exception as rollback_error:
+                print(f"Error during inventory rollback: {str(rollback_error)}")
+            
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class GetFirstaidRecordCountView(APIView):
     def get(self, request, pat_id):
         try:
