@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageAcceptedResident } from "../queries/garbagePickupFetchQueries";
 import { router } from "expo-router";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { CheckCircle } from "lucide-react-native";
 import { formatTime } from "@/helpers/timeFormatter";

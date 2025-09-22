@@ -145,31 +145,10 @@ export default function FamilyPlanningForm2({
       }
     })
   }
-
-  // ORIGINAL: Keep the original medical history options as fallback
-  // const medicalHistoryOptions = [
-  //   { name: "severeHeadaches", label: "Severe headaches / migraine" },
-  //   { name: "strokeHeartAttackHypertension", label: "History of stroke / heart attack / hypertension" },
-  //   { name: "hematomaBruisingBleeding", label: "Non-traumatic hematoma / frequent bruising or gum bleeding" },
-  //   { name: "breastCancerHistory", label: "Current or history of breast cancer / breast mass" },
-  //   { name: "severeChestPain", label: "Severe chest pain" },
-  //   { name: "cough", label: "Cough for more than 14 days" },
-  //   { name: "jaundice", label: "Jaundice" },
-  //   { name: "unexplainedVaginalBleeding", label: "Unexplained vaginal bleeding" },
-  //   { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
-  //   { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
-  //   { name: "smoker", label: "Is this client a SMOKER?" },
-  //   { name: "disability", label: "Others" },
-  // ]
-
   const onSubmit = async (data: FormData) => {
 
   // let customDisabilityIllnessId: number | null = null;
   if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
-    // Instead of directly creating here, we'll pass the string to the backend.
-    // The backend will handle checking if it exists or creating it.
-    // We'll add a new field to the formData for this.
-    // For now, ensure the 'disability' checkbox is treated as selected if details are provided.
     const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
     if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
         selectedIllnesses.push(disabilityIllness.ill_id);

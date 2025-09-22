@@ -7,7 +7,7 @@ import {
   ActivityIndicator, 
   RefreshControl,
   TextInput,
-  Text
+  Text, Image
 } from "react-native";
 import { User, FileText, AlertCircle, Package, Clock, Heart, Search, ChevronLeft, Calendar, Shield, MapPin, RefreshCw } from "lucide-react-native";
 
@@ -65,11 +65,12 @@ const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
       {item.signature && (
         <View className="mt-3 pt-3 border-t border-slate-200">
           <Text className="text-slate-600 text-sm mb-2">Patient Signature:</Text>
-          {/* <Image 
+          <Image 
             source={{ uri: `data:image/png;base64,${item.signature}` }}
             className="h-16 w-40 border border-slate-200 rounded"
             resizeMode="contain"
-          /> */}
+          />
+          
         </View>
       )}
     </CardContent>

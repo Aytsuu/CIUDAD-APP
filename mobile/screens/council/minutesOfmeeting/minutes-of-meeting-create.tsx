@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { ChevronLeft } from 'lucide-react-native';
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod"
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import FormComboCheckbox from "@/components/ui/form/form-combo-checkbox";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input";

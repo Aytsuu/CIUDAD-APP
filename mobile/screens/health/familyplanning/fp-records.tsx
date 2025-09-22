@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText, Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
 import { router, useRouter } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query";
 import PageLayout from "@/screens/_PageLayout";

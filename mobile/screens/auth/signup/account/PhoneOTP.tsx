@@ -11,7 +11,7 @@ import {
 import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useSendOTP } from "../../queries/authPostQueries";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";

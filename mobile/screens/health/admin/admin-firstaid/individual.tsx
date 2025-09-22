@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  TouchableOpacity, 
-  FlatList,
-  TextInput,
-  RefreshControl,
-  Image
-} from "react-native";
+import { View, TouchableOpacity, FlatList,TextInput,RefreshControl,Image } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Search, ChevronLeft, Heart, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
@@ -29,10 +22,10 @@ const PatientInfoCard = ({ patientData }: { patientData: any }) => {
       .join(", ");
   };
 
-  const calculatePatientAge = () => {
-    if (!patientData?.patient_details?.personal_info?.per_dob) return "N/A";
-    return calculateAge(patientData.patient_details.personal_info.per_dob).toString();
-  };
+  // const calculatePatientAge = () => {
+  //   if (!patientData?.patient_details?.personal_info?.per_dob) return "N/A";
+  //   return calculateAge(patientData.patient_details.personal_info.per_dob).toString();
+  // };
 };
 
 const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (

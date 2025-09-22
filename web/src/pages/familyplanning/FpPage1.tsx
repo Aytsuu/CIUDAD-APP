@@ -118,7 +118,7 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!isPatientPreSelected) {
       const fetchPatients = async () => {
         setLoadingPatients(true)

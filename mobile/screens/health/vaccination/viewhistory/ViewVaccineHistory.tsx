@@ -2,7 +2,7 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {  useMemo } from "react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { CurrentVaccination } from "../../../../components/ui/current-vaccination";
 import {VaccinationHistoryRecord} from "@/components/ui/vaccination-history";
 import { VaccinationRecord } from "../tables/columns/types";

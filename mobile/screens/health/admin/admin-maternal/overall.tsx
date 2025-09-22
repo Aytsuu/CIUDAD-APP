@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMaternalRecords, useActivepregnanciesCount } from "./queries/maternalFETCH";
 import { AgeCalculation } from "@/helpers/ageCalculator";
 import { date } from "zod";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 
 // interface for maternal records
 interface maternalRecords {
