@@ -188,12 +188,7 @@ export default function PatientsRecord() {
   const [page, setPage] = useState(1)
   const pageSize = 10
 
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = usePatients({}, {})
+  const { data, isLoading, isError } = usePatients({}, {})
   const patientsData: PatientRecord[] = Array.isArray(data?.results) ? data.results : [];
 
   React.useEffect(() => {
@@ -236,7 +231,6 @@ export default function PatientsRecord() {
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true)
-    // Simulate API call
     setTimeout(() => {
       setRefreshing(false)
     }, 1000)
@@ -244,7 +238,6 @@ export default function PatientsRecord() {
 
   const handleRecordPress = (pat_id: string) => {
     console.log(`Navigate to patient ${pat_id}`)
-    // Implement navigation logic here
   }
 
   const handlePageChange = (newPage: number) => {

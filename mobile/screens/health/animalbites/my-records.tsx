@@ -38,12 +38,15 @@ type PatientRecordDetail = {
 
 export default function MyAnimalBiteRecordsScreen() {
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  const rp_id = user?.rp;
   
   // First, get the patient details using the resident ID
   const { data: patientData } = useQuery({
     queryKey: ["patientByResidentId", rp_id],
-    queryFn: () => getPatientByResidentId(rp_id),
+    queryFn: () => {
+      if (!rp_id) throw new Error("Resident ID is undefined");
+      return getPatientByResidentId(rp_id);
+    },
     enabled: !!rp_id,
   });
 

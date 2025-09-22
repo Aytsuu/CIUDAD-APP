@@ -57,8 +57,8 @@ export default function Records() {
      {
       id: 5,
       name: 'Vaccination Records',
-      description: 'View animal bite treatment records',
-      route: '/animalbite/my-records/',
+      description: 'View vaccination records',
+      route: '/vaccination/my-records/',
       icon: Dog,
       image: require('@/assets/images/Health/Home/vaccination.jpg'),
       color: '#1E40AF'

@@ -278,7 +278,7 @@ class MaternalCountView(generics.ListAPIView):
             active_pregnancy_count = Pregnancy.objects.filter(status='active').count()
 
             return Response({
-                'total_patients': total_patients,
+                'total_records': total_patients,
                 'active_pregnancies': active_pregnancy_count,
                 'resident_patients': resident_patients,
                 'transient_patients': transient_patients,

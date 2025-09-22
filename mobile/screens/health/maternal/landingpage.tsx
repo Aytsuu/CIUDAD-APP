@@ -1,15 +1,23 @@
-import { View, Image, Text, ScrollView, TouchableWithoutFeedback } from 'react-native'
+import { View, Image, Text, ScrollView, TouchableWithoutFeedback, TouchableOpacity } from 'react-native'
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import { router } from 'expo-router';
+import PageLayout from '@/screens/_PageLayout';
+import { ChevronLeft } from 'lucide-react-native';
 
 const MaternalLanding = () => {
   return (
-    <ScrollView>
-
-        <TouchableWithoutFeedback onPress={() => router.back()}>
-          <Text className="text-black text-[15px]">Back</Text>
-        </TouchableWithoutFeedback>
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      rightAction={<View className="w-10 h-10" />}
+    >
 
       <View className='flex justify-center items-center'>
         <Image source={require('@/assets/images/Health/Home/Maternal.png')}
@@ -29,7 +37,7 @@ const MaternalLanding = () => {
 
 
       </View>
-    </ScrollView>
+    </PageLayout>
 
   );
 };

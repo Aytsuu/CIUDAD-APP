@@ -70,10 +70,10 @@ const PrenatalBookingPage: React.FC = () => {
     '2024-06-11': ['08:30', '13:00', '16:00']
   };
 
-  const prenatalTimeSlots: string[] = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00', '4:30'
-  ];
+  // const prenatalTimeSlots: string[] = [
+  //   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+  //   '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00', '4:30'
+  // ];
 
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
@@ -132,28 +132,28 @@ const PrenatalBookingPage: React.FC = () => {
 
   return (
     <PageLayout
-          leftAction={
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-            >
-              <ChevronLeft size={24} className="text-gray-700" />
-            </TouchableOpacity>
-          }
-          headerTitle={<Text className="text-gray-900 text-[13px]">Resident Details</Text>}
-          rightAction={<View className="w-10 h-10" />}
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Prenatal Appointment</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
     
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       <ScrollView className='flex-1 p-4' showsVerticalScrollIndicator={false}>
         
         {/* Header */}
-        <View className='bg-white rounded-lg p-5 mb-4 shadow-md'>
+        {/* <View className='bg-white rounded-lg p-5 mb-4 shadow-md'>
           <Text className='text-2xl font-bold text-gray-800 mb-1'>Prenatal Care</Text>
-          <Text className='text-lg text-gray-600 mb-4'>Schedule Your Prenatal Check-up</Text>
+          <Text className='text-lg text-gray-600 mb-4'>Schedule Your Prenatal Check-up</Text> */}
           
           {/* Patient Info Display */}
-          <View className='bg-blue-100 p-3 rounded-lg'>
+          {/* <View className='bg-blue-100 p-3 rounded-lg'>
             <Text className='text-lg font-semibold text-gray-800'>{currentUser .name}</Text>
             <Text className='text-sm text-gray-600 mt-1'>
               ID: {currentUser .id} • {currentUser .contact}
@@ -164,11 +164,11 @@ const PrenatalBookingPage: React.FC = () => {
               </Text>
             )}
           </View>
-        </View>
+        </View> */}
 
         {/* Appointment Form */}
         <View className='bg-white rounded-lg p-5 shadow-md'>
-          <Text className='text-xl font-semibold text-gray-800 mb-5'>Book Prenatal Appointment</Text>
+          {/* <Text className='text-xl font-semibold text-gray-800 mb-5'>Book Prenatal Appointment</Text> */}
           
           {/* Date Selection */}
           <View className='mb-5'>
@@ -203,7 +203,7 @@ const PrenatalBookingPage: React.FC = () => {
           )}
 
           {/* Time Selection */}
-          <View className='mb-5'>
+          {/* <View className='mb-5'>
             <Text className='text-lg font-medium text-gray-700 mb-2'>Select Time Slot *</Text>
             <View className='flex flex-row flex-wrap gap-2'>
               {prenatalTimeSlots.map((time) => (
@@ -216,7 +216,7 @@ const PrenatalBookingPage: React.FC = () => {
                 />
               ))}
             </View>
-          </View>
+          </View> */}
 
           {/* Prenatal Care Info */}
           {/* <View className='bg-blue-100 rounded-lg p-4 mb-5'>
@@ -243,7 +243,7 @@ const PrenatalBookingPage: React.FC = () => {
 
           {/* Submit Button */}
           <TouchableOpacity className='bg-blue-600 rounded-lg p-4 items-center' onPress={handleSubmit}>
-            <Text className='text-lg font-semibold text-white'>Schedule Prenatal Appointment</Text>
+            <Text className='text-lg font-semibold text-white'>Schedule</Text>
           </TouchableOpacity>
         </View>
 
