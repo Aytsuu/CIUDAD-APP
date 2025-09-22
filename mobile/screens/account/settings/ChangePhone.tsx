@@ -1,27 +1,26 @@
 import { TouchableOpacity, View, Text } from "react-native";
-import PageLayout from "../_PageLayout";
-import AccountDetails from "../auth/signup/account/AccountDetails";
+import PageLayout from "@/screens/_PageLayout";
+import PhoneOTP from "../../auth/signup/account/PhoneOTP";
 import { router } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { useUpdateAccount } from "./queries/updateQueries";
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateAccount } from "../queries/accountUpdateQueries";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
-export default function ChangePassword() {
+export default function ChangePhone() {
   const { user } = useAuth();
   const { mutateAsync: updateAccount } = useUpdateAccount();
-  const { getValues, reset } = useRegistrationFormContext();
+  const { getValues } = useRegistrationFormContext();
 
   const submit = async () => {
     await updateAccount({
       data: {
-        password: getValues("accountFormSchema.password")
+        phone: getValues("accountFormSchema.phone")
       }, 
       accId: user?.acc_id as any
     })
 
     router.back()
-    reset()
   }
 
   return (
@@ -34,12 +33,12 @@ export default function ChangePassword() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-black text-[13px]">Change Password</Text>}
+      headerTitle={<Text className="text-black text-[13px]">Phone Verification</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <AccountDetails 
+      <PhoneOTP 
         params={{
-          next: () => submit()
+          next: submit
         }}
       />
     </PageLayout>

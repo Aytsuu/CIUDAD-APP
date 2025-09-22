@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import {useAppDispatch} from "@/redux/redux";
-import { setLoading, setError, clearAuthState, clearError, clearOtpState, setAuthData, setOtpSent } from "./authSlice";
+import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
 import { api } from "@/api/api";
-import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, OTPCredentials, EmailOTPCredentials } from "./auth-types";
+import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, EmailOTPCredentials } from "./auth-types";
 
 export const useLoginMutation = () => {
   const dispatch = useAppDispatch();
@@ -214,7 +214,6 @@ export const useLogoutMutation = () => {
     onSettled: () => {
       dispatch(clearAuthState());
       dispatch(setLoading(false));
-      
       queryClient.clear();
     },
   });

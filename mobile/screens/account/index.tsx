@@ -1,10 +1,8 @@
 import {
-  ScrollView,
   Text,
   View,
   Image,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,30 +46,18 @@ export default () => {
     {
       name: "Settings",
       icon: Settings,
-      route: "/(account)/settings/"
+      route: "/(account)/settings"
     },
   ]
 
   const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await logout();
-            router.replace("/(auth)");
-            toast.success("Signed out successfully");
-          } catch (error) {
-            toast.success("Signed out successfully");
-          }
-        },
-      },
-    ]);
+    try {
+      await logout();
+      router.replace("/(auth)");
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.success("Signed out successfully");
+    }
   };
   
   return (
@@ -94,7 +80,9 @@ export default () => {
             />
           </View>
           <View>
-              <Text className="text-lg text-gray-700 font-PoppinsMedium mb-2">Hi, {user?.personal?.fname}</Text>
+              <Text className="text-lg text-gray-700 font-PoppinsMedium mb-2">
+                Hi, {user?.rp ? user?.personal?.per_fname : user?.personal?.br_fname}
+              </Text>
               <Text className="text-sm text-gray-500">{user?.phone}</Text>
               <Text className="text-sm text-gray-500" >{user?.email}</Text>
           </View>

@@ -186,7 +186,7 @@ export default function OverallMaternalRecordsScreen() {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);
       setPage(1); 
-    }, 100); 
+    }, 1); 
 
     return () => clearTimeout(timer);
   }, [searchInput]);
@@ -248,12 +248,10 @@ export default function OverallMaternalRecordsScreen() {
     }
   };
 
-  // Reset to page 1 when tab changes
   React.useEffect(() => {
     setPage(1);
   }, [activeTab]);
 
-  // Show loading only on initial load, not during search typing
   if (isLoading && !searchInput && !isFetching) {
     return <LoadingState />;
   }
@@ -288,11 +286,6 @@ export default function OverallMaternalRecordsScreen() {
       </PageLayout>
     );
   }
-
-
-   if (isLoading && searchInput === "") {
-      return <LoadingState />;
-   }
 
   return (
     <PageLayout

@@ -68,6 +68,7 @@ export default () => ({
     },
     extra: {
       apiUrl: "https://ciudad-app-server-1.onrender.com",
+      apiUrl2: "https://ciudad-app-server-2.onrender.com",
       supabaseUrl: "https://isxckceeyjcwvjipndfd.supabase.co",
       supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeGNrY2VleWpjd3ZqaXBuZGZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMDEyNDYsImV4cCI6MjA1Nzg3NzI0Nn0.lm99kbu2GH7qG_MvAO1boa7C3jCLRc7nOGfdHA-upEM",
       router: {

@@ -1,4 +1,4 @@
-import ChangePhone from "@/screens/account/ChangePhone"
+import ChangePhone from "@/screens/account/settings/ChangePhone"
 
 export default () => {
   return <ChangePhone />

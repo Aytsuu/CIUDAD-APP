@@ -41,8 +41,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Business.objects.filter(~Q(bus_status='Pending')).select_related(
-      'add',
+    queryset = Business.objects.filter(~Q(bus_status='PENDING')).select_related(
       'staff',
     ).prefetch_related(
       'business_files'
@@ -50,12 +49,11 @@ class ActiveBusinessTableView(generics.ListAPIView):
       'bus_id',
       'bus_name',
       'bus_gross_sales',
+      'bus_location',
       'bus_date_verified',
       'staff__rp__per__per_lname',
       'staff__rp__per__per_fname',
       'staff__rp__per__per_mname',
-      'add__sitio__sitio_name',
-      'add__add_street'
     )
 
     search_query = self.request.query_params.get('search', '').strip()
@@ -64,9 +62,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
         Q(bus_id__icontains=search_query) |
         Q(bus_name__icontains=search_query) |
         Q(bus_gross_sales__icontains=search_query) |
-        Q(bus_date_registered__icontains=search_query) |
-        Q(add__sitio__sitio_name__icontains=search_query) |
-        Q(add__add_street__icontains=search_query) 
+        Q(bus_location=search_query) 
       ).distinct()
 
     return queryset.order_by('bus_id')
@@ -77,7 +73,7 @@ class PendingBusinessTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Business.objects.filter(bus_status='Pending')
+    queryset = Business.objects.filter(bus_status='PENDING')
 
     return queryset
   
@@ -179,11 +175,19 @@ class SpecificOwnerView(generics.ListAPIView):
       br = self.request.query_params.get('br')
 
       if rp:
-          return Business.objects.filter(rp=rp)
+          queryset = Business.objects.filter(rp=rp)
       elif br:
-          return Business.objects.filter(br=br)
+          queryset = Business.objects.filter(br=br)
       else:
-          return Business.objects.none()
+          queryset = Business.objects.none()
+
+      search = self.request.query_params.get("search", "").strip()
+      if search:
+        queryset = queryset.filter(
+          Q(bus_name__icontains=search)
+        )
+      
+      return queryset
 
 class BusinessModificationCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
@@ -200,11 +204,10 @@ class BusinessModificationCreateView(generics.CreateAPIView):
         status=status.HTTP_200_OK
     )
 
-
 class BusinessModificationListView(generics.ListAPIView):
   permission_classes = [AllowAny]
   serializer_class = BusinessModificationListSerializer
-  queryset = BusinessModification.objects.filter(bm_status=None)
+  queryset = BusinessModification.objects.all()
 
 class BusinessModificationDeleteView(generics.DestroyAPIView):
   permission_classes = [AllowAny]
@@ -232,6 +235,6 @@ class BusinessHistoryView(APIView):
     bus_id = request.query_params.get('bus_id', None)
 
     if bus_id:
-      query = Business.history.filter(bus_id=bus_id, bus_status='Active')
+      query = Business.history.filter(bus_id=bus_id, bus_status='ACTIVE')
       return Response(data=BusinessHistoryBaseSerializer(query, many=True).data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_404_NOT_FOUND)

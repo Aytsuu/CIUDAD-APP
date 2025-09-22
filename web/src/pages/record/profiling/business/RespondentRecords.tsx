@@ -65,7 +65,7 @@ export default function RespondentRecords() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
-                placeholder="Search by respondent id, name..."
+                placeholder="Search by name..."
                 className="pl-11"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

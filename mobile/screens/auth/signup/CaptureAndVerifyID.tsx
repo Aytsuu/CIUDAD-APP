@@ -18,8 +18,6 @@ export type CAVIDCamHandle = {
 // Configuration constants
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000;
-const OPERATION_TIMEOUT = 45000; // 45 seconds
-const SUBSCRIPTION_TIMEOUT = 30000; // 30 seconds
 
 export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
   (props, ref) => {
@@ -138,12 +136,22 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
 
           // Send data for processing
           try {
-            const values = type == "individual" ? 
-                        getValues('personalInfoSchema') : 
-                        getValues('businessRespondent') as any
+            const values = type == "business" ? 
+                        getValues('businessRespondent') : 
+                        getValues('personalInfoSchema') as any
 
             switch(type) {
-              case 'individual':
+              case 'business':
+                const busRespondentMatchID = await postDocumentData({
+                  lname: values.br_lname.toUpperCase().trim(),
+                  fname: values.br_fname.toUpperCase().trim(),
+                  ...(values.br_mname != "" && {mname: values.br_mname?.toUpperCase().trim()}),
+                  dob: values.br_dob,
+                  image: `data:image/jpeg;base64,${base64Data}`
+                });
+                
+                return busRespondentMatchID
+              default:
                 const residentMatchID = await postDocumentData({
                   lname: values.per_lname.toUpperCase().trim(),
                   fname: values.per_fname.toUpperCase().trim(),
@@ -153,16 +161,6 @@ export const CaptureAndVerifyID = React.forwardRef<CAVIDCamHandle>(
                 });
 
                 return residentMatchID
-              case 'business':
-                const busRespondentMatchID = await postDocumentData({
-                  lname: values.br_lname.toUpperCase().trim(),
-                  fname: values.br_fname.toUpperCase().trim(),
-                  ...(values.br_mname != "" && {mname: values.br_mname?.toUpperCase().trim()}),
-                  dob: values.br_dob,
-                  image: `data:image/jpeg;base64,${base64Data}`
-                });
-
-                return busRespondentMatchID
             }
 
           } catch (postError) {
