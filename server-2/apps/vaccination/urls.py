@@ -27,7 +27,6 @@ urlpatterns = [
     path('forwarded-vaccination-records/', ForwardedVaccinationHistoryView.as_view(), name='forwarded-vaccination-records'),
     path('forwarded-vaccination-count/', ForwardedVaccinationCountView.as_view(), name='pat_vaccination_records'),
     
-    path('to-be-administered/', TobeAdministeredVaccinationView.as_view(), name='administered_vaccination'),
     
     path('count-scheduled-vaccinations/', CountScheduledVaccinationView.as_view(), name='count_scheduled_vaccinations'),
       
@@ -48,8 +47,12 @@ urlpatterns = [
 
     
     
-    # =============================BACKEND=================================
+    # =============================BACKEND CREATION UPDATED=================================
     path('submit-vaccination-records/', VaccinationSubmissionView.as_view(), name='vaccination-records-list'),
+    path("vaccination-completion/",VaccinationCompletionAPIView.as_view(),name="vaccine-completion-create"),
+    path('to-be-administered/<str:assigned_to>/', TobeAdministeredVaccinationView.as_view(), name='administered_vaccination'),
+ 
+         
 
 
 ]

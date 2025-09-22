@@ -9,11 +9,10 @@ import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
+import { PaginationControls } from "../components/pagination-layout";
 import { useIndividualMedicineRecords } from "./queries/fetch";
 import { PatientInfoCard } from "../components/patientcards";
 import { MedicineRecordCard } from "./medicine-record-cad";
-
-
 
 export default function IndividualMedicineRecords() {
   const params = useLocalSearchParams();
@@ -48,16 +47,26 @@ export default function IndividualMedicineRecords() {
 
   const medicineRecords = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Calculate current entries being shown
+  const startEntry = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endEntry = Math.min(currentPage * pageSize, totalCount);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await refetch();
+      setCurrentPage(1); // Reset to first page on refresh
     } catch (e) {
       console.error("Refetch error:", e);
     }
     setRefreshing(false);
   }, [refetch]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   // Guard clause for missing patient data
   if (!patientData?.pat_id) {
@@ -111,25 +120,22 @@ export default function IndividualMedicineRecords() {
 
   return (
     <PageLayout
-           leftAction={
-             <TouchableOpacity
-               onPress={() => router.back()}
-               className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-             >
-               <ChevronLeft size={24} color="#374151" />
-             </TouchableOpacity>
-           }
-           headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medicine Record</Text>}
-         >
-      <ScrollView className="flex-1 bg-gray-50" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <ScrollView className="flex-1 " refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
         {/* Patient Info Card */}
-        <View className="px-4 pt-4 bg-white">
+        <View className="px-4 pt-4">
           <PatientInfoCard patient={patientData} />
         </View>
 
-        
         {/* Summary and Search */}
-        <View className="bg-white p-4 ">
+        <View className=" p-4">
           {/* Search */}
           <View className="">
             <View className="flex-row items-center space-x-3">
@@ -141,8 +147,16 @@ export default function IndividualMedicineRecords() {
           </View>
         </View>
 
-        <View className="flex flex-row justify-end items-center gap-2 px-4 mb-2 mt-4">
-          <Text className="text-sm font-semibold text-gray-900 ">Total Records: {totalCount}</Text>
+        {/* Entries Summary */}
+        <View className="px-4 py-2 border-b border-gray-100 bg-white">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-gray-600">
+              Showing {startEntry} to {endEntry} of {totalCount} entries
+            </Text>
+            <Text className="text-sm font-medium text-gray-800">
+              Page {currentPage} of {totalPages}
+            </Text>
+          </View>
         </View>
 
         {/* Records List */}
@@ -154,20 +168,25 @@ export default function IndividualMedicineRecords() {
               <Text className="text-gray-600 text-center mt-2 mb-4">{debouncedSearchQuery ? "No records match your search criteria." : "This patient doesn't have any medicine records yet."}</Text>
             </View>
           ) : (
-            <FlatList
-              data={medicineRecords}
-              keyExtractor={(item) => `medicine-record-${item.id}`}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-              renderItem={({ item }) => <MedicineRecordCard record={item} />}
-              ListFooterComponent={
-                isFetching ? (
-                  <View className="py-4 items-center">
-                    <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
-                  </View>
-                ) : null
-              }
-            />
+            <>
+              <FlatList
+                data={medicineRecords}
+                keyExtractor={(item) => `medicine-record-${item.id}`}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={false}
+                renderItem={({ item }) => <MedicineRecordCard record={item} />}
+                ListFooterComponent={
+                  isFetching ? (
+                    <View className="py-4 items-center">
+                      <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+                    </View>
+                  ) : null
+                }
+              />
+
+              {/* Pagination Controls */}
+              <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
+            </>
           )}
         </View>
       </ScrollView>

@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, Users, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, Syringe, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,10 +11,12 @@ import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
-import { useMedicineRecords } from "./queries/fetch";
+import { useVaccinationRecords } from "./queries/fetch";
+import { Overallrecordcard } from "../components/overall-cards";
 import { PaginationControls } from "../components/pagination-layout";
+
 // Types
-interface MedicineRecord {
+interface VaccinationRecord {
   pat_id: string;
   fname: string;
   lname: string;
@@ -30,7 +32,7 @@ interface MedicineRecord {
   province: string;
   pat_type: string;
   address: string;
-  medicine_count: number;
+  vaccination_count: number;
   patient_details?: {
     personal_info: {
       per_fname: string;
@@ -52,46 +54,13 @@ interface MedicineRecord {
 }
 
 interface ApiResponse {
-  results?: MedicineRecord[];
+  results?: VaccinationRecord[];
   count?: number;
   next?: string;
   previous?: string;
 }
 
 type TabType = "all" | "resident" | "transient";
-
-// Components
-const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-  const getTypeConfig = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "resident":
-        return {
-          color: "text-green-700",
-          bgColor: "bg-green-100",
-          borderColor: "border-green-200"
-        };
-      case "transient":
-        return {
-          color: "text-purple-700",
-          bgColor: "bg-purple-100",
-          borderColor: "border-purple-200"
-        };
-      default:
-        return {
-          color: "text-gray-700",
-          bgColor: "bg-gray-100",
-          borderColor: "border-gray-200"
-        };
-    }
-  };
-
-  const typeConfig = getTypeConfig(type);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
-    </View>
-  );
-};
 
 const TabBar: React.FC<{
   activeTab: TabType;
@@ -111,78 +80,7 @@ const TabBar: React.FC<{
   </View>
 );
 
-const MedicineRecordCard: React.FC<{
-  record: MedicineRecord;
-  onPress: () => void;
-}> = ({ record, onPress }) => {
-  const formatAddress = () => {
-    return record.address || [record.street, record.barangay, record.city, record.province].filter(Boolean).join(", ");
-  };
-
-  return (
-    <TouchableOpacity className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm" activeOpacity={0.8} onPress={onPress}>
-      {/* Header */}
-      <View className="p-4 border-b border-gray-100">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-                <Pill color="white" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
-                  {record.lname}, {record.fname} {record.mname}
-                </Text>
-                <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
-              </View>
-            </View>
-          </View>
-          <StatusBadge type={record.pat_type} />
-        </View>
-      </View>
-
-      {/* Details */}
-      <View className="p-4">
-        <View className="flex-row items-center mb-3">
-          <Users size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Age: <Text className="font-medium text-gray-900">{record.age}</Text> • {record.sex}
-          </Text>
-        </View>
-
-        <View className="flex-row items-center mb-3">
-          <Text className="ml-2 text-gray-600 text-sm">
-            Address: <Text className="font-medium text-gray-900">{formatAddress() || "No address provided"}</Text>
-          </Text>
-        </View>
-
-        {record.sitio && (
-          <View className="flex-row items-center mb-3">
-            {" "}
-            <Users size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Sitio: <Text className="font-medium text-gray-900">{record.sitio}</Text>
-            </Text>
-          </View>
-        )}
-
-        <View className="flex-row items-center justify-between">
-          <Users size={16} color="#6B7280" />
-
-          <View className="flex-row items-center">
-            <Pill size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Medicine Records: <Text className="font-medium text-gray-900">{record.medicine_count}</Text>
-            </Text>
-          </View>
-          <ChevronRight size={16} color="#6B7280" />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-export default function OverAllMedicineRecords() {
+export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
@@ -203,16 +101,16 @@ export default function OverAllMedicineRecords() {
     [currentPage, pageSize, debouncedSearchQuery, activeTab]
   );
 
-  // Use the useMedicineRecords hook instead of direct useQuery
-  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useMedicineRecords(queryParams);
+  // Use the useVaccinationRecords hook
+  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useVaccinationRecords(queryParams);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchQuery, activeTab]);
 
-  // Format medicine data
-  const formatMedicineData = useCallback((): MedicineRecord[] => {
+  // Format vaccination data
+  const formatVaccinationData = useCallback((): VaccinationRecord[] => {
     if (!apiResponse?.results || !Array.isArray(apiResponse.results)) {
       return [];
     }
@@ -240,12 +138,12 @@ export default function OverAllMedicineRecords() {
         province: address.add_province || "",
         pat_type: details.pat_type || "",
         address: addressString,
-        medicine_count: record.medicine_count || 0
+        vaccination_count: record.vaccination_count || 0
       };
     });
   }, [apiResponse?.results]);
 
-  const formattedData = formatMedicineData();
+  const formattedData = formatVaccinationData();
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
   const hasNext = !!apiResponse?.next;
@@ -275,7 +173,7 @@ export default function OverAllMedicineRecords() {
     setRefreshing(false);
   }, [refetch]);
 
-  const handleRecordPress = (record: MedicineRecord) => {
+  const handleRecordPress = (record: any) => {
     try {
       const patientData = {
         pat_id: record.pat_id,
@@ -300,7 +198,7 @@ export default function OverAllMedicineRecords() {
       };
 
       router.push({
-        pathname: "/admin/medicinerecords/individual",
+        pathname: "/(health)/admin/vaccination/individual",
         params: { patientData: JSON.stringify(patientData) }
       });
     } catch (error) {
@@ -324,10 +222,10 @@ export default function OverAllMedicineRecords() {
             <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medicine Records</Text>}
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">Vaccination Records</Text>}
         rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 justify-center items-center px-6">
+        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
           <AlertCircle size={64} color="#EF4444" />
           <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
           <Text className="text-gray-600 text-center mt-2 mb-6">Failed to load data. Please check your connection and try again.</Text>
@@ -347,15 +245,17 @@ export default function OverAllMedicineRecords() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medicine Records</Text>}
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Vaccination Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1">
+        {/* Summary Cards */}
+
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
           <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
-            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, medicine, or address..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, vaccine, or address..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 
@@ -375,25 +275,25 @@ export default function OverAllMedicineRecords() {
             </Text>
           </View>
         </View>
-
         {/* Records List */}
         {!formattedData || formattedData.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
-            <Pill size={64} color="#9CA3AF" />
+            <Syringe size={64} color="#9CA3AF" />
             <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
-            <Text className="text-gray-600 text-center mt-2">There are no medicine records available yet.</Text>
+            <Text className="text-gray-600 text-center mt-2">There are no vaccination records available yet.</Text>
           </View>
         ) : (
           <>
             <FlatList
               data={formattedData}
-              keyExtractor={(item) => `medicine-${item.pat_id}`}
+              keyExtractor={(item) => `vaccination-${item.pat_id}`}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ padding: 16 }}
               initialNumToRender={10}
               maxToRenderPerBatch={10}
-              renderItem={({ item }) => <MedicineRecordCard record={item} onPress={() => handleRecordPress(item)} />}
+              windowSize={10}
+              renderItem={({ item }) => <Overallrecordcard record={item} onPress={() => handleRecordPress(item)} />}
               ListFooterComponent={
                 isFetching ? (
                   <View className="py-4 items-center">
@@ -402,7 +302,7 @@ export default function OverAllMedicineRecords() {
                 ) : null
               }
             />
-
+            {/* Pagination Controls */}
             <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
           </>
         )}

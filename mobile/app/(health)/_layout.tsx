@@ -71,6 +71,13 @@ export default () => {
   
                 <Stack.Screen name="admin/first-aid/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/first-aid/individual" options={{headerShown: false}}/>
+
+                <Stack.Screen name="admin/medicinerecords/overall" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/medicinerecords/individual" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/vaccination/overall" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/vaccination/individual" options={{headerShown: false}}/>
+
+
                 
                 
                 <Stack.Screen name="my-schedules/my-schedules" options={{headerShown:false}}/>
