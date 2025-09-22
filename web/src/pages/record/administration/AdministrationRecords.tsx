@@ -48,7 +48,7 @@ export default function AdministrationRecords() {
     user?.staff?.staff_type
   );
   const { data: features } = useFeatures();
-  console.log(staffs)
+  console.log(features)
 
   const staffList = staffs?.results || [];
   const totalCount = staffs?.count || 0;
