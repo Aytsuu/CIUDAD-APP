@@ -107,7 +107,7 @@ const barangayItems: BaseMenuItem[] = [
     url: "/",
     items: [
       { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
+      { title: "Business Clearance", url: "record/clearances/businesspermit" },
       { title: "Service Charge", url: "record/clearances/servicecharge" },
       { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
       
