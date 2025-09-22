@@ -28,14 +28,14 @@ export const useAddPersonalCertification = (onSuccess?: () => void) => {
                 requester: values.requester,
                 pr_id: values.pr_id // Pass the purpose ID
             };
-            return addCertificationRequest(apiPayload, undefined, user?.resident?.rp_id);
+            return addCertificationRequest(apiPayload, undefined, (user as any)?.rp);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
             // Ensure tracking list reflects the new item
-            if (user?.resident?.rp_id) {
-                queryClient.invalidateQueries({ queryKey: ['cert-tracking', user.resident.rp_id] });
+            if ((user as any)?.rp) {
+                queryClient.invalidateQueries({ queryKey: ['cert-tracking', (user as any).rp] });
             }
 
             toast.success('Personal Certification Request Submitted!');
@@ -57,12 +57,12 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
 
     return useMutation({
         mutationFn: (values: BusinessPermitFormData) => 
-            addCertificationRequest(values, "00003250722", user?.resident?.rp_id),
+            addCertificationRequest(values, "00003250722", (user as any)?.rp),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
-            if (user?.resident?.rp_id) {
-                queryClient.invalidateQueries({ queryKey: ['cert-tracking', user.resident.rp_id] });
+            if ((user as any)?.rp) {
+                queryClient.invalidateQueries({ queryKey: ['cert-tracking', (user as any).rp] });
             }
 
             toast.success('Business Permit Request Submitted!');
@@ -85,13 +85,13 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
 
     return useMutation({
         mutationFn: (values: CertificationRequestFormData) => {
-            return addCertificationRequest(values, "00003250722", user?.resident?.rp_id);
+            return addCertificationRequest(values, "00003250722", (user as any)?.rp);
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
-            if (user?.resident?.rp_id) {
-                queryClient.invalidateQueries({ queryKey: ['cert-tracking', user.resident.rp_id] });
+            if ((user as any)?.rp) {
+                queryClient.invalidateQueries({ queryKey: ['cert-tracking', (user as any).rp] });
             }
 
             const message = variables.cert_type === 'personal' 
@@ -112,7 +112,7 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
 export const useAddBusinessClearance = () => {
   const { user } = useAuth();
   return useMutation({
-    mutationFn: (data: BusinessPermitFormData) => addBusinessClearance(data, undefined, user?.resident?.rp_id),
+    mutationFn: (data: BusinessPermitFormData) => addBusinessClearance(data, undefined, (user as any)?.rp),
     onSuccess: (data) => {
       console.log("Business clearance request submitted successfully:", data);
     },

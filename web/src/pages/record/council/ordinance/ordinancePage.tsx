@@ -1283,7 +1283,7 @@ function OrdinancePage() {
                                                             {(individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === selectedFolder.id) ? 'Analyzing...' : 'Analyze'}
                                                         </Button>
                                                         
-                                                        <Button
+                                                        {/* <Button
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => {
@@ -1297,7 +1297,7 @@ function OrdinancePage() {
                                                         >
                                                             <Eye className="h-3 w-3 mr-1" />
                                                             View File
-                                                        </Button>
+                                                        </Button> */}
                                                         
                                                         
                                                     </div>
