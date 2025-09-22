@@ -1,14 +1,9 @@
-import { View, Text } from "react-native";
 import { useBusinessFormContext } from "@/contexts/BusinessFormContext";
-import { useGetSitio } from "../_global_queries/Retrieve";
 import React from "react";
-import { formatSitio } from "@/helpers/formatSitio";
 import { MediaItem } from "@/components/ui/media-picker";
-import { Button } from "@/components/ui/button";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useToastContext } from "@/components/ui/toast";
 import { useAddBusiness } from "./queries/businessAddQueries";
-import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import BusinessForm from "./BusinessForm";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,11 +11,9 @@ export default function AddBusiness() {
   const { toast } = useToastContext();
   const { user } = useAuth();
   const { control, trigger, getValues, reset } = useBusinessFormContext();
-  const { data: sitioList, isLoading: isLoadingSitio } = useGetSitio();
   const { mutateAsync: addBusiness } = useAddBusiness();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
-  const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -61,7 +54,6 @@ export default function AddBusiness() {
       <BusinessForm
         header="Add a Business"
         control={control}
-        formattedSitio={formattedSitio}
         selectedImages={selectedImages}
         setSelectedImages={setSelectedImages}
         submit={submit}

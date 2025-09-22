@@ -1,6 +1,6 @@
 import { ActivityIndicator, Text } from "react-native"
-import { CheckCircle } from "@/lib/icons/CheckCircle"
 import { Button } from "../button"
+import { CheckCircle } from "@/lib/icons/CheckCircle"
 
 export const SubmitButton = ({
   submittingLabel = "Submitting...",

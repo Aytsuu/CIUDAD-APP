@@ -4,7 +4,7 @@ import { ScrollView, TouchableOpacity, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import { CheckCircle } from "@/lib/icons/CheckCircle";
+import { CheckCircle } from "@/lib/icons/CircleCheck";
 import { X } from "@/lib/icons/X";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { Camera } from "@/lib/icons/Camera";
