@@ -14,6 +14,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <IncomeExpenseMain/>
+    return <App/>
 }
  
