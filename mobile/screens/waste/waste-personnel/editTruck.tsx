@@ -12,7 +12,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { TruckFormValues } from './waste-personnel-types';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
-import { Button } from '@/components/ui/button/button'; 
+import { Button } from '@/components/ui/button'; 
 
 export default function WasteTruckEdit() {
   const router = useRouter();

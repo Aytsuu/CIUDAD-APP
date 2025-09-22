@@ -87,7 +87,7 @@ export default function WeeklyAR() {
     })
     .filter((monthData) => monthData.hasData || monthData.missingWeeks.length > 0)
 
-  console.log(organizedData)
+  {process.env.NODE_ENV === 'development' && console.log(organizedData)}
 
   // Get recent reports (last 7 days or most recent 10 items) for selected year
   const recentReports = filteredWeeklyAR
@@ -273,7 +273,7 @@ export default function WeeklyAR() {
                               )
                             }
 
-                            if(missingWeeks.includes(week) && missedWeeksPassed >= week) {
+                            if((missingWeeks.includes(week) && missedWeeksPassed >= week) || week == getWeekNumber(new Date().toDateString())) {
                               return (
                                 <div className="flex items-center justify-between w-full mr-4">
                                   <div className="flex items-center gap-2">

@@ -18,9 +18,6 @@ import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
 import ShowLess from '@/assets/icons/features/showless.svg'
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
-import Video from 'react-native-video'
-// import { SafeAreaView } from "react-native-safe-area-context"
-import { AppDispatch, RootState } from "@/redux/store";
 
 const styles = StyleSheet.create({
   container: {
@@ -68,8 +65,6 @@ export default function HomeScreen() {
   if (isLoading) {
     return <LoadingModal visible={true} />;
   }
-  console.log("User: ", user)
-  console.log("User Data:", user?.staff?.rp?.pos_id);
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (
@@ -112,7 +107,7 @@ export default function HomeScreen() {
   const renderFeatures = () => {
     const userStatus: any[] = []
 
-    if(user?.resident?.rp_id) userStatus.push("RESIDENT")
+    if(user?.rp) userStatus.push("RESIDENT")
 
     const INITIAL_FEATURES_COUNT = 5;
     const myFeatures = features.filter((feat: Record<string, any>) => {

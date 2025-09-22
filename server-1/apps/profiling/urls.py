@@ -34,6 +34,8 @@ urlpatterns = [
     # Personal Urls
     path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
+    path("personal/create-modification/", PersonalModificationCreateView.as_view(), name="personal-create-modification"),
+    path("personal/<int:per>/modification/", PersonalModificationRequestsView.as_view(), name="personal-modification-request"),
     path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
 
     # Family Urls

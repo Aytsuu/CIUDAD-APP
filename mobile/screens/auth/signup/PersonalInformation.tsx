@@ -2,7 +2,7 @@ import "@/global.css"
 import React from "react"
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Dimensions } from "react-native"
 import { useRouter } from "expo-router"
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button"
 import _ScreenLayout from "@/screens/_ScreenLayout"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
@@ -12,6 +12,7 @@ import { Plus } from "@/lib/icons/Plus"
 import { AddressDrawer } from "./AddressDrawer"
 import { FormDateInput } from "@/components/ui/form/form-date-input"
 import { useToastContext } from "@/components/ui/toast"
+import { SubmitButton } from "@/components/ui/button/submit-button"
 
 
 const sexOptions: { label: string; value: string }[] = [
@@ -106,10 +107,10 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
       return;
     }
 
-    if(addresses.length === 0) {
-      setAddressesError(true);
-      return;
-    }
+    // if(addresses.length === 0) {
+    //   setAddressesError(true);
+    //   return;
+    // }
     
     params?.submit();
   }
@@ -226,9 +227,10 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
       </View>
 
       <View className="pt-4 pb-8 bg-white border-t border-gray-100">
-        <Button onPress={handleSubmit} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">{params?.buttonLabel}</Text>
-        </Button>
+        <SubmitButton
+            handleSubmit={handleSubmit}
+            buttonLabel="Save and Continue"
+        />
 
         <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
           All information will be kept secure and confidential

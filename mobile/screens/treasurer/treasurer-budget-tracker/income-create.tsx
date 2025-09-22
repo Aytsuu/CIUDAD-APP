@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button/button';
+import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
