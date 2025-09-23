@@ -27,6 +27,7 @@ const Homepage = () => {
     { name: 'Schedules', route: 'admin/schedules/all-appointment', icon: Calendar },
     { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },
     { name: 'First Aid', route: 'admin/first-aid/overall', icon: BriefcaseMedical},
+    { name: 'Medicine Records', route: 'admin/medicinerecords/overall', icon: BriefcaseMedical},
   ];
 
   const quickActions = [

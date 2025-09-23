@@ -123,7 +123,7 @@ export default function FamilyPlanningForm({
       const fetchPatients = async () => {
         setLoadingPatients(true)
         try {
-          const response = await api2.get("patientrecords/patient/")
+          const response = await api2.get("patientrecords/patients/")
           const formattedPatients = response.data.map((patient: any) => ({
             id: patient.pat_id?.toString() || "",
             name: (
@@ -172,7 +172,7 @@ export default function FamilyPlanningForm({
     setSelectedPatientId(id);
     try {
       // Fetch basic patient data
-      const response = await api2.get(`patientrecords/patient/${id}/`);
+      const response = await api2.get(`patientrecords/patients/${id}/`);
       const patientData = response.data;
 
       // Initialize default spouse info
@@ -214,23 +214,14 @@ export default function FamilyPlanningForm({
         full_address: patientData.address?.full_address || "",
       };
 
-      console.log("Address info extracted:", addressInfo); // Debug log
-
-      // Fetch additional data with error handling for each request
       const requests = [
         api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
       ];
-
-      const [
-        bodyMeasurementsResponse,
-        obsHistoryResponse,
-        lastPrevPregResponse,
-        personalResponse
-      ] = await Promise.all(requests);
-
+      const [bodyMeasurementsResponse,obsHistoryResponse,lastPrevPregResponse,personalResponse] = await Promise.all(requests);
+      console.log("Body measurement: " ,bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 

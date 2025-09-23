@@ -42,7 +42,7 @@ export default () => {
 
 
 
-
+                <Stack.Screen name="admin/medicinerecords/overall" options={{headerShown: false}}/>
 
                 <Stack.Screen name="admin/maternal/overall" options={{headerShown: false}}/>
 

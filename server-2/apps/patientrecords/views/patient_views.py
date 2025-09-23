@@ -33,6 +33,22 @@ class TransientAddressView(generics.ListAPIView):
     def get_queryset(self):
         return TransientAddress.objects.all().order_by('-tradd_id')
 
+# for displaying patients in comobox
+class PatientListView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
+
+    def get_queryset(self):
+        return Patient.objects.select_related(
+            'rp_id__per',
+        ).prefetch_related(
+            Prefetch(
+                'rp_id__per__personaladdress_set',
+                queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
+            ),
+            'rp_id__household_set',
+        ).filter(pat_status='Active')
+        
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     pagination_class = StandardResultsPagination

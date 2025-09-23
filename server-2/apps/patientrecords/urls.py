@@ -19,8 +19,10 @@ urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
-    path('patient/', PatientView.as_view(), name='patient'),
-    path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patients/', PatientListView.as_view(), name='patient-list'),
+    path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
+    
+    path('patients/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
@@ -60,6 +62,7 @@ urlpatterns = [
     # UPDATE/ DELETE
     path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('patient-record/<int:patrec_id>/', DeleteUpdatePatientRecordView.as_view(), name='patient-record-detail'),
+    
     path('update-pe-option/<int:pe_option_id>/',DeleteUpdatePEOptionView.as_view(), name='update_pe_option'),
     path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
     path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),

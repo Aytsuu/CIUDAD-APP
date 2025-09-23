@@ -488,7 +488,7 @@ export const FamilyPlanningView = () => {
                     </div>
                   ))}
 
-                  <div className="flex justify-between items-center py-0.5">
+                  {/* <div className="flex justify-between items-center py-0.5">
                     <span>• With Disability?</span>
                     <div className="flex gap-1">
                       <YesNoCheckbox
@@ -506,7 +506,7 @@ export const FamilyPlanningView = () => {
                         }
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   {hasCustomIllnesses() && (
                     <div className="mt-1">
@@ -592,12 +592,12 @@ export const FamilyPlanningView = () => {
                           type="checkbox"
                           checked={
                             recordData.obstetricalHistory?.typeOfLastDelivery ===
-                            "Caesarean Section"
+                            "Cesarean section"
                           }
                           disabled
                           className="h-3 w-3"
                         />
-                        <span>Caesarean Section</span>
+                        <span>Cesarean Section</span>
                       </div>
                     </div>
                   </div>

@@ -53,7 +53,7 @@ export default function FamPlanningTable() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300); // 300ms debounce time
+    },1500); // 300ms debounce time
 
     return () => {
       clearTimeout(handler);
@@ -208,8 +208,8 @@ export default function FamPlanningTable() {
 
   const clientTypeOptions = [
     { id: "all", name: "All Types" },
-    { id: "New Acceptor", name: "New Acceptor" },
-    { id: "Current User", name: "Current User" },
+    { id: "newacceptor", name: "New Acceptor" },
+    { id: "currentuser", name: "Current User" },
   ]
 
   const totalFPPatients = fpCounts?.total_fp_patients || 0;

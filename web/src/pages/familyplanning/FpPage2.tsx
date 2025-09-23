@@ -291,7 +291,7 @@ export default function FamilyPlanningForm2({
                   ))
                   :  " "}
 
-                <div className="flex justify-between items-center mb-4">
+                {/* <div className="flex justify-between items-center mb-4">
                   <Label className="flex-1">■ Others</Label>
                   <div className="flex space-x-7">
                     <div className="flex items-center space-x-2">
@@ -311,7 +311,7 @@ export default function FamilyPlanningForm2({
                       <Label>No</Label>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {form.watch("medicalHistory.disability") && (
                   <FormField
@@ -498,8 +498,8 @@ export default function FamilyPlanningForm2({
                           <Label>Vaginal</Label>
                           <FormControl>
                             <Checkbox
-                              checked={field.value === "Cesarean section"} // Keep this as "Cesarean Section"
-                              onCheckedChange={() => field.onChange("Cesarean Section")} // Change this to "Cesarean Section"
+                              checked={field.value === "Cesarean section"}
+                              onCheckedChange={() => field.onChange("Cesarean section")}
                               disabled={isReadOnly || !isFemale}
                             />
                           </FormControl>

@@ -158,15 +158,14 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                 )}
               />
             </div>
-            <span className="text-xs italic mt-5 m">
-  {(formData.weight > 0 || formData.height > 0) && (
-    `Weight & height last recorded (y/m/d): ${
-      formData.bodyMeasurementRecordedAt 
-        ? formatDate(formData.bodyMeasurementRecordedAt) 
-        : formatDate(new Date().toISOString().split('T')[0])
-    }`
-  )}
-</span>
+            {/* <span className="text-xs italic mt-5 m">
+              {(formData.weight > 0 || formData.height > 0) && (
+                `Weight & height last recorded (y/m/d): ${formData.bodyMeasurementRecordedAt
+                  ? formatDate(formData.bodyMeasurementRecordedAt)
+                  : formatDate(new Date().toISOString().split('T')[0])
+                }`
+              )}
+            </span> */}
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}
               {renderRadioGroup("SKIN", "skinExamination", [

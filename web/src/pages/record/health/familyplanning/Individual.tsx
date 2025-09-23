@@ -368,13 +368,13 @@ const IndividualFamPlanningTable: React.FC = () => {
           return method === "Others" && otherMethod ? otherMethod : method || "N/A";
         },
       },
-{
-  accessorKey: "subtype",
-  header: "Subtype of Client",
-  cell: ({ row }) => {
-    return row.original.subtype || "N/A";
-  },
-},
+// {
+//   accessorKey: "subtype",
+//   header: "Subtype of Client",
+//   cell: ({ row }) => {
+//     return row.original.subtype || "N/A";
+//   },
+// },
       {
         accessorKey: "dateOfFollowUp",
         header: "Next Follow-up Visit",

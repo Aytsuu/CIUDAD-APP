@@ -32,53 +32,55 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
     
-class PatientListForOverallTable(generics.ListAPIView):
-    serializer_class = FPRecordSerializer # This serializer is not directly used for the final output, but for internal processing
-    pagination_class = StandardResultsSetPagination # Apply pagination
+# class PatientListForOverallTable(generics.ListAPIView):
+#     serializer_class = FPRecordSerializer
+#     pagination_class = StandardResultsSetPagination 
     
     
-    def get_queryset(self):
-        # Start with all FP_Record objects
-        queryset = FP_Record.objects.select_related(
-            "pat",
-            "pat__rp_id__per",
-            "pat__trans_id",
-        ).prefetch_related(
-            'fp_type_set' # Prefetch related FP_type instances
-        ).order_by("-created_at") # Order by creation date descending
-        # Apply search filter if 'search' query parameter is present
-        search_query = self.request.query_params.get('search', None)
-        if search_query:
-            queryset = queryset.filter(
-                Q(pat__rp_id__per__per_lname__icontains=search_query) |
-                Q(pat__rp_id__per__per_fname__icontains=search_query) |
-                Q(pat__trans_id__tran_lname__icontains=search_query) |
-                Q(pat__trans_id__tran_fname__icontains=search_query) |
-                Q(client_id__icontains=search_query) |
-                Q(fp_type_set__fpt_client_type__icontains=search_query) |
-                Q(fp_type_set__fpt_method_used__icontains=search_query)
-            ).distinct() # Use distinct to avoid duplicate records if multiple FP_types match
-        # Apply client_type filter if 'client_type' query parameter is present
-        client_type_filter = self.request.query_params.get('client_type', None)
-        if client_type_filter and client_type_filter != "all":
-            queryset = queryset.filter(fp_type_set__fpt_client_type__iexact=client_type_filter).distinct()
-        return queryset
+#     def get_queryset(self):
+#         # Start with all FP_Record objects
+#         queryset = FP_Record.objects.select_related(
+#             "pat",
+#             "pat__rp_id__per",
+#             "pat__trans_id",
+#         ).prefetch_related(
+#             'fp_type' # Prefetch related FP_type instances
+#         ).order_by("-created_at") # Order by creation date descending
+#         # Apply search filter if 'search' query parameter is present
+#         search_query = self.request.query_params.get('search', None)
+#         if search_query:
+#             queryset = queryset.filter(
+#                 Q(pat__rp_id__per__per_lname__icontains=search_query) |
+#                 Q(pat__rp_id__per__per_fname__icontains=search_query) |
+#                 Q(pat__trans_id__tran_lname__icontains=search_query) |
+#                 Q(pat__trans_id__tran_fname__icontains=search_query) |
+#                 Q(client_id__icontains=search_query) |
+#                 Q(fp_type_set__fpt_client_type__icontains=search_query) |
+#                 Q(fp_type_set__fpt_method_used__icontains=search_query)
+#             ).distinct() 
+            
+            
+#         client_type_filter = self.request.query_params.get('client_type', None)
+#         if client_type_filter and client_type_filter != "all":
+#             queryset = queryset.filter(fp_type_set__fpt_client_type__iexact=client_type_filter).distinct()
+#         return queryset
     
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            patient_data_map = {}
-            for record in page:
-                patient_id = record.pat.pat_id
-                if patient_id not in patient_data_map:
-                    # build patient_entry as before
-                    # ...
-                    patient_data_map[patient_id] = patient_entry
-            response_data = list(patient_data_map.values())
-            return self.get_paginated_response(response_data)
-        # fallback if pagination is not applied
-        return Response([])
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.get_queryset()
+#         page = self.paginate_queryset(queryset)
+#         if page is not None:
+#             patient_data_map = {}
+#             for record in page:
+#                 patient_id = record.pat.pat_id
+#                 if patient_id not in patient_data_map:
+#                     # build patient_entry as before
+#                     # ...
+#                     patient_data_map[patient_id] = patient_entry
+#             response_data = list(patient_data_map.values())
+#             return self.get_paginated_response(response_data)
+#         # fallback if pagination is not applied
+#         return Response([])
+    
 @api_view(['GET'])
 def get_fp_patient_counts(request):
     try:
@@ -179,16 +181,23 @@ def get_patient_medical_history(request, patrec_id):
 def get_body_measurements(request, pat_id):
     try:
         patient = get_object_or_404(Patient, pat_id=pat_id)
-        patient_records = PatientRecord.objects.filter(pat_id=patient)
-
-        body_measurement = (BodyMeasurement.objects.filter(patrec__in=patient_records).order_by("-created_at").first())
-
+        
+        # Get the latest body measurement for this patient
+        body_measurement = (
+            BodyMeasurement.objects.filter(pat=patient)
+            .order_by("-created_at")
+            .first()
+        )
+        
         if body_measurement:
-            data = { "height": body_measurement.height, "weight": body_measurement.weight,"recorded_at": body_measurement.created_at.isoformat() if body_measurement.created_at else None,}
+            data = {
+                "height": float(body_measurement.height) if body_measurement.height else 0,
+                "weight": float(body_measurement.weight) if body_measurement.weight else 0,
+                "recorded_at": body_measurement.created_at.isoformat() if body_measurement.created_at else None,
+            }
             return Response(data)
         else:
             return Response({}, status=200)
-
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -509,7 +518,7 @@ def get_patient_health_and_nhts_data(request, patient_id):
 #         )
     
 class PatientListForOverallTable(generics.ListAPIView):
-    serializer_class = OverallFPRecordSerializer  # Use the appropriate serializer
+    serializer_class = OverallFPRecordSerializer
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
@@ -519,8 +528,8 @@ class PatientListForOverallTable(generics.ListAPIView):
             "pat__rp_id__per",
             "pat__trans_id",
         ).prefetch_related(
-            'fp_type_set'  # Prefetch related FP_type instances
-        ).order_by("-created_at")  # Order by creation date descending
+            'fp_type_set'  # Changed from fp_type_set to fp_type
+        ).order_by("-created_at")
         
         # Apply search filter if 'search' query parameter is present
         search_query = self.request.query_params.get('search', None)
@@ -528,17 +537,21 @@ class PatientListForOverallTable(generics.ListAPIView):
             queryset = queryset.filter(
                 Q(pat__rp_id__per__per_lname__icontains=search_query) |
                 Q(pat__rp_id__per__per_fname__icontains=search_query) |
+                Q(pat__rp_id__per__per_mname__icontains=search_query) |
                 Q(pat__trans_id__tran_lname__icontains=search_query) |
                 Q(pat__trans_id__tran_fname__icontains=search_query) |
+                Q(pat__trans_id__tran_mname__icontains=search_query) |
                 Q(client_id__icontains=search_query) |
-                Q(fp_type_set__fpt_client_type__icontains=search_query) |
-                Q(fp_type_set__fpt_method_used__icontains=search_query)
+                Q(fp_type__fpt_client_type__icontains=search_query) |  # Changed from fp_type_set to fp_type
+                Q(fp_type__fpt_method_used__icontains=search_query) |  # Changed from fp_type_set to fp_type
+                Q(fp_type__fpt_subtype__icontains=search_query)        # Changed from fp_type_set to fp_type
             ).distinct()
+
         
         # Apply client_type filter if 'client_type' query parameter is present
         client_type_filter = self.request.query_params.get('client_type', None)
         if client_type_filter and client_type_filter != "all":
-            queryset = queryset.filter(fp_type_set__fpt_client_type__iexact=client_type_filter).distinct()
+            queryset = queryset.filter(fp_type__fpt_client_type__iexact=client_type_filter).distinct()
         
         return queryset
     
@@ -569,8 +582,8 @@ class PatientListForOverallTable(generics.ListAPIView):
         patient_id = record.pat.pat_id
         patient_type = record.pat.pat_type
         
-        # Get FP type info
-        fp_type_instance = record.fp_type_set.first()
+        # Get FP type info - changed from fp_type_set to fp_type
+        fp_type_instance = record.fp_type_set.first()  # Changed from fp_type_set.first()
         raw_subtype = fp_type_instance.fpt_subtype if fp_type_instance else "N/A"
         subtype = map_subtype_display(raw_subtype)
         
@@ -859,10 +872,13 @@ def get_fp_records_for_patient(request, patient_id):
 #         )
         
 
-
 @api_view(["GET"])
 def get_obstetrical_history(request, pat_id):
     try:
+        # Check if pat_id is valid before querying
+        if not pat_id or pat_id == "undefined":
+            return Response({"error": "Invalid patient ID"}, status=status.HTTP_400_BAD_REQUEST)
+        
         patient = get_object_or_404(Patient, pat_id=pat_id)
         patient_records = PatientRecord.objects.filter(pat_id=patient)
 
@@ -873,8 +889,8 @@ def get_obstetrical_history(request, pat_id):
         )
 
         latest_previous_pregnancy = (
-            Previous_Pregnancy.objects.filter(patrec_id__in=patient_records) # <--- CORRECTED LINE
-            .order_by("-date_of_delivery", "-pfpp_id") # Order to get the absolute latest
+            Previous_Pregnancy.objects.filter(patrec_id__in=patient_records)
+            .order_by("-date_of_delivery", "-pfpp_id")
             .first()
         )
 
@@ -885,8 +901,8 @@ def get_obstetrical_history(request, pat_id):
             "premature": 0,
             "abortion": 0,
             "livingChildren": 0,
-            "lastDeliveryDate": "", # Initialize as None
-            "typeOfLastDelivery": "", # Initialize as None
+            "lastDeliveryDate": "",
+            "typeOfLastDelivery": "",
         }
 
         if obstetrical_summary_history:
@@ -899,19 +915,21 @@ def get_obstetrical_history(request, pat_id):
                 "livingChildren": obstetrical_summary_history.obs_living_ch or 0,
             })
         
-        if latest_previous_pregnancy:
+        if latest_previous_pregnancy and latest_previous_pregnancy.date_of_delivery:
             response_data.update({
-                "lastDeliveryDate": latest_previous_pregnancy.date_of_delivery.isoformat() if latest_previous_pregnancy.date_of_delivery else None,
-                "typeOfLastDelivery": latest_previous_pregnancy.type_of_delivery,
+                "lastDeliveryDate": latest_previous_pregnancy.date_of_delivery.isoformat(),
+                "typeOfLastDelivery": latest_previous_pregnancy.type_of_delivery or "",
             })
             
         return Response(response_data, status=status.HTTP_200_OK)
 
+    except Http404:
+        return Response({"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f"Error in get_obstetrical_history: {str(e)}")
-        import traceback # Add traceback for detailed error logging
-        traceback.print_exc() # Print traceback to console for debugging
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        import traceback
+        traceback.print_exc()
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["GET"])
 def get_patient_details_data(request, patient_id):
@@ -2290,7 +2308,7 @@ def get_last_previous_pregnancy(request, patient_id):
 
 def _create_fp_records_core(data, patient_record_instance, staff_id_from_request):
     patrec_id = patient_record_instance.patrec_id
-    
+    print("Patrec:",patrec_id)
     # Get patient gender from the form data
     patient_gender = data.get("gender", "").lower()
     
@@ -2604,13 +2622,16 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
     if fp_obstetrical_history_data:
         last_delivery_date_for_prev_preg = fp_obstetrical_history_data.get('lastDeliveryDate')
         type_of_last_delivery_for_prev_preg = fp_obstetrical_history_data.get('typeOfLastDelivery')
-
+        print("LAST AND TYPE: ",last_delivery_date_for_prev_preg,type_of_last_delivery_for_prev_preg)
+        
         if last_delivery_date_for_prev_preg == "":
             last_delivery_date_for_prev_preg = None
         if type_of_last_delivery_for_prev_preg == "":
             type_of_last_delivery_for_prev_preg = None
-
-        if last_delivery_date_for_prev_preg and type_of_last_delivery_for_prev_preg:
+            
+        patrec_id = patient_record_instance.patrec_id
+        print("Patrec_id 2:",patrec_id)
+        if last_delivery_date_for_prev_preg or type_of_last_delivery_for_prev_preg:
             prev_pregnancy_data = {
                 "date_of_delivery": last_delivery_date_for_prev_preg,
                 "type_of_delivery": type_of_last_delivery_for_prev_preg,
