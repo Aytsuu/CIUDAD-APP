@@ -1,38 +1,73 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Loader2, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowUpDown, Loader2, Search, FileInput, Users, Home, UserCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { FileInput } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useAuth } from "@/context/AuthContext";
+import { useDebounce } from "@/hooks/use-debounce";
+import ViewButton from "@/components/ui/view-button";
+import { useNavigate } from "react-router-dom";
 
+import { api2 } from "@/api/api";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+
+export const getScheduledVaccinations = async (assigned_to: string, search = "", patientType = "all", page = 1, pageSize = 10): Promise<any> => {
+  try {
+    const params = new URLSearchParams({
+      search,
+      patient_type: patientType,
+      page: page.toString(),
+      page_size: pageSize.toString()
+    });
+    const response = await api2.get(`/vaccination/to-be-administered/${assigned_to}/?${params}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching vaccination records:", error);
+    throw error;
+  }
+};
 export default function ForwardedScheduledVaccinationsTables() {
+  const { user } = useAuth();
+  const staff_id = user?.staff?.staff_id;
+
   const [searchQuery, setSearchQuery] = useState("");
+  const [patientType, setPatientType] = useState("all");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter] = useState("all");
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [residentCount, setResidentCount] = useState(0);
+  const [transientCount, setTransientCount] = useState(0);
+  const navigate = useNavigate();
 
-  const { data: ScheduledVaccinations, isLoading } = useQuery({
-    queryKey: ["scheduledVaccination"],
-    queryFn: async () => {
-      const response = await api2.get("vaccination/to-be-administered/");
-      return response.data || [];
-    }
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  const {
+    data: vaccinationData,
+    isLoading,
+    refetch
+  } = useQuery({
+    queryKey: ["scheduledVaccination", staff_id, debouncedSearchQuery, patientType, currentPage, pageSize],
+    queryFn: () => getScheduledVaccinations(staff_id!, debouncedSearchQuery, patientType, currentPage, pageSize),
+    refetchOnMount: true,
+    staleTime: 300000,
+    gcTime: 600000,
+    enabled: !!staff_id
   });
 
   const formatVaccinationData = useCallback((): VaccinationRecord[] => {
-    if (!ScheduledVaccinations) return [];
+    if (!vaccinationData?.results) return [];
 
-    return ScheduledVaccinations.map((record: any) => {
+    return vaccinationData.results.map((record: any) => {
       const patientDetails = record.patient || {};
       const personalInfo = patientDetails.personal_info || {};
       const address = patientDetails.address || {};
@@ -42,20 +77,20 @@ export default function ForwardedScheduledVaccinationsTables() {
       const invDetails = vaccineStock.inv_details || {};
       const vacrecDetails = record.vacrec_details || {};
 
-      // Construct address string
       const fullAddress = address.full_address || [address.add_street, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ") || "";
 
       return {
         ...record,
         vaccine_name: vaccineList.vac_name || "Unknown Vaccine",
-        vachist_doseNo: record.vachist_doseNo || "N/A",
+        vachist_doseNo: record.vachist_doseNo || "",
         vacrec_totaldose: vacrecDetails.vacrec_totaldose || 1,
-        status: record.vachist_status || "N/A",
-        batch_number: vaccineStock.batch_number || "N/A",
-        expiry_date: invDetails.expiry_date || "N/A",
+        status: record.vachist_status || "",
+        patrec_id: vacrecDetails.patrec_id || "",
+        batch_number: vaccineStock.batch_number || "",
+        expiry_date: invDetails.expiry_date || "",
         patient: {
-          pat_id: patientDetails.pat_id || "N/A",
-          pat_type: patientDetails.pat_type || "N/A",
+          pat_id: patientDetails.pat_id || "",
+          pat_type: patientDetails.pat_type || "",
           personal_info: personalInfo,
           address: {
             add_street: address.add_street || "",
@@ -82,20 +117,56 @@ export default function ForwardedScheduledVaccinationsTables() {
         vacrec_details: vacrecDetails
       };
     });
-  }, [ScheduledVaccinations]);
+  }, [vaccinationData]);
 
-  const filteredData = useMemo(() => {
-    return formatVaccinationData().filter((record: VaccinationRecord) => {
-      const searchText = `${record.patient?.personal_info?.per_id || ""} ${record.patient?.personal_info?.per_lname || ""} ${record.patient?.personal_info?.per_fname || ""} ${record.vaccine_name || ""}`.toLowerCase();
+  const calculateCounts = useCallback(() => {
+    if (!vaccinationData?.results) return;
 
-      const statusMatches = statusFilter === "all" || (record.vachist_status || "").toLowerCase() === statusFilter.toLowerCase();
+    const total = vaccinationData.count || 0;
+    let residents = 0;
+    let transients = 0;
 
-      return searchText.includes(searchQuery.toLowerCase()) && statusMatches;
+    vaccinationData.results.forEach((record: any) => {
+      const patType = record.patient?.pat_type;
+      if (patType === "Resident") residents++;
+      if (patType === "Transient") transients++;
     });
-  }, [searchQuery, formatVaccinationData, statusFilter]);
 
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    setTotalCount(total);
+    setResidentCount(residents);
+    setTransientCount(transients);
+    setTotalPages(Math.ceil(total / pageSize));
+  }, [vaccinationData, pageSize]);
+
+  useEffect(() => {
+    calculateCounts();
+  }, [calculateCounts]);
+
+  const { showLoading, hideLoading } = useLoading();
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientType]);
+
+ 
+
+  const handlePatientTypeChange = (value: string) => {
+    setPatientType(value);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize >= 1 ? newPageSize : 1);
+    setCurrentPage(1);
+  };
 
   const columns: ColumnDef<VaccinationRecord>[] = [
     {
@@ -163,7 +234,7 @@ export default function ForwardedScheduledVaccinationsTables() {
         const address = row.original.patient?.address;
         return (
           <div className="flex justify-start px-2">
-            <div className="w-[200px] break-words">{address?.full_address || [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province].filter(Boolean).join(", ") || "No address provided"}</div>
+            <div className="w-[200px] break-words">{[address?.add_street, address?.add_barangay, address?.add_city, address?.add_province].filter(Boolean).join(", ") || "No address provided"}</div>
           </div>
         );
       }
@@ -172,7 +243,7 @@ export default function ForwardedScheduledVaccinationsTables() {
       accessorKey: "Sitio",
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex justify-start px-2">
+        <div className="flex justify-center px-2">
           <div>{row.original.patient?.address?.add_sitio || "No address provided"}</div>
         </div>
       )
@@ -185,118 +256,168 @@ export default function ForwardedScheduledVaccinationsTables() {
         const address = row.original.patient?.address;
         return (
           <div className="flex justify-center gap-2">
-            <Link
-              to="/scheduled-vaccine"
-              state={{
+            <ViewButton
+              onClick={() => {
+              navigate("/scheduled-vaccine", {
+                state: {
                 Vaccination: row.original,
                 patientData: {
+                  patrec_id: row.original.patrec_id || "",
                   pat_id: row.original.patient?.pat_id || "",
                   pat_type: row.original.patient?.pat_type || "",
                   age: patient?.per_dob ? calculateAge(patient.per_dob).toString() : "N/A",
                   addressFull: address?.full_address || [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province].filter(Boolean).join(", ") || "No address provided",
                   address: {
-                    add_street: address?.add_street || "",
-                    add_barangay: address?.add_barangay || "",
-                    add_city: address?.add_city || "",
-                    add_province: address?.add_province || "",
-                    add_sitio: address?.add_sitio || ""
+                  add_street: address?.add_street || "",
+                  add_barangay: address?.add_barangay || "",
+                  add_city: address?.add_city || "",
+                  add_province: address?.add_province || "",
+                  add_sitio: address?.add_sitio || ""
                   },
                   households: [{ hh_id: row.original.patient?.households?.[0]?.hh_id || "N/A" }],
                   personal_info: {
-                    per_fname: patient?.per_fname || "",
-                    per_mname: patient?.per_mname || "",
-                    per_lname: patient?.per_lname || "",
-                    per_dob: patient?.per_dob || "",
-                    per_sex: patient?.per_sex || ""
+                  per_fname: patient?.per_fname || "",
+                  per_mname: patient?.per_mname || "",
+                  per_lname: patient?.per_lname || "",
+                  per_dob: patient?.per_dob || "",
+                  per_sex: patient?.per_sex || ""
                   }
                 }
+                }
+              });
               }}
-            >
-              <Button variant="outline" size="sm">
-                View
-              </Button>
-            </Link>
+            />
           </div>
         );
       }
     }
   ];
 
-  const { showLoading, hideLoading } = useLoading();
+  const currentData = formatVaccinationData();
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+  if (!staff_id) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">Unable to load staff information</p>
+          <p className="text-sm text-gray-500">Please try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <LayoutWithBack title="Scheduled Vaccinations" description="Manage and view scheduled vaccinations for patients.">
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
-          <div className="w-full flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search patients, ID, or vaccine..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            </div>
-          </div>
-        </div>
-
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-14 h-8"
-                value={pageSize}
-                onChange={(e) => {
-                  const value = +e.target.value;
-                  setPageSize(value >= 1 ? value : 1);
-                }}
-                min="1"
-              />
-              <p className="text-xs sm:text-sm">Entries</p>
+    <MainLayoutComponent title="Scheduled Vaccinations" description="Manage and view scheduled vaccinations for patients.">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-full mr-4">
+              <Users className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data">
-                    <FileInput className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <p className="text-sm font-medium text-gray-600">Total Records</p>
+              <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">loading....</span>
-              </div>
-            ) : (
-              <DataTable columns={columns} data={paginatedData} />
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-            </p>
-
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-            </div>
+          <div className="text-right">
+            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
           </div>
         </div>
-      </LayoutWithBack>
-    </>
+
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-3 bg-green-100 rounded-full mr-4">
+              <Home className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Residents</p>
+              <p className="text-2xl font-bold text-gray-800">{residentCount}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-full mr-4">
+              <UserCheck className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Transients</p>
+              <p className="text-2xl font-bold text-gray-800">{transientCount}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+        <div className="w-full flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search patients, ID, or vaccine..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          </div>
+          <SelectLayout
+            placeholder="Filter patient type"
+            label=""
+            className="bg-white w-full sm:w-48"
+            options={[
+              { id: "all", name: "All Types" },
+              { id: "resident", name: "Resident" },
+              { id: "transient", name: "Transient" }
+            ]}
+            value={patientType}
+            onChange={handlePatientTypeChange}
+          />
+        </div>
+      </div>
+
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => handlePageSizeChange(+e.target.value)} min="1" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" aria-label="Export data">
+                  <FileInput className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading...</span>
+            </div>
+          ) : (
+            <DataTable columns={columns} data={currentData} />
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
+          </p>
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          </div>
+        </div>
+      </div>
+    </MainLayoutComponent>
   );
 }

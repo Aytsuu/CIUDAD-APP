@@ -72,7 +72,14 @@ class HealthStaffListView(generics.ListAPIView):
   serializer_class = StaffFullSerializer
 
   def get_queryset(self):
-    return Staff.objects.filter(staff_type="Health Staff")
+    return Staff.objects.filter(staff_type__iexact="HEALTH STAFF")
+  
+class DoctorStaffListView(generics.ListAPIView):
+  serializer_class = StaffFullSerializer
+
+  def get_queryset(self):
+    return Staff.objects.filter(pos__pos_title__iexact="DOCTOR")
+
 
 
    

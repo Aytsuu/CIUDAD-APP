@@ -10,8 +10,12 @@ import { getFPCompleteRecord } from "../admin/admin-familyplanning/GetRequest"
 import { LoadingState } from "@/components/ui/loading-state"
 
 export default function MyFpRecordDetailScreen() {
+    const params = useLocalSearchParams<{ fprecordId: string; pat_id?: string }>();
 const { fprecordId } = useLocalSearchParams()
 const windowWidth = Dimensions.get("window").width
+const patIdFromParams = params.pat_id;
+
+  console.log("[DEBUG] fp-details patIdFromParams:", patIdFromParams);
 
 const {
 data: recordData,

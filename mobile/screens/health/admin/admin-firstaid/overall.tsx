@@ -1,54 +1,81 @@
-import React, { useState, useMemo } from "react";
+"use client";
+
+import type React from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, User, FileText, Users,  RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, Users, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFirstaidRecords } from "./restful-api/getAPI";
-import { FirstAidRecord} from "./types";
+import { useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
+import { PaginationControls } from "../components/pagination-layout";
+import { useDebounce } from "@/hooks/use-debounce";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { useMedicineRecords } from "../admin-medicinerecords/queries/fetch";
 
-interface FirstAidPatientsCount {
-  total_firstaid_patients: number;
-  resident_firstaid_patients: number;
-  transient_firstaid_patients: number;
+interface FirstAidRecord {
+  pat_id: string;
+  fname: string;
+  lname: string;
+  mname: string;
+  sex: string;
+  age: string;
+  dob: string;
+  householdno: string;
+  street: string;
+  sitio: string;
+  barangay: string;
+  city: string;
+  province: string;
+  pat_type: string;
+  address: string;
+  firstaid_count: number;
+  patient_details?: {
+    personal_info: {
+      per_fname: string;
+      per_lname: string;
+      per_mname: string;
+      per_sex: string;
+      per_dob: string;
+    };
+    address: {
+      add_street: string;
+      add_sitio: string;
+      add_barangay: string;
+      add_city: string;
+      add_province: string;
+    };
+    pat_type: string;
+    households?: Array<{ hh_id: string }>;
+  };
+}
+
+interface ApiResponse {
+  results?: FirstAidRecord[];
+  count?: number;
+  next?: string;
+  previous?: string;
 }
 
 type TabType = "all" | "resident" | "transient";
 
-// Components
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   const getTypeConfig = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'resident':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        };
-      case 'transient':
-        return {
-          color: 'text-amber-700',
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-        };
+      case "resident":
+        return { color: "text-green-700", bgColor: "bg-green-100", borderColor: "border-green-200" };
+      case "transient":
+        return { color: "text-purple-700", bgColor: "bg-purple-100", borderColor: "border-purple-200" };
       default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        };
+        return { color: "text-gray-700", bgColor: "bg-gray-100", borderColor: "border-gray-200" };
     }
   };
 
   const typeConfig = getTypeConfig(type);
   return (
     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </Text>
+      <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
     </View>
   );
 };
@@ -60,45 +87,35 @@ const TabBar: React.FC<{
 }> = ({ activeTab, setActiveTab, counts }) => (
   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
     <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+      onPress={() => setActiveTab("all")}
+      className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}
     >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>
         All ({counts.all})
       </Text>
     </TouchableOpacity>
     <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
+      onPress={() => setActiveTab("resident")}
+      className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}
     >
-      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>
         Residents ({counts.resident})
       </Text>
     </TouchableOpacity>
     <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
+      onPress={() => setActiveTab("transient")}
+      className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}
     >
-      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>
         Transients ({counts.transient})
       </Text>
     </TouchableOpacity>
   </View>
 );
 
-const FirstAidRecordCard: React.FC<{
-  record: FirstAidRecord;
-  onPress: () => void;
-}> = ({ record, onPress }) => {
+const FirstAidRecordCard: React.FC<{ record: FirstAidRecord; onPress: () => void }> = ({ record, onPress }) => {
   const formatAddress = () => {
-    const address = record.patient_details.address;
-    return [address.add_street, address.add_barangay, address.add_city, address.add_province]
-      .filter(Boolean)
-      .join(", ");
-  };
-
-  const calculatePatientAge = () => {
-    return calculateAge(record.patient_details.personal_info.per_dob).toString();
+    return record.address || [record.street, record.barangay, record.city, record.province].filter(Boolean).join(", ");
   };
 
   return (
@@ -107,53 +124,48 @@ const FirstAidRecordCard: React.FC<{
       activeOpacity={0.8}
       onPress={onPress}
     >
-      {/* Header */}
       <View className="p-4 border-b border-gray-100">
         <View className="flex-row items-start justify-between">
           <View className="flex-1 mr-3">
             <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-red-600 rounded-full items-center justify-center mr-3">
-                <User color="white" size={20} />
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
+                <Pill color="white" size={20} />
               </View>
               <View className="flex-1">
                 <Text className="font-semibold text-lg text-gray-900">
-                  {record.patient_details.personal_info.per_lname}, {record.patient_details.personal_info.per_fname} {record.patient_details.personal_info.per_mname}
+                  {record.lname}, {record.fname} {record.mname}
                 </Text>
                 <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
               </View>
             </View>
           </View>
-          <StatusBadge type={record.patient_details.pat_type} />
+          <StatusBadge type={record.pat_type} />
         </View>
       </View>
 
-      {/* Details */}
       <View className="p-4">
         <View className="flex-row items-center mb-3">
           <Users size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
-            Age: <Text className="font-medium text-gray-900">{calculatePatientAge()}</Text> • {record.patient_details.personal_info.per_sex}
+            Age: <Text className="font-medium text-gray-900">{record.age}</Text> • {record.sex}
           </Text>
         </View>
+
         <View className="flex-row items-center mb-3">
-          <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Address: <Text className="font-medium text-gray-900">{formatAddress() || "No address provided"}</Text>
           </Text>
         </View>
-        {record.patient_details.address.add_sitio && (
-          <View className="flex-row items-center mb-3">
-            <FileText size={16} color="#6B7280" />
+
+        <View className="flex-row items-center justify-between">
+          <Users size={16} color="#6B7280" />
+          <View className="flex-row items-center">
+            <Pill size={16} color="#6B7280" />
             <Text className="ml-2 text-gray-600 text-sm">
-              Sitio: <Text className="font-medium text-gray-900">{record.patient_details.address.add_sitio}</Text>
+              First Aid Records: <Text className="font-medium text-gray-900">{record.firstaid_count}</Text>
             </Text>
           </View>
-        )}
-        <View className="flex-row items-center">
-          <FileText size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Records: <Text className="font-medium text-gray-900">{record.firstaid_count}</Text>
-          </Text>
+          <ChevronRight size={16} color="#6B7280" />
         </View>
       </View>
     </TouchableOpacity>
@@ -164,62 +176,75 @@ export default function AllFirstAidRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
   const queryClient = useQueryClient();
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const {
-    data: firstAidRecords,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching
-  } = useQuery<FirstAidRecord[]>({
-    queryKey: ["firstAidRecords"],
-    queryFn: getFirstaidRecords,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: debouncedSearchQuery || undefined,
+      patient_type: activeTab !== "all" ? activeTab : undefined,
+    }),
+    [currentPage, pageSize, debouncedSearchQuery, activeTab]
+  );
 
-  const filteredData = useMemo(() => {
-    if (!firstAidRecords) return [];
-    
-    let result = firstAidRecords;
-    
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      result = result.filter(
-        (record) =>
-          record.patient_details.personal_info.per_fname.toLowerCase().includes(lowerCaseQuery) ||
-          record.patient_details.personal_info.per_lname.toLowerCase().includes(lowerCaseQuery) ||
-          record.pat_id.toLowerCase().includes(lowerCaseQuery) ||
-          record.patient_details.address.add_sitio?.toLowerCase().includes(lowerCaseQuery)
-      );
+  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } =
+    useMedicineRecords(queryParams);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, activeTab]);
+
+  const formatFirstAidData = useCallback((): FirstAidRecord[] => {
+    if (!apiResponse?.results || !Array.isArray(apiResponse.results)) {
+      return [];
     }
-    
-    if (activeTab !== 'all') {
-      result = result.filter((record) =>
-        record.patient_details.pat_type.toLowerCase() === activeTab
-      );
-    }
-    
-    return result;
-  }, [firstAidRecords, searchQuery, activeTab]);
+    return apiResponse.results.map((record: any) => {
+      const details = record.patient_details || {};
+      const info = details.personal_info || {};
+      const address = details.address || {};
+      const addressString =
+        [address.add_street, address.add_barangay, address.add_city, address.add_province]
+          .filter((part) => part && part.trim().length > 0)
+          .join(", ") || "";
+
+      return {
+        pat_id: record.pat_id,
+        fname: info.per_fname || "",
+        lname: info.per_lname || "",
+        mname: info.per_mname || "",
+        sex: info.per_sex || "",
+        age: calculateAge(info.per_dob).toString(),
+        dob: info.per_dob || "",
+        householdno: details.households?.[0]?.hh_id || "",
+        street: address.add_street || "",
+        sitio: address.add_sitio || "",
+        barangay: address.add_barangay || "",
+        city: address.add_city || "",
+        province: address.add_province || "",
+        pat_type: details.pat_type || "",
+        address: addressString,
+        firstaid_count: record.firstaid_count || 0,
+      };
+    });
+  }, [apiResponse?.results]);
+
+  const formattedData = formatFirstAidData();
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const counts = useMemo(() => {
-    if (!firstAidRecords) return { all: 0, resident: 0, transient: 0 };
-    
-    const residentCount = firstAidRecords.filter(r => r.patient_details.pat_type.toLowerCase() === 'resident').length;
-    const transientCount = firstAidRecords.filter(r => r.patient_details.pat_type.toLowerCase() === 'transient').length;
-    
-    return {
-      all: firstAidRecords.length,
-      resident: residentCount,
-      transient: transientCount,
-    };
-  }, [firstAidRecords]);
+    if (!formattedData) return { all: 0, resident: 0, transient: 0 };
+    const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
+    const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
+    return { all: totalCount, resident: residentCount, transient: transientCount };
+  }, [formattedData, totalCount]);
 
-  const onRefresh = React.useCallback(async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await refetch();
@@ -229,18 +254,11 @@ export default function AllFirstAidRecords() {
     setRefreshing(false);
   }, [refetch]);
 
-  const handleRecordPress = (record: FirstAidRecord) => {
-    try {
-      router.push({
-        pathname: "/admin/first-aid/individual",
-        params: { patientData: JSON.stringify(record) }
-      });
-    } catch (error) {
-      console.log("Navigation error:", error);
-    }
-  };
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
-  if (isLoading) {
+  if (isLoading && !formattedData.length) {
     return <LoadingState />;
   }
 
@@ -255,11 +273,14 @@ export default function AllFirstAidRecords() {
             <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="">First Aid Records</Text>}
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">First Aid Records</Text>}
+        rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+        <View className="flex-1 justify-center items-center px-6">
           <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
+          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
+            Error loading records
+          </Text>
           <Text className="text-gray-600 text-center mt-2 mb-6">
             Failed to load data. Please check your connection and try again.
           </Text>
@@ -288,14 +309,13 @@ export default function AllFirstAidRecords() {
       headerTitle={<Text className="text-gray-900 text-lg font-semibold">First Aid Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 bg-gray-50">
-        {/* Search Bar */}
+      <View className="flex-1">
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search records..."
+              placeholder="Search by name or address..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -303,48 +323,53 @@ export default function AllFirstAidRecords() {
           </View>
         </View>
 
-        {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
-        {/* Records List */}
-        {!firstAidRecords || firstAidRecords.length === 0 ? (
+        <View className="px-4 flex-row items-center justify-between  mt-4">
+          <Text className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} records
+          </Text>
+          <Text className="text-sm font-medium text-gray-800">
+            Page {currentPage} of {totalPages}
+          </Text>
+        </View>
+
+        {!formattedData || formattedData.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
-            <FileText size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
+            <Pill size={64} color="#9CA3AF" />
+            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
+              No records found
+            </Text>
             <Text className="text-gray-600 text-center mt-2">
               There are no first aid records available yet.
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={filteredData}
-            keyExtractor={(item) => `firstaid-${item.pat_id}`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
-            windowSize={21}
-            renderItem={({ item }) => (
-              <FirstAidRecordCard
-                record={item}
-                onPress={() => handleRecordPress(item)}
-              />
-            )}
-            ListEmptyComponent={() => (
-              <View className="flex-1 justify-center items-center py-20">
-                <FileText size={48} color="#D1D5DB" />
-                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
-                  No records in this category
-                </Text>
-                <Text className="text-gray-500 text-center">
-                  {searchQuery
-                    ? `No ${activeTab} records match your search.`
-                    : `No ${activeTab} records found.`}
-                </Text>
-              </View>
-            )}
-          />
+          <>
+            <FlatList
+              data={formattedData}
+              keyExtractor={(item) => `firstaid-${item.pat_id}`}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 16 }}
+              renderItem={({ item }) => <FirstAidRecordCard record={item} onPress={() => {}} />}
+              ListFooterComponent={
+                isFetching ? (
+                  <View className="py-4 items-center">
+                    <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+                  </View>
+                ) : null
+              }
+            />
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalCount}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
       </View>
     </PageLayout>

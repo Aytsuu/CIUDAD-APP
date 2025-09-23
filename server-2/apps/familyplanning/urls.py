@@ -76,4 +76,6 @@ urlpatterns = [
     path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'),
     path('fp-records/', PatientListForOverallTable.as_view(), name='fp-records-paginated'),
     # path('familyplanning/submit-followup/', submit_followup_family_planning_form, name='submit_followup_family_planning_form'),
+    # path('count/<str:pat_id>/', FPRecordCountView.as_view(), name='fp-records-count-by-patient'),
+
 ]

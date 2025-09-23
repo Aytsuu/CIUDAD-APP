@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Stethoscope } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { ConsultationHistoryTable } from "./table-history";
-import { MedicalConsultationHistory } from "../types";
 import CurrentConsultationCard from "./current-medrec";
 import { useConsultationHistory } from "../queries/fetchQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -26,48 +25,23 @@ export default function DisplayMedicalConsultation() {
 
   const consultationHistory = useMemo(() => {
     if (!data?.results) return [];
-
+  
     return data.results
       .map((history: any) => ({
+        // Keep all your existing fields
+        ...history,
         patrec: history.patrec,
         medrec_id: history.medrec_id,
         medrec_status: history.medrec_status,
-        medrec_chief_complaint: history.medrec_chief_complaint || "Not specified",
+        medrec_chief_complaint: history.medrec_chief_complaint,
         created_at: history.created_at,
         medrec_age: history.medrec_age,
-        vital_signs: {
-          vital_bp_systolic: history.vital_signs?.vital_bp_systolic || "N/A",
-          vital_bp_diastolic: history.vital_signs?.vital_bp_diastolic || "N/A",
-          vital_temp: history.vital_signs?.vital_temp || "N/A",
-          vital_RR: history.vital_signs?.vital_RR || "N/A",
-          vital_o2: history.vital_signs?.vital_o2 || "N/A",
-          vital_pulse: history.vital_signs?.vital_pulse || "N/A"
-        },
-        bmi_details: {
-          height: history.bmi_details?.height || "N/A",
-          weight: history.bmi_details?.weight || "N/A"
-        },
-        staff_details: history.staff_details
-          ? {
-              rp: {
-                per: {
-                  per_fname: history.staff_details?.rp?.per?.per_fname || "",
-                  per_lname: history.staff_details?.rp?.per?.per_lname || "",
-                  per_mname: history.staff_details?.rp?.per?.per_mname || ""
-                }
-              }
-            }
-          : null,
-        find_details: history.find_details
-          ? {
-              assessment_summary: history.find_details.assessment_summary || "Not specified",
-              plantreatment_summary: history.find_details.plantreatment_summary || "Not specified",
-              subj_summary: history.find_details.subj_summary || "Not specified",
-              obj_summary: history.find_details.obj_summary || "Not specified"
-            }
-          : null
+        vital_signs: history.vital_signs,
+        bmi_details: history.bmi_details,
+        staff_details: history.staff_details,
+        find_details: history.find_details // Keep as-is, no defaults
       }))
-      .sort((a: MedicalConsultationHistory, b: MedicalConsultationHistory) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }, [data]);
 
   const totalCount = data?.count || 0;
@@ -89,9 +63,11 @@ export default function DisplayMedicalConsultation() {
 
     return (
       <div className="flex flex-col sm:flex-row items-center justify-end mt-4 gap-4">
-        <div className="text-sm text-gray-600">
-          Showing {startItem} to {endItem} of {totalCount} records
-        </div>
+        {totalCount > 1 && (
+          <div className="text-sm text-gray-600">
+            Showing {startItem} to {endItem} of {totalCount} records
+          </div>
+        )}
       </div>
     );
   };

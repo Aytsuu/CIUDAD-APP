@@ -108,6 +108,7 @@ export const initialFormData: FormData = {
   created_at: "",
   chhist_status: "",
   historicalSupplementStatuses: [], // ADDED THIS LINE
+  selectedStaffId:"", // ADDED THIS LINE
 
 };
 

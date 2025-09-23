@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VaccinationRecord } from "@/pages/healthServices/vaccination/tables/columns/types";
-
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 export type VaccinationHistory = {
   vachist_id: string;
   vachist_doseNo: number;
@@ -38,6 +38,7 @@ export type VaccinationHistory = {
 type VaccinationHistoryProps = {
   relevantHistory: VaccinationRecord[];
   currentVaccinationId?: string;
+  patientDob?: string; 
   loading?: boolean;
   error?: string | null;
 };
@@ -45,12 +46,13 @@ type VaccinationHistoryProps = {
 export function VaccinationHistoryRecord({
   relevantHistory,
   currentVaccinationId,
+  patientDob,
   loading = false,
   error = null,
 }: VaccinationHistoryProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 4;
-
+console.log("patientDob", patientDob);
   const hasHistory = useMemo(() => {
     return relevantHistory.length > 0;
   }, [relevantHistory]);
@@ -99,7 +101,9 @@ export function VaccinationHistoryRecord({
         } else if (row.attribute === "Status") {
           rowData[recordId] = record.vachist_status;
         } else if (row.attribute === "Age at Vaccination") {
-          rowData[recordId] = record.vachist_age;
+            rowData[recordId] = patientDob 
+              ? calculateAgeFromDOB(patientDob, record.created_at).years || "" 
+              : "";
         } else if (row.attribute === "Blood Pressure") {
           const bpSystolic = record.vital_signs?.vital_bp_systolic || "";
           const bpDiastolic = record.vital_signs?.vital_bp_diastolic || "";

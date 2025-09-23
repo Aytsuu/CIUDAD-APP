@@ -1,14 +1,13 @@
 // getAPI.ts
 import { api2 } from "@/api/api";
-import {MedicineChartResponse, MedicineRecordsResponse} from "../types";
 
 
-export const getMedicineMonthly = async (year?: string): Promise<MedicineRecordsResponse> => {
+export const getMedicineMonthly = async (year?: string): Promise<any> => {
   try {
     const url = year
-      ? `/medicine/medicine-records/monthly/?year=${year}`
-      : `/medicine/medicine-records/monthly/`;
-    const response = await api2.get<MedicineRecordsResponse>(url);
+      ? `/reports/medicine-records/monthly/?year=${year}`
+      : `/reports/medicine-records/monthly/`;
+    const response = await api2.get<any>(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching Medicine records:", error);
@@ -19,10 +18,10 @@ export const getMedicineMonthly = async (year?: string): Promise<MedicineRecords
 
 
 
-export const getMedicineDetailedReports = async (month: string): Promise<MedicineRecordsResponse> => {
+export const getMedicineDetailedReports = async (month: string): Promise<any> => {
   try {
-    const url = `/medicine/medicine-reports/${month}/`;
-    const response = await api2.get<MedicineRecordsResponse>(url);
+    const url = `/reports/medicine-reports/${month}/`;
+    const response = await api2.get<any>(url);
     console.log("First Aid Reports Response:", response.data);
     return response.data;
   } catch (error) {
@@ -35,8 +34,8 @@ export const getMedicineDetailedReports = async (month: string): Promise<Medicin
 export  const getMedicineChart = async(month:string)=>{
   try
   {
-    const url = `/medicine/medicines-request/monthly/chart/${month}/`;
-    const response = await api2.get<MedicineChartResponse>(url);
+    const url = `/reports/medicines-request/monthly/chart/${month}/`;
+    const response = await api2.get<any>(url);
     console.log("Chart Response:", response.data);
     return response.data;
   }

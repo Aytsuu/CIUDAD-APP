@@ -43,8 +43,14 @@ export const useCreateMedicineAllocation = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["medicine-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["pending-items"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
+
+
 
       console.log("Allocation successful:", data);
       showSuccessToast("Allocation processed successfully");

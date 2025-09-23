@@ -1,6 +1,5 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -15,25 +14,27 @@ import { usePendingItemsMedRequest } from "../queries/fetch";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { toast } from "sonner"; // Assuming you're using sonner for toast notifications
+import { toast } from "sonner";
 import { useConfirmAllPendingItems } from "../queries/update";
 
 export default function MedicineRequestPendingItems() {
   const location = useLocation();
   const navigate = useNavigate();
-
+  
   // Get the medreqData from state params
   const medreq_id = location.state?.params?.medreq_id;
   const patientInfo = location.state?.params?.patientData;
-
+  
   const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [medicineDisplayPage, setMedicineDisplayPage] = useState(1);
+  const [medicineSearchQuery, setMedicineSearchQuery] = useState("");
 
   // Use the existing fetchMedicinesWithStock function
   const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
+  
   // Use the new mutation hook instead of useCreateMedicineAllocation
   const { mutate: confirmAllPendingItems, isPending, error: confirmError, isSuccess } = useConfirmAllPendingItems();
 
@@ -73,12 +74,19 @@ export default function MedicineRequestPendingItems() {
   const createMedicineMapping = () => {
     if (!medicineStocksOptions || !medicineData.length) return [];
 
+    console.log('Medicine stocks options:', medicineStocksOptions);
+    console.log('Medicine data from API:', medicineData);
+
     const mappedMedicines: any = [];
 
     // For each pending medicine request
     medicineData.forEach((pendingMedicine: any) => {
       // Find all stock entries that match this medicine
-      const matchingStocks = medicineStocksOptions.filter((stock: any) => String(stock.med_id) === String(pendingMedicine.med_id));
+      const matchingStocks = Array.isArray(medicineStocksOptions?.medicines)
+        ? medicineStocksOptions.medicines.filter((stock: any) => String(stock.med_id) === String(pendingMedicine.med_id))
+        : [];
+
+      console.log(`Matching stocks for medicine ${pendingMedicine.med_name}:`, matchingStocks);
 
       // For each matching stock, create an entry
       matchingStocks.forEach((stock: any) => {
@@ -88,7 +96,6 @@ export default function MedicineRequestPendingItems() {
         // If there are pending items, create mapping entries
         pendingItems.forEach((item: any) => {
           const uniqueId = `${pendingMedicine.med_id}_${stock.id}_${item.medreqitem_id}`;
-
           mappedMedicines.push({
             ...stock,
             id: uniqueId, // Unique identifier for this specific stock-request combination
@@ -106,11 +113,39 @@ export default function MedicineRequestPendingItems() {
       });
     });
 
+    console.log('Enhanced medicine stocks:', mappedMedicines);
     return mappedMedicines;
   };
 
   // Get the enhanced medicine stocks with proper mapping
   const enhancedMedicineStocks = createMedicineMapping();
+
+  // Filter medicines based on search query
+  const filteredMedicineStocks = useMemo(() => {
+    if (!medicineSearchQuery.trim()) {
+      return enhancedMedicineStocks;
+    }
+
+    const query = medicineSearchQuery.toLowerCase();
+    return enhancedMedicineStocks.filter((medicine: any) =>
+      medicine.name?.toLowerCase().includes(query) ||
+      medicine.med_name?.toLowerCase().includes(query) ||
+      medicine.dosage?.toLowerCase().includes(query) ||
+      medicine.form?.toLowerCase().includes(query) ||
+      medicine.med_type?.toLowerCase().includes(query) ||
+      medicine.inv_id?.toLowerCase().includes(query) ||
+      medicine.id?.toString().toLowerCase().includes(query)
+    );
+  }, [enhancedMedicineStocks, medicineSearchQuery]);
+
+  // Implement client-side pagination for medicine display
+  const paginatedMedicines = useMemo(() => {
+    const startIndex = (medicineDisplayPage - 1) * 10;
+    const endIndex = startIndex + 10;
+    return filteredMedicineStocks.slice(startIndex, endIndex);
+  }, [filteredMedicineStocks, medicineDisplayPage]);
+
+  const medicineTotalPages = Math.ceil(filteredMedicineStocks.length / 10);
 
   // Calculate the actual count of pending items
   const pendingItemsCount = medicineData.reduce((count: any, medicine: any) => {
@@ -125,8 +160,12 @@ export default function MedicineRequestPendingItems() {
       });
       return;
     }
-
     confirmAllPendingItems(medreq_id);
+  };
+
+  const handleMedicineSearch = (searchTerm: string) => {
+    setMedicineSearchQuery(searchTerm);
+    setMedicineDisplayPage(1); // Reset to first page when search changes
   };
 
   // Guard clause for missing medreq_id
@@ -174,7 +213,7 @@ export default function MedicineRequestPendingItems() {
 
   return (
     <LayoutWithBack title="Pending Medicine Request Items" description="Review and confirm pending medicine requests">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="mx-auto space-y-6">
         {/* Success Message */}
         {isSuccess && (
           <Card className="border-green-200 bg-green-50">
@@ -294,7 +333,7 @@ export default function MedicineRequestPendingItems() {
           </CardHeader>
           <CardContent>
             <MedicineDisplay
-              medicines={enhancedMedicineStocks}
+              medicines={paginatedMedicines}
               initialSelectedMedicines={[]} // Empty since readonly
               onSelectedMedicinesChange={() => {}} // No-op since readonly
               itemsPerPage={10}
@@ -303,13 +342,23 @@ export default function MedicineRequestPendingItems() {
               autoFillReasons={false}
               isLoading={isMedicinesLoading}
               readonly={true} // View-only mode
+              totalItems={filteredMedicineStocks.length}
+              totalPages={medicineTotalPages}
+              onSearch={handleMedicineSearch}
+              searchQuery={medicineSearchQuery}
+              isSearching={false}
             />
           </CardContent>
         </Card>
 
         {/* Action Button */}
         <div className="flex justify-end">
-          <Button onClick={processMedicineAllocation} disabled={isPending || isSuccess || pendingItemsCount === 0} size="lg" className="min-w-[200px]">
+          <Button 
+            onClick={processMedicineAllocation} 
+            disabled={isPending || isSuccess || pendingItemsCount === 0} 
+            size="lg" 
+            className="min-w-[200px]"
+          >
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

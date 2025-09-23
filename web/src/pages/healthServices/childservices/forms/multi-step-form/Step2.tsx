@@ -23,9 +23,11 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       BFchecks: formData.BFchecks || [],
       dateNewbornScreening: formData.dateNewbornScreening || "",
       type_of_feeding: formData.type_of_feeding || "",
-      tt_status: formData.tt_status || ""
+      tt_status: formData.tt_status || "",
+      newbornInitiatedbf: formData.newbornInitiatedbf
     }
   });
+  console.log("newbornInitiatedbf", form.getValues("newbornInitiatedbf"));
 
   useEffect(() => {
     console.log(historicalBFChecks);
@@ -38,6 +40,14 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
   const [currentBFDate, setCurrentBFDate] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingHistoricalId, setEditingHistoricalId] = useState<number | null>(null);
+
+  // Get current date in YYYY-MM format
+  const getCurrentMonth = (): string => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
+    return `${year}-${month}`;
+  };
 
   // Helper function to check if date is today (September 14, 2025)
   const isToday = (dateString: string): boolean => {
@@ -80,9 +90,16 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     return historicalBFChecks.some((check) => check.ebf_date === date);
   };
 
+  // Validate if date is not in the future
+  const isDateValid = (date: string): boolean => {
+    const currentMonth = getCurrentMonth();
+    return date <= currentMonth;
+  };
+
   const handleAddDate = () => {
     if (!currentBFDate) {
       console.log("No current BF date provided");
+      showErrorToast("Please select a date");
       return;
     }
 
@@ -90,6 +107,12 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     const dateRegex = /^\d{4}-\d{2}$/;
     if (!dateRegex.test(currentBFDate)) {
       showErrorToast("Please enter a valid date in format YYYY-MM (e.g., 2023-09)");
+      return;
+    }
+
+    // Validate that date is not in the future
+    if (!isDateValid(currentBFDate)) {
+      showErrorToast("Date cannot be in the future. Please select a date up to the current month.");
       return;
     }
 
@@ -152,6 +175,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
       setCurrentBFDate("");
     } catch (error) {
       console.error("Error adding BF date:", error);
+      showErrorToast("Error adding BF date. Please try again.");
     }
   };
 
@@ -197,6 +221,9 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
     onPrevious();
   };
 
+  // Set max attribute for month input to current month
+  const maxMonth = getCurrentMonth();
+
   return (
     <>
       <Form {...form}>
@@ -208,7 +235,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
           noValidate
         >
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Left Column - Medical Information */}
             <div className="space-y-6">
               {/* Newborn Screening Card */}
@@ -222,7 +249,13 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                 description=""
                 content={
                   <div className="p-4 space-y-6">
-                    <FormDateTimeInput control={form.control} name="dateNewbornScreening" label="Date of Newborn Screening" type="date" />
+                    <FormDateTimeInput
+                      control={form.control}
+                      name="dateNewbornScreening"
+                      label="Date of Newborn Screening"
+                      type="date"
+                      max={new Date().toISOString().split("T")[0]} // Set max to today's date
+                    />
                     <FormMessage />
                     <FormField
                       control={control}
@@ -299,8 +332,16 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   {editingIndex !== null ? "Edit BF Date" : editingHistoricalId !== null ? "Edit Historical BF Date" : "Add BF Date"}
                                   <span className="text-xs text-gray-500 block">Format: YYYY-MM (e.g., 2023-09)</span>
+                                  <span className="text-xs text-blue-500 block">Maximum allowed: {maxMonth}</span>
                                 </label>
-                                <input type="month" value={currentBFDate} onChange={(e) => setCurrentBFDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="YYYY-MM" />
+                                <input
+                                  type="month"
+                                  value={currentBFDate}
+                                  onChange={(e) => setCurrentBFDate(e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                  placeholder="YYYY-MM"
+                                  max={maxMonth} // Set maximum to current month
+                                />
                               </div>
                               <Button type="button" onClick={handleAddDate} disabled={!currentBFDate} className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
                                 {editingIndex !== null || editingHistoricalId !== null ? (
@@ -316,7 +357,7 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                                 )}
                               </Button>
                               {(editingIndex !== null || editingHistoricalId !== null) && (
-                                <Button type="button" onClick={handleCancelEdit} className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg">
+                                <Button type="button" onClick={handleCancelEdit} className="bg-gray-400 hover:bg-gray-300 px-4 py-2 rounded-lg">
                                   Cancel
                                 </Button>
                               )}
@@ -402,18 +443,6 @@ export default function ChildHRPage2({ onPrevious, onNext, updateFormData, formD
                       <div className="text-center py-8 text-gray-500">
                         <Baby className="h-8 w-8 mx-auto mb-2" />
                         <p>No BF dates recorded yet</p>
-                      </div>
-                    )}
-
-                    {/* Summary Information */}
-                    {(historicalBFChecks.length > 0 || (BFchecks ?? []).length > 0) && (
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <h4 className="text-sm font-semibold text-blue-800 mb-2">Summary</h4>
-                        <div className="text-sm text-blue-700">
-                          <p>Previous BF Checks: {historicalBFChecks.length}</p>
-                          <p>New BF Checks: {(BFchecks ?? []).filter((check) => !check.ebf_id).length}</p>
-                          <p>Total BF Checks: {historicalBFChecks.length + (BFchecks ?? []).filter((check) => !check.ebf_id).length}</p>
-                        </div>
                       </div>
                     )}
                   </div>

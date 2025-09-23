@@ -1,11 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button/button";
-import { BsChevronLeft } from "react-icons/bs";
-import { useNavigate, useLocation } from "react-router";
+// import { useNavigate, useLocation } from "react-router";
 import { FileText } from "lucide-react";
-import { MdOutlinePregnantWoman } from "react-icons/md";
-import { PostpartumHistoryTable } from "../maternal-components/postpartum-history";
+import { PostpartumHistoryTable } from "../../maternal-components/postpartum-history";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 
 interface PostpartumVisit {
   date: string;
@@ -37,14 +35,14 @@ interface Patient {
   };
 }
 
-export default function PostpartumIndivHistory() {
+export default function PostpartumCareHistory() {
   const [postpartumData, setPostpartumData] = useState<PostpartumVisit[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [recordId, setRecordId] = useState<string>("");
   const [hasRealData, setHasRealData] = useState<boolean>(false);
   
   const location = useLocation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   // Mock data for demonstration when no real data is available
   const mockPostpartumData: PostpartumVisit[] = [
@@ -110,31 +108,6 @@ export default function PostpartumIndivHistory() {
 
   return (
     <div className="space-y-4">
-      {/* Back Button */}
-      <div className="flex items-center mb-2">
-        <Button className="text-black p-2" variant={"outline"} onClick={() => navigate(-1)}>
-          <BsChevronLeft />
-        </Button>
-      </div>
-
-      {/* Clinical Header */}
-      <div className="flex flex-col items-center gap-4 bg-slate-50 border border-slate-200 rounded-lg p-3">
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2">
-            <MdOutlinePregnantWoman className="h-6 w-6 " />
-            <h2 className="text-xl font-semibold text-black">Postpartum Visit Records</h2>
-          </div>
-          <p className="text-slate-600 text-sm font-medium">
-            Complete record of postpartum visits and clinical notes
-            {selectedPatient && (
-              <span className="block mt-1">
-                Patient: {selectedPatient.personal_info.per_fname} {selectedPatient.personal_info.per_lname}
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
-
       {/* Postpartum History Table */}
       {hasData ? (
         <div className="space-y-4">

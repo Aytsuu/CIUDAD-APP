@@ -169,7 +169,7 @@ export default function MedicineStocks() {
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
         </div>
-        <Button onClick={() => navigate("/addMedicineStock")} className="hover:bg-buttonBlue/90 group">
+        <Button onClick={() => navigate("/inventory/stocks/add-medicine")} className="hover:bg-buttonBlue/90 group">
           <Plus size={15} /> New Medicine
         </Button>
       </div>

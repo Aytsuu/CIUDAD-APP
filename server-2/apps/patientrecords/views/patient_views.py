@@ -12,16 +12,39 @@ from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
 from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer, TransientAddressSerializer
-from ..models import *
-from ..serializers.followvisits_serializers import *
+from ..models import   Patient, PatientRecord, Transient, TransientAddress
 from ...pagination import StandardResultsPagination
 
+
+
+# Approach 1: Class-based API View
+class PatientByRPView(APIView):
+    """
+    Get patient ID by resident profile ID
+    URL: /api/patient/by-rp/<int:rp_id>/
+    """
+    def get(self, request, rp_id):
+        try:
+            patient = Patient.objects.get(rp_id=rp_id)
+            return Response({
+                'pat_id': patient.pat_id,
+                'pat_type': patient.pat_type, 
+                'pat_status': patient.pat_status
+            }, status=status.HTTP_200_OK)
+        except Patient.DoesNotExist:
+            return Response({
+                'error': 'Patient not found for the given rp_id'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def get_resident_profile_list(request):
     residents = ResidentProfile.objects.filter(
         patients__isnull=True
-    ).select_related('per').prefetch_related('per__personaladdress_set__add__sitio')
+    ).select_related('per').prefetch_related('per__personal_addresses__add__sitio')
 
     serializer = ResidentProfileListSerializer(residents, many=True)
     return Response(serializer.data)
@@ -324,7 +347,7 @@ class PatientView(generics.ListCreateAPIView):
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
-                'rp_id__per__personaladdress_set',
+                'rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',
@@ -370,7 +393,7 @@ class PatientDetailView(generics.RetrieveAPIView):
         return Patient.objects.select_related(
             'rp_id__per'
         ).prefetch_related(
-            'rp_id__per__personaladdress_set__add__sitio'
+            'rp_id__per__personal_addresses__add__sitio'
         ).prefetch_related(
             'rp_id__household_set'
         )

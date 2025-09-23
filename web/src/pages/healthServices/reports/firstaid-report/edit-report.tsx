@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Loader2, Edit } from "lucide-react";
-import { SignatureField, SignatureFieldRef } from "./signature";
+import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/reports/firstaid-report/signature";
 import { Combobox } from "@/components/ui/combobox";
-import { fetchStaffWithPositions } from "./queries/fetchQueries";
+import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Label } from "@/components/ui/label";
-import { update_monthly_recipient_list_report } from "./restful-api/updateAPI";
+import { update_monthly_recipient_list_report } from "@/pages/healthServices/reports/firstaid-report/restful-api/updateAPI";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

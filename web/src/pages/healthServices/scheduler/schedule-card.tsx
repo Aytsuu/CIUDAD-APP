@@ -57,8 +57,8 @@ export default function ScheduleCard({ day, dailySchedule, services }: ScheduleC
                   {amServices.length && amServices.length > 1 ? `${amServices.length} services` : `${amServices.length} service`}
                 </Badge>
               </div>
-
-              <div className="space-y-1 max-h-20 overflow-y-auto">
+              
+              <div className="space-y-1 max-h-50 overflow-y-auto">
                 {amServices.length === 0 ? (
                   <p className="text-xs text-amber-600 italic">No morning services</p>
                 ) : (
@@ -81,8 +81,8 @@ export default function ScheduleCard({ day, dailySchedule, services }: ScheduleC
                   {pmServices.length && pmServices.length > 1 ? `${pmServices.length} services` : `${pmServices.length} service`}
                 </Badge>
               </div>
-
-              <div className="space-y-1 max-h-20 overflow-y-auto">
+              
+              <div className="space-y-1 max-h-50 overflow-y-auto">
                 {pmServices.length === 0 ? (
                   <p className="text-xs text-blue-600 italic">No afternoon services</p>
                 ) : (

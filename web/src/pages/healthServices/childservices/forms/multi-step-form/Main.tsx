@@ -169,8 +169,8 @@ export default function ChildHealthRecordForm() {
       BFdates: BFdatesFromApi, // Keep for backward compatibility
       BFchecks: BFchecksFromApi, // New field with full BF check data
       nbscreening_result: chrecDetails?.nbscreening_result || "",
-      newbornInitiatedbf: chrecDetails?.newborn_initiatedbf || false,
-      vitalSigns: chhistRecord.vitalSigns || [],
+      newbornInitiatedbf: chrecDetails.newbornInitiatedbf|| false,  
+          vitalSigns: chhistRecord.vitalSigns || [],
       medicines: chhistRecord.medicines || [],
       anemic: chhistRecord.anemic || initialFormData.anemic,
       birthwt: chhistRecord.birthwt || initialFormData.birthwt,

@@ -17,11 +17,11 @@ class ChildHealthrecordSerializerBase(serializers.ModelSerializer):
         fields = '__all__'
         
 class ChildHealthrecordSerializer(serializers.ModelSerializer):
-    patrec_details = PatientRecordSerializer(source='patrec', read_only=True)
+    patrec_details = PatientRecordSerializer(source='patrec', read_only=True)     
     class Meta:
         model = ChildHealthrecord
         fields = '__all__'
-
+ 
 
 class ChildHealthHistorySerializerBase(serializers.ModelSerializer):
     class Meta:

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getConsultationHistory, getMedicalRecord, getPreviousBMI } from "../restful-api/get";
+import { getConsultationHistory, getMedicalRecord, getPreviousBMI,getMedConPHHistory } from "../restful-api/get";
 
 export const useConsultationHistory = (patientId: string, page: number, pageSize: number) => {
   return useQuery<any>({
@@ -27,3 +27,14 @@ export const usePreviousBMI = (id: string) => {
     retry: 3
   });
 };
+
+
+export const useMedConPHHistory=(pat_id:string)=>{
+  return useQuery({
+    queryKey: ["MedConPHHistory", pat_id],
+    queryFn: () => getMedConPHHistory(pat_id),
+    staleTime: 1000 * 60 * 5,
+    enabled: !!pat_id,
+    retry: 3
+  });
+}

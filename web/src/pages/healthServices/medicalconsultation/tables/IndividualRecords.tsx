@@ -1,5 +1,5 @@
 // InvMedicalConRecords.tsx
-import  { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,13 @@ import { Syringe, AlertCircle } from "lucide-react";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { Patient } from "../../restful-api-patient/type";
-import { MedicalConsultationHistory } from "../types";
 import { useConsultationHistory } from "../queries/fetchQueries";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
+import {useMedConPHHistory} from "../queries/fetchQueries";
+import PHIllnessTable from "../medicalhistory/past-medical-history";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
@@ -37,17 +38,21 @@ export default function InvMedicalConRecords() {
   }, [patientData]);
 
   // Use the consultation history hook with pagination
-  const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, error: medicalRecordsError, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
-
+  const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
+  const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
 
-  // Extract data from the paginated response
+
+
   const medicalRecords = useMemo(() => {
+    console.log("Medical Records Response:", medicalRecordsResponse);
+
     return medicalRecordsResponse?.results || medicalRecordsResponse || [];
   }, [medicalRecordsResponse]);
 
   const totalCount = medicalRecordsResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
 
   const getMedicalHistoryCardsData = useCallback(() => {
     if (isMedHistoryLoading) {
@@ -80,91 +85,24 @@ export default function InvMedicalConRecords() {
     }));
   }, [medHistoryData, isMedHistoryLoading, isMedHistoryError, medHistoryError]);
 
-  const formatMedicalData = useCallback((): MedicalConsultationHistory[] => {
-    if (isMedicalRecordsLoading) {
-      return [];
-    }
-
-    if (isMedicalRecordsError) {
-      console.error("Error fetching medical records:", medicalRecordsError);
-      return [];
-    }
-
-    if (!medicalRecords || !Array.isArray(medicalRecords)) {
-      return [];
-    }
-
-    return medicalRecords.map((record: any) => {
-      const vitalSigns = record.vital_signs || {};
-      const bmiDetails = record.bmi_details || {};
-      const patrecDetails = record.patrec_details || {};
-
-      const staffDetails = record.staff_details || null;
-      const staffPer = staffDetails?.rp?.per || null;
-
-      return {
-        medrec_chief_complaint: record.medrec_chief_complaint || "N/A",
-        medrec_id: record.medrec_id,
-        created_at: record.created_at || "N/A",
-        vital_signs: {
-          vital_id: vitalSigns.vital_id || 0,
-          vital_bp_systolic: vitalSigns.vital_bp_systolic || "N/A",
-          vital_bp_diastolic: vitalSigns.vital_bp_diastolic || "N/A",
-          vital_temp: vitalSigns.vital_temp || "N/A",
-          vital_RR: vitalSigns.vital_RR || "N/A",
-          vital_pulse: vitalSigns.vital_pulse || "N/A",
-          created_at: vitalSigns.created_at || "N/A"
-        },
-        bmi_details: {
-          bm_id: bmiDetails.bm_id || 0,
-          age: bmiDetails.age || "N/A",
-          height: bmiDetails.height || 0,
-          weight: bmiDetails.weight || 0,
-          bmi: bmiDetails.bmi || "N/A",
-          bmi_category: bmiDetails.bmi_category || "N/A",
-          created_at: bmiDetails.created_at || "N/A",
-          pat: bmiDetails.pat || null
-        },
-        find_details: record.find_details || null,
-        patrec_details: {
-          pat_id: patrecDetails.pat_id || 0,
-          medicalrec_count: patrecDetails.medicalrec_count || 0,
-          patient_details: patrecDetails.patient_details || null
-        },
-        staff_details: staffDetails
-          ? {
-              rp: staffPer
-                ? {
-                    per: {
-                      per_fname: staffPer.per_fname || "",
-                      per_lname: staffPer.per_lname || "",
-                      per_mname: staffPer.per_mname || "",
-                      per_suffix: staffPer.per_suffix || "",
-                      per_dob: staffPer.per_dob || ""
-                    }
-                  }
-                : null
-            }
-          : null
-      };
-    });
-  }, [medicalRecords, isMedicalRecordsLoading, isMedicalRecordsError, medicalRecordsError]);
-
   // Client-side filtering for search
   const filteredData = useMemo(() => {
-    const formattedData = formatMedicalData();
+    const formattedData = medicalRecords;
     if (!searchQuery) return formattedData;
 
-    return formattedData.filter((record) => {
+    return formattedData.filter((record: any) => {
       const searchText = `${record.medrec_id} 
         ${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} 
         ${record.bmi_details.bmi} 
         ${record.created_at}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
-  }, [searchQuery, formatMedicalData]);
+  }, [searchQuery, medicalRecords]);
 
-  const columns = getMedicalConsultationColumns(patientData);
+  // Updated columns call - pass all medical records
+  const columns = useMemo(() => {
+    return getMedicalConsultationColumns(patientData);
+  }, [medicalRecords, patientData]);
 
   if (!patientData?.pat_id) {
     return (
@@ -196,6 +134,7 @@ export default function InvMedicalConRecords() {
           <PatientInfoCard patient={selectedPatientData} />
         </div>
       )}
+
 
       <div className="flex w-full flex-col md:flex-row gap-4">
         {/* Medical History Section */}
@@ -302,7 +241,7 @@ export default function InvMedicalConRecords() {
 
         {mode !== "doctor" && (
           <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>
-            <Link to="/medical-consultation-form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
+            <Link to="/services/medical-consultation/form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
               New Consultation Record
             </Link>
           </Button>

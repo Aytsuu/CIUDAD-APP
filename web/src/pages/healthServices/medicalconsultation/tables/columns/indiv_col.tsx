@@ -2,10 +2,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { MedicalConsultationHistory } from "../../types";
-import { Patient } from "../../../restful-api-patient/type";
 
-export const getMedicalConsultationColumns = (patientData: Patient | null): ColumnDef<MedicalConsultationHistory>[] => [
+export const getMedicalConsultationColumns = (patientData: any | null): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
     header: "Created at",
@@ -68,6 +66,8 @@ export const getMedicalConsultationColumns = (patientData: Patient | null): Colu
     accessorKey: "chiefcomplaint",
     header: "ChiefComplaint",
     cell: ({ row }) => {
+      console.log("FUCKKER", row.original)
+      
       return (
         <div className="flex flex-col w-full items-center">
           <div className="text-sm font-medium  w-[200px]">{row.original.medrec_chief_complaint || "N/A"}</div>
@@ -79,12 +79,8 @@ export const getMedicalConsultationColumns = (patientData: Patient | null): Colu
     accessorKey: "bhw_name",
     header: "BHW Assigned",
     cell: ({ row }) => {
-      const bhw = `${row.original.staff_details?.rp?.per?.per_fname || "N/A"} ${row.original.staff_details?.rp?.per?.per_lname || "N/A"}`;
-      return (
-        <div className="flex flex-col">
-          <div className="text-sm">{bhw}</div>
-        </div>
-      );
+      const bhw = `${row.original.staff_details?.rp?.per_fname || "N/A"} ${row.original.staff_details?.rp?.per_lname || "N/A"}`;
+      return <div className="flex flex-col">{bhw.toUpperCase()}</div>;
     }
   },
   {
@@ -92,8 +88,9 @@ export const getMedicalConsultationColumns = (patientData: Patient | null): Colu
     header: "Actions",
     cell: ({ row }) => (
       <div className="flex justify-center gap-2">
+        
         <Link
-          to="/DisplayMedicalConsultation"
+          to="/services/medical-consultation/records/history"
           state={{
             params: { MedicalConsultation: row.original, patientData }
           }}

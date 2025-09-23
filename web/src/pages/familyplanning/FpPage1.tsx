@@ -168,11 +168,11 @@ export default function FamilyPlanningForm({
       toast.error("Please select a valid patient");
       return;
     }
-
+    console.log("ID:",id)
     setSelectedPatientId(id);
     try {
       // Fetch basic patient data
-      const response = await api2.get(`patientrecords/patients/${id}/`);
+      const response = await api2.get(`patientrecords/patient/${id}/`);
       const patientData = response.data;
 
       // Initialize default spouse info

@@ -1,39 +1,92 @@
-import { format } from "date-fns";
-import { MedicalConsultationHistory } from "../types";
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Printer } from "lucide-react";
-
-interface PatientData {
-  pat_id: string;
-  personal_info: {
-    per_fname: string;
-    per_lname: string;
-    per_sex: string;
-    per_dob: string;
-  };
-  addressFull: string;
-}
+import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
+import PhysicalExamTable from "./philhealth-display";
+import {useMedConPHHistory} from "../queries/fetchQueries";
 
 interface CurrentConsultationCardProps {
-  consultation: MedicalConsultationHistory;
-  patientData: PatientData;
+  consultation: any;
+  patientData: any;
   className?: string;
 }
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  };
+  return date.toLocaleDateString("en-US", options);
+};
 
 export default function CurrentConsultationCard({ consultation, patientData, className = "" }: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const bhw = `${consultation.staff_details?.rp?.per?.per_fname || ""} ${consultation.staff_details?.rp?.per?.per_lname || ""} ${consultation.staff_details?.rp?.per?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
-  console.log("BHW Assigned:", bhw);
+  const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
+  const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
+  const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
+
+  console.log("consultation data:", consultation);
+
+  // Get selected physical exam option IDs from the consultation data
+  const selectedPhysicalExamOptions = useMemo(() => {
+    if (!consultation?.find_details?.pe_results) {
+      console.log("No PE results found in consultation");
+      return [];
+    }
+
+    const selectedIds = consultation.find_details.pe_results.map((result: any) => {
+      console.log("PE Result:", result);
+      return result.pe_option;
+    });
+
+    console.log("Selected PE option IDs:", selectedIds);
+    return selectedIds;
+  }, [consultation]);
+
+  // Process exam sections to match original format
+  const examSections = useMemo(() => {
+    if (!sectionsQuery.data || !optionsQuery.data) {
+      console.log("No sections or options data available");
+      return [];
+    }
+
+    console.log("All PE options from database:", optionsQuery.data);
+
+    const sections = sectionsQuery.data.map((section: any) => ({
+      pe_section_id: section.pe_section_id,
+      title: section.title,
+      options: []
+    }));
+    // Group all options by section and mark which ones are selected
+    optionsQuery.data.forEach((option: any) => {
+      const section = sections.find((s: any) => s.pe_section_id === option.pe_section);
+      if (section) {
+        // Convert both to numbers for comparison to avoid type issues
+        const isSelected = selectedPhysicalExamOptions.includes(Number(option.pe_option_id));
+        console.log(`Option ${option.pe_option_id} (${option.text}) is selected: ${isSelected}`);
+
+        section.options.push({
+          pe_option_id: option.pe_option_id,
+          text: option.text,
+          isSelected: isSelected
+        });
+      }
+    });
+    console.log("Processed exam sections:", sections);
+    return sections;
+  }, [sectionsQuery.data, optionsQuery.data, selectedPhysicalExamOptions]);
 
   const handlePrint = () => {
     if (!printRef.current) return;
-
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
     const printContent = printRef.current.innerHTML;
-
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -44,226 +97,214 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               size: 8.5in 13in;
               margin: 0.5in;
             }
-
             * {
               box-sizing: border-box;
             }
-
             body {
               background: white;
               margin: 0;
               padding: 0;
               font-family: Arial, sans-serif;
               font-size: 9pt;
-              line-height: 1.2;
+              line-height: 1.3;
               color: black;
             }
-
             /* Typography */
             h3 {
-              font-size: 10pt;
+              font-size: 12pt;
               font-weight: bold;
               color: black;
               text-align: center;
-              margin-bottom: 8pt;
+              margin-bottom: 12pt;
+              text-transform: uppercase;
             }
-
             h5 {
-              font-size: 9pt;
+              font-size: 10pt;
               font-weight: bold;
-              margin-bottom: 4pt;
+              margin-bottom: 6pt;
               text-align: center;
-              padding-bottom: 8pt;
+              padding-bottom: 4pt;
             }
-
             span {
-              font-size: 8pt;
+              font-size: 9pt;
             }
-
             /* Layout Classes */
             .grid {
               display: grid;
             }
-
             .grid-cols-1 {
               grid-template-columns: 1fr;
             }
-
             .grid-cols-2 {
               grid-template-columns: 1fr 1fr;
               gap: 16pt;
             }
-
-           
-
             .flex {
               display: flex;
             }
-
             .flex-col {
               flex-direction: column;
             }
-
             .flex-row {
               flex-direction: row;
             }
-
             .items-baseline {
               align-items: baseline;
             }
-
             .gap-2 > * + * {
               margin-left: 4pt;
             }
-
             .flex-1 {
               flex: 1;
             }
-
             .min-w-0 {
               min-width: 0;
             }
-
             /* Spacing */
             .space-y-4 > * + * {
               margin-top: 16pt;
             }
-
-          
-
             .space-y-2 > * + * {
               margin-top: 8pt;
             }
-
+            .space-y-3 > * + * {
+              margin-top: 12pt;
+            }
             /* Margins */
             .mb-6 {
               margin-bottom: 24pt;
             }
-
             .mb-8 {
               margin-bottom: 32pt;
             }
-
             .mb-10 {
               margin-bottom: 40pt;
             }
-
             .mb-2 {
               margin-bottom: 8pt;
             }
-
+            .mb-3 {
+              margin-bottom: 12pt;
+            }
             .mt-1 {
               margin-top: 4pt;
             }
-
             .mt-4 {
               margin-top: 16pt;
             }
-
+            .mt-6 {
+              margin-top: 24pt;
+            }
             .p-4 {
               padding: 16pt;
             }
-
             .py-4 {
               padding-top: 16pt;
               padding-bottom: 16pt;
             }
-
             .pb-4 {
               padding-bottom: 16pt;
             }
-
             .pt-2 {
               padding-top: 8pt;
             }
-
+            .px-3 {
+              padding-left: 12pt;
+              padding-right: 12pt;
+            }
             /* Text styles */
             .font-bold {
               font-weight: bold;
             }
-
             .text-center {
               text-align: center;
             }
-
             .text-sm {
               font-size: 8pt;
             }
-
             .text-black {
               color: black;
             }
-
             .truncate {
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
             }
-
             .line-clamp-2 {
               overflow: hidden;
               display: -webkit-box;
               -webkit-line-clamp: 2;
               -webkit-box-orient: vertical;
             }
-
             /* Borders */
             .border-b {
               border-bottom: 1px solid black;
             }
-
             .border {
               border: 1px solid black;
             }
-
             .border-black {
               border-color: black;
             }
-
-            /* Responsive behavior for print */
-            .sm\\:grid-cols-2 {
+            /* Physical Exam Styles */
+            .pe-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 8pt;
+            }
+            .pe-table th,
+            .pe-table td {
+              border: 1px solid black;
+              padding: 4pt;
+              text-align: left;
+              font-size: 8pt;
+              vertical-align: top;
+            }
+            .pe-table th {
+              background-color: #f5f5f5;
+              font-weight: bold;
+            }
+            .pe-finding {
+              background-color: #f0f9ff;
+              color: #0369a1;
+              margin-bottom: 2pt;
+              padding: 1pt 2pt;
+              border-radius: 2pt;
+              display: block;
+            }
+            .pe-option {
+              margin-bottom: 2pt;
+              padding: 1pt 2pt;
+              display: block;
+              font-size: 8pt;
+            }
+            .pe-no-findings {
+              color: #666;
+              font-style: italic;
+              font-size: 8pt;
+            }
+            .pe-option-grid {
+              display: grid;
               grid-template-columns: 1fr 1fr;
+              gap: 8pt;
+              width: 100%;
             }
-
-            .sm\\:flex-row {
-              flex-direction: row;
+            .pe-option-column {
+              display: flex;
+              flex-direction: column;
             }
-
-          
-
-          
-
-            .sm\\:ml-4 {
-              margin-left: 16pt;
-            }
-
-            .sm\\:space-y-8 > * + * {
-              margin-top: 15pt;
-            }
-
-            .sm\\:mb-8 {
-              margin-bottom: 32pt;
-            }
-
-            .sm\\:mb-10 {
-              margin-bottom: 40pt;
-            }
-
             /* Hide print button */
             .no-print {
               display: none;
             }
-
             button {
               display: none;
             }
-
             /* Page breaks */
             .print-section {
               page-break-inside: avoid;
               margin-bottom: 8pt;
             }
-
             /* Ensure proper width distribution */
             .w-full {
               width: 100%;
@@ -275,9 +316,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
         </body>
       </html>
     `);
-
     printWindow.document.close();
-
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
@@ -302,15 +341,15 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* Row 1: Name and Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Name:</span>
+              <span className="font-bold text-black text-sm">Name:</span>
               <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm truncate">{`${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_lname}`}</span>
+                <span className="text-sm truncate">{` ${patientData?.personal_info?.per_lname} ${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_mname || ""} ${patientData?.personal_info?.per_suffix || ""}`}</span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Date:</span>
+              <span className="font-bold text-black text-sm">Date:</span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{consultation.created_at ? format(new Date(consultation.created_at), "MMM d, yyyy") : "N/A"}</span>
+                <span className="text-sm">{formatDate(consultation.created_at)}</span>
               </div>
             </div>
           </div>
@@ -318,17 +357,17 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* Row 2: Age, Sex, and Date of Birth */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Age:</span>
+              <span className="font-bold text-black text-sm">Age:</span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">{patientData.personal_info.per_dob && consultation.created_at ? Math.floor((new Date(consultation.created_at).getTime() - new Date(patientData.personal_info.per_dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : "N/A"}</span>
               </div>
-              <span className="font-bold text-black text-sm  sm:ml-4">Sex:</span>
+              <span className="font-bold text-black text-sm sm:ml-4">Sex:</span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">{patientData.personal_info.per_sex}</span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Date of Birth:</span>
+              <span className="font-bold text-black text-sm">Date of Birth:</span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">{patientData.personal_info.per_dob}</span>
               </div>
@@ -338,13 +377,13 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* Row 3: Address and BHW Assigned */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Address:</span>
+              <span className="font-bold text-black text-sm">Address:</span>
               <div className="border-b border-black flex-1 min-w-0">
                 <span className="text-sm line-clamp-2">{patientData.addressFull}</span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">BHW Assigned:</span>
+              <span className="font-bold text-black text-sm">BHW Assigned:</span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">{bhw}</span>
               </div>
@@ -356,15 +395,15 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             {/* Left Column - BP, RR, HR, Temperature */}
             <div className="flex flex-col space-y-4">
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-baseline gap-2  flex-1">
-                  <span className="font-bold text-black text-sm ">BP:</span>
+                <div className="flex items-baseline gap-2 flex-1">
+                  <span className="font-bold text-black text-sm">BP:</span>
                   <div className="border-b border-black flex-1">
                     <span className="text-sm">{consultation.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}</span>
                   </div>
                   <span className="text-black text-sm">mmHg</span>
                 </div>
                 <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm ">RR:</span>
+                  <span className="font-bold text-black text-sm">RR:</span>
                   <div className="border-b border-black flex-1">
                     <span className="text-sm">{consultation.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}</span>
                   </div>
@@ -372,15 +411,15 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-baseline gap-2  flex-1">
-                  <span className="font-bold text-black text-sm ">HR:</span>
+                <div className="flex items-baseline gap-2 flex-1">
+                  <span className="font-bold text-black text-sm">HR:</span>
                   <div className="border-b border-black flex-1">
                     <span className="text-sm">{consultation.vital_signs?.vital_pulse || "N/A"}</span>
                   </div>
                   <span className="text-black text-sm">bpm</span>
                 </div>
                 <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm ">Temperature:</span>
+                  <span className="font-bold text-black text-sm">Temperature:</span>
                   <div className="border-b border-black flex-1">
                     <span className="text-sm">{consultation.vital_signs?.vital_temp || "N/A"}</span>
                   </div>
@@ -388,11 +427,10 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
                 </div>
               </div>
             </div>
-
             {/* Right Column - WT, HT */}
             <div className="flex flex-col space-y-4">
               <div className="flex items-baseline gap-2">
-                <span className="font-bold text-black text-sm ">WT:</span>
+                <span className="font-bold text-black text-sm">WT:</span>
                 <div className="border-b border-black flex-1">
                   <span className="text-sm">
                     {parseFloat(consultation.bmi_details?.weight ?? "0")
@@ -403,7 +441,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
                 <span className="text-black text-sm">kg</span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-bold text-black text-sm ">HT:</span>
+                <span className="font-bold text-black text-sm">HT:</span>
                 <div className="border-b border-black flex-1">
                   <span className="text-sm">
                     {parseFloat(consultation.bmi_details?.height ?? "0")
@@ -426,12 +464,13 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             </div>
           </div>
 
+          {/* History and Treatment Section */}
           <div className="py-4 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2">
               {/* History of Present Illness/Findings */}
               <div className="border border-black py-4">
                 <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">History of Present Illness/Findings</h5>
-                <div className="space-y-2 p-4">
+                <div className="space-y-3 px-3">
                   <div>
                     <span className="font-bold text-black text-sm">Subjective Summary:</span>
                     <div className="text-sm mt-1">{consultation.find_details?.subj_summary}</div>
@@ -439,9 +478,35 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
                   <div>
                     <span className="font-bold text-black text-sm">Objective Summary:</span>
                     <div className="text-sm mt-1">
-                      {consultation.find_details?.obj_summary?.split("-").map((line: any, index: any) => (
-                        <div key={index}>{line.trim()}</div>
-                      ))}
+                      {(() => {
+                        const lines = consultation.find_details?.obj_summary?.split("-") || [];
+                        const grouped: { [key: string]: string[] } = {};
+
+                        // Group by keyword (part before colon)
+                        lines.forEach((line: string) => {
+                          const trimmed = line.trim();
+                          if (trimmed) {
+                            const colonIndex = trimmed.indexOf(":");
+                            if (colonIndex > -1) {
+                              const keyword = trimmed.substring(0, colonIndex).trim();
+                              const value = trimmed.substring(colonIndex + 1).trim();
+                              if (!grouped[keyword]) {
+                                grouped[keyword] = [];
+                              }
+                              grouped[keyword].push(value);
+                            } else {
+                              // If no colon, treat as standalone item
+                              if (!grouped["Other"]) {
+                                grouped["Other"] = [];
+                              }
+                              grouped["Other"].push(trimmed);
+                            }
+                          }
+                        });
+
+                        // Render grouped items
+                        return Object.entries(grouped).map(([keyword, values], index) => <div key={index}>{keyword !== "Other" ? `${keyword}: ${values.join(", ")}` : values.join(", ")}</div>);
+                      })()}
                     </div>
                   </div>
                   <div>
@@ -458,10 +523,10 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               {/* Plan/Treatment */}
               <div className="border border-black py-4">
                 <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">Plan Treatment</h5>
-                <div className="space-y-2 p-4">
+                <div className="space-y-2 px-3">
                   <div>
                     <div className="text-sm mt-1">
-                      {consultation.find_details?.plantreatment_summary?.split("-").map((item, index) => (
+                      {consultation.find_details?.plantreatment_summary?.split("-").map((item: any, index: any) => (
                         <div key={index}>{item.trim()}</div>
                       ))}
                     </div>
@@ -470,6 +535,12 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               </div>
             </div>
           </div>
+
+          {/* PhilHealth Section */}
+          {/* <PhilHealthSection consultation={consultation} patientData={patientData} /> */}
+
+          {/* Physical Exam Table */}
+          <PhysicalExamTable consultation={consultation} patientData={patientData} examSections={examSections} isPhysicalExamLoading={isPhysicalExamLoading} phHistoryData={phHistoryData} isLoading={!phHistoryData} isError={false} />
         </div>
       </div>
     </div>

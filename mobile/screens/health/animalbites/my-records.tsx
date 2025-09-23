@@ -4,7 +4,7 @@ import React, { useMemo } from "react"
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
-import { router } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
 import { format } from "date-fns"
 import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
 import { getPatientByResidentId, getPatientRecordsByPatId } from "./api/get-api"
@@ -12,6 +12,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
+import { getPatientById } from "../admin/admin-animalbites/api/get-api"
+import { calculateAge } from "@/helpers/ageCalculator"
+import { usePatient } from "./db-request/get-query"
 
 // Remove the mock API function and use your actual API call
 type PatientRecordDetail = {
@@ -37,20 +40,35 @@ type PatientRecordDetail = {
 }
 
 export default function MyAnimalBiteRecordsScreen() {
+  const params = useLocalSearchParams<{ pat_id?: string }>();
+  const patIdFromParams = params.pat_id;
   const { user } = useAuth();
   const rp_id = user?.resident?.rp_id;
   
-  // First, get the patient details using the resident ID
-  const { data: patientData } = useQuery({
-    queryKey: ["patientByResidentId", rp_id],
-    queryFn: () => getPatientByResidentId(rp_id),
-    enabled: !!rp_id,
+console.log("[DEBUG] patIdFromParams:", patIdFromParams);
+  console.log("[DEBUG] rp_id from auth:", rp_id);
+  console.log("[DEBUG] user:", user);
+
+
+  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = useQuery({
+    queryKey: ["patientDetails", patIdFromParams || rp_id],
+    queryFn: async () => {
+      if (patIdFromParams) {
+        console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams);
+        return await getPatientById(patIdFromParams);
+      } else if (rp_id) {
+        console.log("[DEBUG] Fetching patient with rp_id:", rp_id);
+        return await getPatientByResidentId(rp_id);
+      }
+      return null;
+    },
+    enabled: !!(patIdFromParams || rp_id),
   });
 
-  // Then, use the patient ID from the first query to fetch records
-  const patient_id = patientData?.pat_id;
+  const patient_id = patIdFromParams || patientData?.pat_id;
+  console.log("[DEBUG] patient_id used for records:", patient_id);
 
-  const {
+ const {
     data: records = [],
     isLoading,
     isError,
@@ -59,14 +77,39 @@ export default function MyAnimalBiteRecordsScreen() {
   } = useQuery<PatientRecordDetail[], Error>({
     queryKey: ["myAnimalbiteRecord", patient_id],
     queryFn: () => getPatientRecordsByPatId(patient_id),
-    enabled: !!patient_id, // This query will only run once patient_id is available
+    enabled: !!patient_id,
   });
+
+  // Then, use the patient ID from the first query to fetch records
+
+  // const {
+  //   data: records = [],
+  //   isLoading,
+  //   isError,
+  //   error,
+  //   refetch,
+  // } = useQuery<PatientRecordDetail[], Error>({
+  //   queryKey: ["myAnimalbiteRecord", patient_id],
+  //   queryFn: () => getPatientRecordsByPatId(patient_id),
+  //   enabled: !!patient_id, // This query will only run once patient_id is available
+  // });
 
   const [refreshing, setRefreshing] = React.useState(false)
 
   const patientInfo = useMemo(() => {
-    if (records && records.length > 0) {
-      const firstRecord = records[0]
+    if (patientData) {
+      return {
+        patient_fname: patientData.personal_info?.per_fname,
+        patient_lname: patientData.personal_info?.per_lname,
+        patient_mname: patientData.personal_info?.per_mname,
+        patient_sex: patientData.personal_info?.per_sex,
+        patient_age: calculateAge(patientData.personal_info?.per_dob),
+        patient_address: `${patientData.address?.add_street ?? ''} ${patientData.address?.add_barangay ?? ''} ${patientData.address?.add_city ?? ''} ${patientData.address?.add_province ?? ''}`.trim() || 'N/A',
+        patient_id: patientData.pat_id,
+        patient_type: patientData.pat_type,
+      };
+    } else if (records.length > 0) {
+      const firstRecord = records[0];
       return {
         patient_fname: firstRecord.patient_fname,
         patient_lname: firstRecord.patient_lname,
@@ -76,11 +119,10 @@ export default function MyAnimalBiteRecordsScreen() {
         patient_address: firstRecord.patient_address,
         patient_id: firstRecord.patient_id,
         patient_type: firstRecord.patient_type,
-      }
+      };
     }
-    
-    return null
-  }, [records, user])
+    return null;
+  }, [patientData, records]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true)
@@ -144,7 +186,7 @@ export default function MyAnimalBiteRecordsScreen() {
     )
   }
 
-  if (!rp_id) {
+  if (!patient_id && !rp_id) {
     return (
       <View className="flex-1 justify-center items-center p-4 bg-gray-50">
         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">

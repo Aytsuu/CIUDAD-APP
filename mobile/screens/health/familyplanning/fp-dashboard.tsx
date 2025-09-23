@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView } from "react-native"
 import { router } from "expo-router"
-import { Search,  AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, Plus, Filter, ChevronLeft } from "lucide-react-native"
-
+import { Search, AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, Plus, Filter, ChevronLeft, Activity } from "lucide-react-native"
+import { useLocalSearchParams } from "expo-router"; // NEW: Import this
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"
 import { LoadingState } from "@/components/ui/loading-state"
 import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query"
+import { Button } from "@/components/ui/button";
 
 interface FPRecord {
   fprecord: number
@@ -120,66 +121,50 @@ const UpcomingFollowUps = ({ records }: { records: FPRecord[] }) => {
     }).length;
   }, [records]);
 
-  const formatFollowUpDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    
-    const diffTime = date.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Tomorrow";
-    if (diffDays <= 7) return `In ${diffDays} days`;
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
-
-  if (upcomingFollowUps.length === 0) return null;
-
   return (
     <View className="px-4 mb-6">
       <View className="flex-row items-center justify-between mb-3">
         <Text className="text-lg font-semibold text-gray-900">Upcoming Follow-ups</Text>
-        {missedFollowUps > 0 && (
-          <View className="flex-row items-center bg-red-50 px-3 py-1 rounded-full">
-            <AlertTriangle size={14} color="#EF4444" />
-            <Text className="ml-1 text-sm text-red-600 font-medium">{missedFollowUps} missed</Text>
-          </View>
-        )}
+        <View className="flex-row items-center">
+          {missedFollowUps > 0 && (
+            <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full mr-2">
+              <AlertTriangle size={12} color="#EF4444" />
+              <Text className="text-xs text-red-600 ml-1">{missedFollowUps} missed</Text>
+            </View>
+          )}
+          <Clock size={16} color="#6B7280" />
+        </View>
       </View>
-      <View className="bg-white rounded-2xl shadow-sm border border-gray-100">
-        {upcomingFollowUps.map((record, index) => {
-          const { status, color, bgColor, textColor } = getFollowUpDisplayStatus(
-            record.followv_status,
-            record.dateOfFollowUp
-          );
-          return (
-            <TouchableOpacity
-              key={record.fprecord}
-              className={`p-4 border-gray-100 ${
-                index !== upcomingFollowUps.length - 1 ? "border-b" : ""
-              }`}
-              onPress={() =>
-                router.push({
-                  pathname: "/(health)/family-planning/fp-details",
-                  params: { fprecordId: record.fprecord },
-                })
-              }
-            >
-              <View className="flex-row items-center justify-between">
+      
+      <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        {upcomingFollowUps.length === 0 ? (
+          <View className="items-center py-4">
+            <TrendingUp size={24} color="#D1D5DB" />
+            <Text className="text-sm text-gray-500 mt-2">No upcoming follow-ups</Text>
+          </View>
+        ) : (
+          upcomingFollowUps.map((followUp, index) => {
+            const { status, color, bgColor, textColor } = getFollowUpDisplayStatus(
+              followUp.followv_status,
+              followUp.dateOfFollowUp
+            );
+            
+            return (
+              <View
+                key={followUp.fprecord}
+                className={`flex-row items-center justify-between py-3 ${
+                  index < upcomingFollowUps.length - 1 ? "border-b border-gray-100" : ""
+                }`}
+              >
                 <View className="flex-1">
-                  <Text className="text-base font-semibold text-gray-900 mb-1">
-                    {record.method_used}
+                  <Text className="text-sm font-medium text-gray-900">{followUp.method_used}</Text>
+                  <Text className="text-xs text-gray-500 mt-1">
+                    {new Date(followUp.dateOfFollowUp!).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric"
+                    })}
                   </Text>
-                  <View className="flex-row items-center">
-                    <Calendar size={14} color="#6B7280" className="mr-1" />
-                    <Text className="text-sm text-gray-600 mr-4">
-                      {formatFollowUpDate(record.dateOfFollowUp!)}
-                    </Text>
-                    <Clock size={14} color="#6B7280" className="mr-1" />
-                    <Text className="text-sm text-gray-600">9:00 AM</Text>
-                  </View>
                 </View>
                 <View 
                   className="px-3 py-1 rounded-full flex-row items-center"
@@ -197,219 +182,181 @@ const UpcomingFollowUps = ({ records }: { records: FPRecord[] }) => {
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
-          );
-        })}
+            );
+          })
+        )}
       </View>
     </View>
   );
 };
 
-// Component for enhanced stats
-const EnhancedStats = ({ records }: { records: FPRecord[] }) => {
-  const stats = useMemo(() => {
-    const totalRecords = records.length;
-    const methodsUsed = [...new Set(records.map(r => r.method_used))].length;
-    const activeMethods = records.filter(r => !r.subtype?.includes("dropout")).length;
-    const recentRecord = records[0]; // Assuming sorted by date
-    
-    return {
-      total: totalRecords,
-      methods: methodsUsed,
-      active: activeMethods,
-      lastVisit: recentRecord ? new Date(recentRecord.created_at).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      }) : "N/A"
-    };
+// Component for active methods
+const ActiveMethods = ({ records }: { records: FPRecord[] }) => {
+  const activeMethods = useMemo(() => {
+    return records
+      .filter(record => !record.dateOfFollowUp || new Date(record.dateOfFollowUp) > new Date())
+      .slice(0, 3);
   }, [records]);
-
-  const statItems = [
-    { label: "Total Records", value: stats.total, icon: TrendingUp, color: "#3B82F6" },
-    { label: "Methods Tried", value: stats.methods, icon: TrendingUp, color: "#10B981" },
-    { label: "Active Methods", value: stats.active, icon: Heart, color: "#8B5CF6" },
-    { label: "Last Visit", value: stats.lastVisit, icon: Calendar, color: "#F59E0B" },
-  ];
 
   return (
     <View className="px-4 mb-6">
-      {/* <Text className="text-lg font-semibold text-gray-900 mb-3">Your FP Overview</Text> */}
+      <View className="flex-row items-center justify-between mb-3">
+        <Text className="text-lg font-semibold text-gray-900">Active Methods</Text>
+        <Activity size={16} color="#6B7280" />
+      </View>
+      
       <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <View className="flex-row flex-wrap justify-between">
-          {statItems.map((item, index) => (
-            <View 
-              key={index}
-              className="w-[48%] mb-4 bg-gray-50 rounded-xl p-3"
+        {activeMethods.length === 0 ? (
+          <View className="items-center py-4">
+            <Heart size={24} color="#D1D5DB" />
+            <Text className="text-sm text-gray-500 mt-2">No active methods</Text>
+          </View>
+        ) : (
+          activeMethods.map((method, index) => (
+            <View
+              key={method.fprecord}
+              className={`flex-row items-center justify-between py-3 ${
+                index < activeMethods.length - 1 ? "border-b border-gray-100" : ""
+              }`}
             >
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-sm text-gray-600">{item.label}</Text>
-                <item.icon size={16} color={item.color} />
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-900">{method.method_used}</Text>
+                <Text className="text-xs text-gray-500 mt-1">
+                  Started: {new Date(method.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric"
+                  })}
+                </Text>
               </View>
-              <Text className="text-xl font-bold text-gray-900">{item.value}</Text>
+              <View className="px-3 py-1 rounded-full bg-green-50">
+                <Text className="text-xs font-medium text-green-700">Active</Text>
+              </View>
             </View>
-          ))}
-        </View>
+          ))
+        )}
       </View>
     </View>
   );
 };
 
 const clientTypeOptions = [
-  { id: "all", name: "All" },
-  { id: "New Acceptor", name: "New" },
-  { id: "Changing Method", name: "Changing" },
-  { id: "Current User", name: "Current" },
-  { id: "Restart", name: "Restart" },
+  { id: "all", name: "All Types" },
+  { id: "current_user", name: "Current User" },
+  { id: "changing_method", name: "Changing Method" },
+  { id: "changing_clinic", name: "Changing Clinic" },
+  { id: "restart", name: "Restart" },
+  { id: "new_acceptor", name: "New Acceptor" },
 ];
 
-export default function MyFpDashboard() {
+export default function MyFPDashboardScreen() {
+  const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params
+  const patIdFromParams = params.pat_id;
   const { user } = useAuth();
   const rp_id = user?.resident?.rp_id;
 
-  // Fetch patient to get pat_id
+  // NEW: Debug logs
+  console.log("[DEBUG] fp-dashboard patIdFromParams:", patIdFromParams);
+  console.log("[DEBUG] rp_id from auth:", rp_id);
+
+  // NEW: Conditional patient query (only if no pat_id provided)
+  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = usePatientByResidentId(rp_id, {
+    enabled: !patIdFromParams && !!rp_id, // Skip if pat_id provided (admin)
+  });
+
+  const patient_id = patIdFromParams || patientData?.pat_id;
+  console.log("[DEBUG] patient_id used for FP records:", patient_id);
+
   const {
-    data: patientData,
-    isLoading: isPatientLoading,
-    isError: isPatientError,
-    error: patientError,
-  } = usePatientByResidentId(rp_id);
-
-  const pat_id = patientData?.pat_id || null;
-
-  // Fetch FP records using pat_id
-  const {
-    data: fpRecords = [],
-    isLoading: isRecordsLoading,
-    isError: isRecordsError,
-    error: recordsError,
-  } = useFPRecordsByPatientId(pat_id);
-
-  const isLoading = isPatientLoading || isRecordsLoading;
-  const isError = isPatientError || isRecordsError;
-  const error = patientError || recordsError;
+    data: records = [],
+    isLoading: isLoadingRecords,
+    isError: isErrorRecords,
+    error: errorRecords,
+    refetch,
+  } = useFPRecordsByPatientId(patient_id);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
 
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+  };
+
   const filteredRecords = useMemo(() => {
-    return fpRecords.filter((record: { patient_name: string; method_used: string; client_id: string; client_type: string }) => {
-      const matchesSearch = 
-        record.patient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.method_used.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        record.client_id.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesFilter = selectedFilter === "all" || 
-        record.client_type.toLowerCase() === selectedFilter.toLowerCase();
-      
-      return matchesSearch && matchesFilter;
-    }).sort((a: { created_at: string | number | Date }, b: { created_at: string | number | Date }) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [fpRecords, searchQuery, selectedFilter]);
+    let filtered = records;
 
-  const handleFilterChange = (filterId: string) => {
-    setSelectedFilter(filterId);
-  };
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (record:any) =>
+          record.method_used.toLowerCase().includes(lowerQuery) ||
+          record.client_type.toLowerCase().includes(lowerQuery) ||
+          record.patient_name.toLowerCase().includes(lowerQuery)
+      );
+    }
 
-  const renderRecordItem = ({ item }: { item: FPRecord }) => {
-    const { status, color, bgColor, textColor } = getFollowUpDisplayStatus(
-      item.followv_status,
-      item.dateOfFollowUp
-    );
+    if (selectedFilter !== "all") {
+      filtered = filtered.filter((record:any) => record.client_type.toLowerCase() === selectedFilter);
+    }
 
-    return (
-      <TouchableOpacity 
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 mx-4 mb-4 p-4"
-        onPress={() => 
-          router.push({
-            pathname: "/(health)/family-planning/fp-record",
-            params: { fprecordId: item.fprecord },
-          })
-        }
-      >
-        <View className="flex-row items-center justify-between mb-3">
-          <View>
-            <Text className="text-base font-semibold text-gray-900">{item.method_used}</Text>
-            <Text className="text-sm text-gray-500">{item.client_type}</Text>
-          </View>
-          <View 
-            className="px-3 py-1 rounded-full flex-row items-center"
-            style={{ backgroundColor: bgColor }}
-          >
-            <View 
-              className="w-2 h-2 rounded-full mr-1.5"
-              style={{ backgroundColor: color }}
-            />
-            <Text 
-              className="text-xs font-medium"
-              style={{ color: textColor }}
-            >
-              {status}
-            </Text>
-          </View>
-        </View>
-        
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Calendar size={14} color="#6B7280" className="mr-1" />
-            <Text className="text-sm text-gray-600">
-              {new Date(item.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric"
-              })}
-            </Text>
-          </View>
-          <ChevronRight size={18} color="#9CA3AF" />
-        </View>
-      </TouchableOpacity>
-    );
-  };
+    return filtered.sort((a:any, b:any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [records, searchQuery, selectedFilter]);
 
-  if (isLoading) {
+  const activeMethods = useMemo(() => {
+    return filteredRecords.filter(record => record.followv_status?.toLowerCase() !== "completed");
+  }, [filteredRecords]);
+
+  if (isLoadingPatient || isLoadingRecords) {
     return <LoadingState />;
   }
 
-  if (isError) {
+  if (isErrorPatient || isErrorRecords) {
     return (
-      <View className="flex-1 items-center justify-center p-6 bg-gray-50">
-        <AlertCircle size={32} color="#EF4444" />
-        <Text className="text-lg text-red-600 mt-4 text-center">Failed to load dashboard</Text>
-        <Text className="text-sm text-gray-500 mt-2 text-center">{error?.message}</Text>
+      <View className="flex-1 justify-center items-center p-6 bg-red-50">
+        <AlertCircle size={48} color="#EF4444" />
+        <Text className="text-xl font-semibold text-red-800 mt-4">Error Loading Records</Text>
+        <Text className="text-gray-600 mt-2 text-center">{(errorPatient || errorRecords)?.message ?? "Please try again later."}</Text>
+        <Button onPress={() => router.back()} className="mt-4 bg-blue-600">
+          <Text className="text-white">Back</Text>
+        </Button>
+      </View>
+    );
+  }
+
+  // NEW: Auth check only if no pat_id and no user
+  if (!patient_id && !user) {
+    return (
+      <View className="flex-1 justify-center items-center p-6 bg-gray-50">
+        <AlertCircle size={48} color="#9CA3AF" />
+        <Text className="text-xl font-semibold text-gray-800 mt-4">Authentication Required</Text>
+        <Text className="text-gray-500 mt-2 text-center">Please log in to view your family planning records.</Text>
       </View>
     );
   }
 
   return (
     <PageLayout
-         leftAction={
-           <TouchableOpacity
-             onPress={() => router.back()}
-             className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-           >
-             <ChevronLeft size={24} color="#374151" />
-           </TouchableOpacity>
-         }
-         headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Family Planning Records</Text>}
-         rightAction={<View className="w-10 h-10" />}
-       >
-    <View className="flex-1 bg-gray-50">
-      {/* Enhanced Header */}
-   
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Enhanced Stats */}
-        <EnhancedStats records={fpRecords} />
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-slate-700" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-slate-900 text-[13px]">{patIdFromParams ? 'Family Planning Dashboard' : 'My Family Planning Dashboard'}</Text>} // NEW: Dynamic title
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 bg-white">
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <UpcomingFollowUps records={filteredRecords} />
+          <ActiveMethods records={activeMethods} />
 
-        {/* Upcoming Follow-ups Section */}
-        <UpcomingFollowUps records={fpRecords} />
-
-        {/* Search & Filter */}
-        <View className="px-4 mb-4">
-          {/* Search Bar */}
-          <View className="bg-white rounded-2xl shadow-sm mb-3">
-            <View className="flex-row items-center px-4 py-3">
-              <Search size={18} color="#9CA3AF" />
+          {/* Filter Section */}
+          <View className="px-4 mb-4">
+            {/* Search Bar */}
+            <View className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-3 flex-row items-center">
+              <Search size={20} color="#9CA3AF" />
               <TextInput
                 className="flex-1 text-gray-900 ml-3 text-base"
                 placeholder="Search records, methods..."
@@ -424,78 +371,131 @@ export default function MyFpDashboard() {
                 </TouchableOpacity>
               )}
             </View>
-          </View>
 
-          {/* Enhanced Filter */}
-          <View className="bg-white rounded-2xl p-2 shadow-sm">
-            <View className="flex-row items-center justify-between">
-              {clientTypeOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  onPress={() => handleFilterChange(option.id)}
-                  className={`flex-1 items-center py-3 mx-1 rounded-xl transition-colors duration-200 ${
-                    selectedFilter === option.id 
-                      ? "bg-blue-500 shadow-lg" 
-                      : "bg-gray-50"
-                  }`}
-                >
-                  <Text
-                    className={`text-xs font-semibold ${
-                      selectedFilter === option.id ? "text-white" : "text-gray-700"
+            {/* Enhanced Filter */}
+            <View className="bg-white rounded-2xl p-2 shadow-sm">
+              <View className="flex-row items-center justify-between">
+                {clientTypeOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    onPress={() => handleFilterChange(option.id)}
+                    className={`flex-1 items-center py-3 mx-1 rounded-xl transition-colors duration-200 ${
+                      selectedFilter === option.id 
+                        ? "bg-blue-500 shadow-lg" 
+                        : "bg-gray-50"
                     }`}
                   >
-                    {option.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      className={`text-xs font-semibold ${
+                        selectedFilter === option.id ? "text-white" : "text-gray-700"
+                      }`}
+                    >
+                      {option.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Records List */}
-        <View className="pb-6">
-          {filteredRecords.length === 0 ? (
-            <View className="items-center justify-center px-6 py-12">
-              <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-                <Heart size={32} color="#D1D5DB" />
-              </View>
-              <Text className="text-xl font-semibold text-gray-900 mb-2">No records found</Text>
-              <Text className="text-gray-500 text-center leading-6">
-                {searchQuery || selectedFilter !== "all"
-                  ? "Try adjusting your search or filter criteria to find what you're looking for"
-                  : "Start your family planning journey by consulting with our healthcare professionals"}
-              </Text>
-        
-            </View>
-          ) : (
-            <>
-              {/* Results Header */}
-              <View className="px-4 mb-3">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-lg font-semibold text-gray-900">
-                    Your Records ({filteredRecords.length})
-                  </Text>
-                  {searchQuery && (
-                    <Text className="text-sm text-gray-500">
-                      for "{searchQuery}"
-                    </Text>
-                  )}
+          {/* Records List */}
+          <View className="pb-6">
+            {filteredRecords.length === 0 ? (
+              <View className="items-center justify-center px-6 py-12">
+                <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
+                  <Heart size={32} color="#D1D5DB" />
                 </View>
+                <Text className="text-xl font-semibold text-gray-900 mb-2">No records found</Text>
+                <Text className="text-gray-500 text-center leading-6">
+                  {searchQuery || selectedFilter !== "all"
+                    ? "Try adjusting your search or filter criteria to find what you're looking for"
+                    : "Start your family planning journey by consulting with our healthcare professionals"}
+                </Text>
               </View>
-              
-              <FlatList
-                data={filteredRecords}
-                renderItem={renderRecordItem}
-                keyExtractor={(item) => String(item.fprecord)}
-                contentContainerStyle={{ paddingBottom: 20 }}
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={false}
-              />
-            </>
-          )}
+            ) : (
+              <>
+                {/* Results Header */}
+                <View className="px-4 mb-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-lg font-semibold text-gray-900">
+                      {patIdFromParams ? 'Records' : 'Your Records'} ({filteredRecords.length})
+                    </Text>
+                    {searchQuery && (
+                      <Text className="text-sm text-gray-500">
+                        for "{searchQuery}"
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                
+                <FlatList
+                  data={filteredRecords}
+                  renderItem={({ item }) => renderRecordItem(item, patIdFromParams)} // Use updated renderRecordItem
+                  keyExtractor={(item) => String(item.fprecord)}
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                  showsVerticalScrollIndicator={false}
+                  scrollEnabled={false}
+                />
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </PageLayout>
+  );
+};
+
+const renderRecordItem = (item: FPRecord, patIdFromParams?: string) => {
+  const { status, color, bgColor, textColor } = getFollowUpDisplayStatus(
+    item.followv_status,
+    item.dateOfFollowUp
+  );
+
+  return (
+    <TouchableOpacity 
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 mx-4 mb-4 p-4"
+      onPress={() => 
+        router.push({
+          pathname: "/(health)/family-planning/fp-record",
+          params: { fprecordId: item.fprecord, pat_id: patIdFromParams },
+        })
+      }
+    >
+      <View className="flex-row items-center justify-between mb-3">
+        <View>
+          <Text className="text-base font-semibold text-gray-900">{item.method_used}</Text>
+          <Text className="text-sm text-gray-500">{item.client_type}</Text>
         </View>
-      </ScrollView>
-    </View>
-  </PageLayout>
-  )
-}
+        <View 
+          className="px-3 py-1 rounded-full flex-row items-center"
+          style={{ backgroundColor: bgColor }}
+        >
+          <View 
+            className="w-2 h-2 rounded-full mr-1.5"
+            style={{ backgroundColor: color }}
+          />
+          <Text 
+            className="text-xs font-medium"
+            style={{ color: textColor }}
+          >
+            {status}
+          </Text>
+        </View>
+      </View>
+      
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center">
+          <Calendar size={14} color="#6B7280" className="mr-1" />
+          <Text className="text-sm text-gray-600">
+            {new Date(item.created_at).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric"
+            })}
+          </Text>
+        </View>
+        <ChevronRight size={18} color="#9CA3AF" />
+      </View>
+    </TouchableOpacity>
+  );
+};

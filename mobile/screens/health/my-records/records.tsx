@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { View, TouchableOpacity, ScrollView, StatusBar, SafeAreaView, Image } from 'react-native';
-import { ChevronLeft, Calendar, FileText, ChevronRight, Heart, Baby, Dog } from 'lucide-react-native';
+import { ChevronLeft, Calendar, FileText, ChevronRight, Heart, Baby, Dog, Activity, BriefcaseMedical, Cross, Syringe } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import PageLayout from '@/screens/_PageLayout';
 
 interface Service {
@@ -17,6 +18,9 @@ interface Service {
 }
 
 export default function Records() {
+  const { pat_id } = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params (optional for user view)
+  console.log("[DEBUG] Records.tsx pat_id:", pat_id);
+  
   const services: Service[] = [
     {
       id: 1,
@@ -34,7 +38,7 @@ export default function Records() {
       route: '/maternal-records',
       icon: Baby,
       image: require('@/assets/images/Health/Home/Maternal.jpg'),
-      color: '#DC2626'
+      color: '#059669'
     },
     {
       id: 3,
@@ -43,43 +47,52 @@ export default function Records() {
       route: '/animalbite/my-records/',
       icon: Dog,
       image: require('@/assets/images/Health/Home/animalbites.jpg'),
-      color: '#1E40AF'
+      color: '#059669'
     },
      {
       id: 4,
       name: 'Medical Consultation',
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
-      icon: Dog,
+      icon: Activity,
       image: require('@/assets/images/Health/Home/medicalconsultation.jpg'),
-      color: '#1E40AF'
+      color:'#059669'
     },
      {
       id: 5,
       name: 'Vaccination Records',
       description: 'View animal bite treatment records',
-      route: '/animalbite/my-records/',
-      icon: Dog,
+      route: '/vaccination/my-records/',
+      icon: Syringe,
       image: require('@/assets/images/Health/Home/vaccination.jpg'),
-      color: '#1E40AF'
+      color: '#059669'
     },
      {
       id: 6,
       name: 'First Aid Records',
       description: 'View animal bite treatment records',
       route: '/first-aid/my-records',
-      icon: Dog,
+      icon: Cross,
       image: require('@/assets/images/Health/Home/first-aid.jpg'),
-      color: '#1E40AF'
+      color: '#059669'
     },
      {
       id: 7,
       name: 'Child Health Records',
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
-      icon: Dog,
+      icon: Baby,
       image: require('@/assets/images/Health/Home/child-health.jpg'),
-      color: '#1E40AF'
+      color: '#059669'
+    },
+      {
+      id: 8,
+      name: 'Medicine Records',
+      description: 'View animal bite treatment records',
+      route: '/first-aid/my-records/',
+      icon: BriefcaseMedical,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#059669'
     },
   ];
 
@@ -105,9 +118,9 @@ export default function Records() {
       >
         {/* Header */}
         <View className="px-6 mt-1">
-          <Text className="text-2xl font-semibold text-gray-900 mb-2">My Health Records</Text>
+          <Text className="text-gray-900 font-semibold text-2xl">{pat_id ? 'Health Records' : 'My Health Records'}</Text>
           <Text className="text-gray-500 text-sm">
-            Access your medical records across different services
+            Access medical records across different services
           </Text>
         </View>
 
@@ -117,11 +130,14 @@ export default function Records() {
             {services.map((service) => {
               const Icon = service.icon;
               return (
-                <TouchableOpacity
-                  key={service.id}
-                  onPress={() => router.push(service.route as any)}
+               <TouchableOpacity
+                key={service.id}
+                onPress={() => {
+                        console.log("[DEBUG] Navigating to:", service.route, "with pat_id:", pat_id);
+                        router.push({ pathname: service.route as any, params: { pat_id } })} // NEW: Pass pat_id
+                 }
                   className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-                >
+              >
                   <View className="flex-row">
                     {service.image && (
                       <Image

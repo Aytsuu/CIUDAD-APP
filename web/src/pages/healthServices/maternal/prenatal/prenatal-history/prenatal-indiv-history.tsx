@@ -1,16 +1,19 @@
-// pages/PrenatalIndivHistory.tsx
-// import { useNavigate } from "react-router";
-// import { Card, CardContent } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button/button";
+// In prenatal-indiv-history.tsx - remove mock data and use real API data
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button/button";
+import { Loader2, Printer } from "lucide-react";
 
+import { PrenatalCareHistoryTable } from "../../maternal-components/prenatalcare-history";
+import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
+import PrenatalFormTableHistory from "./prenatal-form-history";
+import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
+import PFHistoryTab from "./form-history/form-history-tab";
 
-// import { FileText } from "lucide-react";
-// import { MdOutlinePregnantWoman } from "react-icons/md";
-import { PrenatalHistoryTable } from "../../maternal-components/prenatal-history";
-// import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
-import PrenatalFormHistory from "./prenatal-form-history";
+import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
+import PrenatalViewingTwo from "./form-history/prenatal-viewing-two";
+
 
 interface PrenatalVisit {
   date: string;
@@ -26,124 +29,153 @@ interface PrenatalVisit {
     complaint: string;
     advice: string;
   };
+  changes?: {
+    weight?: boolean;
+    bloodPressure?: boolean;
+    fundalHeight?: boolean;
+    fetalHeartbeat?: boolean;
+    fetalPosition?: boolean;
+  };
 }
 
-const prenatalData: PrenatalVisit[] = [
-  {
-    date: "January 15, 2025",
-    aog: "12 wks 3 days",
-    weight: "55 kg",
-    bloodPressure: "110/70 mmHg",
-    leopoldsFindings: {
-      fundalHeight: "3cm",
-      fetalHeartbeat: "132 BPM",
-      fetalPosition: "Cephalic"
-    },
-    notes: {
-      complaint: "Heartburn and Leg Cramps",
-      advice: "Avoiding foods and drinks that trigger heartburn, such as citrus, spicy, fatty or greasy foods, caffeine, and carbonated beverages."
-    }
-  },
-  {
-    date: "February 15, 2025",
-    aog: "16 wks 3 days",
-    weight: "60 kg",
-    bloodPressure: "110/80 mmHg",
-    leopoldsFindings: {
-      fundalHeight: "4cm",
-      fetalHeartbeat: "120 BPM",
-      fetalPosition: "Cephalic"
-    },
-    notes: {
-      complaint: "Weight Gain",
-      advice: "Eat a balanced diet rich in whole grains, fruits, vegetables, lean proteins, and low-fat dairy while limiting added sugars, solid fats, and highly processed foods"
-    }
-  },
-  {
-    date: "March 15, 2025",
-    aog: "20 wks 3 days",
-    weight: "63 kg",
-    bloodPressure: "120/80 mmHg",
-    leopoldsFindings: {
-      fundalHeight: "4cm",
-      fetalHeartbeat: "120 BPM",
-      fetalPosition: "Cephalic"
-    },
-    notes: {
-      complaint: "Weight Gain and Back Pain",
-      advice: "Eat a balanced diet rich in whole grains, fruits, vegetables, lean proteins, and low-fat dairy while limiting added sugars, solid fats, and highly processed foods"
-    }
-  },
-  {
-    date: "April 15, 2025",
-    aog: "24 wks 3 days",
-    weight: "63 kg",
-    bloodPressure: "120/80 mmHg",
-    leopoldsFindings: {
-      fundalHeight: "4cm",
-      fetalHeartbeat: "120 BPM",
-      fetalPosition: "Cephalic"
-    },
-    notes: {
-      complaint: "Weight Gain and Back Pain",
-      advice: "Eat a balanced diet rich in whole grains, fruits, vegetables, lean proteins, and low-fat dairy while limiting added sugars, solid fats, and highly processed foods"
-    }
-  }
-];
-
 export default function PrenatalIndivHistory() {
-  const hasData = prenatalData && prenatalData.length > 0;
+  const location = useLocation();
+  const { patientData, pregnancyId, visitNumber, recordId } = location.state?.params || {};
   const [activeTab, setActiveTab] = useState("prenatalcare");
+  const [pfPageNum, setPfPageNum] = useState(1);
 
- const getTabStyle = (tab: string) => {
-		const baseClasses = "flex justify-center items-center cursor-pointer text-black/70 transition-colors duration-200 ease-in-out rounded-md p-2";
-		
-		if (activeTab === tab) {
-			// Active tab styles
-			return `${baseClasses} bg-white shadow-md border text-blue-500`;
-		} else {
-			// Inactive tab styles
-			return `${baseClasses} bg-blue-50 text-gray-100 hover:bg-white/`;
-		}
-	}
+  // fetching
+  const { data: prenatalCareData, isLoading, error } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "");
+
+
+  const handlePFPageChange = (pageNum: number) => {
+    setPfPageNum(pageNum);
+  }
+
+
+  // Get records up to the selected visit number
+  const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || [];
+
+  // Transform API data to PrenatalVisit format
+  const transformedData: PrenatalVisit[] = recordsToShow.flatMap((record: any) => 
+    record.prenatal_care_entries.map((entry: any) => ({
+      date: new Date(entry.pfpc_date).toLocaleDateString(),
+      aog: `${entry.pfpc_aog_weeks || 0}w ${entry.pfpc_aog_days || 0}d`,
+      weight: `${entry.weight || entry.pfpc_weight || 0} kg`,
+      bloodPressure: `${entry.bp_systolic || entry.pfpc_bp_systolic || 0}/${entry.bp_diastolic || entry.pfpc_bp_diastolic || 0}`,
+      leopoldsFindings: {
+        fundalHeight: entry.pfpc_fundal_height || "N/A",
+        fetalHeartbeat: entry.pfpc_fetal_heart_rate || "N/A",
+        fetalPosition: entry.pfpc_fetal_position || "N/A"
+      },
+      notes: {
+        complaint: entry.pfpc_complaints || "No complaints",
+        advice: entry.pfpc_advises || "No specific advice"
+      }
+    }))
+  );
+
+  // Sort data chronologically (oldest first for change detection)
+  const chronologicalData = [...transformedData].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  const detectChanges = (currentVisit: PrenatalVisit, previousVisit: PrenatalVisit | null): PrenatalVisit => {
+    if (!previousVisit) {
+      return { ...currentVisit, changes: {} };
+    }
+
+    const changes = {
+      weight: currentVisit.weight !== previousVisit.weight,
+      bloodPressure: currentVisit.bloodPressure !== previousVisit.bloodPressure,
+      fundalHeight: currentVisit.leopoldsFindings.fundalHeight !== previousVisit.leopoldsFindings.fundalHeight,
+      fetalHeartbeat: currentVisit.leopoldsFindings.fetalHeartbeat !== previousVisit.leopoldsFindings.fetalHeartbeat,
+      fetalPosition: currentVisit.leopoldsFindings.fetalPosition !== previousVisit.leopoldsFindings.fetalPosition,
+    };
+
+    return { ...currentVisit, changes };
+  };
+
+  // Process data to detect changes
+  const processedPrenatalData = chronologicalData.map((visit, index) => {
+    const previousVisit = index > 0 ? chronologicalData[index - 1] : null;
+    return detectChanges(visit, previousVisit);
+  });
+
+  const hasData = processedPrenatalData && processedPrenatalData.length > 0;
+
+  if (isLoading) {
+    return (
+      <LayoutWithBack 
+        title="Prenatal Visit Records"
+        description="Loading prenatal care history..."
+      >
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="animate-spin h-8 w-8 mr-2">Loading records...</Loader2>
+        </div>
+      </LayoutWithBack>
+    );
+  }
+
+  if (error) {
+    return (
+      <LayoutWithBack 
+        title="Prenatal Visit Records"
+        description="Error loading prenatal care history"
+      >
+        <div className="text-center text-red-600">
+          Failed to load prenatal care history. Please try again.
+        </div>
+      </LayoutWithBack>
+    );
+  }
 
   return (
     <LayoutWithBack 
       title="Prenatal Visit Records"
       description="Complete record of prenatal visits and clinical notes"
     >
-      <div className="bg-blue-50/50 p-3 space-y-2">
-        <div className="bg-white/70 p-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className={getTabStyle("prenatalcare")} onClick={() => setActiveTab("prenatalcare")}>
-              <h2 className="font-semibold">Prenatal Care History</h2>
-            </div>
+      <div className="bg-white p-3 space-y-2">
+        <div className="flex justify-end pr-4 my-5">
+          <Button variant="outline"><Printer/> Print</Button>
+        </div>
 
-            <div className={getTabStyle("prenatalform")} onClick={() => setActiveTab("prenatalform")}>
-              <h2 className="font-semibold">Prenatal Form History</h2>
-            </div>
+        <div className="w-full" defaultValue={1}>
+          <div className="flex items-center justify-center">
+            <PFHistoryTab onPageChange={handlePFPageChange} />
+          </div>
+          
+        </div>
+
+        {pfPageNum === 1 && (
+          <PrenatalViewingOne pfId={recordId} />
+        )}
+
+        {pfPageNum === 2 && (
+          <PrenatalViewingTwo />
+        )}
+
+        <div className="bg-white/70 pt-5 px-2">
+          <div className="flex-1 p-1 border rounded-md bg-blue-50">
+            <PrenatalIndivHistoryTab onTabChange={(tab) => setActiveTab(tab)} />
           </div>
         </div>
 
-        {/* Prenatal History Table */}
-        {hasData && activeTab === "prenatalcare" && (
-          <PrenatalHistoryTable data={prenatalData} />
-        // ) : (
-        //   <Card className="text-center py-16 border-slate-200">
-        //   <CardContent>
-        //     <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-        //     <h3 className="text-lg font-medium text-slate-700 mb-2">
-        //       No Clinical Records Available
-        //     </h3>
-        //     <p className="text-slate-500">
-        //       No prenatal examination records have been documented.
-        //     </p>
-        //   </CardContent>
-        //   </Card>
-        )}
+        {/* Prenatal History Table with real data */}
+        {hasData && activeTab === "prenatalcare" ? (
+          <div className="px-2">
+            <PrenatalCareHistoryTable data={processedPrenatalData} />
+          </div>
+        ):
+          <div className="text-center py-8 text-gray-500">
+            No prenatal care records found for this pregnancy.
+          </div>
+        }
 
         {activeTab === "prenatalform" && (
-          <PrenatalFormHistory/>
+          <PrenatalFormTableHistory/>
         )}
       </div>
     </LayoutWithBack>

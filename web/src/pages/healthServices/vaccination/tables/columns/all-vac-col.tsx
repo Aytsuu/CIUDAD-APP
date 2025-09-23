@@ -1,7 +1,8 @@
 // src/features/vaccination/components/columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import ViewButton from "@/components/ui/view-button";
 import { BasicInfoVaccinationRecord } from "./types";
 
 export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
@@ -17,7 +18,7 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
       return (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
+            A<div className="font-medium truncate">{fullName}</div>
             <div className="text-sm text-darkGray">
               {row.original.sex}, {row.original.age}
             </div>
@@ -69,41 +70,43 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-          <Link
-            to="/invVaccinationRecord"
-            state={{
-              params: {
-                patientData: {
-                  pat_id: row.original.pat_id,
-                  pat_type: row.original.pat_type,
-                  age: row.original.age,
-                  addressFull: row.original.address || "No address provided",
-                  address: {
-                    add_street: row.original.street,
-                    add_barangay: row.original.barangay,
-                    add_city: row.original.city,
-                    add_province: row.original.province,
-                    add_sitio: row.original.sitio
-                  },
-                  households: [{ hh_id: row.original.householdno }],
-                  personal_info: {
-                    per_fname: row.original.fname,
-                    per_mname: row.original.mname,
-                    per_lname: row.original.lname,
-                    per_dob: row.original.dob,
-                    per_sex: row.original.sex
-                  }
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const patientData = {
+        pat_id: row.original.pat_id,
+        pat_type: row.original.pat_type,
+        age: row.original.age,
+        addressFull: row.original.address || "No address provided",
+        address: {
+          add_street: row.original.street,
+          add_barangay: row.original.barangay,
+          add_city: row.original.city,
+          add_province: row.original.province,
+          add_sitio: row.original.sitio
+        },
+        households: [{ hh_id: row.original.householdno }],
+        personal_info: {
+          per_fname: row.original.fname,
+          per_mname: row.original.mname,
+          per_lname: row.original.lname,
+          per_dob: row.original.dob,
+          per_sex: row.original.sex
+        }
+      };
+
+      return (
+        <ViewButton
+          onClick={() => {
+            navigate("/services/vaccination/records", {
+              state: {
+                params: {
+                  patientData
                 }
               }
-            }}
-          >
-            View
-          </Link>
-        </div>
-      </div>
-    )
+            });
+          }}
+        />
+      );
+    }
   }
 ];

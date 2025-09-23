@@ -44,7 +44,6 @@ class ChildHealthrecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='child_health_records')
-    
     class Meta:
         db_table = 'child_healthrecord'
         ordering = ['-created_at']
@@ -56,6 +55,8 @@ class ChildHealth_History(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     chrec = models.ForeignKey(ChildHealthrecord, on_delete=models.CASCADE, related_name='child_health_histories')
     tt_status = models.CharField(max_length=100, blank=True, null=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories', null=True, blank=True)
+
     status = models.CharField(
         max_length=20,
         choices=[

@@ -49,10 +49,14 @@ export const getFirstAidChart = async (month: string) => {
 
 export const getStaffList = async () => {
   try {
-    const response = await api2.get("/reports/healthstaff/");
+    const response = await api2.get("/administration/healthstaff/");
     return response.data;
   } catch (error) {
     console.error("Error fetching staff list:", error);
     throw error;
   }
 };
+
+
+
+// export  const getDoctorList = async () => { 

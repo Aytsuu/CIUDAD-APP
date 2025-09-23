@@ -143,7 +143,7 @@ export default function InventoryMonthlyMedicineRecords() {
                     key={monthItem.month}
                     monthItem={monthItem}
                     navigateTo={{
-                      path: "/inventory-monthly-medicine-details",
+                      path: "/reports/monthly-inventory-medicine/records",
                       state: {
                         month: monthItem.month,
                         monthName: new Date(monthItem.month + "-01").toLocaleString("default", {

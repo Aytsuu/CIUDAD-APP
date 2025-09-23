@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query";
 import PageLayout from "@/screens/_PageLayout";
+import { useLocalSearchParams } from "expo-router";
 
 // Define FPRecord type
 interface FPRecord {
@@ -38,10 +39,12 @@ const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: an
 export default function MyFpRecordsScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
   const [isComparing, setIsComparing] = useState(false);
 
+  const params = useLocalSearchParams();
+  const patIdFromParams = params.pat_id;
+  const rp_id = patIdFromParams ? null : user?.resident?.rp_id;
   // Fetch patient to get pat_id
   const {
     data: patientData,
@@ -50,9 +53,11 @@ export default function MyFpRecordsScreen() {
     error: patientError,
     refetch: refetchPatient,
     isFetching: isPatientFetching
-  } = usePatientByResidentId(rp_id);
+  } = usePatientByResidentId(rp_id,{
+    enabled: !patIdFromParams && !!rp_id, // Only fetch if no pat_id provided
+  });
 
-  const pat_id = patientData?.pat_id || null;
+   const pat_id = patIdFromParams || patientData?.pat_id;
 
   // Fetch FP records using pat_id
   const {
@@ -122,7 +127,7 @@ export default function MyFpRecordsScreen() {
             <TouchableOpacity 
               onPress={() => router.push({
                 pathname: "/(health)/family-planning/fp-details",
-                params: { fprecordId: item.fprecord }
+                params: { fprecordId: item.fprecord , pat_id: patIdFromParams }
               })}
               className="p-4"
             >

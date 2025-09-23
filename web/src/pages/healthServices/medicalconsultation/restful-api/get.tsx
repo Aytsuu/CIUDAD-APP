@@ -58,3 +58,15 @@ export const getConsultationHistory = async (patientId: string, page: number, pa
     throw error;
   }
 };
+
+
+
+export const getMedConPHHistory =async(pat_id:string)=>{
+  try {
+    const response = await api2.get(`patientrecords/patientPHIllnessCheck/${pat_id}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching consultation history:", error);
+    throw error;
+  }
+}

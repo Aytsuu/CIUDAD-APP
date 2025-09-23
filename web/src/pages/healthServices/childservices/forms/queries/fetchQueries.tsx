@@ -2,13 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory } from "../restful-api/get";
 
-export function useChildHealthRecords() {
+export const useChildHealthRecords = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
   return useQuery({
-    queryKey: ["childHealthRecords"],
-    queryFn: getChildHealthRecords,
-    staleTime: 1000 * 60 * 5
+    queryKey: ["ChildHealthRecords", params],
+    queryFn: () => getChildHealthRecords(params),
+    staleTime: 1000 * 60 * 5,
+    retry: 3
   });
-}
+};
 
 export function useNutritionalSummary(id: string) {
   return useQuery({

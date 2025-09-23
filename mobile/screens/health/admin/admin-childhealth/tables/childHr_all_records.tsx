@@ -184,8 +184,10 @@ export default function AllChildHealthRecords() {
     if (!childHealthRecords) {
       return [];
     }
-
-    return childHealthRecords.map((record: any) => {
+const resultsArray = Array.isArray(childHealthRecords?.results)
+  ? childHealthRecords.results
+  : [];
+   return resultsArray.map((record: any) => {
       const childInfo = record.patrec_details?.pat_details?.personal_info || {};
       const motherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.mother?.personal_info || {};
       const fatherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.father?.personal_info || {};

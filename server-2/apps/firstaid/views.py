@@ -14,29 +14,110 @@ from django.utils.timezone import now
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from apps.pagination import StandardResultsPagination
-from apps.healthProfiling.models import PersonalAddress
+from apps.healthProfiling.models import *
+from apps.medicalConsultation.utils import *
+
+
 
 
 
 class PatientFirstaidRecordsView(generics.ListAPIView):
     serializer_class = PatientFirstaidRecordSerializer
-
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        return Patient.objects.filter(
-          Q(patient_records__first_aid_records__patrec_id__isnull=False)
-        ).distinct()
+        # Base queryset with annotations for first aid count
+        queryset = Patient.objects.annotate(
+            firstaid_count=Count(
+                'patient_records__first_aid_records',
+                distinct=True
+            )
+        ).filter(
+            # Only include patients who have first aid records
+            patient_records__first_aid_records__isnull=False
+        ).select_related(
+            'rp_id__per',         
+            'trans_id',             
+            'trans_id__tradd_id'   
+        ).distinct().order_by('-firstaid_count')
+        
+        # Search filter
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query and len(search_query) >= 2:
+            queryset = apply_patient_search_filter(queryset, search_query)
+        
+        # Patient type filter
+        patient_type_search = self.request.query_params.get('patient_type', '').strip()
+        if patient_type_search and patient_type_search != 'all':
+            queryset = apply_patient_type_filter(queryset, patient_type_search)
+        
+        return queryset
+    
 
-class IndividualFirstaidRecordView(generics.ListCreateAPIView):
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()) 
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+
+class IndividualFirstaidRecordView(generics.ListAPIView):
     serializer_class = FirstaidRecordSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
-        return FirstAidRecord.objects.filter(
-            patrec_id__pat_id=pat_id
-        ).order_by('-created_at')  # Optional: latest first
         
-class CreateFirstaidRecordView(generics.CreateAPIView):
-    serializer_class = FirstaidRecordSerializer
+        # Base queryset - using the correct relationship path
+        queryset = FirstAidRecord.objects.filter(
+            patrec__pat_id=pat_id  # Direct field access, not through relationship
+        ).select_related(
+            'finv__fa_id',  # FirstAid details
+            'finv__fa_id__cat',  # Category details
+            'patrec',  # Patient record
+            'staff'  # Staff details
+        ).order_by('-created_at')
+        
+        # Search filter
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query and len(search_query) >= 2:
+            queryset = self._apply_firstaid_search_filter(queryset, search_query)
+        
+        return queryset
+    
+    def _apply_firstaid_search_filter(self, queryset, search_term):
+        """
+        Apply search filter for first aid records
+        """
+        return queryset.filter(
+            Q(finv__fa_id__fa_name__icontains=search_term) |  # FirstAid name
+            Q(finv__fa_id__cat__cat_name__icontains=search_term) |  # Category name
+            Q(finv__fa_id__cat__cat_type__icontains=search_term) |  # Category type
+            Q(reason__icontains=search_term) |  # Reason field
+            Q(qty__icontains=search_term)  # Quantity field
+        )
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True) 
+        return Response(serializer.data) 
+
+        
+class CreateFirstaidRecordView(generics.CreateAPIView):  
+    serializer_class = FirstaidRecordSerializer 
     queryset = FirstAidRecord.objects.all()
     
 
@@ -143,7 +224,7 @@ class CreateFirstAidRequestView(APIView):
                     # Create first aid transaction
                     firstaid_transaction = FirstAidTransactions.objects.create(
                         fat_qty=f"{qty} {unit}",
-                        fat_action="Deducted (FirstAid Request)",
+                        fat_action="Deducted",
                         staff=staff_instance,
                         finv_id=firstaid_inv
                     )

@@ -1,55 +1,104 @@
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from apps.maternal.models import Pregnancy, Prenatal_Form
+# from datetime import datetime, timedelta
+# from dateutil.relativedelta import relativedelta
+# from datetime import date
+
 from apps.patientrecords.models import Spouse
-from apps.maternal.serializer import *
-from datetime import date
+from apps.patientrecords.serializers.patients_serializers import *
+from apps.maternal.models import Pregnancy, Prenatal_Form
+from apps.maternal.serializers.serializer import *
+
+
+def check_medical_records_for_spouse(self, obj):
+    try:
+        # family_planning_with_spouse = PostpartumRecord.objects.filter(
+        #     patrec_id__pat_id=obj,
+        #     spouse_id__isnull=False
+        # ).select_related('spouse_id').order_by('-created_at').first()
+        
+        # if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
+        #     return {
+        #         'spouse_exists': True,
+        #         'spouse_source': 'postpartum_record',
+        #         'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
+        #     }
+
+        # query PostpartumRecord with spouse
+        postpartum_with_spouse = PostpartumRecord.objects.filter(
+            patrec_id__pat_id=obj,
+            spouse_id__isnull=False
+        ).select_related('spouse_id').order_by('-created_at').first()
+        
+        if postpartum_with_spouse and postpartum_with_spouse.spouse_id:
+            return {
+                'spouse_exists': True,
+                'spouse_source': 'postpartum_record',
+                'spouse_info': SpouseSerializer(postpartum_with_spouse.spouse_id, context=self.context).data
+            }
+        
+        # query Prenatal_Form with spouse
+        prental_with_spouse = Prenatal_Form.objects.filter(
+            patrec_id__pat_id=obj,
+            spouse_id__isnull=False
+        ).select_related('spouse_id').order_by('-created_at').first()
+        
+        if prental_with_spouse and prental_with_spouse.spouse_id:
+            return {
+                'spouse_exists': True,
+                'spouse_source': 'prenatal_form',
+                'spouse_info': SpouseSerializer(prental_with_spouse.spouse_id, context=self.context).data
+            }
+        
+        # No spouse found in medical records
+        return {
+            'spouse_exists': False,
+            'allow_spouse_insertion': True,
+            'reason': 'No spouse found in family composition or medical records'
+        }
+
+    except Exception as e:
+        print(f"Error checking medical records for spouse: {str(e)}")
+        return {
+            'spouse_exists': False,
+            'allow_spouse_insertion': True,
+            'reason': f'Error in medical records check: {str(e)}'
+        }
 
 
 def handle_spouse_logic(patient, spouse_data):
     if not spouse_data:
         return None
     
-    try:
-        patient_serializer = PatientSerializer(patient)
-        spouse_info = patient_serializer.get_spouse_info(patient)
+    patient_serializer = PatientSerializer(patient)
+    spouse_info = patient_serializer.get_spouse_info(patient)
+    
+    print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
+    
+    # check if spouse exists (either in family composition or medical records)
+    if spouse_info.get('spouse_exists', False):
+        spouse_source = spouse_info.get('spouse_source', '')
+        existing_spouse_info = spouse_info.get('spouse_info', {})
         
-        print(f"Spouse info for patient {patient.pat_id}: {spouse_info}")
-        
-        # check if spouse exists (either in family composition or medical records)
-        if spouse_info.get('spouse_exists', False):
-            spouse_source = spouse_info.get('spouse_source', '')
-            existing_spouse_info = spouse_info.get('spouse_info', {})
-            
-            if spouse_source == 'family_composition':
-                # if father exists in family composition, don't create spouse
-                print("Father exists in family composition, not creating spouse")
-                return None
-            
-            elif spouse_source in ['prenatal_form', 'postpartum_record']:
-                # existing spouse in medical records
-                spouse_id = existing_spouse_info.get('spouse_id')
-                if spouse_id:
-                    existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
-                    print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
-                    return existing_spouse
-        
-        # check if spouse insertion is allowed
-        if spouse_info.get('allow_spouse_insertion', False):
-            print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
-            return Spouse.objects.create(**spouse_data)
-        else:
-            print("Spouse insertion not allowed")
+        if spouse_source == 'family_composition':
+            # if father exists in family composition, don't create spouse
+            print("Father exists in family composition, not creating spouse")
             return None
-            
-    except Exception as e:
-        return (f"Error in spouse logic: {str(e)}") 
-        # fallback: try to create spouse if there's an error
-        # try:
-        #     return Spouse.objects.create(**spouse_data)
-        # except Exception as create_error:
-        #     print(f"Error creating spouse: {str(create_error)}")
-        #     return None
+        
+        elif spouse_source in ['prenatal_form', 'postpartum_record']:
+            # existing spouse in medical records
+            spouse_id = existing_spouse_info.get('spouse_id')
+            if spouse_id:
+                existing_spouse = Spouse.objects.get(spouse_id=spouse_id)
+                print(f"Using existing spouse from {spouse_source}: {existing_spouse.spouse_id}")
+                return existing_spouse
+    
+    # check if spouse insertion is allowed
+    if spouse_info.get('allow_spouse_insertion', False):
+        print(f"Creating new spouse. Reason: {spouse_info.get('reason', 'Unknown')}")
+        return Spouse.objects.create(**spouse_data)
+    else:
+        print("Spouse insertion not allowed")
+        return None
+    
 
 
 def calculate_missed_visits(pregnancy_id, current_aog_weeks=None, current_aog_days=0):

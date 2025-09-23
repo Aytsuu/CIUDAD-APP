@@ -4,27 +4,20 @@ import { api2 } from "@/api/api";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 
-type ImmunizationMutationParams = {
-  data: any;
-  vaccines: any[];
-  existingVaccines: any[];
-  ChildHealthRecord: any;
-  staff_id: string | null;
-  pat_id: string;
-};
 
 export const useImmunizationMutations = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
   const saveImmunizationData = async ({
+    
     data,
     vaccines,
     existingVaccines,
     ChildHealthRecord,
+    vital_id,
     staff_id,
     pat_id,
-  }: ImmunizationMutationParams): Promise<any> => {
+  }: any): Promise<any> => {
     
     // Prepare the payload for the Django API
     const payload = {
@@ -33,7 +26,8 @@ export const useImmunizationMutations = () => {
         followUpVisit: data.followUpVisit || '',
         follov_description: data.follov_description || ''
       },
-      vaccines: vaccines.map(vaccine => ({
+      vital_id:vital_id,
+      vaccines: vaccines.map((vaccine:any) => ({
         vacStck_id: vaccine.vacStck_id,
         dose: vaccine.dose,
         totalDoses: vaccine.totalDoses,
@@ -43,7 +37,7 @@ export const useImmunizationMutations = () => {
         existingFollowvId: vaccine.existingFollowvId,
         vacrec: vaccine.vacrec
       })),
-      existingVaccines: existingVaccines.map(vaccine => ({
+      existingVaccines: existingVaccines.map((vaccine:any) => ({
         vac_id: vaccine.vac_id,
         dose: vaccine.dose,
         totalDoses: vaccine.totalDoses,
@@ -63,7 +57,7 @@ export const useImmunizationMutations = () => {
   };
 
   return useMutation({
-    mutationFn: async (params: ImmunizationMutationParams) => {
+    mutationFn: async (params: any) => {
       const { data, vaccines, existingVaccines } = params;
 
       const hasVaccines = vaccines.length > 0;

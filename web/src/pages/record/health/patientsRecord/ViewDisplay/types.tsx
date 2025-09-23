@@ -53,6 +53,7 @@ export interface ChildHealthRecord {
       per_contact: string
       per_dob: string
       ageTime?: "yrs"
+      philhealth_id?: string
     }
     address: {
       full_address?: string

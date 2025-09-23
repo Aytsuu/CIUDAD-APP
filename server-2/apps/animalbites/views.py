@@ -13,6 +13,32 @@ from apps.patientrecords.models import Patient, PatientRecord
 
 from django.db.models import F 
 
+
+
+class AnimalBiteReferralCountView(APIView):
+    def get(self, request, pat_id=None):
+        try:
+            if pat_id:
+                # Count referrals for a specific patient through patrec
+                count = AnimalBite_Referral.objects.filter(patrec__pat_id=pat_id).count()
+                return Response({
+                    'count': count,
+                    'pat_id': pat_id,
+                    'message': f'Animal bite referrals for patient {pat_id}: {count}'
+                }, status=status.HTTP_200_OK)
+            else:
+                # Count all referrals if no pat_id provided
+                count = AnimalBite_Referral.objects.count()
+                return Response({
+                    'count': count,
+                    'message': f'Total animal bite referrals: {count}'
+                }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class AnimalBitePatientRecordCountView(APIView):
     def get(self, request):
         # Get the serialized data

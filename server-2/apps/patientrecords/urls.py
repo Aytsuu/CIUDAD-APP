@@ -15,14 +15,15 @@ from .views.mobile_views import *
 from apps.administration.views.staff_views import HealthStaffListView
 
 urlpatterns = [
-    # path("patient-resident-exist/<str:rp_id>/", PatientByRPView.as_view(), name="check-resident-exist"),
+    
+    
+    path("patient-resident-exist/<str:rp_id>/", PatientByRPView.as_view(), name="check-resident-exist"),
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patients/', PatientListView.as_view(), name='patient-list'),
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
-    
-    path('patients/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
@@ -52,6 +53,8 @@ urlpatterns = [
    
     path('illness/', IllnessView.as_view(), name="illness"),
     path('philhealth-formatted-illness/', PHIllnessAPIView.as_view(), name="philhealth-formatted-illness"),
+    path('patientPHIllnessCheck/<str:pat_id>/', PatientPHIllnessCheckSimpleAPIView.as_view(), name="patient-ph-illness-check-simple"),
+   
    
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),
@@ -70,7 +73,8 @@ urlpatterns = [
    
     path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view(), name='delete-peresults'),
+
     #DISABLITY
     
     # path('disability/', ListDisabilityView.as_view(), name='list-disability'),

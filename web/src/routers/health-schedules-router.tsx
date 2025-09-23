@@ -3,11 +3,11 @@ import SchedulerMain from "@/pages/healthServices/scheduler/scheduler-main";
 
 export const health_schedule_routes = [
 	{
-		path: '/health-appointments',
+		path: '/services/scheduled/follow-ups',
 		element: <ScheduleRecords />
 	},
 	{
-		path: '/health-services/scheduler',
+		path: '/scheduler',
 		element: <SchedulerMain />
 	}
 ]

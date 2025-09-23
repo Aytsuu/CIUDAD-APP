@@ -1,18 +1,8 @@
 // screens/first-aid/my-records.tsx
-import React, { useState, useEffect, useMemo } from "react";
-import { 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  RefreshControl,
-  TextInput,
-  Text, Image
-} from "react-native";
-import { User, FileText, AlertCircle, Package, Clock, Heart, Search, ChevronLeft, Calendar, Shield, MapPin, RefreshCw } from "lucide-react-native";
-
+import React, { useState, useMemo } from "react";
+import { View, FlatList, TextInput, Text, Image, TouchableOpacity, RefreshControl } from "react-native";
+import { User, FileText, AlertCircle, Package, Clock, Search, ChevronLeft, Calendar, RefreshCw } from "lucide-react-native";
 import { router } from "expo-router";
-import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { FirstAidRecord } from "../admin/admin-firstaid/types";
+import { useLocalSearchParams } from "expo-router";
+import { getPatientById, getPatientByResidentId } from "../animalbites/api/get-api";
 
 // Reuse the FirstAidRecordCard component from individual.tsx
 const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
@@ -67,157 +59,189 @@ const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
           <Text className="text-slate-600 text-sm mb-2">Patient Signature:</Text>
           <Image 
             source={{ uri: `data:image/png;base64,${item.signature}` }}
-            className="h-16 w-40 border border-slate-200 rounded"
+            className="h-16 w-40 border border-slate-200 rounded-md"
             resizeMode="contain"
           />
-          
         </View>
       )}
     </CardContent>
   </Card>
 );
 
-const StatsCard = ({ count }: { count: number }) => (
-  <Card className="mx-4 mb-4 bg-white border-slate-200">
-    <CardContent className="p-4">
-      <View className="flex-row items-center">
-        <View className="w-10 h-10 bg-red-100 rounded-lg items-center justify-center mr-3">
-          <Heart size={20} color="#DC2626" />
-        </View>
-        <View>
-          <Text className="text-slate-600 text-sm">Total Records</Text>
-          <Text className="text-2xl font-bold text-slate-900">{count}</Text>
-        </View>
-      </View>
-    </CardContent>
-  </Card>
-);
-
-export default function MyFirstAidRecordsScreen() {
-  const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
-  const [searchQuery, setSearchQuery] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
-  
-  // First, get the patient details using the resident ID
-  const { data: patientData } = useQuery({
-    queryKey: ["patientByResidentId", rp_id],
-    queryFn: async () => {
-      const response = await api2.get(`/patientrecords/patient/by-resident/${rp_id}/`);
-      return response.data;
-    },
-    enabled: !!rp_id,
-  });
-
-  // Then, use the patient ID from the first query to fetch first aid records
-  const patient_id = patientData?.pat_id;
-
-  const {
-    data: firstAidRecords = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery<FirstAidRecord[]>({
-    queryKey: ["myFirstAidRecords", patient_id],
-    queryFn: async () => {
-      if (!patient_id) return [];
-      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patient_id}/`);
-      return response.data;
-    },
-    enabled: !!patient_id,
-  });
-
-  const filteredData = useMemo(() => {
-    if (!firstAidRecords) return [];
-    return firstAidRecords.filter((record: FirstAidRecord) => {
-      const searchText = `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [firstAidRecords, searchQuery]);
-
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } catch (e) {
-      console.error("Refetch error:", e);
-    }
-    setRefreshing(false);
-  }, [refetch]);
-
+const PatientInfoCard = ({ patientData }: { patientData: any }) => {
   const formatAddress = () => {
     if (!patientData?.address) return "No address provided";
-    return [patientData.address.add_street, patientData.address.add_barangay, patientData.address.add_city, patientData.address.add_province]
+    const address = patientData.address;
+    return [address.add_street, address.add_barangay, address.add_city, address.add_province]
       .filter(Boolean)
       .join(", ");
   };
 
-  const calculatePatientAge = () => {
-    if (!patientData?.personal_info?.per_dob) return "N/A";
-    return calculateAge(patientData.personal_info.per_dob).toString();
+  return (
+    <Card className="mb-4 bg-white border-slate-200">
+      <CardContent className="p-4">
+        <View className="flex-row items-center mb-4">
+          <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-blue-100">
+            <User size={20} color="#3B82F6" />
+          </View>
+          <Text className="text-lg font-semibold text-gray-800">Patient Information</Text>
+        </View>
+        <View className="space-y-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-gray-500">Full Name</Text>
+            <Text className="text-sm font-medium text-gray-900">
+              {patientData?.personal_info?.per_fname || "N/A"} {patientData?.personal_info?.per_mname || ""} {patientData?.personal_info?.per_lname || "N/A"}
+            </Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-gray-500">Age</Text>
+            <Text className="text-sm font-medium text-gray-900">
+              {patientData?.personal_info?.per_dob ? calculateAge(patientData.personal_info.per_dob) : "N/A"}
+            </Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-gray-500">Sex</Text>
+            <Text className="text-sm font-medium text-gray-900">{patientData?.personal_info?.per_sex || "N/A"}</Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-gray-500">Address</Text>
+            <Text className="text-sm font-medium text-gray-900">{formatAddress()}</Text>
+          </View>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm text-gray-500">Type</Text>
+            <Text className="text-sm font-medium text-gray-900">{patientData?.pat_type || "N/A"}</Text>
+          </View>
+        </View>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default function MyFirstAidRecordsScreen() {
+  const params = useLocalSearchParams<{ pat_id?: string }>();
+  const patIdFromParams = params.pat_id;
+  const { user } = useAuth();
+  const rp_id = user?.resident?.rp_id;
+
+  console.log("[DEBUG] my-records patIdFromParams:", patIdFromParams);
+  console.log("[DEBUG] rp_id from auth:", rp_id);
+
+  // Fetch patient data
+  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient, refetch: refetchPatient } = useQuery({
+    queryKey: ["patientDetails", patIdFromParams || rp_id],
+    queryFn: async () => {
+      if (patIdFromParams) {
+        console.log(`🔍 Fetching patient with ID: ${patIdFromParams}`);
+        return await getPatientById(patIdFromParams); // Admin/transient view
+      } else if (rp_id) {
+        console.log(`🔍 Fetching patient with resident ID: ${rp_id}`);
+        return await getPatientByResidentId(rp_id); // User view
+      }
+      return null;
+    },
+    enabled: !!(patIdFromParams || rp_id),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep cache for 10 minutes
+  });
+
+  const patient_id = patIdFromParams || patientData?.pat_id;
+  console.log("[DEBUG] patient_id used for First Aid records:", patient_id);
+
+  // Fetch records, handle 404 as empty array
+  const {
+    data: recordsData = [], // Default to empty array
+    isLoading: isLoadingRecords,
+    isError: isErrorRecords,
+    error: errorRecords,
+    refetch: refetchRecords
+  } = useQuery({
+    queryKey: ["firstAidRecords", patient_id],
+    queryFn: async () => {
+      if (!patient_id) throw new Error("No patient ID available");
+      console.log(`🔍 Fetching First Aid records for pat_id: ${patient_id}`);
+      try {
+        const res = await api2.get(`firstaid/firstaidrecords/by-patient/${patient_id}/`);
+        console.log("[DEBUG] First Aid records response:", JSON.stringify(res.data, null, 2));
+        return Array.isArray(res.data) ? res.data : [];
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          console.log("[DEBUG] 404: No First Aid records found for pat_id:", patient_id);
+          return []; // Treat 404 as no records
+        }
+        throw error; // Re-throw other errors
+      }
+    },
+    enabled: !!patient_id,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+  });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const filteredData = useMemo(() => {
+    if (!Array.isArray(recordsData)) return [];
+    const lowerQuery = searchQuery.toLowerCase();
+    return recordsData.filter((item: FirstAidRecord) => 
+      item.finv_details?.fa_detail?.fa_name?.toLowerCase().includes(lowerQuery) ||
+      item.reason?.toLowerCase().includes(lowerQuery) ||
+      item.farec_id?.toLowerCase().includes(lowerQuery)
+    );
+  }, [recordsData, searchQuery]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetchRecords();
+    await refetchPatient();
+    setRefreshing(false);
   };
 
-  const getPatientInitials = (fname: string, lname: string) => {
-    return `${fname?.charAt(0) || ""}${lname?.charAt(0) || ""}`.toUpperCase();
-  };
-
-  if (isLoading) {
+  if (isLoadingPatient || isLoadingRecords) {
     return <LoadingState />;
   }
 
-  if (isError) {
+  if (isErrorPatient || (isErrorRecords && (!errorRecords.response || errorRecords.response.status !== 404))) {
     return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} color="#374151" />
+      <View className="flex-1 justify-center items-center p-6 bg-red-50">
+        <AlertCircle size={48} color="#EF4444" />
+        <Text className="text-xl font-semibold text-red-800 mt-4">
+          {isErrorPatient ? "Patient Not Found" : "Error Loading Records"}
+        </Text>
+        <Text className="text-gray-600 mt-2 text-center">
+          {(errorPatient || errorRecords)?.message ?? "Please try again later."}
+        </Text>
+        <View className="flex-row mt-4 space-x-4">
+          <TouchableOpacity onPress={onRefresh} className="bg-blue-600 px-4 py-2 rounded-lg">
+            <Text className="text-white">Retry</Text>
           </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-slate-900 text-lg font-semibold">My First Aid Records</Text>}
-      >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-          <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">
-            Failed to load your records. Please try again.
-          </Text>
-          <TouchableOpacity
-            onPress={onRefresh}
-            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
-          >
-            <RefreshCw size={18} color="white" />
-            <Text className="ml-2 text-white font-medium">Try Again</Text>
+          <TouchableOpacity onPress={() => router.back()} className="bg-gray-600 px-4 py-2 rounded-lg">
+            <Text className="text-white">Go Back</Text>
           </TouchableOpacity>
         </View>
-      </PageLayout>
+      </View>
     );
   }
 
-  if (!rp_id) {
+  if (!patient_id && !user) {
     return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-slate-900 text-lg font-semibold">My First Aid Records</Text>}
-      >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-          <Package size={64} color="#9CA3AF" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Authentication Required</Text>
-          <Text className="text-gray-600 text-center mt-2">
-            Please log in to view your first aid records.
-          </Text>
-        </View>
-      </PageLayout>
+      <View className="flex-1 justify-center items-center p-6 bg-gray-50">
+        <AlertCircle size={48} color="#9CA3AF" />
+        <Text className="text-xl font-semibold text-gray-800 mt-4">Authentication Required</Text>
+        <Text className="text-gray-500 mt-2 text-center">Please log in to view your first aid records.</Text>
+      </View>
+    );
+  }
+
+  if (!patientData) {
+    return (
+      <View className="flex-1 justify-center items-center p-6 bg-gray-50">
+        <AlertCircle size={48} color="#9CA3AF" />
+        <Text className="text-xl font-semibold text-gray-800 mt-4">Patient Not Found</Text>
+        <Text className="text-gray-500 mt-2 text-center">No patient data available for this ID.</Text>
+        <TouchableOpacity onPress={() => router.back()} className="mt-4 bg-blue-600 px-4 py-2 rounded-lg">
+          <Text className="text-white">Go Back</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -231,15 +255,12 @@ export default function MyFirstAidRecordsScreen() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-slate-900 text-lg font-semibold">My First Aid Records</Text>}
+      headerTitle={<Text className="text-slate-900 text-lg font-semibold">{patIdFromParams ? 'First Aid Records' : 'My First Aid Records'}</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
-       
-        {/* Stats */}
-        <StatsCard count={filteredData.length} />
-
-        {/* Search Bar */}
+        <PatientInfoCard patientData={patientData} />
+        
         <View className="mx-4 mb-4">
           <View className="flex-row items-center p-3 border border-gray-200 bg-white rounded-xl">
             <Search size={20} color="#6B7280" />
@@ -253,18 +274,22 @@ export default function MyFirstAidRecordsScreen() {
           </View>
         </View>
 
-        {/* Records List */}
-        <ScrollView
+        <FlatList
+          data={filteredData}
+          renderItem={({ item }) => <FirstAidRecordCard item={item} />}
+          keyExtractor={(item) => item.farec_id || `record-${Math.random()}`}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
-        >
-          {filteredData.length > 0 ? (
-            filteredData.map((item) => (
-              <FirstAidRecordCard key={item.farec_id || `record-${Math.random()}`} item={item} />
-            ))
-          ) : (
-            <View className="flex-1 justify-center items-center py-20">
+          ListHeaderComponent={
+            <View className="px-4 mb-4">
+              <Text className="text-lg font-semibold text-gray-900">
+                Records ({filteredData.length})
+              </Text>
+            </View>
+          }
+          ListEmptyComponent={() => (
+            <View className="justify-center items-center py-20">
               <FileText size={48} color="#D1D5DB" />
               <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
                 No records found
@@ -272,11 +297,11 @@ export default function MyFirstAidRecordsScreen() {
               <Text className="text-gray-500 text-center">
                 {searchQuery
                   ? "No records match your search criteria."
-                  : "You don't have any first aid records yet."}
+                  : "No first aid records available for this patient."}
               </Text>
             </View>
           )}
-        </ScrollView>
+        />
       </View>
     </PageLayout>
   );

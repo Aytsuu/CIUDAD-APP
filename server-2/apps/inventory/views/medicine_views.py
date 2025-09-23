@@ -397,6 +397,8 @@ class MedicineStockCreate(APIView):
     def post(self, request, *args, **kwargs):
         try:
             data = request.data
+            print("STAFFACKERSS", data)
+
             
             # Step 1: Create Inventory
             inventory_data = self._prepare_inventory_data(data)
@@ -406,9 +408,9 @@ class MedicineStockCreate(APIView):
                 return Response({
                     'error': 'Inventory validation failed',
                     'details': inventory_serializer.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
+                }, status=status.HTTP_400_BAD_REQUEST) 
             
-            inventory = inventory_serializer.save()
+            inventory = inventory_serializer.save() 
             inv_id = inventory.inv_id
             
             # Step 2: Create MedicineInventory
@@ -476,6 +478,7 @@ class MedicineStockCreate(APIView):
             medicine_data = data.copy()
             medicine_data['inv_id'] = inv_id
         
+        
         # Validate medicineID
         medicine_id = medicine_data.get('medicineID')
         if not medicine_id:
@@ -504,9 +507,7 @@ class MedicineStockCreate(APIView):
         
         # Handle staff field
         staff = medicine_data.get('staff')
-        if staff:
-            medicine_data['staff'] = int(staff)
-        else:
+        if not staff:  # If staff is empty or None
             medicine_data['staff'] = None
         
         return medicine_data
@@ -551,6 +552,8 @@ class MedicineTransactionView(generics.ListCreateAPIView):
     
     
 # ============================TRANSACTION TABLE=================================
+
+
 class TableMedicineTransactionView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -568,6 +571,7 @@ class TableMedicineTransactionView(APIView):
                 'staff__rp__per'  # Add this to get the personal info
             ).all()
             
+            
             # Apply search filter if provided
             if search_query:
                 transactions = transactions.filter(
@@ -580,6 +584,7 @@ class TableMedicineTransactionView(APIView):
             
             # Format the data for response
             transaction_data = []
+
             
             for transaction in transactions:
                 # Get related inventory and medicine data
@@ -592,13 +597,14 @@ class TableMedicineTransactionView(APIView):
                 staff_name = "Managed by System"
                 if staff and staff.rp and staff.rp.per:
                     personal = staff.rp.per
+                    print("Persona",personal)
                     staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
                         staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
                  
                 item_data = {
                     'mdt_id': transaction.mdt_id,
-                    'inv_id': inventory.inv_id if inventory else "N/A",
+                    'inv_id': inventory.inv_id if inventory else "N/A", 
                     'med_detail': {
                         'med_name': medicine.med_name if medicine else "Unknown Medicine",
                         'minv_dsg': medicine_inventory.minv_dsg if medicine_inventory else 0,
@@ -626,17 +632,17 @@ class TableMedicineTransactionView(APIView):
                 return Response(response.data)
             
             return Response({
-                'success': True,
+                'success': True, 
                 'results': transaction_data,
                 'count': len(transaction_data)
             }, status=status.HTTP_200_OK)
             
-        except Exception as e:
+        except Exception as e: 
             import traceback
             print(f"Error traceback: {traceback.format_exc()}")
             return Response({
                 'success': False,
-                'error': f'Error fetching medicine transactions: {str(e)}'
+                'error': f'Error fetching medicine transactions: {str(e)}' 
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

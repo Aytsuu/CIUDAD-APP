@@ -3,6 +3,7 @@ from venv import logger
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.db import transaction  # For atomic operations if needed
 from django.db.models import Exists, Sum, Q, Min, F, Case, When, DateField, Subquery, Value, OuterRef,Prefetch
@@ -19,7 +20,7 @@ from apps.patientrecords.serializers.bodymesurement_serializers import *
 from apps.patientrecords.serializers.vitalsigns_serializers import *
 from apps.patientrecords.serializers.followvisits_serializers import *
 from apps.patientrecords.serializers.obstetrical_serializers import *
-from apps.maternal.serializer import PreviousPregnancyCreateSerializer
+from apps.maternal.serializers.serializer import PreviousPregnancyCreateSerializer
 from apps.patientrecords.serializers.spouse_serializers import *
 from apps.inventory.models import CommodityList, CommodityInventory # Import CommodityList and CommodityInventory
 from .api_functions import get_checkbox_name_from_illness

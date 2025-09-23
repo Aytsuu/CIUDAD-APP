@@ -43,7 +43,7 @@ export default function ArchiveMainInventoryStocks() {
                 className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
               >
                 <Syringe className="h-4 w-4" />
-                <span>Vaccine</span>
+                <span>Antigen</span>
               </TabsTrigger>
               <TabsTrigger
                 value="commodity"

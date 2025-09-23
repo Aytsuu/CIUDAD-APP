@@ -7,8 +7,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocation } from "react-router"
 import { toast } from "sonner"
-import { showSuccessToast } from "@/components/ui/toast"
-import { showErrorToast } from "@/components/ui/toast"
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast"
 
 import CardLayout from "@/components/ui/card/card-layout"
 import { Button } from "@/components/ui/button/button"
@@ -27,15 +26,13 @@ import VisitHistoryTab from "./VisitHistoryTab"
 
 // fetch queries
 import { useUpdatePatient } from "../queries/update"
-import { usePatientDetails } from "../queries/fetch"
-import { useChildData } from "../queries/fetch"
-import { useMedConCount, useChildHealthRecordCount } from "../queries/count"
+import { usePatientDetails, useChildData } from "../queries/fetch"
+import { useMedConCount, useChildHealthRecordCount, useFamplanCount, useAnimalbitesCount } from "../queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries"
 import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv"
 import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries"
-
 
 export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
@@ -45,23 +42,39 @@ export default function ViewPatientRecord() {
 
   const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "")
   const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
-  const { data: medicineCountData } = useMedicineCount(patientId ?? "")
-  const medicineCount = medicineCountData?.medicinerecord_count
-  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
-  const vaccinationCount = vaccinationCountData?.vaccination_count
-  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
-  const firstAidCount = firstAidCountData?.firstaidrecord_count
-  const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
-  const childHealthCountData = childHealthCount?.childhealthrecord_count
-  const { data: medconCountData } = useMedConCount(patientId ?? "")
-  const medconCount = medconCountData?.medcon_count
-  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "")
-  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "")
-  const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
-  const postpartumCount = postpartumCountData
-  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
-  const prenatalCount = prenatalCountData
-  const updatePatientData = useUpdatePatient()
+
+  const { data: medicineCountData } = useMedicineCount(patientId ?? "");
+  const medicineCount = medicineCountData?.medicinerecord_count;
+
+  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
+  const vaccinationCount = vaccinationCountData?.vaccination_count;
+
+  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
+  const firstAidCount = firstAidCountData?.firstaidrecord_count;
+
+  const { data: childHealthCount, isLoading: childHistoryLoading } = useChildHealthRecordCount(patientId ?? "");
+  const childHealthCountData = childHealthCount?.childhealthrecord_count;
+
+  const { data: medconCountData } = useMedConCount(patientId ?? "");
+  const medconCount = medconCountData?.medcon_count;
+
+  const { data: famplanCountData } = useFamplanCount(patientId ?? "");
+  const famplanCount = famplanCountData?.count;
+
+  const { data: animalbitesCountData } = useAnimalbitesCount(patientId ?? "");
+  const animalbitesCount = animalbitesCountData?.count;
+  console.log("Animal Bites Count:", animalbitesCount);
+
+  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
+  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+
+  const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "");
+  const postpartumCount = postpartumCountData;
+
+  const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "");
+  const prenatalCount = prenatalCountData;
+
+  const updatePatientData = useUpdatePatient();
 
   const currentPatient = useMemo(() => {
     if (!patientsData || !patientId) return null;
@@ -242,6 +255,7 @@ export default function ViewPatientRecord() {
       };
     });
   }, [rawChildHealthRecords]);
+  console.log("Formatted Child Health Records:", formatChildHealthData());
 
   const formattedChildHealthData = formatChildHealthData();
 
@@ -410,6 +424,9 @@ export default function ViewPatientRecord() {
             childHealthCount={childHealthCountData}
             childHealthRecords={formattedChildHealthData}
             prenatalCount={prenatalCount}
+            childHistoryLoading={childHistoryLoading}
+            famplanCount={famplanCount}
+            animalbitesCount={animalbitesCount}
           />
         )}
 

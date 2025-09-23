@@ -14,10 +14,10 @@ class TransientAddress(models.Model):
     tradd_barangay = models.CharField(max_length=50)
     tradd_street = models.CharField(max_length=50)
     tradd_sitio= models.CharField(max_length=50, null=True, blank=True)
-
-    class Meta:
-        db_table = 'transient_address'
-
+ 
+    class Meta:  
+        db_table = 'transient_address'      
+     
    
 class Transient(models.Model):
     trans_id = models.CharField(max_length=15, primary_key=True)
@@ -31,11 +31,11 @@ class Transient(models.Model):
     tran_ed_attainment = models.CharField(max_length=100)
     tran_religion = models.CharField(max_length=100)
     tran_contact = models.CharField(max_length=20)
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     tradd_id = models.ForeignKey(TransientAddress, on_delete=models.CASCADE, related_name='transients', db_column='tradd_id', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    philhealth_id = models.CharField(max_length=12, null=True, blank=True)
+
     # MOTHER fields
     mother_fname = models.CharField(max_length=100, null=True, blank=True)
     mother_lname = models.CharField(max_length=100, null=True, blank=True)
@@ -171,6 +171,7 @@ class Obstetrical_History(models.Model):
     obs_abortion = models.PositiveIntegerField(null=True, blank=True)
     obs_still_birth = models.PositiveIntegerField(null=True, blank=True)
     obs_lg_babies = models.PositiveIntegerField(null=True, blank=True)
+    obs_lg_babies_str = models.BooleanField(null=True, blank=True)
     obs_gravida = models.PositiveIntegerField(null=True, blank=True)
     obs_para = models.PositiveIntegerField(null=True, blank=True)
     obs_fullterm = models.PositiveIntegerField(null=True, blank=True)
@@ -186,7 +187,7 @@ class Obstetrical_History(models.Model):
 
 class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
-    followv_date = models.DateField()
+    followv_date = models.DateField(null=True, blank=True)
     followv_status = models.CharField(max_length=100)
     followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -245,13 +246,13 @@ class Illness(models.Model):
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
     assessment_summary =models.TextField(default="",blank=True,null=True)
-    obj_summary = models.TextField(default="")
-    subj_summary = models.TextField(default="")
-    plantreatment_summary=models.TextField(default="")
+    obj_summary = models.TextField(default="",blank=True,null=True)
+    subj_summary = models.TextField(default="",blank=True,null=True)
+    plantreatment_summary=models.TextField(default="",blank=True,null=True)
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'finding'
-
+ 
 
 
 class MedicalHistory(models.Model):
@@ -260,9 +261,17 @@ class MedicalHistory(models.Model):
     year = models.CharField(max_length=255, null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(default="", blank=True, null=True)
     class Meta:
-        db_table = 'medical_history'  
-        
+        db_table = 'medical_history'   
+
+class FamilyPastMedicalHistory(models.Model):      
+    fammedhist_id= models.BigAutoField(primary_key=True)
+    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='ill_id')
+    remarks = models.TextField(default="", blank=True, null=True)
+    pat=models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='pat_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
@@ -277,7 +286,6 @@ class PESection(models.Model):
 
     class Meta:
         db_table = 'physical_exam_section'
-
 
 # Option under a section (e.g., "Normal skin color and texture")
 class PEOption(models.Model):
