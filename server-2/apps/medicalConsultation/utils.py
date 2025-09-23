@@ -69,6 +69,7 @@ def get_patient_address_and_sitio(pat_obj):
         print(f"Error fetching address for patient {pat_obj.pat_id}: {str(e)}")
     
     return address, sitio
+
 def apply_patient_search_filter(queryset, search_query):
     """Reusable search filter for patients with multiple term support"""
     search_terms = [term.strip() for term in search_query.split(',') if term.strip()]

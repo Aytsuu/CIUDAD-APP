@@ -25,7 +25,7 @@ const formatDate = (dateString: string) => {
 
 export default function CurrentConsultationCard({ consultation, patientData, className = "" }: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
-  const bhw = `${consultation.staff_details?.rp?.per_fname || ""} ${consultation.staff_details?.rp?.per_lname || ""} ${consultation.staff_details?.rp?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
+  const bhw = `${consultation.staff_details?.rp?.per?.per_fname || ""} ${consultation.staff_details?.rp?.per?.per_lname || ""} ${consultation.staff_details?.rp?.per?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
   const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");

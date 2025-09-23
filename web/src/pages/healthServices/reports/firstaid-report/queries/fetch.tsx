@@ -48,10 +48,10 @@ export const fetchStaffWithPositions = () => {
             name: (
               <div className="flex gap-3">
                 <span className="bg-green-500 rounded text-white p-1 text-xs">{staff.staff_id || "No ID"}</span>
-                {`${staff.rp?.per_fname || "Unknown"} ${staff.rp?.per_lname || "Staff"}`}( {staff.pos?.pos_title || "No Position"})
+                {`${staff.rp?.per?.per_fname || "Unknown"} ${staff.rp?.per?.per_lname || "Staff"}`}( {staff.pos?.pos_title || "No Position"})
               </div>
             ),
-            rawName: `${staff.rp?.per_fname || "Unknown"} ${staff.rp?.per_lname || "Staff"}`,
+            rawName: `${staff.rp?.per?.per_fname || "Unknown"} ${staff.rp?.per?.per_lname || "Staff"}`,
             position: staff.pos?.pos_title || "No Position"
           }))
         };

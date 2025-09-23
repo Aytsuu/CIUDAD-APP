@@ -208,7 +208,8 @@ class CombinedHealthRecordsView(APIView):
         for record in med_consult_queryset:
             patrec = record.patrec
             patient = patrec.pat_id
-            
+            serializer = MedicalConsultationRecordSerializer(record)
+            serialized_data = serializer.data
             # Get patient details
             patient_details = self._get_patient_details(patient)
             
@@ -248,23 +249,8 @@ class CombinedHealthRecordsView(APIView):
             
             combined_data.append({
                 'record_type': 'medical-consultation',
-                'data': {
-                    'medrec_id': record.medrec_id,
-                    'created_at': record.created_at.isoformat() if record.created_at else '',
-                    'medrec_chief_complaint': record.medrec_chief_complaint,
-                    'assigned_to_id': record.assigned_to_id if record.assigned_to else None,
-                    'medrec_status': record.medrec_status,
-                    'medrec_age': getattr(record, 'medrec_age', None),
-                    'vital_signs': vital_data,
-                    'bmi_details': bmi_data,
-                    'staff_details': staff_details,
-                    'patrec':record.patrec_id, 
+                'data': serialized_data  # This contains ALL attributes from your serializer
 
-                    'patrec_details': {
-                        'pat_id': patient.pat_id,
-                        'patient_details': patient_details
-                    }
-                }
             })
         
         # Sort by created_at (most recent first)

@@ -47,7 +47,7 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
             </td>
             <td className="w-1/4 border border-black p-2 align-top">
               <Label className="font-bold">PIN: </Label>
-              <span className="text-sm">{consultation.pin || "N/A"}</span>
+              <span className="text-sm">{consultation.pat_details?.additional_info?.philhealth_id || ""}</span>
             </td>
             <td className="w-1/4 border border-black p-2 align-top">
               <div className="flex flex-col gap-2">
@@ -78,11 +78,11 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
                 {/* Gender Section */}
                 <div className="flex gap-2">
                   <div className="flex items-center">
-                    <div className={`h-5 w-5 border border-black flex items-center justify-center ${patientData.personal_info.per_sex === "Female" ? "bg-black" : "bg-white"}`}>{patientData.personal_info.per_sex === "Female" && <Check className="h-4 w-4 text-white" />}</div>
+                    <div className={`h-5 w-5 border border-black flex items-center justify-center ${patientData.personal_info.per_sex?.toLowerCase() === "female" ? "bg-black" : "bg-white"}`}>{patientData.personal_info.per_sex?.toLowerCase() === "female" && <Check className="h-4 w-4 text-white" />}</div>
                     <Label className="ml-2 text-black">Female</Label>
                   </div>
                   <div className="flex items-center">
-                    <div className={`h-5 w-5 border border-black flex items-center justify-center ${patientData.personal_info.per_sex === "Male" ? "bg-black" : "bg-white"}`}>{patientData.personal_info.per_sex === "Male" && <Check className="h-4 w-4 text-white" />}</div>
+                    <div className={`h-5 w-5 border border-black flex items-center justify-center ${patientData.personal_info.per_sex?.toLowerCase() === "Male" ? "bg-black" : "bg-white"}`}>{patientData.personal_info.per_sex === "Male" && <Check className="h-4 w-4 text-white" />}</div>
                     <Label className="ml-2 text-black">Male</Label>
                   </div>
                 </div>
