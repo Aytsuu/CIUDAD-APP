@@ -99,8 +99,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.request_logging.RequestLoggingMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware', 
-    # 'simple_history.middleware.HistoryRequestMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware', 
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'

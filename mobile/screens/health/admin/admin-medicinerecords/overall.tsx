@@ -1,14 +1,18 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, Alert } from "react-native";
-import { Search, ChevronLeft, AlertCircle, Users, Home, UserCheck, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
+"use client";
+
+import type React from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
+import { Search, ChevronLeft, AlertCircle, Users, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import {  useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useMedicineRecords } from "./queries/fetch";
+import { PaginationControls } from "../components/pagination-layout";
 // Types
 interface MedicineRecord {
   pat_id: string;
@@ -60,23 +64,23 @@ type TabType = "all" | "resident" | "transient";
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   const getTypeConfig = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'resident':
+      case "resident":
         return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
+          color: "text-green-700",
+          bgColor: "bg-green-100",
+          borderColor: "border-green-200"
         };
-      case 'transient':
+      case "transient":
         return {
-          color: 'text-purple-700',
-          bgColor: 'bg-purple-100',
-          borderColor: 'border-purple-200',
+          color: "text-purple-700",
+          bgColor: "bg-purple-100",
+          borderColor: "border-purple-200"
         };
       default:
         return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
+          color: "text-gray-700",
+          bgColor: "bg-gray-100",
+          borderColor: "border-gray-200"
         };
     }
   };
@@ -84,13 +88,10 @@ const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   const typeConfig = getTypeConfig(type);
   return (
     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </Text>
+      <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
     </View>
   );
 };
-
 
 const TabBar: React.FC<{
   activeTab: TabType;
@@ -98,29 +99,14 @@ const TabBar: React.FC<{
   counts: { all: number; resident: number; transient: number };
 }> = ({ activeTab, setActiveTab, counts }) => (
   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </Text>
+    <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
+      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All ({counts.all})</Text>
     </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </Text>
+    <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
+      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents ({counts.resident})</Text>
     </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </Text>
+    <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
+      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients ({counts.transient})</Text>
     </TouchableOpacity>
   </View>
 );
@@ -130,17 +116,11 @@ const MedicineRecordCard: React.FC<{
   onPress: () => void;
 }> = ({ record, onPress }) => {
   const formatAddress = () => {
-    return record.address || [record.street, record.barangay, record.city, record.province]
-      .filter(Boolean)
-      .join(", ");
+    return record.address || [record.street, record.barangay, record.city, record.province].filter(Boolean).join(", ");
   };
 
   return (
-    <TouchableOpacity
-      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
-      activeOpacity={0.8}
-      onPress={onPress}
-    >
+    <TouchableOpacity className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm" activeOpacity={0.8} onPress={onPress}>
       {/* Header */}
       <View className="p-4 border-b border-gray-100">
         <View className="flex-row items-start justify-between">
@@ -177,8 +157,9 @@ const MedicineRecordCard: React.FC<{
         </View>
 
         {record.sitio && (
-          <View className="flex-row items-center mb-3">          <Users size={16} color="#6B7280" />
-
+          <View className="flex-row items-center mb-3">
+            {" "}
+            <Users size={16} color="#6B7280" />
             <Text className="ml-2 text-gray-600 text-sm">
               Sitio: <Text className="font-medium text-gray-900">{record.sitio}</Text>
             </Text>
@@ -186,7 +167,7 @@ const MedicineRecordCard: React.FC<{
         )}
 
         <View className="flex-row items-center justify-between">
-        <Users size={16} color="#6B7280" />
+          <Users size={16} color="#6B7280" />
 
           <View className="flex-row items-center">
             <Pill size={16} color="#6B7280" />
@@ -201,55 +182,13 @@ const MedicineRecordCard: React.FC<{
   );
 };
 
-const PaginationControls: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}> = ({ currentPage, totalPages, onPageChange, hasNext, hasPrevious }) => (
-  <View className="flex-row items-center justify-between bg-white px-4 py-3 border-t border-gray-200">
-    <TouchableOpacity
-      onPress={() => onPageChange(currentPage - 1)}
-      disabled={!hasPrevious}
-      className={`px-4 py-2 rounded-lg border ${!hasPrevious 
-        ? 'bg-gray-100 border-gray-200' 
-        : 'bg-white border-blue-600'
-      }`}
-    >
-      <Text className={`font-medium ${!hasPrevious ? 'text-gray-400' : 'text-blue-600'}`}>
-        Previous
-      </Text>
-    </TouchableOpacity>
-
-    <View className="flex-row items-center space-x-2">
-      <Text className="text-gray-600 text-sm">
-        Page {currentPage} of {totalPages}
-      </Text>
-    </View>
-
-    <TouchableOpacity
-      onPress={() => onPageChange(currentPage + 1)}
-      disabled={!hasNext}
-      className={`px-4 py-2 rounded-lg border ${!hasNext 
-        ? 'bg-gray-100 border-gray-200' 
-        : 'bg-white border-blue-600'
-      }`}
-    >
-      <Text className={`font-medium ${!hasNext ? 'text-gray-400' : 'text-blue-600'}`}>
-        Next
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
-
 export default function OverAllMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  
+
   const queryClient = useQueryClient();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -265,14 +204,7 @@ export default function OverAllMedicineRecords() {
   );
 
   // Use the useMedicineRecords hook instead of direct useQuery
-  const {
-    data: apiResponse,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching
-  } = useMedicineRecords(queryParams);
+  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useMedicineRecords(queryParams);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -289,13 +221,8 @@ export default function OverAllMedicineRecords() {
       const details = record.patient_details || {};
       const info = details.personal_info || {};
       const address = details.address || {};
-      
-      const addressString = [
-        address.add_street, 
-        address.add_barangay, 
-        address.add_city, 
-        address.add_province
-      ].filter((part) => part && part.trim().length > 0).join(", ") || "";
+
+      const addressString = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter((part) => part && part.trim().length > 0).join(", ") || "";
 
       return {
         pat_id: record.pat_id,
@@ -314,7 +241,6 @@ export default function OverAllMedicineRecords() {
         pat_type: details.pat_type || "",
         address: addressString,
         medicine_count: record.medicine_count || 0
-
       };
     });
   }, [apiResponse?.results]);
@@ -328,14 +254,14 @@ export default function OverAllMedicineRecords() {
   // Calculate counts for summary cards and tabs
   const counts = useMemo(() => {
     if (!formattedData) return { all: 0, resident: 0, transient: 0 };
-    
-    const residentCount = formattedData.filter(r => r.pat_type.toLowerCase() === 'resident').length;
-    const transientCount = formattedData.filter(r => r.pat_type.toLowerCase() === 'transient').length;
-    
+
+    const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
+    const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
+
     return {
       all: totalCount,
       resident: residentCount,
-      transient: transientCount,
+      transient: transientCount
     };
   }, [formattedData, totalCount]);
 
@@ -382,6 +308,10 @@ export default function OverAllMedicineRecords() {
     }
   };
 
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
   if (isLoading && !formattedData.length) {
     return <LoadingState />;
   }
@@ -390,25 +320,18 @@ export default function OverAllMedicineRecords() {
     return (
       <PageLayout
         leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
             <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="">Medicine Records</Text>}
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medicine Records</Text>}
+        rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+        <View className="flex-1 justify-center items-center px-6">
           <AlertCircle size={64} color="#EF4444" />
           <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">
-            Failed to load data. Please check your connection and try again.
-          </Text>
-          <TouchableOpacity
-            onPress={onRefresh}
-            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
-          >
+          <Text className="text-gray-600 text-center mt-2 mb-6">Failed to load data. Please check your connection and try again.</Text>
+          <TouchableOpacity onPress={onRefresh} className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg">
             <RefreshCw size={18} color="white" />
             <Text className="ml-2 text-white font-medium">Try Again</Text>
           </TouchableOpacity>
@@ -420,68 +343,57 @@ export default function OverAllMedicineRecords() {
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medicine Records</Text>}
-     
+      rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 bg-gray-50">
-       
-
+      <View className="flex-1">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
           <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
-            <TextInput
-              className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search by name, medicine, or address..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
+            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, medicine, or address..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 
         {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
+        <View className="px-4 flex-row items-center justify-between  mt-4">
+          <View className="flex-row items-center">
+            <Text className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+            </Text>
+          </View>
+
+          <View className="flex-row items-center">
+            <Text className="text-sm font-medium text-gray-800">
+              Page {currentPage} of {totalPages}
+            </Text>
+          </View>
+        </View>
+
         {/* Records List */}
         {!formattedData || formattedData.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
             <Pill size={64} color="#9CA3AF" />
             <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
-            <Text className="text-gray-600 text-center mt-2">
-              There are no medicine records available yet.
-            </Text>
+            <Text className="text-gray-600 text-center mt-2">There are no medicine records available yet.</Text>
           </View>
         ) : (
           <>
             <FlatList
               data={formattedData}
               keyExtractor={(item) => `medicine-${item.pat_id}`}
-              refreshControl={
-                <RefreshControl 
-                  refreshing={refreshing} 
-                  onRefresh={onRefresh} 
-                  colors={['#3B82F6']} 
-                />
-              }
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 16, paddingBottom: 0 }}
+              contentContainerStyle={{ padding: 16 }}
               initialNumToRender={10}
               maxToRenderPerBatch={10}
-              windowSize={10}
-              renderItem={({ item }) => (
-                <MedicineRecordCard
-                  record={item}
-                  onPress={() => handleRecordPress(item)}
-                />
-              )}
+              renderItem={({ item }) => <MedicineRecordCard record={item} onPress={() => handleRecordPress(item)} />}
               ListFooterComponent={
                 isFetching ? (
                   <View className="py-4 items-center">
@@ -490,15 +402,8 @@ export default function OverAllMedicineRecords() {
                 ) : null
               }
             />
-            
-            {/* Pagination Controls */}
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              hasNext={hasNext}
-              hasPrevious={hasPrevious}
-            />
+
+            <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
           </>
         )}
       </View>

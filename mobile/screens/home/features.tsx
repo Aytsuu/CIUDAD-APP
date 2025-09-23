@@ -56,6 +56,6 @@ export const features: FeatureType[] = [
     name: "Securado",
     icon: <Securado width={30} height={30}/>,
     route: "/(securado)",
-    users: [User.resident]
+    users: [User.resident]  
   },
 ]

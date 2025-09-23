@@ -41,17 +41,14 @@ export default () => {
                 <Stack.Screen name="medicine-request/request-page" options={{ headerShown: false }} />
 
 
-
-                <Stack.Screen name="admin/medicinerecords/overall" options={{headerShown: false}}/>
-
-                <Stack.Screen name="admin/maternal/overall" options={{headerShown: false}}/>
-
                 <Stack.Screen name="admin/animalbites/individual" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/animalbites/overall" options={{ headerShown: false }} />
 
-                <Stack.Screen name="admin/patientsrecord/patientsrecord" options={{ headerShown: false }} />
+
+                <Stack.Screen name="admin/patientsrecord/patientrecords" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/medicinerequest/medicinerequest" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/requestspage" options={{ headerShown: false }} />
+
 
                 <Stack.Screen name="admin/inventory/medicine" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/inventory/transaction" options={{headerShown:false}} />
@@ -60,7 +57,9 @@ export default () => {
                 <Stack.Screen name="admin/familyplanning/viewpage1" options={{headerShown:false}} />
                 <Stack.Screen name="admin/familyplanning/overall" options={{headerShown:false}} />
 
+
                 <Stack.Screen name="admin/schedules/all-appointment" options={{headerShown:false}}/>
+                
                 
                 <Stack.Screen name="admin/scheduler/schedule-main" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/scheduler/schedule-weekly" options={{headerShown:false}}/>
@@ -69,10 +68,22 @@ export default () => {
                 <Stack.Screen name="admin/childhealth/overall" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/history" options={{headerShown:false}}/>
   
+
                 <Stack.Screen name="admin/first-aid/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/first-aid/individual" options={{headerShown: false}}/>
-                
-                
+
+
+                <Stack.Screen name="admin/medicinerecords/overall" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/medicinerecords/individual" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/vaccination/overall" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/vaccination/individual" options={{headerShown: false}}/>
+
+
+                <Stack.Screen name="admin/maternal/overall" options={{headerShown: false}}/>
+                <Stack.Screen name="admin/maternal/individual" options={{headerShown: false}}/> 
+
+
+                <Stack.Screen name="vaccination/my-records" options={{ headerShown: false }} />
                 <Stack.Screen name="my-schedules/my-schedules" options={{headerShown:false}}/>
                 <Stack.Screen name="first-aid/my-records" options={{headerShown: false}}/>
             </Stack>

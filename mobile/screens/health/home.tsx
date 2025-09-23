@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, ArrowLeft, Venus, BriefcaseMedical } from "lucide-react-native";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, Stethoscope, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, Bell, Search, UserRoundPlus, ArrowLeft, Venus, BriefcaseMedical, SyringeIcon } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 import NotificationBadge from "./my-schedules/notifbadge";
@@ -23,11 +23,14 @@ const Homepage = () => {
     { name: 'Maternal Records', route: '/admin/maternal/overall', icon: Venus },
     { name: 'Medical Consultation', route: '(health)/medicine-request/my-requests', icon: Stethoscope },
     { name: 'Profiling', route: 'admin/medicinerequest/medicinerequest', icon: UserRoundPlus },
-    { name: 'Patients Records', route: '/admin/patientrecords/patientrecords', icon: Users },
+    { name: 'Patients Records', route: '/admin/patientsrecord/patientsrecord', icon: Users },
     { name: 'Schedules', route: 'admin/schedules/all-appointment', icon: Calendar },
     { name: 'Inventory', route: 'admin/inventory/medicine', icon: Archive },
     { name: 'First Aid', route: 'admin/first-aid/overall', icon: BriefcaseMedical},
-    { name: 'Medicine Records', route: 'admin/medicinerecords/overall', icon: BriefcaseMedical},
+    { name: 'Vaccination', route: 'admin/vaccination/overall', icon: SyringeIcon},
+    { name: 'Medicine', route: 'admin/medicinerecords/overall', icon: BriefcaseMedical},
+
+
   ];
 
   const quickActions = [

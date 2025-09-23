@@ -28,8 +28,8 @@ export const MedicineRecordCard: React.FC<{
           <View className="flex-row items-start justify-between">
             <View className="flex-1 mr-3">
               <View className="flex-row items-center mb-1">
-                <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-                  <Pill color="white" size={20} />
+                <View className="w-10 h-10 bg-blue-50 border border-blue-500 rounded-full items-center justify-center mr-3 shadow-sm">
+                  <Pill color="#2563EB" size={20} />
                 </View>
                 <View className="flex-1">
                   <Text className="font-semibold text-lg text-gray-900">{record.medicine_name}</Text>
