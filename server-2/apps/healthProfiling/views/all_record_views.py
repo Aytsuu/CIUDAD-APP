@@ -72,7 +72,7 @@ class CompleteRegistrationView(APIView):
   @transaction.atomic
   def post(self, request, *args, **kwargs):
     personal = request.data.get("personal", None)
-    account = request.data.get("account", None)
+    # account = request.data.get("account", None)
     houses = request.data.get("houses", [])
     livingSolo = request.data.get("livingSolo", None)
     family = request.data.get("family", None)
@@ -98,8 +98,8 @@ class CompleteRegistrationView(APIView):
         if rp:
           results["rp_id"] = rp.pk
 
-    if account:
-        self.create_account(account, staff)
+    # if account:
+    #     self.create_account(account, staff)
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -160,8 +160,8 @@ class CompleteRegistrationView(APIView):
 
     return resident_profile
 
-  def create_account(self, account, staff):
-    return
+  # def create_account(self, account, staff):
+  #   return
   
   def create_household(self, houses, rp, staff):
     # data = [undefined, sitio, street]

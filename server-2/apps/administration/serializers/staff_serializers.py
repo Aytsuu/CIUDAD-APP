@@ -76,6 +76,24 @@ class StaffCreateSerializer(serializers.ModelSerializer):
       return register
     
     return None
+
+class HealthStaffComboboxSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source='staff_id')
+    name = serializers.SerializerMethodField()
+    position = serializers.CharField(source='pos.pos_title')
+
+    class Meta:
+        model = Staff
+        fields = ['id', 'name', 'position']
+
+    def get_name(self, obj):
+        per = obj.rp.per
+        full_name = f"{per.per_fname} {per.per_lname}"
+        if per.per_mname:
+            full_name = f"{per.per_fname} {per.per_mname} {per.per_lname}"
+        if per.per_suffix:
+            full_name += f" {per.per_suffix}"
+        return full_name
   
   
 

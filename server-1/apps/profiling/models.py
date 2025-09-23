@@ -15,7 +15,7 @@ class Voter(models.Model):
         db_table = "voter"
 
 class Sitio(AbstractModels):
-    sitio_id = models.CharField(max_length=100, primary_key=True)
+    sitio_id = models.BigAutoField(primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
     class Meta:
@@ -84,6 +84,23 @@ class Personal(AbstractModels):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
+
+class PersonalModification(AbstractModels):
+    pm_id = models.BigAutoField(primary_key=True)
+    pm_lname = models.CharField(max_length=50, null=True)
+    pm_fname = models.CharField(max_length=50, null=True)
+    pm_mname = models.CharField(max_length=50, null=True)
+    pm_suffix = models.CharField(max_length=50, null=True)
+    pm_dob = models.DateField(null=True)
+    pm_sex = models.CharField(max_length=50, null=True)
+    pm_status = models.CharField(max_length=50, null=True)
+    pm_edAttainment = models.CharField(max_length=50, null=True)
+    pm_religion = models.CharField(max_length=50, null=True)
+    pm_contact = models.CharField(max_length=50, null=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
+
+    class Meta:
+        db_table = 'personal_modification'
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
@@ -188,6 +205,7 @@ class BusinessRespondent(AbstractModels):
     br_sex = models.CharField(max_length=10)
     br_dob = models.DateField()
     br_contact = models.CharField(max_length=11)
+    staff = models.ForeignKey("administration.Staff", on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'business_respondent'
@@ -196,12 +214,12 @@ class Business(AbstractModels):
     bus_id = models.BigAutoField(primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
+    bus_location = models.TextField()
     bus_status = models.CharField(max_length=20, default='Pending')
     bus_date_of_registration = models.DateField(default=date.today)
     bus_date_verified = models.DateField(null=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, null=True, related_name="owned_business")
     br = models.ForeignKey(BusinessRespondent, on_delete=models.CASCADE, null=True, related_name="owned_business")
-    add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     staff = models.ForeignKey('administration.Staff', null=True, on_delete=models.CASCADE, related_name='businesses')
 
     history = HistoricalRecords(
@@ -218,10 +236,10 @@ class BusinessModification(AbstractModels):
     bm_id = models.BigAutoField(primary_key=True)
     bm_updated_name = models.CharField(max_length=100, null=True)
     bm_updated_gs = models.FloatField(null=True)
+    bm_updated_loc = models.TextField(null=True)
     bm_submitted_at = models.DateTimeField(auto_now_add=True)
     bm_status = models.CharField(max_length=50, null=True)
     bm_rejection_reason = models.TextField(null=True)
-    add = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     bus = models.ForeignKey(Business, on_delete=models.CASCADE)
 
     class Meta:

@@ -16,6 +16,8 @@ import { useLoading } from "@/context/LoadingContext"
 import { formatDate } from "@/helpers/dateHelper"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
+import { useAuth } from "@/context/AuthContext"
+import HealthFamilyProfileView from "../../health-family-profiling/HealthFamilyProfileView"
 
 export default function FamilyRecordView() {
   // =================== STATE INITIALIZATION ===================
@@ -26,17 +28,23 @@ export default function FamilyRecordView() {
   const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false)
   const [accordionValue, setAccordionValue] = React.useState<string>("general-info")
   const { showLoading, hideLoading } = useLoading()
+  const { user } = useAuth()
   const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList()
   const { data: familyData, isLoading: isLoadingFamData } = useFamilyData(params?.fam_id)
   const { data: familyMembers, isLoading: isLoadingFamMembers } = useFamilyMembers(params?.fam_id)
+  
+  // Check if current user is health staff and should show health profiling data
+  const showHealthProfiling = params?.showHealthProfiling || user?.staff?.staff_type === "HEALTH STAFF"
 
   const members = familyMembers?.results || []
 
   // =================== SIDE EFFECTS ===================
   React.useEffect(() => {
-    if (isLoadingFamData || isLoadingHHList || isLoadingFamMembers) showLoading()
+    const loadingStates = [isLoadingFamData, isLoadingHHList, isLoadingFamMembers]
+    
+    if (loadingStates.some(loading => loading)) showLoading()
     else hideLoading()
-  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers])
+  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, showLoading, hideLoading])
 
   // =================== HANDLERS ====================
   const handleViewInfo = async (resId: string, famId: string) => {
@@ -234,6 +242,12 @@ export default function FamilyRecordView() {
             </div>
           )}
         </Card>
+
+        {/* Health Profiling Section - Only show for Health Staff */}
+        <HealthFamilyProfileView 
+          familyId={params?.fam_id} 
+          showHealthProfiling={showHealthProfiling}
+        />
       </div>
     </LayoutWithBack>
   )

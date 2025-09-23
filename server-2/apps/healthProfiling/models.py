@@ -2,11 +2,12 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
-from ..abstract_classes import AbstractModels
+from abstract_classes import AbstractModels
+from datetime import datetime
 
 
 class Sitio(AbstractModels):
-    sitio_id = models.CharField(max_length=100, primary_key=True)
+    sitio_id = models.BigAutoField(primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
     class Meta:
@@ -203,7 +204,7 @@ class Dependents_Under_Five(models.Model):
         db_table = 'dep_under_five'
 
 class WaterSupply(models.Model):
-    water_sup_id = models.CharField(max_length=50, primary_key=True)
+    water_sup_id = models.BigAutoField(primary_key=True)
     water_sup_type = models.CharField(max_length=50)
     water_conn_type = models.CharField(max_length=50, null=True, blank=True)
     water_sup_desc = models.TextField(max_length=1000)
@@ -213,7 +214,7 @@ class WaterSupply(models.Model):
         db_table = 'water_supply'
 
 class SanitaryFacility(models.Model):
-    sf_id = models.CharField(max_length=50, primary_key=True)
+    sf_id = models.BigAutoField(primary_key=True)
     sf_type = models.CharField(max_length=50)
     sf_toilet_type = models.CharField(max_length=50)
 
@@ -232,7 +233,7 @@ class FacilityDetails(models.Model):
         db_table = 'facility_details'
 
 class SolidWasteMgmt(models.Model):
-    swm_id = models.CharField(max_length=50, primary_key=True)
+    swm_id = models.BigAutoField(primary_key=True)
     swn_desposal_type = models.CharField(max_length=50)
     swm_desc = models.TextField(max_length=1000)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
@@ -241,7 +242,7 @@ class SolidWasteMgmt(models.Model):
         db_table = 'solid_waste_mgmt'
         
 class TBsurveilance(models.Model):
-    tb_id = models.CharField(max_length=50, primary_key=True)
+    tb_id = models.BigAutoField(primary_key=True)
     tb_meds_source = models.CharField(max_length=100, blank=True, null=True)
     tb_days_taking_meds = models.IntegerField(null=True, blank=True, default=0)
     tb_status = models.CharField(max_length=100, blank=True, null=True)
@@ -252,7 +253,7 @@ class TBsurveilance(models.Model):
         db_table = 'tb_surveillance_records'
 
 class NonCommunicableDisease(models.Model):
-    ncd_id = models.CharField(max_length=50, primary_key=True)
+    ncd_id = models.BigAutoField(primary_key=True)
     ncd_riskclass_age = models.CharField(max_length=100, blank=True, null=True)
     ncd_comorbidities = models.CharField(max_length=100, blank=True, null=True)
     ncd_lifestyle_risk = models.CharField(max_length=100, blank=True, null=True)
@@ -313,8 +314,28 @@ class SurveyIdentification(models.Model):
             models.Index(fields=['si_date']),
         ]
 
+    def save(self, *args, **kwargs):
+        if not self.si_id:
+            # Generate custom ID format: ddmmyy#####-SI
+            today = datetime.now()
+            date_prefix = today.strftime("%d%m%y")  # DDMMYY format
+            
+            # Get the count of records created today
+            today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
+            count = SurveyIdentification.objects.filter(
+                si_created_at__range=(today_start, today_end)
+            ).count()
+            
+            # Generate ID with auto-incrementing number (padded to 5 digits)
+            self.si_id = f"{date_prefix}{count + 1:05d}-SI"
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Survey {self.si_id} - Family {self.fam.fam_id}"
+
 
 
 # class RiskClassGroups(models.Model):
@@ -337,6 +358,3 @@ class SurveyIdentification(models.Model):
 
 #     class Meta:
 #         db_table = 'illness'
-
-
-
