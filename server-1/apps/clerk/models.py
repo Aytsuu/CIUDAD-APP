@@ -149,33 +149,33 @@ class DocumentsPDF(models.Model):
     class Meta:
         db_table = 'clerk_pdf_documents'
 
-# Address Models
-class Sitio(models.Model):
-    sitio_id = models.CharField(max_length=100, primary_key=True)
-    sitio_name = models.CharField(max_length=100)
+# # Address Models
+# class Sitio(models.Model):
+#     sitio_id = models.CharField(max_length=100, primary_key=True)
+#     sitio_name = models.CharField(max_length=100)
 
-    class Meta:
-        db_table = 'sitio'
-        managed = False 
+#     class Meta:
+#         db_table = 'sitio'
+#         managed = False 
 
-    def __str__(self):
-        return self.sitio_id
+#     def __str__(self):
+#         return self.sitio_id
 
-class Address(models.Model):
-    add_id = models.BigAutoField(primary_key=True)  
-    add_province = models.CharField(max_length=50)
-    add_city = models.CharField(max_length=50)
-    add_barangay = models.CharField(max_length=50)
-    add_street = models.CharField(max_length=50)
-    add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
+# class Address(models.Model):
+#     add_id = models.BigAutoField(primary_key=True)  
+#     add_province = models.CharField(max_length=50)
+#     add_city = models.CharField(max_length=50)
+#     add_barangay = models.CharField(max_length=50)
+#     add_street = models.CharField(max_length=50)
+#     add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
+#     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
 
-    class Meta:
-        db_table = 'address'
-        managed = False
+#     class Meta:
+#         db_table = 'address'
+#         managed = False
 
-    def __str__(self):
-        return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
+#     def __str__(self):
+#         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
 
 

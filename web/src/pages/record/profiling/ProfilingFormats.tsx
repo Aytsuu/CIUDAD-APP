@@ -31,7 +31,7 @@ export const formatSitio = (sitio: any) => {
 
   return sitio.map(
     (item: { sitio_id: string; sitio_name: string }) => ({
-      id: item.sitio_id,
+      id: `${item.sitio_id}`,
       name: item.sitio_name,
     })
   );
