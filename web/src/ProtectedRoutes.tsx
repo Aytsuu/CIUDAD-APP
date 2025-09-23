@@ -4,11 +4,13 @@ import React from "react";
 
 interface ProtectedRouteProps {
   requiredFeature?: string;
+  staffType?: string;
   children: React.ReactNode;
 }
 
 export const ProtectedRoute = ({
   requiredFeature,
+  staffType,
   children,
 }: ProtectedRouteProps) => {
   const location = useLocation();
@@ -22,8 +24,12 @@ export const ProtectedRoute = ({
     );
   }
 
+  if (!requiredFeature && isAuthenticated && staffType && staffType?.toLowerCase() != user?.staff?.staff_type.toLowerCase()) {
+    return <Navigate to="/page_not_found" replace />;
+  }
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/home" state={{ from: location }} replace />;
   }
   
   const hasAccess = user?.staff?.assignments?.includes(requiredFeature) || user?.staff?.pos?.toLowerCase() == "admin"
