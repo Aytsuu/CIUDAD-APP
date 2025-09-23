@@ -1,6 +1,6 @@
 import { ActivityIndicator, Text } from "react-native"
+import { Button } from "../button"
 import { CheckCircle } from "@/lib/icons/CheckCircle"
-import { Button } from "./button"
 
 export const SubmitButton = ({
   submittingLabel = "Submitting...",
@@ -10,7 +10,7 @@ export const SubmitButton = ({
 } : {
   submittingLabel?: string
   buttonLabel?: string
-  isSubmitting: boolean
+  isSubmitting?: boolean
   handleSubmit: () => void
 }) => {
   return (

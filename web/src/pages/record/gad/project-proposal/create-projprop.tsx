@@ -115,10 +115,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
 
   useEffect(() => {
     const userStaff = user?.staff;
-    const userFullName = userStaff?.rp?.per
-      ? `${userStaff.rp.per.per_fname} ${userStaff.rp.per.per_lname}`.trim()
-      : user?.username || "";
-    const userPosition = userStaff?.pos?.pos_title || "Staff";
+    const userFullName = user?.personal
+      ? `${user?.personal?.per_fname} ${user?.personal?.per_lname}`.trim()
+      : user?.phone || "";
+    const userPosition = userStaff?.pos || "Staff";
     const treasurer = staffList.find((s) => s.position === "Treasurer");
     const treasurerName = treasurer?.full_name || "";
 

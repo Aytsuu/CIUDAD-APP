@@ -1,9 +1,11 @@
 export interface User {
     acc_id: string;
     email: string;
-    username: string;
-    profile_image?: string | null;
-    resident?: Record<string, any>;
+    phone: string;
+    profile_image?: string;
+    personal: Record<string, any>;
+    br?: string
+    rp?: string
     staff?: Record<string, any>;
 }
 
@@ -15,7 +17,7 @@ export interface AuthState {
     isLoading: boolean;
     error: string | null;
     otpSent: boolean;
-    email: string | null;
+    email: Record<string, any> | null;
 }
 
 export interface LoginCredentials {

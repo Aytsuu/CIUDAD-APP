@@ -87,7 +87,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
   },
   {
     accessorKey: "fam_date_registered",
-    header: "Date Registered",
+    header: "Registered",
     cell: ({row}) => (
       formatDate(row.original.fam_date_registered, "short" as any)
     )
@@ -202,7 +202,6 @@ export const familyMembersCol = (
       const navigate = useNavigate()
 
       const handleViewClick = () => {
-        console.log('clicked')
         navigate("/profiling/resident/view/personal", {
           state: {
             params: {

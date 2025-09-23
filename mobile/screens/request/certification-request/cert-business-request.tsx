@@ -32,8 +32,9 @@ const CertPermit: React.FC = () => {
   const addBusinessPermit = useAddBusinessPermit();
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
+  const rp = (user as any)?.rp ?? "";
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    user?.resident?.rp_id || ""
+    rp
   );
   const businessData = businessResponse?.results || [];
 
@@ -182,7 +183,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: user?.resident?.rp_id || "",
+      rp_id: rp,
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
@@ -228,7 +229,7 @@ const CertPermit: React.FC = () => {
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: selectedPurpose?.pr_id, // Add the purpose and rates ID
-      rp_id: user?.resident?.rp_id || "",
+      rp_id: rp,
       req_amount: reqAmount, // Add the required amount field
       ags_id: agsId || undefined, // Add the annual gross sales ID
       previous_permit_image: previousPermitImage || undefined,

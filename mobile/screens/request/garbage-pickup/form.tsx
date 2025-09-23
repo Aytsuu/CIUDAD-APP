@@ -1,7 +1,7 @@
 import '@/global.css';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Button } from '@/components/ui/button/button';
+import { Button } from '@/components/ui/button';
 import { FormInput } from "@/components/ui/form/form-input";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { garbagePickupRequestCreateSchema } from '@/form-schema/waste/garbage-pickup-schema-resident';
@@ -48,7 +48,7 @@ export default function GarbagePickupForm() {
       garb_pref_time: '',
       garb_waste_type: '',
       garb_additional_notes: '',
-      rp_id: user.resident.rp_id
+      rp_id: user?.rp  || ''
     }
   });
 

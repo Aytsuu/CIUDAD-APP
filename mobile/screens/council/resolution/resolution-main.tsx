@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Archive, ArchiveRestore, Trash, CircleAlert, ChevronLeft, ChevronRight, Search, Files, X } from 'lucide-react-native';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SelectLayout } from '@/components/ui/select-layout';
-import { Button } from '@/components/ui/button/button';
+import { Button } from '@/components/ui/button';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useResolution } from './queries/resolution-fetch-queries';
 import { useDeleteResolution } from './queries/resolution-delete-queries';
@@ -284,6 +284,7 @@ function ResolutionPage() {
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
       }
+      wrapScroll={false}
     >
       {isLoading || isArchivePending || isDeletePending ? (
         <View className="flex-1 justify-center items-center">

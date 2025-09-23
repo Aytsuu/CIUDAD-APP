@@ -17,7 +17,7 @@ import {
 } from "lucide-react-native";
 import PageLayout from "@/screens/_PageLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge";
 import { LoadingState } from "@/components/ui/loading-state";
 

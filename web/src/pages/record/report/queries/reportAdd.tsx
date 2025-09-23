@@ -9,7 +9,6 @@ export const useAddAR = () => {
         const res = await api.post('report/ar/create/', data);
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     }

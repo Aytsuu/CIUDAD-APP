@@ -10,7 +10,7 @@ import {
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 
 interface VitalSignsSectionProps {
   currentAge: string;

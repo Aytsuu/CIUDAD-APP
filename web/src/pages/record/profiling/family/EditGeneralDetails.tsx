@@ -41,7 +41,6 @@ export default function EditGeneralDetails({
 
   React.useEffect(() => {
     if(familyData) {
-      console.log("has family data")
       form.setValue("householdNo", familyData.household_no)
       form.setValue("building", familyData.fam_building.toLowerCase())
       form.setValue("indigenous", familyData.fam_indigenous.toLowerCase())
@@ -67,8 +66,6 @@ export default function EditGeneralDetails({
     }
 
     const values = form.getValues();
-    console.log('familyData:', familyData)
-    console.log('values:', values)
     
     if(checkDefaultValues(values)) {
       setIsOpenDialog(false);

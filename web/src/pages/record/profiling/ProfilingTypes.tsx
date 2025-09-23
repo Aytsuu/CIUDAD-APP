@@ -152,11 +152,11 @@ export type BusinessRecord = {
 
 export type BusinessRespondent = {
   br_id: string;
-  lname: string;
-  fname: string;
-  mname: string;
-  suffix: string;
-  sex: string;
+  br_lname: string;
+  br_fname: string;
+  br_mname: string;
+  br_sex: string;
+  br_dob: string;
   br_date_registered: string;
   businesses: Record<string, any>[];
 }

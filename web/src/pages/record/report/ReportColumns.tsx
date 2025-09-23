@@ -1,20 +1,21 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Bookmark, CircleAlert } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { IRReport, ARReport } from "./ReportTypes";
 import ViewButton from "@/components/ui/view-button";
 import { useNavigate } from "react-router";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 import React from "react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/helpers/dateHelper";
+import { formatDate, getMonthName, getWeekNumber } from "@/helpers/dateHelper";
+import { showErrorToast } from "@/components/ui/toast";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
     accessorKey: "ir_id",
-    header: "Report No.",
+    header: "No.",
+    size: 50
   },
   {
     accessorKey: "ir_area",
@@ -25,16 +26,26 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
     header: "Involved/Affected",
   },
   {
-    accessorKey: "ir_add_details",
-    header: "Description",
-  },
-  {
     accessorKey: "ir_type",
     header: "Type",
   },
   {
-    accessorKey: "ir_reported_by",
-    header: "Reported By",
+    accessorKey: "ir_severity",
+    header: "Severity",
+    cell: ({ row }) => {
+      const severity_color: Record<string, any> = {
+        LOW: 'bg-green-100 border-green-400 text-green-700 hover:bg-green-100',
+        MEDIUM: 'bg-amber-100 border-amber-400 text-amber-700 hover:bg-amber-100',
+        HIGH: 'bg-red-100 border-red-400 text-red-700 hover:bg-red-100',
+      }
+      return (
+        <div className="flex justify-center">
+          <Badge className={`px-3 rounded-full ${ severity_color[row.original.ir_severity as string]}`}>
+            {row.original.ir_severity}
+          </Badge>
+        </div>
+      )
+    }
   },
   {
     accessorKey: "ir_date",
@@ -54,10 +65,10 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
       const navigate = useNavigate();
 
       const handleViewClick = () => {
-        navigate("form", {
+        navigate("view", {
           state: {
             params: {
-              data: row.original,
+              ir_id: row.original.ir_id,
             },
           },
         });
@@ -105,16 +116,18 @@ export const ARColumns = (
 
         const selectionValidator = React.useCallback(() => {
           if(row.getIsSelected() && unsigned) {
-            toast(`Report No. ${row.original.id} is Unsigned`, {
-              icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-              style: {
-                border: "1px solid rgb(225, 193, 193)",
-                padding: "16px",
-                color: "#b91c1c",
-                background: "#fef2f2",
-              }
-            });
+            showErrorToast(`Report No. ${row.original.id} is Unsigned`);
             row.toggleSelected(false);
+          }
+
+          if(row.getIsSelected() && (
+            getWeekNumber(row.original.date) !== getWeekNumber(new Date().toISOString())
+          )) {
+            showErrorToast(
+              `Report #${row.original.id} is from Week ${getWeekNumber(row.original.date)} of 
+              ${getMonthName(row.original.date)} ${new Date(row.original.date).getFullYear()}.`
+            );   
+             row.toggleSelected(false);
           }
         },[isCreatingWeeklyAR, row.getIsSelected()])
 
@@ -138,15 +151,7 @@ export const ARColumns = (
             checked={row.getIsSelected()}
             onCheckedChange={(value) => {
               if(unsigned) {
-                toast("Cannot add Unsigned reports", {
-                  icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-                  style: {
-                    border: "1px solid rgb(225, 193, 193)",
-                    padding: "16px",
-                    color: "#b91c1c",
-                    background: "#fef2f2",
-                  }
-                })
+                showErrorToast("Cannot add Unsigned reports")
                 return;
               }
               row.toggleSelected(!!value)
@@ -184,7 +189,7 @@ export const ARColumns = (
       const status = row.original.status
 
       return (
-        <Badge className={`${status === 'Signed' ? 
+        <Badge className={`${status?.toLowerCase() === 'signed' ? 
           "bg-green-100 text-green-700 hover:bg-green-100 shadow-none" : 
           "bg-amber-100 text-amber-700 hover:bg-amber-100 shadow-none"}`}>
           {status}

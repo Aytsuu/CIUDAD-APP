@@ -31,12 +31,15 @@ export default function ReportDocument() {
   const { mutateAsync: addARFile } = useAddARFile();
   const { mutateAsync: deleteARFile } = useDeleteARFile();
   const { mutateAsync: updateAR } = useUpdateAR();
-  const { data: ARInfo, isLoading: isLoadingARInfo } = useGetARInfo(type === 'AR' ? data.id : null) 
+  const { data: ARInfo, isLoading: isLoadingARInfo } = useGetARInfo(
+    type === 'AR' ? data.id : null
+  ) 
   const images = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) =>   
     file.arf_type.startsWith('image/')), [ARInfo]);
   const arDocs = React.useMemo(() => ARInfo?.ar_files?.filter((file: any) => 
     file.arf_type.startsWith('application/')), [ARInfo])
 
+  console.log(data.id)
 
   // For Weekly Accomplishment Report Document
   const { mutateAsync: addWARFile } = useAddWARFile();
@@ -50,7 +53,7 @@ export default function ReportDocument() {
   const isLoadingDetails = type === "AR" ? isLoadingARInfo : isLoadingWARInfo;
   const currentInfo = type === "AR" ? ARInfo : WARInfo; 
   const currentDocs = type === "AR" ? arDocs : warDocs; 
-  const signed = currentInfo?.status === 'Signed' || currentDocs?.length > 0
+  const signed = currentInfo?.status?.toLowerCase() === 'signed' || currentDocs?.length > 0
   const formatDocs = React.useMemo(() => currentDocs?.map((doc: any) => ({
     id: doc.warf_id || doc.arf_id,
     name: doc.warf_name || doc.arf_name,

@@ -50,7 +50,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   })
 
   const houseList = tab_params?.form.watch("houseSchema.list");
-  console.log(houseList)
 
   // =================== SIDE EFFECTS ======================
   React.useEffect(() => {
@@ -64,24 +63,14 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   React.useEffect(() => {
     if(tab_params?.isRegistrationTab) return;
     const head = form.watch("householdHead")
-    console.log('Selected household head:', head)
-    console.log('Residents list:', residentsList)
-    console.log('Per address list:', perAddressList)
     
     if (head && residentsList) {
       const resident = residentsList.find((res: any) => res.rp_id == head.split(" ")[0])
-      console.log('Found resident:', resident)
       
       if (resident) {
         const filteredAddresses = perAddressList?.filter((per_add: any) => per_add?.per === resident.personal_info.per_id)
         form.resetField('address')
-        console.log('Filtered addresses:', filteredAddresses)
-        console.log('Looking for per_id:', resident.personal_info.per_id)
-        
         setAddresses(filteredAddresses)
-        
-        // Debug the formatted addresses
-        console.log('Formatted addresses:', formatAddresses(filteredAddresses))
       }
     } else {
       setAddresses([])
@@ -143,8 +132,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
       }
 
       const householdInfo = form.getValues()
-      console.log(householdInfo)
-
       await addHousehold({
         householdInfo: householdInfo,
         staffId: user?.staff?.staff_id,

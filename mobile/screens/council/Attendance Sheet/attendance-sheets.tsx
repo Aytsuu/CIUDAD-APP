@@ -28,7 +28,7 @@ import {
 } from "../ce-events/ce-att-queries";
 import { useLocalSearchParams } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useRouter } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";

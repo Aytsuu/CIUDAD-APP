@@ -12,6 +12,7 @@ class DevelopmentPlan(models.Model):
     dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
     dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
     dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
+    dev_mandated = models.BooleanField(default=False, db_column='dev_mandated')
    
     staff = models.ForeignKey(
         'administration.Staff',

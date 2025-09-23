@@ -8,7 +8,7 @@ import { ScrollView, TouchableOpacity, Text, View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import React from 'react';
 import { useProgressContext } from "@/contexts/ProgressContext";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { useAddPersonal, useAddRequest, useAddAddress, useAddPerAddress } from "../../queries/authPostQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
