@@ -6,6 +6,7 @@ import { formatDate } from "@/helpers/dateHelper";
 import { Combobox } from "@/components/ui/combobox";
 import { formatOwnedBusinesses } from "../ProfilingFormats";
 import React from "react";
+import { formatCurrency } from "@/helpers/currencyFormat";
 
 export const activeColumns: ColumnDef<BusinessRecord>[] = [
   {
@@ -20,6 +21,9 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
   {
     accessorKey: "bus_gross_sales",
     header: "Gross Sales",
+    cell: ({ row }) => (
+      formatCurrency(+row.original.bus_gross_sales)
+    )
   },
   {
     accessorKey: "bus_location",
