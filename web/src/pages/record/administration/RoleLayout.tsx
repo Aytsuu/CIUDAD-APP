@@ -3,7 +3,7 @@ import AdministrationPositions from "./AdministrationPositions"
 import FeatureSelection from "./FeatureSelection"
 import { Label } from "@/components/ui/label"
 import { useLocation } from "react-router"
-import type { Assigned, Feature } from "./AdministrationTypes"
+import type { Assigned } from "./AdministrationTypes"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAllAssignedFeatures, usePositions } from "./queries/administrationFetchQueries"
@@ -61,18 +61,6 @@ export default function RoleLayout() {
     },
     [selectedPosition],
   )
-
-  // Group features by category
-  const groupedFeatures = React.useMemo(() => {
-    const groups: Record<string, Feature[]> = {}
-    for (const feature of params.features || []) {
-      if (!groups[feature.feat_group]) {
-        groups[feature.feat_group] = []
-      }
-      groups[feature.feat_group].push(feature)
-    }
-    return groups
-  }, [params.features])
 
   const selectedPositionData = positions?.find((p: any) => p.pos_id == selectedPosition)
 
@@ -136,7 +124,7 @@ export default function RoleLayout() {
                   <FeatureSelection
                     selectedPosition={selectedPosition}
                     assignedFeatures={assignedFeatures}
-                    groupedFeatures={groupedFeatures}
+                    features={params?.features}
                     setAssignedFeatures={handleFeatureUpdate}
                   />
                 )}
