@@ -68,8 +68,8 @@ export const formatAddresses = (addresses: any) => {
     }, idx: number) => {
       if(item.sitio) {
         return {
-          id: `${item.add_id}-${item.sitio.toLowerCase()}-${item.add_street}`,
-          name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`, 
+          id: `${item.add_id}-${item.sitio}-${item.add_street}`,
+          name: `Address ${idx+1} - ${item.sitio}, ${item.add_street}`, 
         }
       }
     }
