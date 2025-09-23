@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";

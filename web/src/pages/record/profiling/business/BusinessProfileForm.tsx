@@ -171,6 +171,7 @@ export default function BusinessProfileForm({
                           label="Last Name"
                           placeholder="Enter last name"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true} 
                         />
                       </div>
                       <div className="lg:col-span-1">
@@ -180,6 +181,7 @@ export default function BusinessProfileForm({
                           label="First Name"
                           placeholder="Enter first name"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true}
                         />
                       </div>
                       <div className="lg:col-span-1">
@@ -189,6 +191,7 @@ export default function BusinessProfileForm({
                           label="Middle Name"
                           placeholder="Enter middle name (optional)"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true}
                         />
                       </div>
                       <div>
@@ -197,8 +200,8 @@ export default function BusinessProfileForm({
                           name="respondent.per_sex"
                           label="Sex"
                           options={[
-                            { id: "female", name: "Female" },
-                            { id: "male", name: "Male" },
+                            { id: "female", name: "FEMALE" },
+                            { id: "male", name: "MALE" },
                           ]}
                           readOnly={isReadOnly || residentSelected}
                         />
@@ -258,6 +261,7 @@ export default function BusinessProfileForm({
                 label="Business Name"
                 placeholder="Enter the official business name"
                 readOnly={isReadOnly}
+                upper={true}
               />
               {formType !== Type.Viewing && 
                 <p className="text-xs text-gray-500 mt-1">Use the exact name as registered with DTI or SEC</p>
@@ -297,6 +301,7 @@ export default function BusinessProfileForm({
                 label="Address"
                 placeholder="Sitio, street, building number"
                 readOnly={isReadOnly}
+                upper={true}
               />
               {formType !== Type.Viewing && 
                 <p className="text-xs text-gray-500 mt-1">

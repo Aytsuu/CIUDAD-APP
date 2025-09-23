@@ -94,7 +94,23 @@ class SignupView(APIView):
                 {'error': 'Account creation failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class VerifyWebAccRegistration(APIView):
+    def post(self, request):
+        phone = request.data.get('phone', None)
+        email = request.data.get('email', None)
 
+        if phone:
+            exists = Account.objects.filter(phone=phone).exists()
+            if exists:
+                return Response({"error": "Phone is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            exists = Account.objects.filter(email=email).exists()
+            if exists:
+                return Response({"error": "Email is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        return Response(status=status.HTTP_200_OK)
+    
 # class MobileLoginView(APIView):
 #     permission_classes = [AllowAny]
 
