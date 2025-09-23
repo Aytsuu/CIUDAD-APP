@@ -13,7 +13,26 @@ export const personalInfoSchema = z.object({
   per_id: z.string().optional(),
   per_suffix: z.string(),
   per_sex: z.string().min(1, "Sex is required"),
-  per_dob: z.string().min(1, "Date of Birth is required"),
+  per_dob: z.string()
+  .min(1, "Date of Birth is required")
+  .refine((val) => {
+    // Parse input date string (YYYY-MM-DD)
+    const inputDate = new Date(val + "T00:00:00+08:00"); // Philippine timezone offset
+    
+    if (isNaN(inputDate.getTime())) return false;
+
+    // Get current date in Philippine timezone
+    const now = new Date();
+    // convert now to Philippines date string
+    const nowPhDateStr = now.toLocaleDateString("en-US", { timeZone: "Asia/Manila" });
+    // convert back to Date to zero out time
+    const nowPh = new Date(nowPhDateStr);
+
+    // Check that inputDate is <= today in PH timezone
+    return inputDate <= nowPh;
+  }, {
+    message: "Invalid Date of Birth",
+  }),
   per_status: z.string().min(1, "Status is required"),
   per_religion: z.string().min(1, "Religion is required"),
   per_addresses: z.array(z.object({})).default([]),

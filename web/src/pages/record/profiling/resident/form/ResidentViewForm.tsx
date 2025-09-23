@@ -51,6 +51,8 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const { data: ownedBusinesses, isLoading: isLoadingBusinesses } = useOwnedBusinesses({
     rp: params.data.residentId,
   })
+
+  console.log(personalInfo)
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
   const { data: personalHistory, isLoading: isLoadingPersonalHistory } = usePersonalHistory(personalInfo?.per_id)
 
@@ -129,6 +131,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     }] : []) as any
   ]
   
+  console.log(personalInfo?.per_addresses)
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
     if (isLoadingFam || isLoadingPersonalInfo || isLoadingBusinesses || isLoadingPersonalHistory) showLoading()

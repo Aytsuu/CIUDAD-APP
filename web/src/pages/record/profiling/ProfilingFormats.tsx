@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { capitalize } from "@/helpers/capitalize";
 import { formatCurrency } from "@/helpers/currencyFormat";
 
 // Format residents for searching
@@ -31,7 +30,7 @@ export const formatSitio = (sitio: any) => {
 
   return sitio.map(
     (item: { sitio_id: string; sitio_name: string }) => ({
-      id: `${item.sitio_id}`,
+      id: item.sitio_name,
       name: item.sitio_name,
     })
   );
@@ -68,8 +67,8 @@ export const formatAddresses = (addresses: any) => {
     }, idx: number) => {
       if(item.sitio) {
         return {
-          id: `${item.add_id}-${item.sitio.toLowerCase()}-${item.add_street}`,
-          name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`, 
+          id: `${item.add_id}-${item.sitio}-${item.add_street}`,
+          name: `ADDRESS ${idx+1} - ${item.sitio}, ${item.add_street}`, 
         }
       }
     }
@@ -153,7 +152,7 @@ export const formatOwnedHouses = (houses: any) => {
   return houses.map((house: any, index: number) => ({
     id: String(index),
     name: <div className="flex gap-2">
-      <p>{`House ${index + 1} - Sitio ${house.address.split("-")[1]}, ${house.address.split("-")[2]}`}</p>
+      <p>{`HOUSE ${index + 1} - SITIO ${house.address.split("-")[1]}, ${house.address.split("-")[2]}`}</p>
       <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
     </div>
   }))
