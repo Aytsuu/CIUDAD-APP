@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from ..models import Assignment
 from ..serializers.assignment_serializers import *
+from ..double_queries import PostQueries
 
 class AssignmentView(generics.ListCreateAPIView):
     serializer_class = AssignmentMinimalSerializer
@@ -23,6 +24,17 @@ class AssignmentCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+
+        # Perform double query
+        double_queries = PostQueries()
+        response = double_queries.assignment(request.data)
+        if not response.ok:
+            try:
+                error_detail = response.json()
+            except ValueError:
+                error_detail = response.text
+            raise serializers.ValidationError({"error": error_detail})
+
         return Response(data=AssignmentMinimalSerializer(instance).data, status=status.HTTP_200_OK)
 
 class AssignmentDeleteView(generics.DestroyAPIView):

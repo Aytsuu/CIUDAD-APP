@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.utils import timezone
 from ..models import *
+from django.db.models import Count
+from ..double_queries import PostQueries
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -55,7 +57,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
               'date_registered']
     
   def get_total_families(self, obj):
-    return Family.objects.filter(hh=obj).count()
+    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
   
   def get_head(self, obj):
     info = obj.rp.per
@@ -70,7 +72,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     read_only_fields = ['hh_id', 'hh_date_registered']
 
   def create(self, validated_data):
-    return Household.objects.create(
+    household = Household.objects.create(
       hh_id = self.generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
@@ -78,6 +80,19 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
       rp = validated_data['rp'],
       staff = validated_data['staff']
     )
+
+    # Perform double query
+    request = self.context.get("request")
+    double_queries = PostQueries()
+    response = double_queries.household(request.data)
+    if not response.ok:
+      try:
+          error_detail = response.json()
+      except ValueError:
+          error_detail = response.text
+      raise serializers.ValidationError({"error": error_detail})
+
+    return household
 
   def generate_hh_no(self):
     next_val = Household.objects.count() + 1

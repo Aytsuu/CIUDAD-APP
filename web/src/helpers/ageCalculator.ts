@@ -22,6 +22,8 @@ export const calculateAge = (dateOfBirth: string, type?: string): string => {
   // Ensure months is positive after adjustment
   months = Math.max(0, months);
 
+  years = Math.max(0, years);
+
   if (years > 0) {
     return `${years} ${type == "long" ? `year${years > 1 ? 's' : ''} old` : ''}`;
   }

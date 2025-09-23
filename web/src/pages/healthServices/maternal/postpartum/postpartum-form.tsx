@@ -1,32 +1,40 @@
 "use client";
 
-import { useFormContext, type UseFormReturn } from "react-hook-form";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import type { z } from "zod";
+import { useFormContext, type UseFormReturn } from "react-hook-form"
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router"
+import type { z } from "zod"
 
-import { Form } from "@/components/ui/form/form";
-import { FormInput } from "@/components/ui/form/form-input";
-import { Button } from "@/components/ui/button/button";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { Separator } from "@/components/ui/separator";
-import { FormSelect } from "@/components/ui/form/form-select";
-import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { DataTable } from "@/components/ui/table/data-table";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Label } from "@/components/ui/label";
-import { PatientSearch } from "@/components/ui/patientSearch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Form } from "@/components/ui/form/form"
+import { FormInput } from "@/components/ui/form/form-input"
+import { Button } from "@/components/ui/button/button"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
+import { Separator } from "@/components/ui/separator"
+import { FormSelect } from "@/components/ui/form/form-select"
+import { FormTextArea } from "@/components/ui/form/form-text-area"
+import { DataTable } from "@/components/ui/table/data-table"
+import type { ColumnDef } from "@tanstack/react-table"
+import { Label } from "@/components/ui/label"
+import { PatientSearch } from "@/components/ui/patientSearch"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2, AlertCircle } from "lucide-react"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 
-import type { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema";
-import { useAddPostpartumRecord } from "../queries/maternalAddQueries";
-import { transformPostpartumFormData, validatePostpartumFormData } from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers";
-import { toast } from "sonner";
+import type { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
+import { useAddPostpartumRecord } from "../queries/maternalAddQueries"
+import {
+  transformPostpartumFormData,
+  validatePostpartumFormData,
+} from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
+import { showErrorToast } from "@/components/ui/toast" 
 
-// Use Patient type from PatientSearch component for compatibility
-import type { Patient } from "@/components/ui/patientSearch";
+import { useLatestPatientPostpartumRecord } from "../queries/maternalFetchQueries"
+import { fetchMedicinesWithStock } from "../../medicineservices/restful-api/fetchAPI"
+
+import type { Patient } from "@/components/ui/patientSearch"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import MedicineDisplay from "@/components/ui/medicine-display"
 
 type PostpartumTableType = {
   date: string;
@@ -49,19 +57,111 @@ const calculateAge = (dob: string): number => {
   return age;
 };
 
-export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFormReturn<z.infer<typeof PostPartumSchema>>; onSubmit: () => void }) {
-  const { setValue, getValues } = useFormContext();
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([]);
-  const [formErrors, setFormErrors] = useState<string[]>([]);
-  const navigate = useNavigate();
+export default function PostpartumFormFirstPg({
+  form,
+  onSubmit,
+  isFromIndividualRecord = false,
+  preselectedPatient = null,
+  pregnancyId = null
+}: {
+  form: UseFormReturn<z.infer<typeof PostPartumSchema>>
+  onSubmit: () => void
+  isFromIndividualRecord?: boolean
+  preselectedPatient?: Patient | null
+  pregnancyId?: string | null
+}) {
+  const { setValue, getValues } = useFormContext()
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+  const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([])
+  const [formErrors, setFormErrors] = useState<string[]>([])
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const addPostpartumMutation = useAddPostpartumRecord();
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
+  const navigate = useNavigate()
+
+  // add hooks
+  const addPostpartumMutation = useAddPostpartumRecord()
+
+  // fetch hooks
+  const { data: latestPostpartumRecord, isLoading: latestPostpartumLoading } = useLatestPatientPostpartumRecord(selectedPatientId)
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+
+  // useEffect to preselect patient if coming from individual record page
+  useEffect(() => {
+    if (isFromIndividualRecord && preselectedPatient) {
+      
+      setSelectedPatientId(preselectedPatient.pat_id || "")
+
+      const displayFormat = `${preselectedPatient.pat_id}, ${preselectedPatient?.personal_info?.per_lname}, ${preselectedPatient?.personal_info?.per_fname} ${preselectedPatient?.personal_info?.per_mname || ''}`.trim()
+      setSelectedPatIdDisplay(displayFormat)
+
+      handlePatientSelection(preselectedPatient, preselectedPatient.pat_id)
+    }
+  }, [isFromIndividualRecord, preselectedPatient, pregnancyId])
+
+
+  // if latest postpatrum record exists, prefill the form
+  useEffect(() => {
+    const latestRecord = latestPostpartumRecord?.latest_postpartum_record
+
+    if (isFromIndividualRecord && !latestRecord) {
+      const spouse = latestPostpartumRecord?.spouse_info
+
+      setValue("mothersPersonalInfo.husbandLName", spouse?.spouse_lname)
+      setValue("mothersPersonalInfo.husbandFName", spouse?.spouse_fname)
+      setValue("mothersPersonalInfo.husbandMName", spouse?.spouse_mname)
+      setValue("mothersPersonalInfo.husbandDob", spouse?.spouse_dob)
+    }
+
+    if (isFromIndividualRecord && latestPostpartumRecord && latestPostpartumRecord && !latestPostpartumLoading) {
+      setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
+
+      if (latestRecord) {
+        const spouse = latestRecord.spouse_info
+        const delivery = latestRecord.delivery_records?.[0]
+        const visit = latestRecord.follow_up_visits
+
+        setValue("postpartumInfo.lochialDischarges", lochialConversion(latestRecord.ppr_lochial_discharges))
+        setValue("postpartumInfo.ironSupplement", latestRecord.ppr_iron_supplement)
+        setValue("postpartumInfo.vitASupplement", latestRecord.ppr_vit_a_date_given)
+        setValue("postpartumInfo.noOfPadPerDay", latestRecord.ppr_num_of_pads)
+        setValue("postpartumInfo.mebendazole", latestRecord.ppr_mebendazole_date_given)
+        setValue("postpartumInfo.dateBfInitiated", latestRecord.ppr_date_of_bf)
+        setValue("postpartumInfo.timeBfInitiated", latestRecord.ppr_time_of_bf)
+
+        if (spouse) {
+          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
+          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
+          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
+          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+        }
+
+        if(delivery) {
+          setValue("postpartumInfo.dateOfDelivery", delivery.ppdr_date_of_delivery)
+          setValue("postpartumInfo.timeOfDelivery", delivery.ppdr_time_of_delivery)
+          setValue("postpartumInfo.placeOfDelivery", delivery.ppdr_place_of_delivery)
+          setValue("postpartumInfo.outcome", outcomeConversion(delivery.ppdr_outcome))
+          setValue("postpartumInfo.attendedBy", delivery.ppdr_attended_by)
+        }
+
+        if(visit) {
+          setValue("postpartumInfo.nextVisitDate", visit.followv_date)
+        }
+        
+      }
+    }
+  }, [latestPostpartumRecord, latestPostpartumLoading])
+  // end of prefill useEffect
+
+  // patient selection handler
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
-    console.log("Selected Patient:", patient);
-    console.log("Patient ID from callback:", patientId);
+    setSelectedPatIdDisplay(patientId)
 
     if (!patient) {
       setSelectedPatientId("");
@@ -92,10 +192,10 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
           outcome: "",
           attendedBy: "",
           ttStatus: "",
-          ironSupplement: "",
-          vitASupplement: "",
-          noOfPadPerDay: "",
-          mebendazole: "",
+          // ironSupplement: "",
+          // vitASupplement: "",
+          noOfPadPerDay: 0,
+          // mebendazole: "",
           dateBfInitiated: "",
           timeBfInitiated: "",
           nextVisitDate: "",
@@ -115,14 +215,12 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
       return;
     }
 
-    const actualPatientId = patient.pat_id;
-    console.log("Using Patient ID:", actualPatientId);
+    const actualPatientId = patient.pat_id
 
     // check if patient ID is not NaN or empty
     if (!actualPatientId || actualPatientId.trim() === "" || actualPatientId.toLowerCase() === "nan") {
-      toast.error("Invalid patient ID. Please select a different patient.");
-      console.error("Invalid patient ID:", actualPatientId);
-      return;
+      showErrorToast("Invalid patient ID. Please select a different patient.")
+      return
     }
 
     setSelectedPatientId(actualPatientId);
@@ -135,22 +233,23 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
       const familyHeadFather = patient.family_head_info?.family_heads?.father?.personal_info;
       const spouse = patient.spouse_info?.spouse_info;
 
-      form.setValue("mothersPersonalInfo.familyNo", patient.family_head_info?.fam_id || "");
-      form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "");
-      form.setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname || "");
-      form.setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname || "");
-      form.setValue("mothersPersonalInfo.motherAge", personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "");
-      if (patientRole === "mother") {
-        if (spouse) {
-          form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "");
-          form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "");
-          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "");
-          form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "");
-        } else if (familyHeadFather) {
-          form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "");
-          form.setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "");
-          form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "");
-          form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "");
+      form.setValue("mothersPersonalInfo.familyNo", patient.family_head_info?.fam_id || "")
+      form.setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname || "")
+      form.setValue("mothersPersonalInfo.motherFName", personalInfo?.per_fname || "")
+      form.setValue("mothersPersonalInfo.motherMName", personalInfo?.per_mname || "")
+      form.setValue("mothersPersonalInfo.motherAge", personalInfo?.per_dob ? String(calculateAge(personalInfo.per_dob)) : "")
+      
+      if (patientRole === 'mother') {
+        if(spouse){
+          form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "") 
+        } else if (familyHeadFather){
+          form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
+          form.setValue("mothersPersonalInfo.husbandFName", familyHeadFather?.per_fname || "")
+          form.setValue("mothersPersonalInfo.husbandMName", familyHeadFather?.per_mname || "")
+          form.setValue("mothersPersonalInfo.husbandDob", familyHeadFather?.per_dob || "")
         } else {
           form.setValue("mothersPersonalInfo.husbandLName", "");
           form.setValue("mothersPersonalInfo.husbandFName", "");
@@ -178,21 +277,60 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
         form.setValue("mothersPersonalInfo.address.city", address.add_city || "");
         form.setValue("mothersPersonalInfo.address.province", address.add_province || "");
       }
-
-      if (spouse) {
-        form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "");
-        form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "");
-        form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "");
-        form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "");
-      } else {
-        form.setValue("mothersPersonalInfo.husbandLName", "");
-        form.setValue("mothersPersonalInfo.husbandFName", "");
-        form.setValue("mothersPersonalInfo.husbandMName", "");
-        form.setValue("mothersPersonalInfo.husbandDob", "");
-      }
     }
-  };
+  }
+  // end of patient selection handler
 
+  // medicine selection handlers
+  const handleSelectedMedicinesChange = useCallback(
+    (
+      updatedMedicines: {
+        minv_id: string
+        medrec_qty: number
+        reason: string
+      }[],
+    ) => {
+      setSelectedMedicines(updatedMedicines)
+    },
+    [],
+  )
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page)
+  }, [])
+  // end of medicine selection handlers
+
+  // conversion helpers
+  const outcomeConversion = (value: string) => {
+    switch (value) {
+      case "Select":
+        return "0"
+      case "Fullterm":
+        return "1"
+      case "Preterm":
+        return "2"
+      default:
+        return "0"
+    }
+  }
+
+  const lochialConversion = (value: string) => {
+    switch (value) {
+      case "Select":
+        return "0"
+      case "Lochia Rubra":
+        return "1"
+      case "Lochia Serosa":
+        return "2"
+      case "Lochia Alba":
+        return "3"
+      default:
+        return "0"
+    }
+  }
+  // end of conversion helpers
+
+  // postpartum care columns
   const postpartumTableColumns: ColumnDef<PostpartumTableType>[] = [
     {
       accessorKey: "date",
@@ -226,8 +364,8 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
     }
   ];
 
-  // Date setup
-  const today = new Date().toLocaleDateString("en-CA");
+  // date setup
+  const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
     form.setValue("postpartumTable.date", today);
@@ -243,28 +381,26 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
     const nursesNotes = getValues("postpartumTable.nursesNotes") || "None";
 
     const feedingOptions = [
-      { id: "0", name: "Select" },
       { id: "1", name: "Exclusive Breastfeeding" },
       { id: "2", name: "Mixed Feeding" },
       { id: "3", name: "Formula Feeding" }
     ];
 
     const lochialOptions = [
-      { id: "0", name: "Select" },
       { id: "1", name: "Lochia Rubra" },
       { id: "2", name: "Lochia Serosa" },
       { id: "3", name: "Lochia Alba" }
     ];
 
-    // Convert IDs to names
-    const feedingName = feedingOptions.find((option) => option.id === feeding)?.name || feeding;
-    const lochialName = lochialOptions.find((option) => option.id === lochialDischarges)?.name || lochialDischarges;
+    // convert IDs to names
+    const feedingName = feedingOptions.find((option) => option.id === feeding)?.name || feeding
+    const lochialName = lochialOptions.find((option) => option.id === lochialDischarges)?.name || lochialDischarges
 
     if (date && !isNaN(systolic) && !isNaN(diastolic) && feeding && feeding !== "0" && lochialDischarges && lochialDischarges !== "0") {
       setPostpartumCareData((prev) => [
         ...prev,
         {
-          date: date, // Use the actual date from form
+          date: date, // use the actual date from form
           lochialDischarges: lochialName,
           bp: `${systolic} / ${diastolic}`,
           feeding: feedingName,
@@ -273,40 +409,45 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
         }
       ]);
 
-      // Clear form fields
-      form.setValue("postpartumTable.date", today);
-      form.setValue("postpartumInfo.lochialDischarges", "");
-      form.setValue("postpartumTable.bp.systolic", "");
-      form.setValue("postpartumTable.bp.diastolic", "");
-      form.setValue("postpartumTable.feeding", "");
-      form.setValue("postpartumTable.findings", "");
-      form.setValue("postpartumTable.nursesNotes", "");
+      // clear form fields
+      form.setValue("postpartumTable.date", today)
+      form.setValue("postpartumInfo.lochialDischarges", "")
+      form.setValue("postpartumTable.bp.systolic", "")
+      form.setValue("postpartumTable.bp.diastolic", "")
+      form.setValue("postpartumTable.feeding", "")
+      form.setValue("postpartumTable.findings", "")
+      form.setValue("postpartumTable.nursesNotes", "")
     } else {
-      toast.error("Please fill in all required fields for the assessment including lochial discharges");
+      showErrorToast("Please fill in all required fields for the assessment including lochial discharges")
     }
   };
 
   const handleFormSubmit = async () => {
-    const formData = form.getValues();
+    setIsDialogOpen(false)
+    setIsSubmitting(true)
+
+    const formData = form.getValues()
 
     // Validate form data
     const errors = validatePostpartumFormData(formData, selectedPatientId, postpartumCareData);
 
     if (errors.length > 0) {
-      setFormErrors(errors);
-      toast.error("Please fix the form errors before submitting");
-      return;
+      setFormErrors(errors)
+      showErrorToast("Please fix the form errors before submitting")
+      setIsSubmitting(false)
+      return
     }
 
     if (!selectedPatient) {
-      toast.error("Please select a patient first");
-      return;
+      showErrorToast("Please select a patient first")
+      setIsSubmitting(false)
+      return
     }
 
     if (!selectedPatientId || selectedPatientId.trim() === "" || selectedPatientId.toLowerCase() === "nan") {
-      toast.error("Invalid patient ID selected");
-      console.error("Invalid patient ID:", selectedPatientId);
-      return;
+      showErrorToast("Invalid patient ID selected")
+      setIsSubmitting(false)
+      return
     }
 
     setFormErrors([]);
@@ -323,14 +464,22 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
         navigate(-1);
       }
     } catch (error) {
-      console.error("Error submitting postpartum form:", error);
+      console.error("Error submitting postpartum form:", error)
+    } finally {
+      setIsSubmitting(false)
+      setIsDialogOpen(false)
     }
   };
 
   const submit = () => {
     form.trigger(["mothersPersonalInfo", "postpartumInfo", "postpartumTable"]).then((isValid) => {
+      console.log("Form validation result:", isValid)
+      console.log("Form errors:", form.formState.errors)
+      
       if (isValid) {
-        handleFormSubmit();
+        setIsDialogOpen(true)
+      } else {
+        console.log("Form validation failed")
       }
     });
   };
@@ -339,10 +488,12 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
 
   return (
     <LayoutWithBack title="Postpartum Form" description="Fill out the postpartum form with the mother's information.">
-      <div>
-        <PatientSearch onChange={setSelectedPatientId} value={selectedPatientId} onPatientSelect={handlePatientSelection} />
-      </div>
-
+      {!isFromIndividualRecord && (
+        <div>
+          <PatientSearch onChange={setSelectedPatientId} value={selectedPatIdDisplay} onPatientSelect={handlePatientSelection} />
+        </div>
+      )}
+  
       {/* Form Errors */}
       {formErrors.length > 0 && (
         <Alert variant="destructive" className="mt-4">
@@ -359,6 +510,7 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
 
       <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
         <div className="pb-4">
+          <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
           <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
           <h2 className="text-3xl font-bold text-center mt-12">POSTPARTUM RECORD</h2>
         </div>
@@ -410,7 +562,6 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
                 label="Outcome"
                 name="postpartumInfo.outcome"
                 options={[
-                  { id: "0", name: "Select" },
                   { id: "1", name: "Fullterm" },
                   { id: "2", name: "Preterm" }
                 ]}
@@ -430,14 +581,89 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
                   { id: "fim", name: "FIM" }
                 ]}
               />
-              <FormDateTimeInput control={form.control} label="Iron Supplement" name="postpartumInfo.ironSupplement" type="date" />
-              <FormDateTimeInput control={form.control} label="Vitamin A Supplement" name="postpartumInfo.vitASupplement" type="date" />
+              {/* <FormDateTimeInput
+                control={form.control}
+                label="Iron Supplement"
+                name="postpartumInfo.ironSupplement"
+                type="date"
+              />
+              <FormDateTimeInput
+                control={form.control}
+                label="Vitamin A Supplement"
+                name="postpartumInfo.vitASupplement"
+                type="date"
+              /> */}
 
-              <FormInput control={form.control} label="Number of Pads per Day" name="postpartumInfo.noOfPadPerDay" placeholder="Number of Pads per Day" />
-              <FormDateTimeInput control={form.control} label="Mebendazole" name="postpartumInfo.mebendazole" type="date" />
-              <FormDateTimeInput control={form.control} label="Date Breastfeeding Initiated" name="postpartumInfo.dateBfInitiated" type="date" />
-              <FormDateTimeInput control={form.control} label="Time Breastfeeding Initiated" name="postpartumInfo.timeBfInitiated" type="time" />
+              <FormInput
+                control={form.control}
+                label="Number of Pads per Day"
+                name="postpartumInfo.noOfPadPerDay"
+                placeholder="Number of Pads per Day"
+                type="number"
+              />
+              {/* <FormDateTimeInput
+                control={form.control}
+                label="Mebendazole"
+                name="postpartumInfo.mebendazole"
+                type="date"
+              /> */}
+              <FormDateTimeInput
+                control={form.control}
+                label="Date Breastfeeding Initiated"
+                name="postpartumInfo.dateBfInitiated"
+                type="date"
+              />
+              <FormDateTimeInput
+                control={form.control}
+                label="Time Breastfeeding Initiated"
+                name="postpartumInfo.timeBfInitiated"
+                type="time"
+              />
             </div>
+
+            <Card className="border rounded-lg shadow-md p-3 mt-5 mb-5">
+                <CardHeader>
+                  <span className="flex flex-row items-center">
+                    <CardTitle className="text-md font-semibold mt-2 mb-3 mr-2">
+                      MICRONUTRIENT SUPPLEMENTATION{" "}
+                    </CardTitle>
+                    <p className="text-[14px] text-black/50 font-poppins">
+                      (Select <b>Iron Supplement</b>, <b>Vitamin A Supplement</b>, and <b>Mebendazole</b> (if not given during prenatal))
+                    </p>
+                  </span>
+                </CardHeader>
+                <CardContent>
+                  {isMedicineLoading ? (
+                    <div className="p-4 flex justify-center items-center space-y-4">
+                      <p className="text-center text-red-600">Loading medicines...</p>
+                    </div>
+                  ) : (
+                    <MedicineDisplay
+                      medicines={medicineStocksOptions ?? []}
+                      initialSelectedMedicines={selectedMedicines}
+                      onSelectedMedicinesChange={handleSelectedMedicinesChange}
+                      itemsPerPage={itemsPerPage}
+                      currentPage={currentPage}
+                      onPageChange={handlePageChange}
+                    />
+                  )}
+                  
+                  <div className="flex px-3 mt-4">
+                    <div className="border rounded-lg p-3 w-full">
+                      <Label className="font-semibold">Given Medicines</Label>
+                      <div className="flex justify-center items-center p-3">
+                        {/* {selectedMedicines.map((medicine) => (
+                          <div key={medicine.id} className="flex justify-between">
+                            <span>{medicine.name}</span>
+                            <span>{medicine.dosage}</span>
+                          </div>
+                        ))} */}
+                        <Label className="text-black/70">No history of given medicines yet.</Label>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
             <div className="mt-10 mb-3">
               <Label className="text-lg">Schedule</Label>
@@ -483,7 +709,6 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
                   control={form.control}
                   name="postpartumTable.feeding"
                   options={[
-                    { id: "0", name: "Select" },
                     { id: "1", name: "Exclusive Breastfeeding" },
                     { id: "2", name: "Mixed Feeding" },
                     { id: "3", name: "Formula Feeding" }
@@ -494,7 +719,6 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
                   label=""
                   name="postpartumInfo.lochialDischarges"
                   options={[
-                    { id: "0", name: "Select" },
                     { id: "1", name: "Lochia Rubra" },
                     { id: "2", name: "Lochia Serosa" },
                     { id: "3", name: "Lochia Alba" }
@@ -519,10 +743,18 @@ export default function PostpartumFormFirstPg({ form, onSubmit }: { form: UseFor
             <div className="mt-8 sm:mt-auto flex justify-end">
               <Button type="submit" className="mt-4 mr-4 sm-w-32" disabled={addPostpartumMutation.isPending || !selectedPatient}>
                 {addPostpartumMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Record
+                Submit
               </Button>
             </div>
           </form>
+          <ConfirmationDialog
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            title="Postpartum Record Submission"
+            description="Are you sure you want to submit this postpartum record?"
+            onConfirm={handleFormSubmit}
+          >
+          </ConfirmationDialog>
         </Form>
       </div>
     </LayoutWithBack>

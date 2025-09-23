@@ -20,9 +20,10 @@ export default function HealthcareReports() {
       title: "BHW Report",
       icon: <Activity className="w-6 h-6 text-green-600" />,
       bgColor: "bg-gradient-to-br from-green-50 to-emerald-50",
-      description: "Monthly report of Barangay Health Workers activities and achievements",
-      link: "#"
-    }
+      description:
+        "Monthly report of Barangay Health Workers activities and achievements",
+      link: "/bhw-monthly-reports",
+    },
   ];
 
   const recipientLists = [

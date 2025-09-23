@@ -2,6 +2,7 @@ from django.urls import path
 from .views.position_views import *
 from .views.feature_views import *
 from .views.assignment_views import *
+from .views.permission_views import *
 from .views.staff_views import *
 
 urlpatterns = [
@@ -32,6 +33,9 @@ urlpatterns = [
     
     
 
-
-
+    # Permission Urls 
+    path('permission/', PermissionView.as_view(), name='permissions-list'),
+    path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
+    
+ 
 ]   

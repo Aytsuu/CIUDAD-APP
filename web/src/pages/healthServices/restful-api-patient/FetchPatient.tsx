@@ -27,7 +27,7 @@ export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
 
 export const fetchPatientRecords = async () => {
   try {
-    const response = await api2.get("patientrecords/patient/");
+    const response = await api2.get("patientrecords/patient/view/create/");
     const patientData = response.data;
 
     return {
@@ -54,7 +54,7 @@ export const fetchPatientRecords = async () => {
 };
 export const fetchPatient5yearsbelow = async () => {
   try {
-    const response = await api2.get("patientrecords/patient/");
+    const response = await api2.get("patientrecords/patient/view/create/");
     const patientData = response.data;
 
     // Filter patients aged 5 years and below (0-5 years)

@@ -13,9 +13,9 @@ export const transformPostpartumFormData = (
 
     // Basic postpartum record data
     ppr_lochial_discharges: getLochialDischargeName(formData.postpartumInfo?.lochialDischarges) || "Lochia Rubra",
-    ppr_vit_a_date_given: formData.postpartumInfo?.vitASupplement || "",
-    ppr_num_of_pads: formData.postpartumInfo?.noOfPadPerDay || "0",
-    ppr_mebendazole_date_given: formData.postpartumInfo?.mebendazole || "",
+    // ppr_vit_a_date_given: formData.postpartumInfo?.vitASupplement || "",
+    ppr_num_of_pads: formData.postpartumInfo?.noOfPadPerDay || 0,
+    // ppr_mebendazole_date_given: formData.postpartumInfo?.mebendazole || "",
     ppr_date_of_bf: formData.postpartumInfo?.dateBfInitiated || "",
     ppr_time_of_bf: formData.postpartumInfo?.timeBfInitiated || "",
 
@@ -128,11 +128,6 @@ export const validatePostpartumFormData = (
   // Validate next visit date
   if (!formData.postpartumInfo?.nextVisitDate) {
     errors.push("Next visit date is required")
-  }
-
-  // Validate required supplement dates
-  if (!formData.postpartumInfo?.vitASupplement) {
-    errors.push("Vitamin A supplement date is required")
   }
 
   if (!formData.postpartumInfo?.dateBfInitiated) {

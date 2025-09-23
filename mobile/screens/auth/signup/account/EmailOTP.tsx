@@ -5,7 +5,7 @@ import { ScrollView, View, Text, TouchableOpacity } from "react-native";
 import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { useSendOTP } from "../../queries/authPostQueries";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -35,9 +35,15 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
 
   // ====================== SIDE EFFECTS ======================
   React.useEffect(() => {
+    if (otpInput.every((val) => val == "")) return;
+
     if (otpInput?.length == 6 && otpInput.every((val) => val !== "")) verify();
     else setInvalidOTP(false);
   }, [otpInput]);
+
+  React.useEffect(() => {
+    if(!modalVisible) setInvalidOTP(false);
+  }, [modalVisible])
 
   // ====================== HANDLERS ======================
   const verify = async () => {
@@ -67,7 +73,10 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
     try {
       setIsSubmitting(true);
       const email = getValues("accountFormSchema.email");
-      const response = await sendEmailOTP(email);
+      const response = await sendEmailOTP({
+        email: email,
+        type: params?.signin ? "signin" : "signup"
+      });
 
       if (response) {
         setModalVisible(true);
@@ -140,7 +149,7 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
               </TouchableOpacity>
             </>
           ) : (
-            <>
+            !params.isChangeEmail && <>
               <Text className="text-sm">Don't have email?</Text>
               <TouchableOpacity onPress={skip}>
                 <Text className="text-primaryBlue text-sm">Skip Email</Text>
@@ -156,7 +165,7 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
         description={
           <View className="mb-4">
             <Text className="text-center text-gray-600 text-sm leading-relaxed">
-              Enter the 6-digit code sent to your phone number
+              Enter the 6-digit code sent to your email address
             </Text>
           </View>
         }

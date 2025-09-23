@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
-from ..abstract_classes import AbstractModels
+from abstract_classes import AbstractModels
 
 class Voter(models.Model):
     voter_id = models.BigAutoField(primary_key=True)
@@ -84,6 +84,15 @@ class Personal(AbstractModels):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
+
+class PersonalModification(AbstractModels):
+    pm_id = models.BigAutoField(primary_key=True)
+    pm_lname = models.CharField(max_length=50, null=True)
+    pm_fname = models.CharField(max_length=50, null=True)
+    pm_dob = models.DateField(null=True)
+    pm_sex = models.CharField(max_length=50, null=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
+
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)

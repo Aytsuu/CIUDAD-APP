@@ -11,7 +11,6 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
   // -------------------- HANDLERS ----------------------
   // Submit function
   const handleContinue = async () => {
-    console.log(tab_params?.form.getValues().familySchema)
     if (!(await tab_params?.form.trigger(["familySchema"]))) {
       showErrorToast("Please fill out all required fields to continue")
       return

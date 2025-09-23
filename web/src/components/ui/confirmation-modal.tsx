@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { X } from "lucide-react";
 
 export const variants: Record<string, string> = {
   default: "",
@@ -21,10 +22,13 @@ interface ConfirmationModalProps {
   title: string;
   description: React.ReactNode;
   actionLabel?: string;
+  cancelLabel?: string;
   type?: string;
   variant?: string;
   onClick?: () => void;
   open?: boolean;
+  onCancel?: () => void;
+  showCloseButton?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -32,25 +36,39 @@ export function ConfirmationModal({
   trigger,
   title,
   description,
+  cancelLabel = 'Cancel',
   actionLabel = 'Confirm',
-  type,
+  type = "button",
   variant,
   onClick,
   open,
+  onCancel,
+  showCloseButton = true,
   onOpenChange,
 }: ConfirmationModalProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
       <AlertDialogContent>
+        {showCloseButton && (
+          <div className="absolute right-4 top-4">
+            <AlertDialogCancel
+              className="border-0 p-1 h-auto hover:bg-transparent hover:opacity-70"
+              // Don't call onCancel here, just let it close the modal
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </AlertDialogCancel>
+          </div>
+        )}
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
-            type={(type as "button" | "submit" | "reset") || "button"}
+            type={(type as "button" | "submit" | "reset")}
             onClick={onClick}
             className={variants[variant ?? variants.default]}
           >

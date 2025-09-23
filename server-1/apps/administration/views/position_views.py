@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Count, F
 from ..models import Position, Staff
 from ..serializers.position_serializers import *
+from ..double_queries import PostQueries
 
 
 class PositionView(generics.ListCreateAPIView):
@@ -14,8 +15,8 @@ class PositionView(generics.ListCreateAPIView):
         staff_type = self.request.query_params.get('staff_type', None)
         
         if staff_type:
-            pos_category = 'Barangay Position' if staff_type == 'Barangay Staff' \
-                            else 'Health Position'
+            pos_category = 'BARANGAY POSITION' if staff_type.lower() == 'barangay staff' \
+                            else 'HEALTH POSITION'
             queryset = Position.objects.filter(pos_category=pos_category)
             return queryset
         return None
@@ -34,17 +35,22 @@ class PositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        instances = [
-            Position(**item)
-            for item in serializer.validated_data
-        ]
+        for item in serializer.validated_data:
+            instance = Position(**item)
+            instance.save()
 
-        created_instances = Position.objects.bulk_create(instances)
-
-        if len(created_instances) > 0:
-            return Response(status=status.HTTP_201_CREATED)
+        # Perform double query
+        double_queries = PostQueries()
+        response = double_queries.position(request.data)
+        if not response.ok:
+            try:
+                error_detail = response.json()
+            except ValueError:
+                error_detail = response.text
+            raise serializers.ValidationError({"error": error_detail})
         
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
+
 
 class PositionUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PositionBaseSerializer

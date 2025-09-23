@@ -6,7 +6,7 @@ def get_completed_followup_visits(pat_id):
 
     try:
         # Get all patient records for this patient
-        patient_records = PatientRecord.objects.filter(pat_id=pat_id)
+        patient_records = PatientRecord.objects.filter(pat_id__pat_id=pat_id)
         
         # Get only completed follow-up visits associated with these patient records
         completed_visits = FollowUpVisit.objects.filter(

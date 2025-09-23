@@ -66,8 +66,7 @@ venv/
 env/
 .venv/
 
-# Mobile
-**/android/
+/mobile/android/
 
 # Vite cache
 /web/.vite/

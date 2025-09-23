@@ -4,106 +4,53 @@ import {
   View,
   Image,
   TouchableOpacity,
-  Switch,
   Alert,
 } from "react-native";
-import { useState } from "react";
-import ScreenLayout from "../_ScreenLayout";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
+import PageLayout from "../_PageLayout";
+import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
+import Logout from '@/assets/icons/essentials/logout.svg'
+import Settings from '@/assets/icons/essentials/settings.svg'
+import TermsCondition from '@/assets/icons/essentials/termsCon.svg'
+import Star from '@/assets/icons/essentials/star.svg'
+import Service from '@/assets/icons/essentials/service.svg'
+import InformationCircle from '@/assets/icons/essentials/information-circle.svg'
+import { ChevronRight } from "@/lib/icons/ChevronRight";
+import { ConfirmationModal } from "@/components/ui/confirmationModal";
 
 export default () => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-  const router = useRouter();
   const { user, isLoading, logout } = useAuth();
   const { toast } = useToastContext();
 
-  type AccountSectionProps = {
-    title: string;
-    children: React.ReactNode;
-  };
-
-  const AccountSection = ({ title, children }: AccountSectionProps) => (
-    <View className="mb-6">
-      <Text className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-3 px-4">
-        {title}
-      </Text>
-      <View className="bg-white rounded-xl mx-4 shadow-sm">{children}</View>
-    </View>
-  );
-
-  type AccountItemProps = {
-    icon: React.ReactNode;
-    title: string;
-    subtitle?: string;
-    rightElement?: React.ReactNode;
-    onPress?: () => void;
-    showBorder?: boolean;
-  };
-
-  const AccountItem = ({
-    icon,
-    title,
-    subtitle,
-    rightElement,
-    onPress,
-    showBorder = true,
-  }: AccountItemProps) => (
-    <TouchableOpacity
-      className={`flex-row items-center px-4 py-4 ${
-        showBorder ? "border-b border-gray-100" : ""
-      }`}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-3">
-        <Text className="text-blue-600 text-lg">{icon}</Text>
-      </View>
-      <View className="flex-1">
-        <Text className="text-gray-900 text-base font-medium">{title}</Text>
-        {subtitle && (
-          <Text className="text-gray-500 text-sm mt-1">{subtitle}</Text>
-        )}
-      </View>
-      {rightElement || <Text className="text-gray-400 text-lg">›</Text>}
-    </TouchableOpacity>
-  );
-
-  interface SwitchItemProps {
-    icon: React.ReactNode;
-    title: string;
-    subtitle?: string;
-    value: boolean;
-    onValueChange: (value: boolean) => void;
-  }
-
-  const SwitchItem = ({
-    icon,
-    title,
-    subtitle,
-    value,
-    onValueChange,
-  }: SwitchItemProps) => (
-    <View className="flex-row items-center px-4 py-4 border-b border-gray-100">
-      <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-3">
-        <Text className="text-blue-600 text-lg">{icon}</Text>
-      </View>
-      <View className="flex-1">
-        <Text className="text-gray-900 text-base font-medium">{title}</Text>
-        {subtitle && (
-          <Text className="text-gray-500 text-sm mt-1">{subtitle}</Text>
-        )}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: "#e5e7eb", true: "#3b82f6" }}
-        thumbColor={value ? "#ffffff" : "#ffffff"}
-      />
-    </View>
-  );
+  const menuItems = [
+    {
+      name: "About",
+      icon: InformationCircle,
+      addIcon: Ciudad,
+      route: "/(account)/about"
+    },
+    {
+      name: "Rate our app",
+      icon: Star,
+      route: "/(account)/app-rating"
+    },
+    {
+      name: "Support",
+      icon: Service,
+      route: "/(account)/support"
+    },
+    {
+      name: "Terms & Condition",
+      icon: TermsCondition
+    },
+    {
+      name: "Settings",
+      icon: Settings,
+      route: "/(account)/settings/"
+    },
+  ]
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -126,151 +73,70 @@ export default () => {
       },
     ]);
   };
-
+  
   return (
-    <ScreenLayout
-      showBackButton={false}
-      showExitButton={false}
-      headerBetweenAction={<Text className="text-[13px]">Account</Text>}
+    <PageLayout 
+      leftAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Account</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView className="flex-1 bg-gray-50">
-        {/* Profile Header */}
-        <View className="bg-white px-4 py-6 mb-6">
-          <View className="flex-row items-center">
-            <View className="relative">
-              <Image
-                source={
-                  user?.profile_image
-                    ? { uri: user.profile_image }
-                    : require("@/assets/images/Logo.png")
-                }
-                className="w-20 h-20 rounded-full"
-                style={{ backgroundColor: '#f3f4f6' }}
-              />
-              <TouchableOpacity className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 rounded-full items-center justify-center">
-                <Text className="text-white text-sm">✎</Text>
-              </TouchableOpacity>
-            </View>
-            <View className="ml-4 flex-1">
-              <Text className="text-xl font-bold text-gray-900">
-                {user?.resident?.per?.per_fname} {" "}
-                {user?.resident?.per?.per_lname || ""}
-              </Text>
-              <Text className="text-gray-500 text-sm mt-1">{user?.email}</Text>
-              <Text className="text-gray-400 text-xs mt-1">
-                {user?.staff?.staff_type || "Resident"}
-              </Text>
-            </View>
+      <View className="flex-1 px-6 py-2">
+        <View className="flex-row border-b border-gray-100 pb-3 gap-4">
+          <View className="relative">
+            <Image
+              source={
+                user?.profile_image
+                  ? { uri: user.profile_image }
+                  : require("@/assets/images/Logo.png")
+              }
+              className="w-20 h-20 rounded-full"
+              style={{ backgroundColor: '#f3f4f6' }}
+            />
           </View>
-
-          <TouchableOpacity className="mt-4 bg-gray-100 rounded-lg px-4 py-3">
-            <Text className="text-center text-gray-700 font-medium">
-              Edit Profile
-            </Text>
-          </TouchableOpacity>
+          <View>
+              <Text className="text-lg text-gray-700 font-PoppinsMedium mb-2">Hi, {user?.personal?.fname}</Text>
+              <Text className="text-sm text-gray-500">{user?.phone}</Text>
+              <Text className="text-sm text-gray-500" >{user?.email}</Text>
+          </View>
         </View>
-
-        {/* Account Settings */}
-        <AccountSection title="Account">
-          <AccountItem
-            icon="👤"
-            title="Personal Information"
-            subtitle="Update your details and preferences"
-            onPress={() => console.log("Personal Info")}
-          />
-          <AccountItem
-            icon="🔒"
-            title="Privacy & Security"
-            subtitle="Password, 2FA, and security settings"
-            onPress={() => console.log("Privacy")}
-          />
-        </AccountSection>
-
-        {/* Preferences */}
-        <AccountSection title="Preferences">
-          <SwitchItem
-            icon="🔔"
-            title="Push Notifications"
-            subtitle="Get alerts about updates and messages"
-            value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
-          />
-          <SwitchItem
-            icon="🌙"
-            title="Dark Mode"
-            subtitle="Switch to dark theme"
-            value={darkModeEnabled}
-            onValueChange={setDarkModeEnabled}
-          />
-        </AccountSection>
-
-        {/* Support */}
-        <AccountSection title="Support">
-          <AccountItem
-            icon="❓"
-            title="Help Center"
-            subtitle="FAQs and troubleshooting"
-            onPress={() => console.log("Help")}
-          />
-          <AccountItem
-            icon="💬"
-            title="Contact Support"
-            subtitle="Get help from our team"
-            onPress={() => console.log("Contact")}
-          />
-          <AccountItem
-            icon="⭐"
-            title="Rate App"
-            subtitle="Share your feedback"
-            onPress={() => console.log("Rate")}
-            showBorder={false}
-          />
-        </AccountSection>
-
-        {/* About */}
-        <AccountSection title="About">
-          <AccountItem
-            icon="📄"
-            title="Terms of Service"
-            onPress={() => console.log("Terms")}
-          />
-          <AccountItem
-            icon="🔐"
-            title="Privacy Policy"
-            onPress={() => console.log("Privacy Policy")}
-          />
-          <AccountItem
-            icon="ℹ️"
-            title="App Version"
-            subtitle="1.2.3"
-            rightElement={null}
-            showBorder={false}
-          />
-        </AccountSection>
-
-        {/* Sign Out */}
-        <View className="mx-4 mb-20">
-          <TouchableOpacity
-            className={`rounded-xl px-4 py-4 ${
-              isLoading ? "bg-gray-200" : "bg-red-50"
-            }`}
-            onPress={handleSignOut}
-            // disabled={isLoading}
-            activeOpacity={0.7}
-          >
-            <Text 
-              className={`text-center text-base font-medium ${
-                isLoading ? "text-gray-500" : "text-red-600"
-              }`}
+        <View className="flex-1 gap-3 mt-5">
+          {menuItems.map((item: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              className="flex-row items-center justify-between py-3"
+              activeOpacity={1}
+              onPress={() => item.route && router.push(item.route)}
             >
-              {isLoading ? "Signing Out..." : "Sign Out"}
-            </Text>
-          </TouchableOpacity>
+              <View className="flex-row items-center gap-2">
+                <item.icon width={35} height={20}/>
+                <Text className="text-[14px] text-gray-800">{item.name}</Text>
+                {item.addIcon && <item.addIcon width={40} height={30}/>}
+              </View>
+              <ChevronRight className="text-primaryBlue"/>
+            </TouchableOpacity>
+          ))}
+          
+          <ConfirmationModal 
+            trigger={
+              <TouchableOpacity
+                className="flex-row items-center justify-between"
+                activeOpacity={1}
+              >
+                <View className="flex-row items-center gap-2 py-3">
+                  <Logout width={35} height={20}/>
+                  <Text className="text-[14px] text-gray-800">Sign Out</Text>
+                </View>
+                <ChevronRight className="text-primaryBlue"/>
+              </TouchableOpacity>
+            }     
+            title="Confirmation"
+            description="Are you sure you want to sign out?"    
+            variant="destructive" 
+            onPress={handleSignOut}
+          />
+          
         </View>
-
-        {/* Bottom Spacing */}
-        <View className="h-4" />
-      </ScrollView>
-    </ScreenLayout>
+      </View>
+    </PageLayout>
   );
 };

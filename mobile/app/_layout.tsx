@@ -55,6 +55,7 @@ export default function RootLayout() {
             <StatusBar backgroundColor="transparent" style='dark'/>
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'slide_from_right' }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
@@ -62,7 +63,6 @@ export default function RootLayout() {
               <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
-              <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
