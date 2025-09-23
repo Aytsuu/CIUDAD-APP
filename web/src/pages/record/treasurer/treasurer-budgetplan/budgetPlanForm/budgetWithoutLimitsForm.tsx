@@ -37,14 +37,11 @@ function CreateBudgetPlanWithoutLimits({
     { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle" },
     { name: "fidelityBond", label: "Fidelity Bond Premiums" },
     { name: "insuranceExpense", label: "Insurance Expenses" },
-    { name: "gadProg", label: "GAD Program" },
-    { name: "seniorProg", label: "Senior Citizen/ PWD Program" },
     { name: "juvJustice", label: "BCPC (Juvenile Justice System)" },
     { name: "badacProg", label: "BADAC Program" },
     { name: "nutritionProg", label: "Nutrition Program" },
     { name: "aidsProg", label: "Combating AIDS Program" },
     { name: "assemblyExpenses", label: "Barangay Assembly Expenses" },
-    { name: "disasterProg", label: "Disaster Response Program" },
     { name: "capitalOutlays", label: "Total Capital Outlays"},
   ]
 

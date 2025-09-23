@@ -239,7 +239,7 @@ function BudgetPlan() {
                         />
                     </div>
 
-                    {showAddButton && (
+                    {showAddButton && fetchedData.length != 0 ? (
                         <ConfirmationModal
                             trigger={<Button>+ Add New</Button>}
                             title="Cloning Confirmation"
@@ -262,6 +262,16 @@ function BudgetPlan() {
                                 });
                             }}
                         />
+                    ): (
+                        <Button 
+                            onClick={() => {
+                                    navigate("/budgetplan-forms", { 
+                                        state: { 
+                                            shouldClone: false
+                                        } 
+                                    });
+                                }}
+                        >+ Add New</Button>
                     )}
                 </div>
 
