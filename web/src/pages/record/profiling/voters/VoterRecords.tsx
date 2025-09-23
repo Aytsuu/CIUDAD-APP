@@ -7,11 +7,12 @@ import React from "react";
 import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { FileDown, Loader2, Search, Users } from "lucide-react";
+import { FileDown, Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { voterColumns } from "./VoterColumns";
 import { useVoterTable } from "../queries/profilingFetchQueries";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function VoterRecords() {
   // ================== STATE INITIALIZATION ==================
@@ -103,7 +104,7 @@ export default function VoterRecords() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Spinner size="lg" />
                 <span className="ml-2 text-gray-600">Loading voters...</span>
               </div>
             )}
