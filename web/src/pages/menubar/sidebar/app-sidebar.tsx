@@ -366,7 +366,7 @@ export function AppSidebar() {
             { title: "Household", url: "/profiling/household" },
           ],
         },
-        { title: "Voters", url: "/profiling/voters" },
+        ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff" ? [{ title: "Voters", url: "/profiling/voters" },
         {
           title: "Business",
           url: "/profiling/business/record",
@@ -376,7 +376,7 @@ export function AppSidebar() {
               url: "/profiling/business/record/respondent",
             },
           ],
-        },
+        }] : []),
       ],
     }] : []),
     ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
