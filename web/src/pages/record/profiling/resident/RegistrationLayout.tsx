@@ -23,6 +23,7 @@ import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { useDeleteRequest } from "../queries/profilingDeleteQueries";
 import { useUpdateAccount } from "../queries/profilingUpdateQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
+import { BeforeUnloadDialog, useBeforeUnload } from "@/components/ui/before-unload-dialog";
 
 export default function RegistrationLayout() {
   // --------------- STATE INITIALIZATION ------------------
@@ -42,6 +43,29 @@ export default function RegistrationLayout() {
     resolver: zodResolver(CompleteResidentProfilingSchema),
     defaultValues: generateDefaultValues(CompleteResidentProfilingSchema)
   })
+
+  // Check if user has unsaved changes based on form state and progress
+  const hasUnsavedChanges = React.useMemo(() => {
+    if (isSubmitting) return false; // Don't show dialog during submission
+    
+    // Check if user has started filling any form data
+    const formValues = registrationForm.getValues();
+    const defaultValues = generateDefaultValues(CompleteResidentProfilingSchema);
+    
+    // Check if any form fields have been modified from defaults
+    const hasFormChanges = JSON.stringify(formValues) !== JSON.stringify(defaultValues);
+    
+    // Check if user has made progress (completed any steps or moved beyond step 1)
+    const hasProgress = completed.size > 0 || currentStep > 1;
+    
+    return hasFormChanges || hasProgress;
+  }, [registrationForm.watch(), completed, currentStep, isSubmitting]);
+
+  // Initialize before unload protection
+  const {
+    handleConfirmLeave,
+    handleCancelLeave,
+  } = useBeforeUnload(hasUnsavedChanges);
 
   const registrationSteps = [
     { id: 1, label: "Account", minProgress: 20, icon: CircleUserRound, onClick: (id: number) => handleProgressSelection(id) },
@@ -123,6 +147,9 @@ export default function RegistrationLayout() {
       // Success feedback
       showSuccessToast("Successfully added all profile.")
       registrationForm.reset();
+      // Reset unsaved changes state on successful submission
+      setCompleted(new Set());
+      setCurrentStep(1);
       safeNavigate.back();
 
     } catch (err) {
@@ -167,6 +194,9 @@ export default function RegistrationLayout() {
 
       showSuccessToast("Registration has been approved. New record added.")
       registrationForm.reset();
+      // Reset unsaved changes state on successful submission
+      setCompleted(new Set());
+      setCurrentStep(1);
       safeNavigate.back();
 
     } catch (err) {
@@ -455,6 +485,13 @@ export default function RegistrationLayout() {
       description={params?.description}
     >
       {params?.origin === "create" ? create : approve}
+      
+      {/* Before Unload Dialog */}
+      <BeforeUnloadDialog
+        hasUnsavedChanges={hasUnsavedChanges}
+        onConfirmLeave={handleConfirmLeave}
+        onCancelLeave={handleCancelLeave}
+      />
     </LayoutWithBack>
   )
 

@@ -100,6 +100,7 @@ class CompleteRegistrationView(APIView):
     if account:
         self.create_account(account, rp)
 
+
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 
@@ -190,10 +191,10 @@ class CompleteRegistrationView(APIView):
         hh_id = generate_hh_no(),
         hh_nhts = house['nhts'],
         add = Address.objects.get_or_create(
-          add_province="Cebu",
-          add_city="Cebu City",
-          add_barangay="San Roque (ciudad)",
-          sitio=Sitio.objects.filter(sitio_id=data[1]).first(),
+          add_province="CEBU",
+          add_city="CEBU CITY",
+          add_barangay="SAN ROQUE (CIUDAD)",
+          sitio=Sitio.objects.filter(sitio_name=data[1]).first(),
           add_street=data[2]
         )[0],
         rp = rp,
