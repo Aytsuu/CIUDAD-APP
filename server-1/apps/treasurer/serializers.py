@@ -639,10 +639,12 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
 
     def get_resident_details(self, obj):
         return {
-            'per_fname': obj.rp.per_fname,
-            'per_lname': obj.rp.per_lname,
-            'per_contact': obj.rp.per_contact,
-            'per_email': obj.rp.per_email
+            'per_fname': getattr(obj.rp, 'per_fname', ''),
+            'per_lname': getattr(obj.rp, 'per_lname', ''),
+            'per_contact': getattr(obj.rp, 'per_contact', ''),
+            'per_email': getattr(obj.rp, 'per_email', ''),
+            'per_dob': getattr(obj.rp, 'per_dob', None),
+            'per_disability': getattr(obj.rp, 'per_disability', None),
         }
 
     def get_invoice(self, obj):
@@ -755,10 +757,12 @@ class ResidentNameSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='per.per_fname')
     last_name = serializers.CharField(source='per.per_lname')
     full_name = serializers.SerializerMethodField()
+    per_dob = serializers.DateField(source='per.per_dob', allow_null=True)
+    per_disability = serializers.CharField(source='per.per_disability', allow_null=True)
 
     class Meta:
         model = ResidentProfile
-        fields = ['rp_id', 'per_id', 'first_name', 'last_name', 'full_name']
+        fields = ['rp_id', 'per_id', 'first_name', 'last_name', 'full_name', 'per_dob', 'per_disability']
     
     def get_full_name(self, obj):
         name_parts = [obj.per.per_lname, obj.per.per_fname]
