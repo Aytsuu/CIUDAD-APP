@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -46,6 +47,11 @@ import { showErrorToast } from "@/components/ui/toast"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Trash } from "lucide-react"
 
+
+interface AogResult {
+  weeks: number;
+  days: number;
+}
 
 // capitalization tailored for adding illness
 const capitalize = (str: string): string => {
@@ -262,7 +268,35 @@ export default function PrenatalFormFirstPg({
       }
     }
   }, [latestPrenatalData, latestPrenatalLoading, isFromIndividualRecord, activePregnancyId, setValue])
+  // Automatically calculate AOG when LMP changes
+  useEffect(() => {
+    const lmpValue = form.watch("presentPregnancy.pf_lmp");
+    if (lmpValue) {
+      const lmpDate = new Date(lmpValue);
+      if (!isNaN(lmpDate.getTime())) {
+        const { weeks, days } = calculateAog(lmpDate);
+        setValue("followUpSchedule.aogWeeks", weeks);
+        setValue("followUpSchedule.aogDays", days);
+      } else {
+        setValue("followUpSchedule.aogWeeks", undefined);
+        setValue("followUpSchedule.aogDays", undefined);
+      }
+    } else {
+      setValue("followUpSchedule.aogWeeks", undefined);
+      setValue("followUpSchedule.aogDays", undefined);
+    }
+  }, [form.watch("presentPregnancy.pf_lmp"), setValue]);
 
+  function calculateAog (lmp: Date, currentDate: Date = new Date()): AogResult {
+    const diffMs = currentDate.getTime() - lmp.getTime();
+
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    const weeks = Math.floor(diffDays / 7);
+    const days = diffDays % 7;
+
+    return { weeks, days };
+  }
 
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
@@ -389,7 +423,7 @@ export default function PrenatalFormFirstPg({
             goiter: undefined
           }
         },
-        assessedBy: { assessedby: "" },
+        assessedBy: { name: "", id: "" },
         prenatalCare: [],
       })
 
@@ -593,7 +627,7 @@ export default function PrenatalFormFirstPg({
       if (historyList?.length > 0) {
         const mappedData = historyList.map((history: any) => ({
           prevIllness: history.illness_name || history.ill?.illname || "N/A",
-          prevIllnessYr: history.year ? history.year : undefined,
+          prevIllnessYr: history.ill_date ? history.ill_date : undefined,
           ill_id: history.ill || null,
         }))
 

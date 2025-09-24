@@ -314,7 +314,8 @@ export const PrenatalFormSchema = z.object({
 
     // assessed by
     assessedBy: z.object({
-        assessedby: z.string().optional()
+        name: z.string().optional(),
+        id: z.string().optional()
     }),
 
     // prenatal care table

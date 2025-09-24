@@ -292,7 +292,21 @@ export function AppSidebar() {
 
     { title: "BHW Daily Notes", url: "/bhw/notes" },
     { title: "Patient Records", url: "/patientrecords" },
-    { title: "Forwarded Records", url: "/forwarded-records" },
+    {
+      title: "Forwarded Records",
+      url: "/",
+      items: [
+        {
+          title: "Child Immunization",
+          url: "/forwarded-records/child-health-immunization"
+        },
+        { title: "Vaccine Waitlist", url: "/forwarded-records/vaccine-waitlist" },
+        {
+          title: "Medical Consultaion",
+          url: "/forwarded-records/medical-consultation"
+        }
+      ]
+    },
 
     {
       title: "Services",

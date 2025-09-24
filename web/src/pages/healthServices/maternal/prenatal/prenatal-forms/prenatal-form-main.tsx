@@ -164,6 +164,7 @@ export default function PrenatalForm() {
       pf_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
       previous_complications: forceCapitalize(data.medicalHistory.previousComplications) || null,
+      staff_id: data.assessedBy.id ?? "",
 
       // spouse section
       spouse_data: spouseData,
