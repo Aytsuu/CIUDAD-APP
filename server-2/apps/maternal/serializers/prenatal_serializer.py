@@ -1137,4 +1137,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrenatalAppointmentRequest
-        fields = ['requested_at', 'confirmed_at', 'rp_id', 'pat_id']
+        fields = ['requested_at', 'confirmed_at', 'status', 'rp_id', 'pat_id']
+        extra_kwargs = {
+            'pat_id': {'required': False, 'allow_null': True},
+        }

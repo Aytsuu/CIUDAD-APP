@@ -164,7 +164,6 @@ export default function MyVaccinationRecordsScreen() {
   const { user } = useAuth();
   const rp_id = user?.rp;
 
-  // Fetch patient data using resident id (useQuery pattern)
   const {
     data: patientData,
     isLoading: isPatientLoading,
