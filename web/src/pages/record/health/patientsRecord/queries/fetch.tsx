@@ -118,4 +118,3 @@ export const useCheckPatientExists = (rp_id: string) => {
 		staleTime: 300000, // 5 minutes
 	})
 }
-

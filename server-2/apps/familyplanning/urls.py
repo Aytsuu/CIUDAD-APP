@@ -5,9 +5,9 @@ from .views import *
 from .mappings.mappings import *
 
 urlpatterns = [
-    path('monthly-list/', get_monthly_fp_list, name='monthly-fp-list'),
+    # path('monthly-list/', get_monthly_fp_list, name='monthly-fp-list'),
     path('illnesses/create_or_get/', get_or_create_illness, name='create_or_get_illness'),
-    path('familyplanning/illnesses/by_ids/', get_illnesses_by_ids, name='get_illnesses_by_ids'),
+    # path('familyplanning/illnesses/by_ids/', get_illnesses_by_ids, name='get_illnesses_by_ids'),
     path('last-previous-pregnancy/<str:patient_id>/', get_last_previous_pregnancy, name='last-pregnancy'),
     path('patient-details/<str:patient_id>/', get_patient_details_data, name='get_patient_details'),
     path('monthly-report/<int:year>/<int:month>/', get_detailed_monthly_fp_report, name='monthly-fp-report'),
@@ -73,7 +73,8 @@ urlpatterns = [
     
     # NEW: Path for submitting a follow-up record
     path('submit-follow-up-form/', submit_follow_up_family_planning_form, name='submit_follow_up_family_planning_form'),
-    
+    path('overall-records/', PatientListForOverallTable.as_view(), name='fp-overall-list'),
+    path('fp-records/', PatientListForOverallTable.as_view(), name='fp-records-paginated'),
     # path('familyplanning/submit-followup/', submit_followup_family_planning_form, name='submit_followup_family_planning_form'),
     path('count/<str:pat_id>/', FPRecordCountView.as_view(), name='fp-records-count-by-patient'),
 

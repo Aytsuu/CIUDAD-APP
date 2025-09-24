@@ -1,38 +1,29 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, RefreshControl } from "react-native";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
-import { getFPPatientsCounts, getFPRecordsList } from "./GetRequest";
-import {
-  ArrowLeft,
-  Search,
-  FileText,
-  Loader2,
-  AlertCircle,
-  ChevronRight,
-  ChevronLeft,
-  Users,
-  UserCheck,
-  UserPlus
-} from "lucide-react-native";
-import PageLayout from "@/screens/_PageLayout";
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
+import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Users, UserCheck, UserPlus, RefreshCw } from "lucide-react-native";
+import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { router } from "expo-router";
+import { format } from "date-fns";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getFPPatientsCounts, getFPRecordsList } from "./GetRequest";
+import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 
 interface FPRecord {
   fprecord_id: number;
   patient_id: string;
-  client_id: string;
   patient_name: string;
   patient_age: number;
+  sex: string;
   client_type: string;
+  subtype: string | null;
   patient_type: string;
   method_used: string;
   created_at: string;
-  updated_at: string;
-  sex: string;
+  record_count: number;
 }
 
 interface FPPatientsCount {
@@ -41,24 +32,176 @@ interface FPPatientsCount {
   transient_fp_patients: number;
 }
 
+type TabType = "all" | "resident" | "transient";
+
+// Components
+const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
+  const getTypeConfig = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'resident':
+        return {
+          color: 'text-green-700',
+          bgColor: 'bg-green-100',
+          borderColor: 'border-green-200',
+        };
+      case 'transient':
+        return {
+          color: 'text-amber-700',
+          bgColor: 'bg-amber-100',
+          borderColor: 'border-amber-200',
+        };
+      default:
+        return {
+          color: 'text-gray-700',
+          bgColor: 'bg-gray-100',
+          borderColor: 'border-gray-200',
+        };
+    }
+  };
+
+  const typeConfig = getTypeConfig(type);
+  return (
+    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
+        {type}
+      </Text>
+    </View>
+  );
+};
+
+const TabBar: React.FC<{
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  counts: { all: number; resident: number; transient: number };
+}> = ({ activeTab, setActiveTab, counts }) => (
+  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+    <TouchableOpacity
+      onPress={() => setActiveTab('all')}
+      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+        All ({counts.all})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('resident')}
+      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Residents ({counts.resident})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('transient')}
+      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Transients ({counts.transient})
+      </Text>
+    </TouchableOpacity>
+  </View>
+);
+
+const FPRecordCard: React.FC<{
+  record: FPRecord;
+  onPress: () => void;
+}> = ({ record, onPress }) => {
+  const formatDateSafely = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy");
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+
+  return (
+    <TouchableOpacity
+      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
+      activeOpacity={0.8}
+      onPress={onPress}
+    >
+      {/* Header */}
+      <View className="p-4 border-b border-gray-100">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center mb-1">
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
+                <User color="white" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-lg text-gray-900">
+                  {record.patient_name}
+                </Text>
+                <Text className="text-gray-500 text-sm">ID: {record.patient_id}</Text>
+              </View>
+            </View>
+          </View>
+          <StatusBadge type={record.patient_type} />
+        </View>
+      </View>
+
+      {/* Details */}
+      <View className="p-4">
+        <View className="flex-row items-center mb-3">
+          <Calendar size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Created: <Text className="font-medium text-gray-900">{formatDateSafely(record.created_at)}</Text>
+          </Text>
+        </View>
+        <View className="flex-row items-center mb-3">
+          <FileText size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Client Type: <Text className="font-medium text-gray-900">{record.client_type}</Text>
+          </Text>
+        </View>
+        <View className="flex-row items-center mb-3">
+          <FileText size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Method: <Text className="font-medium text-gray-900">{record.method_used}</Text>
+          </Text>
+        </View>
+        <View className="flex-row items-center mb-3">
+          <Users size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Age: <Text className="font-medium text-gray-900">{record.patient_age}</Text> • {record.sex}
+          </Text>
+        </View>
+        <View className="flex-row items-center">
+          <FileText size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Records: <Text className="font-medium text-gray-900">{record.record_count}</Text>
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 export default function OverallFpRecordsScreen() {
-  const [pageSize, setPageSize] = useState<number>(10);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 10; // Match backend pagination size
 
   const queryClient = useQueryClient();
 
   const {
-    data: fpRecords = [],
+    data: fpData,
     isLoading,
     isError,
     error,
     refetch,
     isFetching
-  } = useQuery<FPRecord[], Error>({
-    queryKey: ["fpRecordsList"],
-    queryFn: getFPRecordsList,
+  } = useQuery<{ count: number; next: string | null; previous: string | null; results: FPRecord[] }, Error>({
+    queryKey: ["fpRecordsList", page, searchQuery, activeTab],
+    queryFn: () => getFPRecordsList({
+      page,
+      page_size: pageSize,
+      search: searchQuery || undefined,
+      // patient_type: activeTab !== "all" ? activeTab : undefined,
+    }),
   });
 
   const {
@@ -71,61 +214,46 @@ export default function OverallFpRecordsScreen() {
     queryFn: getFPPatientsCounts,
   });
 
-  const filteredRecords = useMemo(() => {
-    let filtered = fpRecords;
+  const fpRecords = fpData?.results || [];
+  const totalCount = fpData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
+  const filteredData = useMemo(() => {
+    let result = fpRecords;
     if (searchQuery) {
-      filtered = filtered.filter(
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      result = result.filter(
         (record) =>
-          record.patient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          record.client_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          record.client_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          record.method_used.toLowerCase().includes(searchQuery.toLowerCase())
+          record.patient_name.toLowerCase().includes(lowerCaseQuery) ||
+          record.patient_id.toLowerCase().includes(lowerCaseQuery)
       );
     }
-
-    if (selectedFilter !== "all") {
-      filtered = filtered.filter((record) => record.client_type === selectedFilter);
+    if (activeTab !== 'all') {
+      result = result.filter((record) =>
+        record.patient_type.toLowerCase() === activeTab
+      );
     }
+    return result;
+  }, [fpRecords, searchQuery, activeTab]);
 
-    return filtered;
-  }, [fpRecords, searchQuery, selectedFilter]);
+  const counts = useMemo(() => {
+    return {
+      all: totalCount,
+      resident: fpCounts?.resident_fp_patients || 0,
+      transient: fpCounts?.transient_fp_patients || 0,
+    };
+  }, [totalCount, fpCounts]);
 
-  const paginatedRecords = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredRecords.slice(startIndex, startIndex + pageSize);
-  }, [filteredRecords, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(filteredRecords.length / pageSize);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["fpPatientCounts"] });
+    } catch (e) {
+      console.error("Refetch error:", e);
     }
-  };
-
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleRefresh = () => {
-    refetch();
-    queryClient.invalidateQueries({ queryKey: ["fpPatientCounts"] });
-  };
-
-  const clientTypeOptions = [
-    { id: "all", name: "All Types" },
-    { id: "New Acceptor", name: "New Acceptor" },
-    { id: "Current User", name: "Current User" },
-  ];
-
-  const totalFPPatients = fpCounts?.total_fp_patients || 0;
-  const residentFPPatients = fpCounts?.resident_fp_patients || 0;
-  const transientFPPatients = fpCounts?.transient_fp_patients || 0;
-
-  // const residentFPPercentage = totalFPPatients > 0 ? Math.round((residentFPPatients / totalFPPatients) * 100) : 0;
-  // const transientFPPercentage = totalFPPatients > 0 ? Math.round((transientFPPatients / totalFPPatients) * 100) : 0;
+    setRefreshing(false);
+  }, [refetch, queryClient]);
 
   const handleRecordPress = (patientId: string) => {
     try {
@@ -138,260 +266,44 @@ export default function OverallFpRecordsScreen() {
     }
   };
 
-  const renderRecordItem = ({ item }: { item: FPRecord }) => (
-    <View className="px-4 mb-3">
-      <Card className="bg-white border border-slate-200">
-        <CardContent className="p-0">
-          <TouchableOpacity
-            onPress={() => handleRecordPress(item.patient_id)}
-            accessibilityLabel={`View records for ${item.patient_name}`}
-            className="p-4"
-          >
-            {/* Header */}
-            <View className="flex-row items-center justify-between mb-3">
-              <View className="flex-1">
-                <Text className="text-lg font-semibold text-slate-900 mb-1">
-                  {item.patient_name || "N/A"}
-                </Text>
-                <View className="flex-row items-center">
-                  <Badge 
-                    variant={item.client_type === "New Acceptor" ? "default" : "secondary"}
-                    className="mr-2"
-                  >
-                    <Text className="text-xs">{item.client_type || "N/A"}</Text>
-                  </Badge>
-                  <Text className="text-xs text-slate-500">
-                    ID: {item.client_id}
-                  </Text>
-                </View>
-              </View>
-              <View className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center">
-                <ChevronRight size={16} color="#64748b" />
-              </View>
-            </View>
-
-            {/* Info Grid */}
-            <View className="flex-row justify-between mb-3">
-              <View className="flex-1 mr-3">
-                <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
-                  Patient Type
-                </Text>
-                <Text className="text-sm text-slate-700 font-medium">
-                  {item.patient_type || "N/A"}
-                </Text>
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-xs text-slate-400 uppercase tracking-wide mb-1">
-                  Method
-                </Text>
-                <Text className="text-sm text-slate-700 font-medium">
-                  {item.method_used || "Not specified"}
-                </Text>
-              </View>
-            </View>
-
-            {/* Date */}
-            <View className="pt-3 border-t border-slate-100">
-              <Text className="text-xs text-slate-500">
-                Created: {new Date(item.created_at).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                })}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </CardContent>
-      </Card>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View>
-      {/* Stats Cards */}
-      <View className="px-4 py-4">
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="p-4">
-                <View className="flex-row items-center">
-                  <Users size={24} color="#3b82f6" />
-                  <View className="ml-3">
-                    <Text className="text-2xl font-bold text-blue-900">
-                      {totalFPPatients}
-                    </Text>
-                    <Text className="text-sm text-center text-blue-700">Patients</Text>
-                  </View>
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-          <View className="flex-1">
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-4">
-                <View className="flex-row items-center">
-                  <UserCheck size={24} color="#059669" />
-                  <View className="ml-3">
-                    <Text className="text-2xl font-bold text-green-900">
-                      {residentFPPatients}
-                    </Text>
-                    <Text className="text-sm text-green-700">
-                      {/* Resident ({residentFPPercentage}%) */}
-                      Resident
-                    </Text>
-                  </View>
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-          <View className="flex-1">
-            <Card className="bg-amber-50 border-amber-200">
-              <CardContent className="p-4">
-                <View className="flex-row items-center">
-                  <UserPlus size={24} color="#d97706" />
-                  <View className="ml-3">
-                    <Text className="text-2xl font-bold text-amber-900">
-                      {transientFPPatients}
-                    </Text>
-                    <Text className="text-sm text-amber-700">
-                      Transients
-                    </Text>
-                  </View>
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-        </View>
-      </View>
-
-      {/* Search & Filter */}
-      <View className="px-4 mb-4">
-        {/* Search Bar */}
-        <Card className="mb-3 bg-white border-slate-200">
-          <CardContent className="p-0">
-            <View className="flex-row items-center px-4 py-3">
-              <Search size={18} color="#94a3b8" />
-              <TextInput
-                className="flex-1 text-slate-900 ml-3"
-                placeholder="Search patients..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                accessibilityLabel="Search family planning records"
-              />
-            </View>
-          </CardContent>
-        </Card>
-
-        {/* Filter */}
-        <Card className="bg-white border-slate-200">
-          <CardContent className="p-2">
-            <View className="flex-row justify-between">
-              {clientTypeOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  onPress={() => handleFilterChange(option.id)}
-                  className={`flex-1 items-center py-2 rounded-lg mx-1 ${
-                    selectedFilter === option.id ? "bg-blue-600" : "bg-slate-50"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-semibold ${
-                      selectedFilter === option.id ? "text-white" : "text-slate-700"
-                    }`}
-                  >
-                    {option.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </CardContent>
-        </Card>
-      </View>
-    </View>
-  );
-
-  const renderEmpty = () => (
-    <View className="px-4">
-      <Card className="bg-white border-slate-200">
-        <CardContent className="items-center justify-center py-12">
-          <FileText size={48} color="#94a3b8" />
-          <Text className="text-lg font-medium text-slate-900 mt-4">
-            No records found
-          </Text>
-          <Text className="text-slate-500 text-center mt-2">
-            Try adjusting your search or filter criteria
-          </Text>
-        </CardContent>
-      </Card>
-    </View>
-  );
-
-  const renderFooter = () => {
-    if (filteredRecords.length === 0 || totalPages <= 1) return null;
-    
-    return (
-      <View className="px-4 mb-4">
-        <Card className="bg-white border-slate-200">
-          <CardContent className="p-4">
-            <View className="flex-row items-center justify-between">
-              <Button
-                onPress={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                variant={currentPage === 1 ? "secondary" : "default"}
-                className={currentPage === 1 ? "bg-slate-200" : "bg-blue-600"}
-              >
-                <Text
-                  className={`font-medium ${
-                    currentPage === 1 ? "text-slate-400" : "text-white"
-                  }`}
-                >
-                  Previous
-                </Text>
-              </Button>
-
-              <Text className="text-slate-600 font-medium">
-                {currentPage} of {totalPages}
-              </Text>
-
-              <Button
-                onPress={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                variant={currentPage === totalPages ? "secondary" : "default"}
-                className={currentPage === totalPages ? "bg-slate-200" : "bg-blue-600"}
-              >
-                <Text
-                  className={`font-medium ${
-                    currentPage === totalPages ? "text-slate-400" : "text-white"
-                  }`}
-                >
-                  Next
-                </Text>
-              </Button>
-            </View>
-          </CardContent>
-        </Card>
-      </View>
-    );
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
   if (isLoading || isLoadingCounts) {
-    return <LoadingState/>}
-  
+    return <LoadingState />;
+  }
 
   if (isError || isErrorCounts) {
     return (
-      <View className="flex-1 bg-slate-50 items-center justify-center px-6">
-        <AlertCircle size={24} color="#ef4444" />
-        <Text className="text-slate-900 font-medium mt-3 text-center">
-          Something went wrong
-        </Text>
-        <Text className="text-slate-500 text-sm mt-1 text-center">
-          {error?.message || errorCounts?.message}
-        </Text>
-        <Button onPress={handleRefresh} className="mt-4 bg-blue-600">
-          <Text className="text-white font-medium">Try Again</Text>
-        </Button>
-      </View>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="">Family Planning Records</Text>}
+      >
+        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+          <AlertCircle size={64} color="#EF4444" />
+          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
+          <Text className="text-gray-600 text-center mt-2 mb-6">
+            Failed to load data. Please check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
+          >
+            <RefreshCw size={18} color="white" />
+            <Text className="ml-2 text-white font-medium">Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </PageLayout>
     );
   }
 
@@ -400,33 +312,117 @@ export default function OverallFpRecordsScreen() {
       leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
-          <ChevronLeft size={24} className="text-slate-700" />
+          <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-slate-900 text-[13px]">Family Planning Records</Text>}
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Family Planning Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 bg-slate-50">
-        <FlatList
-          data={paginatedRecords}
-          renderItem={renderRecordItem}
-          keyExtractor={(item) => item.fprecord_id.toString()}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={renderEmpty}
-          ListFooterComponent={renderFooter}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isFetching}
-              onRefresh={handleRefresh}
-              tintColor="#3b82f6"
-              colors={["#3b82f6"]}
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        <View className="bg-white px-4 py-3 border-b border-gray-200">
+          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+            <Search size={20} color="#6B7280" />
+            <TextInput
+              className="flex-1 ml-3 text-gray-800 text-base"
+              placeholder="Search records..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
-          }
-        />
+          </View>
+        </View>
+
+        {/* Tab Bar */}
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {/* Records List */}
+        {fpRecords.length === 0 ? (
+          <View className="flex-1 justify-center items-center px-6">
+            <FileText size={64} color="#9CA3AF" />
+            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
+            <Text className="text-gray-600 text-center mt-2">
+              There are no family planning records available yet.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => `fp-${item.fprecord_id}`}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 16 }}
+            initialNumToRender={15}
+            maxToRenderPerBatch={20}
+            windowSize={21}
+            renderItem={({ item }) => (
+              <FPRecordCard
+                record={item}
+                onPress={() => handleRecordPress(item.patient_id)}
+              />
+            )}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-20">
+                <FileText size={48} color="#D1D5DB" />
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
+                  No records in this category
+                </Text>
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? `No ${activeTab} records match your search.`
+                    : `No ${activeTab} records found.`}
+                </Text>
+              </View>
+            )}
+            ListFooterComponent={() => (
+              totalPages > 1 ? (
+                <View className="px-4 mb-4">
+                  <Card className="bg-white border-slate-200">
+                    <CardContent className="p-4">
+                      <View className="flex-row items-center justify-between">
+                        <Button
+                          onPress={() => handlePageChange(page - 1)}
+                          disabled={page === 1 || !fpData?.previous}
+                          variant={page === 1 ? "secondary" : "default"}
+                          className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
+                        >
+                          <Text
+                            className={`font-medium ${
+                              page === 1 ? "text-slate-400" : "text-white"
+                            }`}
+                          >
+                            Previous
+                          </Text>
+                        </Button>
+
+                        <Text className="text-slate-600 font-medium">
+                          Page {page} of {totalPages}
+                        </Text>
+
+                        <Button
+                          onPress={() => handlePageChange(page + 1)}
+                          disabled={page === totalPages || !fpData?.next}
+                          variant={page === totalPages ? "secondary" : "default"}
+                          className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
+                        >
+                          <Text
+                            className={`font-medium ${
+                              page === totalPages ? "text-slate-400" : "text-white"
+                            }`}
+                          >
+                            Next
+                          </Text>
+                        </Button>
+                      </View>
+                    </CardContent>
+                  </Card>
+                </View>
+              ) : null
+            )}
+          />
+        )}
       </View>
     </PageLayout>
   );

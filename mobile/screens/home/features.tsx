@@ -49,13 +49,13 @@ export const features: FeatureType[] = [
   {
     name: "Health",
     icon: <Health width={30} height={30}/>,
-    route: "",
+    route: "/(health)",
     users: [User.resident]
   },
   {
     name: "Securado",
     icon: <Securado width={30} height={30}/>,
     route: "/(securado)",
-    users: [User.resident]
+    users: [User.resident]  
   },
 ]

@@ -39,9 +39,9 @@ const login = useCallback(
   );
 
   const sendEmailOTP = useCallback(
-    async (data: Record<string, any>) => {
+    async (emailAddress: string) => {
       try {
-        await sendOTPMutation.mutateAsync(data);
+        await sendOTPMutation.mutateAsync(emailAddress);
         return true;
       } catch {
         return false;

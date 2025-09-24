@@ -9,6 +9,7 @@ export const useDeleteARFile = () => {
         const res = await api.delete(`report/ar/file/${arf_id}/delete/`);
         return res.data;
       } catch (err) {
+        console.error(err);
         throw err;
       }
     }, 
@@ -31,6 +32,7 @@ export const useDeleteWARFile = () => {
         const res = await api.delete(`report/war/file/${warf_id}/delete/`);
         return res.data;
       } catch (err) {
+        console.error(err);
         throw err;
       }
     }, 

@@ -91,7 +91,7 @@ export default function ModificationRequest({ data } : {
   };
 
   const handleReject = () => {
-    
+    console.log("Rejected");
   };
 
   return (

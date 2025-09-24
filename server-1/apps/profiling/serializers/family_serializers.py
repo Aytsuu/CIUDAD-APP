@@ -81,9 +81,8 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
     )
 
     # Perform double query
-    request = self.context.get("request")
     double_queries = PostQueries()
-    response = double_queries.family(request.data)
+    response = double_queries.family(validated_data)
     if not response.ok:
       try:
           error_detail = response.json()

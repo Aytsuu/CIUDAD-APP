@@ -59,10 +59,9 @@ export const useSignupMutation = () => {
 export const useSendEmailOTPMutation = () => {
   const dispatch = useAppDispatch();
   
-  return useMutation<{ message: string }, Error, Record<string, any>>({
-    mutationFn: async (data) => {
-      console.log(data)
-      const response = await api.post('authentication/email/sendOtp/', data);
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: async (email) => {
+      const response = await api.post('authentication/email/sendOtp/', { email });
       return response.data;
     },
     onMutate: () => {

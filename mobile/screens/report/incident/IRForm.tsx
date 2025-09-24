@@ -1,10 +1,10 @@
 import React from "react"
 import _ScreenLayout from "@/screens/_ScreenLayout"
-import { Text, View, TouchableOpacity, ScrollView, Alert } from "react-native"
+import { Text, View, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native"
 import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { IncidentReportSchema } from "@/form-schema/report-schema"
+import { IncidentReportSchema } from "@/form-schema/incident-report-schema"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
@@ -17,6 +17,7 @@ import { useGetReportType } from "../queries/reportFetch"
 import { formatReportType } from "@/helpers/formatReportType"
 import { useRouter } from "expo-router"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
+import { CheckCircle } from "@/lib/icons/CheckCircle"
 import { AlertCircle } from "@/lib/icons/AlertCircle"
 import PageLayout from "@/screens/_PageLayout"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input"
@@ -32,33 +33,10 @@ type IncidentReport = z.infer<typeof IncidentReportSchema>
 interface FormErrors {
   media?: string
   otherType?: string
-  severity?: string
 }
 
-// Severity level options with colors
-const SEVERITY_LEVELS = [
-  { 
-    value: "low", 
-    label: "Low", 
-    description: "Minor issues, no immediate danger",
-    color: "#22C55E", // Green
-  },
-  { 
-    value: "medium", 
-    label: "Medium", 
-    description: "Moderate concern, requires attention",
-    color: "#F59E0B", // Amber
-  },
-  { 
-    value: "high", 
-    label: "High", 
-    description: "Serious issue, needs urgent response",
-    color: "#EF4444", // Red
-  }
-]
-
 export default function IncidentReportForm() {
-  // ================= STATE INITIALIZATION =================
+  // ================= HOOKS & STATE =================
   const router = useRouter()
   const { user } = useAuth();
   const { toast } = useToastContext()
@@ -66,7 +44,6 @@ export default function IncidentReportForm() {
   // Form state
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const [customIncidentType, setCustomIncidentType] = React.useState<string>("")
-  const [severityLevel, setSeverityLevel] = React.useState<string>("")
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [formErrors, setFormErrors] = React.useState<FormErrors>({})
 
@@ -94,7 +71,15 @@ export default function IncidentReportForm() {
   const selectedIncidentType = watch("ir_type")
   const isOtherTypeSelected = selectedIncidentType === "other"
 
-  // ================= SIDE EFFECTS =================
+  const hasUnsavedChanges = React.useMemo(() => {
+    const values = getValues()
+    return (
+      Object.values(values).some((value) => value !== "" && value !== undefined && value !== null) ||
+      selectedImages.length > 0
+    )
+  }, [getValues, selectedImages])
+
+  // ================= EFFECTS =================
   React.useEffect(() => {
     if (!isOtherTypeSelected) {
       setCustomIncidentType("")
@@ -108,29 +93,18 @@ export default function IncidentReportForm() {
     }
   }, [selectedImages])
 
-  React.useEffect(() => {
-    if (severityLevel) {
-      setFormErrors((prev) => ({ ...prev, severity: undefined }))
-    }
-  }, [severityLevel])
-
   // ================= VALIDATION =================
   const validateCustomFields = (): FormErrors => {
     const errors: FormErrors = {}
 
     // Validate media requirement
     if (selectedImages.length === 0) {
-      errors.media = "Attach at least one image to support your report"
+      errors.media = "Please attach at least one image to support your report"
     }
 
     // Validate custom incident type
     if (isOtherTypeSelected && !customIncidentType.trim()) {
-      errors.otherType = "Specify the type of incident"
-    }
-
-    // Validate severity level
-    if (!severityLevel) {
-      errors.severity = "Select a severity level"
+      errors.otherType = "Please specify the type of incident"
     }
 
     return errors
@@ -167,8 +141,7 @@ export default function IncidentReportForm() {
         ...restData,
         ir_involved: Number(ir_involved) || 0,
         ir_time,
-        ir_severity: severityLevel,
-        rp: user?.rp,
+        rp: user?.resident?.rp_id,
         files,
       }
 
@@ -182,7 +155,6 @@ export default function IncidentReportForm() {
       toast.success("Report submitted successfully")
       reset()
       setSelectedImages([])
-      setSeverityLevel("")
     } catch (error) {
       console.error("Submission error:", error)
 
@@ -202,8 +174,19 @@ export default function IncidentReportForm() {
     }
   }
 
-  const handleGoBack = () => { 
-    router.back()
+  const handleGoBack = () => {
+    if (hasUnsavedChanges) {
+      Alert.alert("Unsaved Changes", "You have unsaved changes. Are you sure you want to go back?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Discard Changes",
+          style: "destructive",
+          onPress: () => router.back(),
+        },
+      ])
+    } else {
+      router.back()
+    }
   }
 
   // ================= RENDER HELPERS =================
@@ -242,76 +225,6 @@ export default function IncidentReportForm() {
     </View>
   )
 
-  const renderSeverityLevelSection = () => (
-    <View className="mt-2 pt-4 border-t border-gray-200">
-      <Text className="text-md font-medium text-gray-700 mb-2">Severity Level</Text>
-      <Text className="text-sm text-gray-600 mb-4">
-        Please select the severity level that best describes this incident
-      </Text>
-      
-      <View className="space-y-3">
-        {SEVERITY_LEVELS.map((level) => (
-          <TouchableOpacity
-            key={level.value}
-            onPress={() => setSeverityLevel(level.value)}
-            className={`flex-row items-center p-4 rounded-lg `}
-            accessibilityLabel={`Select ${level.label} severity`}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: severityLevel === level.value }}
-          >
-            {/* Warning Icon with dynamic color */}
-            <View className="mr-3">
-              
-            </View>
-
-            {/* Content */}
-            <View className="flex-1">
-              <View className="flex-row items-center">
-                <Text 
-                  className="text-base font-semibold"
-                  style={{ 
-                    color: severityLevel === level.value ? level.color : '#374151' 
-                  }}
-                >
-                  {level.label}
-                </Text>
-              </View>
-              <Text className="text-sm text-gray-600 mt-1">
-                {level.description}
-              </Text>
-            </View>
-
-            {/* Radio Button */}
-            <View className="ml-3">
-              <View 
-                className={`
-                  w-5 h-5 rounded-full border-2 items-center justify-center
-                  ${severityLevel === level.value ? 'border-transparent' : 'border-gray-300'}
-                `}
-                style={{
-                  backgroundColor: severityLevel === level.value ? level.color : 'transparent',
-                  borderColor: severityLevel === level.value ? level.color : '#d1d5db'
-                }}
-              >
-                {severityLevel === level.value && (
-                  <View className="w-2 h-2 rounded-full bg-white" />
-                )}
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Error message */}
-      {formErrors.severity && (
-        <View className="flex-row items-center mt-2">
-          <AlertCircle size={16} className="text-red-500 mr-1" />
-          <Text className="text-red-500 text-xs">{formErrors.severity}</Text>
-        </View>
-      )}
-    </View>
-  )
-
   const renderMediaUploadSection = () => (
     <View className="mt-2 pt-4 border-t border-gray-200">
       <Text className="text-md font-medium text-gray-700 mb-2">Supporting Evidence</Text>
@@ -319,7 +232,7 @@ export default function IncidentReportForm() {
         className={`rounded-lg bg-white"
         }`}
       >
-        <Text className="text-sm text-gray-600 mb-6">Please attach photos to support your report (up to 5 photos)</Text>
+        <Text className="text-sm text-gray-600 mb-3">Please attach photos to support your report (up to 5 photos)</Text>
         <MediaPicker
           selectedImages={selectedImages}
           setSelectedImages={setSelectedImages}
@@ -364,7 +277,13 @@ export default function IncidentReportForm() {
       headerTitle={<Text className="text-black text-[13px]">Report an Incident</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-6 py-2">
+      <ScrollView
+        className="flex-1 px-6 py-2"
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        overScrollMode="never"
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Form Fields */}
         <View className="flex-1 gap-2">
           {/* Incident Type Selection */}
@@ -410,11 +329,8 @@ export default function IncidentReportForm() {
             label="Additional Details"
             control={control}
             name="ir_add_details"
-            placeholder="Provide additional details (Mag bigay ng iba pang mga detalye)"
+            placeholder="Provide additional details (Mag bigay nang iba pang mga detalye)"
           />
-
-          {/* Severity Level Section */}
-          {renderSeverityLevelSection()}
 
           {/* Media Upload */}
           {renderMediaUploadSection()}
@@ -432,7 +348,7 @@ export default function IncidentReportForm() {
             Your report will be reviewed by our team within 24 hours
           </Text>
         </View>
-      </View>
+      </ScrollView>
       <LoadingModal 
         visible={isSubmitting}
       />

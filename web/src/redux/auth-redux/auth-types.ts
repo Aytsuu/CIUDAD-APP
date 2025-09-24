@@ -15,7 +15,7 @@ export interface AuthState {
     isLoading: boolean;
     error: string | null;
     otpSent: boolean;
-    email: Record<string, any> | null;
+    email: string | null;
 }
 
 export interface LoginCredentials {

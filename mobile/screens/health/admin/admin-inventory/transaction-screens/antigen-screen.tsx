@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAntigenTransactions } from "../restful-api/transaction/fetchqueries";
 
 // Define types based on API response

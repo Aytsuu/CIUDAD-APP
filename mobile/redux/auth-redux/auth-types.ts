@@ -1,11 +1,9 @@
 export interface User {
     acc_id: string;
     email: string;
-    phone: string;
+    username?: string;
     profile_image?: string;
-    personal: Record<string, any>;
-    br?: string
-    rp?: string
+    resident?: Record <string, any>;
     staff?: Record<string, any>;
 }
 
@@ -17,7 +15,7 @@ export interface AuthState {
     error: string | null;
     hasCheckedAuth: boolean;
     otpSent: boolean;
-    email: Record<string, any> | null;
+    email: string | null;
     phone: string | null;
 }
 
@@ -35,7 +33,7 @@ export interface SignupCredentials {
 
 export interface TokenResponse {
     access_token: string;
-    refresh: string;
+    // refresh_token: string;
     user: User;
 }
 

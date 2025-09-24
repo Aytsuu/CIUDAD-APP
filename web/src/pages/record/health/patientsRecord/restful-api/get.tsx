@@ -50,7 +50,7 @@ export const getPatients = async (filters: PatientFilters = {}) => {
 // fetch patient details
 export const getPatientDetails = async (patientId: string) => {
 	try {
-		const res = await api2.get(`patientrecords/patient/${patientId}/`)
+		const res = await api2.get(`patientrecords/patients/${patientId}/`)
 		return res.data;
 	} catch (error) {
 		console.error("Error fetching patient:", error)

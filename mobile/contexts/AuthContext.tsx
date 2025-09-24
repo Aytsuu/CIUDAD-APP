@@ -2,6 +2,8 @@ import { useCallback, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "@/redux/redux";
 import {  useLoginMutation,
   useSignupMutation,
+  useSendOTPMutation,
+  useVerifyOTPMutation,
   useSendEmailOTPMutation,
   useVerifyEmailOTPMutation,
   useLogoutMutation } from "@/redux/auth-redux/useAuthMutation";
@@ -26,6 +28,8 @@ export const useAuth = () => {
   // Mutations
   const loginMutation = useLoginMutation();
   const signupMutation = useSignupMutation();
+  const sendOTPMutation = useSendOTPMutation();
+  const verifyOTPMutation = useVerifyOTPMutation();
   const sendEmailOTPMutation = useSendEmailOTPMutation();
   const verifyEmailOTPMutation = useVerifyEmailOTPMutation();
   const logoutMutation = useLogoutMutation();
@@ -71,10 +75,37 @@ export const useAuth = () => {
     [signupMutation]
   );
 
-  const sendEmailOTP = useCallback(
-    async (data: Record<string, any>) => {
+  const sendOTP = useCallback(
+    async (phoneNumber: string) => {
+      console.log('📱 Sending OTP to:', phoneNumber);
       try {
-        await sendEmailOTPMutation.mutateAsync(data);
+        await sendOTPMutation.mutateAsync(phoneNumber);
+        return true;
+      } catch (err: any){
+        return false;
+      }
+    },
+    [sendOTPMutation]
+  );
+
+  const verifyOTP = useCallback(
+    async (phone: string, otp: string) => {
+      console.log('🔐 Verifying OTP for:', phone);
+      try {
+        const result = await verifyOTPMutation.mutateAsync({ phone, otp });
+        return result.user;
+      } catch {
+        return null;
+      }
+    },
+    [verifyOTPMutation]
+  );
+
+  const sendEmailOTP = useCallback(
+    async (emailAddress: string) => {
+      console.log('📧 Sending Email OTP to:', emailAddress);
+      try {
+        await sendEmailOTPMutation.mutateAsync(emailAddress);
         return true;
       } catch (err){
         throw err;
@@ -116,6 +147,8 @@ export const useAuth = () => {
     isLoading: isLoading || 
                loginMutation.isPending || 
                signupMutation.isPending ||
+               sendOTPMutation.isPending || 
+               verifyOTPMutation.isPending ||
                sendEmailOTPMutation.isPending || 
                verifyEmailOTPMutation.isPending || 
                logoutMutation.isPending ||
@@ -127,6 +160,8 @@ export const useAuth = () => {
     
     login,
     signUp,
+    sendOTP,
+    verifyOTP,
     sendEmailOTP,
     verifyEmailOTP,
     logout,
@@ -135,6 +170,8 @@ export const useAuth = () => {
     
     loginLoading: loginMutation.isPending,
     signupLoading: signupMutation.isPending,
+    otpLoading: sendOTPMutation.isPending,
+    verifyOtpLoading: verifyOTPMutation.isPending,
     emailOtpLoading: sendEmailOTPMutation.isPending,
     verifyEmailOtpLoading: verifyEmailOTPMutation.isPending,
     logoutLoading: logoutMutation.isPending,

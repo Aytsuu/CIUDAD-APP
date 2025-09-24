@@ -13,7 +13,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 export default function MonthlyFirstAidRecords() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10); 
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter] = useState<string>("all");
 

@@ -53,7 +53,7 @@ export default function VoterRecords() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search residents by name..."
+                    placeholder="Search residents by name, ID, or sitio..."
                     className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}

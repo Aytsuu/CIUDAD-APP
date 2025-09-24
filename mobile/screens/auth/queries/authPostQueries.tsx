@@ -133,6 +133,7 @@ export const useVerifyFamily = () => {
 }
 
 export const useSendOTP = () => {
+  const { toast } = useToastContext();
   const { setError } = useRegistrationFormContext();
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {

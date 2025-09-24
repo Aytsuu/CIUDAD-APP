@@ -63,8 +63,6 @@ class FamilyTableView(generics.ListCreateAPIView):
                 ),
                 Value('')
             )
-        ).filter(
-           members__gt=0
         ).only(
             'fam_id',
             'fam_date_registered',
@@ -111,9 +109,7 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
   
   def get_queryset(self):
     household_no = self.kwargs['hh']
-    return Family.objects.annotate(
-       members=Count('family_compositions')
-    ).filter(hh=household_no, members__gt=0)
+    return Family.objects.filter(hh=household_no)
   
 class FamilyUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [AllowAny]

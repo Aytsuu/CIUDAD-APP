@@ -92,7 +92,7 @@ export default function ReportHistory() {
     const time = item.ir_time || 'an unspecified time';
     const involved = item.ir_involved || 'unknown parties';
     
-    return `Incident occurred in ${area} on ${date} at ${time}. The incident involved ${involved}.`;
+    return `A ${type.toLowerCase()} occurred in ${area} on ${date} at ${time}. The incident involved ${involved}.`;
   };
 
   // ============== RENDER HELPERS ==============

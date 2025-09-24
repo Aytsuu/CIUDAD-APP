@@ -1,30 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-  Modal,
-  TextInput,
-  FlatList,
-} from 'react-native';
+import { View,Text,TouchableOpacity,RefreshControl,Alert,Modal,TextInput,FlatList} from 'react-native';
 import { router } from 'expo-router';
-import {
-  ChevronLeft,
-  XCircle,
-  Package,
-  RefreshCw,
-  Trash2,
-  Search,
-  Pill,
-  Calendar,
-  Clock,
-  FileText,
-  AlertCircle,
-} from 'lucide-react-native';
+import { ChevronLeft,XCircle,Package,RefreshCw,Trash2,Search,Pill,Calendar,FileText,AlertCircle, } from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
@@ -57,8 +34,10 @@ type TabType = "pending" | "cancelled" | "ready_for_pickup" | "completed";
 
 // API Functions
 const fetchUserAllMedicineItems = async (userId: string, isResident: boolean = true): Promise<MedicineRequestItem[]> => {
+
   const param = isResident ? `rp_id=${userId}&include_archived=true` : `pat_id=${userId}&include_archived=true`;
   const endpoint = isResident ? '/medicine/user-all-items/' : '/medicine/user-pending-items/';
+  
   const response = await api2.get(`${endpoint}?${param}`);
   const results = response.data.results || [];
   console.log('API Response (All Items):', results); // Debug: Check all statuses
@@ -313,12 +292,13 @@ const CancelModal: React.FC<{
   isPending: boolean;
 }> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending }) => {
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent>
       <View className="flex-1 justify-center items-center bg-black/50 p-4">
         <View className="bg-white rounded-lg w-full max-w-md p-6">
           <Text className="text-lg font-semibold text-gray-900 mb-2">Cancel Request</Text>
           <Text className="text-sm text-gray-600 mb-4">
-            Are you sure you want to cancel "{item?.med_details?.med_name}"? Provide a reason:
+            Are you sure you want to cancel? 
+            <Text className="font-bold text-red-700"> This cannot be undone.</Text>
           </Text>
           <TextInput
             value={cancellationReason}
@@ -466,7 +446,7 @@ const MedicineRequestTracker: React.FC = () => {
         }
         headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Medicine Requests</Text>}
       >
-        <View className="flex-1 justify-center items-center bg-gray-50">
+        <View className="flex-1 justify-center items-center mt-10">
           <Text className="text-gray-600">Please log in to view your medicine requests</Text>
         </View>
       </PageLayout>

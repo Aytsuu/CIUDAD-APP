@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/table/data-table"
-import { Search, FileDown, Archive, FileText } from "lucide-react"
+import { Search, FileDown, Archive } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { IRColumns } from "../ReportColumns"
@@ -14,7 +14,6 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { useGetIncidentReport } from "../queries/reportFetch"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useNavigate } from "react-router"
-import { Spinner } from "@/components/ui/spinner"
 
 export default function IRRecords() {
   const navigate = useNavigate();
@@ -108,30 +107,11 @@ export default function IRRecords() {
               </div>
             </div>
 
-            {/* Empty State */}
-            {!isLoadingIR && IRList.length === 0 && (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchQuery ? "No reports found" : "No reports yet"}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {searchQuery &&`No reports match "${searchQuery}". Try adjusting your search.`}
-                </p>
+            <div className="border-t overflow-hidden">
+              <div className="overflow-x-auto">
+                <DataTable columns={IRColumns()} data={IRList} isLoading={isLoadingIR} />
               </div>
-            )}
-            
-            {/* Loading State */}
-            {isLoadingIR && (
-              <div className="flex items-center justify-center py-12">
-                <Spinner size="md"/>
-                <span className="ml-2 text-gray-600">Loading incident reports...</span>
-              </div>
-            )}
-
-            {!isLoadingIR && IRList.length > 0 && (
-              <DataTable columns={IRColumns()} data={IRList} isLoading={isLoadingIR} />
-            )}
+            </div>
           </CardContent>
 
           {/* Pagination Section */}

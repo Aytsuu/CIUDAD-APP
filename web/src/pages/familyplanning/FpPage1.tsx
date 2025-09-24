@@ -118,12 +118,12 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!isPatientPreSelected) {
       const fetchPatients = async () => {
         setLoadingPatients(true)
         try {
-          const response = await api2.get("patientrecords/patient/")
+          const response = await api2.get("patientrecords/patients/")
           const formattedPatients = response.data.map((patient: any) => ({
             id: patient.pat_id?.toString() || "",
             name: (
@@ -154,9 +154,9 @@ export default function FamilyPlanningForm({
 
   useEffect(() => {
     if (age) {
-      if (age < 10 || age > 49) {
+      if (age < 13 || age > 49) {
         setIsAgeInvalid(true);
-        toast.warning("Patient's age is outside the recommended range (10-49 years) for family planning services. Proceed with caution or select another patient.");
+        toast.warning("Patient's age is outside the recommended age (13-49 years) for family planning services. Proceed with caution or select another patient.");
       } else {
         setIsAgeInvalid(false);
       }
@@ -172,7 +172,7 @@ export default function FamilyPlanningForm({
     setSelectedPatientId(id);
     try {
       // Fetch basic patient data
-      const response = await api2.get(`patientrecords/patient/${id}/`);
+      const response = await api2.get(`patientrecords/patients/${id}/`);
       const patientData = response.data;
 
       // Initialize default spouse info
@@ -214,23 +214,14 @@ export default function FamilyPlanningForm({
         full_address: patientData.address?.full_address || "",
       };
 
-      console.log("Address info extracted:", addressInfo); // Debug log
-
-      // Fetch additional data with error handling for each request
       const requests = [
         api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
       ];
-
-      const [
-        bodyMeasurementsResponse,
-        obsHistoryResponse,
-        lastPrevPregResponse,
-        personalResponse
-      ] = await Promise.all(requests);
-
+      const [bodyMeasurementsResponse,obsHistoryResponse,lastPrevPregResponse,personalResponse] = await Promise.all(requests);
+      console.log("Body measurement: " ,bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 
@@ -691,6 +682,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="No."
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -699,6 +691,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Street"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -707,6 +700,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Barangay"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -715,6 +709,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Municipality/City"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
                 <FormInput
                   control={form.control}
@@ -723,6 +718,7 @@ console.log("Gender type: ",effectiveGender)
                   placeholder="Province"
                   className="col-span-1"
                   {...inputProps}
+                  readOnly={true}
                 />
               </div>
             </div>

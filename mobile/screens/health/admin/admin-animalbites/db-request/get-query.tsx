@@ -124,17 +124,16 @@ export const usePatientRecordsByReferralId = (referralId: string) => {
 // NEW: Mutation hook for submitting animal bite referrals
 export const useSubmitAnimalBiteReferralMutation = () => {
   const queryClient = useQueryClient()
-  const { toast } = useToastContext();
   return useMutation({
     mutationFn: submitAnimalBiteReferral,
     onSuccess: () => {
       // Invalidate the query key that 'overall.tsx' uses to refetch data
       queryClient.invalidateQueries({ queryKey: ["animalbite-patient-summary"] })
       queryClient.invalidateQueries({ queryKey: ["animalbitePatientHistory"] }) // Also invalidate individual patient history queries
-      toast.success("Animal bite referral submitted successfully!")
+      console.log("Animal bite referral submitted successfully!")
     },
     onError: (error: any) => {
-      toast.error(`Failed to submit referral: ${error.message || "Unknown error"}`)
+      console.log(`Failed to submit referral: ${error.message || "Unknown error"}`)
     },
   })
 }

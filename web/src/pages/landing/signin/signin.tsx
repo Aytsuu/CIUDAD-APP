@@ -94,10 +94,7 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      await sendEmailOTP({
-        email: data.email,
-        type: "signin"
-      });
+      await sendEmailOTP(data.email);
 
       setVerificationData({ email: data.email });
       setCurrentStep("otp");

@@ -3,9 +3,8 @@ import React from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
 
 import type { FirstAidRecords, ApiItemWithStaff } from "../types"; // Adjust path if needed
-import { SearchInput } from "@/components/ui/search-input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useFirstAidTransactions } from "../restful-api/transaction/fetchqueries";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function FirstAidListScreen() {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -67,17 +66,8 @@ export default function FirstAidListScreen() {
 
   // --- LOADING SKELETON LOGIC ---
   if (isLoadingFirstAid) {
-    return (
-      <View className="w-full h-full p-4">
-        <Skeleton className="h-10 w-1/2 mb-3" />
-        <Skeleton className="h-7 w-3/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
-      </View>
-    );
+    return <LoadingState/>
   }
-  // --- END LOADING SKELETON LOGIC ---
-
   const renderFirstAidCard = ({ item }: { item: FirstAidRecords }) => (
     <TouchableOpacity
       className="bg-white rounded-lg shadow-sm p-4 mb-3 border border-gray-200"

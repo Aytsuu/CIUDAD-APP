@@ -75,7 +75,7 @@ def map_physical_exam_display_values(data):
         # Neck Examination
         "normal": "Normal",
         "neck_mass": "Neck Mass",
-        "enlarged_lymph_nodes": "Enlarged Lymph Nodes", 
+        "enlarged_lymph_nodes": "Enlarged Lymph Nodes",
         
         # Breast Examination
         "normal": "Normal",
@@ -100,7 +100,7 @@ def map_physical_exam_display_values(data):
         "breastExamination": display_map.get(data.get("breast_exam")),
         "abdomenExamination": display_map.get(data.get("abdomen_exam")),
         "extremitiesExamination": display_map.get(data.get("extremities_exam")),
-    } 
+    }
 
 # @api_view(['GET'])
 # def get_illness_list(request):

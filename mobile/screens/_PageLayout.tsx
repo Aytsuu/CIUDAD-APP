@@ -43,7 +43,7 @@ export default function PageLayout({
   footerBackgroundColor = 'bg-white',
   backgroundColor = 'bg-transparent',
   showScrollIndicator = true,
-  scrollIndicatorColor = 'bg-black/30',
+  scrollIndicatorColor = 'bg-primaryBlue',
   scrollIndicatorPosition = 'right',
 }: PageLayoutProps) {
   const scrollViewRef = useRef<ScrollView>(null)
@@ -238,7 +238,7 @@ export default function PageLayout({
           <View style={getScrollIndicatorPositionStyles()}>
             <TouchableOpacity
               onPress={handleScrollIndicatorPress}
-              className={`${scrollIndicatorColor} rounded-full`}
+              className={`${scrollIndicatorColor} rounded-full shadow-lg`}
               style={{
                 width: 45,
                 height: 45,

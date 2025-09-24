@@ -65,6 +65,8 @@ export default function ARRecords() {
     , [])
   ), [weeklyAR])
 
+  console.log(formatDate(now))
+
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
     if(isLoadingArReports) showLoading();
@@ -73,8 +75,9 @@ export default function ARRecords() {
   
   React.useEffect(() => {
     if(warThisMonth) {
-      setIsCreatable(warThisMonth?.every((war: any) => 
-        getWeekNumber(war.created_for) !== getWeekNumber(new Date().toISOString())
+      setIsCreatable(warThisMonth?.every((war: any) => {
+        getWeekNumber(war.created_for) !== getWeekNumber(formatDate(now) as string)
+      }
       ));
     }
   }, [warThisMonth]);
@@ -82,8 +85,6 @@ export default function ARRecords() {
   const onSelectedRowsChange = React.useCallback((rows: any[]) => {
     setSelectedRows(rows)
   }, [])
-
-  console.log(isCreatable)
 
   const handleCreateWAR = async () => {
     setIsSubmitting(true)
@@ -106,7 +107,7 @@ export default function ARRecords() {
 
           addWARComp(compositions, {
             onSuccess: () => {
-              showSuccessToast("Weekly accomplishment report created successfully");
+              showSuccessToast("Weekly AR created successfully");
               setIsCreatingWeeklyAR(false);
               setIsCreatable(false);
               setReset(true);
@@ -187,7 +188,7 @@ export default function ARRecords() {
                 ) : (
                   <Button onClick={() => setIsCreatingWeeklyAR(true)} className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Create Week {getWeekNumber(formatDate(now) as string)}
+                    Create Week {getWeekNumber(formatDate(now) as string)} AR
                   </Button>
                 )
               ) : (
