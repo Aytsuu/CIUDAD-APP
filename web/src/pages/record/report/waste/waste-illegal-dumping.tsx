@@ -379,6 +379,23 @@ function WasteIllegalDumping() {
     {
       accessorKey: "rep_status",
       header: "Report Status",
+      cell: ({row}) => (
+        <div className="flex justify-center">
+          {row.getValue("rep_status") === "resolved" ? (
+            <div className="flex-row items-center bg-green-50 px-2 py-1 rounded-full border border-green-600">
+              <div className="text-green-600 text-sm font-medium ml-1">Resolved</div>
+            </div>
+          ) : row.getValue("rep_status") === "cancelled" ? (
+            <div className="flex-row items-center bg-red-50 px-2 py-1 rounded-full border border-red-600">
+              <div className="text-red-600 text-sm font-medium ml-1">Cancelled</div>
+            </div>
+          ) : (
+            <div className="flex-row items-center bg-blue-50 px-3 py-1 rounded-full border border-primary">
+              <div className="text-primary text-sm font-medium">Pending</div>
+            </div>
+          )}               
+        </div>
+      )
     },
     {
       accessorKey: "rep_matter",
@@ -476,34 +493,32 @@ function WasteIllegalDumping() {
       <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Filter and Search Section */}
-      <div className='w-full flex justify-between mb-4'>
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input 
-              placeholder="Search..." 
-              className="pl-10 w-72 bg-white" 
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
-          <SelectLayout
-            className="bg-white"
-            label=""
-            placeholder="Filter"
-            options={filterOptions}
-            value={selectedFilterId}
-            onChange={(value) => {
-              setSelectedFilterId(value);
+      <div className='w-full flex flex-col sm:flex-row gap-4 mb-4'>
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+          <Input 
+            placeholder="Search..." 
+            className="pl-10 w-full bg-white" 
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-          />                             
+          />
         </div>
-      </div>                    
+
+        <SelectLayout
+          className="bg-white w-full sm:w-[200px]"
+          label=""
+          placeholder="Filter"
+          options={filterOptions}
+          value={selectedFilterId}
+          onChange={(value) => {
+            setSelectedFilterId(value);
+            setCurrentPage(1);
+          }}
+        />                             
+      </div>             
 
       <div className="w-full bg-white border-none"> 
         <div className="flex justify-between items-center p-4">
