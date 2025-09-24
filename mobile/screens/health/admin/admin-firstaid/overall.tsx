@@ -6,13 +6,13 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "rea
 import { Search, ChevronLeft, AlertCircle, Users, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { PaginationControls } from "../components/pagination-layout";
 import { useDebounce } from "@/hooks/use-debounce";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useMedicineRecords } from "../admin-medicinerecords/queries/fetch";
+import { api2 } from "@/api/api"; // Import your API instance
 
 interface FirstAidRecord {
   pat_id: string;
@@ -59,6 +59,32 @@ interface ApiResponse {
 }
 
 type TabType = "all" | "resident" | "transient";
+
+// Add the missing hook implementation
+const useFirstaid = (queryParams: any) => {
+  return useQuery({
+    queryKey: ["firstaidRecords", queryParams],
+    queryFn: async () => {
+      const { page, page_size, search, patient_type } = queryParams;
+      
+      // Build query string
+      const params = new URLSearchParams();
+      if (page) params.append('page', page.toString());
+      if (page_size) params.append('page_size', page_size.toString());
+      if (search) params.append('search', search);
+      if (patient_type) params.append('patient_type', patient_type);
+      
+      const queryString = params.toString();
+      const url = queryString 
+        ? `/firstaid/all-firstaid-record/?${queryString}`
+        : '/firstaid/all-firstaid-record/';
+      
+      const response = await api2.get(url);
+      return response.data;
+    },
+    // keepPreviousData: true,
+  });
+};
 
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   const getTypeConfig = (type: string) => {
@@ -192,18 +218,29 @@ export default function AllFirstAidRecords() {
     [currentPage, pageSize, debouncedSearchQuery, activeTab]
   );
 
-  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } =
-    useMedicineRecords(queryParams);
+  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useFirstaid(queryParams);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchQuery, activeTab]);
 
+  // Debug: Check what data is being returned
+  useEffect(() => {
+    console.log("API Response:", apiResponse);
+    console.log("Formatted Data:", formatFirstAidData());
+  }, [apiResponse]);
+
   const formatFirstAidData = useCallback((): FirstAidRecord[] => {
     if (!apiResponse?.results || !Array.isArray(apiResponse.results)) {
+      console.log("No results found in API response");
       return [];
     }
-    return apiResponse.results.map((record: any) => {
+    
+    console.log("Raw API results:", apiResponse.results);
+    
+    const formatted = apiResponse.results.map((record: any) => {
+      console.log("Processing record:", record);
+      
       const details = record.patient_details || {};
       const info = details.personal_info || {};
       const address = details.address || {};
@@ -212,13 +249,13 @@ export default function AllFirstAidRecords() {
           .filter((part) => part && part.trim().length > 0)
           .join(", ") || "";
 
-      return {
+      const formattedRecord = {
         pat_id: record.pat_id,
         fname: info.per_fname || "",
         lname: info.per_lname || "",
         mname: info.per_mname || "",
         sex: info.per_sex || "",
-        age: calculateAge(info.per_dob).toString(),
+        age: info.per_dob ? calculateAge(info.per_dob).toString() : "N/A",
         dob: info.per_dob || "",
         householdno: details.households?.[0]?.hh_id || "",
         street: address.add_street || "",
@@ -230,7 +267,13 @@ export default function AllFirstAidRecords() {
         address: addressString,
         firstaid_count: record.firstaid_count || 0,
       };
+      
+      console.log("Formatted record:", formattedRecord);
+      return formattedRecord;
     });
+    
+    console.log("Final formatted data:", formatted);
+    return formatted;
   }, [apiResponse?.results]);
 
   const formattedData = formatFirstAidData();
@@ -258,11 +301,40 @@ export default function AllFirstAidRecords() {
     setCurrentPage(page);
   }, []);
 
+  const handlePatientPress = useCallback((record: FirstAidRecord) => {
+    router.push({
+      pathname: "/admin/first-aid/individual",
+      params: {
+        patientData: JSON.stringify({
+          pat_id: record.pat_id,
+          patient_details: {
+            personal_info: {
+              per_fname: record.fname,
+              per_lname: record.lname,
+              per_mname: record.mname,
+              per_dob: record.dob,
+              per_sex: record.sex
+            },
+            address: {
+              add_street: record.street,
+              add_sitio: record.sitio,
+              add_barangay: record.barangay,
+              add_city: record.city,
+              add_province: record.province
+            },
+            pat_type: record.pat_type
+          }
+        })
+      }
+    });
+  }, []);
+
   if (isLoading && !formattedData.length) {
     return <LoadingState />;
   }
 
   if (isError) {
+    console.error("Error fetching first aid records:", error);
     return (
       <PageLayout
         leftAction={
@@ -325,7 +397,7 @@ export default function AllFirstAidRecords() {
 
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
-        <View className="px-4 flex-row items-center justify-between  mt-4">
+        <View className="px-4 flex-row items-center justify-between mt-4">
           <Text className="text-sm text-gray-600">
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of{" "}
             {totalCount} records
@@ -339,10 +411,12 @@ export default function AllFirstAidRecords() {
           <View className="flex-1 justify-center items-center px-6">
             <Pill size={64} color="#9CA3AF" />
             <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
-              No records found
+              {apiResponse ? "No records found" : "Loading..."}
             </Text>
             <Text className="text-gray-600 text-center mt-2">
-              There are no first aid records available yet.
+              {apiResponse 
+                ? "There are no first aid records available yet." 
+                : "Please wait while we load the records."}
             </Text>
           </View>
         ) : (
@@ -353,7 +427,9 @@ export default function AllFirstAidRecords() {
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ padding: 16 }}
-              renderItem={({ item }) => <FirstAidRecordCard record={item} onPress={() => {}} />}
+              renderItem={({ item }) => (
+                <FirstAidRecordCard record={item} onPress={() => handlePatientPress(item)} />
+              )}
               ListFooterComponent={
                 isFetching ? (
                   <View className="py-4 items-center">

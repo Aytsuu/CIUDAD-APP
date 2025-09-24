@@ -14,7 +14,8 @@ import { formatDate } from "@/helpers/dateHelper";
 export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
     accessorKey: "ir_id",
-    header: "Report No.",
+    header: "No.",
+    size: 50
   },
   {
     accessorKey: "ir_area",

@@ -15,7 +15,26 @@ import { FirstAidRecord } from "../admin/admin-firstaid/types";
 import { useLocalSearchParams } from "expo-router";
 import { getPatientById, getPatientByResidentId } from "../animalbites/api/get-api";
 
-// Reuse the FirstAidRecordCard component from individual.tsx
+// Update FirstAidRecord type to match API response
+// interface FirstAidRecord {
+//   farec_id: string | number;
+//   created_at: string;
+//   finv: number;
+//   finv_details: {
+//     fa_detail?: {
+//       fa_name?: string;
+//       catlist?: string;
+//     };
+//   };
+//   patrec: number;
+//   patrec_details: any;
+//   qty: string;
+//   reason?: string;
+//   signature?: string;
+//   staff: string;
+// }
+
+// Reuse the FirstAidRecordCard component
 const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
   <Card className="mb-3 bg-white border-slate-200">
     <CardContent className="p-4">
@@ -141,13 +160,12 @@ export default function MyFirstAidRecordsScreen() {
     },
     enabled: !!(patIdFromParams || rp_id),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep cache for 10 minutes
   });
 
   const patient_id = patIdFromParams || patientData?.pat_id;
   console.log("[DEBUG] patient_id used for First Aid records:", patient_id);
 
-  // Fetch records, handle 404 as empty array
+  // Fetch records
   const {
     data: recordsData = [], // Default to empty array
     isLoading: isLoadingRecords,
@@ -160,10 +178,12 @@ export default function MyFirstAidRecordsScreen() {
       if (!patient_id) throw new Error("No patient ID available");
       console.log(`🔍 Fetching First Aid records for pat_id: ${patient_id}`);
       try {
-        const res = await api2.get(`firstaid/firstaidrecords/by-patient/${patient_id}/`);
+        const res = await api2.get(`firstaid/indiv-firstaid-record/${patient_id}/`);
         console.log("[DEBUG] First Aid records response:", JSON.stringify(res.data, null, 2));
-        return Array.isArray(res.data) ? res.data : [];
-      } catch (error) {
+        // Handle paginated response with results array
+        return Array.isArray(res.data.results) ? res.data.results : [];
+      } catch (error:any) {
+        console.error("❌ Error fetching First Aid records:", error.response?.status, error.message);
         if (error.response && error.response.status === 404) {
           console.log("[DEBUG] 404: No First Aid records found for pat_id:", patient_id);
           return []; // Treat 404 as no records
@@ -173,20 +193,25 @@ export default function MyFirstAidRecordsScreen() {
     },
     enabled: !!patient_id,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
   });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const filteredData = useMemo(() => {
+    console.log("[DEBUG] recordsData:", JSON.stringify(recordsData, null, 2));
+    console.log("[DEBUG] filteredData processing, searchQuery:", searchQuery);
     if (!Array.isArray(recordsData)) return [];
     const lowerQuery = searchQuery.toLowerCase();
-    return recordsData.filter((item: FirstAidRecord) => 
-      item.finv_details?.fa_detail?.fa_name?.toLowerCase().includes(lowerQuery) ||
-      item.reason?.toLowerCase().includes(lowerQuery) ||
-      item.farec_id?.toLowerCase().includes(lowerQuery)
-    );
+    const filtered = recordsData.filter((item: FirstAidRecord) => {
+      const nameMatch = item.finv_details?.fa_detail?.fa_name?.toLowerCase()?.includes(lowerQuery) || false;
+      const reasonMatch = item.reason?.toLowerCase()?.includes(lowerQuery) || false;
+      const idMatch = item.farec_id?.toString().toLowerCase().includes(lowerQuery) || false;
+      console.log("[DEBUG] Item:", item.farec_id, "Matches:", { nameMatch, reasonMatch, idMatch });
+      return nameMatch || reasonMatch || idMatch;
+    });
+    console.log("[DEBUG] filteredData length:", filtered.length);
+    return filtered;
   }, [recordsData, searchQuery]);
 
   const onRefresh = async () => {
@@ -200,7 +225,7 @@ export default function MyFirstAidRecordsScreen() {
     return <LoadingState />;
   }
 
-  if (isErrorPatient || (isErrorRecords && (!errorRecords.response || errorRecords.response.status !== 404))) {
+  if (isErrorPatient || (isErrorRecords)) {
     return (
       <View className="flex-1 justify-center items-center p-6 bg-red-50">
         <AlertCircle size={48} color="#EF4444" />
@@ -277,7 +302,7 @@ export default function MyFirstAidRecordsScreen() {
         <FlatList
           data={filteredData}
           renderItem={({ item }) => <FirstAidRecordCard item={item} />}
-          keyExtractor={(item) => item.farec_id || `record-${Math.random()}`}
+          keyExtractor={(item) => item.farec_id.toString()}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}

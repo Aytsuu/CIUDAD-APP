@@ -7,9 +7,11 @@ import { setupApiInterceptor } from "./interceptor";
 //   withCredentials: true, 
 //   headers: {
 //     "Content-Type": "application/json",
-//     "Accept": "application/json",
-//   },
+//     Accept: "application/json"
+//   }
 // });
+
+
 
 export const api = axios.create({
   baseURL: "http://localhost:8000",

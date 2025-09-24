@@ -22,27 +22,9 @@ export default function Records() {
   console.log("[DEBUG] Records.tsx pat_id:", pat_id);
   
   const services: Service[] = [
-    {
+   {
       id: 1,
-      name: 'Family Planning',
-      description: 'View your family planning records and track status',
-      route: '/(health)/family-planning/fp-dashboard',
-      icon: Heart,
-      image: require('@/assets/images/Health/Home/Famplanning.jpg'),
-      color: '#059669'
-    },
-    {
-      id: 2,
-      name: 'Maternal Records',
-      description: 'Access your maternal health records',
-      route: '/maternal-records',
-      icon: Baby,
-      image: require('@/assets/images/Health/Home/Maternal.jpg'),
-      color: '#059669'
-    },
-    {
-      id: 3,
-      name: 'Animal Bite Records',
+      name: 'Animal Bite',
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
       icon: Dog,
@@ -50,7 +32,44 @@ export default function Records() {
       color: '#059669'
     },
      {
+      id: 2,
+      name: 'Child Health',
+      description: 'View animal bite treatment records',
+      route: '',
+      icon: Baby,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#059669'
+    },
+    {
+      id: 3,
+      name: 'Family Planning',
+      description: 'View family planning records',
+      route: '/(health)/family-planning/fp-dashboard',
+      icon: Heart,
+      image: require('@/assets/images/Health/Home/Famplanning.jpg'),
+      color: '#059669'
+    },
+       {
       id: 4,
+      name: 'First Aid',
+      description: 'View animal bite treatment records',
+      route: '/first-aid/my-records',
+      icon: Cross,
+      image: require('@/assets/images/Health/Home/first-aid.jpg'),
+      color: '#059669'
+    },
+    {
+      id: 5,
+      name: 'Maternal',
+      description: 'Access your maternal health records',
+      route: '/maternal-records',
+      icon: Baby,
+      image: require('@/assets/images/Health/Home/Maternal.jpg'),
+      color: '#059669'
+    },
+    
+     {
+      id: 6,
       name: 'Medical Consultation',
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
@@ -58,42 +77,27 @@ export default function Records() {
       image: require('@/assets/images/Health/Home/medicalconsultation.jpg'),
       color:'#059669'
     },
+    
+      {
+      id: 7,
+      name: 'Medicine Records',
+      description: 'View animal bite treatment records',
+      route: '/medicine/my-records/',
+      icon: BriefcaseMedical,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#059669'
+    },
      {
-      id: 5,
-      name: 'Vaccination Records',
+      id: 8,
+      name: 'Vaccination',
       description: 'View animal bite treatment records',
       route: '/vaccination/my-records/',
       icon: Syringe,
       image: require('@/assets/images/Health/Home/vaccination.jpg'),
       color: '#059669'
     },
-     {
-      id: 6,
-      name: 'First Aid Records',
-      description: 'View animal bite treatment records',
-      route: '/first-aid/my-records',
-      icon: Cross,
-      image: require('@/assets/images/Health/Home/first-aid.jpg'),
-      color: '#059669'
-    },
-     {
-      id: 7,
-      name: 'Child Health Records',
-      description: 'View animal bite treatment records',
-      route: '/animalbite/my-records/',
-      icon: Baby,
-      image: require('@/assets/images/Health/Home/child-health.jpg'),
-      color: '#059669'
-    },
-      {
-      id: 8,
-      name: 'Medicine Records',
-      description: 'View animal bite treatment records',
-      route: '/first-aid/my-records/',
-      icon: BriefcaseMedical,
-      image: require('@/assets/images/Health/Home/child-health.jpg'),
-      color: '#059669'
-    },
+  
+    
   ];
 
   return (

@@ -125,8 +125,8 @@ export default function Profile() {
               {/* Name and Status */}
               <div className="text-white">
                 <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">
-                  {user?.resident?.per?.per_fname}{" "}
-                  {user?.resident?.per?.per_lname}
+                  {user?.personal?.per_fname}{" "}
+                  {user?.personal?.per_lname}
                 </h1>
                 <div className="flex items-center gap-3">
                   {user.staff && (
@@ -193,7 +193,7 @@ export default function Profile() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
                 <Label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  Username
+                  Phone
                 </Label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
@@ -202,7 +202,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.username}
+                    {user?.phone}
                   </div>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_fname} {user?.resident?.per?.per_lname}
+                    {user?.personal?.per_fname} {user?.personal?.per_lname}
                   </div>
                 </div>
               </div>
@@ -291,7 +291,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_dob}
+                    {user?.personal?.per_dob}
                   </div>
                 </div>
               </div>
@@ -307,7 +307,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_sex}
+                    {user?.personal?.per_sex}
                   </div>
                 </div>
               </div>
@@ -323,7 +323,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_status}
+                    {user?.personal?.per_status}
                   </div>
                 </div>
               </div>
@@ -339,7 +339,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_edAttainment}
+                    {user?.personal?.per_edAttainment}
                   </div>
                 </div>
               </div>
@@ -355,7 +355,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_religion}
+                    {user?.personal?.per_religion}
                   </div>
                 </div>
               </div>
@@ -371,7 +371,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.per?.per_contact}
+                    {user?.personal?.per_contact}
                   </div>
                 </div>
               </div>
@@ -428,7 +428,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.address?.add_street || "Not specified"}
+                    {user?.personal?.address?.add_street || "Not specified"}
                   </div>
                 </div>
               </div>
@@ -444,7 +444,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.address?.add_barangay || "Not specified"}
+                    {user?.personal?.address?.add_barangay || "Not specified"}
                   </div>
                 </div>
               </div>
@@ -460,7 +460,7 @@ export default function Profile() {
                       ? 'border-blue-300 bg-blue-50/50 text-blue-900' 
                       : 'border-gray-200 bg-gray-50/50 text-gray-800 hover:border-blue-200 hover:bg-blue-50/30'
                   }`}>
-                    {user?.resident?.address?.add_city || "Not specified"}
+                    {user?.personal?.address?.add_city || "Not specified"}
                   </div>
                 </div>
               </div>

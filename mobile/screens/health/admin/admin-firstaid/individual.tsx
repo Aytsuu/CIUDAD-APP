@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, FlatList,TextInput,RefreshControl,Image } from "react-native";
+import { View, TouchableOpacity, FlatList, TextInput, RefreshControl, Image } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Search, ChevronLeft, Heart, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
@@ -23,10 +23,47 @@ const PatientInfoCard = ({ patientData }: { patientData: any }) => {
       .join(", ");
   };
 
-  // const calculatePatientAge = () => {
-  //   if (!patientData?.patient_details?.personal_info?.per_dob) return "N/A";
-  //   return calculateAge(patientData.patient_details.personal_info.per_dob).toString();
-  // };
+  const calculatePatientAge = () => {
+    if (!patientData?.patient_details?.personal_info?.per_dob) return "N/A";
+    return calculateAge(patientData.patient_details.personal_info.per_dob).toString();
+  };
+
+  return (
+    <Card className="mb-4 bg-white border-slate-200">
+      <CardContent className="p-4">
+        <View className="flex-row justify-between items-start mb-3">
+          <View className="flex-1">
+            <Text className="font-semibold text-xl text-slate-900 mb-1">
+              {patientData?.patient_details?.personal_info?.per_lname || ""}, {" "}
+              {patientData?.patient_details?.personal_info?.per_fname || ""} {" "}
+              {patientData?.patient_details?.personal_info?.per_mname || ""}
+            </Text>
+            <Text className="text-slate-600 text-sm">
+              Patient ID: {patientData?.pat_id || "N/A"}
+            </Text>
+          </View>
+          <Badge variant="outline" className="border-green-200 bg-green-50">
+            <Text className="text-green-700 text-xs">
+              {patientData?.patient_details?.pat_type || "N/A"}
+            </Text>
+          </Badge>
+        </View>
+        
+        <View className="flex-row items-center mb-2">
+          <Text className="text-slate-600 text-sm">
+            Age: <Text className="text-slate-900 font-medium">{calculatePatientAge()}</Text> • {" "}
+            {patientData?.patient_details?.personal_info?.per_sex || "N/A"}
+          </Text>
+        </View>
+        
+        <View className="flex-row items-center">
+          <Text className="text-slate-600 text-sm">
+            Address: <Text className="text-slate-900 font-medium">{formatAddress()}</Text>
+          </Text>
+        </View>
+      </CardContent>
+    </Card>
+  );
 };
 
 const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
@@ -49,7 +86,7 @@ const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
           {item.finv_details?.fa_detail?.fa_name || "Unknown Item"}
         </Text>
         <Text className="text-slate-600 text-sm">
-          {item.finv_details?.fa_detail?.catlist || "N/A"}
+          Category: {item.finv_details?.fa_detail?.catlist || "N/A"}
         </Text>
       </View>
       
@@ -81,7 +118,19 @@ const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
   </Card>
 );
 
-
+const useFirstAidRecords = (patientId: string) => {
+  return useQuery({
+    queryKey: ["patientFirstAidDetails", patientId],
+    queryFn: async () => {
+      if (!patientId) return [];
+      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patientId}/`);
+      return response.data.results || [];
+    },
+    enabled: !!patientId,
+    refetchOnMount: true,
+    staleTime: 0
+  });
+};
 
 export default function IndivFirstAidRecords() {
   const { patientData: patientDataString } = useLocalSearchParams();
@@ -103,17 +152,7 @@ export default function IndivFirstAidRecords() {
   const { data: firstAidCountData } = useFirstAidCount(patientData?.pat_id);
   const firstAidCount = firstAidCountData?.firstaidrecord_count || 0;
 
-  const { data: firstAidRecords, isLoading, isError, refetch } = useQuery({
-    queryKey: ["patientFirstAidDetails", patientData?.pat_id],
-    queryFn: async () => {
-      if (!patientData?.pat_id) return [];
-      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patientData.pat_id}/`);
-      return response.data;
-    },
-    enabled: !!patientData?.pat_id,
-    refetchOnMount: true,
-    staleTime: 0
-  });
+  const { data: firstAidRecords, isLoading, isError, refetch } = useFirstAidRecords(patientData?.pat_id);
 
   const filteredData = React.useMemo(() => {
     if (!firstAidRecords) return [];
@@ -206,7 +245,11 @@ export default function IndivFirstAidRecords() {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
-        <StatsCard count={firstAidCount} />
+        <View className="mx-4 mb-4">
+          <PatientInfoCard patientData={patientData} />
+        </View>
+
+        {/* <StatsCard count={firstAidCount} /> */}
 
         {/* Search Bar */}
         <View className="mx-4 mb-4">
@@ -226,7 +269,7 @@ export default function IndivFirstAidRecords() {
         <FlatList
           data={filteredData}
           renderItem={({ item }) => <FirstAidRecordCard item={item} />}
-          keyExtractor={(item) => item.farec_id || `record-${Math.random()}`}
+          keyExtractor={(item) => item.farec_id?.toString() || `record-${Math.random()}`}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}

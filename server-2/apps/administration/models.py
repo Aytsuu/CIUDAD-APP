@@ -1,23 +1,8 @@
 from django.db import models
 from datetime import date
+from abstract_classes import AbstractModels
 
-class AdministrationAbstractModel(models.Model):
-    class Meta:
-        abstract = True
-    
-    def save(self, *args, **kwargs):
-        for field in self._meta.fields:
-            if(
-                isinstance(field, (models.CharField, models.TextField))
-                and not field.primary_key
-                and field.editable
-            ):
-                val = getattr(self, field.name)
-                if isinstance(val, str):
-                    setattr(self, field.name, val.upper())
-        super().save(*args, **kwargs)
-
-class Position(models.Model):
+class Position(AbstractModels):
     pos_id = models.BigAutoField(primary_key=True)    
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
@@ -29,7 +14,7 @@ class Position(models.Model):
     class Meta:
         db_table = 'position'
 
-class Feature(models.Model):
+class Feature(AbstractModels):
     feat_id = models.BigAutoField(primary_key=True)
     feat_name = models.CharField(max_length=100)
     feat_group = models.CharField(max_length=100)
@@ -39,7 +24,7 @@ class Feature(models.Model):
     class Meta:
         db_table = 'feature'
 
-class Assignment(models.Model):
+class Assignment(AbstractModels):
     assi_id = models.BigAutoField(primary_key=True)
     feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
@@ -50,7 +35,7 @@ class Assignment(models.Model):
         db_table = 'assignment'
         unique_together = (('feat', 'pos'))
 
-class Permission(models.Model):
+class Permission(AbstractModels):
     perm_id = models.BigAutoField(primary_key=True)
     view = models.BooleanField(default=True)
     create = models.BooleanField(default=False)
@@ -61,7 +46,7 @@ class Permission(models.Model):
     class Meta:
         db_table = 'permission'
 
-class Staff(models.Model):
+class Staff(AbstractModels):
     staff_id = models.CharField(primary_key=True,max_length=50)
     staff_assign_date = models.DateField(default=date.today)
     staff_type = models.CharField(max_length=20, default="Health Staff")

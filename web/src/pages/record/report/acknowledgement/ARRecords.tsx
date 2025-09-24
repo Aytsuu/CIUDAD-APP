@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDebounce } from "@/hooks/use-debounce"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function ARRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -238,13 +239,20 @@ export default function ARRecords() {
               />
             </div>
           </div>
+
+          {isLoadingArReports || isLoadingWeeklyAR && (
+            <div className="flex items-center justify-center py-12">
+              <Spinner size="lg"/>
+              <span className="ml-2 text-gray-600">Loading incident reports...</span>
+            </div>
+          )}
+
           <div className="border-t overflow-hidden">
             <div className="overflow-x-auto">
               <DataTable
                 columns={ARColumns(isCreatingWeeklyAR, compositions)}
                 data={ARList}
                 onSelectedRowsChange={onSelectedRowsChange}
-                isLoading={isLoadingArReports || isLoadingWeeklyAR}
                 reset={reset} 
                 setReset={setReset}
               />
