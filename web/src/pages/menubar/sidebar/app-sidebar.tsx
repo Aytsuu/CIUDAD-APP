@@ -327,6 +327,37 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
+    // {
+    //   title: "Dashboard",
+    //   url: "/dashboard"
+    // },
+
+    // {
+    //   title: "Administration",
+    //   url: "/administration"
+    // },
+    // {
+    //   title: "Profiling",
+    //   url: "/",
+    //   items: [
+    //     { title: "All", url: "/profiling/all" },
+    //     {
+    //       title: "Resident",
+    //       url: "/profiling/resident",
+    //       items: [
+    //         { title: "Family", url: "/profiling/family" },
+    //         { title: "Household", url: "/profiling/household" }
+    //       ]
+    //     },
+    //     { title: "Voters", url: "/profiling/voters" },
+    //     {
+    //       title: "Business",
+    //       url: "/profiling/business/record",
+    //       items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
+    //     }
+    //   ]
+    // },
+
     {
       title: "Announcement",
       url: "/announcement",
@@ -345,28 +376,32 @@ export function AppSidebar() {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
         },
-        {
-          title: "Medical Consultaion",
-          url: "/forwarded-records/medical-consultation",
-        },
+        // {
+        //   title: "Medical Consultaion",
+        //   url: "/forwarded-records/medical-consultation"
+        // }
       ],
+    },
+    {
+      title: "Referred Patients",
+      url: "/forwarded-records/medical-consultation",
     },
     {
       title: "Services",
       url: "/",
       items: [
+        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Child Health", url: "/services/childhealthrecords" },
+        { title: "Firstaid", url: "/services/firstaid" },
+        { title: "Family Planning", url: "/FamPlanning_table" },
+        { title: "Maternal", url: "/services/maternalrecords" },
         {
           title: "Medical Consultation ",
           url: "/services/medical-consultation",
         },
-        { title: "Child Health", url: "/services/childhealthrecords" },
-        { title: "Vaccination", url: "/services/vaccination" },
         { title: "Medicine", url: "/services/medicine" },
-        { title: "Firstaid", url: "/services/firstaid" },
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
-        { title: "Family Planning", url: "/FamPlanning_table" },
-        { title: "Maternal", url: "/services/maternalrecords" },
-        { title: "Schedules", url: "/services/scheduled/follow-ups" },
+        { title: "Vaccination", url: "/services/vaccination" },
+        // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
       ],
     },
     {
@@ -377,31 +412,20 @@ export function AppSidebar() {
         { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
     },
-    {
-      title: "Request",
-      url: "/",
-      items: [
-        {
-          title: "Medicine Request",
-          url: "/request/medicine",
-        },
-        { title: "Medical Consultation", url: "/" },
-      ],
-    },
-
-    { title: "Reports", url: "/reports" },
+    { title: "Follow-up Visits", url: "/services/scheduled/follow-ups" },
+    // {
+    //   title: "Request",
+    //   url: "/",
+    //   items: [
+    //     {
+    //       title: "Medicine Request",
+    //       url: "/request/medicine"
+    //     }
+    //   ]
+    // },
+    { title: "Age Group Management", url: "/age-group" },
     { title: "Service Scheduler", url: "/scheduler" },
-    {
-      title: "Manage",
-      url: "/",
-      items: [
-        {
-          title: "Age Group",
-          url: "/age-group",
-        },
-        { title: "Medical Consultation", url: "/" },
-      ],
-    },
+    { title: "Reports", url: "/reports" },
   ];
 
   const items: BaseMenuItem[] = [
