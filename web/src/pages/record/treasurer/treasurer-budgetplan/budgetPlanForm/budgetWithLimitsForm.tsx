@@ -45,6 +45,9 @@ function CreateBudgetWithLimits({
     { name: "qrfFund", label: "Quick Response Fund (QRF)" },
     { name: "disasterTraining", label: "Disaster Training" },
     { name: "disasterSupplies", label: "Disaster Supplies" },
+    { name: "gadProg", label: "GAD Program" },
+    { name: "disasterProg", label: "Disaster Response Program" },
+    { name: "seniorProg", label: "Senior Citizen/ PWD Program" },
   ]
 
   const [total, setTotal] = useState(0)

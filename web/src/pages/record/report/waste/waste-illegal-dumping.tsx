@@ -379,6 +379,23 @@ function WasteIllegalDumping() {
     {
       accessorKey: "rep_status",
       header: "Report Status",
+      cell: ({row}) => (
+        <div>
+          {row.getValue("rep_status") === "resolved" ? (
+            <div className="flex-row items-center bg-green-50 px-2 py-1 rounded-full border border-green-600">
+              <div className="text-green-600 text-sm font-medium ml-1">Resolved</div>
+            </div>
+          ) : row.getValue("rep_status") === "cancelled" ? (
+            <div className="flex-row items-center bg-red-50 px-2 py-1 rounded-full border border-red-600">
+              <div className="text-red-600 text-sm font-medium ml-1">Cancelled</div>
+            </div>
+          ) : (
+            <div className="flex-row items-center bg-blue-50 px-2 py-1 rounded-full border border-primary">
+              <div className="text-primary text-sm font-medium">Pending</div>
+            </div>
+          )}               
+        </div>
+      )
     },
     {
       accessorKey: "rep_matter",
