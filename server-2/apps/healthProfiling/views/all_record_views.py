@@ -116,7 +116,7 @@ class CompleteRegistrationView(APIView):
         add_province=add["add_province"],
         add_city=add["add_city"],
         add_barangay = add["add_barangay"],
-        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+        sitio=Sitio.objects.filter(sitio_name=add["sitio"]).first(),
         add_external_sitio=add["add_external_sitio"],
         add_street=add["add_street"]
       )[0]

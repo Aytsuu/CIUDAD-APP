@@ -25,6 +25,8 @@ urlpatterns = [
     path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
+    path("sitio/create/", SitioCreateView.as_view(), name="sitio-create"),
+    path("sitio/<str:sitio_id>/delete/", SitioDeleteView.as_view(), name="sitio-delete"),
 
     # Address Urls
     path("address/create/", AddressBulkCreateView.as_view(), name="create-address"),

@@ -129,9 +129,9 @@ export default function LivingSoloForm({
           name={`${prefix}building`}
           label="Household Occupancy"
           options={[
-            { id: "owner", name: "Owner" },
-            { id: "renter", name: "Renter" },
-            { id: "sharer", name: "Sharer" },
+            { id: "owner", name: "OWNER" },
+            { id: "renter", name: "RENTER" },
+            { id: "sharer", name: "SHARER" },
           ]}
           readOnly={buildingReadOnly}
         />
@@ -140,8 +140,8 @@ export default function LivingSoloForm({
           name={`${prefix}indigenous`}
           label="Indigenous People"
           options={[
-            { id: "no", name: "No" },
-            { id: "yes", name: "Yes" },
+            { id: "no", name: "NO" },
+            { id: "yes", name: "YES" },
           ]}
           readOnly={false}
         />
