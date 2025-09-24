@@ -182,9 +182,9 @@ class CompleteRegistrationView(APIView):
     return instance
   
   def create_household(self, houses, rp, staff):
-    # data = [undefined, sitio, street]
     house_instances = []
     for house in houses:
+      print(house["address"])
       data = house["address"].split("-") 
       house_instances.append(Household(
         hh_id = generate_hh_no(),
