@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, X, FileText, Scroll } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ interface DevelopmentPlan {
   staff: string;
   dev_gad_items?: BudgetItem[];
   total?: string;
+  dev_mandated?: boolean;
 }
 
 export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelopmentPlanViewProps) {
@@ -63,6 +64,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     }
   );
 
+
   // Build quick lookup maps
   const proposalByDevId = useMemo(() => {
     const map = new Map<number, any>();
@@ -74,15 +76,26 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     return map;
   }, [proposals]);
 
+  // Only allow resolutions that belong to an existing proposal
+  const validGprIds = useMemo(() => {
+    const set = new Set<number>();
+    (proposals || []).forEach((p: any) => {
+      if (p && typeof p.gprId === 'number') {
+        set.add(p.gprId);
+      }
+    });
+    return set;
+  }, [proposals]);
+
   const resolutionByGprId = useMemo(() => {
     const map = new Map<number, any>();
     (resolutions || []).forEach((r: any) => {
-      if (r && typeof r.gpr_id === 'number') {
+      if (r && typeof r.gpr_id === 'number' && validGprIds.has(r.gpr_id)) {
         map.set(r.gpr_id, r);
       }
     });
     return map;
-  }, [resolutions]);
+  }, [resolutions, validGprIds]);
 
   useEffect(() => {
     fetchPlans();
@@ -138,6 +151,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
     setSelectedResolution(null);
   };
 
+
   return (
     <div className="bg-snow w-full min-h-screen p-6">
       <div className="flex flex-col gap-2 mb-4">
@@ -171,7 +185,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               <col className="w-24" />
               <col className="w-24" />
               <col className="w-56" />
-              <col className="w-40" />
+              <col className="w-32" />
             </colgroup>
             <thead>
               <tr className="bg-gray-100 text-gray-700 border-b border-gray-200">
@@ -180,7 +194,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>PERFORMANCE INDICATOR AND TARGET</th>
                 <th className="px-3 py-2 text-center align-bottom border border-gray-200" colSpan={4}>GAD BUDGET</th>
                 <th className="px-3 py-2 text-left align-bottom border border-gray-200" rowSpan={2}>RESPONSIBLE PERSON</th>
-                <th className="px-3 py-2 text-center align-bottom border border-gray-200" rowSpan={2}>Actions</th>
+                <th className="px-3 py-2 text-center align-bottom border border-gray-200" rowSpan={2}>STATUS</th>
               </tr>
               <tr className="bg-blue-50 text-blue-900 font-semibold border-b border-blue-100">
                 <td className="bg-sky-100 px-3 py-2 border border-blue-200" colSpan={1}>CLIENT FOCUSED</td>
@@ -194,8 +208,33 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <tr key={plan.dev_id}>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
-                      <div className="font-semibold text-blue-900 underline cursor-pointer">{plan.dev_client}</div>
-                      <div className="text-xs mt-2 text-gray-700">{plan.dev_issue}</div>
+                      <div className="font-semibold text-blue-900">{plan.dev_client}</div>
+                      <div className="text-xs mt-2 text-gray-700 mb-5">{plan.dev_issue}</div>
+                      {(() => {
+                        const proposal = proposalByDevId.get(plan.dev_id);
+                        const resolution = proposal ? resolutionByGprId.get(proposal.gprId as number) : null;
+                        
+                        return (
+                          <div className="mt-2 space-y-1">
+                            {proposal && (
+                              <div 
+                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                                onClick={() => handleViewProject(proposal)}
+                              >
+                                View Project Proposal
+                              </div>
+                            )}
+                            {resolution && (
+                              <div 
+                                className="text-xs text-green-600 font-medium cursor-pointer hover:text-green-800 hover:underline"
+                                onClick={() => handleViewResolution(resolution)}
+                              >
+                                Resolution #{resolution.res_num}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
@@ -352,34 +391,37 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                       const hasProposal = Boolean(proposal && proposal.gprId);
                       const hasResolution = hasProposal && resolutionByGprId.has(proposal.gprId as number);
 
-                      if (!hasProposal && !hasResolution) {
+                      const badges: JSX.Element[] = [];
+
+                      if (plan.dev_mandated) {
+                        badges.push(
+                          <span key="mandated" className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-1">
+                            Mandated
+                          </span>
+                        );
+                      }
+
+                      if (hasProposal) {
+                        badges.push(
+                          <span key="with-proposal" className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-1">
+                            With Project Proposal
+                          </span>
+                        );
+                      }
+
+                      if (hasResolution) {
+                        badges.push(
+                          <span key="with-resolution" className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            With Resolution
+                          </span>
+                        );
+                      }
+
+                      if (badges.length === 0) {
                         return <span className="text-sm text-gray-500">-</span>;
                       }
 
-                      return (
-                        <div className="flex gap-2 justify-center">
-                          {hasProposal && (
-                            <Button 
-                              size="icon" 
-                              variant="outline"
-                              title="View Proposal"
-                              onClick={() => handleViewProject(proposal)}
-                            >
-                              <FileText size={16} />
-                            </Button>
-                          )}
-                          {hasResolution && (
-                            <Button 
-                              size="icon" 
-                              variant="outline"
-                              title="View Resolution"
-                              onClick={() => handleViewResolution(resolutionByGprId.get(proposal.gprId))}
-                            >
-                              <Scroll size={16} />
-                            </Button>
-                          )}
-                        </div>
-                      );
+                      return <div className="flex flex-wrap gap-y-1 justify-center">{badges}</div>;
                     })()}
                   </td>
                 </tr>
@@ -463,6 +505,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 } 
