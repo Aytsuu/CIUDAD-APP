@@ -55,7 +55,6 @@ class EnvironmentalFormSubmitView(APIView):
                     water_supply, created = WaterSupply.objects.get_or_create(
                         hh=household,
                         defaults={
-                            'water_sup_id': f"{hh_id}_water_{selected_type}",
                             'water_sup_type': mapping['water_sup_type'],
                             'water_conn_type': mapping['water_conn_type'],
                             'water_sup_desc': mapping['water_sup_desc']
@@ -78,7 +77,6 @@ class EnvironmentalFormSubmitView(APIView):
                 sanitary_facility, created = SanitaryFacility.objects.get_or_create(
                     hh=household,
                     defaults={
-                        'sf_id': f"{hh_id}_sanitary",
                         'sf_type': sanitary_data.get('facility_type', ''),
                         'sf_toilet_type': sanitary_data.get('toilet_facility_type', '')
                     }
@@ -98,7 +96,6 @@ class EnvironmentalFormSubmitView(APIView):
                 waste_mgmt, created = SolidWasteMgmt.objects.get_or_create(
                     hh=household,
                     defaults={
-                        'swm_id': f"{hh_id}_waste",
                         'swn_desposal_type': waste_data.get('waste_management_type', ''),
                         'swm_desc': waste_data.get('description', '')
                     }

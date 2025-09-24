@@ -72,7 +72,31 @@ class HealthStaffListView(generics.ListAPIView):
   serializer_class = StaffFullSerializer
 
   def get_queryset(self):
-    return Staff.objects.filter(staff_type="Health Staff")
+    # Use uppercase "HEALTH STAFF" as that's what exists in the database
+    return Staff.objects.filter(staff_type="HEALTH STAFF")
+
+class HealthStaffComboboxView(generics.ListAPIView):
+  serializer_class = StaffTableSerializer
+  pagination_class = None  # Disable pagination for combobox
+
+  def get_queryset(self):
+    # Use uppercase "HEALTH STAFF" as that's what exists in the database
+    queryset = Staff.objects.filter(staff_type="HEALTH STAFF").select_related(
+      'rp__per',
+      'pos'
+    )
+    
+    search_query = self.request.query_params.get('search', '').strip()
+    if search_query:
+      queryset = queryset.filter(
+        Q(rp__per__per_lname__icontains=search_query) |
+        Q(rp__per__per_fname__icontains=search_query) |
+        Q(rp__per__per_mname__icontains=search_query) |
+        Q(pos__pos_title__icontains=search_query) |
+        Q(staff_id__icontains=search_query)
+      ).distinct()
+
+    return queryset
 
 
    
@@ -87,3 +111,19 @@ class StaffDataByTitleView(APIView):
       req_position = Position.objects.get(pos_title=title)
       staff = Staff.objects.filter(pos=req_position.pos_id)
       return Response(StaffTableSerializer(staff, many=True).data)
+
+class StaffTypeDebugView(APIView):
+    def get(self, request, *args, **kwargs):
+      # Get all distinct staff types to debug the issue
+      staff_types = Staff.objects.values_list('staff_type', flat=True).distinct()
+      staff_data = []
+      for staff_type in staff_types:
+          count = Staff.objects.filter(staff_type=staff_type).count()
+          staff_data.append({
+              'staff_type': staff_type,
+              'count': count
+          })
+      return Response({
+          'staff_types': list(staff_types),
+          'detailed': staff_data
+      })

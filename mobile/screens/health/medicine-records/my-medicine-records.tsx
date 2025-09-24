@@ -13,7 +13,7 @@ import { LoadingState } from "@/components/ui/loading-state"
 import { PaginationControls } from "../admin/components/pagination-layout"
 import { useIndividualMedicineRecords } from "../admin/admin-medicinerecords/queries/fetch"
 import { getPatientByResidentId } from "../animalbites/api/get-api"
-import { PatientInfoCard } from "../admin/components/patientcards"
+// import { PatientInfoCard } from "../admin/components/patientcards"
 import { MedicineRecordCard } from "../admin/admin-medicinerecords/medicine-record-cad"
 
 export default function IndividualMedicineRecords() {
@@ -92,30 +92,30 @@ export default function IndividualMedicineRecords() {
     return <LoadingState />
   }
 
-  if (isPatientError || !patientData?.pat_id) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text>Medicine Records</Text>}
-      >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-          <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Patient Not Found</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">No patient data was found for your account.</Text>
-          <TouchableOpacity onPress={() => refetchPatientData()} className="bg-blue-600 px-6 py-3 rounded-lg">
-            <Text className="text-white font-medium">Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </PageLayout>
-    )
-  }
+  // if (isPatientError || !patientData?.pat_id) {
+  //   return (
+  //     <PageLayout
+  //       leftAction={
+  //         <TouchableOpacity
+  //           onPress={() => router.back()}
+  //           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+  //         >
+  //           <ChevronLeft size={24} color="#374151" />
+  //         </TouchableOpacity>
+  //       }
+  //       headerTitle={<Text>Medicine Records</Text>}
+  //     >
+  //       <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+  //         <AlertCircle size={64} color="#EF4444" />
+  //         <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Patient Not Found</Text>
+  //         <Text className="text-gray-600 text-center mt-2 mb-6">No patient data was found for your account.</Text>
+  //         <TouchableOpacity onPress={() => refetchPatientData()} className="bg-blue-600 px-6 py-3 rounded-lg">
+  //           <Text className="text-white font-medium">Retry</Text>
+  //         </TouchableOpacity>
+  //       </View>
+  //     </PageLayout>
+  //   )
+  // }
 
   if (isLoading && !medicineRecords.length) {
     return <LoadingState />
@@ -166,14 +166,14 @@ export default function IndividualMedicineRecords() {
         className="flex-1 "
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
       >
-        <View className="px-4 pt-4">
+        {/* <View className="px-4 pt-4">
           <PatientInfoCard patient={patientData} />
-        </View>
+        </View> */}
 
         <View className=" p-4">
           <View className="">
             <View className="flex-row items-center space-x-3">
-              <View className="flex-1 flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+              <View className="flex-1 flex-row items-center p-3 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
                 <Search size={20} color="#6B7280" />
                 <TextInput
                   className="flex-1 ml-3 text-gray-800 text-base"

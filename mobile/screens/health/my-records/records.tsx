@@ -81,6 +81,15 @@ export default function Records() {
       image: require('@/assets/images/Health/Home/child-health.jpg'),
       color: '#1E40AF'
     },
+     {
+      id: 8,
+      name: 'Medicine Records',
+      description: 'View medicine treatment records',
+      route: '/medicine-records/my-records/',
+      icon: Dog,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#1E40AF'
+    },
   ];
 
   return (

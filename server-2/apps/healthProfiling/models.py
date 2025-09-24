@@ -2,27 +2,12 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
-
-class ProfilingAbstractModel(models.Model):
-    class Meta:
-        abstract = True
-    
-    def save(self, *args, **kwargs):
-        for field in self._meta.fields:
-            if(
-                isinstance(field, (models.CharField, models.TextField))
-                and not field.primary_key
-                and field.editable
-            ):
-                val = getattr(self, field.name)
-                if isinstance(val, str):
-                    setattr(self, field.name, val.upper())
-        super().save(*args, **kwargs)
+from abstract_classes import AbstractModels
+from datetime import datetime
 
 
-
-class Sitio(models.Model):
-    sitio_id = models.CharField(max_length=100, primary_key=True)
+class Sitio(AbstractModels):
+    sitio_id = models.BigAutoField(primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
     class Meta:
@@ -31,7 +16,7 @@ class Sitio(models.Model):
     def __str__(self):
         return self.sitio_name
 
-class Address(models.Model):
+class Address(AbstractModels):
     add_id = models.BigAutoField(primary_key=True)  
     add_province = models.CharField(max_length=50)
     add_city = models.CharField(max_length=50)
@@ -49,7 +34,7 @@ class Address(models.Model):
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
-class Personal(models.Model):
+class Personal(AbstractModels):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
@@ -84,11 +69,29 @@ class Personal(models.Model):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
+    
+class PersonalModification(AbstractModels):
+    pm_id = models.BigAutoField(primary_key=True)
+    pm_lname = models.CharField(max_length=50, null=True)
+    pm_fname = models.CharField(max_length=50, null=True)
+    pm_mname = models.CharField(max_length=50, null=True)
+    pm_suffix = models.CharField(max_length=50, null=True)
+    pm_dob = models.DateField(null=True)
+    pm_sex = models.CharField(max_length=50, null=True)
+    pm_status = models.CharField(max_length=50, null=True)
+    pm_edAttainment = models.CharField(max_length=50, null=True)
+    pm_religion = models.CharField(max_length=50, null=True)
+    pm_contact = models.CharField(max_length=50, null=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
+
+    class Meta:
+        db_table = 'personal_modification'
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    
 
     class Meta:
         db_table = 'personal_address'
@@ -130,7 +133,7 @@ class RespondentsInfo(models.Model):
     def __str__(self):
         return f"{self.rp} (Respondent ID: {self.ri_id})"
 
-class Household(models.Model):
+class Household(AbstractModels):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)
@@ -144,7 +147,7 @@ class Household(models.Model):
     def __str__(self):
         return f"Household {self.hh_id} - {self.rp} in {self.add}"
 
-class Family(models.Model):
+class Family(AbstractModels):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
@@ -158,7 +161,7 @@ class Family(models.Model):
     def __str__(self):
         return f"Family {self.fam_id}"
 
-class FamilyComposition(models.Model):
+class FamilyComposition(AbstractModels):
     fc_id = models.BigAutoField(primary_key=True)
     fc_role = models.CharField(max_length=50)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family_compositions')
@@ -219,7 +222,7 @@ class Dependents_Under_Five(models.Model):
         db_table = 'dep_under_five'
 
 class WaterSupply(models.Model):
-    water_sup_id = models.CharField(max_length=50, primary_key=True)
+    water_sup_id = models.BigAutoField(primary_key=True)
     water_sup_type = models.CharField(max_length=50)
     water_conn_type = models.CharField(max_length=50, null=True, blank=True)
     water_sup_desc = models.TextField(max_length=1000)
@@ -229,7 +232,7 @@ class WaterSupply(models.Model):
         db_table = 'water_supply'
 
 class SanitaryFacility(models.Model):
-    sf_id = models.CharField(max_length=50, primary_key=True)
+    sf_id = models.BigAutoField(primary_key=True)
     sf_type = models.CharField(max_length=50)
     sf_toilet_type = models.CharField(max_length=50)
 
@@ -248,7 +251,7 @@ class FacilityDetails(models.Model):
         db_table = 'facility_details'
 
 class SolidWasteMgmt(models.Model):
-    swm_id = models.CharField(max_length=50, primary_key=True)
+    swm_id = models.BigAutoField(primary_key=True)
     swn_desposal_type = models.CharField(max_length=50)
     swm_desc = models.TextField(max_length=1000)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
@@ -257,7 +260,7 @@ class SolidWasteMgmt(models.Model):
         db_table = 'solid_waste_mgmt'
         
 class TBsurveilance(models.Model):
-    tb_id = models.CharField(max_length=50, primary_key=True)
+    tb_id = models.BigAutoField(primary_key=True)
     tb_meds_source = models.CharField(max_length=100, blank=True, null=True)
     tb_days_taking_meds = models.IntegerField(null=True, blank=True, default=0)
     tb_status = models.CharField(max_length=100, blank=True, null=True)
@@ -268,7 +271,7 @@ class TBsurveilance(models.Model):
         db_table = 'tb_surveillance_records'
 
 class NonCommunicableDisease(models.Model):
-    ncd_id = models.CharField(max_length=50, primary_key=True)
+    ncd_id = models.BigAutoField(primary_key=True)
     ncd_riskclass_age = models.CharField(max_length=100, blank=True, null=True)
     ncd_comorbidities = models.CharField(max_length=100, blank=True, null=True)
     ncd_lifestyle_risk = models.CharField(max_length=100, blank=True, null=True)
@@ -329,8 +332,28 @@ class SurveyIdentification(models.Model):
             models.Index(fields=['si_date']),
         ]
 
+    def save(self, *args, **kwargs):
+        if not self.si_id:
+            # Generate custom ID format: ddmmyy#####-SI
+            today = datetime.now()
+            date_prefix = today.strftime("%d%m%y")  # DDMMYY format
+            
+            # Get the count of records created today
+            today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
+            count = SurveyIdentification.objects.filter(
+                si_created_at__range=(today_start, today_end)
+            ).count()
+            
+            # Generate ID with auto-incrementing number (padded to 5 digits)
+            self.si_id = f"{date_prefix}{count + 1:05d}-SI"
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Survey {self.si_id} - Family {self.fam.fam_id}"
+
 
 
 # class RiskClassGroups(models.Model):
@@ -353,6 +376,3 @@ class SurveyIdentification(models.Model):
 
 #     class Meta:
 #         db_table = 'illness'
-
-
-

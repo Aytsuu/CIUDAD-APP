@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Download, Building2, FileDown, Loader2 } from "lucide-react"
+import { Search, Download, Building2, FileDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function RespondentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -122,7 +123,7 @@ export default function RespondentRecords() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Spinner size="lg" />
             <span className="ml-2 text-gray-600">Loading respondent records...</span>
           </div>
         )}

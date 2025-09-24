@@ -36,34 +36,6 @@ export const useUpdatePosition = () => {
   })
 }
 
-export const useUpdateAssignment = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({assi_id, data} : {
-      assi_id: string
-      data: Record<string, any>
-    }) => {
-      try {
-        const res = await api.patch(`administration/assignment/${assi_id}/update/`, data);
-        return res.data;
-      } catch (err) {
-        console.error(err)
-        throw err;
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(['allAssignedFeatures'], (old: any[] = []) => 
-        old.map((assi: any) => {
-          if(assi.assi_id == data.assi_id) {
-            return data
-          }
-          return assi
-        })
-      )
-      queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
-    }
-  })
-}
 export const useUpdateStaff = () => {
   const queryClient = useQueryClient();
   return useMutation({ 

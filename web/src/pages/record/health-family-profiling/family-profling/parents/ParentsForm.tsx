@@ -157,6 +157,7 @@ export default function ParentsForm({ residents, form, dependentsList, onSelect,
               name={`${prefix}.perAddDetails.philHealthId`}
               label="PhilHealth ID"
               placeholder="Enter PhilHealth ID"
+              type="number"
             />
 
             <FormSelect

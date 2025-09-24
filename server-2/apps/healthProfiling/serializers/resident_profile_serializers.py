@@ -56,8 +56,8 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
             return True
         return False
     
-    def get_has_account(self, obj):
-        return hasattr(obj, 'account')
+    # def get_has_account(self, obj):
+    #     return hasattr(obj, 'account')
     
     
     def get_age(self, obj):

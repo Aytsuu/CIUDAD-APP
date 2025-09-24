@@ -251,28 +251,6 @@ export default function MyVaccinationRecordsScreen() {
     return <LoadingState />;
   }
 
-  if (isPatientError || !patientData?.pat_id) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text>Vaccination Records</Text>}
-      >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-          <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Patient Not Found</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">No patient data was found for your account.</Text>
-          <TouchableOpacity onPress={() => refetchPatientData()} className="bg-blue-600 px-6 py-3 rounded-lg">
-            <Text className="text-white font-medium">Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </PageLayout>
-    );
-  }
-
   if (isLoading && !vaccinationRecords?.length) {
     return <LoadingState />;
   }
@@ -312,11 +290,11 @@ export default function MyVaccinationRecordsScreen() {
         )}
 
         {/* Search and Summary */}
-        <View className="p-4 mt-4">
+        <View className="p-5 mt-2">
           {/* Search */}
           <View className="flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
             <Search size={20} color="#6B7280" />
-            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by vaccine name, batch number..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+            <TextInput className="flex-1 p-2 ml-3 text-gray-800 text-base" placeholder="Search by vaccine name, batch number..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 

@@ -17,16 +17,13 @@ class Position(AbstractModels):
 class Feature(AbstractModels):
     feat_id = models.BigAutoField(primary_key=True)
     feat_name = models.CharField(max_length=100)
-    feat_group = models.CharField(max_length=100)
     feat_category = models.CharField(max_length=100)
-    feat_url = models.TextField()
 
     class Meta:
         db_table = 'feature'
 
 class Assignment(AbstractModels):
     assi_id = models.BigAutoField(primary_key=True)
-    assi_permission = models.CharField(max_length=20, default="VIEW ONLY")
     feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
     assi_date = models.DateField(default=date.today)

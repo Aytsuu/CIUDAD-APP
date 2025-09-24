@@ -47,3 +47,20 @@ class PostQueries:
             json=data
         )
         return response
+    
+    def sitio(self, data):
+        response = requests.post(
+            f"{self.client}/health-profiling/sitio/create/",
+            json=data
+        )
+        return response
+    
+class DeleteQueries:
+    def __init__(self):
+        self.client = config("CLIENT", default="http://127.0.0.1:8001")
+
+    def sitio(self, sitio_id):
+        response = requests.delete(
+            f"{self.client}/health-profiling/sitio/{sitio_id}/delete/"
+        )
+        return response

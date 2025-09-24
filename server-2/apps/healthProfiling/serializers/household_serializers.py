@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.db.models import Count
 from ..models import *
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
@@ -55,7 +56,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
               'date_registered']
     
   def get_total_families(self, obj):
-    return Family.objects.filter(hh=obj).count()
+    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
   
   def get_head(self, obj):
     info = obj.rp.per
