@@ -30,14 +30,14 @@ class SignupView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
-            email = request.data.get('email')
+            email = request.data.get('email', None)
             phone = request.data.get('phone')
             password = request.data.get('password')
             resident_id = request.data.get('resident_id')
             br = request.data.get('br')
- 
+
             # Check if account already exists
-            if Account.objects.filter(email=email).exists():
+            if Account.objects.filter(~Q(email=None) & Q(email=email)).exists():
                 return Response(
                     {'email': 'Account with this email already exists'},
                     status=status.HTTP_400_BAD_REQUEST

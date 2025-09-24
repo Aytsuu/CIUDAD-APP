@@ -57,7 +57,7 @@ export const main_router: RouteObject[] = [
       },
       {
         path: "announcement",
-        element: <ProtectedRoute>
+        element: <ProtectedRoute exclude={["DOCTOR"]}>
           <AnnouncementDashboard />
         </ProtectedRoute>,
       },
@@ -182,7 +182,14 @@ export const main_router: RouteObject[] = [
           ),
         }))
       })),
-      ...maternal_router,
+      ...maternal_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="SERVICES">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...vaccination,
       ...childHealthServices,
       ...gad_router,
