@@ -316,10 +316,6 @@ export function AppSidebar() {
         ]
       : []),
     {
-      title: "Announcement",
-      url: "/announcement",
-    },
-    {
       title: "Activity Log",
       url: "/record/activity-log",
     },
@@ -327,44 +323,9 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    // {
-    //   title: "Dashboard",
-    //   url: "/dashboard"
-    // },
-
-    // {
-    //   title: "Administration",
-    //   url: "/administration"
-    // },
-    // {
-    //   title: "Profiling",
-    //   url: "/",
-    //   items: [
-    //     { title: "All", url: "/profiling/all" },
-    //     {
-    //       title: "Resident",
-    //       url: "/profiling/resident",
-    //       items: [
-    //         { title: "Family", url: "/profiling/family" },
-    //         { title: "Household", url: "/profiling/household" }
-    //       ]
-    //     },
-    //     { title: "Voters", url: "/profiling/voters" },
-    //     {
-    //       title: "Business",
-    //       url: "/profiling/business/record",
-    //       items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
-    //     }
-    //   ]
-    // },
-
-    {
-      title: "Announcement",
-      url: "/announcement",
-    },
-    { title: "BHW Daily Notes", url: "/bhw/notes" },
-    { title: "Patient Records", url: "/patientrecords" },
-    {
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
+    ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
+    ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
       url: "/",
       items: [
@@ -376,16 +337,12 @@ export function AppSidebar() {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
         },
-        // {
-        //   title: "Medical Consultaion",
-        //   url: "/forwarded-records/medical-consultation"
-        // }
       ],
-    },
-    {
+    }] : []),
+    ...(featureValidator("referred patients") ? [{
       title: "Referred Patients",
       url: "/forwarded-records/medical-consultation",
-    },
+    }] : []),
     {
       title: "Services",
       url: "/",
@@ -401,31 +358,19 @@ export function AppSidebar() {
         },
         { title: "Medicine", url: "/services/medicine" },
         { title: "Vaccination", url: "/services/vaccination" },
-        // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
       ],
     },
-    {
+    ...(featureValidator("inventory") ? [{
       title: "Inventory",
       url: "/",
       items: [
         { title: "Inventory List", url: "/inventory/list" },
         { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
-    },
-    { title: "Follow-up Visits", url: "/services/scheduled/follow-ups" },
-    // {
-    //   title: "Request",
-    //   url: "/",
-    //   items: [
-    //     {
-    //       title: "Medicine Request",
-    //       url: "/request/medicine"
-    //     }
-    //   ]
-    // },
-    { title: "Age Group Management", url: "/age-group" },
-    { title: "Service Scheduler", url: "/scheduler" },
-    { title: "Reports", url: "/reports" },
+    }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
+    ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
   const items: BaseMenuItem[] = [
@@ -475,6 +420,10 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(user?.staff?.pos != "DOCTOR" && featureValidator() ? [{
+      title: "Announcement",
+      url: "/announcement",
+    }] : []),
     ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
       ? barangayItems
       : healthItems),
