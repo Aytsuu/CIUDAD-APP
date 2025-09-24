@@ -368,6 +368,7 @@ class WasteReportSerializer(serializers.ModelSerializer):
             'rep_cancel_reason', 'waste_report_file', 'waste_report_rslv_file', 'sitio_name',
             'sitio_id', 'staff_id', 'rp_id'
         ]
+        read_only_fields = ['rep_id'] 
     
     def get_rep_complainant(self, obj):
         try:
