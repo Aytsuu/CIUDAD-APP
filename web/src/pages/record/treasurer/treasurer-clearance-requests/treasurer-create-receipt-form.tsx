@@ -23,6 +23,8 @@ import { Loader2 } from "lucide-react";
     nat_col,
     is_resident,
     voter_id,
+    isSeniorEligible,
+    hasDisabilityEligible,
     onComplete,
     onRequestDiscount,
     discountedAmount,
@@ -37,6 +39,8 @@ import { Loader2 } from "lucide-react";
     nat_col: string;
     is_resident: boolean;
     voter_id?: string | number | null;
+    isSeniorEligible?: boolean;
+    hasDisabilityEligible?: boolean;
     onComplete: () => void;
     onRequestDiscount: () => void;
     discountedAmount?: string;
@@ -57,7 +61,13 @@ import { Loader2 } from "lucide-react";
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
    const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
    console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
-   const isFree = Boolean(effectiveIsResident && voter_id !== null && voter_id !== undefined);
+   const isFree = Boolean(
+     effectiveIsResident && (
+       voter_id !== null && voter_id !== undefined ||
+       isSeniorEligible ||
+       hasDisabilityEligible
+     )
+   );
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);

@@ -27,7 +27,7 @@ function PersonalClearance() {
     const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
     const [appliedDiscountAmount, setAppliedDiscountAmount] = useState<string | undefined>(undefined);
     const [appliedDiscountReason, setAppliedDiscountReason] = useState<string | undefined>(undefined);
-    const [currentReceipt, setCurrentReceipt] = useState<{
+    const [currentReceipt, setCurrentReceipt] = useState<{ 
         id: string;
         purpose: string | undefined;
         rate: string | undefined;
@@ -36,6 +36,8 @@ function PersonalClearance() {
         nat_col: string;
         is_resident: boolean;
         voter_id?: number | string | null;
+        isSeniorEligible?: boolean;
+        hasDisabilityEligible?: boolean;
     } | null>(null);
 
     const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq();
@@ -173,7 +175,7 @@ function PersonalClearance() {
                                             rate: row.original.purpose?.pr_rate,
                                             requester: row.original.nrc_requester,
                                             pay_status: row.original.nrc_req_payment_status,
-                                            nat_col: "Certificate",
+                                            nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
                                             is_resident: false
                                         });
                                         // Ensure discount modal is closed when opening receipt
@@ -303,15 +305,33 @@ function PersonalClearance() {
                                         <div 
                                             className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
                                             onClick={() => {
+                                                const dobStr = (row.original as any)?.resident_details?.per_dob ? String((row.original as any)?.resident_details?.per_dob) : '';
+                                                let isSenior = false;
+                                                if (dobStr) {
+                                                    try {
+                                                        const dob = new Date(dobStr);
+                                                        if (!isNaN(dob.getTime())) {
+                                                            const today = new Date();
+                                                            let age = today.getFullYear() - dob.getFullYear();
+                                                            const m = today.getMonth() - dob.getMonth();
+                                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                                            isSenior = age >= 60;
+                                                        }
+                                                    } catch {}
+                                                }
+                                                const disabilityRaw = (row.original as any)?.resident_details?.per_disability;
+                                                const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
                                                 setCurrentReceipt({
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
                                                     rate: "0",
                                                     requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
                                                     pay_status: row.original.cr_req_payment_status,
-                                                    nat_col: "Certificate",
+                                                    nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
                                                     is_resident: true,
-                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null
+                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
+                                                    isSeniorEligible: isSenior,
+                                                    hasDisabilityEligible: hasDisability
                                                 });
                                                 setIsDiscountModalOpen(false);
                                                 setAppliedDiscountAmount(undefined);
@@ -329,16 +349,34 @@ function PersonalClearance() {
                                         <div 
                                             className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"
                                             onClick={() => {
+                                                const dobStr = (row.original as any)?.resident_details?.per_dob ? String((row.original as any)?.resident_details?.per_dob) : '';
+                                                let isSenior = false;
+                                                if (dobStr) {
+                                                    try {
+                                                        const dob = new Date(dobStr);
+                                                        if (!isNaN(dob.getTime())) {
+                                                            const today = new Date();
+                                                            let age = today.getFullYear() - dob.getFullYear();
+                                                            const m = today.getMonth() - dob.getMonth();
+                                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                                            isSenior = age >= 60;
+                                                        }
+                                                    } catch {}
+                                                }
+                                                const disabilityRaw = (row.original as any)?.resident_details?.per_disability;
+                                                const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
                                                 setCurrentReceipt({
                                                     id: row.original.cr_id,
                                                     purpose: row.original.purpose?.pr_purpose,
                                                     rate: row.original.purpose?.pr_rate,
                                                     requester: `${row.original.resident_details.per_fname} ${row.original.resident_details.per_lname}`,
                                                     pay_status: row.original.cr_req_payment_status,
-                                                    nat_col: "Certificate",
+                                                    nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
                                                     // Paid resident without voter_id should still be treated as resident
                                                     is_resident: true,
-                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null
+                                                    voter_id: (row.original as any)?.resident_details?.voter_id ?? null,
+                                                    isSeniorEligible: isSenior,
+                                                    hasDisabilityEligible: hasDisability
                                                 });
                                                 setIsDiscountModalOpen(false);
                                                 setAppliedDiscountAmount(undefined);

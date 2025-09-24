@@ -14,6 +14,8 @@ const CertForm: React.FC = () => {
   const router = useRouter();
   const {user, isLoading} = useAuth();
   const [hasVoterId, setHasVoterId] = useState<boolean>(false);
+  const [hasDisability, setHasDisability] = useState<boolean>(false);
+  const [isSenior, setIsSenior] = useState<boolean>(false);
   
   // Debug: Inspect what useAuth provides (rp)
   useEffect(() => {
@@ -38,6 +40,26 @@ const CertForm: React.FC = () => {
           const str = typeof v === 'string' ? v.trim().toLowerCase() : '';
           const isVoter = v === true || v === 1 || str === 'yes' || str === 'true' || str === '1';
           setHasVoterId(Boolean(isVoter));
+          // Disability: any non-empty, non-null string/value
+          const disabilityRaw = match?.per_disability;
+          const hasPwd = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+          setHasDisability(Boolean(hasPwd));
+          // Senior: age >= 60 based on per_dob
+          const dobStr = match?.per_dob ? String(match?.per_dob) : '';
+          let senior = false;
+          if (dobStr) {
+            try {
+              const dob = new Date(dobStr);
+              if (!isNaN(dob.getTime())) {
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const m = today.getMonth() - dob.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                senior = age >= 60;
+              }
+            } catch {}
+          }
+          setIsSenior(senior);
         }
       } catch (_) {
         // Fallback: try profiling resident personal detail
@@ -47,7 +69,27 @@ const CertForm: React.FC = () => {
           const v = data?.voter_id ?? data?.voter;
           const str = typeof v === 'string' ? v.trim().toLowerCase() : '';
           const isVoter = v === true || v === 1 || str === 'yes' || str === 'true' || str === '1';
-          if (!cancelled) setHasVoterId(Boolean(isVoter));
+          if (!cancelled) {
+            setHasVoterId(Boolean(isVoter));
+            const disabilityRaw = data?.per_disability;
+            const hasPwd = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+            setHasDisability(Boolean(hasPwd));
+            const dobStr = data?.per_dob ? String(data?.per_dob) : '';
+            let senior = false;
+            if (dobStr) {
+              try {
+                const dob = new Date(dobStr);
+                if (!isNaN(dob.getTime())) {
+                  const today = new Date();
+                  let age = today.getFullYear() - dob.getFullYear();
+                  const m = today.getMonth() - dob.getMonth();
+                  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                  senior = age >= 60;
+                }
+              } catch {}
+            }
+            setIsSenior(senior);
+          }
         } catch (_) {
           // remain false
         }
@@ -56,10 +98,10 @@ const CertForm: React.FC = () => {
     return () => { cancelled = true; };
   }, [(user as any)?.rp]);
 
-  // Debug: Log resolved hasVoterId
+  // Debug: Log resolved eligibility flags
   useEffect(() => {
-    console.log("[AuthContext] hasVoterId:", hasVoterId);
-  }, [hasVoterId]);
+    console.log("[AuthContext] hasVoterId:", hasVoterId, "hasDisability:", hasDisability, "isSenior:", isSenior);
+  }, [hasVoterId, hasDisability, isSenior]);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -115,7 +157,7 @@ const CertForm: React.FC = () => {
     const selectedPurpose = purposeData.find(p => p.pr_purpose === personalType);
     
     
-    const reqAmount = hasVoterId ? 0 : (selectedPurpose?.pr_rate || 0);
+    const reqAmount = (hasVoterId || hasDisability || isSenior) ? 0 : (selectedPurpose?.pr_rate || 0);
     
     addPersonalCert.mutate({
       cert_type: "personal",
@@ -205,8 +247,8 @@ const CertForm: React.FC = () => {
         {/* Removed payment mode field */}
       </View>
 
-      {/* Amount Display - show only for residents without voter_id */}
-      {personalType && !hasVoterId && (
+      {/* Amount Display - show only if not free by voter/disability/senior */}
+      {personalType && !(hasVoterId || hasDisability || isSenior) && (
         <View className="rounded-lg p-4 mb-6 mt-4 bg-blue-50 border border-blue-200">
           <View className="flex-row items-center mb-2">
             <Ionicons name="information-circle" size={16} color="#2563EB" />
