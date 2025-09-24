@@ -21,6 +21,7 @@ interface FormInputProps {
   max?: number;
   step?: number;
   maxLength?: number;
+  upper?: boolean;
 }
 
 export const FormInput = React.memo(({ 
@@ -34,7 +35,8 @@ export const FormInput = React.memo(({
   min,
   max,
   step,
-  maxLength
+  maxLength,
+  upper = false
 }: FormInputProps) => (
   <FormField
     control={control}
@@ -48,7 +50,7 @@ export const FormInput = React.memo(({
             type={type} 
             placeholder={readOnly ? "" : placeholder} 
             {...field}
-            value={field.value ?? ''}
+            value={field.value ? upper ? field.value.toUpperCase() : field.value : ''}
             readOnly={readOnly}
             min={type === 'number' ? min : undefined}
             max={type === 'number' ? max : undefined}

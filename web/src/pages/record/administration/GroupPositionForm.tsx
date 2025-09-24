@@ -110,7 +110,7 @@ export default function GroupPositionForm() {
       pos_title: pos.pos_title,
       pos_max: parseInt(pos.pos_max),
       pos_group: values.pos_group,
-      pos_category: user?.staff?.staff_type == "Barangay Staff" ? "Barangay Position" : "Health Position",
+      pos_category: user?.staff?.staff_type?.toLowerCase() == "BARANGAY STAFF" ? "BARANGAY POSITION" : "HEALTH POSITION",
       staff: user?.staff?.staff_id,
     }))
 

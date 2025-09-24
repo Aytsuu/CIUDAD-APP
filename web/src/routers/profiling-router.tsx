@@ -21,6 +21,7 @@ import RespondentDetails from "@/pages/record/profiling/business/RespondentDetai
 import ProfilingAllRecords from "@/pages/record/profiling/ProfilingAllRecords";
 import BusinessHistoryView from "@/pages/record/profiling/business/BusinessHistoryView";
 import VoterRecords from "@/pages/record/profiling/voters/VoterRecords";
+import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const profiling_router = [
   // All Records
@@ -134,38 +135,45 @@ export const profiling_router = [
   },
 
   // Business
-  {
-    path: "profiling/business/record",
-    element: <BusinessRecords />,
-  },
-  {
-    path: "profiling/business/record/form",
-    element: <BusinessFormLayout />,
-  },
-  {
-    path: "profiling/business/record/pending",
-    element: <PendingRecords />,
-  },
-  {
-    path: "profiling/business/record/pending/form",
-    element: <BusinessFormLayout />,
-  },
-  {
-    path: "profiling/business/record/respondent",
-    element: <RespondentRecords />,
-  },
-  {
-    path: "profiling/business/record/respondent/details",
-    element: <RespondentDetails />,
-  },
-  {
-    path: "profiling/business/history/view",
-    element: <BusinessHistoryView />,
-  },
+  ...[
+    {
+      path: "profiling/business/record",
+      element: <BusinessRecords />,
+    },
+    {
+      path: "profiling/business/record/form",
+      element: <BusinessFormLayout />,
+    },
+    {
+      path: "profiling/business/record/pending",
+      element: <PendingRecords />,
+    },
+    {
+      path: "profiling/business/record/pending/form",
+      element: <BusinessFormLayout />,
+    },
+    {
+      path: "profiling/business/record/respondent",
+      element: <RespondentRecords />,
+    },
+    {
+      path: "profiling/business/record/respondent/details",
+      element: <RespondentDetails />,
+    },
+    {
+      path: "profiling/business/history/view",
+      element: <BusinessHistoryView />,
+    },
 
-  // Voters
-  {
-    path: "profiling/voters",
-    element: <VoterRecords />,
-  },
+    // Voters
+    {
+      path: "profiling/voters",
+      element: <VoterRecords />,
+    },
+  ].map((route) => ({
+    ...route,
+    element: <ProtectedRoute staffType="barangay staff">
+      {route.element}
+    </ProtectedRoute>
+  })),
 ];
