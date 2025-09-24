@@ -53,7 +53,7 @@ export default function DemographicForm({
           className="grid gap-4"
         >
           <div className="grid grid-cols-4 gap-4">
-            <div className="flex flex-col justify-start item pt-1">
+            <div className="flex flex-col justify-start item pt-1 col-span-2">
               <div className="flex justify-between items-center mb-3">
                 <Label className="text-black/70">Household</Label>
               </div>

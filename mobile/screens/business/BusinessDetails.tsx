@@ -1,167 +1,90 @@
-import { ScrollView, View, Text, TouchableOpacity } from "react-native";
-import PageLayout from "../_PageLayout";
-import { useBusinessInfo, useModificationRequests } from "./queries/businessGetQueries";
-import { router, useLocalSearchParams } from "expo-router";
+import { View, Text } from "react-native";
+import { router } from "expo-router";
 import React from "react";
-import { MapPin } from "@/lib/icons/MapPin";
-import { CheckCircle } from "@/lib/icons/CheckCircle";
+import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { FeedbackScreen } from "@/components/ui/feedback-screen";
-import { LoadingState } from "@/components/ui/loading-state";
+import { formatDate } from "@/helpers/dateHelpers";
+import { Card } from "@/components/ui/card";
+import { CircleCheck } from "@/lib/icons/CircleCheck";
 
-export default function BusinessDetails() {
-  // ------------------ STATE INITIALIZATION ----------------------
-  const params = useLocalSearchParams();
-  const business = React.useMemo(() => JSON.parse(params?.business as string), [params])
-  const [showFeedback, setShowFeedback] = React.useState<boolean>(false);
-  const [status, setStatus] = React.useState<"success" | "failure" | "waiting" | "message">('waiting');
-  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests();
-  const { data: businessInfo, isLoading: isLoadingBusinessInfo } = useBusinessInfo(business.bus_id)
+export default function BusinessDetails({ business, modReq = [] }: {
+  business: Record<string, any>,
+  modReq: Record<string, any>[]
+}) {
 
-  const modReq = React.useMemo(() => 
-    modificationRequests.find((req: any) => 
-      req.current_details.bus_id == business.bus_id
-    )
-  , [modificationRequests])
+  // =========== STATE INITIALIZATION ===========
+  const pending = modReq.filter(req => !req.bm_status);
+  const approved = modReq.filter(req => req.bm_status.toLowerCase() == "approved")
+  const rejected = modReq.filter(req => req.bm_status.toLowerCase() == "rejected")
 
-  // ------------------ SIDE EFFECTS ----------------------
-  
-  // ------------------ RENDER ----------------------
-  const feedbackContents: any = {
-    waiting: {
-      title: (
-        <View className="flex">
-          <Text className={`text-[18px] text-gray-800 font-PoppinsSemiBold text-center`}>
-            Awaiting Verification
-          </Text>
-          <Text className={`text-[15px] text-gray-800 font-PoppinsRegular text-center`}>
-            Your request is still under review
-          </Text>
-          <Text className={`text-[15px] text-gray-800 font-PoppinsRegular text-center`}>
-            please wait patiently...
-          </Text>
-        </View>
-      ),
-      content: (
-        <View className="flex-1 justify-end">
-          <Text className={`text-sm text-gray-800 text-center`}>
-            Processing period takes 2-3 business days.
-          </Text>
-        </View>
-      )
-    }
-  }
-
-  if(isLoadingBusinessInfo || isLoadingRequests) {
-    return (
-      <LoadingState/>
-    )
-  }
-
+  // =========== RENDER ===========
   return (
-    <PageLayout
-      leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-      }
-      headerTitle={<Text className="text-gray-900 text-[13px]">{business.bus_name}</Text>}
-      rightAction={<View className="w-10 h-10" />}
-    > 
-      {businessInfo.bus_status === 'Pending' ? (
-        <FeedbackScreen
-          status={status}
-          title={feedbackContents[status].title}
-          content={feedbackContents[status].content}
-          animationDuration={200}
-        />
-      ) : (
-        <ScrollView
-          className="flex-1 bg-white"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        >
-          {/* Header Card */}
-          <View className="bg-primaryBlue p-5">
-            <View className="flex-row items-center mb-4">
-              <View className="flex-1">
-                <Text className="text-gray-50 text-xs font-medium">
-                  Business ID: {businessInfo?.bus_id}
-                </Text>
-                <Text className="text-white text-2xl font-bold mt-1">
-                  {businessInfo?.bus_name}
+    <Card className="rounded-2xl shadow-xl overflow-hidden">
+      <LinearGradient
+        colors={['#0035b1', '#0054db', '#0036b4']} // Enhanced gradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1 }}
+      >
+        {/* Header Card */}
+        <View className="px-6 pt-6">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-gray-300 bg-[#0035b1] text-xs font-medium">
+                No. {business?.bus_id}
+              </Text>
+              <Text className="text-white text-2xl font-PoppinsSemiBold mt-1">
+                {business?.bus_name}
+              </Text>
+            </View>
+
+            {/* Verification Status */}
+            <View className="flex-row gap-2 mb-6 items-center bg-green-100 rounded-full pr-2 shadow-md">
+              <CircleCheck className="" fill={"#22c553"} stroke={"#dcfce7"} />
+              <Text className="text-green-500 text-sm font-medium">
+                {formatDate(business?.bus_date_verified, "short" as any)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Business Info Section */}
+        <View className="px-6 pb-6">
+          {/* Gross Sales */}
+          <View className="flex-row justify-center mb-4">
+            <Text className="text-white text-[36px] font-PoppinsSemiBold">
+              ₱ {business?.bus_gross_sales?.toLocaleString() || "0"}
+            </Text>
+          </View>
+
+          {/* Action Button or Info */}
+          <View>
+            {pending.length > 0 ? (
+              <View className="mb-4">
+                <Text className="text-center text-sm text-blue-500 font-PoppinsMedium">
+                  Pending Update Request
                 </Text>
               </View>
-            </View>
-          </View>
-    
-          {/* Business Information */}
-          <View className="bg-white p-6 shadow-sm">
-            <Text className="text-gray-900 text-lg font-semibold mb-4">
-              Business Information
-            </Text>
-    
-            {/* Gross Sales */}
-            <View className="mb-4">
-              <Text className="text-gray-500 text-sm font-medium mb-2">Gross Sales</Text>
-              <Text className="text-gray-900 text-2xl font-bold">
-                ₱ {businessInfo?.bus_gross_sales?.toLocaleString() || '0'}
-              </Text>
-            </View>
-    
-            {/* Location */}
-            <View className="flex-row items-center gap-2 mb-2">
-              <MapPin size={18} className="fill-red-500" />
-              <Text className="text-gray-700 text-sm">
-                {businessInfo?.bus_street}, Sitio {businessInfo?.sitio}
-              </Text>
-            </View>
-    
-            {/* Date Verified */}
-            {/* Verification Status */}
-            <View className="flex-row items-center gap-2">
-              <CheckCircle size={18} className="fill-green-600 stroke-white"/>
-              <Text className="text-green-600 text-sm">
-                Verified on {new Date(businessInfo?.bus_date_verified).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </Text>
-            </View>
-          </View>
-    
-          {/* Action Buttons */}
-          <View className="mx-4 mt-4">
-            {modReq ? <View className="mb-4">
-              <Text className="text-center text-gray-400">Pending Update Request</Text>
-            </View> :
-              <Button className="bg-gray-100 p-4 rounded-xl mb-3"
-                onPress={() => router.push({
-                  pathname: '/(business)/edit-business',
-                  params: {
-                    business: JSON.stringify(businessInfo)
-                  }
-                })}
+            ) : (
+              <Button
+                className="bg-white border border-blue-200/30 rounded-full mb-3"
+                onPress={() =>
+                  router.push({
+                    pathname: "/(business)/edit-business",
+                    params: {
+                      business: JSON.stringify(business),
+                    },
+                  })
+                }
               >
-                <Text className="text-gray-700 font-semibold text-center">
-                  Update Business Information
+                <Text className="text-gray-700 text-[13px] font-medium">
+                  Update Information
                 </Text>
               </Button>
-            }
-            
-            <Button className="bg-gray-100 p-4 rounded-xl">
-              <Text className="text-gray-700 font-semibold text-center">
-                Request Document
-              </Text>
-            </Button>
+            )}
           </View>
-        </ScrollView>
-      )}
-    </PageLayout>
-  )
+        </View>
+      </LinearGradient>
+    </Card>
+  );
 }

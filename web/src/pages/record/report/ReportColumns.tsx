@@ -13,6 +13,11 @@ import { showErrorToast } from "@/components/ui/toast";
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
+    accessorKey: "ir_id",
+    header: "No.",
+    size: 50
+  },
+  {
     accessorKey: "ir_area",
     header: "Incident Area",
   },

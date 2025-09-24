@@ -77,21 +77,35 @@ export default function ModificationRequest({ data } : {
 
       await updateBusinessModification({
         data: {
-          bm_status: 'Approved'
+          bm_status: 'APPROVED'
         },
         bm_id: data.bm_id
       })
 
       showSuccessToast("Business record updated successfully!");
-      setIsSubmitting(false);
     } catch (err) {
-      setIsSubmitting(false);
       showErrorToast("Failed to update business");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleReject = () => {
-    
+  const handleReject = async () => {
+    try {
+      setIsSubmitting(true)
+      await updateBusinessModification({
+        data: {
+          bm_status: 'REJECTED'
+        },
+        bm_id: data.bm_id
+      })
+
+      showSuccessToast("Business modification rejected!");
+    } catch (err) {
+      showErrorToast("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   };
 
   return (
@@ -151,13 +165,18 @@ export default function ModificationRequest({ data } : {
                   actionLabel="Confirm"
                 />
 
-                <Button
+                <ConfirmationModal
+                  trigger={<Button variant="outline"
+                    className="flex-1 bg-transparent border-red-200 text-red-500 hover:text-red-500 hover:bg-red-100"
+                  >
+                    <X/> Reject
+                  </Button>}
+                  title="Confirm Approval"
+                  description="Review the changes thoroughly before proceeding. Once rejected, this action cannot be reversed."
                   onClick={handleReject}
-                  variant="outline"
-                  className="flex-1 bg-transparent border-red-200 text-red-500 hover:text-red-500 hover:bg-red-100"
-                >
-                  <X/> Reject
-                </Button>
+                  actionLabel="Confirm"
+                  variant="destructive"
+                />
               </>)}
             </div>
             <Alert className="space-x-2 border-amber-300 bg-amber-50">

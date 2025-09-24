@@ -2,10 +2,9 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import Count, F
 from ..models import Position, Staff
 from ..serializers.position_serializers import *
-from ..double_queries import PostQueries
+from ..double_queries import *
 
 
 class PositionView(generics.ListCreateAPIView):
@@ -25,6 +24,21 @@ class PositionDeleteView(generics.DestroyAPIView):
     serializer_class = PositionBaseSerializer
     queryset = Position.objects.all()
     lookup_field = 'pos_id'
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        pos_id = instance.pos_id
+        instance.delete()
+
+        double_queries = DeleteQueries()
+        response = double_queries.position(pos_id)
+        if not response.ok:
+            try:
+                error_detail = response.json()
+            except ValueError:
+                error_detail = response.text
+            raise serializers.ValidationError({"error": error_detail})
+        return Response(status=status.HTTP_200_OK)
 
 class PositionBulkCreateView(generics.CreateAPIView):
     serializer_class = PositionBaseSerializer
@@ -67,6 +81,15 @@ class PositionUpdateView(generics.RetrieveUpdateAPIView):
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
+                
+                double_queries = UpdateQueries()
+                response = double_queries.position(request.data, instance.pos_id)
+                if not response.ok:
+                    try:
+                        error_detail = response.json()
+                    except ValueError:
+                        error_detail = response.text
+                    raise serializers.ValidationError({"error": error_detail})
                 return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
     

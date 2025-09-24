@@ -76,9 +76,9 @@ interface Patients {
 const getPatType = (type: string) => {
   switch(type.toLowerCase()){
     case "resident":
-      return 'bg-blue-500 w-24 p-1 rounded-md font-semibold text-white'
+      return 'bg-blue-500 w-24 rounded-md font-semibold text-white'
     case "transient":
-      return 'border border-black/40 w-24 p-1 rounded-md font-semibold text-black'
+      return 'border border-black/40 w-24 rounded-md font-semibold text-black'
     default:
       return 'bg-gray-500 text-white'
   }
@@ -485,7 +485,7 @@ export default function PatientsRecord() {
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">
-              {totalPages > 1 && (
+              {totalPages > 0 && (
                 <PaginationLayout
                   currentPage={page}
                   totalPages={totalPages}

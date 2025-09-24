@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Plus, Building2, FileDown, Loader2, ClockArrowUp, Paperclip } from "lucide-react"
+import { Search, Plus, Building2, FileDown  , ClockArrowUp, Paperclip } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { Link, useNavigate } from "react-router"
@@ -15,6 +15,7 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Combobox } from "@/components/ui/combobox"
 import { formatModificationRequests } from "../ProfilingFormats"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function BusinessRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -175,7 +176,7 @@ export default function BusinessRecords() {
         {/* Loading State */}
         {isLoadingBusinesses && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Spinner size="lg" />
             <span className="ml-2 text-gray-600">Loading businesses...</span>
           </div>
         )}

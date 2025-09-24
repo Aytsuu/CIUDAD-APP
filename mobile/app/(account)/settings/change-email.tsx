@@ -1,4 +1,4 @@
-import ChangeEmail from "@/screens/account/ChangeEmail"
+import ChangeEmail from "@/screens/account/settings/ChangeEmail"
 
 export default () => {
   return <ChangeEmail />

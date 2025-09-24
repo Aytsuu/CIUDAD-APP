@@ -101,9 +101,9 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   },
   {
     accessorKey: 'date_registered',
-    header: 'Date Registered',
+    header: 'Registered',
     cell: ({row}) => (
-      formatDate(row.original.date_registered, "long" as any)
+      formatDate(row.original.date_registered, "short" as any)
     )
   },
   {

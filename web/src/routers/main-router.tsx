@@ -19,7 +19,6 @@ import { attendance_router } from './attendacePage-router';
 import { mom_router } from './MinutesOfMeetingPage-router';
 import { template_router } from './template-router';
 import { council_calendar_router } from './calendarPage-route';
-// import { patientQueue } from './patientsQueue';
 import { healthinventory } from './inventory';
 import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
@@ -37,7 +36,7 @@ import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
 import { team_router } from "./team-router";
-// import { ProtectedRoute } from "@/ProtectedRoutes";
+import { ProtectedRoute } from "@/ProtectedRoutes";
 import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
 export const main_router: RouteObject[] = [
@@ -57,38 +56,120 @@ export const main_router: RouteObject[] = [
         path: "announcement",
         element: <AnnouncementDashboard />,
       },
-      ...administration_router,
-      ...profiling_router,
-      ...report_router,
+      ...administration_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute>
+            {route.element}
+          </ProtectedRoute>
+        )
+      })),
+      ...profiling_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute
+            requiredFeature="PROFILING"
+          >
+            {route.element}
+          </ProtectedRoute>
+        )
+      })),
+      ...report_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute
+            requiredFeature="REPORT"
+          >
+            {route.element}
+          </ProtectedRoute>
+        )
+      })),
       ...complaint_router.map((route) => ({
         ...route,
-        // element: (
-        //   <ProtectedRoute
-        //     requiredPosition="tanod"
-        //     alternativePositions={["Admin", "Emergency Response Head", "Barangay Captain"]}
-        //   >
-        //     {route.element}
-        //   </ProtectedRoute>
-        // ),
+        element: (
+          <ProtectedRoute
+            requiredFeature="COMPLAINT"
+          >
+            {route.element}
+          </ProtectedRoute>
+        ),
       })),
       ...team_router,
-      ...complaint_router,
-      ...ord_router,
-      ...res_router,
-      ...attendance_router,
-      ...mom_router,
-      // ...template_router,
-      ...council_calendar_router,
-      ...donation_router,
+      ...ord_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="COUNCIL">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...res_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="COUNCIL">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...attendance_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="COUNCIL">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...mom_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="COUNCIL">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...council_calendar_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="COUNCIL">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...donation_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="DONATION">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...treasurer_router.map((route) => ({
         ...route,
-        // element: (
-        //   <ProtectedRoute requiredPosition="treasurer">
-        //     {route.element}
-        //   </ProtectedRoute>
-        // ),
+        element: (
+          <ProtectedRoute requiredFeature="FINANCE">
+            {route.element}
+          </ProtectedRoute>
+        ),
       })),
-      ...waste_router,
+      ...waste_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="WASTE">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...clearances_router.map((route) => ({
+        ...route,
+        children: route.children.map((route) => ({
+          ...route,
+          element: (
+            <ProtectedRoute requiredFeature="CERTIFICATION & CLEARANCES">
+              {route.element}
+            </ProtectedRoute>
+          ),
+        }))
+      })),
       ...maternal_router,
       ...vaccination,
       ...childHealthServices,
@@ -107,8 +188,7 @@ export const main_router: RouteObject[] = [
       ...health_schedule_routes,
       ...viewprofile_router,
       ...template_router,
-      ...clearances_router,
       ...bhw_daily_notes_router,
-    ])
+      ])
     }
 ]
