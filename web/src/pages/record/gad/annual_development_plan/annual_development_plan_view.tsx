@@ -218,7 +218,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                           <div className="mt-2 space-y-1">
                             {proposal && (
                               <div 
-                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                                className="text-xs text-yellow-600 font-medium cursor-pointer hover:text-yellow-800 hover:underline"
                                 onClick={() => handleViewProject(proposal)}
                               >
                                 View Project Proposal
@@ -226,7 +226,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                             )}
                             {resolution && (
                               <div 
-                                className="text-xs text-green-600 font-medium cursor-pointer hover:text-green-800 hover:underline"
+                                className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
                                 onClick={() => handleViewResolution(resolution)}
                               >
                                 Resolution #{resolution.res_num}
