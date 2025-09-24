@@ -162,7 +162,7 @@ class CompleteRegistrationView(APIView):
           add_province="Cebu",
           add_city="Cebu City",
           add_barangay="San Roque (ciudad)",
-          sitio=Sitio.objects.filter(sitio_id=data[1]).first(),
+          sitio=Sitio.objects.filter(sitio_name=data[1]).first(),
           add_street=data[2]
         )[0],
         rp = rp,
