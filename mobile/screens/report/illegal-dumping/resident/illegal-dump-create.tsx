@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import z from "zod";
+import { useToastContext } from "@/components/ui/toast";
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
@@ -19,6 +20,7 @@ import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
 
 
 export default function IllegalDumpCreateForm() {
+  const {toast} = useToastContext();
   const router = useRouter();
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
@@ -57,6 +59,11 @@ export default function IllegalDumpCreateForm() {
 
   const onSubmit = (values: z.infer<typeof IllegalDumpResSchema>) => {
 
+    if (selectedImages.length === 0) {
+      toast.error("Please provide a photo for evidence.");
+      return; // Stop the function execution
+    }
+
     const files = selectedImages.map((img: any) => ({
       name: img.name,
       type: img.type,
@@ -64,7 +71,7 @@ export default function IllegalDumpCreateForm() {
     }))
 
     const allValues = {
-      ...values,
+      ...values,  
       files      
     }
 
