@@ -326,7 +326,7 @@ class UnvaccinatedVaccinesDetailsView(APIView):
         # Use the correct relationship for addresses - prefetch PersonalAddress with add and sitio
         all_residents = ResidentProfile.objects.select_related('per').prefetch_related(
             Prefetch(
-                'per__personaladdress_set',
+                'per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
                 to_attr='prefetched_personal_addresses'
             )

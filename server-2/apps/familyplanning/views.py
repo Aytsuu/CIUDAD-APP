@@ -1166,7 +1166,7 @@ def get_complete_fp_record(request, fprecord_id):
                 "pat__trans_id",
                 "pat__trans_id__tradd_id"
             ).prefetch_related(
-                "pat__rp_id__per__personaladdress_set__add", 
+                "pat__rp_id__per__personal_addresses__add", 
                 "pat__rp_id__household_set__add"
             ),
             fprecord_id=fprecord_id,
@@ -1281,7 +1281,7 @@ def get_complete_fp_record(request, fprecord_id):
 
                 if not address_found and patient.rp_id.per:
                     try:
-                        personal_addresses = patient.rp_id.per.personaladdress_set.select_related('add').all()
+                        personal_addresses = patient.rp_id.per.personal_addresses.select_related('add').all()
                         personal_address = personal_addresses.first()
                         if personal_address and personal_address.add:
                             address_info = personal_address.add
@@ -1751,7 +1751,7 @@ def get_complete_fp_record_data(request, fprecord_id):
             "pat__trans_id",
             "pat__trans_id__tradd_id"
         ).prefetch_related(
-            "pat__rp_id__per__personaladdress_set__add", 
+            "pat__rp_id__per__personal_addresses__add", 
             "pat__rp_id__household_set__add"
         ).get(fprecord_id=fprecord_id)
 
@@ -1858,7 +1858,7 @@ def get_complete_fp_record_data(request, fprecord_id):
 
                 if not address_found and patient.rp_id.per:
                     try:
-                        personal_addresses = personal_info.personaladdress_set.select_related('add').all()
+                        personal_addresses = personal_info.personal_addresses.select_related('add').all()
                         personal_address = personal_addresses.first()
                         if personal_address and personal_address.add:
                             address_info = personal_address.add

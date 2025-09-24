@@ -4,15 +4,15 @@ import React, { useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, Users } from "lucide-react";
+import { Search, Loader2, Users2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUnvaccinatedVaccinesSummary } from "../../queries/fetch";
 import { PaginatedResidentListDialog } from "./ResidentListDialog";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import CardLayout from "@/components/ui/card/card-layout";
-
+import ViewButton from "@/components/ui/view-button"; // Import your ViewButton
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 interface VaccineAgeGroup {
   age_group_id: number | string | null;
   age_group_name: string;
@@ -41,6 +41,46 @@ interface PaginatedResponse {
   total_residents_count?: number;
 }
 
+// Reusable component for Age Group View Buttons
+const AgeGroupViewButtons = ({ 
+  vaccine, 
+  onOpenDialog 
+}: { 
+  vaccine: VaccineSummary;
+  onOpenDialog: (vaccineId: number, vaccineName: string, ageGroupId: number | string | null, ageGroupName: string) => void;
+}) => {
+  const hasUnvaccinated = vaccine.age_groups.some(ageGroup => ageGroup.unvaccinated_count > 0);
+  
+  if (!hasUnvaccinated) {
+    return <div className="text-sm text-gray-500 italic">No actions available</div>;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {vaccine.age_groups
+        .filter(ageGroup => ageGroup.unvaccinated_count > 0)
+        .map((ageGroup) => {
+          const ageRange = ageGroup.min_age !== undefined && ageGroup.max_age !== undefined 
+            ? `${ageGroup.min_age}-${ageGroup.max_age} ${ageGroup.time_unit === "NA" ? "" : ageGroup.time_unit}`
+            : "";
+            
+          return (
+            <ViewButton
+              key={ageGroup.age_group_id}
+              onClick={() => onOpenDialog(
+                vaccine.vac_id, 
+                vaccine.vac_name, 
+                ageGroup.age_group_id, 
+                `${ageGroup.age_group_name} ${ageRange && `(${ageRange})`}`
+              )}
+           
+            />
+          );
+        })}
+    </div>
+  );
+};
+
 export default function UnvaccinatedResidents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,7 +95,7 @@ export default function UnvaccinatedResidents() {
     [currentPage, pageSize, searchQuery]
   );
 
-  const { data: vaccinesSummaryResponse, isLoading } = useUnvaccinatedVaccinesSummary(queryParams);
+  const { data: vaccinesSummaryResponse, isLoading, isError } = useUnvaccinatedVaccinesSummary(queryParams);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentVaccineId, setCurrentVaccineId] = useState<number | null>(null);
@@ -96,19 +136,18 @@ export default function UnvaccinatedResidents() {
   const totalCount = response?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const totalResidentsCount = response?.total_residents_count || 0;
-
   // Define table columns
   const unvaccinatedColumns: ColumnDef<VaccineSummary>[] = [
     {
       accessorKey: "vac_name",
       header: ({ column }) => (
-        <div className="flex w-full justify-start items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Vaccine Name <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
+        <div className="flex justify-center min-w-[200px] px-2">
+          <div className="flex flex-col items-center w-full">
             <div className="font-medium">{row.original.vac_name}</div>
             {row.original.vac_description && (
               <div className="text-sm text-gray-600">{row.original.vac_description}</div>
@@ -139,7 +178,7 @@ export default function UnvaccinatedResidents() {
         const hasUnvaccinated = row.original.age_groups.some(ageGroup => ageGroup.unvaccinated_count > 0);
         
         return (
-          <div className="flex flex-col gap-2 min-w-[300px]">
+          <div className="flex flex-col items-center gap-2 min-w-[300px]">
             {row.original.age_groups.length === 0 ? (
               <div className="text-sm text-gray-500 italic">No age groups defined</div>
             ) : (
@@ -149,8 +188,8 @@ export default function UnvaccinatedResidents() {
                   : "";
                 
                 return (
-                  <div key={ageGroup.age_group_id} className="flex justify-between items-center text-sm">
-                    <span className="font-medium text-darkBlue1">
+                  <div key={ageGroup.age_group_id} className="flex justify-between items-center text-sm w-full">
+                    <span className="font-medium text-darkBlue1 text-center">
                       {ageGroup.age_group_name} {ageRange && `(${ageRange})`}
                     </span>
                     <span className={ageGroup.unvaccinated_count > 0 ? "text-gray-600" : "text-gray-400"}>
@@ -171,62 +210,36 @@ export default function UnvaccinatedResidents() {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => {
-        const hasUnvaccinated = row.original.age_groups.some(ageGroup => ageGroup.unvaccinated_count > 0);
-        
-        return (
-          <div className="flex flex-col gap-2">
-            {hasUnvaccinated ? (
-              row.original.age_groups
-                .filter(ageGroup => ageGroup.unvaccinated_count > 0)
-                .map((ageGroup) => {
-                  const ageRange = ageGroup.min_age !== undefined && ageGroup.max_age !== undefined 
-                    ? `${ageGroup.min_age}-${ageGroup.max_age} ${ageGroup.time_unit === "NA" ? "" : ageGroup.time_unit}`
-                    : "";
-                    
-                  return (
-                    <Button
-                      key={ageGroup.age_group_id}
-                      variant="outline"
-                      className="text-xs h-8"
-                      onClick={() => handleOpenDialog(
-                        row.original.vac_id, 
-                        row.original.vac_name, 
-                        ageGroup.age_group_id, 
-                        `${ageGroup.age_group_name} ${ageRange && `(${ageRange})`}`
-                      )}
-                    >
-                      View {ageGroup.age_group_name}
-                    </Button>
-                  );
-                })
-            ) : (
-              <div className="text-sm text-gray-500 italic">No actions available</div>
-            )}
-          </div>
-        );
-      }
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <AgeGroupViewButtons 
+            vaccine={row.original} 
+            onOpenDialog={handleOpenDialog} 
+          />
+        </div>
+      )
     }
   ];
 
   return (
     <div className="w-full h-full flex flex-col">
       {/* Total Residents Card */}
-      {response?.success && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <CardLayout
-            title={
-              <div className="flex gap-2">
-                <Users className="w-5 h-5" />
-                <span>Total Residents</span>
-              </div>
-            }
-            content={<div className="text-2xl font-bold px-6 text-blue-600">{totalResidentsCount}</div>}
-          />
-        </div>
-      )}
+    <div className="full">
+      <div className="w-[400px]">
+      <EnhancedCardLayout
+              title="Total Residents"
+              description="All vaccination records"
+              value={totalResidentsCount}
+              valueDescription="Total vaccinated"
+              icon={<Users2 className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
+      </div>
+    </div>
 
-      <div className="w-full flex gap-2 mr-2 mb-4 mt-4">
+      <div className="w-full flex gap-2 mr-2  mt-4 border p-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
@@ -248,7 +261,7 @@ export default function UnvaccinatedResidents() {
       </div>
 
       {/* Page size selector */}
-      <div className="w-full bg-white flex items-center justify-between p-4 border rounded-lg mb-4">
+      <div className="w-full flex items-center justify-between p-4 border  bg-gray-50">
         <div className="flex gap-x-3 justify-start items-center">
           <p className="text-xs sm:text-sm">Show</p>
           <Input 
@@ -264,53 +277,43 @@ export default function UnvaccinatedResidents() {
         {response?.success && <div className="text-sm text-gray-600">Total: {totalCount} vaccines</div>}
       </div>
 
-      {isLoading ? (
-        <div className="w-full h-[100px] flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading...</span>
-        </div>
-      ) : (
-        <>
-          <div className="bg-white w-full overflow-x-auto rounded-md border">
-            <DataTable 
-              columns={unvaccinatedColumns} 
-              data={vaccines} 
-            />
+      <div >
+        {isLoading ? (
+          <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2">Loading...</span>
           </div>
+        ) : isError ? (
+          <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+            <span>Error loading data. Please try again.</span>
+          </div>
+        ) : (
+          <DataTable columns={unvaccinatedColumns} data={vaccines} />
+        )}
+      </div>
+      
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
+                   <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                   Showing {vaccines.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} vaccines
+                   </p>
+                   <div className="w-full sm:w-auto flex justify-center">
+                     <PaginationLayout 
+                       currentPage={currentPage} 
+                       totalPages={totalPages} 
+                       onPageChange={setCurrentPage} 
+                     />
+                   </div>
+                 </div>
+      
 
-          {vaccines.length === 0 && !isLoading && (
-            <div className="text-center text-gray-500 py-10">
-              {searchQuery.trim() ? "No matching vaccines found" : "No vaccine data available"}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalCount > pageSize && (
-            <div className="flex justify-center items-center mt-6 p-4">
-              <div className="flex items-center gap-4">
-                <p className="text-xs sm:text-sm font-normal text-gray-500">
-                  Showing {vaccines.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} vaccines
-                </p>
-
-                <PaginationLayout 
-                  currentPage={currentPage} 
-                  totalPages={totalPages} 
-                  onPageChange={handlePageChange} 
-                />
-              </div>
-            </div>
-          )}
-
-          {currentVaccineId && (
-            <PaginatedResidentListDialog 
-              isOpen={dialogOpen} 
-              onClose={handleCloseDialog} 
-              title={currentDialogTitle} 
-              vaccineId={currentVaccineId} 
-              ageGroupId={currentAgeGroupId} 
-            />
-          )}
-        </>
+      {currentVaccineId && (
+        <PaginatedResidentListDialog 
+          isOpen={dialogOpen} 
+          onClose={handleCloseDialog} 
+          title={currentDialogTitle} 
+          vaccineId={currentVaccineId} 
+          ageGroupId={currentAgeGroupId} 
+        />
       )}
     </div>
   );

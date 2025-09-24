@@ -10,4 +10,4 @@ export const  bhw_daily_notes_router = [
       path: "/bhw/form",
       element: <BHWNoteForm />,
    }
-]
+]  

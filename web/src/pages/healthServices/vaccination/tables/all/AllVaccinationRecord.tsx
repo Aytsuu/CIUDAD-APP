@@ -15,7 +15,6 @@ import { BasicInfoVaccinationRecord, VaccinationCounts } from "../columns/types"
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "@/pages/healthServices/Reports/filter-sitio";
 import { SelectedFiltersChips } from "@/pages/healthServices/Reports/selectedFiltersChipsProps ";
@@ -183,13 +182,9 @@ export default function AllVaccinationRecords() {
       setSelectedSitios([]);
     }
   };
-  
-  const handleManualSitioSearch = (value: string) => {
-    // Not used since we're using the main search field
-  };
+ 
 
   return (
-    <MainLayoutComponent title="Vaccination Records" description="Manage and view patient vaccination records">
       <div className="w-full h-full flex flex-col">
         {/* Summary Cards - Updated with EnhancedCardLayout */}
         <div className="w-full">
@@ -259,7 +254,6 @@ export default function AllVaccinationRecords() {
               selectedSitios={selectedSitios} 
               onSitioSelection={handleSitioSelection} 
               onSelectAll={handleSelectAllSitios} 
-              onManualSearch={handleManualSitioSearch}
               manualSearchValue=""
             />
           </div>
@@ -348,6 +342,5 @@ export default function AllVaccinationRecords() {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
   );
 }

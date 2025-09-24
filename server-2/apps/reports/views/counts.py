@@ -29,6 +29,7 @@ class ReportsCount(APIView):
             inv_immunization = ImmunizationStock.objects.count()
             inv_firstaid_count = FirstAidInventory.objects.count()
             inv_commodity_count = CommodityInventory.objects.count()
+            pregnancy_count = Pregnancy.objects.distinct().count()
         
         
             # Total count
@@ -53,6 +54,7 @@ class ReportsCount(APIView):
                     'inv_antigen_count': inv_antigen_count,
                     'inv_firstaid_count': inv_firstaid_count,
                     'inv_commodity_count': inv_commodity_count,
+                    'pregnancy_count': pregnancy_count
                 }
             }, status=status.HTTP_200_OK)
             
@@ -60,4 +62,4 @@ class ReportsCount(APIView):
             return Response({
                 'success': False,
                 'error': str(e)
-            }, status=statuus.HTTP_500_INTERNAL_SERVER_ERROR)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 

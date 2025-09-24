@@ -1,52 +1,49 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  useGetChildHealthTotalRecords,
-  useGetFirstAidTotalRecords,
-  useGetMedicineTotalRecords,
-  useGetVaccinationTotalRecords,
-  useGetMedicalConsultationTotalRecords
-} from "./queries/services-count-queries";
+import { useReportsCount } from "@/pages/healthServices/count-return/count";
 
 const healthCards = [
     {
       title: "Child Health",
       description: "Child health records",
-      queryHook: useGetChildHealthTotalRecords,
+      dataKey: "child_count",
     },
     {
       title: "First Aid",
       description: "First aid cases",
-      queryHook: useGetFirstAidTotalRecords,
+      dataKey: "firstaid_records_count",
     },
     {
       title: "Medicine",
       description: "Medicine records",
-      queryHook: useGetMedicineTotalRecords,
+      dataKey: "medicine_records_count",
     },
     {
       title: "Vaccinations",
       description: "Vaccines administered",
-      queryHook: useGetVaccinationTotalRecords,
+      dataKey: "vaccination_records_count",
       showBreakdown: true
     },
     {
       title: "Consultations",
       description: "Medical consultations",
-      queryHook: useGetMedicalConsultationTotalRecords,
+      dataKey: "medicalconsultation_records_count",
     },
   ];
+
 export const ServicesHealthRecordsSectionCards = () => {
+  const { data, isLoading } = useReportsCount();
+
   return (
     <>
       {healthCards.map((card) => {
-        const { data, isLoading } = card.queryHook();
+        const count = data?.success ? data.data[card.dataKey] : 0;
         
         return (
           <Card key={card.title}>
             <CardHeader>
               <CardDescription>{card.description}</CardDescription>
               <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl pb-6">
-                {isLoading ? '...' : (data?.total_records ?? 0)}
+                {isLoading ? '...' : count}
               </CardTitle>
             </CardHeader>
           </Card>

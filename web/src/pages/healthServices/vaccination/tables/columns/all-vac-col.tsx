@@ -18,7 +18,7 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
       return (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="flex flex-col w-full">
-            A<div className="font-medium truncate">{fullName}</div>
+            <div className="font-medium truncate">{fullName}</div>
             <div className="text-sm text-darkGray">
               {row.original.sex}, {row.original.age}
             </div>
@@ -30,7 +30,12 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
   {
     accessorKey: "address",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
         Address <ArrowUpDown size={15} />
       </div>
     ),

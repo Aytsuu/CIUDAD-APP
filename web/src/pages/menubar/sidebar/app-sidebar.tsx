@@ -176,29 +176,31 @@ const healthItems: BaseMenuItem[] = [
         title: "Child Immunization",
         url: "/forwarded-records/child-health-immunization"
       },
-      { title: "Vaccine Waitlist", url: "/forwarded-records/vaccine-waitlist" },
-      {
-        title: "Medical Consultaion",
-        url: "/forwarded-records/medical-consultation"
-      }
+      { title: "Vaccine Waitlist", url: "/forwarded-records/vaccine-waitlist" }
+      // {
+      //   title: "Medical Consultaion",
+      //   url: "/forwarded-records/medical-consultation"
+      // }
     ]
-  }, 
-   {
+  },
+  {
+    title: "Referred Patients",
+    url: "/forwarded-records/medical-consultation"
+  },
+  {
     title: "Services",
     url: "/",
     items: [
-      
-      { title: "Medical Consultation ", url: "/services/medical-consultation" },
-      { title: "Child Health", url: "/services/childhealthrecords" },
-      { title: "Vaccination", url: "/services/vaccination" },
-      { title: "Medicine", url: "/services/medicine" },
-      { title: "Firstaid", url: "/services/firstaid" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
-      // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
-     { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Child Health", url: "/services/childhealthrecords" },
+      { title: "Firstaid", url: "/services/firstaid" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Maternal", url: "/services/maternalrecords" },
-      { title: "Schedules", url: "/services/scheduled/follow-ups" }
-    ],
+      { title: "Medical Consultation ", url: "/services/medical-consultation" },
+      { title: "Medicine", url: "/services/medicine" },
+      { title: "Vaccination", url: "/services/vaccination" }
+      // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
+    ]
   },
   {
     title: "Inventory",
@@ -208,31 +210,20 @@ const healthItems: BaseMenuItem[] = [
       { title: "Inventory Stocks", url: "/inventory/stocks" }
     ]
   },
-  {
-    title: "Request",
-    url: "/",
-    items: [
-      {
-        title: "Medicine Request",
-        url: "/request/medicine"
-      },
-      { title: "Medical Consultation", url: "/" }
-    ]
-  },
-
-  { title: "Reports", url: "/reports" },
+  { title: "Follow-up Visits", url: "/services/scheduled/follow-ups" },
+  // {
+  //   title: "Request",
+  //   url: "/",
+  //   items: [
+  //     {
+  //       title: "Medicine Request",
+  //       url: "/request/medicine"
+  //     }
+  //   ]
+  // },
+  { title: "Age Group Management", url: "/age-group" },
   { title: "Service Scheduler", url: "/scheduler" },
-  {
-    title: "Manage",
-    url: "/",
-    items: [
-      {
-        title: "Age Group",
-        url: "/age-group"
-      },
-      { title: "Medical Consultation", url: "/" }
-    ]
-  }
+  { title: "Reports", url: "/reports" }
 ];
 
 interface MenuItemComponentProps {
@@ -365,7 +356,7 @@ export function AppSidebar() {
       ]
     },
     ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff" ? barangayItems : healthItems)
-  ]
+  ];
 
   // Uncomment and modify this if you want to use assignedFeatures instead of hardcoded items
   // const dynamicItems: BaseMenuItem[] = assignedFeatures?.map((item: any) => ({

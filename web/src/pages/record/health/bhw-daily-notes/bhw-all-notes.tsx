@@ -55,7 +55,7 @@ export default function BHWAllNotes() {
                      onChange={(e) => setSearchTerm(e.target.value)}
                   />
                </div>
-               <Link to="/bhw-note-form">
+               <Link to="/bhw/form">
                   <Button variant="default">
                      <Plus size={15} /> Create
                   </Button>

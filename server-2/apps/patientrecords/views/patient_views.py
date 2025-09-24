@@ -13,7 +13,7 @@ from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
 from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer, TransientAddressSerializer
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
-from ...pagination import StandardResultsPagination
+from ...pagination import StandardResultsPagination 
 
 
 
@@ -66,7 +66,7 @@ class PatientListView(generics.ListAPIView):
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
-                'rp_id__per__personaladdress_set',
+                'rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',

@@ -101,7 +101,7 @@ export default function MainInventoryList() {
                     >
                       <Icon className="h-4 w-4" />
                       <span>{tab.label}</span>
-                      <span className={`absolute -top-1 -right-1 text-xs rounded-full h-5 w-5 flex items-center justify-center ${
+                      <span className={`text-xs rounded-full h-6 w-6 flex items-center justify-center ${
                         isActive 
                           ? "bg-red-500 text-white" 
                           : "bg-red-300 text-white"

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput, Loader2, Users, Home, UserCheck } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useMedicineRecords } from "../queries/fetch";
@@ -20,7 +20,6 @@ import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function AllMedicineRecords() {
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -179,10 +178,6 @@ export default function AllMedicineRecords() {
       setSelectedSitios([]);
     }
   };
-  
-  const handleManualSitioSearch = (value: string) => {
-    // Not used since we're using the main search field
-  };
 
   return (
     <MainLayoutComponent title="Medicine Records" description="Manage and view patient's medicine records">
@@ -255,7 +250,6 @@ export default function AllMedicineRecords() {
               selectedSitios={selectedSitios} 
               onSitioSelection={handleSitioSelection} 
               onSelectAll={handleSelectAllSitios} 
-              onManualSearch={handleManualSitioSearch}
               manualSearchValue=""
             />
           </div>

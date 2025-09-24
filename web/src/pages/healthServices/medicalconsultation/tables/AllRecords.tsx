@@ -190,9 +190,7 @@ export default function AllMedicalConsRecord() {
     }
   };
   
-  const handleManualSitioSearch = (value: string) => {
-    // Not used since we're using the main search field
-  };
+
 
   return (
     <MainLayoutComponent title="Medical Consultation" description="Manage Medical Consultation">
@@ -265,7 +263,6 @@ export default function AllMedicalConsRecord() {
               selectedSitios={selectedSitios} 
               onSitioSelection={handleSitioSelection} 
               onSelectAll={handleSelectAllSitios} 
-              onManualSearch={handleManualSitioSearch}
               manualSearchValue=""
             />
           </div>
