@@ -78,7 +78,7 @@ const DisbursementVoucherList: React.FC = () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
-    setCurrentPage(1); // Reset to first page on refresh
+    setCurrentPage(1);
   };
 
   const handleArchivePress = (disbursement: DisbursementVoucher, event?: any) => {
@@ -136,10 +136,6 @@ const DisbursementVoucherList: React.FC = () => {
     });
   };
 
-  const handleDeleteSuccessComplete = () => {
-    setShowDeleteSuccess(false);
-  };
-
   const router = useRouter();
 
   const handleBackPress = () => {
@@ -155,11 +151,15 @@ const DisbursementVoucherList: React.FC = () => {
     setCurrentPage(1); 
   };
 
-  if (selectedDisbursement) {
-    return (
-      <DisbursementView disbursement={selectedDisbursement} onBack={handleBackPress} />
-    );
-  }
+if (selectedDisbursement) {
+  return (
+    <DisbursementView 
+      disNum={selectedDisbursement.dis_num} 
+      disbursement={selectedDisbursement} 
+      onBack={handleBackPress} 
+    />
+  );
+}
 
   if (isLoading) {
     return (
@@ -231,21 +231,6 @@ const DisbursementVoucherList: React.FC = () => {
             >
               <Text className="text-sm font-medium">Archived</Text>
             </TouchableOpacity>
-          </View>
-        </View>
-
-        <View className="flex-row justify-between mb-2">
-          <View className="px-2 py-2 rounded-lg">
-            <Text className="font-medium ">
-              Grand Total:{" "}
-              <Text className="font-bold text-green-700">
-                ₱
-                {new Intl.NumberFormat("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(totalAmount)}
-              </Text>
-            </Text>
           </View>
         </View>
       </View>

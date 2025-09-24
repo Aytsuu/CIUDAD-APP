@@ -108,19 +108,49 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
     supportDocsViewMode === "active" ? activeSupportDocs : archivedSupportDocs
   ).filter((doc) => doc.disf_type?.startsWith("image/"));
 
-  const handleUploadFiles = async () => {
-    try {
-      await addSupportDocMutation.mutateAsync({
-        dis_num: disNum,
-        files: selectedImages,
-      });
-      setShowUploadModal(false);
-      setSelectedImages([]);
-      refetchSupportDocs();
-    } catch (error) {
-      console.error("Error uploading files:", error);
-    }
-  };
+const handleUploadFiles = async () => {
+  try {
+    console.log("Selected images before processing:", selectedImages);
+    
+    // Transform the data to match backend expectations
+    const filesForUpload = selectedImages.map((image) => {
+      // Create the full data URL that your backend expects
+      const dataUrl = `data:${image.type};base64,${image.file}`;
+      
+      return {
+        file: dataUrl,  // Full data URL with prefix
+        name: image.name || `image_${Date.now()}.jpg`,
+        type: image.type || 'image/jpeg'
+      };
+    });
+
+    console.log("Files for upload:", filesForUpload);
+
+    const uploadData = {
+      dis_num: disNum,
+      files: filesForUpload
+    };
+
+    console.log("Final upload data:", uploadData);
+
+    await addSupportDocMutation.mutateAsync(uploadData, {
+      onSuccess: (data) => {
+        console.log("Upload successful response:", data);
+        setShowUploadModal(false);
+        setSelectedImages([]);
+        refetchSupportDocs();
+      },
+      onError: (error) => {
+        console.error("Upload error:", error);
+        // Alert.alert("Upload Failed", "Failed to upload files. Please try again.");
+      }
+    });
+
+  } catch (error) {
+    console.error("Error uploading files:", error);
+    // Alert.alert("Error", "An error occurred while uploading files.");
+  }
+};
 
   const handleArchiveSupportDoc = (disfNum: string) => {
     archiveSupportDocMutation.mutate(
