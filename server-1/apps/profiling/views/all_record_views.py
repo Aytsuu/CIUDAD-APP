@@ -182,17 +182,17 @@ class CompleteRegistrationView(APIView):
     return instance
   
   def create_household(self, houses, rp, staff):
-    # data = [undefined, sitio, street]
     house_instances = []
     for house in houses:
+      print(house["address"])
       data = house["address"].split("-") 
       house_instances.append(Household(
         hh_id = generate_hh_no(),
         hh_nhts = house['nhts'],
         add = Address.objects.get_or_create(
-          add_province="Cebu",
-          add_city="Cebu City",
-          add_barangay="San Roque (ciudad)",
+          add_province="CEBU",
+          add_city="CEBU CITY",
+          add_barangay="SAN ROQUE (CIUDAD)",
           sitio=Sitio.objects.filter(sitio_name=data[1]).first(),
           add_street=data[2]
         )[0],
