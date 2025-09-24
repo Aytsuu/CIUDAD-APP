@@ -291,20 +291,16 @@
   import {z} from "zod"
   import { UseFormReturn } from "react-hook-form"
   import { Button } from "@/components/ui/button/button"
-  import { ChevronLeft, Plus, Trash2 } from "lucide-react"
+  import { Plus, Trash2 } from "lucide-react"
   import { useFieldArray } from "react-hook-form"
   import { useEffect } from "react"
 
   interface BudgetPlanWithoutLimitProps {
     form: UseFormReturn<z.infer<typeof BudgetItemsStep3Schema>>;
-    budgetLimit: number;
-    onPrevious: () => void;
   }
 
   export default function CreateBudgetPlanWithoutLimits({ 
     form, 
-    budgetLimit, 
-    onPrevious 
   }: BudgetPlanWithoutLimitProps) {
     
     const { fields, append, remove } = useFieldArray({
@@ -392,16 +388,7 @@
         </Form>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-          <Button 
-            variant="outline" 
-            onClick={onPrevious}
-            className="flex items-center gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Previous Section
-          </Button>
-          
+        <div className="flex justify-end items-center mt-8 pt-6 border-t border-gray-200">
           <div className="text-sm text-gray-500">
             {fields.length} item{fields.length !== 1 ? 's' : ''} added
           </div>

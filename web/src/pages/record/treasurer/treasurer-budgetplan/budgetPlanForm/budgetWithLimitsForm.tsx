@@ -4,8 +4,6 @@ import type { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState, useRef } from "react"
 import { BudgetPlanStep2Schema } from "@/form-schema/treasurer/budgetplan-schema"
-import { Button } from "@/components/ui/button/button"
-import { ChevronRightIcon } from "lucide-react"
 
 const styles = {
   fieldStyle: "flex items-center p-2",
@@ -15,14 +13,12 @@ const styles = {
 interface budgetPlanWithLimitsProps {
   form: UseFormReturn<z.infer<typeof BudgetPlanStep2Schema>>
   updateFormData: (data: Partial<z.infer<typeof BudgetPlanStep2Schema>>) => void
-  budgetLimit: number
   onNext: () => void
 }
 
 function CreateBudgetWithLimits({
   form,
   updateFormData,
-  budgetLimit,
   onNext,
 }: budgetPlanWithLimitsProps) {
   const budgetItems = [
@@ -114,12 +110,6 @@ function CreateBudgetWithLimits({
                 )}
               />
             ))}
-
-            <div className="flex justify-end mt-4">
-              <Button  onClick={handleNextClick} disabled={isOverLimit} className="flex items-center gap-2" >
-                Next <ChevronRightIcon className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </div>
       </form>

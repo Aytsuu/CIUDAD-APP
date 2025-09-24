@@ -47,7 +47,6 @@ export type BudgetDetailUpdate = {
     dtl_id?: number;
     dtl_proposed_budget: number;
     dtl_budget_item: string;
-    // dtl_budget_category: string;
 };
 
 
@@ -60,20 +59,17 @@ export interface BudgetItem {
 export interface BudgetDetail {
       dtl_proposed_budget: number;
       dtl_budget_item: string;
-      // dtl_budget_category: string;
-    }
+}
 
 export interface OldBudgetDetail {
   dtl_id?: number;
   dtl_proposed_budget: string | number;
   dtl_budget_item: string;
-  // dtl_budget_category: string;
 }
 
 export interface NewBudgetDetail {
   dtl_proposed_budget: number;
   dtl_budget_item: string;
-  // dtl_budget_category: string;
 }
 
 export interface ProcessedOldBudgetDetail {

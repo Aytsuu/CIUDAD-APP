@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BudgetPlan } from "../budgetPlanInterfaces"
 import { showSuccessToast } from "@/components/ui/toast"
 import { showErrorToast } from "@/components/ui/toast"
-
+import { useNavigate } from "react-router"
 
 const BudgetPlanDetailSchema = z.object({
     dtl_budget_item: z.string().min(1, "Budget item is required"),
@@ -15,6 +15,8 @@ const BudgetPlanDetailSchema = z.object({
 
 export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate()
+    
 
     return useMutation({
         mutationFn: async (values: {
@@ -52,7 +54,8 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
 
             
             if (onSuccess) onSuccess(planId);
-            window.location.href = "/treasurer-budget-plan";
+            navigate('/treasurer-budget-plan')
+            // window.location.href = "/treasurer-budget-plan";
         },
         onError: () => {
             showErrorToast('Failed to create budget plan');
