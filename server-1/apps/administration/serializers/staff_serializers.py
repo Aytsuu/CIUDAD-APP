@@ -22,7 +22,7 @@ class StaffAccountSerializer(serializers.ModelSerializer):
   def get_assignments(self, obj):
     assigned = [feat.feat_name for feat in Feature.objects.all()] \
       if obj.pos.pos_title.lower() == "admin" \
-      else [ assi.feat.feat_name for assi in Assignment.objects.filter(pos=obj.pos.pos_id)]
+      else [ assi.feat.feat_name.strip() for assi in Assignment.objects.filter(pos=obj.pos.pos_id)]
     return assigned
 
 
