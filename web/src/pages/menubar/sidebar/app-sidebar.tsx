@@ -20,217 +20,6 @@ interface BaseMenuItem {
   items?: BaseMenuItem[];
 }
 
-// Menu items with unlimited nesting support
-const barangayItems: BaseMenuItem[] = [
-  {
-    title: "Calendar",
-    url: "/waste-calendar-scheduling",
-  },
-  {
-    title: "Report",
-    url: "/",
-    items: [
-      { title: "Incident", url: "/report/incident"},
-      { title: "Acknowledgement", url: "/report/acknowledgement"},
-      { title: "Weekly Accomplishment", url: "/report/weekly-accomplishment"},
-      { title: "Securado", url: "/report/securado"}  
-    ],
-  },
-  {
-    title: "Complaint",
-    url: "/complaint",
-  },
-  {
-    title: "Team",
-    url: "/team",
-  },
-  {
-    title: "Summon & Case Tracker",
-    url: "/",
-    items: [
-      { title: "Request List", url: "/request-list"},
-      { title: "Summon Calendar", url: "/summon-calendar"},
-      { title: "Cases", url: "/summon-cases"},
-    ]
-  },
-  {
-    title: "GAD",
-    url: "/",
-    items: [
-      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-      { title: "Project Proposal", url: "/gad-project-proposal"},
-      { title: "Annual Development Plan", url: "/gad-annual-development-plan"},
-      { title: "Activity", url: "/gad-activity"},
-    ],
-  },
-  {
-    title: "Council",
-    url: "/",
-    items: [
-      { title: "Council Events", url: "/calendar-page" },
-      { title: "Attendance", url: "/attendance-page" },
-      { title: "Ordinance", url: "/ord-page" },
-      { title: "Resolution", url: "/res-page" },
-      { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Document Template", url: "/templates-main"}
-    ],
-  },
-  {
-    title: "Finance",
-    url: "/",
-    items: [
-      { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      {
-        title: "Income & Expense Tracking",
-        url: "/treasurer-income-expense-main",
-      },
-      {
-        title: "Income & Disbursement",
-        url: "/treasurer-income-and-disbursement",
-      },
-      {
-        title: "Payment Request",
-        url: "/",
-        items: [
-          { title: "Personal & Others", url: "/treasurer-personal-and-others" },
-          { title: "Permit", url: "/treasurer-permit" },
-          { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Rates", url: "/treasurer-rates" },
-        ],
-      },
-      { title: "Receipts", url: "/treasurer-receipts" },
-    ],
-  },
-  {
-    title: "Certificate and Clearances",
-
-    url: "/",
-    items: [
-      { title: "Certifications", url: "record/clearances/certification" },
-      { title: "Business Permits", url: "record/clearances/businesspermit" },
-      { title: "Issued Certificates", url: "record/clearances/issuedcertificates" },
-    ],
-  },
-  {
-    title: "Donation",
-    url: "/donation-record",
-  },
-  {
-    title: "Illegal Dumping Reports",
-    url: "/waste-illegaldumping-report",
-  },
-  {
-    title: "Garbage Pickup Request",
-    url: "/garbage-pickup-request"
-  },
-  {
-    title: "Waste Personnel & Collection Vehicle",
-    url: "/waste-personnel",
-  },
-  {
-    title: "Announcement",
-    url: "/announcement",
-  },
-  {
-    title: "Activity Log",
-    url: "/record/activity-log",
-
-  },
-];
-
-// Menu items with unlimited nesting support
-const healthItems: BaseMenuItem[] = [
-  // {
-  //   title: "Dashboard",
-  //   url: "/dashboard"
-  // },
-
-  // {
-  //   title: "Administration",
-  //   url: "/administration"
-  // },
-  // {
-  //   title: "Profiling",
-  //   url: "/",
-  //   items: [
-  //     { title: "All", url: "/profiling/all" },
-  //     {
-  //       title: "Resident",
-  //       url: "/profiling/resident",
-  //       items: [
-  //         { title: "Family", url: "/profiling/family" },
-  //         { title: "Household", url: "/profiling/household" }
-  //       ]
-  //     },
-  //     { title: "Voters", url: "/profiling/voters" },
-  //     {
-  //       title: "Business",
-  //       url: "/profiling/business/record",
-  //       items: [{ title: "Respondent", url: "/profiling/business/record/respondent" }]
-  //     }
-  //   ]
-  // },
- 
-  {
-    title: "Announcement",
-    url: "/announcement"
-  },
-  { title: "BHW Daily Notes", url: "/bhw/notes" },
-  { title: "Patient Records", url: "/patientrecords" },
-  { title: "Forwarded Records", url: "/forwarded-records" },
-  {
-    title: "Services",
-    url: "/",
-    items: [
-      
-      { title: "Animal Bites", url: "/Animalbite_viewing" },
-      // { title: "Family Profiling", url: "/family-profiling-main" },=-=------- 000
-      { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Maternal", url: "/services/maternalrecords" },
-      { title: "Child Health", url: "/all-child-health-records" },
-      { title: "Vaccination", url: "/VaccinationManagement" },
-      { title: "Medicine", url: "/all-medicine-records" },
-      { title: "Firstaid", url: "/all-firstaid-records" },
-      { title: "Schedules", url: "/services/scheduled/follow-ups" }
-    ]
-  },
-
-  {
-    title: "Inventory",
-    url: "/",
-    items: [
-      { title: "Inventory List", url: "/mainInventoryList" },
-      { title: "Inventory Stocks", url: "/main-inventory" }
-    ]
-  },
-  {
-    title: "Manage Request",
-    url: "/",
-    items: [
-      {
-        title: "Medicine Request",
-        url: "/medicine-request"
-      },
-      { title: "Medical Consultation", url: "/" }
-    ]
-  },
-
-  { title: "Service Scheduler", url: "/scheduler" },
-  { title: "Reports", url: "/healthcare-reports" },
-  {
-    title: "Manage",
-    url: "/",
-    items: [
-      {
-        title: "Age Group",
-        url: "/age-group"
-      },
-      { title: "Medical Consultation", url: "/" }
-    ]
-  },
-];
-
 interface MenuItemComponentProps {
   item: BaseMenuItem;
   activeItem: string;
@@ -501,22 +290,37 @@ export function AppSidebar() {
       url: "/announcement",
     },
 
-    { title: "Patients Record", url: "/patients-record-main" },
+    { title: "BHW Daily Notes", url: "/bhw/notes" },
+    { title: "Patient Records", url: "/patientrecords" },
+    {
+      title: "Forwarded Records",
+      url: "/",
+      items: [
+        {
+          title: "Child Immunization",
+          url: "/forwarded-records/child-health-immunization"
+        },
+        { title: "Vaccine Waitlist", url: "/forwarded-records/vaccine-waitlist" },
+        {
+          title: "Medical Consultaion",
+          url: "/forwarded-records/medical-consultation"
+        }
+      ]
+    },
 
     {
       title: "Services",
       url: "/",
       items: [
-        { title: "Forwarded Records", url: "/forwarded-records" },
         { title: "Animal Bites", url: "/Animalbite_viewing" },
         { title: "Medical Consultation ", url: "/allMedRecords" },
         { title: "Family Planning", url: "/FamPlanning_table" },
-        { title: "Maternal", url: "/maternalrecords" },
+        { title: "Maternal", url: "/services/maternalrecords" },
         { title: "Child Health", url: "/all-child-health-records" },
         { title: "Vaccination", url: "/VaccinationManagement" },
         { title: "Medicine", url: "/all-medicine-records" },
         { title: "Firstaid", url: "/all-firstaid-records" },
-        { title: "Schedules", url: "/health-appointments" },
+        { title: "Schedules", url: "/services/scheduled/follow-ups" }
       ],
     },
 
@@ -540,14 +344,14 @@ export function AppSidebar() {
       ],
     },
 
-    { title: "Service Scheduler", url: "/health-services/scheduler" },
+    { title: "Service Scheduler", url: "/scheduler" },
     { title: "Reports", url: "/healthcare-reports" },
     {
       title: "Manage",
       url: "/",
       items: [
         {
-          title: "Manage age group",
+          title: "Age Group",
           url: "/age-group",
         },
         { title: "Medical Consultation", url: "/" },

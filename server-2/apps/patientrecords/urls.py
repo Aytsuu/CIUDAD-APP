@@ -18,6 +18,7 @@ urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
+    path('patients/', PatientListView.as_view(), name='patient-list'),
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
 	 

@@ -193,8 +193,7 @@ export const main_router: RouteObject[] = [
       ...health_schedule_routes,
       ...viewprofile_router,
       ...template_router,
-      ...clearances_router,
       ...bhw_daily_notes_router,
     ])
-    }
+  }
 ]

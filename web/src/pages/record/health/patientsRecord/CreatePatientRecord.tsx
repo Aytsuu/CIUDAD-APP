@@ -71,8 +71,9 @@ interface ResidentProfile {
       add_province: string
       sitio?: string
     }>
-    philhealth_id?: string
   }
+  per_add_philhealth_id?: string
+  mhi_immun_status?: string
 }
 
 interface PatientCreationData {
@@ -230,7 +231,7 @@ export default function CreatePatientRecord() {
       form.setValue("contact", personalInfo.per_contact || "");
       form.setValue("dateOfBirth", personalInfo.per_dob || "");
       form.setValue("patientType", "resident");
-      form.setValue("philhealthId", personalInfo.philhealth_id || "");
+      form.setValue("philhealthId", selectedPatient?.per_add_philhealth_id || "");
 
       if (selectedPatient.personal_info.per_addresses && selectedPatient.personal_info.per_addresses.length > 0) {
         const address = selectedPatient.personal_info.per_addresses[0]; 

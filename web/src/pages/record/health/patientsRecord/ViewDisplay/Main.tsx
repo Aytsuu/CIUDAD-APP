@@ -88,6 +88,13 @@ export default function ViewPatientRecord() {
 
   const patientData = useMemo(() => {
     if (!currentPatient) return null;
+    // Prefer personal_info.philhealth_id, fallback to additional_info.per_add_philhealth_id
+    let philhealthId = "";
+    if (currentPatient.personal_info && currentPatient.personal_info.philhealth_id) {
+      philhealthId = currentPatient.personal_info.philhealth_id;
+    } else if (currentPatient.additional_info && currentPatient.additional_info.per_add_philhealth_id) {
+      philhealthId = currentPatient.additional_info.per_add_philhealth_id;
+    }
     return {
       lastName: currentPatient.personal_info.per_lname,
       firstName: currentPatient.personal_info.per_fname,
@@ -104,7 +111,7 @@ export default function ViewPatientRecord() {
         city: currentPatient.address?.add_city || "",
         province: currentPatient.address?.add_province || ""
       },
-      philhealthId: currentPatient.personal_info.philhealth_id || "",
+      philhealthId,
       bloodType: currentPatient.bloodType ?? "N/A",
       allergies: currentPatient.allergies ?? "N/A",
       chronicConditions: currentPatient.chronicConditions ?? "N/A",
@@ -112,6 +119,7 @@ export default function ViewPatientRecord() {
       visits: currentPatient.visits ?? []
     };
   }, [currentPatient]);
+  console.log("Transformed Patient Data:", patientData);
 
   const form = useForm({
     resolver: zodResolver(patientRecordSchema),
