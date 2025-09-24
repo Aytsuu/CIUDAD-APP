@@ -4,8 +4,6 @@ import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Pill, Refre
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
 import { format, parseISO, isValid } from "date-fns";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -21,7 +19,6 @@ export default function IndividualMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  const queryClient = useQueryClient();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Parse patient data from params
@@ -37,7 +34,6 @@ export default function IndividualMedicineRecords() {
     }
   }, [params.patientData]);
 
-  // Use the useIndividualMedicineRecords hook
   const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useIndividualMedicineRecords(patientData?.pat_id || "", currentPage, pageSize, debouncedSearchQuery);
 
   // Reset to first page when search changes
