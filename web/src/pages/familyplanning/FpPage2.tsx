@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { FormData,page2Schema } from "@/form-schema/FamilyPlanningSchema"
+import { FormData, page2Schema } from "@/form-schema/FamilyPlanningSchema"
 import { api2 } from "@/api/api"
 
 // NEW: Interface for illness data
@@ -70,42 +70,42 @@ export default function FamilyPlanningForm2({
   }, [form, formData])
 
   useEffect(() => {
-  if (formData.pat_id) {
-    // Fetch last pregnancy data when patient ID is available
-    api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
-      .then(response => {
-        const { last_delivery_date, last_delivery_type } = response.data;
+    if (formData.pat_id) {
+      // Fetch last pregnancy data when patient ID is available
+      api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
+        .then(response => {
+          const { last_delivery_date, last_delivery_type } = response.data;
 
-        // Set the values in your form
-        if (last_delivery_date) {
-          form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date);
-        }
-        if (last_delivery_type) {
-          form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type);
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching last pregnancy data:", error);
-      });
-  }
-}, [formData.pat_id, form]);
+          // Set the values in your form
+          if (last_delivery_date) {
+            form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date);
+          }
+          if (last_delivery_type) {
+            form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type);
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching last pregnancy data:", error);
+        });
+    }
+  }, [formData.pat_id, form]);
 
   // NEW: Convert the old boolean medical history to selected illness IDs
   useEffect(() => {
-      if (illnesses.length > 0 && formData.medicalHistory) {
-    const selected: number[] = []
-    // const medicalHistoryData = formData.medicalHistory
+    if (illnesses.length > 0 && formData.medicalHistory) {
+      const selected: number[] = []
+      // const medicalHistoryData = formData.medicalHistory
 
-    // First, check for any existing selected illness IDs from the backend
-    if (formData.selectedIllnessIds) {
-      const idsFromBackend = typeof formData.selectedIllnessIds === 'string' 
-        ? formData.selectedIllnessIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
-        : Array.isArray(formData.selectedIllnessIds) 
-          ? formData.selectedIllnessIds 
-          : []
-      
-      selected.push(...idsFromBackend)
-    }
+      // First, check for any existing selected illness IDs from the backend
+      if (formData.selectedIllnessIds) {
+        const idsFromBackend = typeof formData.selectedIllnessIds === 'string'
+          ? formData.selectedIllnessIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+          : Array.isArray(formData.selectedIllnessIds)
+            ? formData.selectedIllnessIds
+            : []
+
+        selected.push(...idsFromBackend)
+      }
       // Map the old boolean fields to illness IDs
       const medicalHistoryMapping: Record<string, string> = {
         severeHeadaches: "Severe headaches / migraine",
@@ -147,19 +147,19 @@ export default function FamilyPlanningForm2({
   }
   const onSubmit = async (data: FormData) => {
 
-  // let customDisabilityIllnessId: number | null = null;
-  if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
-    const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
-    if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
+    // let customDisabilityIllnessId: number | null = null;
+    if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
+      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
+      if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
         selectedIllnesses.push(disabilityIllness.ill_id);
-    }
-  } else {
-    // If disability is unchecked or details are empty, ensure the "Others" illness is not selected
-    const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
-    if (disabilityIllness) {
+      }
+    } else {
+      // If disability is unchecked or details are empty, ensure the "Others" illness is not selected
+      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
+      if (disabilityIllness) {
         setSelectedIllnesses(prev => prev.filter(id => id !== disabilityIllness.ill_id));
+      }
     }
-  }
     const medicalHistory = {
       severeHeadaches: false,
       strokeHeartAttackHypertension: false,
@@ -289,7 +289,7 @@ export default function FamilyPlanningForm2({
                       </div>
                     </div>
                   ))
-                  :  " "}
+                  : " "}
 
                 {/* <div className="flex justify-between items-center mb-4">
                   <Label className="flex-1">■ Others</Label>
@@ -472,8 +472,8 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Date of last delivery</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} 
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -520,12 +520,12 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Last menstrual period</Label>
                         <FormControl>
-                          <Input 
+                          <Input
                             {...field}
-                            type="date" 
-                            className=" w-[150px]" 
+                            type="date"
+                            className=" w-[150px]"
                             readOnly={isReadOnly || !isFemale}
-                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
                           />
                         </FormControl>
                         <FormMessage />
@@ -540,8 +540,8 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Previous menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale} 
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

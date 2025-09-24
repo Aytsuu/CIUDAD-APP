@@ -23,6 +23,7 @@ urlpatterns = [
     path('fp_record/', FP_RecordListCreateView.as_view(), name='fp_record_list_create'),
     # path('fp_record/<int:fprecord_id>/', FP_RecordDetailView.as_view(), name='fp_record_detail'),
 
+  
     # Patient Record CRUD (if needed separately)
     path('patient-record/', PatientRecordCreateView.as_view(), name='patient_record_create'), 
     path('commodities/filtered/',get_filtered_commodity_list, name='filtered_commodity_list'),

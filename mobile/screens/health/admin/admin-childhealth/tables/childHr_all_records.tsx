@@ -373,7 +373,7 @@ const resultsArray = Array.isArray(childHealthRecords?.results)
 
         {/* Records List */}
         {formattedData.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-6">
+          <View className="flex-1 justify-center mt-10 items-center px-6">
             <Baby size={64} color="#9CA3AF" />
             <UIText className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</UIText>
             <UIText className="text-gray-600 text-center mt-2">

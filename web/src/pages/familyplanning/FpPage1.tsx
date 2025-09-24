@@ -216,7 +216,7 @@ export default function FamilyPlanningForm({
 
       const requests = [
         api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })), 
         api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
       ];

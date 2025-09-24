@@ -82,7 +82,7 @@ export default function Records() {
       id: 7,
       name: 'Medicine Records',
       description: 'View animal bite treatment records',
-      route: '/medicine/my-records/',
+      route: '/medicine-records/my-records/',
       icon: BriefcaseMedical,
       image: require('@/assets/images/Health/Home/child-health.jpg'),
       color: '#059669'

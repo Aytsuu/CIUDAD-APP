@@ -23,12 +23,12 @@ export default function Login() {
     setCurrentStep(2);
   };
 
-  useEffect(() => {
-    if(isAuthenticated && user){
-      toast.success("Welcome!");
-      router.replace("/(tabs)");
-    } 
-  }, [user, isAuthenticated, router, toast]);
+  // useEffect(() => {
+  //   if(isAuthenticated && user){
+  //     toast.success("Welcome!");
+  //     router.replace("/(tabs)");
+  //   } 
+  // }, [user, isAuthenticated, router, toast]);
 
   const handleLogin = async () => {
     try {

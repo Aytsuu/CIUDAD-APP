@@ -82,27 +82,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 #         # fallback if pagination is not applied
 #         return Response([])
     
-@api_view(['GET'])
-def get_fp_patient_counts(request):
-    try:
-        today = timezone.now().date()
-        eighteen_years_ago = today - timedelta(days=18*365.25) 
-        all_fp_patients = FP_Record.objects.select_related('pat').values('pat__pat_id', 'pat__pat_type').distinct()
-        total_fp_patients = all_fp_patients.count()
-        resident_fp_patients = all_fp_patients.filter(pat__pat_type='Resident').count()
-        transient_fp_patients = all_fp_patients.filter(pat__pat_type='Transient').count() # Count transients among FP patients
 
-        # Count minor residents (under 18) among FP patients
-        minor_resident_fp_patients = FP_Record.objects.filter(pat__pat_type='Resident',pat__rp_id__per__per_dob__gt=eighteen_years_ago).values('pat__pat_id').distinct().count()
-        minor_transient_fp_patients = FP_Record.objects.filter(pat__pat_type='Transient',pat__trans_id__tran_dob__gt=eighteen_years_ago).values('pat__pat_id').distinct().count()
-        minor_fp_patients = minor_resident_fp_patients + minor_transient_fp_patients
-        response_data = {"total_fp_patients": total_fp_patients,"resident_fp_patients": resident_fp_patients,"transient_fp_patients": transient_fp_patients,"minor_fp_patients": minor_fp_patients,}
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response({"detail": f"Error fetching FP patient counts: {str(e)}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['GET'])
 def get_illness_list(request):
@@ -359,6 +339,8 @@ def get_pelvic_exam_display_values(data):
         "uterinePosition": data.get("uterine_position", "Not Applicable"),
         "uterineDepth": data.get("uterine_depth", "Not Applicable"),  
     }
+    
+    
 # @api_view(["GET"])
 # def get_last_previous_pregnancy(request, patient_id):
 #     try:
@@ -393,37 +375,53 @@ def get_pelvic_exam_display_values(data):
 #         import traceback
 #         traceback.print_exc()
 #         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
-@api_view(['GET'])
-def get_patient_health_and_nhts_data(request, patient_id):
-    try:
-        patient = get_object_or_404(Patient, pat_id=patient_id)
+# @api_view(['GET'])
+# def get_patient_health_and_nhts_data(request, patient_id):
+#     try:
+#         patient = get_object_or_404(Patient, pat_id=patient_id)
         
-        philhealth_id = ""
-        nhts_status = ""
+#         philhealth_id = ""
+#         nhts_status = ""
 
-        if patient.pat_type == "Resident" and patient.rp_id:
-            hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
-            if hrd:
-                philhealth_id = hrd.hrd_philhealth_id or ""
+#         if patient.pat_type == "Resident" and patient.rp_id:
+#             # For resident patients
+#             hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
+#             if hrd:
+#                 philhealth_id = hrd.hrd_philhealth_id or ""
             
-            household = Household.objects.filter(rp=patient.rp_id).first()
-            if household:
-                nhts_status = household.hh_nhts or "" # Assuming hh_nhts is the field name
+#             household = Household.objects.filter(rp=patient.rp_id).first()
+#             if household:
+#                 nhts_status = household.hh_nhts or ""
+#         elif patient.pat_type == "Transient" and patient.trans_id:
+#             # For transient patients - get from the linked Transient object
+#             transient = patient.trans_id
+            
+#             # Get PhilHealth ID from transient - check different possible field names
+#             if hasattr(transient, 'philhealth_id'):
+#                 philhealth_id = transient.philhealth_id or ""
+#             elif hasattr(transient, 'tran_philhealth'):
+#                 philhealth_id = transient.tran_philhealth or ""
+#             elif hasattr(transient, 'philhealth_no'):
+#                 philhealth_id = transient.philhealth_no or ""
+            
+#             # NHTS status might not apply to transients
+#             nhts_status = "Not applicable for transient patients"
         
-        response_data = {
-            "philhealthNo": philhealth_id,
-            "nhts_status": nhts_status
-        }
+#         response_data = {
+#             "philhealthNo": philhealth_id,
+#             "nhts_status": nhts_status
+#         }
         
-        return Response(response_data, status=status.HTTP_200_OK)
+#         return Response(response_data, status=status.HTTP_200_OK)
 
-    except Patient.DoesNotExist:
-        return Response({"detail": f"Patient with ID {patient_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response({"detail": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#     except Patient.DoesNotExist:
+#         return Response({"detail": f"Patient with ID {patient_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()
+#         return Response({"detail": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # @api_view(["GET"])
 # def get_patient_spouse(request, patient_id):
@@ -946,6 +944,7 @@ def get_patient_details_data(request, patient_id):
             "philhealthNo": "",
             "nhts_status": "",
             "fourps": "",
+            "philhealthNo": personal_info.get("philhealth_id",""),
             "lastName": personal_info.get("per_lname", ""),
             "givenName": personal_info.get("per_fname", ""),
             "contact": personal_info.get("per_contact", ""),  # ADD THIS
@@ -1008,33 +1007,33 @@ def get_patient_details_data(request, patient_id):
         
 
         # Fetch PhilHealth ID and NHTS status for Resident patients
-        if patient.pat_type == "Resident" and patient.rp_id:
-            try:
-                hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
-                if hrd:
-                    fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
-                    print(f"✓ PhilHealth ID: {fp_form_data['philhealthNo']}")
-            except Exception as e:
-                print(f"Error fetching HealthRelatedDetails: {e}")
+        # if patient.pat_type == "Resident" and patient.rp_id:
+        #     try:
+        #         hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
+        #         if hrd:
+        #             fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
+        #             print(f"✓ PhilHealth ID: {fp_form_data['philhealthNo']}")
+        #     except Exception as e:
+        #         print(f"Error fetching HealthRelatedDetails: {e}")
 
-            try:
-                household = Household.objects.filter(rp=patient.rp_id).first()
-                if household:
-                    fp_form_data["nhts_status"] = household.hh_nhts == "Yes"
-                    print(f"✓ NHTS Status: {fp_form_data['nhts_status']}")
-            except Exception as e:
-                print(f"Error fetching Household: {e}")
+        #     try:
+        #         household = Household.objects.filter(rp=patient.rp_id).first()
+        #         if household:
+        #             fp_form_data["nhts_status"] = household.hh_nhts == "Yes"
+        #             print(f"✓ NHTS Status: {fp_form_data['nhts_status']}")
+        #     except Exception as e:
+        #         print(f"Error fetching Household: {e}")
 
-        if patient.pat_type == "Transient" and patient.trans_id:
-            try:
-                transient = Transient.objects.filter(pk=patient.trans_id_id).first()
-                if transient:
-                    fp_form_data["contact"] = transient.tran_contact or ""
-                    fp_form_data["religion"] = transient.tran_religion or ""
-                    fp_form_data["philhealthNo"] = transient.philhealth_id or ""
-                    print(f"✓ PhilHealth ID: {fp_form_data['philhealthNo']}")
-            except Exception as e:
-                print(f"Error fetching Transient PhilHealth ID: {e}")
+        # if patient.pat_type == "Transient" and patient.trans_id:
+        #     try:
+        #         transient = Transient.objects.filter(pk=patient.trans_id_id).first()
+        #         if transient:
+        #             fp_form_data["contact"] = transient.tran_contact or ""
+        #             fp_form_data["religion"] = transient.tran_religion or ""
+        #             fp_form_data["philhealthNo"] = transient.philhealth_id or ""
+        #             print(f"✓ PhilHealth ID: {fp_form_data['philhealthNo']}")
+        #     except Exception as e:
+        #         print(f"Error fetching Transient PhilHealth ID: {e}")
 
         
         # Fetch spouse information
@@ -1055,6 +1054,7 @@ def get_patient_details_data(request, patient_id):
         #         print("No spouse data fetched: Patient is not a Resident or no rp_id")
         # except Exception as e:
         #     print(f"Error fetching spouse information: {e}")
+        
         latest_fp_record = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at').first()
         try:
             if latest_fp_record.spouse:
@@ -1266,6 +1266,12 @@ def get_complete_fp_record(request, fprecord_id):
                     hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
                     if hrd:
                         philhealth_id = hrd.hrd_philhealth_id or ""
+                elif patient.pat_type == "Transient" and patient.trans_id:
+                    transient = patient.trans_id
+                    if transient:
+                        philhealth_id = transient.philhealth_id
+                        print("TRANS ID: ",philhealth_id)
+                    
             except Exception as e:
                 print(f"Error fetching health details: {e}")
             
@@ -1327,6 +1333,7 @@ def get_complete_fp_record(request, fprecord_id):
                 complete_data.update({
                     "lastName": transient_info.tran_lname or "",
                     "givenName": transient_info.tran_fname or "",
+                    "philhealthNo": transient_info.philhealth_id or "",
                     "middleInitial": (transient_info.tran_mname[:1] if transient_info.tran_mname else ""),
                     "dateOfBirth": (transient_info.tran_dob.isoformat() if transient_info.tran_dob else ""),
                     "age": (calculate_age_from_dob(transient_info.tran_dob.isoformat()) if transient_info.tran_dob else 0),
@@ -1518,8 +1525,7 @@ def get_complete_fp_record(request, fprecord_id):
             pelvic_exam_serialized_data = PelvicExamSerializer(fp_pelvic_exam).data
             display_values = get_pelvic_exam_display_values(pelvic_exam_serialized_data)
             complete_data["fp_pelvic_exam"] = display_values  # Use display_values instead of raw data
-            print("Display values: ", display_values)
-            print("Raw values: ", pelvic_exam_serialized_data)
+           
             # complete_data.update({
             #     "pelvic_exam": display_values["pelvicExamination"],
             #     "cervical_consistency": display_values["cervicalConsistency"],
@@ -2632,22 +2638,45 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
             
         patrec_id = patient_record_instance.patrec_id
         print("Patrec_id 2:",patrec_id)
+        
         if last_delivery_date_for_prev_preg or type_of_last_delivery_for_prev_preg:
             prev_pregnancy_data = {
                 "date_of_delivery": last_delivery_date_for_prev_preg,
                 "type_of_delivery": type_of_last_delivery_for_prev_preg,
                 "outcome": None, "babys_wt": None, "gender": None,
                 "ballard_score": None, "apgar_score": None,
-                "patrec_id": patrec_id, # Link to the determined patrec_id
+                "patrec_id": patrec_id,  # Try with ID
             }
+            
+            print("DEBUG - Previous Pregnancy Data:", prev_pregnancy_data)
+            print("DEBUG - Patient Record Instance:", patient_record_instance)
+            print("DEBUG - Patient Record ID type:", type(patrec_id))
+            
             prev_pregnancy_serializer = PreviousPregnancyCreateSerializer(data=prev_pregnancy_data)
+            
             if prev_pregnancy_serializer.is_valid():
                 prev_pregnancy_instance = prev_pregnancy_serializer.save()
                 logger.info(f"Created new Previous_Pregnancy record for last delivery: {prev_pregnancy_instance.pfpp_id}")
+                print("DEBUG - Successfully created Previous_Pregnancy")
             else:
                 logger.error(f"Error validating Previous_Pregnancy data: {prev_pregnancy_serializer.errors}")
-        else:
-            logger.info("Skipping Previous_Pregnancy creation: 'lastDeliveryDate' or 'typeOfLastDelivery' not valid or provided.")
+                print("DEBUG - Serializer errors:", prev_pregnancy_serializer.errors)
+                
+                # Try alternative - pass the instance instead
+                prev_pregnancy_data_alt = {
+                    "date_of_delivery": last_delivery_date_for_prev_preg,
+                    "type_of_delivery": type_of_last_delivery_for_prev_preg,
+                    "outcome": None, "babys_wt": None, "gender": None,
+                    "ballard_score": None, "apgar_score": None,
+                    "patrec": patient_record_instance,  # Pass instance
+                }
+                
+                prev_pregnancy_serializer_alt = PreviousPregnancyCreateSerializer(data=prev_pregnancy_data_alt)
+                if prev_pregnancy_serializer_alt.is_valid():
+                    prev_pregnancy_instance = prev_pregnancy_serializer_alt.save()
+                    logger.info(f"Created new Previous_Pregnancy record (alternative method): {prev_pregnancy_instance.pfpp_id}")
+                else:
+                    logger.error(f"Alternative method also failed: {prev_pregnancy_serializer_alt.errors}")
 
     # 7. Create Risk STI
     risk_sti_data = data.get("sexuallyTransmittedInfections", {})
@@ -2947,7 +2976,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
 def submit_full_family_planning_form(request):
     data = request.data
     staff_id_from_request = request.user.id if request.user.is_authenticated else None
-
+    print("Staff_id:",staff_id_from_request)
     try:
         with transaction.atomic():
             logger.info("Starting atomic transaction for full FP form submission (new record set).")
@@ -3362,59 +3391,6 @@ class FP_PregnancyCheckDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FP_PregnancyCheckSerializer
     queryset = FP_pregnancy_check.objects.all()
     lookup_field = "fp_pc_id"
-
-
-class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
-    def get(self, request, pat_id, format=None):
-        try:
-            # Get the patient first
-            patient = get_object_or_404(Patient, pat_id=pat_id)
-            
-            # Get all patient records for this patient
-            patient_records = PatientRecord.objects.filter(pat_id=patient)
-            
-            # Find obstetrical histories linked to these patient records
-            histories = Obstetrical_History.objects.filter(
-                patrec_id__in=patient_records
-            ).order_by('-patrec_id__created_at')
-            
-            if histories.exists():
-                # Return the most recent one or all of them based on your needs
-                latest_history = histories.first()
-                serializer = FP_ObstetricalHistorySerializer(latest_history)
-                
-                response_data = {
-                    'obs_id': latest_history.obs_id,
-                    'patrec_id': latest_history.patrec_id.patrec_id if latest_history.patrec_id else None,
-                    'g_pregnancies': latest_history.obs_gravida or 0,
-                    'p_pregnancies': latest_history.obs_para or 0,
-                    'fullTerm': latest_history.obs_fullterm or 0,
-                    'premature': latest_history.obs_preterm or 0,
-                    'abortion': latest_history.obs_abortion or 0,
-                    'numOfLivingChildren': latest_history.obs_living_ch or 0,
-                    # Add other fields as needed
-                }
-                
-                return Response(response_data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    {"detail": "No obstetrical history found for this patient."}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-                
-        except Patient.DoesNotExist:
-            return Response(
-                {"detail": f"Patient with ID {pat_id} not found."}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            print(f"Error in ObstetricalHistoryByPatientView: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return Response(
-                {"detail": f"Internal server error: {str(e)}"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
 
 def _check_and_update_dropouts_for_patient(patient_id):

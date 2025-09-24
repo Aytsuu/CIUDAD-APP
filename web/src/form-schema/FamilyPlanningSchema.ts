@@ -100,6 +100,7 @@ const FamilyPlanningBaseSchema = z.object({
   otherMethod: z.string().optional(),
   fp_type: z.object({
     fpt_reason: z.string().optional(),
+    fpt_reason_fp: z.string().optional(),
     fpt_other_reason_fp: z.string().optional(),
   }),
   previousMethod: z.string().optional(),

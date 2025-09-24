@@ -212,7 +212,7 @@ export default function FamilyPlanningPage() {
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
         typeOfClient: "currentuser",
         subTypeOfClient: "changingmethod", // Preserve existing value
-        reasonForFP: latestRecord.reasonForFP || "medicalcondition",
+        reasonForFP: latestRecord.fp_type?.fpt_reason_fp || "medicalcondition",
         reason: latestRecord.reason,
         otherReasonForFP: latestRecord.otherReasonForFP || "", // Preserve existing value
         previousMethod: prevEffectiveMethod || "",
@@ -249,7 +249,7 @@ export default function FamilyPlanningPage() {
       reasonForFP: followUpPrefillRecord.reasonForFP || "", // Preserve existing value
       otherReasonForFP: followUpPrefillRecord.otherReasonForFP || "", // Preserve existing value
       reason: followUpPrefillRecord.reason || "", // Add this line
-      weight: followUpPrefillRecord.weight,
+      weight: bodyMeasurementsResponse.weight,
       height: followUpPrefillRecord.height,
       methodCurrentlyUsed: followUpPrefillRecord.methodCurrentlyUsed,
       bloodPressure: followUpPrefillRecord.bloodPressure,
