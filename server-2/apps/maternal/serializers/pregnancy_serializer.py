@@ -22,13 +22,13 @@ class PregnancyDetailSerializer(serializers.ModelSerializer):
         Get prenatal_care entry for a specific record
         """
         try:
-            prenatal_forms = obj.prenatal_form.all()  # related_name='prenatal_form'
+            prenatal_forms = obj.prenatal_form.all()  
             
             prenatal_care_data = []
             
             for pf in prenatal_forms:
                 # Get prenatal care records for each prenatal form
-                prenatal_care_records = pf.pf_prenatal_care.all()  # related_name='pf_prenatal_care'
+                prenatal_care_records = pf.pf_prenatal_care.all()  
                 
                 for pc_record in prenatal_care_records:
                     prenatal_care_serializer = PrenatalCareSerializer(

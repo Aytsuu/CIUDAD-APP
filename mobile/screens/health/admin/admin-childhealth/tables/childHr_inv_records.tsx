@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button";
 import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
+// import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
+
+// Hooks and types
 import { ChrRecords } from "./types";
 import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
+// import { LoadingContext } from "@/contexts/LoadingContext";
+// import { getChildHealthColumns } from "./columns/indiv_col";
 import { useChildHealthHistory } from "../queries/fetchQueries";
 
 export default function InvChildHealthRecords() {

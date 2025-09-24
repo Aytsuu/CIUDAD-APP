@@ -1,5 +1,5 @@
-import MyMedicineRecords from "@/screens/health/medicine-records/my-medicine-records"
+import IndividualMedicineRecords from "@/screens/health/medicine-records/my-medicine-records"
 
 export default () => {
-    return <MyMedicineRecords />
+    return <IndividualMedicineRecords />
 }

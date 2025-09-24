@@ -1,6 +1,5 @@
 import App from "@/screens/auth/login";
-// import HealthApp from "@/screens/health/home";
-// import Homepage from "@/screens/health/home";
+import Homepage from "@/screens/health/home";
 
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';

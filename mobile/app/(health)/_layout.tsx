@@ -72,22 +72,22 @@ export default () => {
                 <Stack.Screen name="admin/first-aid/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/first-aid/individual" options={{headerShown: false}}/>
 
-                <Stack.Screen name="admin/patientsrecord/patient" options={{headerShown: false}}/>
-                
+
                 <Stack.Screen name="admin/medicinerecords/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/medicinerecords/individual" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/vaccination/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/vaccination/individual" options={{headerShown: false}}/>
 
-                <Stack.Screen name="admin/patientsrecord/patientsrecord" options={{ headerShown: false }} />
 
                 <Stack.Screen name="admin/maternal/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/maternal/individual" options={{headerShown: false}}/> 
-                <Stack.Screen name="medicine-records/my-records" options={{headerShown: false}}/> 
-                
+
+
                 <Stack.Screen name="vaccination/my-records" options={{ headerShown: false }} />
                 <Stack.Screen name="my-schedules/my-schedules" options={{headerShown:false}}/>
                 <Stack.Screen name="first-aid/my-records" options={{headerShown: false}}/>
+
+                <Stack.Screen name="medicine-records/my-records" options={{headerShown: false}}/>
             </Stack>
     );
 }

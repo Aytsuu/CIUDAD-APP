@@ -75,3 +75,21 @@ export const useGetChildHealthTotalRecords = () => {
       staleTime: 5000
     });
   };
+
+
+//  MATERNAL
+export const useGetMaternalTotalRecords = () => {
+  return useQuery({
+    queryKey: ['maternalTotalRecords'],
+    queryFn: async () => {
+      try {
+        const res = await api2.get('maternal/counts/');
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+

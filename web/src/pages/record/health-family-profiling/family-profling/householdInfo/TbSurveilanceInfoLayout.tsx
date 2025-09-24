@@ -83,7 +83,7 @@ export default function TbSurveilanceInfoLayout({
     },
     {
       id: "action",
-      header: "",
+      header: "Actions",
       cell: ({ row }) => (
         <ConfirmationModal
           trigger={<Trash className="h-4 w-4 cursor-pointer" />}

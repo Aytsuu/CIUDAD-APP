@@ -1,6 +1,6 @@
-# # ---------------------------------------------------
-# # PRODUCTION SERVER
-# # ---------------------------------------------------
+# ---------------------------------------------------
+# PRODUCTION SERVER
+# ---------------------------------------------------
 
 # from pathlib import Path
 # from datetime import timedelta
@@ -326,9 +326,6 @@ if not firebase_admin._apps and os.path.exists(FIREBASE_CREDENTIAL_PATH):
     cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
     firebase_admin.initialize_app(cred)
 
-# ========================
-# APPLICATION DEFINITION
-# ========================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -357,25 +354,21 @@ INSTALLED_APPS = [
     'apps.reports',
 ]
 
-
+# REST_FRAMEWORK = {
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 10,  # default page size
+# }
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', 
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "django.middleware.gzip.GZipMiddleware",  
-    'simple_history.middleware.HistoryRequestMiddleware',
-]
-
-AUTHENTICATION_BACKENDS = [
-    'apps.authentication.backends.SupabaseAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -430,9 +423,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ========================
-# INTERNATIONALIZATION
-# ========================
+# Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Manila'
 USE_I18N = True
@@ -440,39 +433,23 @@ USE_L10N = True
 USE_TZ = True 
 
 
-# ========================
-# STATIC FILES
-# ========================
-STATIC_URL = 'static/'
-if not DEBUG:
-    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
-    # and renames the files with unique names for each version to support long-term caching
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = 'static/'
+
+# DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ========================
-# CORS SETTINGS
-# ========================
-REST_FRAMEWORK = {
-    # 'DEFAULT_AUTHENTICATION_CLASSES': [
-    #     'apps.authentication.backends.SupabaseAuthBackend',
-    # ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
-    ],
-}
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://ciudad-app-server-2.onrender.com",
-    "http://127.0.0.1:5173",  # Add this for Vite sometimes
+    config('FRONTEND_URL', default='http://localhost:3000'),
 ]
-
 ALLOWED_HOSTS = ['*'] 
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True

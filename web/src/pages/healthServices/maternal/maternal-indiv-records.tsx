@@ -397,6 +397,12 @@ export default function MaternalIndivRecords() {
             <p className="text-center text-gray-500">No patient selected</p>
           </div>
         )}
+        
+        <div className="w-full mb-5 bg-white">
+          <div className="border rounded-md p-3">
+            <h3 className="font-semibold">Upcoming follow-up visit</h3>
+          </div>
+        </div>
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           {/* Search Input and Filter Dropdown */}

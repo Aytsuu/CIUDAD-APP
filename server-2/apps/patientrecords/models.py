@@ -2,9 +2,10 @@ from django.db import models, transaction
 from django.db.models import Max
 from django.utils import timezone
 from decimal import Decimal
-from datetime import date
 from apps.healthProfiling.models import ResidentProfile
 from apps.administration.models import Staff
+
+
 
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
@@ -13,10 +14,10 @@ class TransientAddress(models.Model):
     tradd_barangay = models.CharField(max_length=50)
     tradd_street = models.CharField(max_length=50)
     tradd_sitio= models.CharField(max_length=50, null=True, blank=True)
- 
-    class Meta:  
-        db_table = 'transient_address'      
-     
+
+    class Meta:
+        db_table = 'transient_address'
+
    
 class Transient(models.Model):
     trans_id = models.CharField(max_length=15, primary_key=True)
@@ -237,7 +238,6 @@ class Illness(models.Model):
     illname = models.CharField(max_length=100,default="",null=True,blank=True)
     ill_description = models.CharField(max_length=200, default="",null=True,blank=True)
     ill_code = models.CharField(max_length=100,default="",null=True,blank=True)
-    
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'illness'
@@ -246,32 +246,24 @@ class Illness(models.Model):
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
     assessment_summary =models.TextField(default="",blank=True,null=True)
-    obj_summary = models.TextField(default="",blank=True,null=True)
-    subj_summary = models.TextField(default="",blank=True,null=True)
-    plantreatment_summary=models.TextField(default="",blank=True,null=True)
+    obj_summary = models.TextField(default="")
+    subj_summary = models.TextField(default="")
+    plantreatment_summary=models.TextField(default="")
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'finding'
- 
+
 
 
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='ill_id')
-    ill_date = models.CharField(default=lambda: str(date.today().year),null=True,blank=True)
+    ill_date = models.CharField(max_length=255, null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
-    remarks = models.TextField(default="", blank=True, null=True)
     class Meta:
-        db_table = 'medical_history'   
-
-class FamilyPastMedicalHistory(models.Model):      
-    fammedhist_id= models.BigAutoField(primary_key=True)
-    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='ill_id')
-    remarks = models.TextField(default="", blank=True, null=True)
-    pat=models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='pat_id')
-    created_at = models.DateTimeField(auto_now_add=True)
-    
+        db_table = 'medical_history'  
+        
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
@@ -286,6 +278,7 @@ class PESection(models.Model):
 
     class Meta:
         db_table = 'physical_exam_section'
+
 
 # Option under a section (e.g., "Normal skin color and texture")
 class PEOption(models.Model):

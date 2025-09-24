@@ -3,11 +3,11 @@ import { View, TouchableOpacity, TextInput, FlatList, RefreshControl, } from 're
 import { useRouter } from 'expo-router';
 import {  Search, MapPin, Calendar, Baby, Heart, ChevronLeft, Users, AlertCircle,RefreshCw} from 'lucide-react-native';
 import { Text as UIText } from '@/components/ui/text';
+import { useChildHealthRecords } from '../queries/fetchQueries';
+import { ChildHealthRecord } from '../../admin-patientsrecord/types';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { calculateAge } from '@/helpers/ageCalculator';
-import { useChildHealthRecords } from '../queries/fetchQueries';
-import { ChildHealthRecord } from '../../admin-patientsrecord/types';
 
 type TabType = "all" | "resident" | "transient";
 
@@ -184,10 +184,8 @@ export default function AllChildHealthRecords() {
     if (!childHealthRecords) {
       return [];
     }
-const resultsArray = Array.isArray(childHealthRecords?.results)
-  ? childHealthRecords.results
-  : [];
-   return resultsArray.map((record: any) => {
+
+    return childHealthRecords.map((record: any) => {
       const childInfo = record.patrec_details?.pat_details?.personal_info || {};
       const motherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.mother?.personal_info || {};
       const fatherInfo = record.patrec_details?.pat_details?.family_head_info?.family_heads?.father?.personal_info || {};
@@ -373,7 +371,7 @@ const resultsArray = Array.isArray(childHealthRecords?.results)
 
         {/* Records List */}
         {formattedData.length === 0 ? (
-          <View className="flex-1 justify-center mt-10 items-center px-6">
+          <View className="flex-1 justify-center items-center px-6">
             <Baby size={64} color="#9CA3AF" />
             <UIText className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</UIText>
             <UIText className="text-gray-600 text-center mt-2">

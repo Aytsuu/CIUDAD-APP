@@ -216,6 +216,7 @@ export function PregnancyAccordion({
                               </span>
                               <div className="flex gap-1">
                                 <TooltipLayout
+                                <TooltipLayout
                                   trigger={
                                     <Link
                                       to={
@@ -316,7 +317,12 @@ export function PregnancyAccordion({
                               )}
                               {record.notes && (
                                 <p className="text-gray-600">
-                                  <strong>Visit:</strong> {record.notes}
+                                  <strong>Visited:</strong> {record.notes}
+                                </p>
+                              )}
+                              {record.notes && (
+                                <p className="text-gray-600">
+                                  <strong>Next Visit:</strong> {record.notes}
                                 </p>
                               )}
                             </div>

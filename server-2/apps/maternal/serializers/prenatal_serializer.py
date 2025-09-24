@@ -1132,3 +1132,12 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         
         representation['prenatal_care_count'] = instance.pf_prenatal_care.count()
         return representation
+    
+
+class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrenatalAppointmentRequest
+        fields = ['requested_at', 'confirmed_at', 'status', 'rp_id', 'pat_id']
+        extra_kwargs = {
+            'pat_id': {'required': False, 'allow_null': True},
+        }

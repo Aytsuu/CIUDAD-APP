@@ -1,30 +1,32 @@
+"use client"
+
 import { useState, useCallback, useEffect } from "react"
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView } from "react-native"
 import { Search, ChevronLeft, AlertCircle, Pill, RefreshCw, Package } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router, useLocalSearchParams } from "expo-router"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/contexts/AuthContext"
 import { useDebounce } from "@/hooks/use-debounce"
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
 import { PaginationControls } from "../admin/components/pagination-layout"
 import { useIndividualMedicineRecords } from "../admin/admin-medicinerecords/queries/fetch"
-import { getPatientByResidentId, getPatientById } from "../animalbites/api/get-api" // Added getPatientById
-import { PatientInfoCard } from "../admin/components/patientcards"
+import { getPatientByResidentId } from "../animalbites/api/get-api"
+// import { PatientInfoCard } from "../admin/components/patientcards"
 import { MedicineRecordCard } from "../admin/admin-medicinerecords/medicine-record-cad"
 
-export default function MyMedicineRecords() {
+export default function IndividualMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
-  const { user } = useAuth()
-  const { pat_id: paramPatId } = useLocalSearchParams() // Get pat_id from navigation params
 
-  // Fetch patient data by pat_id (from params) or rp_id (from auth)
+  const { user } = useAuth()
+  const rp_id = user?.rp
+
   const {
     data: patientData,
     isLoading: isPatientLoading,
@@ -32,15 +34,12 @@ export default function MyMedicineRecords() {
     error: patientError,
     refetch: refetchPatientData,
   } = useQuery({
-    queryKey: ["patient", paramPatId || user?.resident?.rp_id],
-    queryFn: async () => {
-      if (paramPatId) {
-        return await getPatientById(paramPatId as string) // Fetch by pat_id if provided
-      }
-      if (!user?.resident?.rp_id) throw new Error("Resident ID is undefined")
-      return await getPatientByResidentId(user.resident.rp_id)
+    queryKey: ["patientByResidentId", rp_id],
+    queryFn: () => {
+      if (!rp_id) throw new Error("Resident ID is undefined")
+      return getPatientByResidentId(rp_id)
     },
-    enabled: !!(paramPatId || user?.resident?.rp_id),
+    enabled: !!rp_id,
   })
 
   const {
@@ -56,13 +55,12 @@ export default function MyMedicineRecords() {
     setRefreshing(true)
     try {
       await refetch()
-      await refetchPatientData()
       setCurrentPage(1)
     } catch (e) {
       console.error("Refetch error:", e)
     }
     setRefreshing(false)
-  }, [refetch, refetchPatientData])
+  }, [refetch])
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
@@ -78,46 +76,46 @@ export default function MyMedicineRecords() {
   const startEntry = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0
   const endEntry = Math.min(currentPage * pageSize, totalCount)
 
-  // Handle no user and no pat_id
-  if (!user && !paramPatId) {
+  if (!user && !rp_id) {
     return (
       <View className="flex-1 justify-center items-center p-4 bg-gray-50">
         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
           <Package size={48} color="#9CA3AF" />
-          <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">Authentication or Patient ID Required</Text>
-          <Text className="text-gray-500 text-center leading-6">Please log in or select a patient to view medicine records.</Text>
+          <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">Authentication Required</Text>
+          <Text className="text-gray-500 text-center leading-6">Please log in to view your medicine records.</Text>
         </View>
       </View>
     )
   }
+
   if (isPatientLoading) {
     return <LoadingState />
   }
 
-  if (isPatientError || !patientData?.pat_id) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text>Medicine Records</Text>}
-      >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-          <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Patient Not Found</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">No patient data was found for your account.</Text>
-          <TouchableOpacity onPress={() => refetchPatientData()} className="bg-blue-600 px-6 py-3 rounded-lg">
-            <Text className="text-white font-medium">Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </PageLayout>
-    )
-  }
+  // if (isPatientError || !patientData?.pat_id) {
+  //   return (
+  //     <PageLayout
+  //       leftAction={
+  //         <TouchableOpacity
+  //           onPress={() => router.back()}
+  //           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+  //         >
+  //           <ChevronLeft size={24} color="#374151" />
+  //         </TouchableOpacity>
+  //       }
+  //       headerTitle={<Text>Medicine Records</Text>}
+  //     >
+  //       <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+  //         <AlertCircle size={64} color="#EF4444" />
+  //         <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Patient Not Found</Text>
+  //         <Text className="text-gray-600 text-center mt-2 mb-6">No patient data was found for your account.</Text>
+  //         <TouchableOpacity onPress={() => refetchPatientData()} className="bg-blue-600 px-6 py-3 rounded-lg">
+  //           <Text className="text-white font-medium">Retry</Text>
+  //         </TouchableOpacity>
+  //       </View>
+  //     </PageLayout>
+  //   )
+  // }
 
   if (isLoading && !medicineRecords.length) {
     return <LoadingState />
@@ -168,14 +166,14 @@ export default function MyMedicineRecords() {
         className="flex-1 "
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
       >
-        <View className="px-4 pt-4">
+        {/* <View className="px-4 pt-4">
           <PatientInfoCard patient={patientData} />
-        </View>
+        </View> */}
 
         <View className=" p-4">
           <View className="">
             <View className="flex-row items-center space-x-3">
-              <View className="flex-1 flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+              <View className="flex-1 flex-row items-center p-3 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
                 <Search size={20} color="#6B7280" />
                 <TextInput
                   className="flex-1 ml-3 text-gray-800 text-base"

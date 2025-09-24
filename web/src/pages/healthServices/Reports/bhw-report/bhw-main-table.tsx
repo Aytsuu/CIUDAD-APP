@@ -5,7 +5,7 @@ import { useState } from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { MonthInfoCardV2 } from "../bhw-report/folder-component"
+import { MonthInfoCardV2 } from "./folder-component"
 
 
 export default function BHWReportsMainTable() {

@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
@@ -220,7 +219,7 @@ class MaternalPatientListView(generics.ListAPIView):
                 patrec_type__in=['Prenatal', 'Postpartum Care']
             ))
         ).annotate(
-            active_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
+            completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
         ).distinct()
 
 
@@ -259,22 +258,33 @@ class MaternalPatientListView(generics.ListAPIView):
 
 
 # Fix: Use APIView and return Response in get method
-from rest_framework.views import APIView
 
-class MaternalCountView(APIView):
+class MaternalCountView(generics.ListAPIView):
     def get(self, request):
         try:
-            total_patients = Patient.objects.filter(
-                Exists(Pregnancy.objects.filter(
-                    pat_id=OuterRef('pat_id')
-                ))
-            ).distinct().count()
+            # Get all unique pat_ids from Pregnancy
+            pregnancy_pat_ids = Pregnancy.objects.values_list('pat_id', flat=True)
+            resident_set = set()
+            transient_set = set()
+            for pat_id in pregnancy_pat_ids:
+                pat_id_str = str(pat_id)
+                if pat_id_str.startswith('PR'):
+                    resident_set.add(pat_id_str)
+                elif pat_id_str.startswith('PT'):
+                    transient_set.add(pat_id_str)
+
+            resident_patients = len(resident_set)
+            transient_patients = len(transient_set)
+            total_patients = resident_patients + transient_patients
             active_pregnancy_count = Pregnancy.objects.filter(status='active').count()
 
             return Response({
-                'total_patients': total_patients,
-                'active_pregnancies': active_pregnancy_count
+                'total_records': total_patients,
+                'active_pregnancies': active_pregnancy_count,
+                'resident_patients': resident_patients,
+                'transient_patients': transient_patients,
             }, status=status.HTTP_200_OK)
+        
         except Exception as e:
             logger.error(f"Error fetching counts: {str(e)}")
             return Response({
@@ -395,32 +405,49 @@ def get_latest_patient_prenatal_record(request, pat_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
    
-@api_view(['GET'])
-def get_patient_pregnancy_records(request, pat_id):
-    try:
-        patient = Patient.objects.get(pat_id=pat_id)
-        
-        pregnancies = Pregnancy.objects.filter(pat_id=patient).order_by('-created_at').prefetch_related(
+
+# Converted to ListAPIView for pagination, searching, filtering
+class PatientPregnancyRecordsListView(generics.ListAPIView):
+    serializer_class = PregnancyDetailSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        pat_id = self.kwargs.get('pat_id')
+        try:
+            patient = Patient.objects.get(pat_id=pat_id)
+        except Patient.DoesNotExist:
+            return Pregnancy.objects.none()
+
+        params = self.request.query_params
+        status_param = params.get('status')
+        search = params.get('search')
+
+        pregnancies = Pregnancy.objects.filter(pat_id=patient)
+
+        filters = Q()
+        if status_param and status_param.lower() not in ["all", ""]:
+            filters &= Q(status=status_param)
+
+        if search:
+            search = search.strip()
+            if search:
+                search_filters = Q()
+                search_filters |= Q(pregnancy_id__icontains=search)
+                search_filters |= Q(pat_id__pat_id__icontains=search)
+                search_filters |= Q(pat_id__rp_id__per__per_fname__icontains=search)
+                search_filters |= Q(pat_id__rp_id__per__per_lname__icontains=search)
+                search_filters |= Q(pat_id__trans_id__tran_fname__icontains=search)
+                search_filters |= Q(pat_id__trans_id__tran_lname__icontains=search)
+                filters &= search_filters
+
+        if filters:
+            pregnancies = pregnancies.filter(filters)
+
+        pregnancies = pregnancies.order_by('-created_at').prefetch_related(
             Prefetch('prenatal_form', queryset=Prenatal_Form.objects.all().order_by('-created_at')),
             Prefetch('postpartum_record', queryset=PostpartumRecord.objects.prefetch_related('postpartum_delivery_record', 'vital_id').order_by('-created_at'))
         )
-
-        serializer = PregnancyDetailSerializer(pregnancies, many=True)
-        return Response(
-            serializer.data,
-            status= status.HTTP_200_OK
-        )
-    except Patient.DoesNotExist:
-        return Response(
-            {'error': f'Patient with ID {pat_id} does not exist'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        logger.error(f'Error fetching pregnancy records for patient: {pat_id} - {str(e)}')
-        return Response(
-            {'error': f'Failed to fetch pregnancy records: {str(e)}'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return pregnancies
     
 
 @api_view(['GET'])
