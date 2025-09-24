@@ -43,7 +43,7 @@ export default function AdministrationPositions({
 
     return filtered.reduce((acc: Record<string, any[]>, position: any) => {
       // Use 'Other' category for positions without a group
-      const category = position.pos_group || 'No Group'
+      const category = position.pos_group || 'NO GROUP'
       if (!acc[category]) {
         acc[category] = []
       }
@@ -66,14 +66,10 @@ export default function AdministrationPositions({
     if (!selectedPosition) return
     
     try {
-      // Delete position (API handles dual database deletion)
       await deletePosition(selectedPosition)
-      
-      // Clear selection after successful deletion
       setSelectedPosition("")
     } catch (error) {
       console.error("Error deleting position:", error)
-      // Handle error appropriately - you might want to show a toast notification
     }
   }, [selectedPosition, deletePosition, setSelectedPosition])
 

@@ -17,9 +17,7 @@ class Position(AbstractModels):
 class Feature(AbstractModels):
     feat_id = models.BigAutoField(primary_key=True)
     feat_name = models.CharField(max_length=100)
-    feat_group = models.CharField(max_length=100)
     feat_category = models.CharField(max_length=100)
-    feat_url = models.TextField()
 
     class Meta:
         db_table = 'feature'
@@ -35,18 +33,7 @@ class Assignment(AbstractModels):
         db_table = 'assignment'
         unique_together = (('feat', 'pos'))
 
-class Permission(AbstractModels):
-    perm_id = models.BigAutoField(primary_key=True)
-    view = models.BooleanField(default=True)
-    create = models.BooleanField(default=False)
-    update = models.BooleanField(default=False)
-    delete = models.BooleanField(default=False)
-    assi = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='permissions')
-
-    class Meta:
-        db_table = 'permission'
-
-class Staff(AbstractModels):
+class Staff(models.Model):
     staff_id = models.CharField(primary_key=True,max_length=50)
     staff_assign_date = models.DateField(default=date.today)
     staff_type = models.CharField(max_length=20, default="Health Staff")

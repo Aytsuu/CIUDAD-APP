@@ -75,7 +75,7 @@ export default function AssignPosition({
           residentId: residentId, 
           positionId: positionId, 
           staffId: user?.staff?.staff_id || "",
-          staffType: staffType == "BARANGAY STAFF" ? "BARANGAY STAFF" : "HEALTH STAFF"
+          staffType: staffType?.toLowerCase() == "barangay staff" ? "BARANGAY STAFF" : "HEALTH STAFF"
 
         });
 

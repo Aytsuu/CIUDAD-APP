@@ -4,8 +4,8 @@ import { VoterRecord } from "../ProfilingTypes";
 export const voterColumns: ColumnDef<VoterRecord>[] = [
   {
     accessorKey: "voter_id",
-    header: "Voter No.",
-    size: 70
+    header: "No.",
+    size: 20
   },
   {
     accessorKey: "voter_name",

@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from apps.account.models import Account
+from django.contrib.auth import authenticate
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileFullSerializer
-from apps.administration.serializers.staff_serializers import StaffFullSerializer
-from apps.administration.serializers.assignment_serializers import AssignmentBaseSerializer
-from apps.administration.serializers.feature_serializers import FeatureBaseSerializer
-from apps.administration.models import Staff, Assignment, Feature, Position
+from apps.administration.serializers.staff_serializers import StaffAccountSerializer
+from apps.administration.models import Staff
+from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
+from apps.profiling.serializers.business_serializers import BusinessRespondentBaseSerializer
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer  
@@ -13,21 +14,22 @@ from django.http import JsonResponse
 User = get_user_model()
 
 class UserAccountSerializer(serializers.ModelSerializer):
-    resident = ResidentProfileFullSerializer(source='rp', read_only=True)
     staff = serializers.SerializerMethodField()
+    personal = serializers.SerializerMethodField()
     
     class Meta:
         model = Account
         fields = [
             'acc_id',
-            'username',
             'email',
+            'phone',
             'profile_image',
-            'resident',
+            'personal',
+            'rp',
+            'br',
             'staff',
-            'br_id',
         ]
-        read_only_fields = ['acc_id']
+
 
     def get_staff(self, obj):
         rp = getattr(obj, 'rp', None)
@@ -44,37 +46,17 @@ class UserAccountSerializer(serializers.ModelSerializer):
         if not staff_position:
             return None
 
-        # Check if the staff position is admin
-        if staff_position.pos_title == 'Admin':
-            # Admin gets all features
-            features = Feature.objects.all()
-        else:
-            # For non-admin, check assignments based on position
-            # First, check if there are direct staff assignments
-            staff_assignments = Assignment.objects.filter(staff=staff_record)
-            
-            if staff_assignments.exists():
-                # Use staff-specific assignments
-                feature_ids = staff_assignments.values_list('feat_id', flat=True)
-                features = Feature.objects.filter(feat_id__in=feature_ids)
-            else:
-                # Check position-based assignments
-                position_assignments = Assignment.objects.filter(pos=staff_position)
-                if position_assignments.exists():
-                    feature_ids = position_assignments.values_list('feat_id', flat=True)
-                    features = Feature.objects.filter(feat_id__in=feature_ids)
-                else:
-                    # No assignments found
-                    features = Feature.objects.none()
-
         # Serialize staff data
-        staff_data = StaffFullSerializer(staff_record).data
-        
-        # Add features to staff data
-        staff_data['features'] = FeatureBaseSerializer(features, many=True).data
-        
+        staff_data = StaffAccountSerializer(staff_record).data
         return staff_data
 
+    def get_personal(self, obj):
+        personal = None
+        if obj.rp:
+            personal = PersonalBaseSerializer(obj.rp.per).data
+        else:
+            personal = BusinessRespondentBaseSerializer(obj.br).data
+        return personal
         
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()

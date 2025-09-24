@@ -2,7 +2,7 @@ import "@/global.css"
 import React from "react"
 import { View, Text, TouchableOpacity, ScrollView } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { Button } from "@/components/ui/button/button"
+import { Button } from "@/components/ui/button"
 import { Eye } from "@/lib/icons/Eye"
 import { EyeOff } from "@/lib/icons/EyeOff"
 import { FormInput } from "@/components/ui/form/form-input"
@@ -33,15 +33,7 @@ export default function AccountDetails({ params }: {
     if (!formIsValid) {
       return
     }
-    // const email = getValues("accountFormSchema.email")
-    // if (email !== "" && accEmailList?.includes(email)) {
-    //   setError("accountFormSchema.email", {
-    //     type: "manual",
-    //     message: "Email is already in use",
-    //   })
-    //   return
-    // }
-
+    
     params.next()
   }
 

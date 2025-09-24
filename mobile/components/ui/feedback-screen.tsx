@@ -6,7 +6,7 @@ import DoneIcon from '@/assets/images/empty-state/Done.svg'
 import ErrorIcon from '@/assets/images/empty-state/Error.svg'
 import NoTasksIcon from '@/assets/images/empty-state/NoTasks.svg'
 import NoMessagesIcon from '@/assets/images/empty-state/NoMessages.svg'
-import { Button } from "./button/button"
+import { Button } from "./button"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
 

@@ -19,7 +19,7 @@ import { Edit } from "@/lib/icons/Edit";
 import { Phone } from "@/lib/icons/Phone";
 import { Mail } from "@/lib/icons/Mail";
 import { Building } from "@/lib/icons/Building";
-import { CheckCircle } from "@/lib/icons/CheckCircle";
+import { CheckCircle } from "@/lib/icons/CircleCheck";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import PageLayout from "@/screens/_PageLayout";
 

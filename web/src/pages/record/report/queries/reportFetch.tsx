@@ -23,6 +23,20 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
   })
 }
 
+export const useGetIRInfo = (ir_id: string) => {
+  return useQuery({
+    queryKey: ['IRInfo'],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`report/ir/${ir_id}/info/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
+  })
+}
+
 export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ['arReports', page, pageSize, searchQuery],
@@ -36,8 +50,7 @@ export const useGetAcknowledgementReport = (page: number, pageSize: number, sear
           }
         });
         return res.data;
-      } catch (err) {
-        console.error(err);
+      } catch (err) {;
         throw err;
       }
     },
@@ -47,13 +60,12 @@ export const useGetAcknowledgementReport = (page: number, pageSize: number, sear
 
 export const useGetARInfo = (arId: string) => {
   return useQuery({
-    queryKey: ['ARInfo'],
+    queryKey: ['ARInfo', arId],
     queryFn: async () => {
       try {
         const res = await api.get(`report/ar/${arId}/info/`);
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err;
       }
     },
@@ -69,8 +81,7 @@ export const useGetWeeklyAR = () => {
       try {
         const res = await api.get('report/war/comp/list/');
         return res.data;
-      } catch (err) {
-        console.error(err);
+      } catch (err) {;
         throw err;
       }
     },
@@ -80,13 +91,12 @@ export const useGetWeeklyAR = () => {
 
 export const useGetWARInfo = (warId: string) => {
   return useQuery({
-    queryKey: ['WARInfo'],
+    queryKey: ['WARInfo', warId],
     queryFn: async () => {
       try {
         const res = await api.get(`report/war/${warId}/info/`);
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err;
       }
     },

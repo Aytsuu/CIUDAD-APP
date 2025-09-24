@@ -9,6 +9,7 @@ from apps.administration.models import Staff
 from apps.treasurer.models import Invoice
 from datetime import datetime
 import logging
+from apps.profiling.models import Address
 
 logger = logging.getLogger(__name__)
 

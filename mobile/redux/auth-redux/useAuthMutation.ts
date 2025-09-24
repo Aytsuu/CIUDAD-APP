@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import {useAppDispatch} from "@/redux/redux";
-import { setLoading, setError, clearAuthState, clearError, clearOtpState, setAuthData, setOtpSent } from "./authSlice";
+import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
 import { api } from "@/api/api";
-import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, OTPCredentials, EmailOTPCredentials } from "./auth-types";
+import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, EmailOTPCredentials } from "./auth-types";
 
 export const useLoginMutation = () => {
   const dispatch = useAppDispatch();
@@ -23,7 +23,7 @@ export const useLoginMutation = () => {
       dispatch(setAuthData({ 
         accessToken: data.access_token, 
         user: data.user,
-        refreshToken: data.refresh_token 
+        refreshToken: data.refresh 
       }));
       dispatch(setLoading(false));
     },
@@ -54,7 +54,7 @@ export const useSignupMutation = () => {
         dispatch(setAuthData({ 
           accessToken: data.access_token, 
           user: data.user,
-          refreshToken: data.refresh_token 
+          refreshToken: data.refresh_token
         }));
       }
       dispatch(setLoading(false));
@@ -68,80 +68,12 @@ export const useSignupMutation = () => {
   });
 };
 
-export const useSendOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: async (phone) => {
-      console.log('📱 Sending OTP to:', phone);
-      const response = await api.post('authentication/mobile/sendOtp/', { 
-        phone: phone 
-      });
-      console.log('✅ OTP sent successfully');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data, phone) => {
-      dispatch(setOtpSent({ sent: true, phone }));
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'Failed to send OTP';
-      console.error('❌ Send OTP failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
-
-export const useVerifyOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<TokenResponse, Error, OTPCredentials>({
-    mutationFn: async ({ phone, otp }) => {
-      console.log('🔐 Verifying OTP...');
-      const response = await api.post('authentication/mobile/verifyOtp/', {
-        phone: phone,
-        otp,
-      });
-      console.log('✅ OTP verification successful');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data) => {
-      if (data.access_token && data.user) {
-        dispatch(setAuthData({ 
-          accessToken: data.access_token, 
-          user: data.user,
-          refreshToken: data.refresh_token 
-        }));
-        dispatch(clearOtpState());
-      }
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'OTP verification failed';
-      console.error('❌ OTP verification failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
-
 export const useSendEmailOTPMutation = () => {
   const dispatch = useAppDispatch();
   
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: async (email) => {
-      console.log('📧 Sending Email OTP to:', email);
-      const response = await api.post('authentication/email/sendOtp/', { email });
-      console.log('✅ Email OTP sent successfully');
+  return useMutation<{ message: string }, Error, Record<string, any>>({
+    mutationFn: async (data) => {
+      const response = await api.post('authentication/email/sendOtp/', data);
       return response.data;
     },
     onMutate: () => {
@@ -216,7 +148,6 @@ export const useLogoutMutation = () => {
     onSettled: () => {
       dispatch(clearAuthState());
       dispatch(setLoading(false));
-      
       queryClient.clear();
     },
   });

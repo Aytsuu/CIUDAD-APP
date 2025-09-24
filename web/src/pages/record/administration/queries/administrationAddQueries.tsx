@@ -3,7 +3,6 @@ import { addPosition, addStaff, assignFeature, setPermission } from "../restful-
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
 
-
 // Adding
 export const useAddPosition = () => {
   const queryClient = useQueryClient();

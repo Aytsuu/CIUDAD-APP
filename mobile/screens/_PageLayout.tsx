@@ -43,7 +43,7 @@ export default function PageLayout({
   footerBackgroundColor = 'bg-white',
   backgroundColor = 'bg-transparent',
   showScrollIndicator = true,
-  scrollIndicatorColor = 'bg-primaryBlue',
+  scrollIndicatorColor = 'bg-black/30',
   scrollIndicatorPosition = 'right',
 }: PageLayoutProps) {
   const scrollViewRef = useRef<ScrollView>(null)
@@ -177,16 +177,53 @@ export default function PageLayout({
             className="border-none shadow-none"
             style={{
               height: responsiveHeaderHeight,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              position: 'relative',
               paddingHorizontal: responsivePadding,
               elevation: 2,
             }}
           >
-            {leftAction}
-            {headerTitle}
-            {rightAction}
+            {/* Left and Right Actions Container */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                height: '100%',
+                zIndex: 1,
+              }}
+            >
+              {/* Left Action */}
+              <View style={{ alignItems: 'flex-start' }}>
+                {leftAction}
+              </View>
+              
+              {/* Right Action */}
+              <View style={{ alignItems: 'flex-end' }}>
+                {rightAction}
+              </View>
+            </View>
+
+            {/* Absolutely Centered Title */}
+            {headerTitle && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 0,
+                  // Prevent title from interfering with touch events on actions
+                  pointerEvents: 'none',
+                }}
+              >
+                <View style={{ pointerEvents: 'auto' }}>
+                  {headerTitle}
+                </View>
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -238,7 +275,7 @@ export default function PageLayout({
           <View style={getScrollIndicatorPositionStyles()}>
             <TouchableOpacity
               onPress={handleScrollIndicatorPress}
-              className={`${scrollIndicatorColor} rounded-full shadow-lg`}
+              className={`${scrollIndicatorColor} rounded-full`}
               style={{
                 width: 45,
                 height: 45,
