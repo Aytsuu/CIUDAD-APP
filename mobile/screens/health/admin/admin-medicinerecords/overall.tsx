@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, Users, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useMedicineRecords } from "./queries/fetch";
 import { PaginationControls } from "../components/pagination-layout";
+import { Overallrecordcard } from "../components/overall-cards";
 // Types
 interface MedicineRecord {
   pat_id: string;
@@ -30,7 +31,7 @@ interface MedicineRecord {
   province: string;
   pat_type: string;
   address: string;
-  medicine_count: number;
+  count: number;
   patient_details?: {
     personal_info: {
       per_fname: string;
@@ -61,38 +62,6 @@ interface ApiResponse {
 type TabType = "all" | "resident" | "transient";
 
 // Components
-const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-  const getTypeConfig = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "resident":
-        return {
-          color: "text-green-700",
-          bgColor: "bg-green-100",
-          borderColor: "border-green-200"
-        };
-      case "transient":
-        return {
-          color: "text-purple-700",
-          bgColor: "bg-purple-100",
-          borderColor: "border-purple-200"
-        };
-      default:
-        return {
-          color: "text-gray-700",
-          bgColor: "bg-gray-100",
-          borderColor: "border-gray-200"
-        };
-    }
-  };
-
-  const typeConfig = getTypeConfig(type);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
-    </View>
-  );
-};
-
 const TabBar: React.FC<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
@@ -110,77 +79,6 @@ const TabBar: React.FC<{
     </TouchableOpacity>
   </View>
 );
-
-const MedicineRecordCard: React.FC<{
-  record: MedicineRecord;
-  onPress: () => void;
-}> = ({ record, onPress }) => {
-  const formatAddress = () => {
-    return record.address || [record.street, record.barangay, record.city, record.province].filter(Boolean).join(", ");
-  };
-
-  return (
-    <TouchableOpacity className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm" activeOpacity={0.8} onPress={onPress}>
-      {/* Header */}
-      <View className="p-4 border-b border-gray-100">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-                <Pill color="white" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
-                  {record.lname}, {record.fname} {record.mname}
-                </Text>
-                <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
-              </View>
-            </View>
-          </View>
-          <StatusBadge type={record.pat_type} />
-        </View>
-      </View>
-
-      {/* Details */}
-      <View className="p-4">
-        <View className="flex-row items-center mb-3">
-          <Users size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Age: <Text className="font-medium text-gray-900">{record.age}</Text> • {record.sex}
-          </Text>
-        </View>
-
-        <View className="flex-row items-center mb-3">
-          <Text className="ml-2 text-gray-600 text-sm">
-            Address: <Text className="font-medium text-gray-900">{formatAddress() || "No address provided"}</Text>
-          </Text>
-        </View>
-
-        {record.sitio && (
-          <View className="flex-row items-center mb-3">
-            {" "}
-            <Users size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Sitio: <Text className="font-medium text-gray-900">{record.sitio}</Text>
-            </Text>
-          </View>
-        )}
-
-        <View className="flex-row items-center justify-between">
-          <Users size={16} color="#6B7280" />
-
-          <View className="flex-row items-center">
-            <Pill size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Medicine Records: <Text className="font-medium text-gray-900">{record.medicine_count}</Text>
-            </Text>
-          </View>
-          <ChevronRight size={16} color="#6B7280" />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 export default function OverAllMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -203,7 +101,7 @@ export default function OverAllMedicineRecords() {
     [currentPage, pageSize, debouncedSearchQuery, activeTab]
   );
 
-  // Use the useMedicineRecords hook instead of direct useQuery
+  // Use the useMedicineRecords hook
   const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useMedicineRecords(queryParams);
 
   // Reset to first page when filters change
@@ -211,7 +109,7 @@ export default function OverAllMedicineRecords() {
     setCurrentPage(1);
   }, [debouncedSearchQuery, activeTab]);
 
-  // Format medicine data
+  // Format medicine data - map medicine_count to count for the Overallrecordcard
   const formatMedicineData = useCallback((): MedicineRecord[] => {
     if (!apiResponse?.results || !Array.isArray(apiResponse.results)) {
       return [];
@@ -240,7 +138,7 @@ export default function OverAllMedicineRecords() {
         province: address.add_province || "",
         pat_type: details.pat_type || "",
         address: addressString,
-        medicine_count: record.medicine_count || 0
+        count: record.medicine_count || 0 // Map medicine_count to count for the card
       };
     });
   }, [apiResponse?.results]);
@@ -362,7 +260,7 @@ export default function OverAllMedicineRecords() {
         {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
-        <View className="px-4 flex-row items-center justify-between  mt-4">
+        <View className="px-4 flex-row items-center justify-between mt-4">
           <View className="flex-row items-center">
             <Text className="text-sm text-gray-600">
               Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
@@ -393,7 +291,12 @@ export default function OverAllMedicineRecords() {
               contentContainerStyle={{ padding: 16 }}
               initialNumToRender={10}
               maxToRenderPerBatch={10}
-              renderItem={({ item }) => <MedicineRecordCard record={item} onPress={() => handleRecordPress(item)} />}
+              renderItem={({ item }) => (
+                <Overallrecordcard 
+                  record={item} 
+                  onPress={() => handleRecordPress(item)} 
+                />
+              )}
               ListFooterComponent={
                 isFetching ? (
                   <View className="py-4 items-center">

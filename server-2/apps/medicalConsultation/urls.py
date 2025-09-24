@@ -19,5 +19,7 @@ urlpatterns=[
     
     
     
-path('combined-health-records/<str:assigned_to>/', CombinedHealthRecordsView.as_view(), name='combined-health-records-assigned'),
-]
+    path('combined-health-records/<str:assigned_to>/', CombinedHealthRecordsView.as_view(), name='combined-health-records-assigned'),
+    path('family-medhistory/<str:pat_id>/', FamilyPHIllnessCheckAPIView.as_view(), name='family-medhistory'),
+
+]  

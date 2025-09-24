@@ -15,9 +15,9 @@ import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
-import { FilterSitio } from "../../reports/filter-sitio";
-import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
-
+import { FilterSitio } from "../../Reports/filter-sitio";
+import { SelectedFiltersChips } from "../../Reports/selectedFiltersChipsProps ";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function AllFirstAidRecords() {
   const navigate = useNavigate();
@@ -41,20 +41,18 @@ export default function AllFirstAidRecords() {
   }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
   
   // Build the combined search query that includes selected sitios
-  // Build the combined search query that includes selected sitios
-const combinedSearchQuery = useMemo(() => {
-  let query = debouncedSearchQuery || "";
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchQuery || "";
+    
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+    
+    return query || undefined;
+  }, [debouncedSearchQuery, selectedSitios]);
   
-  // If sitios are selected, add them to the search query with COMMA separation
-  if (selectedSitios.length > 0) {
-    const sitioQuery = selectedSitios.join(","); // Change space to comma
-    query = query ? `${query},${sitioQuery}` : sitioQuery;
-  }
-  
-  return query || undefined;
-}, [debouncedSearchQuery, selectedSitios]);
-  
-  // Build query parameters - only use search, no separate sitio param
+  // Build query parameters
   const queryParams = useMemo(
     () => ({
       page: currentPage,
@@ -85,23 +83,20 @@ const combinedSearchQuery = useMemo(() => {
     if (!apiResponse) {
       return { firstAidRecords: [], totalCount: 0, totalPages: 1 };
     }
-    // Check if response is paginated
+    
     if (apiResponse.results) {
-      // Paginated response
       return {
         firstAidRecords: apiResponse.results,
         totalCount: apiResponse.count || 0,
         totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
       };
     } else if (Array.isArray(apiResponse)) {
-      // Direct array response (fallback)
       return {
         firstAidRecords: apiResponse,
         totalCount: apiResponse.length,
         totalPages: Math.ceil(apiResponse.length / pageSize)
       };
     } else {
-      // Unknown structure
       return { firstAidRecords: [], totalCount: 0, totalPages: 1 };
     }
   }, [apiResponse, pageSize]);
@@ -285,52 +280,41 @@ const combinedSearchQuery = useMemo(() => {
    <MainLayoutComponent title="First Aid Records" description="Manage and view first aid records" >
      <div className="w-full h-full flex flex-col">
       
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Total Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full mr-4">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Records</p>
-              <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
-          </div>
-        </div>
-        {/* Resident Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-full mr-4">
-              <Home className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Residents</p>
-              <p className="text-2xl font-bold text-gray-800">{residents}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
-          </div>
-        </div>
-        {/* Transient Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-full mr-4">
-              <UserCheck className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transients</p>
-              <p className="text-2xl font-bold text-gray-800">{transients}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
-          </div>
+      {/* Summary Cards - Updated with EnhancedCardLayout and dynamic icons */}
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <EnhancedCardLayout
+            title="Total Records"
+            description="All first aid records"
+            value={totalCount}
+            valueDescription="Total records"
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <EnhancedCardLayout
+            title="Resident Patients"
+            description="Patients who are residents"
+            value={residents}
+            valueDescription="Total residents"
+            icon={<Home className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <EnhancedCardLayout
+            title="Transient Patients"
+            description="Patients who are transients"
+            value={transients}
+            valueDescription="Total transients"
+            icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
         </div>
       </div>
       

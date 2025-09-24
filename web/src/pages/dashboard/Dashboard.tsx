@@ -16,8 +16,8 @@ import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-qua
 import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
 import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
-// import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
-// import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
+import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { ServicesHealthRecordsSectionCards } from "@/components/analytics/health/services-count-cards";
 import { format } from "date-fns";
 
@@ -58,6 +58,9 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="grid gap-2">
+
+          <MedicineDistributionSidebar/>
+          <FirstAidDistributionSidebar/>
           <ProfilingSidebar />
           <ReportSidebar />
           <GADExpenseSidebar />

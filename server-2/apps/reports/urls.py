@@ -10,6 +10,7 @@ from .views.chart_views import NutritionalStatusMonthlyChart
 from .views.chnewchildren_views import MonthlyNewChildrenCountAPIView,MonthlyChildrenDetailAPIView
 from .views.medicines_views import MonthlyMedicineSummariesAPIView, MonthlyMedicineRecordsDetailAPIView, MonthlyMedicineChart
 from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, MedicineSummaryMonthsAPIView, MedicineExpiredOutOfStockSummaryAPIView, MonthlyMedicineExpiredOutOfStockDetailAPIView
+from .views.counts import ReportsCount
 
 
 urlpatterns=[
@@ -48,9 +49,12 @@ urlpatterns=[
         
         # INVENTORY MEDICINE REPORTS
        path('medicine/records/<str:month>/',MonthlyMedicineRecordsDetailAPIView.as_view(),name='medicine-monthly-records'),
-      path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
-      path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
+       path('medicine/summaries/', MedicineSummaryMonthsAPIView.as_view(), name='medicine-summary-montly'),
+       path('medicine-expired-out-of-stock-summary/', MedicineExpiredOutOfStockSummaryAPIView.as_view(), name='outofexpiredstocks-monthly-records'),
       path('medicine-expired-out-of-stock-detail/<str:month>/', MonthlyMedicineExpiredOutOfStockDetailAPIView.as_view(), name='outofexpiredstocks-chart'),
+        
+        # REPORTS COUNTS
+        path('counts/', ReportsCount.as_view(), name='reports-counts'),
 
         # path('medicine/records/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-monthly-records'),
 ]

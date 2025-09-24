@@ -41,4 +41,29 @@ class MedicalConsultation_Record(models.Model):
     
      class Meta:
            db_table = 'medical_consultation_record'
+
+class DateSlot(models.Model):
+    date = models.DateField(unique=True)
+    am_max_slots = models.PositiveIntegerField(default=0)
+    pm_max_slots = models.PositiveIntegerField(default=0)
+    am_current_bookings = models.PositiveIntegerField(default=0)
+    pm_current_bookings = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'date_slots'
+        ordering = ['date']
+
+    @property
+    def am_available_slots(self):
+        return self.am_max_slots - self.am_current_bookings
+
+    @property
+    def pm_available_slots(self):
+        return self.pm_max_slots - self.pm_current_bookings
+
+    def __str__(self):
+        return f"Date: {self.date} (AM: {self.am_available_slots}/{self.am_max_slots}, PM: {self.pm_available_slots}/{self.pm_max_slots})"
              

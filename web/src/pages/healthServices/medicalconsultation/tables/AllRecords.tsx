@@ -18,6 +18,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 export default function AllMedicalConsRecord() {
   const navigate = useNavigate();
@@ -194,56 +195,43 @@ export default function AllMedicalConsRecord() {
   };
 
   return (
-    <>
-      <MainLayoutComponent title="Medical Consultation" description="Manage Medical Consultation">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Total Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-full mr-4">
-                <Users className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Records</p>
-                <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
-            </div>
-          </div>
+    <MainLayoutComponent title="Medical Consultation" description="Manage Medical Consultation">
+      <div className="w-full h-full flex flex-col">
+        {/* Summary Cards - Updated with EnhancedCardLayout */}
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <EnhancedCardLayout
+              title="Total Records"
+              description="All medical consultation records"
+              value={totalCount}
+              valueDescription="Total records"
+              icon={<Users className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
 
-          {/* Resident Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full mr-4">
-                <Home className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Residents</p>
-                <p className="text-2xl font-bold text-gray-800">{residents}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
-            </div>
-          </div>
+            <EnhancedCardLayout
+              title="Resident Patients"
+              description="Patients who are residents"
+              value={residents}
+              valueDescription="Total residents"
+              icon={<Home className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
 
-          {/* Transient Card */}
-          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full mr-4">
-                <UserCheck className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Transients</p>
-                <p className="text-2xl font-bold text-gray-800">{transients}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
-            </div>
+            <EnhancedCardLayout
+              title="Transient Patients"
+              description="Patients who are transients"
+              value={transients}
+              valueDescription="Total transients"
+              icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
           </div>
         </div>
 
@@ -309,7 +297,7 @@ export default function AllMedicalConsRecord() {
           />
         )}
 
-        <div className="h-full w-full">
+        <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
@@ -367,7 +355,7 @@ export default function AllMedicalConsRecord() {
             </div>
           </div>
         </div>
-      </MainLayoutComponent>
-    </>
+      </div>
+    </MainLayoutComponent>
   );
 }

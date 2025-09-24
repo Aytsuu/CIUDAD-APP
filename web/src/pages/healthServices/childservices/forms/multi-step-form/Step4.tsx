@@ -47,19 +47,27 @@ export default function LastPage({
   const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({ page: 1, pageSize: 10, search: "", is_temp: true });
   const [selectedStaffId, setSelectedStaffId] = useState("");
+  const[allowNotesEdit,setAllowNotesEdit]=useState(false);
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
   const { data: staffOptions, isLoading } = fetchStaffWithPositions();
 
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
-    const todaysHistoricalRecord = historicalVitalSigns.find((vital) => isToday(vital.date));
-    return !todaysHistoricalRecord && newVitalSigns.length === 0;
+    const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
+    const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
+    return !hasTodaysHistoricalRecord && !hasTodaysNewRecord;
   });
 
   const medicineStocksOptions = medicineData?.medicines || [];
   const medicinePagination = medicineData?.pagination;
 
+
+  if(status==="immunization"){
+    if(!allowNotesEdit){
+      setAllowNotesEdit(true);
+    }
+  }
   const handleMedicineSearch = (searchTerm: string) => {
     setMedicineSearchParams((prev: any) => ({
       ...prev,
@@ -183,6 +191,12 @@ export default function LastPage({
     return historicalVitalSigns.find((vital) => isToday(vital.date));
   }, [historicalVitalSigns]);
 
+  const hasTodaysVitalSigns = useMemo(() => {
+    const hasTodaysHistorical = historicalVitalSigns.some((vital) => isToday(vital.date));
+    const hasTodaysNew = newVitalSigns.some((vital) => isToday(vital.date));
+    return hasTodaysHistorical || hasTodaysNew;
+  }, [historicalVitalSigns, newVitalSigns]);
+
   const combinedVitalSignsForTable = useMemo(() => {
     return newVitalSigns.map((vital, index) => ({
       ...vital,
@@ -192,8 +206,8 @@ export default function LastPage({
   }, [newVitalSigns, currentAge]);
 
   const shouldShowGeneralHealthSections = useMemo(() => {
-    return !todaysHistoricalRecord;
-  }, [todaysHistoricalRecord]);
+    return !hasTodaysVitalSigns;
+  }, [hasTodaysVitalSigns]);
 
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {
@@ -204,8 +218,8 @@ export default function LastPage({
 
   const shouldShowNutritionalStatusCalculator = useMemo(() => {
     const hasAgeAndHeight = currentAge && latestOverallVitalSign?.ht;
-    return hasAgeAndHeight && ((newVitalSigns.length > 0 && !todaysHistoricalRecord) || (latestOverallVitalSign && !isToday(latestOverallVitalSign.date)));
-  }, [currentAge, latestOverallVitalSign, newVitalSigns.length, todaysHistoricalRecord]);
+    return hasAgeAndHeight && ((newVitalSigns.length > 0 && !hasTodaysVitalSigns) || (latestOverallVitalSign && !isToday(latestOverallVitalSign.date)));
+  }, [currentAge, latestOverallVitalSign, newVitalSigns.length, hasTodaysVitalSigns]);
 
   const hasSevereMalnutrition = useMemo(() => {
     if (!nutritionalStatus) return false;
@@ -214,8 +228,8 @@ export default function LastPage({
   }, [nutritionalStatus]);
 
   const shouldShowSevereMalnutritionWarning = useMemo(() => {
-    return hasSevereMalnutrition && !todaysHistoricalRecord;
-  }, [hasSevereMalnutrition, todaysHistoricalRecord]);
+    return hasSevereMalnutrition && !hasTodaysVitalSigns;
+  }, [hasSevereMalnutrition, hasTodaysVitalSigns]);
 
   const canSubmit = useMemo(() => {
     return newVitalSigns && newVitalSigns.length > 0 && hasFormChanges;
@@ -280,6 +294,13 @@ export default function LastPage({
       updateFormData({ vitalSigns: updatedVitalSigns });
     }
   }, [newVitalSigns, currentAge, setValue, updateFormData, setNewVitalSigns]);
+
+  useEffect(() => {
+    const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
+    const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
+    
+    setShowVitalSignsForm(!hasTodaysHistoricalRecord && !hasTodaysNewRecord);
+  }, [historicalVitalSigns, newVitalSigns]);
 
   useEffect(() => {
     if (status === "immunization") {
@@ -443,40 +464,8 @@ export default function LastPage({
             </div>
           )}
 
-          {/* {!canSubmit && !showVitalSignsForm && (
-            <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
-              <h4 className="font-medium text-yellow-800">⚠️ Required Information Missing</h4>
-              <p className="mt-1 text-sm text-yellow-700">{newVitalSigns.length === 0 ? "Please add at least one vital sign record before submitting the form." : !hasFormChanges ? "No changes detected. Please make changes to the form before submitting." : "Please complete all required fields."}</p>
-            </div>
-          )} */}
-
-          {showVitalSignsForm && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold">Add New Vital Signs</h3>
-              <Form {...vitalSignForm}>
-                <VitalSignFormCard 
-                  title="New Vital Signs" 
-                  control={vitalSignForm.control} 
-                  handleSubmit={vitalSignForm.handleSubmit} 
-                  onSubmit={handleAddVitalSign} 
-                  onCancel={() => setShowVitalSignsForm(false)} 
-                  submitButtonText="Add Vital Signs" 
-                  cancelButtonText="Cancel" 
-                  isReadOnly={false}
-                />
-              </Form>
-            </div>
-          )}
-
-          {!showVitalSignsForm && newVitalSigns.length === 0 && (
-            <div className="flex justify-end">
-              <Button type="button" onClick={() => setShowVitalSignsForm(true)}>
-                Add New Vital Signs
-              </Button>
-            </div>
-          )}
-
-          {newVitalSigns.length > 0 && (
+          {/* Always show today's vital signs if they exist */}
+          {hasTodaysVitalSigns && (
             <div className="pt-4">
               <div className="border-b border-gray-200 bg-white px-4 py-3">
                 <h3 className="text-sm font-semibold text-gray-700">Today's Entry</h3>
@@ -495,8 +484,38 @@ export default function LastPage({
                     setEditingRowIndex(null);
                   }}
                   editVitalSignFormReset={editVitalSignForm.reset}
+                  
                 />
               </Form>
+            </div>
+          )}
+
+          {/* Only show the form if no vital signs exist for today */}
+          {showVitalSignsForm && !hasTodaysVitalSigns && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold">Add New Vital Signs</h3>
+              <Form {...vitalSignForm}>
+                <VitalSignFormCard 
+                  title="New Vital Signs" 
+                  control={vitalSignForm.control} 
+                  handleSubmit={vitalSignForm.handleSubmit} 
+                  onSubmit={handleAddVitalSign} 
+                  onCancel={() => setShowVitalSignsForm(false)} 
+                  submitButtonText="Add Vital Signs" 
+                  cancelButtonText="Cancel" 
+                  isReadOnly={false}
+                  allowNotesEdit={allowNotesEdit}
+                />
+              </Form>
+            </div>
+          )}
+
+          {/* Show "Add New Vital Signs" button only when no today's record exists */}
+          {!showVitalSignsForm && !hasTodaysVitalSigns && (
+            <div className="flex justify-end">
+              <Button type="button" onClick={() => setShowVitalSignsForm(true)}>
+                Add New Vital Signs
+              </Button>
             </div>
           )}
 

@@ -6,6 +6,9 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 import secrets
 from rest_framework import status
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 6 digit otp
 def generate_otp():
@@ -32,6 +35,7 @@ class LogInEmailOTPView(APIView):
 
         if Account.objects.filter(email=email).exists():
             otp = generate_otp()
+            logger.info(f"Generated OTP for {email}: {otp}")  # Log the generated OTP
             cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
             send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
             return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)

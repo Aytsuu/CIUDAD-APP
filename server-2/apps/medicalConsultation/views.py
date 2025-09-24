@@ -825,3 +825,166 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
+
+class FamilyPHIllnessCheckAPIView(APIView):
+    """
+    API view that checks family medical history for PH illnesses
+    Gets family members through FamilyComposition and checks their medical history
+    """
+    
+    def get(self, request, pat_id):
+        try:
+            # First, find the patient using the string ID
+            patient = Patient.objects.get(pat_id=pat_id)
+            
+            # Get the ResidentProfile for this patient
+            try:
+                resident_profile = ResidentProfile.objects.get(patients=patient)
+            except ResidentProfile.DoesNotExist:
+                return Response({
+                    'status': 'error',
+                    'message': 'Resident profile not found for patient',
+                    'error': f'No resident profile found for patient ID {pat_id}'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get family compositions where this resident profile is involved
+            family_compositions = FamilyComposition.objects.filter(rp=resident_profile)
+            
+            if not family_compositions.exists():
+                return Response({
+                    'status': 'success',
+                    'message': 'No family members found',
+                    'patient_id': pat_id,
+                    'family_members_count': 0,
+                    'ph_illnesses': {
+                        'count': 0,
+                        'data': []
+                    },
+                    'other_illnesses': "None"
+                }, status=status.HTTP_200_OK)
+            
+            # Get all family members from the same families
+            family_ids = family_compositions.values_list('fam_id', flat=True)
+            
+            # For MedicalHistory: exclude the patient themselves
+            family_members_excluding_patient = FamilyComposition.objects.filter(
+                fam_id__in=family_ids
+            ).exclude(rp=resident_profile)
+            
+            family_rp_ids_excluding_patient = family_members_excluding_patient.values_list('rp_id', flat=True)
+            family_patients_excluding_patient = Patient.objects.filter(rp_id__in=family_rp_ids_excluding_patient)
+            family_patient_ids_excluding_patient = list(family_patients_excluding_patient.values_list('pat_id', flat=True))
+            
+            # Get patient records for family members (excluding patient)
+            family_patient_records = PatientRecord.objects.filter(
+                pat_id__in=family_patient_ids_excluding_patient
+            )
+            family_record_ids = list(family_patient_records.values_list('patrec_id', flat=True))
+            
+            # For FamilyPastMedicalHistory: include the patient themselves
+            all_family_members_including_patient = FamilyComposition.objects.filter(
+                fam_id__in=family_ids
+            )
+            
+            all_family_rp_ids = all_family_members_including_patient.values_list('rp_id', flat=True)
+            all_family_patients = Patient.objects.filter(rp_id__in=all_family_rp_ids)
+            all_family_patient_ids = list(all_family_patients.values_list('pat_id', flat=True))
+            
+            # Get all PH illnesses (PH-1 to PH-20)
+            ph_codes = [f'PH-{i}' for i in range(1, 21)]
+            # Get all FP illnesses (FP-1 to FP-11)
+            fp_codes = [f'FP-{i}' for i in range(1, 12)]
+            # Combine excluded codes
+            excluded_codes = ph_codes + fp_codes
+            
+            ph_illnesses = Illness.objects.filter(ill_code__in=ph_codes).order_by('ill_code')
+            
+            # Get family medical history from both MedicalHistory and FamilyPastMedicalHistory
+            # MedicalHistory: Only from family members (excluding patient)
+            family_medical_history = MedicalHistory.objects.filter(
+                patrec_id__in=family_record_ids
+            ).select_related('ill')
+            
+            # FamilyPastMedicalHistory: Include patient and all family members
+            family_past_medical_history = FamilyPastMedicalHistory.objects.filter(
+                pat_id__in=all_family_patient_ids
+            ).select_related('ill')
+            
+            # Combine all illness IDs that family members have
+            family_illness_ids = set()
+            
+            # From MedicalHistory
+            for history in family_medical_history:
+                if history.ill_id:
+                    family_illness_ids.add(history.ill_id)
+            
+            # From FamilyPastMedicalHistory
+            for history in family_past_medical_history:
+                if history.ill_id:
+                    family_illness_ids.add(history.ill_id)
+            
+            # Prepare PH illnesses data with check if family has them
+            ph_illnesses_data = []
+            for illness in ph_illnesses:
+                has_family_history = illness.ill_id in family_illness_ids
+                
+                # Get year information if available
+                year_info = None
+                if has_family_history:
+                    # Check MedicalHistory first
+                    med_history = family_medical_history.filter(ill_id=illness.ill_id).first()
+                    if med_history and med_history.year:
+                        year_info = med_history.year
+                
+                ph_illnesses_data.append({
+                    'ill_id': illness.ill_id,
+                    'illname': illness.illname,
+                    'ill_description': illness.ill_description,
+                    'ill_code': illness.ill_code,
+                    'has_family_history': has_family_history,
+                    'year': year_info
+                })
+            
+            # Get other non-PH and non-FP illnesses that family has
+            other_illnesses_names = set()
+            
+            # From MedicalHistory
+            for history in family_medical_history:
+                if history.ill and history.ill.ill_code not in excluded_codes:
+                    other_illnesses_names.add(history.ill.illname)
+            
+            # From FamilyPastMedicalHistory
+            for history in family_past_medical_history:
+                if history.ill and history.ill.ill_code not in excluded_codes:
+                    other_illnesses_names.add(history.ill.illname)
+            
+            # Convert set to sorted list and format as comma-separated string
+            other_illnesses_list = sorted(list(other_illnesses_names)) if other_illnesses_names else []
+            other_illnesses_string = ", ".join(other_illnesses_list) if other_illnesses_list else "None"
+            
+            return Response({
+                'status': 'success',
+                'message': 'Family illness check completed successfully',
+                'patient_id': pat_id,
+                'family_members_count': len(family_patient_ids_excluding_patient),
+                'ph_illnesses': {
+                    'count': len(ph_illnesses_data),
+                    'data': ph_illnesses_data
+                },
+                'other_illnesses': other_illnesses_string
+            }, status=status.HTTP_200_OK)
+            
+        except Patient.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Patient not found',
+                'error': f'Patient with ID {pat_id} does not exist'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': 'Failed to retrieve family illness data',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
