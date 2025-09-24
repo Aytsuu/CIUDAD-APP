@@ -23,7 +23,7 @@ export const BudgetPlanStep1Schema = z.object({
     staff_id: z.string().default('')
 })
 
-export const BudgetPlanStep2Schema = z.object({
+export const  BudgetPlanStep2Schema = z.object({
     honorariaOfficials: DataRequirement,
     cashOfficials: DataRequirement,
     midBonusOfficials: DataRequirement,
@@ -53,8 +53,7 @@ export const BudgetPlanStep2Schema = z.object({
 
 export const BudgetPlanStep3Schema = z.object({
   dtl_budget_item: z.string().nonempty("This field is required."),
-  dtl_proposed_budget: z.string().min(1, "This field is required"),
-  plan_id: z.number().default(0)
+  dtl_proposed_budget: DataRequirement,
 })
 
 export const BudgetItemsStep3Schema = z.object({

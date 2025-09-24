@@ -3,7 +3,6 @@ import { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState, useRef } from "react"
-import { toast } from "sonner"
 import { BudgetPlanStep2Schema } from "@/form-schema/treasurer/budgetplan-schema"
 import { Button } from "@/components/ui/button/button"
 import { ChevronRightIcon } from "lucide-react"
@@ -50,16 +49,12 @@ function CreateBudgetWithLimits({
     { name: "seniorProg", label: "Senior Citizen/ PWD Program" },
   ]
 
-  const [total, setTotal] = useState(0)
-  const [_balance, setBalance] = useState(0)
-  const [isOverLimit, setIsOverLimit] = useState(false)
-  const budgetToast = useRef<string | number | null>(null)
-
+  const [_total, setTotal] = useState(0)
+  const [isOverLimit, _setIsOverLimit] = useState(false)
   const { watch, trigger } = form
   const formValues = watch()
 
   useEffect(() => {
-    // Reset form with latest values whenever they change
     form.reset(form.getValues());
   }, [form]);
 
@@ -70,33 +65,6 @@ function CreateBudgetWithLimits({
     }, 0)
     setTotal(calculatedTotal)
   }, [formValues])
-
-  useEffect(() => {
-    const calculatedBalance = budgetLimit - total
-    const roundedBalance = Math.round(calculatedBalance * 100) / 100
-    setBalance(roundedBalance)
-
-    if (calculatedBalance < 0) {
-      setIsOverLimit(true)
-      if (!budgetToast.current) {
-        budgetToast.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
-          duration: Number.POSITIVE_INFINITY,
-          style: {
-            border: "1px solid rgb(225, 193, 193)",
-            padding: "16px",
-            color: "#b91c1c",
-            background: "#fef2f2",
-          },
-        })
-      }
-    } else {
-      setIsOverLimit(false)
-      if (budgetToast.current !== null) {
-        toast.dismiss(budgetToast.current)
-        budgetToast.current = null
-      }
-    }
-  }, [total, budgetLimit])
 
   const handleNextClick = async () => {
     const isValid = await trigger()
