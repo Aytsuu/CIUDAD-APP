@@ -55,7 +55,6 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             
             if (onSuccess) onSuccess(planId);
             navigate('/treasurer-budget-plan')
-            // window.location.href = "/treasurer-budget-plan";
         },
         onError: () => {
             showErrorToast('Failed to create budget plan');

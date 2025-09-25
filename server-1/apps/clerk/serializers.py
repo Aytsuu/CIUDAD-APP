@@ -39,32 +39,32 @@ class BusinessSerializer(serializers.ModelSerializer):
         ]
 
 # Address Serializers
-class AddressDetailsSerializer(serializers.ModelSerializer):
-    formatted_address = serializers.SerializerMethodField()
-    sitio_name = serializers.CharField(source='sitio.sitio_name', allow_null=True)
+# class AddressDetailsSerializer(serializers.ModelSerializer):
+#     formatted_address = serializers.SerializerMethodField()
+#     sitio_name = serializers.CharField(source='sitio.sitio_name', allow_null=True)
     
-    class Meta:
-        model = Address
-        fields = [
-            'add_province',
-            'add_city',
-            'add_barangay',
-            'add_street',
-            'sitio_name',
-            'add_external_sitio',
-            'formatted_address'
-        ]
+    # class Meta:
+    #     model = Address
+    #     fields = [
+    #         'add_province',
+    #         'add_city',
+    #         'add_barangay',
+    #         'add_street',
+    #         'sitio_name',
+    #         'add_external_sitio',
+    #         'formatted_address'
+    #     ]
     
-    def get_formatted_address(self, obj):
-        sitio = obj.sitio.sitio_name if obj.sitio else obj.add_external_sitio
-        parts = [
-            sitio,
-            obj.add_street,
-            f"Barangay {obj.add_barangay}",
-            obj.add_city,
-            obj.add_province
-        ]
-        return ', '.join(filter(None, parts))
+    # def get_formatted_address(self, obj):
+    #     sitio = obj.sitio.sitio_name if obj.sitio else obj.add_external_sitio
+    #     parts = [
+    #         sitio,
+    #         obj.add_street,
+    #         f"Barangay {obj.add_barangay}",
+    #         obj.add_city,
+    #         obj.add_province
+    #     ]
+    #     return ', '.join(filter(None, parts))
 
 # Certificate Serializers
 class IssuedCertificateSerializer(serializers.ModelSerializer):
@@ -417,7 +417,7 @@ class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AccusedDetailsSerializer(serializers.ModelSerializer):
-    address = AddressDetailsSerializer(source='add')
+    # address = AddressDetailsSerializer(source='add')
     
     class Meta:
         model = Accused
@@ -427,7 +427,7 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
             'acsd_age',
             'acsd_gender',
             'acsd_description',
-            'address'
+            # 'address'
         ]
 
 class SummonRequestSerializer(serializers.ModelSerializer):

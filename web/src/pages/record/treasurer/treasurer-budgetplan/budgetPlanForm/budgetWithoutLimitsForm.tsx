@@ -127,21 +127,22 @@ interface BudgetPlanWithoutLimitProps {
 export default function CreateBudgetPlanWithoutLimits({ 
   form, 
 }: BudgetPlanWithoutLimitProps) {
-  
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "items"
   });
 
-  // FIX: Use an empty dependency array and remove append from dependencies
+  // Simplified initialization - rely on parent to provide proper data
   useEffect(() => {
-    if (fields.length === 0) {
+    // Check if we have any items, if not, add one empty item
+    const currentItems = form.getValues("items");
+    if (!currentItems || currentItems.length === 0) {
       append({
         dtl_budget_item: "",
         dtl_proposed_budget: "",
       });
     }
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [form, append]);
 
   const addNewBudgetItem = () => {
     append({

@@ -46,7 +46,6 @@ function CreateBudgetWithLimits({
   ]
 
   const [_total, setTotal] = useState(0)
-  const [isOverLimit, _setIsOverLimit] = useState(false)
   const { watch, trigger } = form
   const formValues = watch()
 
@@ -61,14 +60,6 @@ function CreateBudgetWithLimits({
     }, 0)
     setTotal(calculatedTotal)
   }, [formValues])
-
-  const handleNextClick = async () => {
-    const isValid = await trigger()
-    if (isValid) {
-      updateFormData(formValues)
-      onNext()
-    }
-  }
 
   return (
     <Form {...form}>
