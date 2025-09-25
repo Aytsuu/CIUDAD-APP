@@ -45,7 +45,7 @@ class AllRecordTableView(generics.GenericAPIView):
     # respondents = [
     #   {
     #     'id': res.br_id,
-    #     'lname': res.per.per_lname,
+    #     'lname': res.per.per_lname, 
     #     'fname': res.per.per_fname,
     #     'mname': res.per.per_mname,
     #     'suffix': res.per.per_suffix,
@@ -72,11 +72,9 @@ class CompleteRegistrationView(APIView):
   @transaction.atomic
   def post(self, request, *args, **kwargs):
     personal = request.data.get("personal", None)
-    account = request.data.get("account", None)
     houses = request.data.get("houses", [])
     livingSolo = request.data.get("livingSolo", None)
     family = request.data.get("family", None)
-    business = request.data.get("business", None)
     staff = request.data.get("staff", None)
 
     if staff:
@@ -98,9 +96,6 @@ class CompleteRegistrationView(APIView):
         if rp:
           results["rp_id"] = rp.pk
 
-    if account:
-        self.create_account(account, staff)
-
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 
@@ -112,11 +107,6 @@ class CompleteRegistrationView(APIView):
     if family:
         self.join_family(family, rp)
 
-    if business:
-        bus = self.create_business(business, rp, staff)
-        if bus:
-          results["bus_id"] = bus.pk
-
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):
@@ -126,12 +116,12 @@ class CompleteRegistrationView(APIView):
         add_province=add["add_province"],
         add_city=add["add_city"],
         add_barangay = add["add_barangay"],
-        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+        sitio=Sitio.objects.filter(sitio_name=add["sitio"]).first(),
         add_external_sitio=add["add_external_sitio"],
         add_street=add["add_street"]
       )[0]
       for add in addresses
-    ]
+    ] 
 
     # Create Personal record
     per_instance = Personal(**personal)
@@ -159,9 +149,6 @@ class CompleteRegistrationView(APIView):
     )
 
     return resident_profile
-
-  def create_account(self, account, staff):
-    return
   
   def create_household(self, houses, rp, staff):
     # data = [undefined, sitio, street]
@@ -172,10 +159,10 @@ class CompleteRegistrationView(APIView):
         hh_id = generate_hh_no(),
         hh_nhts = house['nhts'],
         add = Address.objects.get_or_create(
-          add_province="Cebu",
-          add_city="Cebu City",
-          add_barangay="San Roque (ciudad)",
-          sitio=Sitio.objects.filter(sitio_id=data[1]).first(),
+          add_province="CEBU",
+          add_city="CEBU CITY",
+          add_barangay="SAN ROQUE (CIUDAD)",
+          sitio=Sitio.objects.filter(sitio_name=data[1]).first(),
           add_street=data[2]
         )[0],
         rp = rp,
@@ -213,52 +200,4 @@ class CompleteRegistrationView(APIView):
       fc_role=family["role"],
       rp=rp
     )
-  
-  # def create_business(self, business, rp, staff):
-  #   sitio = business.get("sitio", None)
-  #   street = business.get("bus_street", None)
-  #   files = business.get("files", [])
-
-  #   if sitio and street:
-  #     add,_ = Address.objects.get_or_create(
-  #       add_province="Cebu",
-  #       add_city="Cebu City",
-  #       add_barangay="San Roque (ciudad)",
-  #       sitio=Sitio.objects.filter(sitio_id=sitio).first(),
-  #       add_street=street
-  #     )
-    
-  #   business = Business(
-  #     bus_name=business["bus_name"],
-  #     bus_gross_sales=business["bus_gross_sales"],
-  #     bus_status="Active",
-  #     bus_date_verified=datetime.today(),
-  #     rp=rp,
-  #     add=add,
-  #     staff=staff
-  #   )
-  #   business._history_user=staff
-  #   business.save()
-
-  #   if len(files) > 0:
-  #     business_files = []
-  #     for file_data in files:
-  #       folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"
-
-  #       business_file = BusinessFile(
-  #         bus=business,
-  #         bf_name=file_data['name'],
-  #         bf_type=file_data['type'],
-  #         bf_path=f"{folder}/{file_data['name']}",
-  #       )
-        
-  #       url = upload_to_storage(file_data, 'business-bucket', folder)
-  #       business_file.bf_url=url
-  #       business_files.append(business_file)
-
-  #     if len(business_files) > 0:
-  #         BusinessFile.objects.bulk_create(business_files)
-
-    # return business
-
   

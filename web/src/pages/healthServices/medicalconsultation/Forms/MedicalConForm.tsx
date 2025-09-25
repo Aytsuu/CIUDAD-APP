@@ -43,17 +43,8 @@ export default function MedicalConsultationForm() {
   const { params } = location.state || {};
   const { patientData, mode } = params || {};
   const { user } = useAuth();
-
-  const staff_id = user?.staff?.staff_id || null;
-  const name = `${user?.resident?.per?.per_fname || ""} ${
-    user?.resident?.per?.per_mname || ""
-  } ${user?.resident?.per?.per_lname || ""}`.trim();
-
-  // const [patients, setPatients] = useState({
-  //   default: [] as any[],
-  //   formatted: [] as { id: string; name: string }[],
-  // });
-  
+  const staff = user?.staff?.staff_id || null;
+  const name = `${user?.personal?.per_fname || ""} ${user?.personal?.per_mname || ""} ${user?.personal?.per_lname || ""}`.trim();
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   // const [loading, setLoading] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<any>(

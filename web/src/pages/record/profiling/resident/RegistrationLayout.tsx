@@ -81,7 +81,6 @@ export default function RegistrationLayout() {
     for(const step of newList) {
       const nextStep = currentStep + stepCounter
       if(nextStep !== step) {
-        console.log(nextStep)
         setCurrentStep(nextStep)
         return;
       }

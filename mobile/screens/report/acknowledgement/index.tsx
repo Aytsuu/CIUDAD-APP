@@ -9,7 +9,7 @@ import { ChevronRight } from '@/lib/icons/ChevronRight';
 import { ChevronLeft } from '@/lib/icons/ChevronLeft';
 import { Search } from '@/lib/icons/Search';
 import { FileText } from '@/lib/icons/FileText';
-import { CheckCircle } from '@/lib/icons/CheckCircle';
+import { CheckCircle } from '@/lib/icons/CircleCheck';
 import { Clock } from '@/lib/icons/Clock';
 import { MapPin } from '@/lib/icons/MapPin';
 

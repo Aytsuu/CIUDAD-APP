@@ -6,11 +6,13 @@ import { formatDate } from "@/helpers/dateHelper";
 import { Combobox } from "@/components/ui/combobox";
 import { formatOwnedBusinesses } from "../ProfilingFormats";
 import React from "react";
+import { formatCurrency } from "@/helpers/currencyFormat";
 
 export const activeColumns: ColumnDef<BusinessRecord>[] = [
   {
     accessorKey: "bus_id",
-    header: "Business No.",
+    header: "No.",
+    size: 50
   },
   {
     accessorKey: "bus_name",
@@ -19,13 +21,13 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
   {
     accessorKey: "bus_gross_sales",
     header: "Gross Sales",
+    cell: ({ row }) => (
+      formatCurrency(+row.original.bus_gross_sales)
+    )
   },
   {
-    accessorKey: "location",
+    accessorKey: "bus_location",
     header: "Location",
-    cell: ({ row }) => (
-      `${row.original.bus_street}, Sitio ${row.original.sitio}`
-    ) 
   },
   {
     accessorKey: "respondent",
@@ -40,9 +42,9 @@ export const activeColumns: ColumnDef<BusinessRecord>[] = [
   },
   {
     accessorKey: "bus_date_verified",
-    header: "Date Registered",
+    header: "Registered",
     cell: ({row}) => (
-      formatDate(row.original.bus_date_verified, "long" as any)
+      formatDate(row.original.bus_date_verified, "short" as any)
     )
   },
   {
@@ -134,30 +136,31 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
 export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
   {
     accessorKey: "br_id",
-    header: "Respondent No.",
+    header: "No.",
+    size: 60
   },
   {
-    accessorKey: "lname",
+    accessorKey: "br_lname",
     header: "Last Name",
   },
   {
-    accessorKey: "fname",
+    accessorKey: "br_fname",
     header: "Last Name",
   },
   {
-    accessorKey: "mname",
+    accessorKey: "br_mname",
     header: "Last Name",
   },
   {
-    accessorKey: "suffix",
-    header: "Suffix",
-  },
-   {
-    accessorKey: "sex",
-    header: "Sex",
+    accessorKey: "br_dob",
+    header: "Date of Birth",
     cell: ({row}) => (
-      row.original.sex[0]
+      formatDate(row.original.br_dob, "short" as any)
     )
+  },
+  {
+    accessorKey: "br_sex",
+    header: "Sex"
   },
   {
     accessorKey: "businesses",
@@ -191,9 +194,9 @@ export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
   },
   {
     accessorKey: "br_date_registered",
-    header: "Date Regitered",
+    header: "Registered",
     cell: ({row}) => (
-      formatDate(row.original.br_date_registered, "long" as any)
+      formatDate(row.original.br_date_registered, "short" as any)
     )
   },
   {

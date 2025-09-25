@@ -49,7 +49,7 @@ class WebLoginView(APIView):
         serializer = UserAccountSerializer(user)
 
         # ✅ Check if user has resident profile
-        if not serializer.data.get("resident"):
+        if not serializer.data.get("rp"):
             return Response(
                 {"error": "Resident Profile Required"},
                 status=status.HTTP_403_FORBIDDEN,

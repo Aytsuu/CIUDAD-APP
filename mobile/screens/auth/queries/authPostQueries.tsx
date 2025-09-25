@@ -131,6 +131,7 @@ export const useVerifyFamily = () => {
 }
 
 export const useSendOTP = () => {
+  const { setError } = useRegistrationFormContext();
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {

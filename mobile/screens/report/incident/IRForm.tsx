@@ -1,18 +1,16 @@
 import React from "react"
 import _ScreenLayout from "@/screens/_ScreenLayout"
-import { Text, View, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { Text, View, TouchableOpacity, ScrollView, Alert } from "react-native"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { IncidentReportSchema } from "@/form-schema/incident-report-schema"
+import { IncidentReportSchema } from "@/form-schema/report-schema"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Button } from "@/components/ui/button"
-import MediaPicker, { MediaItem } from "@/components/ui/media-picker"
-import { useGetSitio } from "@/screens/_global_queries/Retrieve"
-import { formatSitio } from "@/helpers/formatSitio"
+import MediaPicker, { type MediaItem } from "@/components/ui/media-picker"
 import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
 import { useGetReportType } from "../queries/reportFetch"
@@ -20,22 +18,49 @@ import { formatReportType } from "@/helpers/formatReportType"
 import { capitalize, capitalizeAllFields } from "@/helpers/capitalize"
 import { useRouter } from "expo-router"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { X } from "@/lib/icons/X"
-import { CheckCircle } from "@/lib/icons/CheckCircle"
 import { AlertCircle } from "@/lib/icons/AlertCircle"
 import { useAuth } from "@/contexts/AuthContext"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
-export default function IRForm() {
+interface FormErrors {
+  media?: string
+  otherType?: string
+  severity?: string
+}
+
+// Severity level options with colors
+const SEVERITY_LEVELS = [
+  { 
+    value: "low", 
+    label: "Low", 
+    description: "Minor issues, no immediate danger",
+    color: "#22C55E", // Green
+  },
+  { 
+    value: "medium", 
+    label: "Medium", 
+    description: "Moderate concern, requires attention",
+    color: "#F59E0B", // Amber
+  },
+  { 
+    value: "high", 
+    label: "High", 
+    description: "Serious issue, needs urgent response",
+    color: "#EF4444", // Red
+  }
+]
+
+export default function IncidentReportForm() {
+  // ================= STATE INITIALIZATION =================
   const router = useRouter()
   const { user } = useAuth();
   const defaultValues = generateDefaultValues(IncidentReportSchema)
   
   // Form state
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
-  const [addReportType, setAddReportType] = React.useState<string>('')
-  const [isOtherType, setIsOtherType] = React.useState<boolean>(false)
+  const [customIncidentType, setCustomIncidentType] = React.useState<string>("")
+  const [severityLevel, setSeverityLevel] = React.useState<string>("")
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [formErrors, setFormErrors] = React.useState<Record<string, string>>({})
 
@@ -53,7 +78,10 @@ export default function IRForm() {
   const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList])
   const formattedRT = React.useMemo(() => formatReportType(irReportType), [irReportType])
 
-  // Watch for report type changes
+  const selectedIncidentType = watch("ir_type")
+  const isOtherTypeSelected = selectedIncidentType === "other"
+
+  // ================= SIDE EFFECTS =================
   React.useEffect(() => {
     const type = watch('ir_type')
     setIsOtherType(type === 'other')
@@ -69,25 +97,29 @@ export default function IRForm() {
     }
   }, [selectedImages])
 
-  const validateForm = async () => {
-    const errors: Record<string, string> = {}
-    
-    // Validate required fields
-    const formIsValid = await trigger([
-      'ir_add_details',
-      'ir_street',
-      'ir_type',
-      'ir_sitio',
-    ])
+  React.useEffect(() => {
+    if (severityLevel) {
+      setFormErrors((prev) => ({ ...prev, severity: undefined }))
+    }
+  }, [severityLevel])
 
-    // Validate media
+  // ================= VALIDATION =================
+  const validateCustomFields = (): FormErrors => {
+    const errors: FormErrors = {} 
+
+    // Validate media requirement
     if (selectedImages.length === 0) {
-      errors.media = "Please attach an image to support your report"
+      errors.media = "Attach at least one image to support your report"
     }
 
-    // Validate other type input
-    if (isOtherType && !addReportType.trim()) {
-      errors.otherType = "Please specify the type of incident"
+    // Validate custom incident type
+    if (isOtherTypeSelected && !customIncidentType.trim()) {
+      errors.otherType = "Specify the type of incident"
+    }
+
+    // Validate severity level
+    if (!severityLevel) {
+      errors.severity = "Select a severity level"
     }
 
     setFormErrors(errors)
@@ -110,38 +142,35 @@ export default function IRForm() {
         type: media.type,
         file: media.file
       }))
-      
-      await addIncidentReport({
-        ...capitalizeAllFields(values),
-        'ir_other_type': capitalize(addReportType),
-        'rp': user?.staff?.staff_id,
-        'files': files
-      })
 
-      setIsSubmitting(false)
+      const submissionData: Record<string, any> = {
+        ...restData,
+        ir_involved: Number(ir_involved) || 0,
+        ir_time,
+        ir_severity: severityLevel,
+        rp: user?.rp,
+        files,
+      }
+
+      // Add custom incident type if specified
+      if (customIncidentType.trim()) {
+        submissionData.ir_other_type = customIncidentType.trim()
+      }
+
+      await addIncidentReport(submissionData)
+
+      toast.success("Report submitted successfully")
+      reset()
+      setSelectedImages([])
+      setSeverityLevel("")
     } catch (error) {
       setIsSubmitting(false)
       console.error('Submission error:', error)
     }
   }
 
-  const handleGoBack = () => {
-    const hasUnsavedChanges = Object.values(getValues()).some(value => 
-      value !== '' && value !== undefined && value !== null
-    ) || selectedImages.length > 0
-
-    if (hasUnsavedChanges) {
-      Alert.alert(
-        "Unsaved Changes",
-        "You have unsaved changes. Are you sure you want to go back?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Go Back", style: "destructive", onPress: () => router.back() }
-        ]
-      )
-    } else {
-      router.back()
-    }
+  const handleGoBack = () => { 
+    router.back()
   }
 
   // Loading state
@@ -175,9 +204,116 @@ export default function IRForm() {
             <Text className="text-white">Go Back</Text>
           </Button>
         </View>
-      </_ScreenLayout>
+      )}
+    </View>
+  )
+
+  const renderSeverityLevelSection = () => (
+    <View className="mt-2 pt-4 border-t border-gray-200">
+      <Text className="text-md font-medium text-gray-700 mb-2">Severity Level</Text>
+      <Text className="text-sm text-gray-600 mb-4">
+        Please select the severity level that best describes this incident
+      </Text>
+      
+      <View className="space-y-3">
+        {SEVERITY_LEVELS.map((level) => (
+          <TouchableOpacity
+            key={level.value}
+            onPress={() => setSeverityLevel(level.value)}
+            className={`flex-row items-center p-4 rounded-lg `}
+            accessibilityLabel={`Select ${level.label} severity`}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: severityLevel === level.value }}
+          >
+            {/* Warning Icon with dynamic color */}
+            <View className="mr-3">
+              
+            </View>
+
+            {/* Content */}
+            <View className="flex-1">
+              <View className="flex-row items-center">
+                <Text 
+                  className="text-base font-semibold"
+                  style={{ 
+                    color: severityLevel === level.value ? level.color : '#374151' 
+                  }}
+                >
+                  {level.label}
+                </Text>
+              </View>
+              <Text className="text-sm text-gray-600 mt-1">
+                {level.description}
+              </Text>
+            </View>
+
+            {/* Radio Button */}
+            <View className="ml-3">
+              <View 
+                className={`
+                  w-5 h-5 rounded-full border-2 items-center justify-center
+                  ${severityLevel === level.value ? 'border-transparent' : 'border-gray-300'}
+                `}
+                style={{
+                  backgroundColor: severityLevel === level.value ? level.color : 'transparent',
+                  borderColor: severityLevel === level.value ? level.color : '#d1d5db'
+                }}
+              >
+                {severityLevel === level.value && (
+                  <View className="w-2 h-2 rounded-full bg-white" />
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Error message */}
+      {formErrors.severity && (
+        <View className="flex-row items-center mt-2">
+          <AlertCircle size={16} className="text-red-500 mr-1" />
+          <Text className="text-red-500 text-xs">{formErrors.severity}</Text>
+        </View>
+      )}
+    </View>
+  )
+
+  const renderMediaUploadSection = () => (
+    <View className="mt-2 pt-4 border-t border-gray-200">
+      <Text className="text-md font-medium text-gray-700 mb-2">Supporting Evidence</Text>
+      <View
+        className={`rounded-lg bg-white"
+        }`}
+      >
+        <Text className="text-sm text-gray-600 mb-6">Please attach photos to support your report (up to 5 photos)</Text>
+        <MediaPicker
+          selectedImages={selectedImages}
+          setSelectedImages={setSelectedImages}
+          multiple={true}
+          maxImages={5}
+        />
+        {formErrors.media && (
+          <View className="flex-row items-center mt-2">
+            <AlertCircle size={16} className="text-red-500 mr-1" />
+            <Text className="text-red-500 text-xs">{formErrors.media}</Text>
+          </View>
+        )}
+        {selectedImages.length > 0 && (
+          <Text className="text-xs text-gray-500 mt-2">
+            {selectedImages.length} image{selectedImages.length !== 1 ? "s" : ""} selected
+          </Text>
+        )}
+      </View>
+    </View>
+  )
+
+  // ================= MAIN RENDER =================
+  if (isLoadingReportTypes) {
+    return (
+      <LoadingState/>
     )
   }
+  if (reportTypeError) return renderErrorState()
 
   return (
     <_ScreenLayout
@@ -192,35 +328,29 @@ export default function IRForm() {
       headerBetweenAction={<Text className="text-[13px]">Incident Report</Text>}
       customRightAction={<View className="w-10 h-10"/>}
     >
-      <View className="flex-1 px-5 py-4">
-        <View>
-          {/* Form fields */}
-          <View className="space-y-4">
-            <FormSelect 
-              label="Incident Type" 
-              control={control} 
-              name="ir_type" 
-              options={[
-                ...formattedRT,
-                { label: 'Other (specify below)', value: 'other' }
-              ]}/>
+      <View className="flex-1 px-6 py-2">
+        {/* Form Fields */}
+        <View className="flex-1 gap-2">
+          {/* Incident Type Selection */}
+          <FormSelect
+            label="Incident Type"
+            control={control}
+            name="ir_type"
+            options={[...formattedReportTypes, { label: "Other (specify below)", value: "other" }]}
+          />
 
-            {isOtherType && (
-              <View className="mb-4">
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                  Specify Incident Type
-                </Text>
-                <Input 
-                  value={addReportType} 
-                  onChangeText={setAddReportType}
-                  placeholder="Enter the type of incident"
-                  className={`${formErrors.otherType ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {formErrors.otherType && (
-                  <Text className="text-red-500 text-xs mt-1">{formErrors.otherType}</Text>
-                )}
-              </View>
-            )}
+          {/* Custom Incident Type Input */}
+          {isOtherTypeSelected && renderCustomIncidentTypeInput()}
+
+          {/* Date and Time */}
+          <View className="flex-row gap-4 border-y border-gray-200 py-3 mb-3 mt-2">
+            <View className="flex-1">
+              <FormDateTimeInput control={control} name="ir_date" label="Date" type="date" maximumDate={new Date(Date.now())}/>
+            </View>
+            <View className="flex-1">
+              <FormDateTimeInput control={control} name="ir_time" label="Time" type="time" restrictToCurrentAndPast={true}/>
+            </View>
+          </View>
 
             <FormSelect 
               label="Sitio" 
@@ -235,52 +365,37 @@ export default function IRForm() {
               name="ir_street"
               placeholder="Enter the street address"/>
 
-            <FormTextArea 
-              label="Additional Details" 
-              control={control} 
-              name="ir_add_details"
-              placeholder="Provide detailed information about the incident..."
-            />
+          {/* Additional Details */}
+          <FormTextArea
+            label="Additional Details"
+            control={control}
+            name="ir_add_details"
+            placeholder="Provide additional details (Mag bigay ng iba pang mga detalye)"
+          />
 
-            {/* Media upload section */}
-            <View className="mt-6">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Supporting Evidence
-              </Text>
-              <View className={`border border-dashed rounded-lg p-4 ${
-                formErrors.media ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'
-              }`}>
-                <Text className="text-sm text-gray-600 mb-3">
-                  Please attach a photo to support your report
-                </Text>
-                <MediaPicker
-                  selectedImages={selectedImages}
-                  setSelectedImages={setSelectedImages}
-                />
-                {formErrors.media && (
-                  <View className="flex-row items-center mt-2">
-                    <AlertCircle size={16} className="text-red-500 mr-1" />
-                    <Text className="text-red-500 text-xs">{formErrors.media}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
+          {/* Severity Level Section */}
+          {renderSeverityLevelSection()}
+
+          {/* Media Upload */}
+          {renderMediaUploadSection()}
         </View>
-        <View className="pt-4 pb-8 bg-white border-t border-gray-100 mb-6 mt-4">
-        <Button 
-          onPress={submit} 
-          className='min-h-[56px] bg-blue-600 flex-row items-center justify-center'
-        >
-          <CheckCircle size={20} className="text-white mr-2" />
-          <Text className="text-white text-base font-semibold">Submit Report</Text>
-        </Button>
-        
-        <Text className="text-xs text-gray-500 text-center mt-2 font-PoppinsRegular">
-          Your report will be reviewed by our team
-        </Text>
+
+        {/* Submit Section */}
+        <View className="pt-6 pb-8 mt-6">
+          <SubmitButton 
+            buttonLabel="Submit Report"
+            isSubmitting={isSubmitting}
+            handleSubmit={handleSubmit}
+          />
+
+          <Text className="text-xs text-gray-500 text-center mt-3">
+            Your report will be reviewed by our team within 24 hours
+          </Text>
+        </View>
       </View>
-      </View>
-    </_ScreenLayout>
+      <LoadingModal 
+        visible={isSubmitting}
+      />
+    </PageLayout>
   )
 }

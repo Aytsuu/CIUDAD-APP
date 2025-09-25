@@ -1,49 +1,41 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addAccount } from "../restful-api/accountPostAPI";
+import api from "@/api/api";
 
 export const useAddAccount = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({accountInfo, residentId} : {
-      accountInfo: Record<string, string>
+    mutationFn: async ({accountInfo, residentId} : {
+      accountInfo: Record<string, any>
       residentId: string
     }) => {
-      // Add logging to debug the payload
-      console.log('Sending account data:', { accountInfo, residentId });
-      return addAccount(accountInfo, residentId);
-    },
-    onSuccess: (data) => {
-      console.log('Account creation successful:', data);
-      queryClient.invalidateQueries({queryKey: ["residents"]});
-    },
-    onError: (error: any) => {
-      console.error('Account creation failed:', error);
+      try {
+          const response = await api.post('authentication/signup/', {
+            username: accountInfo.username,
+            email: accountInfo.email,
+            phone: accountInfo.phone,
+            password: accountInfo.password,
+            resident_id: residentId 
+          });
       
-      // Enhanced error handling
-      let errorMessage = "Failed to create account";
-      
-      if (error.response) {
-        // Server responded with error status
-        const status = error.response.status;
-        const data = error.response.data;
-        
-        switch (status) {
-          case 400:
-            errorMessage = `Invalid data: ${data?.message || 'Please check your input'}`;
-            console.error('Validation errors:', data);
-            break;
-          case 500:
-            errorMessage = "Server error. Please try again later.";
-            break;
-          case 404:
-            errorMessage = "API endpoint not found";
-            break;
-          default:
-            errorMessage = `Server error (${status})`;
+          return response.data;
+        } catch (err: any) {
+          throw err;
         }
-      } else if (error.request) {
-        // Network error
-        errorMessage = "Cannot connect to server. Please check if the server is running.";
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["residents"]});
+    }
+  })
+}
+
+export const useVerifyAccountReg = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post("authentication/verify/web-registration/", data);
+        return res.data;
+      } catch (err) { 
+        throw err;
       }
     }
   })

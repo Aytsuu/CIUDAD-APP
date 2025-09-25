@@ -15,8 +15,21 @@ import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/ex
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/icome-quartertly-report";
 import { GargbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { WasteActivitySidebar } from "@/components/analytics/waste/waste-activities-sidebar";
+import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
+// import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+// import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
+import { ServicesHealthRecordsSectionCards } from "@/components/analytics/health/services-count-cards";
+import { format } from "date-fns";
+
+// HEALTH
+import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Dashboard() {
+  const currentMonth = format(new Date(), "yyyy-MM");
+  const { user } = useAuth()
+  console.log(user?.staff)  
+
   return (
     <MainLayoutComponent
       title="Dashboard"

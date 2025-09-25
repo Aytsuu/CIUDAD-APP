@@ -33,15 +33,7 @@ export default function AccountDetails({ params }: {
     if (!formIsValid) {
       return
     }
-    // const email = getValues("accountFormSchema.email")
-    // if (email !== "" && accEmailList?.includes(email)) {
-    //   setError("accountFormSchema.email", {
-    //     type: "manual",
-    //     message: "Email is already in use",
-    //   })
-    //   return
-    // }
-
+    
     params.next()
   }
 

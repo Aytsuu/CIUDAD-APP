@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPosition, addStaff, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
 import { useNavigate } from "react-router";
 import { api } from "@/api/api";
-import { api2 } from "@/api/api";
 
 // Adding
 export const useAddPosition = () => {

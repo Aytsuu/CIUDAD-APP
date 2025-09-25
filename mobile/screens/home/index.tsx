@@ -18,8 +18,6 @@ import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
 import ShowLess from '@/assets/icons/features/showless.svg'
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
-import Video from 'react-native-video'
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const styles = StyleSheet.create({
   container: {
@@ -67,8 +65,6 @@ export default function HomeScreen() {
   if (isLoading) {
     return <LoadingModal visible={true} />;
   }
-  console.log("User: ", user)
-  console.log("User Data:", user?.staff?.rp?.per?.per_contact);
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (
@@ -109,6 +105,10 @@ export default function HomeScreen() {
   );
 
   const renderFeatures = () => {
+    const userStatus: any[] = []
+
+    if(user?.rp) userStatus.push("RESIDENT")
+
     const INITIAL_FEATURES_COUNT = 5;
 
     if (features.length <= 6) {

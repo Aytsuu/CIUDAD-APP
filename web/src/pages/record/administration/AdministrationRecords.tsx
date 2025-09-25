@@ -14,7 +14,7 @@ import {
   CircleAlert,
 } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
-import { useFeatures, useStaffs } from "./queries/administrationFetchQueries";
+import { useStaffs } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import {
   Select,
@@ -47,8 +47,6 @@ export default function AdministrationRecords() {
     debouncedSearchQuery,
     user?.staff?.staff_type
   );
-  const { data: features } = useFeatures();
-  console.log(staffs)
 
   const staffList = staffs?.results || [];
   const totalCount = staffs?.count || 0;
@@ -123,14 +121,7 @@ export default function AdministrationRecords() {
                 mainContent={<SitioManagement/>}
               />
 
-              <Link
-                to="role"
-                state={{
-                  params: {
-                    features: features,
-                  },
-                }}
-              >
+              <Link to="role">
                 <Button
                   variant="outline"
                   className="px-4 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"

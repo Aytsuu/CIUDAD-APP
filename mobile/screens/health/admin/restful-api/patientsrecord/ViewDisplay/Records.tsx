@@ -1,0 +1,211 @@
+import { TabsContent } from "@/components/ui/tabs";
+import CardLayout from "@/components/ui/card/card-layout";
+import { SyringeIcon, Pill, Baby, Dog } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
+import { useAnimalBiteCount, usePatientPostpartumCount } from "@/pages/record/health/patientsRecord/queries/patientsFetchQueries";
+
+interface PatientLinkData {
+  pat_id: string;
+  pat_type: string;
+  age: number;
+  addressFull: string;
+  address: {
+    add_street: string;
+    add_barangay: string;
+    add_city: string;
+    add_province: string;
+    add_external_sitio: string;
+  };
+  households: Array<{ hh_id: string }>;
+  personal_info: {
+    per_fname: string;
+    per_mname: string;
+    per_lname: string;
+    per_dob: string;
+    per_sex: string;
+  };
+}
+
+interface MedicalHistoryTabProps {
+  vaccinationCount: number | undefined;
+  medicineCount: number | undefined;
+  firstAidCount: number | undefined;
+  postpartumCount: number | undefined
+  patientLinkData: PatientLinkData;
+  animalbiteCount: number | undefined;
+}
+
+export default function Records({
+  vaccinationCount,
+  medicineCount,
+  firstAidCount,
+  patientLinkData
+}: MedicalHistoryTabProps) {
+
+  const { data: postpartumCount = 0,isLoading: isLoadingPostpartum} = usePatientPostpartumCount(patientLinkData.pat_id)
+
+  const { data: animalbiteCount = 0, isLoading: isLoadingAnimalBite } = useAnimalBiteCount(patientLinkData.pat_id)
+
+  return (
+    <TabsContent value="medical" className="mt-0">
+      <CardLayout
+        title="Medical History"
+        description="Patient's medical information and history"
+        content={
+          <div className="space-y-6">
+            {vaccinationCount !== 0 && (
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-sky-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <SyringeIcon className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Vaccination</h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-sky-100 px-2 py-1 rounded-md">
+                          {vaccinationCount !== undefined ? vaccinationCount : "0"} Records
+                        </span>
+                        <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/invVaccinationRecord" state={{ params: { patientData: patientLinkData } }} className="transition-transform hover:scale-105">
+                    <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-sky-300 text-sky-800 font-medium">
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+            {medicineCount !== 0 && (
+              <div className="p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg">
+                      <Pill className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Medicine</h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
+                          {medicineCount !== undefined ? medicineCount : "0"} Records
+                        </span>
+                        <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/IndivMedicineRecord" state={{ params: { patientData: patientLinkData } }}>
+                    <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+            {firstAidCount !== 0 && (
+              <div className="p-4 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg">
+                      <Pill className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">First Aid</h3>
+                      <div className="flex items-center space-x-4 mt-1">
+                        <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
+                          {firstAidCount !== undefined ? firstAidCount : "0"} Records
+                        </span>
+                        <span className="text-sm text-gray-500">Last updated: June 2, 2023</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/indiv-firstaid-records" state={{ params: { patientData: patientLinkData } }}>
+                    <Button variant="outline" size="sm" className="h-10 px-6 bg-white border-purple-300 text-purple-700 font-medium">
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {(isLoadingPostpartum || postpartumCount > 0) && (
+                <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-pink-100 rounded-lg">
+                        <Baby className="w-5 h-5 text-pink-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Postpartum Care</h3>
+                        <div className="flex items-center space-x-4 mt-1">
+                          <span className="text-sm text-gray-600 bg-pink-100 px-2 py-1 rounded-md">
+                            {isLoadingPostpartum ? "Loading..." : `${postpartumCount} Records`}
+                          </span>
+                          <span className="text-sm text-gray-500">Maternal health monitoring</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Link
+                      to="/maternalindividualrecords"
+                      state={{ params: { patientData: patientLinkData } }}
+                      className="transition-transform hover:scale-105"
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 px-6 bg-white border-pink-300 text-pink-700 font-medium"
+                        disabled={isLoadingPostpartum}
+                      >
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+                { animalbiteCount !== 0 && (
+                <div className="p-4 bg-gradient-to-rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Dog className="w-5 h-5 " />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Animal Bite</h3>
+                        <div className="flex items-center space-x-4 mt-1">
+                          <span className="text-sm text-gray-600 bg-indigo-100 px-2 py-1 rounded-md">
+                            {isLoadingAnimalBite ? "Loading..." : `${animalbiteCount} Records`}
+                          </span>
+                          <span className="text-sm text-gray-500">Animal Bite monitoring</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/Animalbite_individual/${patientLinkData.pat_id}`}
+                      state={{ params: { patientData: patientLinkData } }}
+                      className="transition-transform hover:scale-105"
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 px-6 bg-white border-indigo-500 text-indigo-500 font-medium"
+                        disabled={isLoadingAnimalBite}
+                      >
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+          </div>
+
+          
+        }
+        cardClassName="border shadow-sm rounded-md"
+        headerClassName="pb-3 border-b"
+        contentClassName="pt-4"
+      />
+    </TabsContent>
+  );
+}

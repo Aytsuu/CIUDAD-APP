@@ -92,7 +92,10 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      await sendEmailOTP(data.email);
+      await sendEmailOTP({
+        email: data.email,
+        type: "signin"
+      });
 
       setVerificationData({ email: data.email });
       setCurrentStep("otp");

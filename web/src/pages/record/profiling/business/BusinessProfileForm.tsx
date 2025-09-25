@@ -29,7 +29,6 @@ export default function BusinessProfileForm({
   isModificationRequest,
   formattedResidents,
   formType,
-  sitio,
   form,
   isSubmitting,
   isReadOnly,
@@ -172,6 +171,7 @@ export default function BusinessProfileForm({
                           label="Last Name"
                           placeholder="Enter last name"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true} 
                         />
                       </div>
                       <div className="lg:col-span-1">
@@ -181,6 +181,7 @@ export default function BusinessProfileForm({
                           label="First Name"
                           placeholder="Enter first name"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true}
                         />
                       </div>
                       <div className="lg:col-span-1">
@@ -190,6 +191,7 @@ export default function BusinessProfileForm({
                           label="Middle Name"
                           placeholder="Enter middle name (optional)"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true}
                         />
                       </div>
                       <div>
@@ -198,8 +200,8 @@ export default function BusinessProfileForm({
                           name="respondent.per_sex"
                           label="Sex"
                           options={[
-                            { id: "female", name: "Female" },
-                            { id: "male", name: "Male" },
+                            { id: "female", name: "FEMALE" },
+                            { id: "male", name: "MALE" },
                           ]}
                           readOnly={isReadOnly || residentSelected}
                         />
@@ -243,11 +245,11 @@ export default function BusinessProfileForm({
         />
 
         {(formType === Type.Create || formType === Type.Editing) &&  <InfoAlert>
-          Provide accurate business information as this will be used for official records and tax assessment purposes.
+          Provide accurate business information as this will be used for official records.
         </InfoAlert>}
 
         {formType === Type.Request &&  <InfoAlert>
-          Review business information and ensure they are accurate as this will be used for official records and tax assessment purposes.
+          Review business information and ensure they are accurate as this will be used for official records.
         </InfoAlert>}
 
         <div className="space-y-4">
@@ -259,6 +261,7 @@ export default function BusinessProfileForm({
                 label="Business Name"
                 placeholder="Enter the official business name"
                 readOnly={isReadOnly}
+                upper={true}
               />
               {formType !== Type.Viewing && 
                 <p className="text-xs text-gray-500 mt-1">Use the exact name as registered with DTI or SEC</p>
@@ -291,33 +294,18 @@ export default function BusinessProfileForm({
                <p className="text-xs text-gray-500 mt-1">Enter amount without commas (e.g., 500000.00)</p>
               }
             </div>
-
-            <div>
-              <FormSelect
-                control={form.control}
-                name={`${prefix}sitio`}
-                label="Sitio/Location"
-                options={sitio}
-                readOnly={isReadOnly}
-              />
-              {formType !== Type.Viewing && 
-                <p className="text-xs text-gray-500 mt-1">Select the specific area where the business operates</p>
-              }
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
             <div>
               <FormInput
                 control={form.control}
-                name={`${prefix}bus_street`}
-                label="Business Street Address"
-                placeholder="Building name/number, street name, landmarks"
+                name={`${prefix}bus_location`}
+                label="Address"
+                placeholder="Sitio, street, building number"
                 readOnly={isReadOnly}
+                upper={true}
               />
               {formType !== Type.Viewing && 
                 <p className="text-xs text-gray-500 mt-1">
-                  Provide the complete street address where the business is located
+                  Complete address where the business is located
                 </p>
               }
             </div>

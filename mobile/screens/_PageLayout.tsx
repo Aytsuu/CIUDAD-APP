@@ -29,8 +29,10 @@ export default function PageLayout({
   footer,
   showFooter = false,
   footerBackgroundColor = 'bg-white',
-  contentPadding = 16,
-  backgroundColor = 'bg-transparent'
+  backgroundColor = 'bg-transparent',
+  showScrollIndicator = true,
+  scrollIndicatorColor = 'bg-black/30',
+  scrollIndicatorPosition = 'right',
 }: PageLayoutProps) {
   // Responsive header height based on screen size
   const getResponsiveHeaderHeight = () => {
@@ -90,23 +92,60 @@ export default function PageLayout({
   return (
     <SafeAreaView className={`flex-1 ${backgroundColor} pt-4`}>
       {showHeader && (
-        <View
-          className="border-none shadow-none"
-          style={{
-            height: responsiveHeaderHeight,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: responsivePadding,
-            elevation: 2,
-          }}
-        >
-          {/* Left Action */}
-          {leftAction}
-          {/* Header Title */}
-          {headerTitle}
-          {/* Right Action */}
-          {rightAction}
+        <View className={`${headerBackgroundColor}`}>
+          <SafeAreaView edges={['top']} />
+          <View
+            className="border-none shadow-none"
+            style={{
+              height: responsiveHeaderHeight,
+              position: 'relative',
+              paddingHorizontal: responsivePadding,
+              elevation: 2,
+            }}
+          >
+            {/* Left and Right Actions Container */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                height: '100%',
+                zIndex: 1,
+              }}
+            >
+              {/* Left Action */}
+              <View style={{ alignItems: 'flex-start' }}>
+                {leftAction}
+              </View>
+              
+              {/* Right Action */}
+              <View style={{ alignItems: 'flex-end' }}>
+                {rightAction}
+              </View>
+            </View>
+
+            {/* Absolutely Centered Title */}
+            {headerTitle && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 0,
+                  // Prevent title from interfering with touch events on actions
+                  pointerEvents: 'none',
+                }}
+              >
+                <View style={{ pointerEvents: 'auto' }}>
+                  {headerTitle}
+                </View>
+              </View>
+            )}
+          </View>
         </View>
       )}
 
@@ -121,20 +160,41 @@ export default function PageLayout({
         {children}
       </View>
 
-      {/* Footer */}
-      {shouldShowFooter && (
-        <View
-          className={`border-t border-gray-200 ${footerBackgroundColor}`}
-          style={{
-            minHeight: responsiveFooterHeight,
-            paddingHorizontal: responsivePadding,
-            paddingVertical: responsivePadding,
-            justifyContent: 'center',
-          }}
-        >
-          {footer}
-        </View>
-      )}
-    </SafeAreaView>
+        {/* Footer */}
+        {shouldShowFooter && (
+          <View
+            className={`border-t border-gray-200 ${footerBackgroundColor}`}
+            style={{
+              minHeight: responsiveFooterHeight,
+              paddingHorizontal: responsivePadding,
+              paddingVertical: responsivePadding,
+              justifyContent: 'center',
+            }}
+          >
+            {footer}
+          </View>
+        )}
+
+        {/* Floating Scroll Indicator */}
+        {wrapScroll && showScrollIndicator && showScrollArrow && (
+          <View style={getScrollIndicatorPositionStyles()}>
+            <TouchableOpacity
+              onPress={handleScrollIndicatorPress}
+              className={`${scrollIndicatorColor} rounded-full`}
+              style={{
+                width: 45,
+                height: 45,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              activeOpacity={1}
+            >
+              {/* Down Arrow Icon */}
+              <ChevronDown size={26} className="text-white" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </SafeAreaView>
+    </View>
   )
 }

@@ -34,7 +34,7 @@ export default function Login() {
     try {
       const values = getValues();
       const {accountFormSchema} = values;
-      
+      console.log(accountFormSchema)
       const result = await login({
         ...(loginMethod == "phone" ? { 
           phone: accountFormSchema.phone

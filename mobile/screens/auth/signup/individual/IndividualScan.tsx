@@ -16,6 +16,8 @@ import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 import { View, Text } from "react-native";
 import { Button } from "@/components/ui/button";
+import { useDispatch } from "react-redux";
+import { setAuthData } from "@/redux/auth-redux/authSlice";
 
 export default function IndividualScan() {
   const { getValues, reset } = useRegistrationFormContext();

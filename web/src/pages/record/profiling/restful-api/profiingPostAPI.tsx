@@ -25,7 +25,6 @@ export const addPersonal = async (data: Record<string, any>) => {
 
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -87,9 +86,7 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
     await api2.post("health-profiling/resident/create/combined/", data);
     
     return res.data
-  } catch (err) { 
-    console.error(err)
-    throw err;
+  } catch (err) {     throw err;
   }
 }
 
@@ -150,9 +147,7 @@ export const addBusiness = async (data: Record<string, any>) => {
   try {
     const res = await api.post("profiling/business/create/", data);
     return res.data;
-  } catch (err) {
-    console.error(err)
-    throw err;
+  } catch (err) {    throw err;
   }
 };
 

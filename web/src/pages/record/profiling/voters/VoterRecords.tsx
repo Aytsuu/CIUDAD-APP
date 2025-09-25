@@ -8,10 +8,12 @@ import React from "react";
 import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { FileDown, Loader2, Search, Users } from "lucide-react";
+import { FileDown, Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { voterColumns } from "./VoterColumns";
 import { useVoterTable } from "../queries/profilingFetchQueries";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function VoterRecords() {
   // ================== STATE INITIALIZATION ==================
@@ -53,7 +55,7 @@ export default function VoterRecords() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search residents by name, ID, or sitio..."
+                    placeholder="Search residents by name..."
                     className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -103,7 +105,7 @@ export default function VoterRecords() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Spinner size="lg" />
                 <span className="ml-2 text-gray-600">Loading voters...</span>
               </div>
             )}

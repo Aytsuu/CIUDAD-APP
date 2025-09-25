@@ -183,8 +183,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
             fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
             fam_id = fam.fam.fam_id if fam else ""
             personal = staff.rp.per
-            staff_name = f'{personal.per_lname}, {personal.per_fname}' \
-                    f' {personal.per_mname[0]}.' if personal.per_mname else ''
+            staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
             return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
@@ -219,8 +218,8 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers.staff_serializers import StaffFullSerializer
-        return StaffFullSerializer(obj.staff).data
+        from apps.administration.serializers.staff_serializers import StaffAccountSerializer
+        return StaffAccountSerializer(obj.staff).data
 
     def get_is_staff(self, obj):
         return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    

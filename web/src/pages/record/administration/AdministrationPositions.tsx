@@ -66,14 +66,10 @@ export default function AdministrationPositions({
     if (!selectedPosition) return
     
     try {
-      // Delete position (API handles dual database deletion)
       await deletePosition(selectedPosition)
-      
-      // Clear selection after successful deletion
       setSelectedPosition("")
     } catch (error) {
       console.error("Error deleting position:", error)
-      // Handle error appropriately - you might want to show a toast notification
     }
   }, [selectedPosition, deletePosition, setSelectedPosition])
 

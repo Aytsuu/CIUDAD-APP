@@ -80,9 +80,6 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
     const householdNo = tab_params?.isRegistrationTab ? tab_params?.form.watch("livingSoloSchema.householdNo") : form.watch("householdNo")?.split(" ")[0]
     const residentId = form.watch("id")?.split(" ")[0]
     let building = ""
-    console.log(residentId)
-    console.log(householdNo)
-    console.log(householdsList)
 
     if (householdNo && residentId && householdsList) {
       const ownedHouseholds = householdsList.filter((household: any) => {

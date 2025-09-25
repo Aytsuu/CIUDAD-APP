@@ -24,8 +24,6 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     [sitioList]
   );
 
-  console.log(params.data)
-
   // ==================== SIDE EFFECTS ======================
   React.useEffect(() => {
     const per_addresses = params?.form?.getValues().personalSchema.per_addresses

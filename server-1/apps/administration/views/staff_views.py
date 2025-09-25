@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.db.models import Q
 from ..serializers.staff_serializers import *
 from pagination import *
+from ..double_queries import *
 
 class StaffCreateView(generics.CreateAPIView):
   serializer_class = StaffCreateSerializer
@@ -60,6 +61,15 @@ class StaffUpdateView(generics.UpdateAPIView):
 
       if serializer.is_valid():
           serializer.save()
+
+          double_queries = UpdateQueries()
+          response = double_queries.staff(request.data, instance.staff_id)
+          if not response.ok:
+            try:
+                error_detail = response.json()
+            except ValueError:
+                error_detail = response.text
+            raise serializers.ValidationError({"error": error_detail})        
           return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
   
@@ -67,6 +77,21 @@ class StaffDeleteView(generics.DestroyAPIView):
   serializer_class = StaffBaseSerializer
   queryset = Staff.objects.all()
   lookup_field = "staff_id"
+
+  def delete(self, request, *args, **kwargs):
+    instance = self.get_object()
+    staff_id = instance.staff_id
+    instance.delete()
+
+    double_queries = DeleteQueries()
+    response = double_queries.staff(staff_id)
+    if not response.ok:
+      try:
+        error_detail = response.json()
+      except ValueError:
+        error_detail = response.text
+      raise serializers.ValidationError({'error': error_detail})
+    return Response(status=status.HTTP_200_OK)
 
 
 class StaffDataByTitleView(APIView):

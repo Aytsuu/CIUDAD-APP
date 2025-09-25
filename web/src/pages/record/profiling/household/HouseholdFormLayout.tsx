@@ -18,7 +18,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
-import { capitalize } from "@mui/material"
 import { Badge } from "@/components/ui/badge"
 
 export default function HouseholdFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
@@ -50,7 +49,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   })
 
   const houseList = tab_params?.form.watch("houseSchema.list");
-  console.log(houseList)
 
   // =================== SIDE EFFECTS ======================
   React.useEffect(() => {
@@ -64,24 +62,14 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   React.useEffect(() => {
     if(tab_params?.isRegistrationTab) return;
     const head = form.watch("householdHead")
-    console.log('Selected household head:', head)
-    console.log('Residents list:', residentsList)
-    console.log('Per address list:', perAddressList)
     
     if (head && residentsList) {
       const resident = residentsList.find((res: any) => res.rp_id == head.split(" ")[0])
-      console.log('Found resident:', resident)
       
       if (resident) {
         const filteredAddresses = perAddressList?.filter((per_add: any) => per_add?.per === resident.personal_info.per_id)
         form.resetField('address')
-        console.log('Filtered addresses:', filteredAddresses)
-        console.log('Looking for per_id:', resident.personal_info.per_id)
-        
         setAddresses(filteredAddresses)
-        
-        // Debug the formatted addresses
-        console.log('Formatted addresses:', formatAddresses(filteredAddresses))
       }
     } else {
       setAddresses([])
@@ -115,7 +103,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
     const houseInfo = tab_params?.form.getValues("houseSchema.info");
     append({
       ...houseInfo,
-      nhts: capitalize(houseInfo.nhts)
+      nhts: houseInfo.nhts
     })
     tab_params?.form.resetField("houseSchema.info")
   }
@@ -143,8 +131,6 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
       }
 
       const householdInfo = form.getValues()
-      console.log(householdInfo)
-
       await addHousehold({
         householdInfo: householdInfo,
         staffId: user?.staff?.staff_id,
@@ -199,8 +185,8 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                         name="houseSchema.info.nhts"
                         label="Select NHTS status"
                         options={[
-                          { id: "no", name: "No - Not an NHTS household" },
-                          { id: "yes", name: "Yes - NHTS household" },
+                          { id: "no", name: "NO" },
+                          { id: "yes", name: "YES" },
                         ]}
                         readOnly={false}
                       />
@@ -245,9 +231,10 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
                     return (
                       <Card className="flex justify-between items-center py-2 px-3">
-                        <div className="flex gap-4">
-                          <div>House {index + 1}</div>
-                          <p>Sitio {capitalize(sitio)}, {street}</p>
+                        <div className="flex gap-3">
+                          <div>HOUSE {index + 1}</div>
+                          -
+                          <p>SITIO {sitio}, {street}</p>
                           <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
                         </div>
                         <X 

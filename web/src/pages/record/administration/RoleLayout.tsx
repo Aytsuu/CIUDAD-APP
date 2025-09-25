@@ -2,11 +2,10 @@ import React from "react"
 import AdministrationPositions from "./AdministrationPositions"
 import FeatureSelection from "./FeatureSelection"
 import { Label } from "@/components/ui/label"
-import { useLocation } from "react-router"
-import type { Assigned, Feature } from "./AdministrationTypes"
+import type { Assigned } from "./AdministrationTypes"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAllAssignedFeatures, usePositions } from "./queries/administrationFetchQueries"
+import { useAllAssignedFeatures, useFeatures, usePositions } from "./queries/administrationFetchQueries"
 import { Users, Settings } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,15 +13,15 @@ import { useAuth } from "@/context/AuthContext"
 
 export default function RoleLayout() {
   const { user } = useAuth();
-  const location = useLocation()
-  const params = React.useMemo(() => location.state?.params || {}, [location.state])
   const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } = useAllAssignedFeatures()
   const { data: positions, isLoading: isLoadingPositions } = usePositions(
     user?.staff?.staff_type
   )
+  const { data: features, isLoading: isLoadingFeatures } = useFeatures(
+    user?.staff?.staff_type.toLowerCase() == "barangay staff" ? "BARANGAY FEATURE" : "HEALTH FEATURE"
+  );
   const [selectedPosition, setSelectedPosition] = React.useState<string>("")
   const [positionFeaturesMap, setPositionFeaturesMap] = React.useState<Map<number, Assigned[]>>(new Map())
-  // console.log(positionFeaturesMap)
 
   // Initialize the position features map
   React.useEffect(() => {
@@ -62,18 +61,6 @@ export default function RoleLayout() {
     [selectedPosition],
   )
 
-  // Group features by category
-  const groupedFeatures = React.useMemo(() => {
-    const groups: Record<string, Feature[]> = {}
-    for (const feature of params.features || []) {
-      if (!groups[feature.feat_group]) {
-        groups[feature.feat_group] = []
-      }
-      groups[feature.feat_group].push(feature)
-    }
-    return groups
-  }, [params.features])
-
   const selectedPositionData = positions?.find((p: any) => p.pos_id == selectedPosition)
 
   return (
@@ -89,7 +76,7 @@ export default function RoleLayout() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {isLoadingPositions ? (
+              {isLoadingPositions || isLoadingFeatures ? (
                 <div className="px-6 space-y-3 pb-6">
                   {[...Array(3)].map((_, i) => (
                     <Skeleton key={i} className="h-16 w-full" />
@@ -120,7 +107,7 @@ export default function RoleLayout() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="px-6">
-                {isLoadingAllAssignedFeatures ? (
+                {isLoadingAllAssignedFeatures || isLoadingFeatures ? (
                   <div className="space-y-3 pb-6">
                     {[...Array(5)].map((_, i) => (
                       <Skeleton key={i} className="h-12 w-full" />
@@ -136,7 +123,7 @@ export default function RoleLayout() {
                   <FeatureSelection
                     selectedPosition={selectedPosition}
                     assignedFeatures={assignedFeatures}
-                    groupedFeatures={groupedFeatures}
+                    features={features}
                     setAssignedFeatures={handleFeatureUpdate}
                   />
                 )}
