@@ -359,7 +359,7 @@ import BudgetPlanMainForm from "./budgetPlanForm/budgetplanMainForm"
 const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" | "withoutLimits" }) => {
   const steps = [
     { key: "header", number: 1, title: "Budget Header", description: "Budget Plan Sources" },
-    { key: "withLimits", number: 2, itle: "Fixed Budget Items", description: "Predefined Categories"},
+    { key: "withLimits", number: 2, title: "Fixed Budget Items", description: "Predefined Categories"},
     { key: "withoutLimits", number: 3, title: "Custom Budget Items", description: "Additional Expenses" },
   ]
 
