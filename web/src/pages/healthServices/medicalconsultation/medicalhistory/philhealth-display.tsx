@@ -1,5 +1,4 @@
 // components/PhysicalExamTable.tsx
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";

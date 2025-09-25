@@ -24,11 +24,16 @@ export const ServiceProvisionRecordSchema = z.object({
     (arg) => (arg === "" ? null : arg),
     z.union([
       z.literal(null),
-      z.coerce
-        .date()
-        .refine((date) => date > today, { message: "Follow-up date must be a future date" })
-        .refine((date) => !isWeekend(date), { message: "Follow-up date cannot be on weekends (Saturday or Sunday)" })
-        .transform((date) => formatDate(date)),
+      z.string().refine(
+        (dateString) => {
+          if (!dateString) return true; // Allow null/empty
+          const date = new Date(dateString);
+          return date > today && !isWeekend(date);
+        },
+        { 
+          message: "Follow-up date must be a future date and cannot be on weekends (Saturday or Sunday)" 
+        }
+      ),
     ]),
   ),
   bloodPressure: z.string().optional(),
@@ -57,6 +62,22 @@ const FamilyPlanningBaseSchema = z.object({
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean().optional(),
   fourps: z.boolean().optional(),
+  skinExamination: z.string().optional(),
+  staff_id: z.string().optional(),
+
+  conjunctivaExamination: z.string().optional(),
+  neckExamination: z.string().optional(),
+breastExamination: z.string().optional(),
+abdomenExamination: z.string().optional(),
+  pelvicExamination: z.string().optional(),
+ extremitiesExamination: z.string().optional(),
+  cervicalConsistency: z.string().optional(),
+  cervicalTenderness: z.string().optional(),
+  cervicalAdnexal: z.string().optional(),
+  uterinePosition: z.string().optional(),
+  uterineDepth: z.string().optional(),
+
+
 
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),
@@ -353,18 +374,8 @@ export const page4Schema = FamilyPlanningBaseSchema.pick({
   height: true,
   bloodPressure: true,
   pulseRate: true,
-  // skinExamination: true,
-  // conjunctivaExamination: true,
-  // neckExamination: true,
-  // breastExamination: true,
-  // abdomenExamination: true,
-  // extremitiesExamination: true,
-  // pelvicExamination: false,
-  // cervicalConsistency: false,
-  // cervicalTenderness: false,
-  // cervicalAdnexal: false,
-  // uterinePosition: false,
-  // uterineDepth: false,
+  skinExamination: true,
+ 
   bodyMeasurementRecordedAt: true 
 });
 

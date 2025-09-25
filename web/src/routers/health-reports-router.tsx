@@ -13,7 +13,6 @@ import MonthlyVaccinationDetails from "@/pages/healthServices/reports/vaccinatio
 // iINVENTORY REPORTS
 import InventoryMonthlyMedicineRecords from "@/pages/healthServices/reports/inventory/medicine/monthly";
 import InventoryMonthlyMedicineDetails from "@/pages/healthServices/reports/inventory/medicine/records";
-import InventoryMonthlyCommodityRecords from "@/pages/healthServices/reports/inventory/commodity/monthly";
 import MonthlyCommodityDetails from "@/pages/healthServices/reports/inventory/commodity/records";
 import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports/inventory/firstaid/monthly";
 import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/reports/inventory/firstaid/records";

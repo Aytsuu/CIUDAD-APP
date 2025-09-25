@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface Sitio {

@@ -1,6 +1,6 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import CardLayout from "@/components/ui/card/card-layout";
-import { SyringeIcon, Pill, Baby, Heart } from "lucide-react";
+import { SyringeIcon, Pill, Baby } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton"; // Assuming you have a Skeleton component

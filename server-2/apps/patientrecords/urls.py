@@ -15,9 +15,6 @@ from .views.mobile_views import *
 from apps.administration.views.staff_views import HealthStaffListView
 
 urlpatterns = [
-    
-    
-    path("patient-resident-exist/<str:rp_id>/", PatientByRPView.as_view(), name="check-resident-exist"),
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
@@ -52,9 +49,6 @@ urlpatterns = [
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
-    path('philhealth-formatted-illness/', PHIllnessAPIView.as_view(), name="philhealth-formatted-illness"),
-    path('patientPHIllnessCheck/<str:pat_id>/', PatientPHIllnessCheckSimpleAPIView.as_view(), name="patient-ph-illness-check-simple"),
-   
    
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),
@@ -65,7 +59,6 @@ urlpatterns = [
     # UPDATE/ DELETE
     path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('patient-record/<int:patrec_id>/', DeleteUpdatePatientRecordView.as_view(), name='patient-record-detail'),
-    
     path('update-pe-option/<int:pe_option_id>/',DeleteUpdatePEOptionView.as_view(), name='update_pe_option'),
     path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
     path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),

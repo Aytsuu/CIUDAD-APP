@@ -19,13 +19,14 @@ from apps.patientrecords.serializers.bodymesurement_serializers import *
 from apps.patientrecords.serializers.vitalsigns_serializers import *
 from apps.patientrecords.serializers.followvisits_serializers import *
 from apps.patientrecords.serializers.obstetrical_serializers import *
-from apps.maternal.serializers.serializer import PreviousPregnancyCreateSerializer
+from apps.maternal.serializers.serializer import *
 from apps.patientrecords.serializers.spouse_serializers import *
 from apps.inventory.models import CommodityList, CommodityInventory # Import CommodityList and CommodityInventory
 from .api_functions import get_checkbox_name_from_illness
 from dateutil.relativedelta import relativedelta
 from .mappings.mappings import *
 from rest_framework.pagination import PageNumberPagination
+from django.http import Http404
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -134,17 +135,17 @@ def get_illness_list(request):
 #     }
 #     return subtype_map.get(subtype)  # Fallback to title case
 
-# def map_reason_display(reason):
-#     """Map reason IDs to human-readable labels"""
-#     reason_map = {
-#         "spacing": "Spacing",
-#         "limiting": "Limiting",
-#         "fp_others": "Others",
-#         "medicalcondition": "Medical Condition",
-#         "sideeffects": "Side Effects",
-#         # Add more mappings as needed
-#     }
-#     return reason_map.get(reason)  # Fallback to title case
+def map_reason_display(reason):
+    """Map reason IDs to human-readable labels"""
+    reason_map = {
+        "spacing": "Spacing",
+        "limiting": "Limiting",
+        "fp_others": "Others",
+        "medicalcondition": "Medical Condition",
+        "sideeffects": "Side Effects",
+        # Add more mappings as needed
+    }
+    return reason_map.get(reason)  # Fallback to title case
 
 @api_view(['GET'])
 def get_patient_medical_history(request, patrec_id):
@@ -178,17 +179,31 @@ def get_patient_medical_history(request, patrec_id):
 @api_view(["GET"])
 def get_body_measurements(request, pat_id):
     try:
+        # Fetch the patient
         patient = get_object_or_404(Patient, pat_id=pat_id)
-        patient_records = PatientRecord.objects.filter(pat_id=patient)
-
-        body_measurement = (BodyMeasurement.objects.filter(patrec__in=patient_records).order_by("-created_at").first())
-
+        
+        # Fetch the latest BodyMeasurement for the patient
+        body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
+        
+        # Prepare response in the same format as BodyMeasurementReadSerializer
         if body_measurement:
-            data = { "height": body_measurement.height, "weight": body_measurement.weight,"recorded_at": body_measurement.created_at.isoformat() if body_measurement.created_at else None,}
-            return Response(data)
+            body_measurement_data = BodyMeasurementSerializer(body_measurement).data
+            data = {
+                "patient": pat_id,
+                "body_measurement": {
+                    "weight": str(body_measurement_data.get("weight", "0.00")),
+                    "height": str(body_measurement_data.get("height", "0.00")),
+                    "created_at": body_measurement_data.get("created_at")
+                }
+            }
         else:
-            return Response({}, status=200)
-
+            data = {
+                "patient": pat_id,
+                "body_measurement": {}
+            }
+        
+        return Response(data, status=200)
+    
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -395,7 +410,7 @@ def get_patient_health_and_nhts_data(request, patient_id):
         if patient.pat_type == "Resident" and patient.rp_id:
             hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
             if hrd:
-                philhealth_id = hrd.hrd_philhealth_id or ""
+                philhealth_id = hrd.per_add_philhealth_id or ""
             
             household = Household.objects.filter(rp=patient.rp_id).first()
             if household:
@@ -660,7 +675,7 @@ def get_commodity_stock(request, commodity_name):
 @api_view(["GET"])
 def get_fp_records_for_patient(request, patient_id):
     try:
-        # Optimize initial patient query
+        _check_and_update_missed_and_dropouts_for_patient(patient_id)
         patient = get_object_or_404(
             Patient.objects.select_related('rp_id__per', 'trans_id'),
             pat_id=patient_id
@@ -858,24 +873,26 @@ def get_fp_records_for_patient(request, patient_id):
 #             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
 #         )
         
-
-
 @api_view(["GET"])
 def get_obstetrical_history(request, pat_id):
     try:
+        # Validate patient_id format (e.g., P[RT]YYYYXXXX)
+        if not pat_id or pat_id == "undefined":
+            raise ValueError("Invalid patient ID provided")
+
         patient = get_object_or_404(Patient, pat_id=pat_id)
         patient_records = PatientRecord.objects.filter(pat_id=patient)
 
         # Get summary obstetrical history
         obstetrical_summary_history = (
-            Obstetrical_History.objects.filter(patrec_id__in=patient_records)
-            .order_by("-patrec_id__created_at").first()
+            Obstetrical_History.objects.filter(patrec_id__in=patient_records)  # Use 'patrec_id__in'
+            .order_by("-patrec_id__created_at").first()  # Order by PatientRecord's created_at
         )
 
+        # Get latest previous pregnancy (using direct FK to PatientRecord)
         latest_previous_pregnancy = (
-            Previous_Pregnancy.objects.filter(patrec_id__in=patient_records) # <--- CORRECTED LINE
-            .order_by("-date_of_delivery", "-pfpp_id") # Order to get the absolute latest
-            .first()
+            Previous_Pregnancy.objects.filter(patrec_id__in=patient_records)  # Use 'patrec_id__in'
+            .order_by("-date_of_delivery", "-pfpp_id").first()  # Order to get the absolute latest
         )
 
         response_data = {
@@ -885,8 +902,8 @@ def get_obstetrical_history(request, pat_id):
             "premature": 0,
             "abortion": 0,
             "livingChildren": 0,
-            "lastDeliveryDate": "", # Initialize as None
-            "typeOfLastDelivery": "", # Initialize as None
+            "lastDeliveryDate": None,
+            "typeOfLastDelivery": None,
         }
 
         if obstetrical_summary_history:
@@ -901,26 +918,49 @@ def get_obstetrical_history(request, pat_id):
         
         if latest_previous_pregnancy:
             response_data.update({
-                "lastDeliveryDate": latest_previous_pregnancy.date_of_delivery.isoformat() if latest_previous_pregnancy.date_of_delivery else None,
-                "typeOfLastDelivery": latest_previous_pregnancy.type_of_delivery,
+                "lastDeliveryDate": (
+                    latest_previous_pregnancy.date_of_delivery.isoformat()
+                    if latest_previous_pregnancy.date_of_delivery else None
+                ),
+                "typeOfLastDelivery": latest_previous_pregnancy.type_of_delivery or None,
             })
             
-        return Response(response_data, status=status.HTTP_200_OK)
+        return Response(response_data, status=200)
 
+    except ValueError as ve:
+        logger.error(f"ValueError in get_obstetrical_history: {str(ve)}")
+        return Response({"error": str(ve)}, status=400)
+    except Http404:
+        logger.error(f"Patient not found for pat_id: {pat_id}")
+        return Response({"error": "Patient not found."}, status=404)
     except Exception as e:
         logger.error(f"Error in get_obstetrical_history: {str(e)}")
-        import traceback # Add traceback for detailed error logging
-        traceback.print_exc() # Print traceback to console for debugging
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=500)
+    
+    
 
 @api_view(["GET"])
 def get_patient_details_data(request, patient_id):
     try:
         patient = get_object_or_404(Patient, pat_id=patient_id)
         serializer = PatientSerializer(patient)
+        bodymeasure = BodyMeasurementReadSerializer(patient)
+        latest_body = bodymeasure.data.get("body_measurement",{})
+        print("LATEST BODY: ",latest_body)
         patient_data = serializer.data
         personal_info = patient_data.get("personal_info", {})
+        print("PERSONAL:",personal_info)
         
+        body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
+        if body_measurement:
+            body_measurement_data = BodyMeasurementSerializer(body_measurement).data
+            weight = float(body_measurement_data.get("weight", "0.00"))
+            height = float(body_measurement_data.get("height", "0.00"))
+        else:
+            weight = 0.0
+            height = 0.0
+            
         fp_form_data = {
             "pat_id": patient_data.get("pat_id", ""),
             "client_id": patient_data.get("client_id", ""),
@@ -954,9 +994,11 @@ def get_patient_details_data(request, patient_id):
             "numOfLivingChildren": 0,
             "plan_more_children": False,
             "avg_monthly_income": patient_data.get("avgmonthlyincome", ""),
-            "weight": 0,
-            "height": 0,
-            "bodyMeasurementRecordedAt": None,
+            "weight": weight,
+            "height": height,
+            "bodyMeasurementRecordedAt": (
+            body_measurement.created_at.isoformat() if body_measurement else None
+            ),
             "obstetricalHistory": {
                 "g_pregnancies": 0,
                 "p_pregnancies": 0,
@@ -993,7 +1035,7 @@ def get_patient_details_data(request, patient_id):
             try:
                 hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
                 if hrd:
-                    fp_form_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
+                    fp_form_data["philhealthNo"] = hrd.per_add_philhealth_id or ""
                     print(f"✓ PhilHealth ID: {fp_form_data['philhealthNo']}")
             except Exception as e:
                 print(f"Error fetching HealthRelatedDetails: {e}")
@@ -1054,17 +1096,7 @@ def get_patient_details_data(request, patient_id):
             print(f"Error fetching spouse information: {e}")
 
         # Fetch body measurements
-        try:
-            body_measurement = BodyMeasurement.objects.filter(patrec=patient).order_by("-created_at").first()
-            if body_measurement:
-                fp_form_data.update({
-                    "weight": body_measurement.weight or 0,
-                    "height": body_measurement.height or 0,
-                    "bodyMeasurementRecordedAt": body_measurement.created_at.isoformat() if body_measurement.created_at else None,
-                })
-                print(f"✓ Body Measurement: Weight={fp_form_data['weight']}, Height={fp_form_data['height']}")
-        except Exception as e:
-            print(f"Error fetching body measurements: {e}")
+        
 
         # Fetch obstetrical history
         try:
@@ -1146,7 +1178,8 @@ def get_latest_fp_record_for_patient(request, patient_id):
         return Response(
             {"error": f"Error fetching latest complete FP record for patient: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
+        
 # def map_income_display(income):
 #     """Map income IDs to human-readable labels"""
 #     income_map = {
@@ -1246,7 +1279,7 @@ def get_complete_fp_record(request, fprecord_id):
                 if patient.pat_type == "Resident" and patient.rp_id:
                     hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
                     if hrd:
-                        philhealth_id = hrd.hrd_philhealth_id or ""
+                        philhealth_id = hrd.per_add_philhealth_id or ""
             except Exception as e:
                 print(f"Error fetching health details: {e}")
             
@@ -1437,36 +1470,42 @@ def get_complete_fp_record(request, fprecord_id):
         try:
             fp_physical_exam = FP_Physical_Exam.objects.get(fprecord_id=fp_record)
             physical_exam_serialized_data = FPPhysicalExamSerializer(fp_physical_exam).data
-            print("PE DATA: ",physical_exam_serialized_data)
+            print("PE DATA: ", physical_exam_serialized_data)
             complete_data["fp_physical_exam"] = physical_exam_serialized_data
-            # complete_data.update({
-            #     "skinExamination": physical_exam_serialized_data.get("skin_exam"),
-            #     "conjunctivaExamination": physical_exam_serialized_data.get("conjunctiva_exam"),
-            #     "neckExamination": physical_exam_serialized_data.get("neck_exam"),
-            #     "breastExamination": physical_exam_serialized_data.get("breast_exam"),
-            #     "abdomenExamination": physical_exam_serialized_data.get("abdomen_exam"),
-            #     "extremitiesExamination": physical_exam_serialized_data.get("extremities_exam"),
-            # })
-            # complete_data.update({
-            #     "skinExamination": physical_exam_serialized_data.get("skin_exam"),
-            #     "conjunctivaExamination": physical_exam_serialized_data.get("conjunctiva_exam"),
-            #     "neckExamination": physical_exam_serialized_data.get("neck_exam"),
-            #     "breastExamination": physical_exam_serialized_data.get("breast_exam"),
-            #     "abdomenExamination": physical_exam_serialized_data.get("abdomen_exam"),
-            #     "extremitiesExamination": physical_exam_serialized_data.get("extremities_exam"),
-            # })
-            if fp_physical_exam.bm:
-                body_measurement_data = BodyMeasurementSerializer(fp_physical_exam.bm).data
-                # complete_data["body_measurement"] = body_measurement_data
+            complete_data.update({
+                "skinExamination": physical_exam_serialized_data.get("skin_exam"),
+                "conjunctivaExamination": physical_exam_serialized_data.get("conjunctiva_exam"),
+                "neckExamination": physical_exam_serialized_data.get("neck_exam"),
+                "breastExamination": physical_exam_serialized_data.get("breast_exam"),
+                "abdomenExamination": physical_exam_serialized_data.get("abdomen_exam"),
+                "extremitiesExamination": physical_exam_serialized_data.get("extremities_exam"),
+            })
+
+            # Fetch the patient from fp_record
+            patient = fp_record.pat
+
+            # Fetch the latest BodyMeasurement for the patient
+            latest_body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
+            
+            if latest_body_measurement:
+                body_measurement_data = BodyMeasurementSerializer(latest_body_measurement).data
+                complete_data["body_measurement"] = body_measurement_data
                 complete_data["weight"] = body_measurement_data.get("weight", 0)
                 complete_data["height"] = body_measurement_data.get("height", 0)
             else:
                 complete_data["body_measurement"] = None
                 complete_data["weight"] = 0
                 complete_data["height"] = 0
-            if fp_physical_exam.vital:
-                vital_signs_data = VitalSignsSerializer(fp_physical_exam.vital).data
-                complete_data["pulseRate"] = vital_signs_data.get("vital_pulse", 0)
+
+            # Fetch the latest VitalSigns for the patient across all PatientRecords
+            latest_vital = VitalSigns.objects.filter(patrec__pat_id=patient).order_by('-created_at').first()
+            
+            if latest_vital:
+                vital_signs_data = VitalSignsSerializer(latest_vital).data
+                complete_data["pulseRate"] = vital_signs_data.get("vital_pulse", "N/A")
+                complete_data["temperature"] = vital_signs_data.get("vital_temp", "N/A")
+                complete_data["respiratoryRate"] = vital_signs_data.get("vital_RR", "N/A")
+                complete_data["oxygenSaturation"] = vital_signs_data.get("vital_o2", "N/A")
                 systolic = vital_signs_data.get("vital_bp_systolic", "N/A")
                 diastolic = vital_signs_data.get("vital_bp_diastolic", "N/A")
                 complete_data["bloodPressure"] = (
@@ -1825,7 +1864,7 @@ def get_complete_fp_record_data(request, fprecord_id):
                 if patient.pat_type == "Resident" and patient.rp_id:
                     hrd = HealthRelatedDetails.objects.filter(rp_id=patient.rp_id).first()
                     if hrd:
-                        complete_data["philhealthNo"] = hrd.hrd_philhealth_id or ""
+                        complete_data["philhealthNo"] = hrd.per_add_philhealth_id or ""
             except Exception as e:
                 print(f"Error fetching health details: {e}")
 
@@ -2023,8 +2062,15 @@ def get_complete_fp_record_data(request, fprecord_id):
                 "abdomenExamination": physical_exam_serialized_data.get("abdomen_exam"),
                 "extremitiesExamination": physical_exam_serialized_data.get("extremities_exam"),
             })
-            if fp_physical_exam.bm:
-                body_measurement_data = BodyMeasurementSerializer(fp_physical_exam.bm).data
+
+            # Fetch the patient from fp_record
+            patient = fp_record.pat
+
+            # Fetch the latest BodyMeasurement for the patient
+            latest_body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
+            
+            if latest_body_measurement:
+                body_measurement_data = BodyMeasurementSerializer(latest_body_measurement).data
                 complete_data["body_measurement"] = body_measurement_data
                 complete_data["weight"] = body_measurement_data.get("weight", 0)
                 complete_data["height"] = body_measurement_data.get("height", 0)
@@ -2032,9 +2078,16 @@ def get_complete_fp_record_data(request, fprecord_id):
                 complete_data["body_measurement"] = None
                 complete_data["weight"] = 0
                 complete_data["height"] = 0
-            if fp_physical_exam.vital:
-                vital_signs_data = VitalSignsSerializer(fp_physical_exam.vital).data
-                complete_data["pulseRate"] = vital_signs_data.get("vital_pulse", 0)
+
+            # Fetch the latest VitalSigns for the patient across all PatientRecords
+            latest_vital = VitalSigns.objects.filter(patrec__pat_id=patient).order_by('-created_at').first()
+            
+            if latest_vital:
+                vital_signs_data = VitalSignsSerializer(latest_vital).data
+                complete_data["pulseRate"] = vital_signs_data.get("vital_pulse", "N/A")
+                complete_data["temperature"] = vital_signs_data.get("vital_temp", "N/A")
+                complete_data["respiratoryRate"] = vital_signs_data.get("vital_RR", "N/A")
+                complete_data["oxygenSaturation"] = vital_signs_data.get("vital_o2", "N/A")
                 systolic = vital_signs_data.get("vital_bp_systolic", "N/A")
                 diastolic = vital_signs_data.get("vital_bp_diastolic", "N/A")
                 complete_data["bloodPressure"] = (
@@ -2290,7 +2343,7 @@ def get_last_previous_pregnancy(request, patient_id):
 
 def _create_fp_records_core(data, patient_record_instance, staff_id_from_request):
     patrec_id = patient_record_instance.patrec_id
-    
+    staff_id_from_request = data.get('staff_id')
     # Get patient gender from the form data
     patient_gender = data.get("gender", "").lower()
     
@@ -2368,7 +2421,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
     fp_record_instance = fp_record_serializer.save()
     fprecord_id = fp_record_instance.fprecord_id
     logger.info(f"Created FP Record with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
-    print(f"DEBUG: FP Record created with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
+    # print(f"DEBUG: FP Record created with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
 
    # 3. Create Medical History Records (ALWAYS CREATE NEW RECORDS FOR COMPLETE HISTORY)
     # selected_illness_ids = data.get("selectedIllnessIds", [])
@@ -2667,7 +2720,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         "weight": float(current_weight) if current_weight is not None else 0,
         "height": float(current_height) if current_height is not None else 0,
         "age": data.get("age") or 0,
-        # "patrec": patrec_id,
+        "staff": staff_id_from_request,
         "pat": patient.pat_id,
     }
 
@@ -2707,6 +2760,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         "vital_RR": data.get("respiratoryRate") or "N/A",
         "vital_o2": data.get("oxygenSaturation") or "N/A",
         "vital_pulse": data.get("pulseRate") or "N/A",
+        "staff": staff_id_from_request,
         "patrec": patrec_id, # Link to the determined patrec_id
     }
     vital_signs_serializer = VitalSignsSerializer(data=vital_signs_data)
@@ -2924,7 +2978,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
 @api_view(['POST'])
 def submit_full_family_planning_form(request):
     data = request.data
-    staff_id_from_request = request.user.id if request.user.is_authenticated else None
+    staff_id_from_request = data.get('staff_id')
 
     try:
         with transaction.atomic():
@@ -3187,7 +3241,7 @@ def get_detailed_monthly_fp_report(request, year, month):
 @api_view(['POST'])
 def submit_follow_up_family_planning_form(request):
     data = request.data
-    staff_id_from_request = request.user.id if request.user.is_authenticated else None
+    staff_id_from_request = data.get('staff_id')
     
     existing_patrec_id = data.get('patrec_id') 
     if not existing_patrec_id:
@@ -3395,7 +3449,7 @@ class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
             )
 
 
-def _check_and_update_dropouts_for_patient(patient_id):
+def _check_and_update_missed_and_dropouts_for_patient(patient_id):
     try:
         # Get the latest FP_Record for the patient
         latest_fp_record = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at').first()
@@ -3416,100 +3470,112 @@ def _check_and_update_dropouts_for_patient(patient_id):
         if not pending_follow_up:
             return  # No pending follow-up, skip
 
-        # Check if missed: today > followv_date + 3 days, and no new FP_Record since followv_date
-        cutoff_date = pending_follow_up.followv_date + timedelta(days=3)
         today = timezone.now().date()
+
+        # Check if a new FP_Record (e.g., follow-up record) exists since followv_date
         has_new_record = FP_Record.objects.filter(
             pat_id=patient_id,
             created_at__date__gte=pending_follow_up.followv_date
         ).exists()
 
-        if today > cutoff_date and not has_new_record:
-            # Update to dropout
-            with transaction.atomic():
+        if has_new_record:
+            return  # Has new record, don't change status
+
+        # Calculate cutoff for dropout (followv_date + 3 days)
+        cutoff_date = pending_follow_up.followv_date + timedelta(days=3)
+
+        with transaction.atomic():
+            if today > cutoff_date:
+                # Missed by more than 3 days -> Dropout
                 pending_follow_up.followv_status = "Dropout"
                 pending_follow_up.save()
-                fp_type.fpt_subtype = "dropout"  # Or "dropoutrestart" if that's your mapping
+                fp_type.fpt_subtype = "dropout"  # Or "dropoutrestart" based on your mappings
                 fp_type.save()
-                logger.info(f"Updated patient {patient_id} to dropout for follow-up on {pending_follow_up.followv_date}")
+                logger.info(f"Updated patient {patient_id} follow-up {pending_follow_up.followv_id} to 'Dropout' (missed by >3 days on {pending_follow_up.followv_date})")
+            elif today > pending_follow_up.followv_date:
+                # Missed but within 3 days -> Missed
+                pending_follow_up.followv_status = "Missed"
+                pending_follow_up.save()
+                # Optional: Update fp_type.fpt_subtype if needed (e.g., to "missed"), but probably not required
+                logger.info(f"Updated patient {patient_id} follow-up {pending_follow_up.followv_id} to 'Missed' (missed on {pending_follow_up.followv_date})")
 
     except Exception as e:
-        logger.error(f"Error updating dropout for patient {patient_id}: {str(e)}")
+        logger.error(f"Error updating missed/dropout for patient {patient_id}: {str(e)}")
         
-@api_view(['GET'])
-def get_all_fp_records_for_patient(request, patient_id):
-    try:
-        _check_and_update_dropouts_for_patient(patient_id)
-        patient = get_object_or_404(Patient, pat_id=patient_id)
+# @api_view(['GET'])
+# def get_all_fp_records_for_patient(request, patient_id):
+#     try:
+#         _check_and_update_missed_and_dropouts_for_patient(patient_id)
+#         patient = get_object_or_404(Patient, pat_id=patient_id)
         
-        # Initialize contact and religion
-        contact = ""
-        religion = ""
+#         # Initialize contact and religion
+#         contact = ""
+#         religion = ""
         
-        # For residents: Get from Personal via ResidentProfile
-        if patient.pat_type == "Resident" and patient.rp_id:
-            personal = patient.rp_id.per
-            contact = personal.per_contact or ""
-            religion = personal.per_religion or ""
+#         # For residents: Get from Personal via ResidentProfile
+#         if patient.pat_type == "Resident" and patient.rp_id:
+#             personal = patient.rp_id.per
+#             contact = personal.per_contact or ""
+#             religion = personal.per_religion or ""
         
-        # For transients: Get directly from Transient
-        elif patient.pat_type == "Transient" and patient.trans_id:
-            transient = patient.trans_id
-            contact = transient.tran_contact or ""
-            religion = transient.tran_religion or ""
+#         # For transients: Get directly from Transient
+#         elif patient.pat_type == "Transient" and patient.trans_id:
+#             transient = patient.trans_id
+#             contact = transient.tran_contact or ""
+#             religion = transient.tran_religion or ""
         
-        # Prepare patient info dict
-        patient_info = {
-            "contact": contact,
-            "religion": religion,
-        }
-        # Get all FP records for the patient, ordered from newest to oldest
-        fp_records = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at')
+#         # Prepare patient info dict
+#         patient_info = {
+#             "contact": contact,
+#             "religion": religion,
+#         }
+#         # Get all FP records for the patient, ordered from newest to oldest
+#         fp_records = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at')
 
-        if not fp_records.exists():
-            return Response([], status=status.HTTP_200_OK)
+#         if not fp_records.exists():
+#             return Response([], status=status.HTTP_200_OK)
 
-        all_records_data = []
+#         all_records_data = []
 
-        for record in fp_records:
-            record_data = {
-                'fprecord_id': record.fprecord_id,
-                'created_at': record.created_at,
-                'client_id': record.client_id,
-                'patrec_id': record.patrec_id,
-                'fp_type': {},
-                'service_provision': {},
-                'assessment_records': {},
-            }
+#         for record in fp_records:
+#             record_data = {
+#                 'fprecord_id': record.fprecord_id,
+#                 'created_at': record.created_at,
+#                 'client_id': record.client_id,
+#                 'patrec_id': record.patrec_id,
+#                 'fp_type': {},
+#                 'service_provision': {},
+#                 'assessment_records': {},
+#             }
             
-            # Fetch and serialize FP_type data
-            try:
-                fp_type = FP_type.objects.get(fprecord_id=record.fprecord_id)
-                record_data['fp_type'] = FPTypeSerializer(fp_type).data
-            except FP_type.DoesNotExist:
-                record_data['fp_type'] = {}
+#             # Fetch and serialize FP_type data
+#             try:
+#                 fp_type = FP_type.objects.get(fprecord_id=record.fprecord_id)
+#                 record_data['fp_type'] = FPTypeSerializer(fp_type).data
+#             except FP_type.DoesNotExist:
+#                 record_data['fp_type'] = {}
 
-            # Fetch and serialize FP_Service_Provision data
-            try:
-                service_provision = FP_Assessment_Record.objects.get(fprecord_id=record.fprecord_id)
-                record_data['service_provision'] = FPAssessmentSerializer(service_provision).data
-            except FP_Assessment_Record.DoesNotExist:
-                record_data['service_provision'] = {}
+#             # Fetch and serialize FP_Service_Provision data
+#             try:
+#                 service_provision = FP_Assessment_Record.objects.get(fprecord_id=record.fprecord_id)
+#                 record_data['service_provision'] = FPAssessmentSerializer(service_provision).data
+#             except FP_Assessment_Record.DoesNotExist:
+#                 record_data['service_provision'] = {}
             
-            # Fetch and serialize FP_Assessment_Record data
-            try:
-                assessment_record = FP_Assessment_Record.objects.get(fprecord_id=record.fprecord_id)
-                record_data['assessment_records'] = FPAssessmentSerializer(assessment_record).data
-            except FP_Assessment_Record.DoesNotExist:
-                record_data['assessment_records'] = {}
+#             # Fetch and serialize FP_Assessment_Record data
+#             try:
+#                 assessment_record = FP_Assessment_Record.objects.get(fprecord_id=record.fprecord_id)
+#                 record_data['assessment_records'] = FPAssessmentSerializer(assessment_record).data
+#             except FP_Assessment_Record.DoesNotExist:
+#                 record_data['assessment_records'] = {}
 
-            all_records_data.append(record_data)
+#             all_records_data.append(record_data)
 
-        return Response(all_records_data, status=status.HTTP_200_OK)
+#         return Response(all_records_data, status=status.HTTP_200_OK)
 
-    except Exception as e:
-        return Response(
-            {"detail": f"Error fetching patient's FP records: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+#     except Exception as e:
+#         return Response(
+#             {"detail": f"Error fetching patient's FP records: {str(e)}"},
+#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#         )
         

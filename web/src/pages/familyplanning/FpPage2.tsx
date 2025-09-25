@@ -47,7 +47,7 @@ export default function FamilyPlanningForm2({
   mode = "create",
 }: Page2Props) {
   const isReadOnly = mode === "view"
-  const isFemale = formData.gender === "Female"
+  const isFemale = formData.gender === "FEMALE"
 
   // NEW: State for selected illnesses
   const [selectedIllnesses, setSelectedIllnesses] = useState<number[]>([])

@@ -43,4 +43,3 @@ const MaternalLanding = () => {
 };
 
 export default MaternalLanding;
-

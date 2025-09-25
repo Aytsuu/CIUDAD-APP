@@ -1,7 +1,7 @@
 import { useFamilyPlanningFormSubmission, useFollowUpFamilyPlanningFormSubmission } from "./request-db/PostRequest"
 import { getFPCompleteRecord, getLatestCompleteFPRecordForPatient } from "./request-db/GetRequest"
 import { useCallback, useState, useEffect } from "react"
-import { useLocation, useParams, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema" // Ensure patrec_id is in this interface
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -11,6 +11,8 @@ import FamilyPlanningForm5 from "./FpPage5"
 import FamilyPlanningForm6 from "./FpPage6"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
+import { useAuth } from "@/context/AuthContext"
+
 
 // Initial form data structure - keep this for 'create' mode
 const initialFormData: FormData = {
@@ -98,8 +100,8 @@ const initialFormData: FormData = {
   extremitiesExamination: "normal",
   pelvicExamination: "normal",
   cervicalConsistency: "firm",
-  cervicalTenderness: false,
-  cervicalAdnexal: false,
+  cervicalTenderness: "false",
+  cervicalAdnexal: "false",
   uterinePosition: "mid",
   uterineDepth: "",
   acknowledgement: {
@@ -121,17 +123,22 @@ const initialFormData: FormData = {
     recent_abortion: false,
     using_contraceptive: false,
   },
+  fp_type: {},
+  fp_physical_exam: {},
+  fp_pelvic_exam: {}
 }
 
 export default function FamilyPlanningPage() {
   const { patientId: routePatientId, fprecordId } = useParams<{ patientId?: string; fprecordId?: string }>()
   const [searchParams] = useSearchParams()
-
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const modeParam = searchParams.get("mode")
   const prefillParam = searchParams.get("prefill")
   const patrecIdParam = searchParams.get("patrecId") // patrec_id for follow-up submission
   const prefillFromFpRecordParam = searchParams.get("prefillFromFpRecord") // fprecord_id to prefill from for follow-up
-
+  const staff_id = user?.staff?.staff_id
+  console.log("Staff id",staff_id)
   // Determine the current mode of operation
   const currentMode = (modeParam || "create") as "create" | "edit" | "view" | "followup"
 
@@ -246,10 +253,10 @@ export default function FamilyPlanningPage() {
       typeOfClient: "currentuser",
       gender: passedGender || "Unknown",
       subTypeOfClient: followUpPrefillRecord.subTypeOfClient || "", // Preserve existing value
-      reasonForFP: followUpPrefillRecord.reasonForFP || "", // Preserve existing value
+      reasonForFP: followUpPrefillRecord.reasonForFP || "medicalcondition", // Preserve existing value
       otherReasonForFP: followUpPrefillRecord.otherReasonForFP || "", // Preserve existing value
       reason: followUpPrefillRecord.reason || "", // Add this line
-      weight: bodyMeasurementsResponse.weight,
+      weight: followUpPrefillRecord.weight,
       height: followUpPrefillRecord.height,
       methodCurrentlyUsed: followUpPrefillRecord.methodCurrentlyUsed,
       bloodPressure: followUpPrefillRecord.bloodPressure,
@@ -263,8 +270,8 @@ export default function FamilyPlanningPage() {
       extremitiesExamination: followUpPrefillRecord.fp_physical_exam?.extremities_exam ?? "normal",
       pelvicExamination: followUpPrefillRecord.fp_pelvic_exam?.pelvicExamination ?? "normal",
       cervicalConsistency: followUpPrefillRecord.fp_pelvic_exam?.cervicalConsistency ?? "firm",
-      cervicalTenderness: followUpPrefillRecord.fp_pelvic_exam?.cervicalTenderness ?? false,
-      cervicalAdnexal: followUpPrefillRecord.fp_pelvic_exam?.cervicalAdnexal ?? false,
+      cervicalTenderness: String(followUpPrefillRecord.fp_pelvic_exam?.cervicalTenderness ?? false),
+      cervicalAdnexal: String(followUpPrefillRecord.fp_pelvic_exam?.cervicalAdnexal ?? false),
       uterinePosition: followUpPrefillRecord.fp_pelvic_exam?.uterinePosition ?? "mid",
       uterineDepth: followUpPrefillRecord.fp_pelvic_exam?.uterineDepth ?? "",
     }
@@ -349,7 +356,8 @@ export default function FamilyPlanningPage() {
       const finalFormData = {
         ...formData,
         pat_id: actualPatientId || formData.pat_id, // Prioritize actualPatientId
-      };
+        staff_id: staff_id
+        };
 
       if (currentMode === "followup") {
         if (!finalFormData.patrec_id) {
@@ -358,10 +366,11 @@ export default function FamilyPlanningPage() {
         }
         await submitFollowUpRecord(finalFormData) // Use new mutation for follow-up
         toast.success("Family Planning follow-up record submitted successfully!")
-
+        navigate("/FamPlanning_table")  
       } else {
         await submitNewRecordSet(finalFormData) // Use original mutation for new record set
         toast.success("Family Planning record submitted successfully!")
+        navigate("/FamPlanning_table")  
       }
     } catch (error) {
       toast.error("Failed to submit record. Please try again.")

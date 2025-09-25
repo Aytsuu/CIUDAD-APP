@@ -1,7 +1,7 @@
 import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
-import { Users, Trash2, Edit2, Plus, Search, Loader2 } from "lucide-react";
+import { Users, Trash2, Edit2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { deleteAgeroup } from "./restful-api/api";

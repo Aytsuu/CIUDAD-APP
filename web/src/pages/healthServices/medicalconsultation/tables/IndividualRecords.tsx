@@ -17,7 +17,6 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import {useMedConPHHistory} from "../queries/fetchQueries";
-import PHIllnessTable from "../medicalhistory/past-medical-history";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();

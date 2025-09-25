@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronLeft, ArrowUpDown, FileInput, Loader2, Users, Home, UserCheck } from "lucide-react";
+import { Search, ArrowUpDown, FileInput, Loader2, Users, Home, UserCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";

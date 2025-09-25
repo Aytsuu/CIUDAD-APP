@@ -2,7 +2,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpDown } from "lucide-react";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 
 export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
