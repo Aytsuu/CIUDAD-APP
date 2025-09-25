@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import z from "zod"
-import { RejectPickupRequestSchema, AcceptPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
+import { RejectPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
 import { addPickupAssignmentandCollectors, addDecision } from "../restful-api/GarbageRequestPostAPI";
 import { showSuccessToast } from "@/components/ui/toast";
 import { showErrorToast } from "@/components/ui/toast";
