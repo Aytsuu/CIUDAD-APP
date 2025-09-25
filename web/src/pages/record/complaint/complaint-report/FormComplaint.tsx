@@ -94,12 +94,12 @@ export const ComplaintForm = () => {
 
       const formData = new FormData();
 
-      const complainantData = data.complainant.map((comp) => {
+      const complainantData = data.complainant?.map((comp) => {
         const fullAddress = [
-          comp.address.street,
-          comp.address.barangay,
-          comp.address.city,
-          comp.address.province,
+          comp.address?.street,
+          comp.address?.barangay,
+          comp.address?.city,
+          comp.address?.province,
         ]
           .filter(Boolean)
           .join(", ")
@@ -117,12 +117,12 @@ export const ComplaintForm = () => {
       });
       formData.append("complainant", JSON.stringify(complainantData));
 
-      const accusedData = data.accused.map((acc) => {
+      const accusedData = data.accused?.map((acc) => {
         const fullAddress = [
-          acc.address.street,
-          acc.address.barangay,
-          acc.address.city,
-          acc.address.province,
+          acc.address?.street,
+          acc.address?.barangay,
+          acc.address?.city,
+          acc.address?.province,
         ]
           .filter(Boolean)
           .join(", ")
@@ -139,12 +139,12 @@ export const ComplaintForm = () => {
       });
       formData.append("accused_persons", JSON.stringify(accusedData));
 
-      formData.append("comp_incident_type", data.incident.type);
-      formData.append("comp_allegation", data.incident.description);
-      formData.append("comp_location", data.incident.location ?? "");
+      formData.append("comp_incident_type", data.incident?.type as any);
+      formData.append("comp_allegation", data.incident?.description as any);
+      formData.append("comp_location", data.incident?.location ?? "");
 
       // DateTime - backend expects string format
-      const dateTimeString = `${data.incident.date}T${data.incident.time}`;
+      const dateTimeString = `${data.incident?.date}T${data.incident?.time}`;
       const dateTime = new Date(dateTimeString);
       if (isNaN(dateTime.getTime())) {
         throw new Error("Invalid date or time format");
@@ -173,9 +173,9 @@ export const ComplaintForm = () => {
       console.log("Submitting complaint with data:", {
         complainant: complainantData,
         accused_persons: accusedData,
-        comp_incident_type: data.incident.type,
-        comp_allegation: data.incident.description,
-        comp_location: data.incident.location,
+        comp_incident_type: data.incident?.type,
+        comp_allegation: data.incident?.description,
+        comp_location: data.incident?.location,
         comp_datetime: dateTimeString,
       });
 

@@ -2,7 +2,7 @@ import { Form, FormItem, FormField, FormLabel, FormMessage, FormControl } from "
 import { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 import { Input } from "@/components/ui/input"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { BudgetPlanStep2Schema } from "@/form-schema/treasurer/budgetplan-schema"
 
 const styles = {
@@ -18,8 +18,6 @@ interface budgetPlanWithLimitsProps {
 
 function CreateBudgetWithLimits({
   form,
-  updateFormData,
-  onNext,
 }: budgetPlanWithLimitsProps) {
   const budgetItems = [
     { name: "honorariaOfficials", label: "Honoraria for Officials" },
@@ -46,7 +44,7 @@ function CreateBudgetWithLimits({
   ]
 
   const [_total, setTotal] = useState(0)
-  const { watch, trigger } = form
+  const { watch } = form
   const formValues = watch()
 
   useEffect(() => {
