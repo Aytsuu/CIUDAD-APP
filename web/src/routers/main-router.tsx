@@ -49,15 +49,21 @@ export const main_router: RouteObject[] = [
     children: withTransition([
       {
         path: "/",
-        element: <Navigate to="/dashboard" />,
+        element: <ProtectedRoute>
+          <Navigate to="/dashboard" />
+        </ProtectedRoute>,
       },
       {
         path: "dashboard",
-        element: <Dashboard />,
+        element: <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>,
       },
       {
         path: "announcement",
-        element: <AnnouncementDashboard />,
+        element: <ProtectedRoute exclude={["DOCTOR"]}>
+          <AnnouncementDashboard />
+        </ProtectedRoute>,
       },
       ...administration_router.map((route) => ({
         ...route,
@@ -97,7 +103,14 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
-      ...team_router,
+      ...team_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute>
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...ord_router.map((route) => ({
         ...route,
         element: (
@@ -173,7 +186,14 @@ export const main_router: RouteObject[] = [
           ),
         }))
       })),
-      ...maternal_router,
+      ...maternal_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="SERVICES">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...vaccination,
       ...childHealthServices,
       ...gad_router,

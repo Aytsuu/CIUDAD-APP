@@ -215,7 +215,6 @@ export default function CreatePatientRecord() {
       console.log("Selected Patient:", selectedPatient);
 
       const personalInfo = selectedPatient.personal_info;
-      const personalInfo = selectedPatient.personal_info;
 
       if (Array.isArray(selectedPatient?.households)) {
         console.log(

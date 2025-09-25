@@ -72,8 +72,6 @@ export const setupApiInterceptor = (apiInstance: typeof api) => {
 
                     // Clear all React Query cache with auth fails
                     queryClient.clear()
-
-                    window.location.href = '/login';
                     return Promise.reject(refreshError);
                 } finally {
                     isRefreshing = false;

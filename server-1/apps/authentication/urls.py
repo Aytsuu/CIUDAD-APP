@@ -20,8 +20,9 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     
     # OTP endpoints
-    path('email/sendOtp/', LogInEmailOTPView.as_view(), name='email-send-otp'),
+    path('email/sendOtp/', emailOTPView.as_view(), name='email-send-otp'),
     path('email/verifyOtp/', ValidateEmailOTPView.as_view(), name='email-verify-otp'),
+    path('verify/web-registration/', VerifyWebAccRegistration.as_view(), name="verify-web-registration")
 ]
 
 

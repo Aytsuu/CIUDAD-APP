@@ -48,6 +48,8 @@ export default function GroupPositionForm() {
     name: "positions.list",
   })
 
+  console.log(user?.staff?.staff_type)
+
   // Prevent typing negative values and 0
   React.useEffect(() => {
     const max_holders = form.watch("positions.new.pos_max")
@@ -110,7 +112,7 @@ export default function GroupPositionForm() {
       pos_title: pos.pos_title,
       pos_max: parseInt(pos.pos_max),
       pos_group: values.pos_group,
-      pos_category: user?.staff?.staff_type == "Barangay Staff" ? "Barangay Position" : "Health Position",
+      pos_category: user?.staff?.staff_type?.toLowerCase() == "barangay staff" ? "BARANGAY POSITION" : "HEALTH POSITION",
       staff: user?.staff?.staff_id,
     }))
 
