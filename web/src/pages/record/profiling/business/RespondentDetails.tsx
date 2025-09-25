@@ -139,7 +139,7 @@ export default function RespondentDetails() {
   return (
     <LayoutWithBack
       title="Respondent"
-      description={`Complete details of business respondent #${respondentInfo.br_id}, including the associated businesses.`}
+      description={`Complete details of business respondent #${respondentInfo?.br_id}, including the associated businesses.`}
     >
       <div className="grid gap-4">
         <Card className="w-full p-10">
