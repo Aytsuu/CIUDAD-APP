@@ -8,6 +8,7 @@ from rest_framework import status
 from django.db.models import Count
 from datetime import datetime
 from rest_framework.permissions import AllowAny
+from apps.act_log.utils import ActivityLogMixin
 import logging
 from apps.treasurer.models import Purpose_And_Rates
 # from apps.gad.models import ProjectProposalLog
@@ -43,12 +44,12 @@ class UpdateTemplateByPrIdView(generics.UpdateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class CouncilSchedulingView(generics.ListCreateAPIView):
+class CouncilSchedulingView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     permission_classes = [AllowAny]
 
-class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
+class CouncilSchedulingDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     lookup_field = 'ce_id'
@@ -139,7 +140,7 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
 #         logger.error(f"Serializer errors: {serializer.errors}")
 #         return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
 
-class AttendanceSheetListView(generics.ListCreateAPIView):
+class AttendanceSheetListView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
     permission_classes = [AllowAny]
@@ -174,7 +175,7 @@ class AttendanceSheetListView(generics.ListCreateAPIView):
         
         return Response({"message": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
 
-class AttendanceSheetDetailView(generics.RetrieveUpdateDestroyAPIView):
+class AttendanceSheetDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
@@ -243,7 +244,7 @@ class StaffListView(generics.ListAPIView):
     serializer_class = StaffSerializer
 
 #TEMPLATE
-class TemplateView(generics.ListCreateAPIView):
+class TemplateView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
@@ -310,7 +311,7 @@ class SummonTemplateView(APIView):
         return Response(serializer.data)
 
 #UPDATE TEMPLATE
-class UpdateTemplateView(generics.RetrieveUpdateAPIView):
+class UpdateTemplateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
     lookup_field = 'temp_id'
@@ -356,7 +357,7 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 #     serializer_class = ResolutionSerializer
 #     queryset = Resolution.objects.all()
 
-class ResolutionView(generics.ListCreateAPIView):
+class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
     
@@ -385,7 +386,7 @@ class DeleteResolutionView(generics.DestroyAPIView):
         return get_object_or_404(Resolution, res_num=res_num) 
 
 
-class UpdateResolutionView(generics.RetrieveUpdateAPIView):
+class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
     lookup_field = 'res_num'
@@ -440,7 +441,7 @@ class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
 
 
  # Resolution Supp Docs
-class ResolutionSupDocsView(generics.ListCreateAPIView):
+class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ResolutionSupDocsSerializer
     queryset = ResolutionSupDocs.objects.all()
 

@@ -3,6 +3,7 @@ from .models import ActivityLog
 from apps.administration.models import Feature, Staff
 import inspect
 import os
+from rest_framework.response import Response
 
 def create_activity_log(
     act_type,
@@ -109,3 +110,35 @@ def log_model_change(model_instance, action, staff, description=None, **kwargs):
         **kwargs
     )
 
+
+class ActivityLogMixin:
+    """Reusable mixin to automatically log create/update/destroy actions."""
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            staff = getattr(self.request.user, 'staff', None)
+            log_model_change(instance, 'create', staff)
+        except Exception:
+            # Avoid breaking the main flow due to logging issues
+            pass
+        return instance
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        try:
+            staff = getattr(self.request.user, 'staff', None)
+            log_model_change(instance, 'update', staff)
+        except Exception:
+            pass
+        return instance
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        try:
+            staff = getattr(self.request.user, 'staff', None)
+            # instance might be deleted; log with id only if accessible
+            log_model_change(instance, 'delete', staff)
+        except Exception:
+            pass
+        return response

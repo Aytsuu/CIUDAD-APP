@@ -10,10 +10,11 @@ from django.db.models.functions import ExtractYear
 import logging
 from rest_framework.views import APIView
 from django.db import transaction
+from apps.act_log.utils import ActivityLogMixin
 
 logger = logging.getLogger(__name__)
 
-class GAD_Budget_TrackerView(generics.ListCreateAPIView):
+class GAD_Budget_TrackerView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
     permission_classes = [AllowAny]
 
@@ -55,7 +56,7 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
         
         serializer.save(**save_kwargs)
     
-class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):
+class GAD_Budget_TrackerDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_Tracker.objects.all()
     serializer_class = GAD_Budget_TrackerSerializer
     lookup_field = 'gbud_num'
@@ -120,7 +121,7 @@ class GADBudgetFileView(generics.ListCreateAPIView):
         serializer._upload_files(files, gbud_num=gbud_num)
         return Response({"status": "Files uploaded successfully"}, status=201)
 
-class GADBudgetFileDetailView(generics.RetrieveUpdateDestroyAPIView):
+class GADBudgetFileDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = GAD_Budget_File.objects.all()
     serializer_class = GADBudgetFileSerializer
     permission_classes = [AllowAny]
@@ -137,7 +138,7 @@ class GADBudgetLogListView(generics.ListCreateAPIView):
         serializer = GADBudgetLogSerializer(logs, many=True)
         return Response({"data": serializer.data})
 
-class ProjectProposalView(generics.ListCreateAPIView):
+class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
     permission_classes = [AllowAny]
 
@@ -232,7 +233,7 @@ class ProjectProposalView(generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class ProjectProposalDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ProjectProposalDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = ProjectProposal.objects.all().select_related('staff')
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
