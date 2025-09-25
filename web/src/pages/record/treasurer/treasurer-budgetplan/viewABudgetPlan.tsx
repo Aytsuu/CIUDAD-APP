@@ -20,8 +20,6 @@ import BudgetItemEditForm from "./budgetPlanForm/budgetItemEditForm";
 import { formatDate } from "@/helpers/dateHelper";
 
 const styles = {
-    mainCategory: "font-bold text-[19px] md:text-[22px]",
-    subCategory: "font-semibold text-[16px] md:text-[18px] text-sky-500",
     header: "font-bold text-lg text-blue-600",
     budgetItem: "flex flex-col space-y-1 p-3 rounded-lg bg-white shadow-lg",
     budgetLabel: "text-sm font-semibold text-gray-600",
@@ -57,27 +55,6 @@ function ViewBudgetPlan(){
     Number(fetchedData?.plan_cert_fees || 0) +
     Number(fetchedData?.plan_other_income || 0);
 
-    // calculating totals per category
-    const personalServiceTotal = fetchedData?.details
-                                ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category === "Personal Service")
-                                ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
-
-    const otherExpenseTotal = fetchedData?.details
-                            ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category == "Other Expense")
-                            ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
-
-    const capitalOutlaysTotal = fetchedData?.details
-                            ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category == "Capital Outlays")
-                            ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
-
-    const nonOfficeTotal = fetchedData?.details
-                        ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category == "Non-Office")
-                        ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
-
-    const calamityFundTotal = fetchedData?.details
-                        ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category == "LDRRM Fund")
-                        ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0 ) || 0;
-
     // 1. Prepare ordered label list from budgetItemDefinition
     const orderedBudgetLabels = [
         ...budgetItemsPage1,
@@ -93,87 +70,15 @@ function ViewBudgetPlan(){
         return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
     });
 
-    // 3. Build rows using the sorted details
-    const rowsProp = sortedDetails.reduce((acc: any[], detail: BudgetPlanDetail) => {
-        // adding title at the beginning of the table
-        if(acc.length == 0){
-            acc.push(
-                [<span className={styles.mainCategory}>CURRENT OPERATING EXPENDITURES</span>],
-                [<span className={styles.subCategory}>Personal Services</span>]
-            )
-        }
-
-        // Indented rows
-        const isIndented = [
-            "GAD Program",
-            "Senior Citizen/ PWD Program",
-            "BCPC (Juvenile Justice System)",
-            "BADAC Program",
-            "Nutrition Program",
-            "Combating AIDS Program",
-            "Barangay Assembly Expenses",
-            "Disaster Response Program"
-        ].includes(detail.dtl_budget_item);
-
+    // 3. Build rows using the sorted details (simplified without categories)
+    const rowsProp = sortedDetails.map((detail: BudgetPlanDetail) => {
         const itemLabel = detail.dtl_budget_item;
 
-        const mainRow = [
-            <span className={isIndented ? styles.indentedRowItem : styles.rowItem}>{itemLabel}</span>,
+        return [
+            <span className={styles.rowItem}>{itemLabel}</span>,
             <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>
         ];
-
-        acc.push(mainRow);
-    
-        if (detail.dtl_budget_item === "Commutation of Leave Credits") {
-            acc.push(
-                [
-                    <div ></div>, 
-                    <div className={styles.budgetFooter}>Total: {formatNumber(personalServiceTotal)}</div>
-                ],
-                [<span className={styles.subCategory}>Maint. & Other Operating Expenses</span>]
-            );
-        } else if(detail.dtl_budget_item == "Disaster Supplies"){
-            acc.push(
-                [
-                    <div ></div>, 
-                    <div className={styles.budgetFooter}>Total: {formatNumber(calamityFundTotal)}</div>
-                ])
-        } else if(detail.dtl_budget_item == "Insurance Expenses"){
-            acc.push([
-                <span className={styles.rowItem}>Other Maint. & Operating Expenses</span>
-            ])
-        } else if(detail.dtl_budget_item == "Rehabilitation of Multi-Purpose"){
-            acc.push(
-                [
-                    <div ></div>, 
-                    <div className={styles.budgetFooter}>Total: {formatNumber(nonOfficeTotal)}</div>
-                ],
-                [],
-                [<span className={styles.subCategory}>Sangguniang Kabataan Fund</span>],
-            )
-        } else if(detail.dtl_budget_item == "Total Capital Outlays"){
-            acc.push([
-                <div ></div>, 
-                <div className={styles.budgetFooter}>Total: {formatNumber(capitalOutlaysTotal)}</div>,
-            ],
-            [<span className={styles.mainCategory}>NON-OFFICE</span>],
-            [<span className={styles.subCategory}>Local Development Fund</span>],
-            );
-        } else if(detail.dtl_budget_item.startsWith("Extraordinary & Miscellaneous Expense")){
-            acc.push([
-                <div ></div>, 
-                <div className={styles.budgetFooter}>Total: {formatNumber(otherExpenseTotal)}</div>,
-            ],    
-            [<span className={styles.mainCategory}>CAPITAL OUTLAYS</span>],
-            );
-        } else if(detail.dtl_budget_item == "Subsidy to Sangguniang Kabataan (SK) Fund"){
-            acc.push(
-                [<span className={styles.subCategory}>LDRRM Fund /Calamity Fund</span>],
-            )
-        }
-    
-        return acc;
-    }, []) || [];
+    }) || [];
 
     if (isLoading){
         return (

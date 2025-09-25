@@ -1,5 +1,4 @@
 import { Navigate } from 'react-router';
-import SignIn from "@/pages/landing/signin/signin";
 import LandingLayout from '@/layout/LandingLayout';
 import BarangayCouncil from '@/pages/landing/BarangayCouncil';
 import MobileApp from '@/pages/landing/MobileApp';
@@ -49,10 +48,6 @@ export const landing_router: RouteObject[] = [
       {
         path: "mobile-app",
         element: <MobileApp />
-      },
-      {
-        path: "sign-in",
-        element: <SignIn />
       },
     ]
   },

@@ -3,7 +3,7 @@ import { api } from "@/api/api";
 
 // =========================================== STAFF ========================================================
 
-export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+export const updateWasteReport = async (rep_id: string, wasteReportInfo: Record<string, any>) => {
 
     try{
 
@@ -30,7 +30,7 @@ export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<
 
 
 export const uploadResolvedImage = async (data: {
-  rep_id: number;
+  rep_id: string;
   file_data: {
     name: string;
     type: string;
@@ -60,7 +60,7 @@ export const uploadResolvedImage = async (data: {
 // ==================================================== RESIDENT =============================================
 
 // Resident Cancel Report
-export const updateWasteResReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+export const updateWasteResReport = async (rep_id: string, wasteReportInfo: Record<string, any>) => {
 
     try{
         const currentTimestamp = new Date().toISOString();

@@ -1,7 +1,7 @@
-// components/skeleton/vaccinationstatus-skeleton.tsx
-import React from 'react';
-import { View } from 'react-native';
-import { useTailwind } from 'tailwind-rn';
+// // components/skeleton/vaccinationstatus-skeleton.tsx
+// import React from 'react';
+// import { View } from 'react-native';
+// import { useTailwind } from 'tailwind-rn';
 
 export const VaccinationStatusCardsSkeleton: React.FC = () => {
   const tw = useTailwind();

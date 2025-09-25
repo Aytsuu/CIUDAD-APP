@@ -13,7 +13,6 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
 import { formatHouseholds } from "../ProfilingFormats";
-import { capitalize } from "@/helpers/capitalize";
 import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function EditGeneralDetails({
@@ -39,12 +38,14 @@ export default function EditGeneralDetails({
     formatHouseholds(households), [households]
   );
 
+  
+
   React.useEffect(() => {
     if(familyData) {
-      console.log("has family data")
-      form.setValue("householdNo", familyData.household_no)
-      form.setValue("building", familyData.fam_building.toLowerCase())
-      form.setValue("indigenous", familyData.fam_indigenous.toLowerCase())
+      const houseData = formattedHouseholds.find((fh: any) => fh.id.split(" ")[0] == familyData.household_no);
+      form.setValue("householdNo", houseData.id)
+      form.setValue("building", familyData.fam_building)
+      form.setValue("indigenous", familyData.fam_indigenous)
     }
   }, [familyData])
 
@@ -78,9 +79,9 @@ export default function EditGeneralDetails({
 
     // Formatting data
     const data = {
-      hh: values.householdNo,
-      fam_building: capitalize(values.building),
-      fam_indigenous: capitalize(values.indigenous)
+      hh: values.householdNo.split(" ")[0],
+      fam_building: values.building,
+      fam_indigenous: values.indigenous
     }
 
     try {
@@ -118,8 +119,7 @@ export default function EditGeneralDetails({
             onChange={(value) => form.setValue("householdNo", value as string)}
             placeholder="Select a household"
             triggerClassName="font-normal"
-            variant="modal" // Use modal variant for better dialog compatibility
-            modalTitle="Select Household"
+            variant="modal"
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">
@@ -138,13 +138,13 @@ export default function EditGeneralDetails({
           </Label> : ""}
         </div>
         <FormSelect control={form.control} name="building" label="Building" options={[
-          { id: "owner", name: "Owner" },
-          { id: "renter", name: "Renter" },
-          { id: "other", name: "Other" },
+          { id: "OWNER", name: "OWNER" },
+          { id: "RENTER", name: "RENTER" },
+          { id: "OTHER", name: "OTHER" },
         ]}/>
         <FormSelect control={form.control} name="indigenous" label="Indigenous" options={[
-          { id: "yes", name: "Yes" },
-          { id: "no", name: "No" },
+          { id: "YES", name: "YES" },
+          { id: "NO", name: "NO" },
         ]}/>
         <div className="flex justify-end mt-8">
           {!isSaving ? (<Button>Save</Button>) : (

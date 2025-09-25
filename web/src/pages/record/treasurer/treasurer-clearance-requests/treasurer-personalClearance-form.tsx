@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner";
 import { createPersonalClearance, createNonResidentPersonalClearance } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/personalClearancePostApi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-search"; 
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
@@ -23,11 +23,21 @@ interface PersonalClearanceFormProps {
 function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isResident, setIsResident] = useState(true); // Default to resident
+    const [selectedIsSenior, setSelectedIsSenior] = useState<boolean>(false);
+    const [selectedHasDisability, setSelectedHasDisability] = useState<boolean>(false);
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const staffId = user?.staff?.staff_id as string | undefined;
     const { data: residents = [], isLoading: residentLoading} = useGetResidents()
     const { data: purposes = [], isLoading: _purposesLoading} = useGetPurposeAndRate()
+
+    // Read selected flags so they're used (and log for debugging)
+    useEffect(() => {
+        console.log('[Treasurer Personal] Eligibility flags changed:', {
+            isSenior: selectedIsSenior,
+            hasDisability: selectedHasDisability,
+        });
+    }, [selectedIsSenior, selectedHasDisability]);
 
     const purposeOptions = purposes
     .filter(purposes => purposes.pr_is_archive === false)
@@ -158,13 +168,50 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                 label=""
                                                 placeholder="Search resident by name"
                                                 emptyText="No residents found"
-                                                onSelect={(value: string, item: any) => {
+                                                onSelect={async (value: string, item: any) => {
                                                     field.onChange(value);
                                                     residentForm.setValue('rp_id', item?.rp_id || '');
+                                                // helper to compute and set flags
+                                                const computeAndSet = (dobValue: any, disabilityValue: any) => {
+                                                    const dobStr = dobValue ? String(dobValue) : '';
+                                                    let isSenior = false;
+                                                    if (dobStr) {
+                                                        try {
+                                                            const dob = new Date(dobStr);
+                                                            if (!isNaN(dob.getTime())) {
+                                                                const today = new Date();
+                                                                let age = today.getFullYear() - dob.getFullYear();
+                                                                const m = today.getMonth() - dob.getMonth();
+                                                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                                                isSenior = age >= 60;
+                                                            }
+                                                        } catch {}
+                                                    }
+                                                    const disabilityRaw = disabilityValue;
+                                                    const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
+                                                    setSelectedIsSenior(isSenior);
+                                                    setSelectedHasDisability(hasDisability);
+                                                    console.log('[Treasurer Personal] Selected resident flags:', { rp_id: item?.rp_id, isSenior, hasDisability, per_dob: dobStr, per_disability: disabilityRaw });
+                                                };
+
+                                                // Prefer full resident record from the existing residents list
+                                                const full = (Array.isArray(residents) ? residents : []).find((r: any) => String(r?.rp_id) === String(item?.rp_id));
+                                                if (full) {
+                                                    computeAndSet((full as any)?.per_dob, (full as any)?.per_disability);
+                                                } else {
+                                                    computeAndSet((item as any)?.per_dob, (item as any)?.per_disability);
+                                                }
+                                                const hasDob = (((full as any)?.per_dob ?? (item as any)?.per_dob)) && String(((full as any)?.per_dob ?? (item as any)?.per_dob)).trim() !== '';
+                                                const hasDis = (((full as any)?.per_disability ?? (item as any)?.per_disability)) && String(((full as any)?.per_disability ?? (item as any)?.per_disability)).trim() !== '';
+                                                if (!hasDob || !hasDis) {
+                                                    console.warn('[Treasurer Personal] Missing per_dob/per_disability in residents data for rp_id:', item?.rp_id, 'Ensure useGetResidents() provides these fields.');
+                                                }
                                                 }}
                                                 onCustomInput={(value: string) => {
                                                     field.onChange(value);
                                                     residentForm.setValue('rp_id', '');
+                                                    setSelectedIsSenior(false);
+                                                    setSelectedHasDisability(false);
                                                 }}
                                                 displayKey="full_name"
                                                 valueKey="full_name"
@@ -184,6 +231,11 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                 label="Purpose"
                                 options={purposeOptions}
                             />
+                            {(selectedIsSenior || selectedHasDisability) && (
+                                <div className="text-xs text-green-700 mt-2">
+                                    Eligible for free: {selectedIsSenior ? 'Senior' : ''}{selectedIsSenior && selectedHasDisability ? ' • ' : ''}{selectedHasDisability ? 'PWD' : ''}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-end">

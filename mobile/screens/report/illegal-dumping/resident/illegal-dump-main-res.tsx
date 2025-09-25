@@ -8,7 +8,7 @@ import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 
 export default function WasteIllegalDumpingResMain() {
-  let rp_ide = '00003250910';
+  let rp_ide = '00002250924';
   const {
     data: fetchedData = [],
     isLoading,
@@ -252,6 +252,7 @@ export default function WasteIllegalDumpingResMain() {
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 px-4">
         {/* Search and Filters */}

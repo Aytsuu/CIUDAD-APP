@@ -5,11 +5,27 @@ from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
 from apps.account.models import Account
 from ..double_queries import PostQueries
+from django.db import transaction
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = Staff
     fields = '__all__'
+  
+class StaffAccountSerializer(serializers.ModelSerializer):
+  pos = serializers.CharField(source="pos.pos_title")
+  assignments = serializers.SerializerMethodField()
+
+  class Meta:
+    model = Staff
+    fields = ['staff_id', 'staff_type', 'pos', 'assignments']
+  
+  def get_assignments(self, obj):
+    assigned = [feat.feat_name for feat in Feature.objects.all()] \
+      if obj.pos.pos_title.lower() == "admin" \
+      else [ assi.feat.feat_name.strip() for assi in Assignment.objects.filter(pos=obj.pos.pos_id)]
+    return assigned
+
 
 class StaffMinimalSerializer(serializers.ModelSerializer):
     rp = serializers.SerializerMethodField()
@@ -67,6 +83,7 @@ class StaffCreateSerializer(serializers.ModelSerializer):
     model = Staff
     fields = '__all__'
   
+  @transaction.atomic
   def create(self, validated_data):
     pos = validated_data.get('pos', None)
     max_holders = pos.pos_max

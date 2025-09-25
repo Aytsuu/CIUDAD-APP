@@ -28,7 +28,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return FamilyComposition.objects.filter(fam=obj).count()
 
   def get_father(self, obj):
-    father = FamilyComposition.objects.filter(fam=obj, fc_role='Father').first()
+    father = FamilyComposition.objects.filter(fam=obj, fc_role='FATHER').first()
     if father: 
       info = father.rp.per
       return f"{info.per_fname}"
@@ -36,7 +36,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return ""
   
   def get_mother(self, obj):
-    mother = FamilyComposition.objects.filter(fam=obj, fc_role='Mother').first()
+    mother = FamilyComposition.objects.filter(fam=obj, fc_role='MOTHER').first()
     if mother: 
       info = mother.rp.per
       return f"{info.per_fname}"
@@ -44,7 +44,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return ""
   
   def get_guardian(self, obj):
-    guardian = FamilyComposition.objects.filter(fam=obj, fc_role='Guardian').first()
+    guardian = FamilyComposition.objects.filter(fam=obj, fc_role='GUARDIAN').first()
     if guardian: 
       info = guardian.rp.per
       return f"{info.per_fname}"
@@ -53,13 +53,13 @@ class FamilyTableSerializer(serializers.ModelSerializer):
 
   def get_registered_by(self, obj):
     staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
-    fam_id = fam.fam.fam_id if fam else ""
-    personal = staff.rp.per
-    staff_name = f'{personal.per_lname}, {personal.per_fname}' \
-                  f' {personal.per_mname[0]}.' if personal.per_mname else ''
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
     return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -39,48 +38,47 @@ type PersonalInfoFormProps = {
 
 // ==================== CONSTANTS ====================
 const SEX_OPTIONS = [
-  { id: "female", name: "Female" },
-  { id: "male", name: "Male" },
+  { id: "FEMALE", name: "FEMALE" },
+  { id: "MALE", name: "MALE" },
 ];
 
 const MARITAL_STATUS_OPTIONS = [
-  { id: "single", name: "Single" },
-  { id: "married", name: "Married" },
-  { id: "divorced", name: "Divorced" },
-  { id: "widowed", name: "Widowed" },
+  { id: "SINGLE", name: "SINGLE" },
+  { id: "MARRIED", name: "MARRIED" },
+  { id: "DIVORCED", name: "DIVORCED" },
+  { id: "WIDOWED", name: "WIDOWED" },
 ];
 
 const RELIGION_OPTIONS = [
-  { id: "roman catholic", name: "Roman Catholic" },
-  { id: "muslim", name: "Muslim" },
-  { id: "iglesia ni cristo", name: "Iglesia ni Cristo" },
-  { id: "born again", name: "Born Again" },
-]
+  { id: "ROMAN CATHOLIC", name: "ROMAN CATHOLIC" },
+  { id: "MUSLIM", name: "MUSLIM" },
+  { id: "IGLESIA NI CRISTO", name: "IGLESIA NI CRISTO" },
+  { id: "BORN AGAIN", name: "BORN AGAIN" },
+];
 
 const EDUCATIONAL_ATTAINMENT = [
-  { id: "no formal education", name: "No Formal Education" },
-  { id: "elementary", name: "Elementary" },
-  { id: "high school", name: "High School" },
-  { id: "vocational / technical", name: "Vocational / Technical" },
-  { id: "college level", name: "College Level" },
-  { id: "bachelor's degree", name: "Bachelor's Degree" },
-  { id: "master's degree", name: "Master's Degree" },
-  { id: "doctorate degree", name: "Doctorate Degree" }
+  { id: "ELEMENTARY", name: "ELEMENTARY" },
+  { id: "HIGH SCHOOL", name: "HIGH SCHOOL" },
+  { id: "VOCATIONAL / TECHNICAL", name: "VOCATIONAL / TECHNICAL" },
+  { id: "COLLEGE LEVEL", name: "COLLEGE LEVEL" },
+  { id: "BACHELOR'S DEGREE", name: "BACHELOR'S DEGREE" },
+  { id: "MASTER'S DEGREE", name: "MASTER'S DEGREE" },
+  { id: "DOCTORATE DEGREE", name: "DOCTORATE DEGREE" },
 ];
 
 const PWD_OPTIONS = [
-  { id: "visual disability", name: "Visual Disability" },
-  { id: "hearing disability", name: "Hearing Disability" },
-  { id: "speech impairment", name: "Speech Impairment" },
-  { id: "learning disability", name: "Learning Disability" },
-  { id: "intellectual disability", name: "Intellectual Disability" },
-  { id: "mental disability", name: "Mental Disability" },
-  { id: "psychosocial disability", name: "Psychosocial Disability" },
-  { id: "physical disability", name: "Physical Disability" },
-  { id: "cancer", name: "Cancer" },
-  { id: "rare disease", name: "Rare Disease" },
-  { id: "multiple disabilities", name: "Multiple Disabilities" }
-]
+  { id: "VISUAL DISABILITY", name: "VISUAL DISABILITY" },
+  { id: "HEARING DISABILITY", name: "HEARING DISABILITY" },
+  { id: "SPEECH IMPAIRMENT", name: "SPEECH IMPAIRMENT" },
+  { id: "LEARNING DISABILITY", name: "LEARNING DISABILITY" },
+  { id: "INTELLECTUAL DISABILITY", name: "INTELLECTUAL DISABILITY" },
+  { id: "MENTAL DISABILITY", name: "MENTAL DISABILITY" },
+  { id: "PSYCHOSOCIAL DISABILITY", name: "PSYCHOSOCIAL DISABILITY" },
+  { id: "PHYSICAL DISABILITY", name: "PHYSICAL DISABILITY" },
+  { id: "CANCER", name: "CANCER" },
+  { id: "RARE DISEASE", name: "RARE DISEASE" },
+  { id: "MULTIPLE DISABILITIES", name: "MULTIPLE DISABILITIES" },
+];
 
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
@@ -111,7 +109,7 @@ const PersonalInfoForm = ({
     setAddresses && setAddresses(prev => 
       prev.map((address, prevIdx) => {
         return (prevIdx === idx ? 
-          {...address, [field]: field !== "sitio" ? capitalize(value) : value} 
+          {...address, [field]: field !== "sitio" ? value.toUpperCase() : value} 
           : address)
       })
     )
@@ -156,10 +154,10 @@ const PersonalInfoForm = ({
       )}
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} />
-        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} />
-        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} />
-        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} />
+        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true}/>
+        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} upper={true}/>
+        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} upper={true}/>
+        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} upper={true}/>
       </div>
 
       {/* Sex, Status, DOB, Address */}
@@ -225,13 +223,13 @@ const PersonalInfoForm = ({
                       className="border-none w-full"
                       placeholder="Sitio"
                       options={formattedSitio}
-                      value={address.sitio?.toLowerCase()}
+                      value={String(address.sitio)}
                       onChange={(value) => handleSetAddress(idx, 'sitio', value)}
                       
                     />) : (
                       <Input 
                         className="border-none shadow-none focus-visible:ring-0" 
-                        value={String(capitalize(address.sitio))} 
+                        value={address.sitio} 
                         readOnly
                       />
                     )) : (<Input
@@ -277,8 +275,7 @@ const PersonalInfoForm = ({
             </div>
           ))
         }
-        {(formType !== Type.Viewing) && 
-          (!watch(`${prefix}per_id` as any) || watch(`${prefix}per_id` as any) == "undefined") &&
+        {(formType !== Type.Viewing) &&
           <div>
             <Button 
               variant={"outline"} 

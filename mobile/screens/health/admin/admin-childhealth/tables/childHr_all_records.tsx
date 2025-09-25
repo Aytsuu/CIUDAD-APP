@@ -1,8 +1,32 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, TextInput, FlatList, RefreshControl, } from 'react-native';
 import { useRouter } from 'expo-router';
-import {  Search, MapPin, Calendar, Baby, Heart, ChevronLeft, Users, AlertCircle,RefreshCw} from 'lucide-react-native';
+import { 
+  Search, 
+  User, 
+  Phone, 
+  MapPin, 
+  Calendar, 
+  Baby, 
+  Heart, 
+  Loader2, 
+  ChevronLeft, 
+  ChevronRight, 
+  UserCheck, 
+  UserPlus, 
+  Users, 
+  Filter,
+  AlertCircle,
+  RefreshCw,
+  FileText,
+  TrendingUp
+} from 'lucide-react-native';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Text as UIText } from '@/components/ui/text';
+import { useChildHealthRecords } from '../forms/queries/fetchQueries';
+import { ChildHealthRecord } from '../forms/muti-step-form/types';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { calculateAge } from '@/helpers/ageCalculator';

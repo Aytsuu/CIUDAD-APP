@@ -31,7 +31,7 @@ class Budget_Plan_Detail(models.Model):
     dtl_id = models.BigAutoField(primary_key = True)
     dtl_budget_item = models.CharField(max_length=200)
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    dtl_budget_category = models.CharField(max_length=200)
+    # dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
     class Meta: 
         db_table = 'budget_plan_detail'
@@ -85,60 +85,21 @@ class Budget_Plan_History(models.Model):
 
 #=======================================================================================
 
-class Income_File_Folder(models.Model):
-    inf_num = models.BigAutoField(primary_key=True)
-    inf_year = models.CharField(max_length=4)
-    inf_name = models.CharField(max_length=100, default='')
-    inf_desc = models.CharField(default='', null=True)
-    inf_is_archive = models.BooleanField(default=False)
-
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
-
-    class Meta: 
-        db_table = "income_file_folder"
-
-class Income_Image(models.Model):
-    infi_num = models.BigAutoField(primary_key=True)
-    infi_upload_date = models.CharField(default=date.today)
-    infi_is_archive = models.BooleanField(default=False)
-    infi_type = models.CharField(max_length=100, null=True)
-    infi_name = models.CharField(max_length=255, null=True)
-    infi_path = models.CharField(max_length=500, null=True)
-    infi_url = models.CharField(max_length=500, null=True)
-
-    inf_num = models.ForeignKey(
-        Income_File_Folder,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='inf_num'
-    )
-
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
-
-    class Meta:
-        db_table = "income_image"
-
-
-class Disbursement_File_Folder(models.Model):
+class Disbursement_Voucher(models.Model):
     dis_num = models.BigAutoField(primary_key=True)
-    dis_year = models.CharField(max_length=4)
-    dis_name = models.CharField(max_length=100, default='')
-    dis_desc = models.CharField(default='', null=True)
-    dis_is_archive = models.BooleanField(default=False)
-
+    dis_payee = models.CharField(max_length=255, null=True)  
+    dis_tin = models.CharField(max_length=255, null=True)  
+    dis_date = models.DateField(default=date.today)
+    dis_fund = models.DecimalField(default = 0.00, max_digits=10, decimal_places=2 ) 
+    dis_particulars = models.JSONField(default=list, null=True)
+    dis_checknum = models.CharField(max_length=255, null=True)  
+    dis_bank = models.CharField(max_length=255, null=True)  
+    dis_or_num = models.CharField(max_length=255, null=True)  
+    dis_paydate = models.DateField(default=date.today)
+    dis_payacc = models.JSONField(default=list, null=True)
+    dis_signatories = models.JSONField(default=list, null=True)
+    dis_is_archive = models.BooleanField(default=False)        
+    
     staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.SET_NULL,
@@ -147,35 +108,26 @@ class Disbursement_File_Folder(models.Model):
         db_column='staff_id'
     )
     class Meta:
-        db_table = "disbursement_file_folder" 
+        db_table = "disbursement_voucher" 
 
-class Disbursement_Image(models.Model):
+class Disbursement_File(models.Model):
     disf_num = models.BigAutoField(primary_key=True)
-    disf_upload_date = models.CharField(default=date.today)
     disf_is_archive = models.BooleanField(default=False)
-    disf_type = models.CharField(max_length=100, null=True)  # File type (e.g., image/jpeg)
-    disf_name = models.CharField(max_length=255, null=True)  # File name
-    disf_path = models.CharField(max_length=500, null=True)  # File path
-    disf_url = models.CharField(max_length=500, null=True)   # File URL
+    disf_type = models.CharField(max_length=100, null=True) 
+    disf_name = models.CharField(max_length=255, null=True)  
+    disf_path = models.CharField(max_length=500, null=True)  
+    disf_url = models.CharField(max_length=500, null=True)   
 
     dis_num = models.ForeignKey(
-        Disbursement_File_Folder,
+        Disbursement_Voucher,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         db_column='dis_num'
     )
 
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
-
     class Meta:
-        db_table = "disbursement_image"
+        db_table = "disbursement_file"
 
 #======================================================================================
 
@@ -216,6 +168,15 @@ class Invoice(models.Model):
         related_name='treasurer_invoices' 
     )
 
+    spay_id = models.ForeignKey(
+        'clerk.ServiceChargePaymentRequest',
+        on_delete=models.CASCADE, 
+        db_column='spay_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_spay_invoices' 
+    )    
+
     class Meta:
         db_table = 'invoice'
 
@@ -233,7 +194,8 @@ class Expense_Particular(models.Model):
 
 class Income_Expense_Tracking(models.Model):
     iet_num = models.BigAutoField(primary_key=True)
-    iet_serial_num = models.CharField(max_length=100, default='DEFAULT_SERIAL') 
+    iet_serial_num = models.CharField(max_length=100, null=True, blank=True) 
+    iet_check_num = models.CharField(max_length=100, null=True, blank=True) 
     iet_datetime = models.DateTimeField(null=True)
     iet_entryType = models.CharField(max_length=100)
     iet_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -389,5 +351,4 @@ class Purpose_And_Rates(models.Model):
 
     class Meta:
         db_table = 'purpose_and_rate'
-
 

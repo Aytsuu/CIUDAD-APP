@@ -9,21 +9,21 @@ class ActivityLogViewSet(viewsets.ModelViewSet):
     serializer_class = ActivityLogSerializer
     
     def list(self, request, *args, **kwargs):
-     
         activity_logs = ActivityLog.objects.all()
         activity_logs_serialized = ActivityLogSerializer(activity_logs, many=True).data
-        
-        # Normalize to unified format
-        custom_logs = [
+
+        # Map to the keys expected by the frontend while keeping useful extras
+        mapped_logs = [
             {
-                'timestamp': log['act_timestamp'],
-                'type': log['act_type'],
-                'description': log['act_description'],
+                'act_id': log.get('act_id'),
+                'act_timestamp': log.get('act_timestamp'),
+                'act_type': log.get('act_type'),
+                'act_description': log.get('act_description'),
                 'staff_name': log.get('staff_name', ''),
-                'module': (log.get('act_module') or '').title(),
-                'action': (log.get('act_action') or '').title(),
-                'record_id': log.get('act_record_id', ''),
-                'source': 'custom_activity_log',
+                # Extras (not currently used by UI but helpful for filters)
+                'act_module': (log.get('act_module') or ''),
+                'act_action': (log.get('act_action') or ''),
+                'act_record_id': log.get('act_record_id'),
             }
             for log in activity_logs_serialized
         ]
@@ -31,20 +31,19 @@ class ActivityLogViewSet(viewsets.ModelViewSet):
         # Search filter with safe string handling
         search = request.query_params.get('search', '').strip().lower()
         if search:
-            custom_logs = [
-                log for log in custom_logs
-                if search in (log.get('type', '') or '').lower()
-                or search in (log.get('description', '') or '').lower()
+            mapped_logs = [
+                log for log in mapped_logs
+                if search in (log.get('act_type', '') or '').lower()
+                or search in (log.get('act_description', '') or '').lower()
                 or search in (log.get('staff_name', '') or '').lower()
-                or search in (log.get('module', '') or '').lower()
-                or search in (log.get('action', '') or '').lower()
+                or search in (log.get('act_module', '') or '').lower()
+                or search in (log.get('act_action', '') or '').lower()
             ]
 
         # Sort by timestamp (newest first)
-        sorted_logs = sorted(custom_logs, key=itemgetter('timestamp'), reverse=True)
+        sorted_logs = sorted(mapped_logs, key=itemgetter('act_timestamp'), reverse=True)
         return Response(sorted_logs)
     
     def get_queryset(self):
-        return ActivityLog.objects.filter(
-            staff__staff_id="00003250722"
-        ) 
+        # Return all activity logs; access control can be layered via permissions if needed
+        return ActivityLog.objects.all()

@@ -8,7 +8,7 @@ spay_due_date = models.DateField(default=default_due_date)
 
 
 class ClerkCertificate(models.Model):
-    cr_id = models.BigAutoField(primary_key=True)
+    cr_id = models.CharField(primary_key=True)
     cr_req_request_date = models.DateTimeField(default = datetime.now)
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
@@ -37,6 +37,7 @@ class ClerkCertificate(models.Model):
 
     class Meta:
         db_table = 'certification_request'
+        managed = False
 
 
 class NonResidentCertificateRequest(models.Model):
@@ -75,13 +76,13 @@ class Business(models.Model):
     bus_id = models.BigIntegerField(primary_key=True)
     bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
+    bus_location = models.CharField(max_length=255)
+    bus_status = models.CharField(max_length=50)
     bus_date_of_registration = models.DateField()
+    bus_date_verified = models.DateField()
     staff_id = models.CharField(max_length=50, null=True)
-    add_id = models.CharField(max_length=50)
     rp_id = models.CharField(max_length=50, null=True)
     br_id = models.CharField(max_length=50)
-    bus_date_verified = models.DateField()
-    bus_status = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'business'
@@ -149,33 +150,33 @@ class DocumentsPDF(models.Model):
     class Meta:
         db_table = 'clerk_pdf_documents'
 
-# Address Models
-class Sitio(models.Model):
-    sitio_id = models.CharField(max_length=100, primary_key=True)
-    sitio_name = models.CharField(max_length=100)
+# # Address Models
+# class Sitio(models.Model):
+#     sitio_id = models.CharField(max_length=100, primary_key=True)
+#     sitio_name = models.CharField(max_length=100)
 
-    class Meta:
-        db_table = 'sitio'
-        managed = False 
+#     class Meta:
+#         db_table = 'sitio'
+#         managed = False 
 
-    def __str__(self):
-        return self.sitio_id
+#     def __str__(self):
+#         return self.sitio_id
 
-class Address(models.Model):
-    add_id = models.BigAutoField(primary_key=True)  
-    add_province = models.CharField(max_length=50)
-    add_city = models.CharField(max_length=50)
-    add_barangay = models.CharField(max_length=50)
-    add_street = models.CharField(max_length=50)
-    add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
+# class Address(models.Model):
+#     add_id = models.BigAutoField(primary_key=True)  
+#     add_province = models.CharField(max_length=50)
+#     add_city = models.CharField(max_length=50)
+#     add_barangay = models.CharField(max_length=50)
+#     add_street = models.CharField(max_length=50)
+#     add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
+#     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
 
-    class Meta:
-        db_table = 'address'
-        managed = False
+#     class Meta:
+#         db_table = 'address'
+#         managed = False
 
-    def __str__(self):
-        return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
+#     def __str__(self):
+#         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
 
 

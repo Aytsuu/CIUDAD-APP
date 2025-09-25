@@ -288,6 +288,7 @@ class Ordinance(models.Model):
     ord_parent = models.CharField(max_length=50, null=True, blank=True, help_text="ord_num of the parent ordinance (if this is an amendment)")
     ord_is_ammend = models.BooleanField(default=False, help_text="Whether this ordinance is an amendment to another")
     ord_ammend_ver = models.IntegerField(null=True, blank=True, help_text="Version number of the amendment")
+    ord_repealed = models.BooleanField(default=False, help_text="Whether this ordinance is repealed")
 
     of_id = models.ForeignKey(
         'OrdinanceFile',
@@ -306,7 +307,34 @@ class Ordinance(models.Model):
         db_column='staff_id'
     )
     
+    def clean(self):
+        # An ordinance cannot be marked as an amendment if it is repealed
+        if self.ord_repealed and self.ord_is_ammend:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'ord_is_ammend': 'A repealed ordinance cannot be marked as an amendment.'
+            })
+
+        # If this ordinance amends another, ensure the parent is not repealed
+        if self.ord_is_ammend and self.ord_parent:
+            try:
+                parent = Ordinance.objects.get(ord_num=self.ord_parent)
+                if parent.ord_repealed:
+                    from django.core.exceptions import ValidationError
+                    raise ValidationError({
+                        'ord_parent': 'Cannot amend a repealed ordinance.'
+                    })
+            except Ordinance.DoesNotExist:
+                # Let other validations handle missing parent if needed
+                pass
+
     def save(self, *args, **kwargs):
+        # Run validations before saving
+        try:
+            self.full_clean()
+        except Exception:
+            # Re-raise to preserve default behavior upstream
+            raise
         if not self.ord_num:  # If no ordinance number provided
             # Generate ordinance number: ORD-YYYY-XXXX
             year = getattr(self, 'ord_year', 2024)

@@ -1,10 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import {
-  AlertCircle,
   ArrowUpDown,
-  CircleCheck,
   Ellipsis,
-  Info,
   Loader2,
   Pen,
   Trash,
@@ -29,11 +26,11 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Form } from "@/components/ui/form/form";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { usePositions } from "./queries/administrationFetchQueries";
-import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { formatPositions } from "./AdministrationFormats";
 import { useAuth } from "@/context/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
+import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
   {
@@ -201,9 +198,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
 
           // Check if position actually changed
           if (selectedPosition?.pos_title === row.original.position) {
-            toast("No changes were made to the staff position", {
-              icon: <Info size={24} className="fill-blue-500 stroke-white" />,
-            });
+            showPlainToast("No changes were made to the staff position");
             setIsSubmitting(false);
             setIsEditModalOpen(false);
             return;
@@ -219,21 +214,12 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
             staffId: row.original.staff_id,
           });
 
-          toast(`Staff position updated to ${selectedPosition?.pos_title}`, {
-            icon: (
-              <CircleCheck size={24} className="fill-green-500 stroke-white" />
-            ),
-          });
-
+          showSuccessToast(`Staff position updated to ${selectedPosition?.pos_title}`);
           setIsEditModalOpen(false);
           setIsSubmitting(false);
         } catch (error) {
           console.error("Failed to update staff:", error);
-          toast("Failed to update staff position. Please try again.", {
-            icon: (
-              <AlertCircle size={24} className="fill-red-500 stroke-white" />
-            ),
-          });
+          showErrorToast("Failed to update staff position. Please try again.");
           setIsEditModalOpen(false);
           setIsSubmitting(false);
         }
@@ -244,21 +230,10 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
           // Delete staff (API handles dual database deletion)
           await deleteStaff(row.original.staff_id);
 
-          toast("Staff has been removed successfully", {
-            icon: (
-              <CircleCheck
-                size={24}
-                className="fill-green-500 stroke-white"
-              />
-            ),
-          });
+          showSuccessToast("Staff has been removed successfully");
         } catch (error) {
           console.error("Failed to delete staff:", error);
-          toast("Failed to remove staff. Please try again.", {
-            icon: (
-              <AlertCircle size={24} className="fill-red-500 stroke-white" />
-            ),
-          });
+          showErrorToast("Failed to remove staff. Please try again.");
         }
       };
 

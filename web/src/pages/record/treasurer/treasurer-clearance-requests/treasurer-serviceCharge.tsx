@@ -50,11 +50,11 @@ export const columns: ColumnDef<ServiceCharge>[] = [
     },
     { accessorKey: "action", 
         header: "Action",
-        cell: ({ row }) =>(
+        cell: ({  }) =>(
           <div className="flex justify-center gap-1">
-              <TooltipLayout
-              trigger={
-                  <DialogLayout
+              {/* <TooltipLayout
+                trigger={
+                    <DialogLayout
                     trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
                     className="flex flex-col"
                     title="Create Receipt"
@@ -77,7 +77,7 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                         })()
                     } 
                   />
-              } content="Create Receipt"/>
+              } content="Create Receipt"/> */}
               <TooltipLayout 
                trigger={
                   <DialogLayout

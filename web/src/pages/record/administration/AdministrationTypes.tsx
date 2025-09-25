@@ -7,7 +7,6 @@ export type Position = {
 export type Assigned = {
     assi_id: string
     assi_date: string
-    assi_permission: string
     feat: any
     pos: Record<string, any>
 }
@@ -18,14 +17,6 @@ export type Feature = {
     feat_category: string;
 };
 
-export type Permission = {
-    perm_id: string
-    view: boolean
-    create: boolean
-    update: boolean
-    delete: boolean
-    assi_id: string
-}
 
 export type AdministrationRecord = {
     staff_id: string

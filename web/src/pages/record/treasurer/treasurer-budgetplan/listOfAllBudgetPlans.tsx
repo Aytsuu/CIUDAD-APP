@@ -53,8 +53,9 @@ function BudgetPlan() {
     const { paginated, total } = filterAndPaginate(visiblePlans, searchTerm, currentPage, pageSize, activeTab);
 
     // Check if current year plan exists (regardless of archive status)
-    const hasCurrentYearPlan = visiblePlans.some(plan => plan.plan_year === currentYear);
-    const showAddButton = !hasCurrentYearPlan;
+    const showAddButton = !(visiblePlans.some(plan => plan.plan_year === currentYear));
+    const shouldClone = showAddButton && fetchedData.length != 0;
+    const shouldNotClone = showAddButton && fetchedData.length == 0;
 
     const { mutate: deletePlan } = useDeleteBudgetPlan();
     const { mutate: archivePlan } = useArchiveBudgetPlan();
@@ -240,7 +241,7 @@ function BudgetPlan() {
                         />
                     </div>
 
-                    {showAddButton && (
+                    {shouldClone ? (
                         <ConfirmationModal
                             trigger={<Button>+ Add New</Button>}
                             title="Cloning Confirmation"
@@ -263,7 +264,17 @@ function BudgetPlan() {
                                 });
                             }}
                         />
-                    )}
+                    ): shouldNotClone ? (
+                        <Button 
+                            onClick={() => {
+                                    navigate("/budgetplan-forms", { 
+                                        state: { 
+                                            shouldClone: false
+                                        } 
+                                    });
+                                }}
+                        >+ Add New</Button>
+                    ): null}
                 </div>
 
                 <div className="flex items-center gap-2">

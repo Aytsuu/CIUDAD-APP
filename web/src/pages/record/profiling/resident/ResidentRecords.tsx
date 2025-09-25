@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, Loader2, CircleUserRound, House, UsersRound, Building } from "lucide-react"
+import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -16,6 +16,7 @@ import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { capitalize } from "@/helpers/capitalize"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
+import { Spinner } from "@/components/ui/spinner"
 
 const profiles = [
   {
@@ -175,7 +176,7 @@ export default function ResidentRecords() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Spinner size="lg" />
                 <span className="ml-2 text-gray-600">Loading residents...</span>
               </div>
             )}

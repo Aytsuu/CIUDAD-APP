@@ -17,7 +17,6 @@ import {
 } from "../../queries/profilingFetchQueries"
 import { formatSitio } from "../../ProfilingFormats"
 import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries"
-import { capitalizeAllFields } from "@/helpers/capitalize"
 import { useLoading } from "@/context/LoadingContext"
 import { Users, History, Clock, UsersRound, UserRound, Building, MoveRight } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
@@ -30,6 +29,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { CardSidebar } from "@/components/ui/card-sidebar"
 import { Button } from "@/components/ui/button/button"
 import { Badge } from "@/components/ui/badge"
+import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast"
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
@@ -52,6 +52,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const { data: ownedBusinesses, isLoading: isLoadingBusinesses } = useOwnedBusinesses({
     rp: params.data.residentId,
   })
+
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
   const { data: personalHistory, isLoading: isLoadingPersonalHistory } = usePersonalHistory(personalInfo?.per_id)
 
@@ -74,7 +75,8 @@ export default function ResidentViewForm({ params }: { params: any }) {
           address.add_province !== "" &&
           address.add_city !== "" &&
           address.add_barangay !== "" &&
-          (address.add_barangay === "San Roque" ? address.sitio !== "" : address.add_external_sitio !== ""),
+          (address.add_barangay === "SAN ROQUE (CIUDAD)" ? address.sitio !== "" : address.add_external_sitio !== "") &&
+          address.add_street !== ""
       ),
     [addresses],
   )
@@ -157,81 +159,80 @@ export default function ResidentViewForm({ params }: { params: any }) {
   }, [addresses])
 
   const submit = async () => {
-    setIsSubmitting(true)
     if (!(await form.trigger())) {
-      setIsSubmitting(false)
       handleSubmitError("Please fill out all required fields")
       return
     }
     if (!validateAddresses()) {
-      setIsSubmitting(false)
       handleSubmitError("Please fill out all required fields")
       return
     }
     try {
+      setIsSubmitting(true)
       const isAddressAdded = personalInfo?.per_addresses?.length < addresses.length
       const values = form.getValues()
-      const {per_age, ...personalInfoRest } = personalInfo 
+      const {per_age, per_id, registered_by, rp_date_registered, ...personalInfoRest } = personalInfo 
+      const {per_id: id, ...val} = values
+
       if (
         checkDefaultValues(
-          { ...values, per_addresses: addresses },
+          { ...val, per_addresses: addresses },
           personalInfoRest,
         )
       ) {
         setIsSubmitting(false)
         setFormType(Type.Viewing)
-        handleSubmitError("No changes made")
+        showPlainToast("No changes made")
         return
       }
       
-      const initialiAddresses = addresses.slice(0, personalInfo?.per_addresses?.length);
+      const initialAddresses = addresses.slice(0, personalInfo?.per_addresses?.length);
       const addedAddress = addresses.slice(personalInfo?.per_addresses?.length, addresses.length);
-
+      let new_addresses = []
       // Add new address to the database
       if (isAddressAdded) {
-        await addAddress(addedAddress, {
-          onSuccess: (new_addresses) => {
-            // Format the addresses to match the expected format
-            const per_addresses = new_addresses.map((address: any) => {
-              return {
-                add: address.add_id,
-                per: personalInfo?.per_id,
-              }
-            })
+        new_addresses = await addAddress(addedAddress)
 
-            const initial_per_addresses = initialiAddresses.map((address: any) => ({
-              add: address.add_id,
-              per: personalInfo?.per_id,
-              initial: true
-            }));
+        // Format the addresses to match the expected format
+        const per_addresses = new_addresses.map((address: any) => {
+          return {
+            add: address.add_id,
+            per: personalInfo?.per_id,
+          }
+        })
 
-            // Link personal address
-            addPersonalAddress({
-              data: [...per_addresses, ...initial_per_addresses], 
-              staff_id: user?.staff?.staff_id
-            })
-          },
+        const initial_per_addresses = initialAddresses.map((address: any) => ({
+          add: address.add_id,
+          per: personalInfo?.per_id,
+          initial: true
+        }));
+
+        // Link personal address
+        await addPersonalAddress({
+          data: [...per_addresses, ...initial_per_addresses], 
+          staff_id: user?.staff?.staff_id
         })
 
         if (
           checkDefaultValues(
-            { ...values, per_addresses: initialiAddresses },
+            { ...values, per_addresses: initialAddresses },
             personalInfoRest,
           )
         ) {
           setIsSubmitting(false)
           setFormType(Type.Viewing)
-          handleSubmitSuccess("Profile updated successfully");
+          showSuccessToast("Profile updated successfully");
           return
         }
       }
+
       // Update the profile and address if any changes were made
-      updateProfile(
+      await updateProfile(
         {
           personalId: personalInfo?.per_id,
           values: {
-            ...capitalizeAllFields(values),
-            per_addresses: isAddressAdded ? initialiAddresses : addresses,
+            ...values,
+            per_addresses: [...new_addresses,...initialAddresses],
             staff_id: user?.staff?.staff_id,
           },
         },
@@ -244,8 +245,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
         },
       )
     } catch (err) {
+      showErrorToast("Failed to update profile. Please try again.")
+    } finally {
       setIsSubmitting(false);
-      throw err
     }
   }
 
@@ -420,19 +422,21 @@ export default function ResidentViewForm({ params }: { params: any }) {
               <h2 className="text-lg font-semibold">Family</h2>
               <p className="text-xs text-black/50">Shows family members of this resident</p>
             </div>
-            <Button variant={'ghost'}
-              onClick={() => {
-                navigate("/profiling/family/view", {
-                  state: {
-                    params: {
-                      fam_id: params.data.familyId
+            {family.length > 0 && (
+              <Button variant={'ghost'}
+                onClick={() => {
+                  navigate("/profiling/family/view", {
+                    state: {
+                      params: {
+                        fam_id: params.data.familyId
+                      }
                     }
-                  }
-                })
-              }}
-            >
-              View full details <MoveRight/>
-            </Button>
+                  })
+                }}
+              >
+                View full details <MoveRight/>
+              </Button>
+            )}
           </div>
             {renderFamilyContent()}
           </Card>}

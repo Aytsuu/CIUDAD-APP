@@ -17,7 +17,7 @@ export default () => {
     <BusinessFormProvider methods={form}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="details" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="details" options={{ headerShown: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="add-business" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="edit-business" options={{ headerShown: false, animation: 'fade' }} />
       </Stack>

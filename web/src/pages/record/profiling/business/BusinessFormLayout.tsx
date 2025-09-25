@@ -152,14 +152,10 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const populateFields = React.useCallback(() => {
     if (!businessInfo) return
 
-    // If respondent is a resident
-    // const resident = formattedResidents?.find((res: any) => res.id.split(" "[0] == params?.rpId));
-
     const fields = [
       { key: "bus_name", value: businessInfo.bus_name },
       { key: "bus_gross_sales", value: String(businessInfo.bus_gross_sales) },
-      { key: "bus_street", value: businessInfo.bus_street },
-      { key: "sitio", value: businessInfo.sitio },
+      { key: "bus_location", value: businessInfo.bus_location },
     ]
 
     fields.forEach(({ key, value }) => {
@@ -182,37 +178,10 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         ...(!noPersonalInfo && {per: per}),
         ...(rp_id && {rp: rp_id}),
         ...businessData,
-        sitio: businessData.sitio.toLowerCase(),
         bus_status: "Active",
         staff: user?.staff?.staff_id,
         create_files: files
       })
-
-      // if(!rp_id) { // For non-resident
-      //   const personal = await addPersonal(capitalizeAllFields(per));
-      //   const respondent = await addBusinessRespondent({
-      //     per: personal.per_id,
-      //   });
-
-      //   await addBusiness({
-      //     ...businessData,
-      //     bus_status: 'Active',
-      //     br: respondent?.br_id,
-      //     staff: user?.staff?.staff_id,
-      //     files: files,
-      //   })
-
-      // } else {
-      //   await addBusiness({
-      //     ...businessData,
-      //     ...((rp_id || tab_params?.residentId) && {
-      //       rp: tab_params?.residentId || rp_id?.split(" ")[0],
-      //     }),
-      //     bus_status: 'Active',
-      //     staff: user?.staff?.staff_id,
-      //     files: files,
-      //   })
-      // }
 
       setIsSubmitting(false);
       showSuccessToast("Business registered successfully!")
@@ -246,7 +215,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           ...((formType !== Type.Request && !_.isEqual(initialFiles, files)) && {
             edit_files: files
           }),
-          sitio: businessData.sitio.toLowerCase(),
           staff: user?.staff?.staff_id || "",
         },
         businessId: params?.busId,
@@ -287,8 +255,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     const formIsValid = await form.trigger([
       "bus_name", 
       "bus_gross_sales", 
-      "bus_street", 
-      "sitio"
+      "bus_location", 
     ])
 
     // Validate form
@@ -415,7 +382,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           </div>
           <Label className="flex text-xl text-gray-100 items-center gap-4">
             {businessInfo?.br ? 
-              fullName(businessInfo?.br.per_lname, businessInfo?.br.per_fname, businessInfo?.br.per_mname) : 
+              fullName(businessInfo?.br.br_lname, businessInfo?.br.br_fname, businessInfo?.br.br_mname) : 
               fullName(businessInfo?.rp.per_lname, businessInfo?.rp.per_fname, businessInfo?.rp.per_mname)
             }
             {formType == Type.Editing && <div>
