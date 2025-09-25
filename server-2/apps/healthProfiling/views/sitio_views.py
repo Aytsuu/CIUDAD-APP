@@ -15,8 +15,11 @@ class SitioCreateView(generics.CreateAPIView):
     serializer = self.get_serializer(data=request.data, many=True)
     serializer.is_valid(raise_exception=True)
 
-    instances = [Sitio(**item) for item in serializer.validated_data]
-    created_instances = Sitio.objects.bulk_create(instances)
+    created_instances = []
+    for item in serializer.validated_data:
+      instance = Sitio(**item)
+      instance.save()
+      created_instances.append(instance)
     
     if len(created_instances) > 0:
       return Response(data=SitioBaseSerializer(created_instances, many=True).data, status=status.HTTP_200_OK)

@@ -9,7 +9,7 @@ import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/p
 
 export const maternal_router = [
     {
-        path: "/maternalrecords",
+        path: "/services/maternalrecords",
         element: <MaternalAllRecords />,
     },
     {
