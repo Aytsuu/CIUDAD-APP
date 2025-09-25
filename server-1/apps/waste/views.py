@@ -472,7 +472,7 @@ class WasteTruckRestoreView(generics.UpdateAPIView):
 # get Driver for garbage Collection Form
 class DriverPersonnelAPIView(APIView):
     def get(self, request, *args, **kwargs): 
-        allowed_positions = ["WASTE DRIVER", "TRUCK DRIVER", "DRIVER"]  
+        allowed_positions = ["WASTE DRIVER", "TRUCK DRIVER", "DRIVER", "DRIVER LOADER"]  
         
         drivers = WastePersonnel.objects.filter(
             staff_id__pos__pos_title__in=allowed_positions
@@ -487,7 +487,7 @@ class DriverPersonnelAPIView(APIView):
 #get Collectors for garbage collection Form
 class CollectorPersonnelAPIView(APIView):
     def get(self, request, *args, **kwargs): 
-        allowed_positions = ["WASTE COLLECTOR", "COLLECTOR"]  
+        allowed_positions = ["WASTE COLLECTOR", "COLLECTOR","LOADER"]  
         
         collectors = WastePersonnel.objects.filter( 
             staff_id__pos__pos_title__in=allowed_positions
