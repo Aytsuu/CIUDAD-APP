@@ -670,7 +670,12 @@ class SoapFormSubmissionView(APIView):
             # 5. Medical History
             if data.get('selected_illnesses'):
                 medical_history_data = [
-                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': date.today().strftime('%y-%m-%d')}
+                    {
+                        'patrec_id': patrec_id,
+                        'ill_id': ill_id,
+                        'ill_date': date.today().strftime('%Y-%m-%d'),  # Corrected year format
+                        'is_for_surveillance': True  # Added field for surveillance
+                    }
                     for ill_id in data['selected_illnesses']
                 ]
                 MedicalHistory.objects.bulk_create([
@@ -804,7 +809,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     MedicalHistory(
                         patrec_id=patrec_id,
                         ill_id=ill_id,
-                        year=date.today().strftime('%y-%m-%d')
+                        ill_date=date.today().strftime('%y-%m-%d'),
+                        is_for_surveillance=True  
                     )
                     for ill_id in data["selected_illnesses"]
                 ])

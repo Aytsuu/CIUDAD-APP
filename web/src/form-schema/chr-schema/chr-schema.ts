@@ -189,6 +189,7 @@ export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetailsSchema)
     chhist_status: z.string().optional(),
     historicalSupplementStatuses: z.array(CHSSupplementStatSchema).optional(),
     selectedStaffId: z.string().optional(),
+    passed_status: z.string().optional(),
   })
 
 export type FormData = z.infer<typeof ChildHealthFormSchema>

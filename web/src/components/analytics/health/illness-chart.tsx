@@ -1,41 +1,22 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+// components/MedicalHistoryMonthlyChart.tsx
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, BarChart3 } from "lucide-react";
+import { AlertCircle, Loader2, LineChart as LineChartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
 import CardLayout from "@/components/ui/card/card-layout";
-import { useVaccineChart } from "./queries/chart";
+import { useMedicalHistoryChart } from "./queries/chart";
 
-interface VaccineChartProps {
+interface MedicalHistoryChartProps {
   initialMonth: string;
 }
 
-const COLORS = [
-  "#3b82f6", // Blue
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#8b5cf6", // Violet
-  "#ec4899", // Pink
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#64748b", // Slate
-];
-
-export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
+export function MedicalHistoryMonthlyChart({ initialMonth }: MedicalHistoryChartProps) {
   const [currentMonth, setCurrentMonth] = useState(initialMonth);
-  const { data, isLoading, error } = useVaccineChart(currentMonth);
+  const { data, isLoading, error } = useMedicalHistoryChart(currentMonth);
 
   const currentDate = parseISO(`${currentMonth}-01`);
   const today = new Date();
@@ -44,59 +25,43 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
   const nextMonthDisabled = isSameMonth(currentDate, currentMonthDate);
 
   const navigateMonth = (direction: "prev" | "next") => {
-    const newDate =
-      direction === "prev"
-        ? subMonths(currentDate, 1)
-        : addMonths(currentDate, 1);
+    const newDate = direction === "prev" ? subMonths(currentDate, 1) : addMonths(currentDate, 1);
     setCurrentMonth(format(newDate, "yyyy-MM"));
   };
 
   // Transform and sort data
-  const allVaccines = data?.vaccine_counts
-    ? Object.entries(data.vaccine_counts)
-        .filter(([name]) => name !== "null")
+  const allIllnesses = data?.illness_counts
+    ? Object.entries(data.illness_counts)
+        .filter(([name]) => name !== "null" && name.trim() !== "")
         .map(([name, count]) => ({ name, count: count as number }))
         .sort((a, b) => b.count - a.count) // Sort by count descending
     : [];
 
   // Take top 10 and group the rest
   const topN = 10;
-  const displayData = allVaccines.slice(0, topN);
-  const othersCount = allVaccines.slice(topN).reduce((sum, item) => sum + item.count, 0);
-  
+  const displayData = allIllnesses.slice(0, topN);
+  const othersCount = allIllnesses.slice(topN).reduce((sum, item) => sum + item.count, 0);
+
   if (othersCount > 0) {
-    displayData.push({ name: "Other Vaccines", count: othersCount });
+    displayData.push({ name: "Other Illnesses", count: othersCount });
   }
 
-  const totalVaccines = allVaccines.length;
-  const otherVaccinesCount = totalVaccines - topN;
+  const totalIllnesses = allIllnesses.length;
+  const otherIllnessesCount = totalIllnesses - topN;
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    // label,
-  }: {
-    active?: boolean;
-    payload?: any[];
-    label?: string;
-  }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[]; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-4 shadow-md rounded-md border border-gray-200">
           <p className="font-semibold">{payload[0].payload.name}</p>
           <p className="text-sm">
-            Doses: <span className="font-medium">{payload[0].value}</span>
+            Cases: <span className="font-medium">{payload[0].value}</span>
           </p>
           <p className="text-sm">
-            Percentage:{" "}
-            <span className="font-medium">
-              {((payload[0].value / (data?.total_records ?? 1)) * 100 || 0).toFixed(1)}%
-            </span>
+            Percentage: <span className="font-medium">{((payload[0].value / (data?.total_records ?? 1)) * 100 || 0).toFixed(1)}%</span>
           </p>
-          {payload[0].payload.name === "Other Vaccines" && otherVaccinesCount > 0 && (
-            <p className="text-sm mt-1">
-              (Combines {otherVaccinesCount} other vaccines)
-            </p>
+          {payload[0].payload.name === "Other Illnesses" && otherIllnessesCount > 0 && (
+            <p className="text-sm mt-1">(Combines {otherIllnessesCount} other illnesses)</p>
           )}
         </div>
       );
@@ -107,14 +72,12 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
   if (error) {
     return (
       <CardLayout
-        title="Vaccine Distribution"
+        title="Medical History Trends"
         description="Error loading data"
         content={
           <Alert variant="destructive" className="m-4">
             <AlertCircle className="h-5 w-5" />
-            <AlertDescription className="text-sm">
-              Failed to load vaccine distribution data. Please try again later.
-            </AlertDescription>
+            <AlertDescription className="text-sm">Failed to load medical history data. Please try again later.</AlertDescription>
           </Alert>
         }
         cardClassName="border border-gray-200 shadow-sm rounded-xl"
@@ -126,18 +89,14 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
     <CardLayout
       title={
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-gray-500" />
-          <CardTitle className="text-xl font-semibold text-gray-900">
-            Vaccine Distribution
-          </CardTitle>
+          <LineChartIcon className="h-5 w-5 text-gray-500" />
+          <CardTitle className="text-xl font-semibold text-gray-900">Medical History Trends</CardTitle>
         </div>
       }
-      description={`Vaccine doses administered in ${format(
-        currentDate,
-        "MMMM yyyy"
-      )}`}
+      description={`Illness cases recorded in ${format(currentDate, "MMMM yyyy")}`}
       content={
         <div className="space-y-6 p-4">
+          {/* Header with controls */}
           <div className="flex items-center justify-end">
             <div className="flex items-center space-x-3">
               <Button
@@ -171,56 +130,43 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
             <div className="flex items-center justify-center h-[300px]">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
-          ) : !data || allVaccines.length === 0 ? (
+          ) : !data || allIllnesses.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">
-              <BarChart3 className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                No Data Available
-              </h3>
-              <p className="text-sm text-gray-500 max-w-sm">
-                No vaccine administration data available for the selected period.
-              </p>
+              <LineChartIcon className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Data Available</h3>
+              <p className="text-sm text-gray-500 max-w-sm">No medical history data available for the selected period.</p>
             </div>
           ) : (
             <>
               <div className="text-sm text-gray-500 text-center mb-2">
-                Showing top {Math.min(topN, allVaccines.length)} vaccines
-                {otherVaccinesCount > 0 && (
-                  <span> and {otherVaccinesCount} others combined</span>
-                )}
+                Showing top {Math.min(topN, allIllnesses.length)} illnesses
+                {otherIllnessesCount > 0 && <span> and {otherIllnessesCount} others combined</span>}
+                <span className="ml-2">• Total Records: {data.total_records}</span>
               </div>
+
               <div className="h-[450px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={displayData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                  >
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={70}
-                      tick={{ fontSize: 12 }}
-                      interval={0}
+                  <LineChart data={displayData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={70} 
+                      tick={{ fontSize: 12 }} 
+                      interval={0} 
                     />
-                    <YAxis
-                    
-                    />
+                    <YAxis />
                     <Tooltip content={<CustomTooltip />} />
-                  
-                    <Bar
-                      name="Doses"
-                      dataKey="count"
-                      barSize={40}
-                    >
-                      {displayData.map((_entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                    <Line 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3} 
+                      dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }} 
+                      activeDot={{ r: 6, fill: "#ef4444" }} 
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </>

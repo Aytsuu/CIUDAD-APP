@@ -54,7 +54,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         newbornInitiatedbf: submittedData.newbornInitiatedbf,
         selectedStaffId: submittedData.selectedStaffId,
 
-
         // Child health history
         status: submittedData.status,
         tt_status: submittedData.tt_status,
@@ -85,7 +84,8 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         father_lname: submittedData.fatherLname,
         father_mname: submittedData.fatherMname,
         father_age: submittedData.fatherAge,
-        father_dob: localDateFormatter(submittedData.fatherdob)
+        father_dob: localDateFormatter(submittedData.fatherdob),
+        passed_status: submittedData.passed_status || "recorded"
       },
       staff: staff,
       todaysHistoricalRecord: todaysHistoricalRecord,

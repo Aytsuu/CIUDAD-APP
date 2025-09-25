@@ -15,7 +15,6 @@ export const medicineRequest = [
     path: "/services/medicine/records",
     element: <IndivMedicineRecord />,
   },
- 
   
   {
     path: "/request/medicine/pending-pickup",

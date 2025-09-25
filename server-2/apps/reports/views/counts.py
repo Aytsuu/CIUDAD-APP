@@ -8,7 +8,8 @@ from apps.medicalConsultation.models import *
 from apps.firstaid.models import *
 from apps.maternal.models import *
 from apps.vaccination.models import *
-
+from apps.familyplanning.models import *
+from apps.animalbites.models import *
 
 class ReportsCount(APIView):
     def get(self, request):
@@ -30,6 +31,8 @@ class ReportsCount(APIView):
             inv_firstaid_count = FirstAidInventory.objects.count()
             inv_commodity_count = CommodityInventory.objects.count()
             pregnancy_count = Pregnancy.objects.distinct().count()
+            family_planning_count = FP_Record.objects.filter(patrec__patrec_type='Family Planning').distinct().count()
+            animabites_count = AnimalBite_Referral.objects.count()
         
         
             # Total count
@@ -46,15 +49,19 @@ class ReportsCount(APIView):
                     'vaccine_count': vaccine_count,
                     'immunization_count': immunization_count,
                     'child_count': child_count,
-                    'medicine_records_count': medicine_records_count,
-                    'firstaid_records_count': firstaidrecord_count,
-                    'medicalconsultation_records_count': medicalcon_count,
-                    'vaccination_records_count': vaccnerecord_count,
                     'inv_medicine_count': inv_medicine_count,
                     'inv_antigen_count': inv_antigen_count,
                     'inv_firstaid_count': inv_firstaid_count,
                     'inv_commodity_count': inv_commodity_count,
-                    'pregnancy_count': pregnancy_count
+                    'medicine_records_count': medicine_records_count,
+                    'firstaid_records_count': firstaidrecord_count,
+                    'medicalconsultation_records_count': medicalcon_count,
+                    'vaccination_records_count': vaccnerecord_count,
+                    'pregnancy_count': pregnancy_count,
+                    'family_planning_count': family_planning_count,
+                    'animal_bites_count': animabites_count
+                    
+                    
                 }
             }, status=status.HTTP_200_OK)
             

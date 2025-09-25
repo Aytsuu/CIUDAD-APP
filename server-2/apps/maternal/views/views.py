@@ -26,8 +26,7 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
 
         try:
             all_patrec_w_medhis = PatientRecord.objects.filter(
-                pat_id=patient,
-                patrec_type__in=['Prenatal', 'Family Planning', 'Medical Consultation']
+                pat_id=patient
             )
             print("Found patient records w/ medical history for patient: ", patient.pat_id)
 

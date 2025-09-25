@@ -50,7 +50,7 @@ export const getPatients = async (filters: PatientFilters = {}) => {
 // fetch patient details
 export const getPatientDetails = async (patientId: string) => {
 	try {
-		const res = await api2.get(`patientrecords/patients/${patientId}/`)
+		const res = await api2.get(`patientrecords/patient/${patientId}/`)
 		return res.data;
 	} catch (error) {
 		console.error("Error fetching patient:", error)
@@ -143,3 +143,16 @@ export const getChildData = async (id: any): Promise<any> => {
 		throw error;
 	}
 }
+
+
+
+export const getChildren = async (id:string) => {
+	try{
+		const res = await api2.get(`/patientrecords/parent-children/${id}/`);
+		return res.data || [];
+	}catch(error){
+		console.error("Error fetching children:", error);
+		throw error;
+	}
+}
+	

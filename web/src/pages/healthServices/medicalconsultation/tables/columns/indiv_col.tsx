@@ -1,9 +1,11 @@
 // medical-consultation-columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
+import ViewButton from "@/components/ui/view-button";
+import { useNavigate } from "react-router-dom";
 
-export const getMedicalConsultationColumns = (patientData: any | null): ColumnDef<any>[] => [
+
+// Alternative: If you prefer a direct function without hook, use this version:
+export const getMedicalConsultationColumns = (patientData: any ): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
     header: "Created at",
@@ -79,27 +81,26 @@ export const getMedicalConsultationColumns = (patientData: any | null): ColumnDe
     accessorKey: "bhw_name",
     header: "BHW Assigned",
     cell: ({ row }) => {
-      const bhw = `${row.original.staff_details?.rp?.per_fname || "N/A"} ${row.original.staff_details?.rp?.per_lname || "N/A"}`;
+      const bhw = `${row.original.staff_details?.rp?.per?.per_fname || "N/A"} ${row.original.staff_details?.rp?.per?.per_lname || "N/A"}`;
       return <div className="flex flex-col">{bhw.toUpperCase()}</div>;
     }
   },
   {
     accessorKey: "action",
     header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        
-        <Link
-          to="/services/medical-consultation/records/history"
-          state={{
-            params: { MedicalConsultation: row.original, patientData }
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      return (
+        <ViewButton
+          onClick={() => {
+            navigate("/services/medical-consultation/records/history", {
+              state: {
+                params: { MedicalConsultation: row.original, patientData }
+              }
+            });
           }}
-        >
-          <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
-            View
-          </Button>
-        </Link>
-      </div>
-    )
+        />
+      );
+    }
   }
 ];

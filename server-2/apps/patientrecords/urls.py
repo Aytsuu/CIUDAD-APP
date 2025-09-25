@@ -12,7 +12,7 @@ from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
 from apps.administration.views.staff_views import HealthStaffListView
-
+from .views.family_views import MyChildrenSimpleAPIView
 urlpatterns = [
     
     
@@ -71,7 +71,7 @@ urlpatterns = [
     path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
     path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view(), name='delete-peresults'),
-
+    path('parent-children/<str:pat_id>/', MyChildrenSimpleAPIView.as_view(), name='parent-children-simple'),
     #DISABLITY
     
     # path('disability/', ListDisabilityView.as_view(), name='list-disability'),

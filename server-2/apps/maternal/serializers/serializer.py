@@ -19,7 +19,7 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
     illness_name = serializers.CharField(source='ill.illname', read_only=True)
     class Meta:
         model = MedicalHistory
-        fields = ['medhist_id', 'year', 'ill', 'illness_name', 'created_at'] 
+        fields = ['medhist_id', 'ill_date', 'ill', 'illness_name', 'created_at'] 
 
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:

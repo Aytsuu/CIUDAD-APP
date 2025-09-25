@@ -16,8 +16,6 @@ import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFet
 import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
-import {useMedConPHHistory} from "../queries/fetchQueries";
-import PHIllnessTable from "../medicalhistory/past-medical-history";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
@@ -40,7 +38,6 @@ export default function InvMedicalConRecords() {
   // Use the consultation history hook with pagination
   const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
-  const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
 
 
 
@@ -65,7 +62,7 @@ export default function InvMedicalConRecords() {
         {
           id: "error-card",
           illness: "Error loading data",
-          year: "Please try again",
+          ill_date: "Please try again",
           isError: true
         }
       ];
@@ -80,7 +77,7 @@ export default function InvMedicalConRecords() {
     return historyList.map((history: any) => ({
       id: history.medhist_id || Math.random().toString(36).substring(2, 9),
       illness: history.illness_name || history.ill?.illname || "N/A",
-      year: history.year ? String(history.year) : "Not specified",
+      ill_date: history.ill_date ? String(history.ill_date) : "Not specified",
       isError: false
     }));
   }, [medHistoryData, isMedHistoryLoading, isMedHistoryError, medHistoryError]);
@@ -139,7 +136,7 @@ export default function InvMedicalConRecords() {
       <div className="flex w-full flex-col md:flex-row gap-4">
         {/* Medical History Section */}
         <div className="mb-6 w-full md:w-1/2">
-          <div className="bg-white border rounded-lg overflow-hidden">
+          <div className="bg-white  rounded-lg overflow-hidden">
             {isMedHistoryLoading ? (
               <div className="p-4 text-center">Loading medical history...</div>
             ) : isMedHistoryError ? (
@@ -155,7 +152,7 @@ export default function InvMedicalConRecords() {
                 title={
                   <div className="flex items-center gap-2 text-red-500">
                     <HeartPulse className="h-5 w-5 text-red-500" />
-                    <span className="text-lg font-semibold text-red-500">Illness/Diagnoses History</span>
+                    <span className="text-lg font-semibold text-red-500">Medical History</span>
                   </div>
                 }
                 content={
@@ -168,7 +165,7 @@ export default function InvMedicalConRecords() {
                             {!history.isError && (
                               <Badge variant="outline" className="text-gray-600">
                                 <Calendar className="h-4 w-4 mr-1" />
-                                Diagnosed in {history.year}
+                                Diagnosed in {history.ill_date}
                               </Badge>
                             )}
                           </div>
@@ -183,54 +180,7 @@ export default function InvMedicalConRecords() {
             )}
           </div>
         </div>
-
-        {/* Follow Up Visits Section */}
-        <div className="mb-6 w-full md:w-1/2">
-          <div className="bg-white border rounded-lg overflow-hidden">
-            {isMedHistoryLoading ? (
-              <div className="p-4 text-center">Loading follow-up visits...</div>
-            ) : isMedHistoryError ? (
-              <div className="p-4">
-                <div className="flex items-center gap-2 text-red-500">
-                  <AlertCircle className="h-5 w-5" />
-                  <span>Failed to load follow-up visits</span>
-                </div>
-              </div>
-            ) : (
-              <CardLayout
-                title={
-                  <div className="flex items-center gap-2 text-blue-600">
-                    <HeartPulse className="h-5 w-5 text-blue-600" />
-                    <span className="text-lg font-semibold text-blue-600">Follow Up Visits</span>
-                  </div>
-                }
-                content={
-                  <div className="flex flex-col gap-4">
-                    {getMedicalHistoryCardsData().length > 0 ? (
-                      getMedicalHistoryCardsData()
-                        .filter((history: any) => !history.isError)
-                        .map((history: any) => (
-                          <div key={history.id} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-start">
-                              <h3 className="font-medium text-gray-900">{history.illness}</h3>
-                              <Badge variant="outline" className="text-gray-600">
-                                <Calendar className="h-4 w-4 mr-1" />
-                                Follow-up in {history.year}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))
-                    ) : (
-                      <div className="col-span-full text-center text-gray-500 py-4">No follow-up visits found</div>
-                    )}
-                  </div>
-                }
-              />
-            )}
-          </div>
-        </div>
       </div>
-
       {/* Medical Consultations Section */}
       <div className="w-full lg:flex justify-between items-center mb-4 gap-6">
         <div className="flex gap-2 items-center p-2">

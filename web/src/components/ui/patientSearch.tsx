@@ -58,6 +58,7 @@ export interface Patient {
           per_sex?: string | null;
         };
       };
+      tt_status:string | null;
     };
   };
   spouse_info?: {

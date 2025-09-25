@@ -20,7 +20,7 @@ import { MedicineDistributionSidebar } from "@/components/analytics/health/medic
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { ServicesHealthRecordsSectionCards } from "@/components/analytics/health/services-count-cards";
 import { format } from "date-fns";
-
+import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
 // HEALTH
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 
@@ -55,6 +55,8 @@ export default function Dashboard() {
           <div className="grid">
             <OPTStatusChart initialMonth={currentMonth} />
             <VaccineDistributionChart initialMonth={currentMonth} />
+            <MedicalHistoryMonthlyChart initialMonth={currentMonth} />
+
           </div>
         </div>
         <div className="grid gap-2">

@@ -15,7 +15,7 @@ import { NutritionalStatusCalculator } from "../../../../../components/ui/nutrit
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft, } from "lucide-react";
+import { Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 import { z } from "zod";
 import { createHistoricalSupplementStatusColumns } from "./columns";
@@ -27,19 +27,7 @@ import { VitalSignFormCard, VitalSignsCardView } from "./vitalsisgns-card";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Combobox } from "@/components/ui/combobox";
 
-export default function LastPage({
-  onPrevious,
-  onSubmit,
-  updateFormData,
-  formData,
-  historicalVitalSigns = [],
-  historicalSupplementStatuses: historicalSupplementStatusesProp = [],
-  onUpdateHistoricalSupplementStatus,
-  isSubmitting,
-  newVitalSigns,
-  setNewVitalSigns,
-  status
-}: LastPageProps) {
+export default function LastPage({ onPrevious, onSubmit, updateFormData, formData, historicalVitalSigns = [], historicalSupplementStatuses: historicalSupplementStatusesProp = [], onUpdateHistoricalSupplementStatus, isSubmitting, newVitalSigns, setNewVitalSigns, passed_status }: LastPageProps) {
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(null);
   const [editingBirthWeightIndex, setEditingBirthWeightIndex] = useState<number | null>(null);
@@ -47,7 +35,7 @@ export default function LastPage({
   const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({ page: 1, pageSize: 10, search: "", is_temp: true });
   const [selectedStaffId, setSelectedStaffId] = useState("");
-  const[allowNotesEdit,setAllowNotesEdit]=useState(false);
+  const [allowNotesEdit, setAllowNotesEdit] = useState(false);
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
@@ -62,9 +50,8 @@ export default function LastPage({
   const medicineStocksOptions = medicineData?.medicines || [];
   const medicinePagination = medicineData?.pagination;
 
-
-  if(status==="immunization"){
-    if(!allowNotesEdit){
+  if (passed_status === "immunization") {
+    if (!allowNotesEdit) {
       setAllowNotesEdit(true);
     }
   }
@@ -116,6 +103,7 @@ export default function LastPage({
       status: formData.status || "recorded",
       nutritionalStatus: formData.nutritionalStatus || {},
       edemaSeverity: formData.edemaSeverity || "None",
+      passed_status: passed_status
     }
   });
 
@@ -298,7 +286,7 @@ export default function LastPage({
   useEffect(() => {
     const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
-    
+
     setShowVitalSignsForm(!hasTodaysHistoricalRecord && !hasTodaysNewRecord);
   }, [historicalVitalSigns, newVitalSigns]);
 
@@ -484,7 +472,6 @@ export default function LastPage({
                     setEditingRowIndex(null);
                   }}
                   editVitalSignFormReset={editVitalSignForm.reset}
-                  
                 />
               </Form>
             </div>
@@ -495,14 +482,14 @@ export default function LastPage({
             <div className="space-y-4">
               <h3 className="text-lg font-bold">Add New Vital Signs</h3>
               <Form {...vitalSignForm}>
-                <VitalSignFormCard 
-                  title="New Vital Signs" 
-                  control={vitalSignForm.control} 
-                  handleSubmit={vitalSignForm.handleSubmit} 
-                  onSubmit={handleAddVitalSign} 
-                  onCancel={() => setShowVitalSignsForm(false)} 
-                  submitButtonText="Add Vital Signs" 
-                  cancelButtonText="Cancel" 
+                <VitalSignFormCard
+                  title="New Vital Signs"
+                  control={vitalSignForm.control}
+                  handleSubmit={vitalSignForm.handleSubmit}
+                  onSubmit={handleAddVitalSign}
+                  onCancel={() => setShowVitalSignsForm(false)}
+                  submitButtonText="Add Vital Signs"
+                  cancelButtonText="Cancel"
                   isReadOnly={false}
                   allowNotesEdit={allowNotesEdit}
                 />
@@ -554,21 +541,19 @@ export default function LastPage({
                   </div>
                 </div>
 
-                {latestOverallVitalSign &&
-                  latestOverallVitalSign.wt !== undefined &&
-                  Number(latestOverallVitalSign.wt) < 2.5 && (
-                    <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
-                      <div className="mb-4 flex items-center">
-                        <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
-                        <h4 className="text-base font-medium text-gray-700">Birth Weight Follow-up</h4>
-                        <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">Low Birth Weight: {latestOverallVitalSign.wt} kg</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
-                        <FormDateTimeInput control={control} name="birthwt.given_iron" label="Date Iron Given" type="date" />
-                      </div>
+                {latestOverallVitalSign && latestOverallVitalSign.wt !== undefined && Number(latestOverallVitalSign.wt) < 2.5 && (
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
+                    <div className="mb-4 flex items-center">
+                      <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
+                      <h4 className="text-base font-medium text-gray-700">Birth Weight Follow-up</h4>
+                      <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">Low Birth Weight: {latestOverallVitalSign.wt} kg</span>
                     </div>
-                  )}
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
+                      <FormDateTimeInput control={control} name="birthwt.given_iron" label="Date Iron Given" type="date" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -651,7 +636,7 @@ export default function LastPage({
             </div>
           </div>
 
-          {status !== "immunization" ? (
+          {passed_status !== "immunization" ? (
             <div className="mb-10 rounded-lg border bg-purple-50 p-4">
               <h3 className="mb-4 text-lg font-bold">Record Purpose & Status</h3>
               <FormField
@@ -687,7 +672,7 @@ export default function LastPage({
                 )}
               />
 
-              {(currentStatus === "check-up" || currentStatus === "immunization") && status !== "immunization" && (
+              {(currentStatus === "check-up" || currentStatus === "immunization") && passed_status !== "immunization" && (
                 <div className="mt-6">
                   <Label className="block mb-2">Forward To</Label>
                   <div className="relative">
@@ -722,11 +707,7 @@ export default function LastPage({
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button
-              type="submit"
-              className="flex items-center gap-2 px-6"
-              disabled={!canSubmit || isSubmitting || ((currentStatus === "check-up" || currentStatus === "immunization") && !selectedStaffId)}
-            >
+            <Button type="submit" className="flex items-center gap-2 px-6" disabled={!canSubmit}>
               {isSubmitting ? (
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />

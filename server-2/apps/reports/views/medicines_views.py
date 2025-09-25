@@ -90,14 +90,14 @@ class MonthlyMedicineSummariesAPIView(APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({
+            return Response({ 
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
-class MonthlyMedicineRecordsDetailAPIView(APIView):
+class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
     def get(self, request, month):
         try:
             # Validate month format (YYYY-MM)
@@ -152,6 +152,7 @@ class MonthlyMedicineRecordsDetailAPIView(APIView):
 
 
 
+
 class MonthlyMedicineChart(APIView):
     def get(self, request, month):
         try:
@@ -166,27 +167,27 @@ class MonthlyMedicineChart(APIView):
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get medicine quantities for the specified month
+            # Get medicine counts for the specified month
             queryset = MedicineRecord.objects.filter(
                 fulfilled_at__year=year,
                 fulfilled_at__month=month_num
             ).values(
-                'minv_id__med_id__med_name'  # Medicine name
+                'minv_id__med_id__med_name'  # Assuming this is the path to medicine name
             ).annotate(
-                total_quantity=Sum('medrec_qty')  # Sum the quantities instead of counting records
-            ).order_by('-total_quantity')
+                count=Count('minv_id__med_id')
+            ).order_by('-count')
 
-            # Convert to dictionary format {medicine_name: total_quantity}
-            medicine_quantities = {
-                item['minv_id__med_id__med_name']: item['total_quantity'] 
+            # Convert to dictionary format {medicine_name: count}
+            medicine_counts = {
+                item['minv_id__med_id__med_name']: item['count'] 
                 for item in queryset
             }
 
             return Response({
                 'success': True,
                 'month': month,
-                'medicine_counts': medicine_quantities,
-                'total_records': sum(medicine_quantities.values())  # Total of all quantities
+                'medicine_counts': medicine_counts,
+                'total_records': sum(medicine_counts.values())
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

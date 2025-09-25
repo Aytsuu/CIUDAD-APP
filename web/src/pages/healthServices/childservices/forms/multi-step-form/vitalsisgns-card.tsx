@@ -33,9 +33,6 @@ export const VitalSignFormCard = ({
   allowNotesEdit = false // Default to false
 }: VitalSignFormCardProps) => {
   // Watch the date field to check if it's today
-  const date = useWatch({ control, name: "date" });
-  const isTodayDate = isToday(date);
-  const shouldBeReadOnly = isReadOnly || isTodayDate;
   
   // Notes field is editable if allowNotesEdit is true, regardless of other restrictions
   const isNotesEditable = allowNotesEdit;
@@ -50,7 +47,6 @@ export const VitalSignFormCard = ({
               size="sm" 
               onClick={handleSubmit(onSubmit)} 
               className="bg-green-600 px-3 py-1 text-xs hover:bg-green-700" 
-              disabled={shouldBeReadOnly && !allowNotesEdit}
             >
               {submitButtonText}
             </Button>
@@ -69,8 +65,6 @@ export const VitalSignFormCard = ({
             label="Height (cm)" 
             type="number" 
             placeholder="Enter height" 
-            readOnly={shouldBeReadOnly} 
-            className={shouldBeReadOnly ? "bg-gray-100" : ""} 
           />
           <FormInput 
             control={control} 
@@ -78,8 +72,7 @@ export const VitalSignFormCard = ({
             label="Weight (kg)" 
             type="number" 
             placeholder="Enter weight" 
-            readOnly={shouldBeReadOnly} 
-            className={shouldBeReadOnly ? "bg-gray-100" : ""} 
+          
           />
           <FormInput 
             control={control} 
@@ -87,8 +80,7 @@ export const VitalSignFormCard = ({
             label="Temperature (°C)" 
             type="number" 
             placeholder="Enter temperature" 
-            readOnly={shouldBeReadOnly} 
-            className={shouldBeReadOnly ? "bg-gray-100" : ""} 
+          
           />
         </div>
 
@@ -102,7 +94,6 @@ export const VitalSignFormCard = ({
                   checked={field.value} 
                   onCheckedChange={field.onChange} 
                   className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  disabled={shouldBeReadOnly} 
                 />
               </FormControl>
               <FormLabel className="text-sm font-medium text-gray-700">Are you going to use this weighing for OPT tracking reports?</FormLabel>
@@ -117,8 +108,8 @@ export const VitalSignFormCard = ({
             label="Remarks" 
             placeholder="Enter remarks" 
             rows={2} 
-            readOnly={shouldBeReadOnly} 
-            className={shouldBeReadOnly ? "bg-gray-100" : ""} 
+           
+            
           />
           <FormTextArea 
             control={control} 
@@ -126,8 +117,6 @@ export const VitalSignFormCard = ({
             label="Notes" 
             placeholder="Enter notes" 
             rows={2} 
-            readOnly={!isNotesEditable} // Only editable when allowNotesEdit is true
-            className={!isNotesEditable ? "bg-gray-100" : ""} 
           />
         </div>
 
@@ -137,7 +126,6 @@ export const VitalSignFormCard = ({
             name="followUpVisit" 
             label="Follow-up date" 
             type="date" 
-            readOnly={shouldBeReadOnly} 
           />
           <FormTextArea 
             control={control} 
@@ -145,8 +133,7 @@ export const VitalSignFormCard = ({
             label="Follow-up reason" 
             placeholder="Enter reason for follow-up" 
             rows={2} 
-            readOnly={shouldBeReadOnly} 
-            className={shouldBeReadOnly ? "bg-gray-100" : ""} 
+           
           />
         </div>
       </div>

@@ -27,7 +27,7 @@ export default function ChildHealthRecordForm() {
   const navigate = useNavigate();
   const params = useParams();
   const mode = (location.state?.params?.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | undefined) || (params.mode as "newchildhealthrecord" | "addnewchildhealthrecord" | undefined);
-  const status = (location.state?.params?.status as string | undefined) || (params.status as string | undefined);
+  const passed_status = (location.state?.params?.status as string | undefined) || (params.status as string | undefined);
   const { chrecId, chhistId } = location.state?.params || {};
   const isaddnewchildhealthrecordMode = mode === "addnewchildhealthrecord";
   const isNewchildhealthrecord = mode === "newchildhealthrecord";
@@ -169,8 +169,8 @@ export default function ChildHealthRecordForm() {
       BFdates: BFdatesFromApi, // Keep for backward compatibility
       BFchecks: BFchecksFromApi, // New field with full BF check data
       nbscreening_result: chrecDetails?.nbscreening_result || "",
-      newbornInitiatedbf: chrecDetails.newbornInitiatedbf|| false,  
-          vitalSigns: chhistRecord.vitalSigns || [],
+      newbornInitiatedbf: chrecDetails.newbornInitiatedbf || false,
+      vitalSigns: chhistRecord.vitalSigns || [],
       medicines: chhistRecord.medicines || [],
       anemic: chhistRecord.anemic || initialFormData.anemic,
       birthwt: chhistRecord.birthwt || initialFormData.birthwt,
@@ -482,7 +482,12 @@ export default function ChildHealthRecordForm() {
                 setSelectedPatientId={setSelectedPatientId}
               />
             )}
-            {currentPage === 2 && <ChildHRPage2 onPrevious={() => setCurrentPage(1)} onNext={() => setCurrentPage(3)} updateFormData={updateFormData} formData={formData} historicalBFChecks={historicalBFChecks} mode={mode || "newchildhealthrecord"} />}
+            {currentPage === 2 && <ChildHRPage2 
+            onPrevious={() => setCurrentPage(1)} 
+             onNext={() => setCurrentPage(3)} 
+             selectedPatient={selectedPatient}
+             
+             updateFormData={updateFormData} formData={formData} historicalBFChecks={historicalBFChecks} mode={mode || "newchildhealthrecord"} />}
             {currentPage === 3 && <ChildHRPage3 onPrevious={() => setCurrentPage(2)} onNext={() => setCurrentPage(4)} immunizationTracking={immunizationTracking} />}
             {currentPage === 4 && (
               <LastPage
@@ -500,7 +505,7 @@ export default function ChildHealthRecordForm() {
                 isSubmitting={isSubmitting}
                 newVitalSigns={newVitalSigns}
                 setNewVitalSigns={setNewVitalSigns}
-                status={status || ""}
+                passed_status={passed_status || ""}
               />
             )}
           </div>

@@ -195,7 +195,7 @@ mode: "newchildhealthrecord" | "addnewchildhealthrecord";
 isSubmitting: boolean;
 newVitalSigns: VitalSignType[];
 setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
-status: string;
+passed_status: string;
 }
 
 
@@ -212,6 +212,7 @@ export type Page2Props = {
 onPrevious: () => void;
 onNext: () => void;
 updateFormData: (data: Partial<FormData>) => void;
+selectedPatient:any,
 formData: FormData;
 historicalBFChecks: BFCheck[];// Add this new prop
 mode: "newchildhealthrecord" | "addnewchildhealthrecord";

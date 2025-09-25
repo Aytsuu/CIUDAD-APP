@@ -23,14 +23,8 @@ export const childHealthServices = [
     path: "/services/childhealthrecords/form",
     element: <ChildHealthRecordForm />,
   },
-  {
-    path: "/forwarded-records/medical-consultation/child",
-    element: <ChildMedicalConsultation />,
-  },
-  {
-    path: "/child-immunization",
-    element: <ChildImmunization />,
-  }
+  
+  
 
 ];
 

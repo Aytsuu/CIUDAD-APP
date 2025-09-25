@@ -542,10 +542,11 @@ class PatientSerializer(serializers.ModelSerializer):
         try:
             additional_info = {}
             if obj.pat_id and obj.rp_id:
-                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id)
-                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id)
+                # Use first() to get a single object instead of checking exists()
+                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
+                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id).first()
 
-                if per_ph_id.exists() and mother_tt.exists():
+                if per_ph_id and mother_tt:
                     additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
                     additional_info['mother_tt_status'] = mother_tt.mhi_immun_status
                 else:

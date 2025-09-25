@@ -15,6 +15,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { MonthlyMedicineRecord } from "./types";
 import { MedicineRecord } from "./types";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyMedicineDetails() {
   const location = useLocation();
@@ -38,7 +39,7 @@ export default function MonthlyMedicineDetails() {
   const monthlyData = apiResponse?.data as { records: MonthlyMedicineRecord[]; report: any } | undefined;
 
   const records = monthlyData?.records || [];
-  const report = monthlyData?.report;
+  const report = monthlyData?.report || {};
 
   const staffDetails = report?.staff_details?.rp?.per;
   const signatureBase64 = report?.signature;
@@ -51,12 +52,12 @@ export default function MonthlyMedicineDetails() {
     } else {
       hideLoading();
     }
-  }, [isLoading]);
+  }, [isLoading, showLoading, hideLoading]);
 
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch report");
-      toast("Retrying to fetch  report...");
+      toast("Retrying to fetch report...");
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -85,6 +86,11 @@ export default function MonthlyMedicineDetails() {
   const paginatedRecords = useMemo(() => {
     return filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [filteredRecords, currentPage, pageSize]);
+
+  // Calculate pagination info
+  const totalItems = filteredRecords.length;
+  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   const prepareExportData = () => {
     return filteredRecords.map((record: any) => {
@@ -121,11 +127,57 @@ export default function MonthlyMedicineDetails() {
     const printContent = document.getElementById("printable-area");
     if (!printContent) return;
 
+    const printStyles = `
+      <style>
+        @media print {
+          @page {
+            size: 8.5in 13in;
+            margin: 0.5in;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-area {
+            width: 100% !important;
+            min-height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            position: relative;
+          }
+          .signature-section {
+            position: absolute;
+            bottom: 0.5in;
+            left: 0.5in;
+            right: 0.5in;
+          }
+          table {
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          .content-area {
+            min-height: calc(13in - 2in); /* Account for margins */
+            padding-bottom: 2in; /* Space for signature */
+          }
+        }
+      </style>
+    `;
+
     const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
+    const printableContent = printContent.innerHTML;
+
+    document.body.innerHTML = printStyles + printableContent;
     window.print();
     document.body.innerHTML = originalContents;
-    window.location.reload(); // <-- simplest but reloads entire page (loses app state)
+    window.location.reload();
   };
 
   const tableHeader = ["Date Requested", "Patient Name", "Patient ID", "Medicine Name", "Quantity", "Reason"];
@@ -146,44 +198,36 @@ export default function MonthlyMedicineDetails() {
   });
 
   return (
-    <div className="flex flex-col md:flex-row gap-6">
-      <div className="w-full md:w-80 bg-white rounded-md border border-gray-200 h-fit overflow-hidden">
-        <div className="flex flex-col">
-          {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-2">
-            <div className="flex items-center justify-between mb-4">
-              <Button className="hover:bg-transparent hover:text-blue-700 text-gray-600" variant="ghost" onClick={() => navigate(-1)}>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                <span className="font-medium text-sm">Back</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Export Actions */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <h4 className="font-medium text-gray-800 text-sm">Export Options</h4>
+    <LayoutWithBack title="Medicine Distribution Records" description="View and manage monthly medicine distribution records">
+      <div>
+        {/* Controls Section - Hidden when printing */}
+        <div className="bg-white border border-gray-200 p-6 no-print">
+          {/* Search and Actions Row */}
+          <div className="flex flex-col lg:flex-row gap-4 justify-between">
+            {/* Search Input */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input type="text" placeholder="Search records..." className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                {searchTerm && (
+                  <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100" onClick={() => setSearchTerm("")}>
+                    ×
+                  </Button>
+                )}
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 gap-2">
-                <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="w-full border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
-                <Button variant="outline" onClick={handlePrint} className="w-full gap-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 transition-all duration-200">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex gap-2">
+                <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+                <Button variant="outline" onClick={handlePrint} className="gap-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700 hover:text-blue-700 transition-all duration-200">
                   <Printer className="h-4 w-4" />
                   <span className="text-sm">Print Report</span>
                 </Button>
               </div>
-            </div>
 
-            {/* Primary Action */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h4 className="font-medium text-gray-800 text-sm">Actions</h4>
-              </div>
-
-              <Button className="w-full" asChild>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Link
                   to={{
                     pathname: "/edit-monthly-recipient-list"
@@ -191,7 +235,7 @@ export default function MonthlyMedicineDetails() {
                   state={{
                     reports: report,
                     monthlyrcplist_id: monthlyrcplist_id,
-                    recordCount: recordCount,
+                    recordCount: totalItems,
                     state_office: report?.office || "",
                     state_control: report?.control_no || "",
                     year: month?.split("-")[0] || new Date().getFullYear().toString()
@@ -201,170 +245,171 @@ export default function MonthlyMedicineDetails() {
                 </Link>
               </Button>
             </div>
-
-            {/* Search and Filters */}
-            <div className="space-y-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h4 className="font-medium text-gray-800 text-sm">Search & Filter</h4>
-              </div>
-
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input type="text" placeholder="Search records..." className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                {searchTerm && <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100" onClick={() => setSearchTerm("")}></Button>}
-              </div>
-
-              {/* Page Size Selector */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 text-xs font-medium uppercase tracking-wide">Show Entries</Label>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => {
-                    const numValue = parseInt(value);
-                    setPageSize(numValue >= 1 ? numValue : 1);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-full border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                    <SelectValue placeholder="Select page size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 10, 20, 50].map((size) => (
-                      <SelectItem key={size} value={size.toString()}>
-                        {size} per page
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Pagination */}
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <h4 className="font-medium text-gray-800 text-sm">Navigation</h4>
-                </div>
-                <div className="text-xs text-gray-500">
-                  Page {currentPage} of {totalPages}
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
-              </div>
-            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 pb-10">
-        <div
-          className="bg-white py-4 px-4"
-          id="printable-area"
-          style={{
-            width: "8.5in",
-            minHeight: "14in",
-            position: "relative",
-            margin: "0 auto",
-            paddingBottom: "120px"
-          }}
-        >
-          <div className="p-2 border-black flex items-center">
-            <div className="left-0 top-0 flex items-center justify-center w-28 h-28 bg-gray-200 rounded-full">
-              <div className="text-xs text-gray-500">Upload Logo</div>
-            </div>
-
-            <div className="flex-1 text-center mr-28">
-              <Label className="text-xs font-bold uppercase block">Republic of the Philippines</Label>
-              <Label className="text-sm font-bold uppercase block">Cebu City Health Department</Label>
-              <Label className="text-xs block">General Maxilom Extension, Carreta, Cebu City</Label>
-              <Label className="text-xs block">(032) 232-6820; 232-6863</Label>
-            </div>
+        {/* Pagination Controls */}
+        <div className="flex  items-center justify-between  border bg-gray-50 p-4  border-gray-200">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-2">
+            <Label className="text-gray-700 text-sm whitespace-nowrap">Show</Label>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                const numValue = parseInt(value);
+                setPageSize(numValue >= 1 ? numValue : 1);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-20 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 25, 50, 100].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Label className="text-gray-700 text-sm whitespace-nowrap">entries per page</Label>
           </div>
 
-          <div className="text-center py-2">
-            <Label className="text-sm font-bold uppercase tracking-widest underline block">MEDICINE DISTRIBUTION RECORDS</Label>
-            <Label className="font-medium items-center block">Month: {monthName}</Label>
+          {/* Pagination Info */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              Showing {startIndex} to {endIndex} of {totalItems} entries
+            </span>
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
           </div>
+        </div>
 
-          <div className="pb-4 order-b sm:items-center gap-4">
-            <div className="flex flex-col space-y-2 mt-6">
-              <div className="flex justify-between items-end">
-                <div className="flex items-end gap-2 flex-1 mr-8">
-                  <Label className="font-medium whitespace-nowrap text-xs">Office:</Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">{report?.office || "N/A"}</div>
-                </div>
-
-                <div className="flex items-end gap-2 flex-1">
-                  <Label className="text-xs font-medium whitespace-nowrap">Control No:</Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">{report?.control_no || "N/A"}</div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-end">
-                <div className="flex items-end gap-2 flex-1 mr-8">
-                  <Label className="font-medium whitespace-nowrap text-xs">Medicine Description:</Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">{searchTerm || "All Medicines"}</div>
-                </div>
-
-                <div className="flex items-end gap-2 flex-1">
-                  <Label className="font-medium whitespace-nowrap text-xs">Total:</Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">{filteredRecords.length} records</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500  items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
-            </div>
-          ) : (
-            <TableLayout header={tableHeader} rows={tableRows} tableClassName="border rounded-lg" bodyCellClassName="border border-gray-600 text-center text-xs p-1" headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center" />
-          )}
-
-          <div className="mt-4">
-            <Label className="text-xs font-normal">Hereby certify that the names listed above are recipients of the medicines as indicated</Label>
-          </div>
-
+        {/* Printable Report Section - Long Bond Paper Size */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div
+            className="p-8 print-area"
+            id="printable-area"
             style={{
-              position: "absolute",
-              bottom: "40px",
-              left: 0,
-              right: 0,
-              padding: "0 32px"
+              minHeight: "13in",
+              position: "relative",
+              margin: "0 auto",
+              padding: "0.5in",
+              backgroundColor: "white",
+              display: "flex",
+              flexDirection: "column",
+              height: "13in"
             }}
           >
-            <div className="mt-8">
-              {signatureBase64 && (
-                <div className="flex justify-center relative">
-                  <div>
-                    <img src={`data:image/png;base64,${signatureBase64}`} alt="Authorized Signature" className="h-10 w-auto object-contain" />
+            {/* Main Content Area */}
+            <div className="content-area flex-1">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="p-2 border-black flex items-center">
+                  <div className="left-0 top-0 flex items-center justify-center w-28 h-28 bg-gray-200 rounded-full overflow-hidden">
+                    {report.logo ? (
+                      <img
+                        src={report.logo || ""}
+                        alt="Department Logo"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="text-xs text-gray-500 text-center">No Logo</div>
+                    )}
+                    {/* Fallback div that appears if image fails to load */}
+                    <div className="text-xs text-gray-500 text-center hidden">Logo Error</div>
                   </div>
+                </div>
+                <div className="flex-1 text-center mx-4">
+                  <Label className="text-xs font-bold uppercase block text-gray-700">Republic of the Philippines</Label>
+                  <Label className="text-sm font-bold uppercase block">Cebu City Health Department</Label>
+                  <Label className="text-xs block text-gray-600">General Maxilom Extension, Carreta, Cebu City</Label>
+                  <Label className="text-xs block text-gray-600">(032) 232-6820; 232-6863</Label>
+                </div>
+                <div className="w-24"></div> {/* Spacer for balance */}
+              </div>
+
+              {/* Title */}
+              <div className="text-center py-2 mb-6   pb-4">
+                <Label className="text-lg font-bold uppercase tracking-widest underline block">MEDICINE DISTRIBUTION RECORDS</Label>
+                <Label className="font-medium text-gray-700 block text-sm">Month: {monthName}</Label>
+              </div>
+
+              {/* Report Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 ">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Label className="font-medium text-sm whitespace-nowrap min-w-[120px]">Office:</Label>
+                    <div className="text-sm border-b  flex-1 pb-1">{report?.office || "N/A"}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Label className="font-medium text-sm whitespace-nowrap min-w-[120px]">Medicine Description:</Label>
+                    <div className="text-sm border-b  flex-1 pb-1">{searchTerm || "All Medicines"}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Label className="font-medium text-sm whitespace-nowrap min-w-[100px]">Control No:</Label>
+                    <div className="text-sm border-b  flex-1 pb-1">{report?.control_no || "N/A"}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Label className="font-medium text-sm whitespace-nowrap min-w-[100px]">Total Records:</Label>
+                    <div className="text-sm border-b  flex-1 pb-1">{filteredRecords.length}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Table */}
+              {isLoading ? (
+                <div className="w-full h-32 flex items-center justify-center text-gray-500">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2 text-sm">Loading records...</span>
+                </div>
+              ) : (
+                <div className="w-full">
+                  <TableLayout header={tableHeader} rows={tableRows} tableClassName="border  rounded w-full" bodyCellClassName="border  text-center text-xs p-2" headerCellClassName="font-bold text-xs border  text-gray-900 text-center p-2" />
                 </div>
               )}
 
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex justify-center flex-col items-center">
-                  <div className="border-b border-b-black w-48 text-xs text-center pb-1">{staffName}</div>
-                  <Label className="text-xs font-medium">Printed Name and Signature</Label>
+              {/* Certification */}
+              <div className="mt-6 mb-4">
+                <Label className="text-sm font-normal text-gray-700">Hereby certify that the names listed above are recipients of the medicines as indicated</Label>
+              </div>
+            </div>
+
+            {/* Signature Section - Always at bottom */}
+            <div
+              className="signature-section mt-auto pt-8"
+              style={{
+                marginTop: "auto",
+                paddingTop: "1rem"
+              }}
+            >
+              <div className="flex flex-col items-center gap-6">
+                {signatureBase64 && (
+                  <div className="mb-2">
+                    <img src={`data:image/png;base64,${signatureBase64}`} alt="Authorized Signature" className="h-12 w-auto object-contain" />
+                  </div>
+                )}
+
+                <div className="flex flex-col items-center gap-1">
+                  <div className="border-b border-gray-400 w-64 text-center pb-1 text-sm">{staffName}</div>
+                  <Label className="text-xs font-medium text-gray-600">Printed Name and Signature</Label>
                 </div>
 
-                <div className="flex justify-center flex-col items-center">
-                  <div className="border-b border-b-black text-xs w-48 text-center pb-1">{position}</div>
-                  <Label className="text-xs font-medium">Position</Label>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="border-b border-gray-400 w-64 text-center pb-1 text-sm">{position}</div>
+                  <Label className="text-xs font-medium text-gray-600">Position</Label>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </LayoutWithBack>
   );
 }
