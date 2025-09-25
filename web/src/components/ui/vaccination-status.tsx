@@ -20,11 +20,30 @@ export function VaccinationStatusCards({
     (record) => record.vachist_status !== "in queue"
   );
 
+  // Helper function to get vaccine details consistently
+  const getVaccineDetails = (record: any) => {
+    if (record.vaccine_stock?.vaccinelist) {
+      return record.vaccine_stock.vaccinelist;
+    }
+    return record.vac_details || record.vac;
+  };
+
+  // Helper function to get total doses
+  const getTotalDoses = (record: any) => {
+    // For records connected to stock, get total doses from vaccine details
+    if (record.vaccine_stock?.vaccinelist) {
+      return record.vaccine_stock.vaccinelist.no_of_doses;
+    }
+    // For records not connected to stock, get from vacrec_details or vac_details
+    return record.vacrec_details?.vacrec_totaldose || 
+           record.vacrec?.vacrec_totaldose ||
+           record.vac_details?.no_of_doses;
+  };
+
   // Group filtered vaccinations by vaccine ID and find the latest record for each vaccine
   const latestVaccinationsByVaccine = filteredVaccinations.reduce((acc, record) => {
-    const vaccineId = record.vac?.vac_id || 
-                     record.vaccine_stock?.vaccinelist?.vac_id || 
-                     record.vac_details?.vac_id;
+    const vaccineDetails = getVaccineDetails(record);
+    const vaccineId = vaccineDetails?.vac_id;
     
     if (!vaccineId) return acc;
 
@@ -39,9 +58,8 @@ export function VaccinationStatusCards({
 
   // For each vaccine, find the maximum dose number administered from filtered vaccinations
   const maxDoseByVaccine = filteredVaccinations.reduce((acc, record) => {
-    const vaccineId = record.vac?.vac_id || 
-                     record.vaccine_stock?.vaccinelist?.vac_id || 
-                     record.vac_details?.vac_id;
+    const vaccineDetails = getVaccineDetails(record);
+    const vaccineId = vaccineDetails?.vac_id;
     
     if (!vaccineId) return acc;
 
@@ -54,25 +72,25 @@ export function VaccinationStatusCards({
   // Categorize the vaccines (only non-"in queue" status)
   const categorizedVaccines = {
     completed: Object.values(latestVaccinationsByVaccine).filter((record: any) => {
-      const vaccineId = record.vac?.vac_id || 
-                       record.vaccine_stock?.vaccinelist?.vac_id || 
-                       record.vac_details?.vac_id;
+      const vaccineDetails = getVaccineDetails(record);
+      const vaccineId = vaccineDetails?.vac_id;
+      
+      if (!vaccineId) return false;
       
       const maxDose = maxDoseByVaccine[vaccineId];
-      const totalDose = record.vacrec_details?.vacrec_totaldose || 
-                       record.vacrec?.vacrec_totaldose;
+      const totalDose = getTotalDoses(record);
       
       return maxDose === totalDose;
     }),
     
     partial: Object.values(latestVaccinationsByVaccine).filter((record: any) => {
-      const vaccineId = record.vac?.vac_id || 
-                       record.vaccine_stock?.vaccinelist?.vac_id || 
-                       record.vac_details?.vac_id;
+      const vaccineDetails = getVaccineDetails(record);
+      const vaccineId = vaccineDetails?.vac_id;
+      
+      if (!vaccineId) return false;
       
       const maxDose = maxDoseByVaccine[vaccineId];
-      const totalDose = record.vacrec_details?.vacrec_totaldose || 
-                       record.vacrec?.vacrec_totaldose;
+      const totalDose = getTotalDoses(record);
       
       return maxDose < totalDose;
     }),
@@ -175,11 +193,11 @@ export function VaccinationStatusCards({
                       {record.age_group && (
                         <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                           <span className="font-medium">Age Group:</span>
-                          {record.age_group.name && (
-                            <span>{record.age_group.name}</span>
+                          {record.age_group.agegroup_name && (
+                            <span>{record.age_group.agegroup_name}</span>
                           )}
-                          {record.age_group.range && (
-                            <span>({record.age_group.range})</span>
+                          {record.age_group.min_age !== undefined && record.age_group.max_age !== undefined && (
+                            <span>({record.age_group.min_age}-{record.age_group.max_age} {record.age_group.time_unit})</span>
                           )}
                         </span>
                       )}
@@ -190,15 +208,10 @@ export function VaccinationStatusCards({
             }
 
             // For completed/partial vaccines
-            const vaccineData = record.vac || 
-                              record.vaccine_stock?.vaccinelist || 
-                              record.vac_details || {};
-            
-            const ageGroup = vaccineData.age_group || {};
-            const vaccineId = vaccineData.vac_id;
+            const vaccineDetails = getVaccineDetails(record);
+            const vaccineId = vaccineDetails?.vac_id;
             const maxDose = maxDoseByVaccine[vaccineId];
-            const totalDose = record.vacrec_details?.vacrec_totaldose || 
-                             record.vacrec?.vacrec_totaldose;
+            const totalDose = getTotalDoses(record);
 
             return (
               <li
@@ -216,17 +229,17 @@ export function VaccinationStatusCards({
                   ></div>
                   <div className="flex flex-col">
                     <span className="font-semibold text-gray-800">
-                      {vaccineData.vac_name}
+                      {vaccineDetails?.vac_name || "Unknown Vaccine"}
                     </span>
                     <div className="flex gap-4 mt-1">
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <span className="font-medium">Dose:</span>
                         {maxDose} of {totalDose}
                       </span>
-                      {ageGroup.agegroup_name && (
+                      {vaccineDetails?.age_group?.agegroup_name && (
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <span className="font-medium">Age Group:</span>
-                          {ageGroup.agegroup_name}
+                          {vaccineDetails.age_group.agegroup_name}
                         </span>
                       )}
                     </div>
