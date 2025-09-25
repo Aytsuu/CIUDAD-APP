@@ -76,13 +76,13 @@ class Business(models.Model):
     bus_id = models.BigIntegerField(primary_key=True)
     bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
+    bus_location = models.CharField(max_length=255)
+    bus_status = models.CharField(max_length=50)
     bus_date_of_registration = models.DateField()
+    bus_date_verified = models.DateField()
     staff_id = models.CharField(max_length=50, null=True)
-    add_id = models.CharField(max_length=50)
     rp_id = models.CharField(max_length=50, null=True)
     br_id = models.CharField(max_length=50)
-    bus_date_verified = models.DateField()
-    bus_status = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'business'

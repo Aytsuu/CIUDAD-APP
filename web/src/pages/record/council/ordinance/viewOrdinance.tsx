@@ -104,33 +104,7 @@ function ViewOrdinance({
     };
 
     // Function to handle AI analysis for amendments within folders
-    const handleAmendmentAIAnalysis = async (amendment: Ordinance) => {
-        if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
-            return;
-        }
-
-        setIndividualAnalysisLoading(amendment.ord_num);
-        try {
-            const fileUrl = amendment.file?.file_url || '';
-            const result = await aiService.analyzeOrdinance(fileUrl);
-            
-            // Save the analysis result to localStorage
-            saveAnalysisToStorage(amendment.ord_num, result);
-            
-            toast.success("AI analysis completed successfully!");
-            
-            // Open the AI analysis popup to show the results
-            const updatedAmendment = { ...amendment, aiAnalysisResult: result };
-            setSelectedOrdinanceForAnalysis(updatedAmendment);
-            setAiAnalysisOpen(true);
-        } catch (error) {
-            console.error("Error analyzing amendment:", error);
-            toast.error("Failed to analyze amendment. Please try again.");
-        } finally {
-            setIndividualAnalysisLoading(null);
-        }
-    };
+    // Removed unused handleAmendmentAIAnalysis
 
     // Function to analyze and compare all amendments within a folder
     const handleFolderAmendmentComparison = async (folder: OrdinanceFolder) => {
@@ -169,12 +143,7 @@ function ViewOrdinance({
                 keyDifferences: comparisonResult.differences,
                 similarities: comparisonResult.similarities,
                 differences: comparisonResult.differences,
-                recommendations: [
-                    'Review both documents for compliance',
-                    'Check for conflicting provisions',
-                    'Ensure consistency in legal language',
-                    'Verify effective dates and penalties'
-                ],
+                // recommendations removed per requirements
                 similarityScore: comparisonResult.similarityScore,
                 analysisType: 'amendment_comparison',
                 timestamp: new Date().toISOString(),
@@ -323,26 +292,12 @@ function ViewOrdinance({
                                                     </div>
                                                 )}
 
-                                                {/* Recommendations */}
-                                                {folder.amendmentComparisonResult.recommendations && folder.amendmentComparisonResult.recommendations.length > 0 && (
-                                                    <div className="bg-white rounded p-3 border border-green-100">
-                                                        <div className="text-xs font-medium text-green-700 mb-2">Recommendations</div>
-                                                        <ul className="space-y-1">
-                                                            {folder.amendmentComparisonResult.recommendations.map((recommendation, index) => (
-                                                                <li key={index} className="flex items-start gap-2">
-                                                                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                                                    <span className="text-xs text-gray-700">{recommendation}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
+                                                {/* Recommendations removed */}
 
                                                 {/* Metadata */}
                                                 <div className="flex items-center gap-4 text-xs text-gray-600">
                                                     <span>Total Ordinances: {folder.amendmentComparisonResult.metadata?.ordinanceCount}</span>
                                                     <span>Years: {folder.amendmentComparisonResult.metadata?.yearRange?.min} - {folder.amendmentComparisonResult.metadata?.yearRange?.max}</span>
-                                                    <span>Confidence: {Math.round((folder.amendmentComparisonResult.confidence || 0) * 100)}%</span>
                                                 </div>
                                             </div>
                                         </div>

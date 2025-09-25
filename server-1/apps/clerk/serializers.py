@@ -4,7 +4,7 @@ from .models import *
 from .models import NonResidentCertificateRequest
 from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, Complainant, Accused
 from apps.complaint.serializers import ComplaintSerializer
-from apps.profiling.models import ResidentProfile, FamilyComposition
+from apps.profiling.models import ResidentProfile, FamilyComposition, Address
 from apps.administration.models import Staff
 from apps.treasurer.models import Invoice
 from datetime import datetime
@@ -266,22 +266,12 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
 
     def get_business_address(self, obj):
         try:
-            # First try to get from the new bus_permit_address field
-            if obj.bus_permit_address:
+            # Prefer Business.bus_location from the linked Business record
+            if obj.bus_id and hasattr(obj.bus_id, 'bus_location') and obj.bus_id.bus_location:
+                return obj.bus_id.bus_location
+            # Fallback to explicitly provided permit address
+            if getattr(obj, 'bus_permit_address', None):
                 return obj.bus_permit_address
-            # Fallback to bus_id if available
-            if obj.bus_id and hasattr(obj.bus_id, 'add_id') and obj.bus_id.add_id:
-                # Fetch the actual address using the Address model
-                try:
-                    address_obj = Address.objects.get(add_id=obj.bus_id.add_id)
-                    # Format the address similar to the Address model's __str__ method
-                    sitio = address_obj.sitio.sitio_name if address_obj.sitio else address_obj.add_external_sitio
-                    if sitio:
-                        return f"{sitio}, {address_obj.add_street}, Barangay {address_obj.add_barangay}, {address_obj.add_city}, {address_obj.add_province}"
-                    else:
-                        return f"{address_obj.add_street}, Barangay {address_obj.add_barangay}, {address_obj.add_city}, {address_obj.add_province}"
-                except Address.DoesNotExist:
-                    return "Address not found"
             return "No address"
         except Exception as e:
             return f"Address error: {str(e)}"
