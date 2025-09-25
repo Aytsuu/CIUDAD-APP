@@ -23,9 +23,12 @@ import { format } from "date-fns";
 
 // HEALTH
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Dashboard() {
   const currentMonth = format(new Date(), "yyyy-MM");
+  const { user } = useAuth()
+  console.log(user?.staff)  
 
   return (
     <MainLayoutComponent title="Dashboard" description="Overview of key metrics, data, and insights">

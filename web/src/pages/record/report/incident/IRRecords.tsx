@@ -124,7 +124,7 @@ export default function IRRecords() {
             {/* Loading State */}
             {isLoadingIR && (
               <div className="flex items-center justify-center py-12">
-                <Spinner size="md"/>
+                <Spinner size="lg"/>
                 <span className="ml-2 text-gray-600">Loading incident reports...</span>
               </div>
             )}

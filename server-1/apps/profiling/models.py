@@ -15,7 +15,7 @@ class Voter(models.Model):
         db_table = "voter"
 
 class Sitio(AbstractModels):
-    sitio_id = models.CharField(max_length=100, primary_key=True)
+    sitio_id = models.BigAutoField(primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
     class Meta:
