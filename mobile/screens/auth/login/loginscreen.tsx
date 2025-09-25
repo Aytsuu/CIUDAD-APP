@@ -23,18 +23,18 @@ export default function Login() {
     setCurrentStep(2);
   };
 
-  // useEffect(() => {
-  //   if(isAuthenticated && user){
-  //     toast.success("Welcome!");
-  //     router.replace("/(tabs)");
-  //   } 
-  // }, [user, isAuthenticated, router, toast]);
+  useEffect(() => {
+    if(isAuthenticated && user){
+      toast.success("Welcome!");
+      router.replace("/(tabs)");
+    } 
+  }, [user, isAuthenticated, router, toast]);
 
   const handleLogin = async () => {
     try {
       const values = getValues();
       const {accountFormSchema} = values;
-      
+      console.log(accountFormSchema)
       const result = await login({
         ...(loginMethod == "phone" ? { 
           phone: accountFormSchema.phone
