@@ -22,7 +22,7 @@ class Sitio(AbstractModels):
         db_table = 'sitio'
 
     def __str__(self):
-        return self.sitio_id
+        return self.sitio_name
 
 class Address(AbstractModels):
     add_id = models.BigAutoField(primary_key=True)  

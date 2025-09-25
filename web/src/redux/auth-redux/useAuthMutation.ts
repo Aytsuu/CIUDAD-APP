@@ -76,7 +76,7 @@ export const useSendEmailOTPMutation = () => {
       dispatch(setLoading(false));
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.error || 'Failed to send OTP';
+      const message = error?.response?.data?.email || "Failed to send OTP";
       dispatch(setError(message));
       dispatch(setLoading(false));
     },
