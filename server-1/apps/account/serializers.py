@@ -26,7 +26,6 @@ class PhoneVerificationBaseSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         phone = validated_data.get('pv_phone_num', None)
         action = validated_data.get('pv_type', "signup")
-        print(phone, action)
         exists = None
         if phone and action:
             exists = Account.objects.filter(phone=phone).exists()
