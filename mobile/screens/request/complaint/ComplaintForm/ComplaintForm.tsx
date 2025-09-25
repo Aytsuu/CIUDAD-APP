@@ -14,7 +14,6 @@ import {
   type ComplaintFormData,
 } from "@/form-schema/complaint-schema";
 import ScreenLayout from "@/screens/_ScreenLayout";
-import { Review } from "./Review";
 import { Incident } from "./IncidentDetails";
 import { Accused } from "./Accused";
 import { Complainant } from "./Complainant";
@@ -25,7 +24,6 @@ const STEPS = [
   { id: 1, title: "", subtitle: "Personal details" },
   { id: 2, title: "", subtitle: "Person(s) involved" },
   { id: 3, title: "", subtitle: "What happened" },
-  { id: 4, title: "", subtitle: "Confirm details" },
 ];
 
 interface ProgressBarProps {
@@ -101,15 +99,19 @@ ProgressBar.displayName = 'ProgressBar';
 const NavigationButtons = memo(({ 
   currentStep, 
   isValid, 
+  isSubmitting,
   onPrevious, 
-  onNext 
+  onNext,
+  onSubmit
 }: { 
   currentStep: number; 
   isValid: boolean; 
+  isSubmitting: boolean;
   onPrevious: () => void; 
-  onNext: () => void; 
+  onNext: () => void;
+  onSubmit: () => void;
 }) => {
-  if (currentStep >= 4) return null;
+  const isLastStep = currentStep === 3;
 
   return (
     <View className="px-4 py-3 bg-white border-t border-gray-100">
@@ -125,16 +127,21 @@ const NavigationButtons = memo(({
         )}
 
         <TouchableOpacity
-          onPress={onNext}
-          disabled={!isValid}
+          onPress={isLastStep ? onSubmit : onNext}
+          disabled={!isValid || isSubmitting}
           className={`flex-1 py-3 px-4 rounded-lg flex-row items-center justify-center ${
             currentStep === 1 ? "w-full" : ""
-          } ${isValid ? "bg-blue-600" : "bg-gray-300"}`}
+          } ${isValid && !isSubmitting ? "bg-blue-600" : "bg-gray-300"}`}
         >
-          <Text className={`font-medium mr-2 ${isValid ? "text-white" : "text-gray-500"}`}>
-            {currentStep === 3 ? "Review" : "Next"}
+          <Text className={`font-medium mr-2 ${isValid && !isSubmitting ? "text-white" : "text-gray-500"}`}>
+            {isLastStep ? 
+              (isSubmitting ? "Submitting..." : "Submit Complaint") : 
+              "Next"
+            }
           </Text>
-          <ChevronRight size={20} className={isValid ? "text-white" : "text-gray-500"} />
+          {!isLastStep && (
+            <ChevronRight size={20} className={isValid && !isSubmitting ? "text-white" : "text-gray-500"} />
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -222,8 +229,6 @@ const ComplaintReportProcess = memo(() => {
         return await trigger("accused");
       case 3:
         return await trigger("incident");
-      case 4:
-        return await trigger();
       default:
         return true;
     }
@@ -331,18 +336,10 @@ const ComplaintReportProcess = memo(() => {
         return <Accused form={form} />;
       case 3:
         return <Incident form={form} />;
-      case 4:
-        return (
-          <Review
-            form={form}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-          />
-        );
       default:
         return null;
     }
-  }, [currentStep, form, handleSubmit, isSubmitting]);
+  }, [currentStep, form]);
 
   // Memoized router back function
   const handleBack = useCallback(() => {
@@ -367,8 +364,10 @@ const ComplaintReportProcess = memo(() => {
       <NavigationButtons
         currentStep={currentStep}
         isValid={isValid}
+        isSubmitting={isSubmitting}
         onPrevious={handlePrevious}
         onNext={handleNext}
+        onSubmit={handleSubmit}
       />
     </ScreenLayout>
   );

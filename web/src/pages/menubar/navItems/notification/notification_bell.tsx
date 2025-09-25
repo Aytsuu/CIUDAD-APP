@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useNotifications } from '@/context/NotificationContext'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Bell, MoreHorizontal, Eye, EyeOff } from 'lucide-react'
+import { Bell, MoreHorizontal, Eye, EyeOff, Filter, CheckCheck } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Notification } from '@/context/auth-types'
+import DropdownLayout from '@/components/ui/dropdown/dropdown-layout'
 
 const formatTimeAgo = (dateString: string | number | Date) => {
   const now = new Date()
@@ -20,26 +21,12 @@ const formatTimeAgo = (dateString: string | number | Date) => {
 export const NotificationBell: React.FC = () => {
   const { notifications, unreadCount, markAsRead } = useNotifications()
   const [open, setOpen] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [filter, setFilter] = useState('all')
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   useEffect(() => {
     console.log('Notifications updated:', notifications)
     console.log('Unread count:', unreadCount)
   }, [notifications, unreadCount])
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setOpenMenuId(null)
-    }
-    
-    if (openMenuId) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [openMenuId])
 
   const filteredNotifications = notifications
     .filter(notification => {
@@ -50,26 +37,24 @@ export const NotificationBell: React.FC = () => {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // Sort by newest first
 
   const handleNotificationClick = (notification: Notification) => {
-    // Don't mark as read if clicking on menu
-    if (openMenuId === notification.id) return
-    
     console.log('Marking notification as read:', notification.id)
     markAsRead(notification.id)
     setOpen(false)
   }
 
-  const toggleMenu = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, notificationId: string | null) => {
-    e.stopPropagation()
-    setOpenMenuId(openMenuId === notificationId ? null : notificationId)
-  }
-
-  const handleMenuAction = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>, action: string, notificationId: string) => {
-    e.stopPropagation()
+  const handleNotificationMenuAction = (action: string, notificationId: string) => {
     if (action === 'read') {
       markAsRead(notificationId)
     }
-    // Add delete functionality if available in your context
-    setOpenMenuId(null)
+    // Add other actions as needed
+  }
+
+  const handleSettingsMenuAction = (action: string) => {
+    if (action === 'all' || action === 'unread' || action === 'read') {
+      setFilter(action)
+    } else if (action === 'mark_all_read') {
+      markAllAsRead()
+    }
   }
 
   const markAllAsRead = () => {
@@ -79,6 +64,46 @@ export const NotificationBell: React.FC = () => {
       }
     })
   }
+
+  // Settings dropdown options
+  const settingsOptions = [
+    {
+      id: 'all',
+      name: 'Show All',
+      icon: <Filter className="h-4 w-4" />,
+      variant: filter === 'all' ? 'default' : undefined
+    },
+    {
+      id: 'unread',
+      name: 'Show Unread',
+      icon: <Eye className="h-4 w-4" />,
+      variant: filter === 'unread' ? 'default' : undefined
+    },
+    {
+      id: 'read',
+      name: 'Show Read',
+      icon: <EyeOff className="h-4 w-4" />,
+      variant: filter === 'read' ? 'default' : undefined
+    },
+    ...(unreadCount > 0 ? [{
+      id: 'mark_all_read',
+      name: 'Mark All as Read',
+      icon: <CheckCheck className="h-4 w-4" />,
+      variant: undefined
+    }] : [])
+  ]
+
+  // Generate notification menu options for each notification
+  const getNotificationMenuOptions = (notification: Notification) => [
+    {
+      id: 'read',
+      name: notification.is_read ? 'Mark as Unread' : 'Mark as Read',
+      icon: notification.is_read ? 
+        <EyeOff className="h-4 w-4 text-gray-500" /> : 
+        <Eye className="h-4 w-4 text-blue-500" />,
+      variant: undefined
+    }
+  ]
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -108,51 +133,21 @@ export const NotificationBell: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setShowSettings(!showSettings)}
-                className="p-2 hover:bg-white/70 rounded-xl transition-all duration-200"
-                title="Settings"
-              >
-                <MoreHorizontal className="h-4 w-4 text-gray-600" />
-              </button>
+              <DropdownLayout
+                trigger={
+                  <button 
+                    className="p-2 hover:bg-white/70 rounded-xl transition-all duration-200"
+                    title="Settings"
+                  >
+                    <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                  </button>
+                }
+                options={settingsOptions}
+                onSelect={handleSettingsMenuAction}
+                contentClassName="w-48"
+              />
             </div>
           </div>
-
-          {/* Settings Panel */}
-          {showSettings && (
-            <div className="px-4 py-2 border-b bg-gradient-to-r from-gray-50 to-blue-50">
-              <div className="flex items-center justify-between mb-3">
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                </button>
-              </div>
-              <div className="flex gap-2 mb-3">
-                {['all', 'unread', 'read'].map((filterType) => (
-                  <button
-                    key={filterType}
-                    onClick={() => setFilter(filterType)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                      filter === filterType 
-                        ? 'bg-blue-500 text-white shadow-md' 
-                        : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
-                    }`}
-                  >
-                    {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                  </button>
-                ))}
-              </div>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="w-full px-3 py-2 bg-blue-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 text-sm font-medium shadow-md"
-                >
-                  Mark all as read
-                </button>
-              )}
-            </div>
-          )}
 
           {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
@@ -185,9 +180,6 @@ export const NotificationBell: React.FC = () => {
                             {item.metadata?.sender_name?.charAt(0) || 'S'}
                           </AvatarFallback>
                         </Avatar>
-                        {/* <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-lg ring-2 ring-white">
-                          {getNotificationIcon(item.type)}
-                        </div> */}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -214,37 +206,20 @@ export const NotificationBell: React.FC = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-1">
-                            <div className="relative">
-                              <button
-                                onClick={(e) => toggleMenu(e, item.id)}
-                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                                title="More options"
-                              >
-                                <MoreHorizontal className="h-4 w-4 text-gray-500" />
-                              </button>
-                              
-                              {openMenuId === item.id && (
-                                <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border py-1 z-10 min-w-[140px]">
-                                  <button
-                                    onClick={(e) => handleMenuAction(e, 'read', item.id)}
-                                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                                  >
-                                    {item.is_read ? (
-                                      <>
-                                        <EyeOff className="h-4 w-4 text-gray-500" />
-                                        Mark as unread
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Eye className="h-4 w-4 text-blue-500" />
-                                        Mark as read
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <DropdownLayout
+                              trigger={
+                                <button
+                                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                  title="More options"
+                                >
+                                  <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                </button>
+                              }
+                              options={getNotificationMenuOptions(item)}
+                              onSelect={(action) => handleNotificationMenuAction(action, item.id)}
+                              contentClassName="w-40"
+                            />
                           </div>
                         </div>
                       </div>
@@ -261,27 +236,6 @@ export const NotificationBell: React.FC = () => {
               <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 hover:underline">
                 View all {filteredNotifications.length} notifications
               </button>
-            </div>
-          )}
-          
-          {/* Quick Stats */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-t">
-              <div className="flex items-center justify-between text-xs text-gray-600">
-                <div className="flex items-center gap-4">
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    {notifications.filter(n => !n.is_read).length} unread
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                    {notifications.filter(n => n.is_read).length} read
-                  </span>
-                </div>
-                <span className="text-gray-500">
-                  Total: {notifications.length}
-                </span>
-              </div>
             </div>
           )}
         </div>

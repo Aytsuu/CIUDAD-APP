@@ -5,7 +5,6 @@ import {
   type ComplaintFormData,
   complaintFormSchema,
 } from "@/form-schema/complaint-schema";
-import { ReviewInfo } from "./review";
 import { ComplainantInfo } from "./complainant";
 import { AccusedInfo } from "./accused";
 import { IncidentInfo } from "./incident";
@@ -42,15 +41,35 @@ export const ComplaintForm = () => {
   const methods = useForm<ComplaintFormData>({
     resolver: zodResolver(complaintFormSchema),
     defaultValues: {
-      complainant: [],
-      accused: [],
+      complainant: [
+        {
+          type: "manual",
+          rp_id: null,
+          cpnt_name: "",
+          cpnt_gender: "",
+          cpnt_age: "",
+          cpnt_relation_to_respondent: "",
+          cpnt_number: "",
+          cpnt_address: "",
+        },
+      ],
+      accused: [
+        {
+          rp_id: null,
+          acsd_name: "",
+          acsd_age: "",
+          acsd_address: "",
+          acsd_gender: "",
+          acsd_description: "",
+        },
+      ],
       incident: {
         comp_location: "",
-        comp_incident_type: "Other",
+        comp_incident_type: "",
         comp_allegation: "",
         comp_datetime: "",
       },
-      documents: [],
+      files: [],
     },
   });
 
@@ -59,9 +78,9 @@ export const ComplaintForm = () => {
     const isValid = await methods.trigger(fields as any);
 
     if (isValid) {
-      setStep((prev) => Math.min(prev + 1, 5));
+      setStep((prev) => Math.min(prev + 1, 3));
     } else {
-      if (step === 4 && methods.formState.errors) {
+      if (step === 3 && methods.formState.errors) {
         toast.error("Please check your uploaded files for errors");
       }
     }
@@ -71,121 +90,53 @@ export const ComplaintForm = () => {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSubmitClick = async () => {
-    const isValid = await methods.trigger();
-    if (isValid) {
-      setShowConfirmModal(true);
-    } else {
-      toast.error("Please fix all validation errors before submitting");
-    }
+  const handleSubmitClick = () => {
+    setShowConfirmModal(true);
   };
 
   const onSubmit = async (data: ComplaintFormData) => {
     try {
       setIsSubmitting(true);
 
-      const formData = new FormData();
+      // Create the payload object directly
+      const payload = {
+        complainant: data.complainant,
+        accused: data.accused,
+        comp_incident_type: data.incident.comp_incident_type,
+        comp_allegation: data.incident.comp_allegation,
+        comp_location: data.incident.comp_location,
+        comp_datetime: data.incident.comp_datetime,
+        files: data.files || [],
+      };
 
-      const complainantData = data.complainant.map((comp) => {
-        const fullAddress = [
-          comp.address?.street,
-          comp.address?.barangay,
-          comp.address?.city,
-          comp.address?.province,
-        ]
-          .filter(Boolean)
-          .join(", ")
-          .toUpperCase();
+      console.log("Payload to submit:", payload);
 
-        return {
-          cpnt_name: comp.cpnt_name,
-          cpnt_gender: comp.genderInput || comp.cpnt_gender,
-          cpnt_number: comp.cpnt_number,
-          cpnt_age: comp.cpnt_age,
-          cpnt_relation_to_respondent: comp.cpnt_relation_to_respondent,
-          cpnt_address: fullAddress,
-          rp_id: comp.rp_id || null,
-        };
-      });
-      formData.append(
-        "complainant",
-        JSON.stringify(complainantData).toUpperCase()
-      );
-
-      const accusedData = data.accused.map((acc) => {
-        const fullAddress = [
-          acc.address?.street,
-          acc.address?.barangay,
-          acc.address?.city,
-          acc.address?.province,
-        ]
-          .filter(Boolean)
-          .join(", ")
-          .toUpperCase();
-
-        return {
-          acsd_name: acc.acsd_name,
-          acsd_age: acc.acsd_age,
-          acsd_gender: acc.genderInput || acc.acsd_gender,
-          acsd_description: acc.acsd_description,
-          acsd_address: fullAddress,
-          rp_id: acc.rp_id || null,
-        };
-      });
-      formData.append(
-        "accused",
-        JSON.stringify(accusedData).toUpperCase()
-      );
-
-      formData.append(
-        "comp_incident_type",
-        data.incident.comp_incident_type.toUpperCase()
-      );
-      formData.append(
-        "comp_allegation",
-        data.incident.comp_allegation.toUpperCase()
-      );
-      formData.append(
-        "comp_location",
-        data.incident.comp_location.toUpperCase() ?? ""
-      );
-
-      const dateTimeString = data.incident.comp_datetime;
-      formData.append("comp_datetime", dateTimeString);
-
-      if (data.documents && data.documents.length > 0) {
-        const uploadedFiles = data.documents.filter(
-          (fileData: any) =>
-            fileData.status === "uploaded" && fileData.publicUrl
-        );
-
-        if (uploadedFiles.length > 0) {
-          const fileDataForBackend = uploadedFiles.map((fileData: any) => ({
-            cf_filename: fileData.name,
-            cf_size: fileData.size,
-            cf_type: fileData.type || "document",
-            cf_path: fileData.publicUrl,
-            cf_storage_path: fileData.storagePath,
-          }));
-
-          formData.append(
-            "complaint_files",
-            JSON.stringify(fileDataForBackend)
-          );
-        }
+      // If you need to log files specifically
+      if (payload.files.length > 0) {
+        console.log("Files to upload:", payload.files);
+        payload.files.forEach((fileItem: any, index: number) => {
+          if (fileItem && fileItem.file) {
+            console.log(
+              `File ${index}:`,
+              fileItem.file.name,
+              fileItem.file.type,
+              fileItem.file.size
+            );
+          } else {
+            console.warn(`File ${index} is not a File object:`, fileItem);
+          }
+        });
       }
 
-      const response = await postComplaint.mutateAsync(formData);
+      const response = await postComplaint.mutateAsync(payload);
 
       if (response) {
         await handleSendAlert();
-
         const successMessage = response.comp_id
           ? `Complaint #${response.comp_id} submitted successfully`
           : "Complaint submitted successfully";
 
         toast.success(successMessage);
-
         methods.reset();
         setStep(1);
         setShowConfirmModal(false);
@@ -209,7 +160,7 @@ export const ComplaintForm = () => {
         message: "Your complaint has been submitted and is now being processed",
         recipient_ids: [user?.acc_id || ""],
         metadata: {
-          action_url: "/complaint",
+          action_url: `complaint/${user?.acc_id}/`,
           sender_name: "Barangay System",
           sender_avatar: `${user?.profile_image}` || "",
         },
@@ -233,28 +184,26 @@ export const ComplaintForm = () => {
       "incident.comp_allegation",
       "incident.comp_datetime",
     ],
-    4: ["documents"],
   };
 
   const steps = [
     {
       number: 1,
       title: "Complainant",
-      description: "Nagrereklamo",
+      description: "Person filing",
       icon: User,
     },
-    { number: 2, title: "Respondent", description: "Isinasakdal", icon: Users },
+    {
+      number: 2,
+      title: "Respondent",
+      description: "Person accused",
+      icon: Users,
+    },
     {
       number: 3,
       title: "Incident",
-      description: "Detalye ng Reklamo",
+      description: "Case details",
       icon: MapPin,
-    },
-    {
-      number: 4,
-      title: "Review",
-      description: "Confirm the accuracy of your complaint details",
-      icon: Eye,
     },
   ];
 
@@ -263,16 +212,18 @@ export const ComplaintForm = () => {
       title={"Blotter Form"}
       description="Ensure all complaint details are complete and accurate to facilitate proper action by the barangay."
     >
-      {/* Progress Bar */}
-      <ProgressBar steps={steps} currentStep={step} showDescription={true}  />
+      <ProgressBar steps={steps} currentStep={step} showDescription={true} />
 
-      {/* Form Content */}
       <FormProvider {...methods}>
         <div className="mb-8 mt-4 px-32">
           {step === 1 && <ComplainantInfo />}
           {step === 2 && <AccusedInfo />}
-          {step === 3 && <IncidentInfo />}
-          {step === 4 && <ReviewInfo />}
+          {step === 3 && (
+            <IncidentInfo
+              onSubmit={handleSubmitClick}
+              isSubmitting={isSubmitting}
+            />
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t gap-4">
@@ -291,7 +242,7 @@ export const ComplaintForm = () => {
           </div>
 
           <div className="w-full sm:w-auto">
-            {step < 4 ? (
+            {step < 3 ? (
               <Button
                 type="button"
                 variant="secondary"
@@ -301,31 +252,11 @@ export const ComplaintForm = () => {
               >
                 Next <ChevronRight className="w-4 h-4" />
               </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleSubmitClick}
-                className="w-full sm:w-auto flex items-center gap-2 text-darkGray"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" /> Submit Complaint
-                  </>
-                )}
-              </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </FormProvider>
 
-      {/* Confirm Submit Dialog */}
       <DialogLayout
         isOpen={showConfirmModal}
         onOpenChange={setShowConfirmModal}

@@ -14,7 +14,7 @@ export interface Complainant {
   cpnt_age: string;
   cpnt_number: string;
   cpnt_relation_to_respondent: string;
-  add: Address;
+  address: Address;
   rp_id: string;
 }
 
@@ -24,7 +24,7 @@ export interface Accused {
   acsd_age: string;
   acsd_gender: string;
   acsd_description: string;
-  add: Address;
+  address: Address;
   rp_id: string;
 }
 

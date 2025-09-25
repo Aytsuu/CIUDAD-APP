@@ -57,7 +57,7 @@ class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Complaint.objects.prefetch_related(
             'complaintcomplainant_set__cpnt',
             'complaintaccused_set__acsd',
-            'complaint_file',
+            'files',
             'staff'
         )
 

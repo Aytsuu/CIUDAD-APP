@@ -1,3 +1,4 @@
+// incident-info.tsx
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   FormControl,
@@ -12,13 +13,18 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import React from "react";
 
-export const IncidentInfo = () => {
+interface IncidentInfoProps {
+  onSubmit: () => void;
+  isSubmitting: boolean;
+}
+
+export const IncidentInfo: React.FC<IncidentInfoProps> = ({ onSubmit, isSubmitting }) => {
   const { control, setValue, watch, trigger } = useFormContext();
   const incidentType = useWatch({ control, name: "incident.comp_incident_type" });
 
   // Watch the documents field from the form
-  const formDocuments = watch("documents") || [];
-  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>(formDocuments);
+  const formFiles = watch("files") || [];
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>(formFiles);
 
   // Watch the datetime field to sync with date/time inputs
   const compDateTime = watch("incident.comp_datetime") || "";
@@ -27,17 +33,16 @@ export const IncidentInfo = () => {
   const currentDate = compDateTime ? compDateTime.split('T')[0] : "";
   const currentTime = compDateTime ? compDateTime.split('T')[1] : "";
 
-  // Sync mediaFiles with form data whenever it changes
   React.useEffect(() => {
-    setValue("documents", mediaFiles);
+    setValue("files", mediaFiles);
   }, [mediaFiles, setValue]);
 
   // Sync form data with local state on mount/form data change
   React.useEffect(() => {
-    if (formDocuments.length !== mediaFiles.length) {
-      setMediaFiles(formDocuments);
+    if (formFiles.length !== mediaFiles.length) {
+      setMediaFiles(formFiles);
     }
-  }, [formDocuments]);
+  }, [formFiles]);
 
   // Set initial date/time values when component mounts
   React.useEffect(() => {
@@ -85,8 +90,21 @@ export const IncidentInfo = () => {
     }, 100);
   };
 
+  const handleSubmitClick = async () => {
+    const isValid = await trigger([
+      "incident.comp_location",
+      "incident.comp_incident_type",
+      "incident.comp_allegation",
+      "incident.comp_datetime",
+    ]);
+
+    if (isValid) {
+      onSubmit();
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-8 rounded-lg">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           control={control}
@@ -182,7 +200,6 @@ export const IncidentInfo = () => {
         name="incident.comp_location"
         label="Location of Incident *"
         placeholder="Enter the exact location where the incident occurred"
-        // rules={{ required: "Location is required" }}
       />
 
       <FormField
@@ -238,13 +255,26 @@ export const IncidentInfo = () => {
         />
       </div>
 
-      {/* Debug information (remove in production) */}
-      {/* <div className="mt-6 p-4 bg-gray-100 rounded-lg text-xs">
-        <h4 className="font-semibold mb-2">Debug Info:</h4>
-        <p>comp_datetime: {compDateTime}</p>
-        <p>Date: {currentDate}</p>
-        <p>Time: {currentTime}</p>
-      </div> */}
+      {/* Submit Button */}
+      <div className="flex justify-end pt-6 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={handleSubmitClick}
+          disabled={isSubmitting}
+          className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            <>
+              Submit Complaint
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

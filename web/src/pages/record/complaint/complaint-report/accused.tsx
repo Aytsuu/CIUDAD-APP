@@ -8,16 +8,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, UserCheck } from "lucide-react";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { FormInput } from "@/components/ui/form/form-input";
-import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { Plus, X, Search, Trash2 } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
 import { useAllResidents } from "../api-operations/queries/complaintGetQueries";
+import { Input } from "@/components/ui/input";
+import { FormInput } from "@/components/ui/form/form-input";
+
+type Resident = {
+  rp_id: string;
+  cpnt_name: string;
+  cpnt_gender?: string;
+  cpnt_age?: string;
+  cpnt_number?: string;
+  cpnt_address?: string;
+  [key: string]: any;
+};
 
 export const AccusedInfo = () => {
-  const { control, watch, setValue, trigger } = useFormContext();
+  const { control, watch, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "accused",
@@ -25,61 +34,25 @@ export const AccusedInfo = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [selectedResident, setSelectedResident] = useState<any>(null);
+  const [selectedResidentValue, setSelectedResidentValue] = useState<string>("");
 
-  // Fetch all residents upfront
   const { data: allResidents = [], isLoading: isResidentsLoading } = useAllResidents();
 
-  // Watch current accused data
   const currentAccused = watch(`accused.${activeTab}`);
-  const accusedType = currentAccused?.type || "manual";
-
-  const genderOptions = [
-    { id: "Male", name: "Male" },
-    { id: "Female", name: "Female" },
-  ];
-  
-  useEffect(() => {
-    if (fields.length === 0) {
-      append({
-        type: "manual",
-        rp_id: null,
-        acsd_name: "",
-        acsd_age: "",
-        acsd_gender: "",
-        acsd_description: "",
-        acsd_address: "",
-        address: {
-          street: "",
-          barangay: "",
-          city: "",
-          province: "",
-          sitio: "",
-        },
-      });
-      setActiveTab(0);
-    }
-  }, [fields.length, append]);
 
   const addAccused = () => {
     const newIndex = fields.length;
     append({
-      type: "manual",
       rp_id: null,
       acsd_name: "",
       acsd_age: "",
       acsd_gender: "",
       acsd_description: "",
       acsd_address: "",
-      address: {
-        street: "",
-        barangay: "",
-        city: "",
-        province: "",
-        sitio: "",
-      },
     });
     setActiveTab(newIndex);
     setSelectedResident(null);
+    setSelectedResidentValue("");
   };
 
   const removeAccused = (index: any) => {
@@ -91,66 +64,97 @@ export const AccusedInfo = () => {
       setActiveTab(activeTab - 1);
     }
     setSelectedResident(null);
+    setSelectedResidentValue("");
   };
 
-  const selectResidentAccused = (resident: any) => {
+  const selectResidentAccused = (residentId: string) => {
+    const resident = allResidents.find((r: Resident) => r.rp_id === residentId);
+    if (!resident) return;
+
     setSelectedResident(resident);
-    setValue(`accused.${activeTab}.type`, "resident");
+    setSelectedResidentValue(residentId);
     setValue(`accused.${activeTab}.rp_id`, resident.rp_id);
     setValue(`accused.${activeTab}.acsd_name`, resident.cpnt_name);
     setValue(`accused.${activeTab}.acsd_age`, resident.cpnt_age);
-    setValue(`accused.${activeTab}.acsd_gender`, resident.cpnt_gender);
-    setValue(`accused.${activeTab}.acsd_description`, `Resident: ${resident.cpnt_name}`);
-    setValue(`accused.${activeTab}.acsd_address`, resident.cpnt_address || "");
     
-    // Parse address for display
-    if (resident.cpnt_address) {
-      const addressParts = resident.cpnt_address.split(", ");
-      setValue(`accused.${activeTab}.address`, {
-        street: addressParts[0] || "",
-        barangay: addressParts[1] || "",
-        city: addressParts[2] || "",
-        province: addressParts[3] || "",
-        sitio: addressParts[4] || "",
-      });
+    // Format gender to match options
+    const residentGender = resident.cpnt_gender;
+    let formattedGender = "";
+    if (residentGender) {
+      formattedGender = residentGender.charAt(0).toUpperCase() + residentGender.slice(1).toLowerCase();
     }
+    setValue(`accused.${activeTab}.acsd_gender`, formattedGender);
     
-    // Trigger validation after setting values
-    setTimeout(() => {
-      trigger(`accused.${activeTab}`);
-    }, 100);
+    setValue(`accused.${activeTab}.acsd_description`, "");
+    setValue(`accused.${activeTab}.acsd_address`, resident.cpnt_address || "");
   };
 
-  const switchToManualEntry = () => {
+  const clearSelection = () => {
     setSelectedResident(null);
-    setValue(`accused.${activeTab}.type`, "manual");
+    setSelectedResidentValue("");
     setValue(`accused.${activeTab}.rp_id`, null);
+    setValue(`accused.${activeTab}.acsd_name`, "");
+    setValue(`accused.${activeTab}.acsd_age`, "");
+    setValue(`accused.${activeTab}.acsd_gender`, "");
+    setValue(`accused.${activeTab}.acsd_description`, "");
     setValue(`accused.${activeTab}.acsd_address`, "");
-    
-    // Clear fields but keep manually entered data
-    setValue(`accused.${activeTab}.acsd_name`, currentAccused?.acsd_name || "");
-    setValue(`accused.${activeTab}.acsd_age`, currentAccused?.acsd_age || "");
-    setValue(`accused.${activeTab}.acsd_gender`, currentAccused?.acsd_gender || "");
-    setValue(`accused.${activeTab}.acsd_description`, currentAccused?.acsd_description || "");
   };
 
-  const validateAge = (value: any) => {
-    if (!value) return "Age is required";
-    const age = parseInt(value);
-    if (isNaN(age)) return "Age must be a number";
-    if (age < 1 || age > 150) return "Age must be between 1 and 150";
-    return true;
-  };
+  // Only handle activeTab bounds checking
+  useEffect(() => {
+    if (activeTab >= fields.length && fields.length > 0) {
+      setActiveTab(fields.length - 1);
+    }
+  }, [fields.length, activeTab]);
+
+  // Reset selected resident when switching tabs
+  useEffect(() => {
+    const currentAccusedData = watch(`accused.${activeTab}`);
+    if (currentAccusedData?.rp_id) {
+      const resident = allResidents.find((r: Resident) => r.rp_id === currentAccusedData.rp_id);
+      setSelectedResident(resident || null);
+      setSelectedResidentValue(currentAccusedData.rp_id);
+    } else {
+      setSelectedResident(null);
+      setSelectedResidentValue("");
+    }
+  }, [activeTab, allResidents, watch]);
 
   const getTabDisplayName = (index: any) => `Resp. ${index + 1}`;
 
+  // Format residents for Combobox
+  const residentOptions = allResidents.map((resident: Resident) => ({
+    id: resident.rp_id,
+    name: (
+      <div className="flex items-center gap-2">
+        <span className="inline-block px-2 py-1 text-s font-normal bg-green-500 text-white rounded">
+          #{resident.rp_id}
+        </span>
+        <span>{resident.cpnt_name}</span>
+      </div>
+    ),
+  }));
+
   if (fields.length === 0) return null;
 
+  const isResidentSelected = currentAccused?.rp_id;
+
   return (
-    <div className="space-y-4">
-      {/* Tabs */}
-      <div className="bg-white border rounded-t-lg shadow-sm">
-        <div className="flex items-center px-4 py-3 border-b">
+    <div className="rounded-lg mt-10">
+      {/* Header Section */}
+      <div className="bg-white p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-black/70">
+            Respondent Information
+          </h3>
+        </div>
+        
+        <p className="text-sm text-gray-600 mb-6">
+          Please select a registered resident as the respondent. Only registered residents can be filed as respondents in a complaint. The description field can be edited to provide additional details about the incident.
+        </p>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 flex-1 overflow-x-auto">
             {fields.map((field, index) => (
               <div
@@ -162,7 +166,6 @@ export const AccusedInfo = () => {
                 }`}
                 onClick={() => {
                   setActiveTab(index);
-                  setSelectedResident(null);
                 }}
               >
                 <span className="text-sm font-medium">
@@ -200,122 +203,84 @@ export const AccusedInfo = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
+      {/* Form Content */}
       <div
         key={`tab-${activeTab}`}
-        className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-6 shadow-sm"
+        className="bg-white rounded-lg p-6"
       >
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-black/70">
-              Respondent {activeTab + 1} Information
-            </h3>
-            <span className="text-sm text-gray-500">
-              Tab {activeTab + 1} of {fields.length}
-            </span>
-          </div>
+          {/* Resident Search Section with Combobox */}
+          <div className="space-y-3">
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <Combobox 
+                  options={residentOptions}
+                  value={selectedResidentValue}
+                  onChange={(value) => {
+                    if (value) {
+                      selectResidentAccused(value);
+                    } else {
+                      clearSelection();
+                    }
+                  }}
+                  placeholder="Select a resident"
+                  triggerClassName="w-full"
+                  contentClassName="w-full max-w-2xl"
+                  emptyMessage={
+                    <div className="flex flex-col items-center justify-center py-4 text-center">
+                      <Search className="h-8 w-8 text-gray-300 mb-2" />
+                      <span className="font-normal text-gray-500 text-sm">
+                        No resident found.
+                      </span>
+                    </div>
+                  }
+                />
+              </div>
 
-          {/* Resident Selection */}
-          <div className="mb-6">
-            <ComboboxInput
-              value={selectedResident ? selectedResident.cpnt_name : ""}
-              options={allResidents}
-              isLoading={isResidentsLoading}
-              label="Select Resident (Optional)"
-              placeholder="Search or select a resident..."
-              emptyText="No residents found."
-              onSelect={(item) => {
-                if (item) {
-                  selectResidentAccused(item);
-                }
-              }}
-              displayKey="cpnt_name"
-              valueKey="rp_id"
-              additionalDataKey="cpnt_number"
-              className="w-full"
-            />
-          </div>
-
-          {/* Show resident info if linked */}
-          {accusedType === "resident" && currentAccused?.rp_id && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-green-700">
-                  <UserCheck className="h-4 w-4" />
-                  <span className="font-medium">Linked to Resident Profile</span>
-                </div>
+              {isResidentSelected && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={switchToManualEntry}
-                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs"
+                  onClick={clearSelection}
+                  className="text-red-600 border-red-300 hover:bg-red-50 h-10 px-3"
+                  title="Clear Selection"
                 >
-                  Switch to Manual Entry
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Full Name:</span>
-                  <p className="text-gray-900">{currentAccused.acsd_name}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Age:</span>
-                  <p className="text-gray-900">{currentAccused.acsd_age}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Gender:</span>
-                  <p className="text-gray-900">{currentAccused.acsd_gender}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <span className="font-medium text-gray-700">Address:</span>
-                  <p className="text-gray-900">{currentAccused.acsd_address}</p>
-                </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Hidden field for rp_id */}
-          <input
-            type="hidden"
-            {...control.register(`accused.${activeTab}.rp_id`)}
-          />
-
-          {/* Form Fields */}
-          <div className="space-y-6">
+          {/* Form Fields - Read-only except for description */}
+          <div className="space-y-6 p-4 rounded-lg">
             <FormInput
               control={control}
               name={`accused.${activeTab}.acsd_name`}
               label="Full Name *"
-              placeholder="Enter name or alias"
-              readOnly={accusedType === "resident"}
+              placeholder="Please select a registered resident above"
+              className="max-w-full "
+              readOnly={true}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={control}
                 name={`accused.${activeTab}.acsd_age`}
-                rules={{ validate: validateAge }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-black/50">
-                      Age *
+                      Age
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="1"
                         max="150"
-                        placeholder="Age"
+                        placeholder="Auto-filled from resident data"
                         {...field}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === "" || /^\d+$/.test(value)) {
-                            field.onChange(value);
-                          }
-                        }}
-                        readOnly={accusedType === "resident"}
+                        readOnly={true}
+                        className=""
                       />
                     </FormControl>
                     <FormMessage />
@@ -329,16 +294,14 @@ export const AccusedInfo = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-black/50">
-                      Gender *
+                      Gender
                     </FormLabel>
                     <FormControl>
-                      <SelectLayout
-                        placeholder="Select gender"
-                        label=""
-                        options={genderOptions}
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                        className="h-10"
+                      <Input
+                        placeholder="Auto-filled from resident data"
+                        {...field}
+                        readOnly={true}
+                        className=""
                       />
                     </FormControl>
                     <FormMessage />
@@ -347,6 +310,16 @@ export const AccusedInfo = () => {
               />
             </div>
 
+            <FormInput
+              control={control}
+              name={`accused.${activeTab}.acsd_address`}
+              label="Complete Address *"
+              placeholder="Auto-filled from resident data"
+              className="max-w-full "
+              readOnly={true}
+            />
+
+            {/* Description Field - Only editable field */}
             <FormField
               control={control}
               name={`accused.${activeTab}.acsd_description`}
@@ -357,72 +330,23 @@ export const AccusedInfo = () => {
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide detailed description (e.g. physical appearance)..."
-                      className="min-h-[120px]"
-                      readOnly={accusedType === "resident"}
+                      placeholder="Provide detailed description of the respondent's involvement in the incident..."
+                      className="min-h-[120px] bg-white border-2 border-blue-200 focus:border-blue-400"
                       {...field}
+                      value={field.value || ""} 
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* Address Section - Only show for manual entry */}
-            {accusedType === "manual" && (
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <div className="space-y-3">
-                  <FormLabel className="font-semibold text-black/50">
-                    Complete Address (Street / Barangay / Municipality / Province) *
-                  </FormLabel>
-
-                  <div className="flex flex-col md:flex-row items-stretch border-2 border-gray-300 rounded-lg p-2 bg-white gap-2 md:gap-0">
-                    {[
-                      { key: "street", placeholder: "Street/Sitio" },
-                      { key: "barangay", placeholder: "Barangay" },
-                      { key: "city", placeholder: "Municipality/City" },
-                      { key: "province", placeholder: "Province" },
-                    ].map(({ key, placeholder }, i) => (
-                      <div key={key} className="flex-1 flex items-center">
-                        <FormField
-                          control={control}
-                          name={`accused.${activeTab}.address.${key}`}
-                          render={({ field }) => (
-                            <FormItem className="w-full">
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder={placeholder}
-                                  className="border-none shadow-none px-2 h-10 md:h-8"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        {i < 3 && (
-                          <span className="hidden md:inline mx-2 text-gray-400 font-medium">
-                            /
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Address field validation messages */}
-                  <div className="space-y-1">
-                    {["street", "barangay", "city", "province"].map((fieldKey) => (
-                      <FormField
-                        key={fieldKey}
-                        control={control}
-                        name={`accused.${activeTab}.address.${fieldKey}`}
-                        render={() => <FormMessage />}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Hidden field for rp_id */}
+          <input
+            type="hidden"
+            {...control.register(`accused.${activeTab}.rp_id`)}
+          />
         </div>
       </div>
     </div>

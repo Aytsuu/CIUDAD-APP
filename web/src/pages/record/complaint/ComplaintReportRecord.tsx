@@ -4,12 +4,17 @@ import { useLocation } from "react-router-dom";
 import { Complaint } from "./complaint-type";
 import {
   AlertTriangle,
-  FolderOpen,
   FileText,
   Download,
   Eye,
   Shield,
   FileWarning,
+  User,
+  Calendar,
+  FileX,
+  Hash,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -20,7 +25,6 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export function ComplaintViewRecord() {
@@ -29,39 +33,42 @@ export function ComplaintViewRecord() {
   const complaintData = state?.complaint as Complaint;
   const [isRaiseIssueDialogOpen, setIsRaiseIssueDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    general: true,
+    complainants: true,
+    accused: true,
+    documents: true,
+  });
   const { send } = useNotifications();
   const [complaintStatus, setComplaintStatus] = useState({
     isArchived: complaintData?.comp_is_archive || false,
     isRaised: complaintData?.comp_status === "Raised",
   });
 
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   const handleRaiseIssue = async () => {
     setIsSubmitting(true);
     try {
-      console.log("Raising issue for comp_id:", complaintData.comp_id);
-
       const response = await raiseIssue(complaintData.comp_id);
-
       if (response) {
-        await handleSendAlert(response.sr_id);
+        await handleSendAlert(response.data.sr_id);
         await archiveComplaint(complaintData.comp_id.toString());
-
         setComplaintStatus((prev) => ({
           ...prev,
           isRaised: true,
           isArchived: true,
         }));
-
         toast.success("Issue raised successfully", {
-          description: `Service Request ${response.sr_id} created for Complaint ID: ${complaintData.comp_id}`,
-          action: {
-            label: "View SR",
-            onClick: () => console.log("View SR action clicked"),
-          },
+          description: `Service Request ${response.data.sr_id} created for Complaint ID: ${complaintData.comp_id}`,
         });
       }
     } catch (error: any) {
-      console.error("Error raising issue:", error);
       toast.error("Failed to raise issue", {
         description: error.response?.data?.error || "Please try again later",
       });
@@ -110,87 +117,6 @@ export function ComplaintViewRecord() {
     }
   };
 
-  const formatAddress = (address: any) => {
-    if (!address) return "Not provided";
-    const parts = [
-      address.add_street,
-      address.add_barangay,
-      address.add_city,
-      address.add_province,
-    ].filter(Boolean);
-    return parts.join(", ") || "Address not specified";
-  };
-
-  const formatPersonAddress = (person: any) => {
-    if (person.cpnt_address) return person.cpnt_address;
-    if (person.acsd_address) return person.acsd_address;
-    if (person.add) return formatAddress(person.add);
-    return "Not provided";
-  };
-
-  const renderDocumentsSection = () => {
-    const files = complaintData?.comp_file || [];
-
-    if (files.length === 0) {
-      return (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-gray-900">
-              Supporting Documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-gray-500">
-              <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No documents uploaded</p>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-gray-900">
-            Supporting Documents ({files.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {files.map((file: any, index: number) => (
-              <div
-                key={file.comp_file_id || index}
-                className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50"
-              >
-                <FileText className="w-5 h-5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">
-                    {file.comp_file_name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {file.comp_file_type} •{" "}
-                    {new Date(
-                      file.created_at || Date.now()
-                    ).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <Download className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
   if (!complaintData) {
     return (
       <LayoutWithBack
@@ -199,19 +125,16 @@ export function ComplaintViewRecord() {
       >
         <div className="flex items-center justify-center py-20">
           <div className="text-center max-w-md">
-            <div className="p-4 rounded-full bg-red-50 w-fit mx-auto mb-6">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+            <div className="rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-10 h-10 text-red-500" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
               No Complaint Data Available
             </h3>
             <p className="text-gray-600 mb-6">
-              The complaint record you're looking for could not be found or may
-              have been removed.
+              The complaint record you're looking for could not be found or may have been removed.
             </p>
-            <Button variant="outline" size="sm">
-              Return to Complaints List
-            </Button>
+            <Button variant="outline">Return to Complaints List</Button>
           </div>
         </div>
       </LayoutWithBack>
@@ -223,302 +146,416 @@ export function ComplaintViewRecord() {
     ? new Date(complaintData.comp_datetime).toLocaleString()
     : "Not specified";
   const formattedCreatedAt = complaintData.comp_created_at
-    ? new Date(complaintData.comp_created_at).toLocaleString()
+    ? new Date(complaintData.comp_created_at).toLocaleDateString()
     : "Not available";
-
-  const headerActions = (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-      <Badge
-        variant={statusDisplay.variant}
-        className="text-sm flex items-center gap-1.5"
-      >
-        {statusDisplay.icon}
-        {statusDisplay.text}
-      </Badge>
-
-      {!complaintStatus.isRaised && (
-        <DialogLayout
-          isOpen={isRaiseIssueDialogOpen}
-          onOpenChange={setIsRaiseIssueDialogOpen}
-          trigger={
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={complaintStatus.isRaised || isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              {complaintStatus.isRaised ? "Issue Raised" : "Raise Issue"}
-            </Button>
-          }
-          title="Create Service Request"
-          description="This will create a service request and archive the complaint."
-          mainContent={
-            <>
-              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-amber-800">
-                      Complaint Summary
-                    </p>
-                    <div className="text-sm text-amber-700 space-y-1">
-                      <p>
-                        <span className="font-medium">ID:</span>{" "}
-                        {complaintData.comp_id}
-                      </p>
-                      <p>
-                        <span className="font-medium">Type:</span>{" "}
-                        {complaintData.comp_incident_type}
-                      </p>
-                      <p>
-                        <span className="font-medium">Location:</span>{" "}
-                        {complaintData.comp_location || "Not specified"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsRaiseIssueDialogOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleRaiseIssue}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Creating..." : "Create Service Request"}
-                </Button>
-              </div>
-            </>
-          }
-        />
-      )}
-    </div>
-  );
 
   return (
     <LayoutWithBack
-      title={"Complaint Details"}
-      description={`Review and manage complaint record #${complaintData.comp_id}`}
+      title={`Complaint Details`}
+      description={`Review and manage complaint record information`}
     >
-      <div className="space-y-6">
-        {/* Main Content - Single Column */}
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Case Summary Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-gray-900">Case Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-6 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {complaintData.complainant?.length || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">Complainants</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {complaintData.accused?.length || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">Accused</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {complaintData.comp_file?.length || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">Documents</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Incident Details Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-gray-900">
-                Incident Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    Incident Type
-                  </p>
-                  <p className="text-gray-900">
-                    {complaintData.comp_incident_type || "Not specified"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    Date & Time
-                  </p>
-                  <p className="text-gray-900">{formattedDate}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">
-                  Location
-                </p>
-                <p className="text-gray-900">
-                  {complaintData.comp_location || "Location not specified"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">
-                  Allegation Details
-                </p>
-                <div className="p-3 bg-gray-50 rounded border">
-                  <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                    {complaintData.comp_allegation ||
-                      "No detailed description provided for this complaint."}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Complainants Section */}
-          {complaintData.complainant &&
-            complaintData.complainant.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-gray-900">
-                    Complainants ({complaintData.complainant.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {complaintData.complainant.map((person) => (
-                    <div key={person.cpnt_id} className="p-4 border rounded">
-                      <div className="space-y-3">
-                        <h4 className="font-medium text-gray-900">
-                          {person.cpnt_name || "Unknown"}
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-500">Age & Gender</p>
-                            <p className="text-gray-900">
-                              {person.cpnt_age || "N/A"} years,{" "}
-                              {person.cpnt_gender || "N/A"}
-                            </p>
-                          </div>
-                          {person.cpnt_number && (
-                            <div>
-                              <p className="text-gray-500">Contact</p>
-                              <p className="text-gray-900">
-                                {person.cpnt_number}
-                              </p>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* General Information Section */}
+        <div className="bg-white rounded-lg border">
+          <div className="flex items-center justify-between p-6 border-b">
+            <div>
+              <button
+                onClick={() => toggleSection('general')}
+                className="flex items-center gap-2 text-left"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 underline">
+                  General Information
+                </h2>
+                {expandedSections.general ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+              <p className="text-sm text-gray-600 mt-1">
+                Basic complaint details and status information
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant={statusDisplay.variant} className="text-sm flex items-center gap-1.5">
+                {statusDisplay.icon}
+                {statusDisplay.text}
+              </Badge>
+              {!complaintStatus.isRaised && (
+                <DialogLayout
+                  isOpen={isRaiseIssueDialogOpen}
+                  onOpenChange={setIsRaiseIssueDialogOpen}
+                  trigger={
+                    <Button variant="destructive" size="sm" disabled={isSubmitting}>
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      Raise Issue
+                    </Button>
+                  }
+                  title="Create Service Request"
+                  description="This will create a service request and archive the complaint."
+                  mainContent={
+                    <>
+                      <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-amber-800">Complaint Summary</p>
+                            <div className="text-sm text-amber-700 space-y-1">
+                              <p><span className="font-medium">ID:</span> {complaintData.comp_id}</p>
+                              <p><span className="font-medium">Type:</span> {complaintData.comp_incident_type}</p>
+                              <p><span className="font-medium">Location:</span> {complaintData.comp_location || "Not specified"}</p>
                             </div>
-                          )}
+                          </div>
                         </div>
-                        {person.cpnt_relation_to_respondent && (
-                          <div className="text-sm">
-                            <p className="text-gray-500">
-                              Relation to Respondent
-                            </p>
-                            <p className="text-gray-900">
-                              {person.cpnt_relation_to_respondent}
-                            </p>
+                      </div>
+                      <div className="flex justify-end gap-2 mt-6">
+                        <Button variant="outline" onClick={() => setIsRaiseIssueDialogOpen(false)} disabled={isSubmitting}>
+                          Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleRaiseIssue} disabled={isSubmitting}>
+                          {isSubmitting ? "Creating..." : "Create Service Request"}
+                        </Button>
+                      </div>
+                    </>
+                  }
+                />
+              )}
+            </div>
+          </div>
+
+          {expandedSections.general && (
+            <div className="p-6">
+              {/* Three-column layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Identification */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Hash className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-base font-semibold text-gray-900">Identification</h3>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">COMPLAINT ID</p>
+                      <p className="text-lg font-semibold text-gray-900">#{complaintData.comp_id}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">INCIDENT TYPE</p>
+                      <p className="text-gray-900 font-medium">{complaintData.comp_incident_type || "Not specified"}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">LOCATION</p>
+                      <p className="text-gray-900">{complaintData.comp_location || "Not specified"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Classification */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-base font-semibold text-gray-900">Classification</h3>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">STATUS</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={statusDisplay.variant} className="text-sm flex items-center gap-1.5">
+                          {statusDisplay.icon}
+                          {statusDisplay.text}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">COMPLAINANTS</p>
+                      <p className="text-2xl font-bold text-blue-600">{complaintData.complainant?.length || 0}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">ACCUSED PERSONS</p>
+                      <p className="text-2xl font-bold text-red-600">{complaintData.accused?.length || 0}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Registration */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-base font-semibold text-gray-900">Registration</h3>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">DATE FILED</p>
+                      <p className="text-gray-900 font-medium">{formattedCreatedAt}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-1">INCIDENT DATE</p>
+                      <p className="text-gray-900">{formattedDate}</p>
+                    </div>
+                    {complaintData.staff && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-gray-500 mb-1">ASSIGNED STAFF</p>
+                        <p className="text-gray-900 font-medium">{complaintData.staff.staff_name}</p>
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          {complaintData.staff.staff_position}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Allegation Details - Full Width */}
+              <div className="mt-8">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Allegation Details</h3>
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-line">
+                    {complaintData.comp_allegation || "No detailed description provided for this complaint."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Complainants Section */}
+        {complaintData.complainant && complaintData.complainant.length > 0 && (
+          <div className="bg-white rounded-lg border">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <button
+                  onClick={() => toggleSection('complainants')}
+                  className="flex items-center gap-2 text-left"
+                >
+                  <h2 className="text-xl font-semibold text-gray-900 underline">
+                    Complainants
+                  </h2>
+                  {expandedSections.complainants ? (
+                    <ChevronUp className="w-5 h-5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  )}
+                </button>
+                <p className="text-sm text-gray-600 mt-1">
+                  A comprehensive list of all complainants in this case, including their details.
+                </p>
+              </div>
+            </div>
+
+            {expandedSections.complainants && (
+              <div className="p-6">
+                <div className="space-y-4">
+                  {complaintData.complainant.map((person, index) => (
+                    <div key={person.cpnt_id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-full bg-blue-100 w-10 h-10 flex items-center justify-center">
+                            <User className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 text-lg">
+                              {person.cpnt_name || "Unknown"}
+                            </h4>
+                            <p className="text-sm text-gray-600">Complainant {index + 1}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm font-medium text-gray-500 mb-1">AGE</p>
+                          <p className="text-gray-900 font-medium">{person.cpnt_age || "N/A"}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm font-medium text-gray-500 mb-1">GENDER</p>
+                          <p className="text-gray-900 font-medium">{person.cpnt_gender || "N/A"}</p>
+                        </div>
+                        {person.cpnt_number && (
+                          <div className="bg-white p-3 rounded">
+                            <p className="text-sm font-medium text-gray-500 mb-1">CONTACT</p>
+                            <p className="text-gray-900 font-medium">{person.cpnt_number}</p>
                           </div>
                         )}
-                        <div className="text-sm">
-                          <p className="text-gray-500">Address</p>
-                          <p className="text-gray-900">
-                            {formatPersonAddress(person)}
-                          </p>
+                        {person.cpnt_relation_to_respondent && (
+                          <div className="bg-white p-3 rounded">
+                            <p className="text-sm font-medium text-gray-500 mb-1">RELATION</p>
+                            <p className="text-gray-900 font-medium">{person.cpnt_relation_to_respondent}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-4">
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm font-medium text-gray-500 mb-1">ADDRESS</p>
+                          {/* <p className="text-gray-900">{ || "Not provided"}</p> */}
                         </div>
                       </div>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
+          </div>
+        )}
 
-          {/* Accused Persons Section */}
-          {complaintData.accused &&
-            complaintData.accused.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-gray-900">
-                    Accused Persons ({complaintData.accused.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {complaintData.accused.map((person) => (
-                    <div key={person.acsd_id} className="p-4 border rounded">
-                      <div className="space-y-3">
-                        <h4 className="font-medium text-gray-900">
-                          {person.acsd_name || "Unknown"}
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-500">Age & Gender</p>
-                            <p className="text-gray-900">
-                              {person.acsd_age || "N/A"} years,{" "}
-                              {person.acsd_gender || "N/A"}
-                            </p>
+        {/* Accused Persons Section */}
+        {complaintData.accused && complaintData.accused.length > 0 && (
+          <div className="bg-white rounded-lg border">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <button
+                  onClick={() => toggleSection('accused')}
+                  className="flex items-center gap-2 text-left"
+                >
+                  <h2 className="text-xl font-semibold text-gray-900 underline">
+                    Accused Persons
+                  </h2>
+                  {expandedSections.accused ? (
+                    <ChevronUp className="w-5 h-5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  )}
+                </button>
+                <p className="text-sm text-gray-600 mt-1">
+                  A comprehensive list of all accused persons in this case, including their details.
+                </p>
+              </div>
+            </div>
+
+            {expandedSections.accused && (
+              <div className="p-6">
+                <div className="space-y-4">
+                  {complaintData.accused.map((person, index) => (
+                    <div key={person.acsd_id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-full bg-red-100 w-10 h-10 flex items-center justify-center">
+                            <User className="w-5 h-5 text-red-600" />
                           </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 text-lg">
+                              {person.acsd_name || "Unknown"}
+                            </h4>
+                            <p className="text-sm text-gray-600">Accused Person {index + 1}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm font-medium text-gray-500 mb-1">AGE</p>
+                          <p className="text-gray-900 font-medium">{person.acsd_age || "N/A"}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm font-medium text-gray-500 mb-1">GENDER</p>
+                          <p className="text-gray-900 font-medium">{person.acsd_gender || "N/A"}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm font-medium text-gray-500 mb-1">ADDRESS</p>
+                          {/* <p className="text-gray-900">{person?.address?.add_barangay || "Not provided"}</p> */}
                         </div>
                         {person.acsd_description && (
-                          <div className="text-sm">
-                            <p className="text-gray-500">Description</p>
-                            <p className="text-gray-900">
-                              {person.acsd_description}
-                            </p>
+                          <div className="bg-white p-3 rounded">
+                            <p className="text-sm font-medium text-gray-500 mb-1">DESCRIPTION</p>
+                            <p className="text-gray-900 leading-relaxed">{person.acsd_description}</p>
                           </div>
                         )}
-                        <div className="text-sm">
-                          <p className="text-gray-500">Address</p>
-                          <p className="text-gray-900">
-                            {formatPersonAddress(person)}
-                          </p>
-                        </div>
                       </div>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
-            )}
-
-          {/* Documents Section */}
-          {renderDocumentsSection()}
-
-          {/* Staff Information */}
-          {complaintData.staff && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-gray-900">Assigned Staff</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-900">
-                    {complaintData.staff.staff_name}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {complaintData.staff.staff_position}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {complaintData.staff.staff_department}
-                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* Confidentiality Notice */}
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm text-gray-600 text-center">
-              All information contained in this complaint record is confidential
-              and protected. Access is restricted to authorized personnel only.
-            </p>
+        {/* Documents Section */}
+        <div className="bg-white rounded-lg border">
+          <div className="flex items-center justify-between p-6 border-b">
+            <div>
+              <button
+                onClick={() => toggleSection('documents')}
+                className="flex items-center gap-2 text-left"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 underline">
+                  Supporting Documents
+                </h2>
+                {expandedSections.documents ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+              <p className="text-sm text-gray-600 mt-1">
+                All documents and evidence submitted with this complaint.
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-sm">
+              {complaintData?.comp_file?.length || 0} files
+            </Badge>
+          </div>
+
+          {expandedSections.documents && (
+            <div className="p-6">
+              {!complaintData?.comp_file || complaintData.comp_file.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="rounded-full bg-gray-100 w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                    <FileX className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">No Documents</h3>
+                  <p className="text-sm text-gray-500">No supporting documents were uploaded with this complaint</p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {complaintData.comp_file.map((file: any, index: number) => (
+                    <div
+                      key={file.comp_file_id || index}
+                      className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="rounded-lg p-3">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate text-lg">
+                          {file.comp_file_name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {file.comp_file_type} • {new Date(file.created_at || Date.now()).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Confidentiality Notice */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <Shield className="w-6 h-6 text-amber-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800 mb-2">
+                Confidential Information
+              </p>
+              <p className="text-sm text-amber-700">
+                All information contained in this complaint record is confidential and protected. 
+                Access is restricted to authorized personnel only.
+              </p>
+            </div>
           </div>
         </div>
       </div>

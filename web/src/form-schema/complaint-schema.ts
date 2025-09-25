@@ -50,111 +50,21 @@ const incidentSchema = z.object({
   comp_incident_type: z.string().min(1, "Incident type is required"),
   comp_allegation: z.string().min(20, "Description must be at least 20 characters"),
   comp_datetime: z.string().min(1, "Date and time is required"),
-  // These are for UI only, not sent to backend
   date: z.string().optional(),
   time: z.string().optional(),
   otherType: z.string().optional(),
 });
 
-const documentSchema = z.object({
-  comp_file_name: z.string(),
-  comp_file_size: z.number(),
-  comp_file_type: z.string(),
-  status: z.enum(["uploading", "uploaded", "error"]),
-  comp_file_url: z.string().optional(),
-  error: z.string().optional(),
-});
-
-// Main complaint form schema
 export const complaintFormSchema = z.object({
   complainant: z.array(complainantSchema)
     .min(1, "At least one complainant is required")
     .max(5, "Maximum 5 complainants allowed"),
-  
+
   accused: z.array(accusedSchema)
     .min(1, "At least one accused person is required")
     .max(5, "Maximum 5 accused persons allowed"),
-  
   incident: incidentSchema,
-  
-  documents: z.array(documentSchema)
-    .max(10, "Maximum 10 files allowed")
-    .optional(),
-});
-
+  files: z.array(z.object({})).default([]),
+}); 
 
 export type ComplaintFormData = z.infer<typeof complaintFormSchema>;
-export type ComplainantData = z.infer<typeof complainantSchema>;
-export type AccusedData = z.infer<typeof accusedSchema>;
-export type IncidentData = z.infer<typeof incidentSchema>;
-export type DocumentData = z.infer<typeof documentSchema>;
-
-export const transformComplainantForBackend = (complainant: ComplainantData) => {
-  let address = complainant.cpnt_address || "";
-  
-  // Build address string from address object if manual entry and no cpnt_address
-  if (complainant.type === "manual" && !address && complainant.address) {
-    address = [
-      complainant.address.street,
-      complainant.address.barangay,
-      complainant.address.city,
-      complainant.address.province,
-      complainant.address.sitio
-    ].filter(Boolean).join(", ");
-  }
-
-  return {
-    cpnt_name: complainant.cpnt_name,
-    cpnt_gender: complainant.genderInput || complainant.cpnt_gender,
-    cpnt_number: complainant.cpnt_number,
-    cpnt_age: complainant.cpnt_age,
-    cpnt_relation_to_respondent: complainant.cpnt_relation_to_respondent,
-    cpnt_address: address || "N/A",
-    rp_id: complainant.rp_id || null,
-  };
-};
-
-export const transformAccusedForBackend = (accused: AccusedData) => {
-  let address = accused.acsd_address || "";
-  
-  if (accused.type === "manual" && !address && accused.address) {
-    address = [
-      accused.address.street,
-      accused.address.barangay,
-      accused.address.city,
-      accused.address.province,
-      accused.address.sitio
-    ].filter(Boolean).join(", ");
-  }
-
-  return {
-    acsd_name: accused.acsd_name,
-    acsd_age: accused.acsd_age,
-    acsd_gender: accused.genderInput || accused.acsd_gender,
-    acsd_description: accused.acsd_description,
-    acsd_address: address || "N/A",
-    rp_id: accused.rp_id || null,
-  };
-};
-
-export const transformIncidentForBackend = (incident: IncidentData) => {
-  return {
-    comp_incident_type: incident.comp_incident_type,
-    comp_allegation: incident.comp_allegation,
-    comp_location: incident.comp_location,
-    comp_datetime: incident.comp_datetime,
-  };
-};
-
-export const transformDocumentsForBackend = (documents: DocumentData[]) => {
-  const uploadedFiles = documents.filter(
-    (doc) => doc.status === "uploaded" && doc.comp_file_url
-  );
-
-  return uploadedFiles.map((doc) => ({
-    comp_file_name: doc.comp_file_name,
-    comp_file_type: doc.comp_file_type,
-    comp_file_url: doc.comp_file_url,
-  }));
-};
-

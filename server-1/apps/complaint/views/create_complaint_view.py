@@ -9,6 +9,7 @@ from apps.complaint.models import Complaint, Complainant, Accused, ComplaintComp
 from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
+from ..serializers import ComplaintFileSerializer
 # from apps.complaint.serializers.create_complaint_serializer import ComplaintSerializer
 
 # Django imports
@@ -25,14 +26,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import base64
+import io
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
 class ComplaintCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = ComplaintSerializer
 
-    @transaction.atomic
+    # @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
             logger.info(f"Received data keys: {request.data.keys()}")
+            logger.info(f"Request content type: {request.content_type}")
 
             # Parse complainants safely
             complainants_data = request.data.get("complainant", [])
@@ -165,24 +172,30 @@ class ComplaintCreateView(APIView):
                     ]
                     ComplaintAccused.objects.bulk_create(complaint_accused)
                 
-                # Handle file uploads
-                files = request.FILES.getlist("complaint_files")
+                # Handle file uploads using the same pattern as medicine
+                files = request.data.get("files", [])
+                uploaded_files = []
+                
                 if files:
-                    complaint_files = []
-                    for file_data in files:
-                        folder = "images" if file_data.content_type.split("/")[0] == "image" else "documents"
-                        url = upload_to_storage(file_data, "complaint-bucket", folder)
-
-                        complaint_files = Complaint_File(
-                            comp=complaint,
-                            comp_file_name=file_data.name,
-                            comp_file_type=file_data.content_type,
-                            comp_file_url=url,
-                        )
-                        complaint_files.append(complaint_files)
-
-                    if complaint_files:
-                        Complaint_File.objects.bulk_create(complaint_files)
+                    try:
+                        # Create a savepoint before file operations
+                        sid = transaction.savepoint()
+                        
+                        file_serializer = ComplaintFileSerializer(context={'request': request})
+                        uploaded_files = file_serializer._upload_files(files, comp_instance=complaint)
+                    
+                        if not uploaded_files:
+                            logger.warning("No files were uploaded successfully")
+                        
+                        logger.info(f"Successfully processed {len(uploaded_files)} files")
+                        
+                    except Exception as file_error:
+                        logger.error(f"File upload failed: {file_error}")
+                        # Rollback file operations but keep the complaint
+                        transaction.savepoint_rollback(sid)
+                        # You can choose to continue without files or raise an error
+                        # For now, we'll continue without files
+                        logger.info("Continuing without file uploads due to error")
 
                 # Serialize response with related data
                 response_serializer = ComplaintSerializer(
@@ -209,6 +222,7 @@ class ComplaintCreateView(APIView):
 
         except Exception as e:
             logger.error(f"Unexpected error in ComplaintCreateView: {str(e)}")
+            logger.error(f"Error traceback: ", exc_info=True)  # This will log the full traceback
             return Response(
                 {"error": "An unexpected error occurred", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

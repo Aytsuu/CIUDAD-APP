@@ -1,10 +1,5 @@
 import { api } from "@/api/api";
 
-export const submitComplaint = async (formData: FormData) => {
-  const response = await api.post("complaint/create/", formData);
-  return response.data;
-};
-
 export const getComplaints = () => {
   return api.get("/complaint/list/");
 };
