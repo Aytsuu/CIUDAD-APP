@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from ..serializers.address_serializers import *
 from apps.administration.models import Staff
+from ..double_queries import *
 
 class AddressBulkCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
@@ -53,13 +54,25 @@ class AddressBulkCreateView(generics.CreateAPIView):
         else:
           instances.append(Address(**item))
     
-    created_instances = Address.objects.bulk_create(instances)
+    created_instances = []
+    for instance in instances:
+      instance.save()
+      created_instances.append(instance)
 
-    created_serializer = self.get_serializer(created_instances, many=True).data if created_instances else []
-
-    response_data = created_serializer + existing_addresses
-    
-    return Response(response_data, status=status.HTTP_201_CREATED)
+    if created_instances.length > 0:
+      double_queries = PostQueries()
+      response = double_queries.address(request.data)
+      if not response.ok:
+        try:
+          error_details = response.json()
+        except ValueError:
+          error_details = response.text
+        raise serializers.ValidationError({'error': error_details})
+      
+      created_serializer = self.get_serializer(created_instances, many=True).data
+      response_data = created_serializer + existing_addresses 
+      return Response(response_data, status=status.HTTP_201_CREATED)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
     
 class PerAddressBulkCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
@@ -105,6 +118,15 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
     response_data = {
         "detail": "Bulk create successful",
     }
+
+    double_queries = PostQueries()
+    response = double_queries.personal_address(request.data)
+    if not response.ok:
+      try:
+        error_details = response.json()
+      except ValueError:
+        error_details = response.text
+      raise serializers.ValidationError({'error': error_details})
     return Response(response_data, status=status.HTTP_201_CREATED)
   
 class PerAddressListView(generics.ListAPIView):

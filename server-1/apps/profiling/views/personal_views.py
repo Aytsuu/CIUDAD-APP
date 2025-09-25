@@ -22,7 +22,7 @@ class PersonalUpdateView(APIView):
     )
 
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(pk=pk)
         return Response(serializer.data)
     
     return Response(serializer.errors, status=400)

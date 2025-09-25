@@ -17,6 +17,7 @@ from ..utils import *
 from utils.supabase_client import upload_to_storage
 from ..utils import *
 from ..double_queries import PostQueries
+import copy
 
 class AllRecordTableView(generics.GenericAPIView):
   serializer_class = AllRecordTableSerializer
@@ -69,15 +70,16 @@ class CompleteRegistrationView(APIView):
 
   @transaction.atomic
   def post(self, request, *args, **kwargs):
-    personal = request.data.get("personal", None)
-    account = request.data.get("account", None)
-    houses = request.data.get("houses", [])
-    livingSolo = request.data.get("livingSolo", None)
-    family = request.data.get("family", None)
-    business = request.data.get("business", None)
-    staff = request.data.get("staff", None)
-    
+    data_copy = copy.deepcopy(request.data)
+    personal = data_copy.get("personal", None)
+    account = data_copy.get("account", None)
+    houses = data_copy.get("houses", [])
+    livingSolo = data_copy.get("livingSolo", None)
+    family = data_copy.get("family", None)
+    business = data_copy.get("business", None)
+    staff = data_copy.get("staff", None)
 
+    print("before:",request.data)
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
 
@@ -112,6 +114,7 @@ class CompleteRegistrationView(APIView):
         self.join_family(family, rp)
 
 
+    print("after:",request.data)
     # Perform double query
     double_queries = PostQueries()
     response = double_queries.complete_profile(request.data) 

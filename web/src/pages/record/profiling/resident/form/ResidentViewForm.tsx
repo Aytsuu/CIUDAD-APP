@@ -30,6 +30,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { CardSidebar } from "@/components/ui/card-sidebar"
 import { Button } from "@/components/ui/button/button"
 import { Badge } from "@/components/ui/badge"
+import { showErrorToast } from "@/components/ui/toast"
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
@@ -131,7 +132,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
     }] : []) as any
   ]
   
-  console.log(personalInfo?.per_addresses)
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
     if (isLoadingFam || isLoadingPersonalInfo || isLoadingBusinesses || isLoadingPersonalHistory) showLoading()
@@ -159,18 +159,16 @@ export default function ResidentViewForm({ params }: { params: any }) {
   }, [addresses])
 
   const submit = async () => {
-    setIsSubmitting(true)
     if (!(await form.trigger())) {
-      setIsSubmitting(false)
       handleSubmitError("Please fill out all required fields")
       return
     }
     if (!validateAddresses()) {
-      setIsSubmitting(false)
       handleSubmitError("Please fill out all required fields")
       return
     }
     try {
+      setIsSubmitting(true)
       const isAddressAdded = personalInfo?.per_addresses?.length < addresses.length
       const values = form.getValues()
       const {per_age, ...personalInfoRest } = personalInfo 
@@ -232,7 +230,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
         {
           personalId: personalInfo?.per_id,
           values: {
-            ...capitalizeAllFields(values),
+            ...values,
             per_addresses: isAddressAdded ? initialiAddresses : addresses,
             staff_id: user?.staff?.staff_id,
           },
@@ -246,8 +244,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
         },
       )
     } catch (err) {
+      showErrorToast("Failed to update profile. Please try again.")
+    } finally {
       setIsSubmitting(false);
-      throw err
     }
   }
 

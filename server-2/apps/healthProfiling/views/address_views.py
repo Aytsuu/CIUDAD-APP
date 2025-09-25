@@ -52,11 +52,13 @@ class AddressBulkCreateView(generics.CreateAPIView):
             existing_keys.add(key)
         else:
           instances.append(Address(**item))
-    
-    created_instances = Address.objects.bulk_create(instances)
+          
+    created_instances = []
+    for instance in instances:
+      instance.save()
+      created_instances.append(instance)
 
     created_serializer = self.get_serializer(created_instances, many=True).data if created_instances else []
-
     response_data = created_serializer + existing_addresses
     
     return Response(response_data, status=status.HTTP_201_CREATED)

@@ -199,7 +199,7 @@ const Homepage = () => {
               <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <View className="h-32 relative">
                   <Image
-                    source={require('@/assets/images/Health/Home/Maternal.jpg')}
+                    source={require('@/assets/images/Health/Home/Maternal1.jpg')}
                     className="w-full h-full"
                     resizeMode="cover"
                   />

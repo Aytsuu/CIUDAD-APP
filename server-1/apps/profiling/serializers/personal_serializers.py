@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import *
 from ..serializers.address_serializers import AddressBaseSerializer
 from apps.administration.models import Staff
+from ..double_queries import *
 
 class PersonalHistoryBaseSerializer(serializers.ModelSerializer):
     history_user_name = serializers.SerializerMethodField()
@@ -92,7 +93,7 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
             'per_disability': {'required': False, 'allow_null': True},
         }
 
-    def update(self, instance, validated_data): 
+    def update(self, instance, validated_data, **kwargs): 
         staff_id = validated_data.pop('staff_id', None)
         
         try:
@@ -208,7 +209,17 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
                     per=instance,
                     add_id__in=addresses_to_delete
                 ).delete()
-        
+            
+            pk = kwargs.get('pk')
+            request = self.context.get("request")
+            double_queries = PostQueries()
+            response = double_queries.personal(request.data, pk)
+            if not response.ok:
+                try:
+                    error_details = response.json()
+                except ValueError:
+                    error_details = response.text
+                raise serializers.ValidationError({'error': error_details})
         return instance
 
 class PersonalModificationBaseSerializer(serializers.ModelSerializer):
