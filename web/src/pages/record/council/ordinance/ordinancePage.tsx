@@ -1223,9 +1223,6 @@ function OrdinancePage() {
                                                         </div>
                                                     )}
 
-                                                   
-                                                    
-
                                                     {/* Metadata */}
                                                     <div className="flex items-center gap-4 text-xs text-gray-600">
                                                         <span>Total Ordinances: {selectedFolder.amendmentComparisonResult.metadata?.ordinanceCount || 0}</span>
