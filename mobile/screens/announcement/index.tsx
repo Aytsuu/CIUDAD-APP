@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 import {
   View,
   Text,
@@ -7,65 +7,59 @@ import {
   RefreshControl,
   ActivityIndicator,
   TextInput,
-} from "react-native"
-import { Picker } from "@react-native-picker/picker"
-import { useRouter } from "expo-router"
-import { useGetAnnouncement, useDeleteAnnouncement } from "./queries"
-import PageLayout from "@/screens/_PageLayout"
-import { Card } from "@/components/ui/card"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { FileText } from "@/lib/icons/FileText"
-import { Calendar } from "@/lib/icons/Calendar"
-import { Clock, Bell, Mail, MessageSquare } from "lucide-react-native"
-import { getDateTimeFormat } from "@/helpers/dateHelpers"
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { useRouter } from "expo-router";
+import { useGetAnnouncement, useDeleteAnnouncement } from "./queries";
+import PageLayout from "@/screens/_PageLayout";
+import { Card } from "@/components/ui/card";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft";
+import { FileText } from "@/lib/icons/FileText";
+import { Calendar } from "@/lib/icons/Calendar";
+import { Clock, Bell, Mail, MessageSquare } from "lucide-react-native";
+import { getDateTimeFormat } from "@/helpers/dateHelpers";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AnnouncementListPage() {
-  const router = useRouter()
-  const [isRefreshing, setIsRefreshing] = React.useState(false)
-  const [search, setSearch] = React.useState("")
-  const [filter, setFilter] = React.useState("all")
+  const router = useRouter();
+  const { user } = useAuth(); 
+  const currentUserId = user?.staff?.id; 
 
-  const { data: announcements = [], isLoading, refetch } = useGetAnnouncement()
-  const { mutate: deleteAnnouncement } = useDeleteAnnouncement()
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [filter, setFilter] = React.useState("all");
+
+  const { data: announcements = [], isLoading, refetch } = useGetAnnouncement();
+  const { mutate: deleteAnnouncement } = useDeleteAnnouncement();
 
   const handleRefresh = async () => {
-    setIsRefreshing(true)
-    await refetch()
-    setIsRefreshing(false)
-  }
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
 
-
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <FileText size={32} className="text-gray-400" />
-      </View>
-      <Text className="text-gray-500 text-lg font-medium mb-2">
-        No announcements yet
-      </Text>
+  const renderEmptyState = (label: string) => (
+    <View className="flex-1 items-center justify-center py-10">
+      <Text className="text-gray-500 text-lg font-medium mb-2">{label}</Text>
       <Text className="text-gray-400 text-center px-8">
         Announcements will appear here once added.
       </Text>
     </View>
-  )
+  );
 
   const renderLoadingState = () => (
-    <View className="flex-1 items-center justify-center py-20">
+    <View className="flex-1 items-center justify-center py-10">
       <ActivityIndicator size="large" color="#3B82F6" />
       <Text className="text-gray-500 mt-4">Loading announcements...</Text>
     </View>
-  )
+  );
 
   const RenderAnnouncementCard = React.memo(
     ({ item, index }: { item: any; index: number }) => (
       <View key={index} className="mb-3 mx-5">
         <Card className="p-4 bg-white shadow-sm border border-gray-100">
-          {/* Title and Type */}
           <View className="flex-row items-center justify-between mb-3">
-            <Text
-              className="text-gray-900 font-semibold text-lg"
-              numberOfLines={1}
-            >
+            <Text className="text-gray-900 font-semibold text-lg" numberOfLines={1}>
               {item.ann_title}
             </Text>
             <View className="bg-blue-500 px-3 py-1 rounded">
@@ -75,14 +69,11 @@ export default function AnnouncementListPage() {
             </View>
           </View>
 
-          {/* Created At */}
           {item.ann_created_at && (
             <View className="mb-3">
               <View className="flex-row items-center">
                 <Calendar size={16} className="text-gray-500 mr-2" />
-                <Text className="text-gray-700 text-sm font-medium">
-                  Created At
-                </Text>
+                <Text className="text-gray-700 text-sm font-medium">Created At</Text>
               </View>
               <Text className="ml-6 text-gray-600 text-sm">
                 {getDateTimeFormat(item.ann_created_at, true)}
@@ -90,7 +81,7 @@ export default function AnnouncementListPage() {
             </View>
           )}
 
-          {/* General Announcement Period */}
+          {/* Event / General display */}
           {item.ann_type?.toLowerCase() === "general" && (
             <View className="mb-3">
               {item.ann_start_at && (
@@ -114,7 +105,6 @@ export default function AnnouncementListPage() {
             </View>
           )}
 
-          {/* Event Announcement */}
           {item.ann_type?.toLowerCase() === "event" && (
             <View className="mb-3">
               {item.ann_start_at && (
@@ -129,9 +119,7 @@ export default function AnnouncementListPage() {
                 <>
                   <View className="flex-row items-center mb-2">
                     <Clock size={16} className="text-gray-500 mr-2" />
-                    <Text className="text-gray-700 text-sm font-medium">
-                      Event Period
-                    </Text>
+                    <Text className="text-gray-700 text-sm font-medium">Event Period</Text>
                   </View>
                   {item.ann_event_start && (
                     <View className="flex-row items-center mb-2 ml-6">
@@ -156,22 +144,16 @@ export default function AnnouncementListPage() {
             </View>
           )}
 
-          {/* Notification Status */}
           {(item.ann_to_sms || item.ann_to_email) && (
             <View className="mb-3">
               <View className="flex-row items-center mb-2">
                 <Bell size={16} className="text-gray-500 mr-2" />
-                <Text className="text-gray-700 text-sm font-medium">
-                  Notification Status
-                </Text>
+                <Text className="text-gray-700 text-sm font-medium">Notification Status</Text>
               </View>
               <View className="ml-6 space-y-2">
                 {item.ann_to_sms && (
                   <View className="flex-row items-center">
-                    <MessageSquare
-                      size={16}
-                      className="text-green-600 mr-2"
-                    />
+                    <MessageSquare size={16} className="text-green-600 mr-2" />
                     <Text className="text-gray-600 text-sm">SMS</Text>
                   </View>
                 )}
@@ -185,7 +167,6 @@ export default function AnnouncementListPage() {
             </View>
           )}
 
-          {/* Actions */}
           <View className="flex-row justify-between mt-3 pt-3 border-t border-gray-100">
             <TouchableOpacity
               onPress={() =>
@@ -208,26 +189,31 @@ export default function AnnouncementListPage() {
         </Card>
       </View>
     )
-  )
+  );
 
   // Search + Filter
   const filteredAnnouncements = announcements.filter((a) => {
     const matchesSearch =
       a.ann_title?.toLowerCase().includes(search.toLowerCase()) ||
-      a.ann_details?.toLowerCase().includes(search.toLowerCase())
+      a.ann_details?.toLowerCase().includes(search.toLowerCase());
 
-    let matchesFilter = true
-    if (filter === "general")
-      matchesFilter = a.ann_type?.toLowerCase() === "general"
-    else if (filter === "event")
-      matchesFilter = a.ann_type?.toLowerCase() === "event"
-    else if (filter === "public")
-      matchesFilter = a.ann_type?.toLowerCase() === "public"
-    else if (filter === "email") matchesFilter = a.ann_to_email === true
-    else if (filter === "sms") matchesFilter = a.ann_to_sms === true
+    let matchesFilter = true;
+    if (filter === "general") matchesFilter = a.ann_type?.toLowerCase() === "general";
+    else if (filter === "event") matchesFilter = a.ann_type?.toLowerCase() === "event";
+    else if (filter === "public") matchesFilter = a.ann_type?.toLowerCase() === "public";
+    else if (filter === "email") matchesFilter = a.ann_to_email === true;
+    else if (filter === "sms") matchesFilter = a.ann_to_sms === true;
 
-    return matchesSearch && matchesFilter
-  })
+    return matchesSearch && matchesFilter;
+  });
+
+  // Split Created vs Received using user ID
+  const createdAnnouncements = filteredAnnouncements.filter(
+    (a) => a.ann_created_by === currentUserId
+  );
+  const receivedAnnouncements = filteredAnnouncements.filter(
+    (a) => a.ann_created_by !== currentUserId
+  );
 
   return (
     <PageLayout
@@ -235,11 +221,8 @@ export default function AnnouncementListPage() {
       leftAction={
         <TouchableOpacity
           onPress={() => {
-            if (router.canGoBack()) {
-              router.back()
-            } else {
-              router.push("/")
-            }
+            if (router.canGoBack()) router.back();
+            else router.push("/");
           }}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
@@ -263,12 +246,8 @@ export default function AnnouncementListPage() {
             <FileText size={24} className="text-white" />
           </View>
           <View className="flex-1">
-            <Text className="text-white/80 text-sm font-medium">
-              Total Announcements
-            </Text>
-            <Text className="text-white text-2xl font-bold">
-              {announcements.length}
-            </Text>
+            <Text className="text-white/80 text-sm font-medium">Total Announcements</Text>
+            <Text className="text-white text-2xl font-bold">{announcements.length}</Text>
           </View>
         </Card>
 
@@ -292,32 +271,28 @@ export default function AnnouncementListPage() {
           </View>
         </View>
 
-        {/* List */}
-        <View className="flex-1">
-          {isLoading && !isRefreshing ? (
-            renderLoadingState()
-          ) : filteredAnnouncements.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <FlatList
-              data={filteredAnnouncements}
-              renderItem={({ item, index }) => (
-                <RenderAnnouncementCard item={item} index={index} />
-              )}
-              keyExtractor={(item) => item.ann_id.toString()}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={handleRefresh}
-                  colors={["#3B82F6"]}
-                />
-              }
-              contentContainerStyle={{ paddingBottom: 20 }}
-            />
-          )}
-        </View>
+        {/* Created Announcements */}
+        <FlatList
+          data={createdAnnouncements}
+          ListHeaderComponent={() => <Text className="text-gray-700 font-semibold px-5 mb-2">Created Announcements</Text>}
+          renderItem={({ item, index }) => <RenderAnnouncementCard item={item} index={index} />}
+          keyExtractor={(item) => item.ann_id.toString()}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={["#3B82F6"]} />}
+          ListEmptyComponent={renderEmptyState("No Created Announcements")}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+
+        {/* Received Announcements */}
+        <FlatList
+          data={receivedAnnouncements}
+          ListHeaderComponent={() => <Text className="text-gray-700 font-semibold px-5 mb-2">Received Announcements</Text>}
+          renderItem={({ item, index }) => <RenderAnnouncementCard item={item} index={index} />}
+          keyExtractor={(item) => item.ann_id.toString()}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={["#3B82F6"]} />}
+          ListEmptyComponent={renderEmptyState("No Received Announcements")}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
       </View>
     </PageLayout>
-  )
+  );
 }

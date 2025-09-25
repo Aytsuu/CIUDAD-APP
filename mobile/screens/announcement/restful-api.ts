@@ -2,15 +2,15 @@ import { api } from "@/api/api";
 
 // Delete announcement
 export const deleteAnnouncement = async (ann_id: string) => {
-  try {
-    console.log("Deleting announcement with ann_id:", ann_id);
-    const res = await api.delete(`announcement/announcements/${ann_id}/`);
-    console.log("Delete response:", JSON.stringify(res.data, null, 2));
-    return res.data ?? {};
-  } catch (err) {
-    console.error("Error deleting entry:", err);
-    throw err;
-  }
+    try {
+        console.log("Deleting announcement with ann_id:", ann_id);
+        const res = await api.delete(`announcement/${ann_id}/`);
+        console.log("Delete response:", res.data);
+        return res.data;
+    } catch (err) {
+        console.error("Error deleting entry:", err);
+        throw err;
+    }
 };
 
 // Get announcements
@@ -59,38 +59,26 @@ export const postAnnouncement = async (announcement: Record<string, any>) => {
     const payload: Record<string, any> = {
       ...announcement,
       ann_created_at: now,
+      ann_event_start: announcement.ann_event_start || null,
+      ann_event_end: announcement.ann_event_end || null,
     };
 
-    if (announcement.ann_start_at?.trim()) {
+    // Only include ann_start_at if provided
+    if (announcement.ann_start_at && announcement.ann_start_at.trim() !== "") {
       payload.ann_start_at = announcement.ann_start_at;
     }
-    if (announcement.ann_end_at?.trim()) {
+
+    // Only include ann_end_at if provided
+    if (announcement.ann_end_at && announcement.ann_end_at.trim() !== "") {
       payload.ann_end_at = announcement.ann_end_at;
     }
 
-    if (announcement.ann_type === "event") {
-      payload.ann_event_start = announcement.ann_event_start || payload.ann_start_at || null;
-      payload.ann_event_end = announcement.ann_event_end || payload.ann_end_at || null;
-    } else {
-      payload.ann_event_start = null;
-      payload.ann_event_end = null;
-    }
+    console.log("Sending payload:", payload);
 
-    if (announcement.ann_type === "public") {
-      delete payload.staff;
-      delete payload.staff_group;
-      delete payload.ar_type;
-      delete payload.ar_category;
-      payload.ann_to_sms = false;
-      payload.ann_to_email = false;
-    }
-
-    console.log("Sending payload:", JSON.stringify(payload, null, 2));
     const res = await api.post("announcement/create/", payload);
-    console.log("Post response:", JSON.stringify(res.data, null, 2));
-    return res.data ?? {};
+    return res.data;
   } catch (error) {
-    console.error("API Error (postAnnouncement):", error);
+    console.error(error);
     throw error;
   }
 };
@@ -98,9 +86,8 @@ export const postAnnouncement = async (announcement: Record<string, any>) => {
 // ✅ Bulk recipients
 export const postAnnouncementRecipient = async (recipients: Record<string, any>[]) => {
   try {
-    const payload = { recipients };
-    console.log("Sending recipients payload:", JSON.stringify(payload, null, 2));
-    const res = await api.post("announcement/create-recipient/", payload);
+    console.log("Sending recipients payload:", JSON.stringify(recipients, null, 2));
+    const res = await api.post("announcement/create-recipient/", recipients); // no extra object
     console.log("Recipients response:", JSON.stringify(res.data, null, 2));
     return res.data ?? {};
   } catch (error) {

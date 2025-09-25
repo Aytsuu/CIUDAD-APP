@@ -3,11 +3,11 @@ import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useForm, Controller, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
-import { ChevronLeft, Send } from "lucide-react-native";
+import { ChevronLeft} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/button/submit-button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -44,13 +44,6 @@ function uniquePreserve<T>(items: T[], keyFn: (x: T) => string): T[] {
     }
   }
   return out;
-}
-
-function formatToISO(date: string | Date | null): string | null {
-  if (!date) return null;
-  const d = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(d.getTime())) return null;
-  return d.toISOString().slice(0, 19); // yyyy-MM-ddTHH:mm:ss
 }
 
 export default function AnnouncementCreate() {
@@ -146,89 +139,105 @@ export default function AnnouncementCreate() {
   }, [positions, posCategory, posGroup]);
 
   const onSubmit = async (data: AnnouncementCreateFormValues) => {
-  setIsSubmitting(true);
-  try {
+   try {
     const cleanedData: Record<string, any> = {};
     for (const key in data) {
       const value = (data as any)[key];
       cleanedData[key] = value !== "" && value !== undefined ? value : null;
     }
 
-    // 🔹 Normalize datetime fields
-    cleanedData.ann_start_at = formatToISO(cleanedData.ann_start_at);
-    cleanedData.ann_end_at = formatToISO(cleanedData.ann_end_at);
-    cleanedData.ann_event_start = formatToISO(cleanedData.ann_event_start);
-    cleanedData.ann_event_end = formatToISO(cleanedData.ann_event_end);
-
     let { ar_type, ar_category, pos_category, pos_group, ...announcementData } = cleanedData;
 
-    // 🔹 Event handling (ann_end_at = ann_event_end always)
+    // Handle Event Type: Sync ann_end_at with ann_event_end if type is "event"
     if (announcementData.ann_type === "event") {
-      if (announcementData.ann_event_end) {
+      if (announcementData.ann_event_end && !announcementData.ann_end_at) {
         announcementData.ann_end_at = announcementData.ann_event_end;
+      }
+      if (!announcementData.ann_event_end && announcementData.ann_end_at) {
+        announcementData.ann_event_end = announcementData.ann_end_at;
       }
     }
 
-    // 🔹 Public announcements – only keep event dates
-    if (announcementData.ann_type === "public") {
-      announcementData.ann_start_at = null; // public doesn’t use it
-      announcementData.ann_end_at = null;
-    }
+    // Handle Event & Public Types
+if (["event", "public"].includes(announcementData.ann_type)) {
+  if (announcementData.ann_event_end && !announcementData.ann_end_at) {
+    announcementData.ann_end_at = announcementData.ann_event_end;
+  }
+  if (!announcementData.ann_event_end && announcementData.ann_end_at) {
+    announcementData.ann_event_end = announcementData.ann_end_at;
+  }
+}
 
-    // 🔹 General announcements – no event fields
-    if (announcementData.ann_type === "general") {
-      announcementData.ann_event_start = null;
-      announcementData.ann_event_end = null;
-    }
+// Public: strip recipients + notifications
+if (announcementData.ann_type === "public") {
+  announcementData.ar_category = null;
+  announcementData.ar_type = [];
+  announcementData.pos_category = null;
+  announcementData.pos_group = null;
+  announcementData.ann_to_sms = false;
+  announcementData.ann_to_email = false;
+}
 
-    // ✅ force Active if no schedule
+
+    // **Force Active if no scheduler provided**
     if (!announcementData.ann_start_at && !announcementData.ann_end_at) {
       announcementData.ann_status = "Active";
     }
 
-      if (Array.isArray(ar_type)) {
-        const origWithKey = (ar_type as string[]).map((t: string) => ({
-          orig: t,
-          key: normalizeTitle(t),
-        }));
-        const unique = uniquePreserve(origWithKey, (o) => o.key).map((o) => o.orig);
-        ar_type = unique;
-      }
+    if (Array.isArray(ar_type)) {
+      const origWithKey = (ar_type as string[]).map((t: string) => ({
+        orig: t,
+        key: normalizeTitle(t),
+      }));
+      const unique = uniquePreserve(origWithKey, (o) => o.key).map((o) => o.orig);
+      ar_type = unique;
+    }
 
-      if (mediaFiles.length > 0) {
-        announcementData.files = mediaFiles.map((file) => ({
-          name: file.name,
-          type: file.type,
-          file: file.url,
-        }));
-      }
+    if (mediaFiles.length > 0) {
+      const filesPayload = mediaFiles.map((file) => ({
+        name: file.name,
+        type: file.type,
+        file: file.url,
+      }));
+      announcementData.files = filesPayload;
+    }
 
-      const createdAnnouncement = await postAnnouncement(announcementData);
+    const createdAnnouncement = await postAnnouncement(announcementData);
 
-      if (Array.isArray(ar_type) && ar_type.length > 0) {
-        const recipientsPayload = (ar_type as string[]).map((type) => ({
+    if (Array.isArray(ar_type) && ar_type.length > 0) {
+      const recipientsPayload = (ar_type as string[])
+        .filter(Boolean)
+        .map((type: string) => ({
           ann: createdAnnouncement?.ann_id,
           ar_type: capitalize(type.trim()),
-          ar_category: ar_category?.trim(),
+          ar_category: ar_category.trim(),
         }));
-        await postAnnouncementRecipient(recipientsPayload);
-      }
 
-      if (ar_category?.toLowerCase() === "resident") {
-        await postAnnouncementRecipient([
-          { ann: createdAnnouncement?.ann_id, ar_category: ar_category.trim() },
-        ]);
-      }
-
-      reset({ ...defaultValues, staff: user?.staff?.staff_id || "" });
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      router.back();
-    } catch (error) {
-      console.error("Error creating announcement:", error);
-    } finally {
-      setIsSubmitting(false);
+      await postAnnouncementRecipient({ recipients: recipientsPayload });
     }
-  };
+
+    if (ar_category?.toLowerCase() === "resident") {
+      await postAnnouncementRecipient({
+        recipients: [
+          {
+            ann: createdAnnouncement?.ann_id,
+            ar_category: ar_category.trim(),
+          },
+        ],
+      });
+    }
+
+
+
+    reset({ ...defaultValues, staff: user?.staff?.staff_id || "" });
+    queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    router.back();
+  } catch (error) {
+    console.error("Error creating announcement:", error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -385,12 +394,12 @@ export default function AnnouncementCreate() {
       </>
     )}
 
-    {/* Submit */}
-    <Button onPress={handleSubmit(onSubmit)} disabled={isSubmitting} className="mt-6">
-      <Text className="ml-2 text-blue ">
-        {isSubmitting ? "Submitting..." : "Create Announcement"}
-      </Text>
-    </Button>
+    <SubmitButton
+  buttonLabel="Create Announcement"
+  submittingLabel="Submitting..."
+  isSubmitting={isSubmitting}
+  handleSubmit={handleSubmit(onSubmit)}
+/>
   </>
 ) : null}
 

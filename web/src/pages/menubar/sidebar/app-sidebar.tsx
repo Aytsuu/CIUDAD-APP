@@ -420,7 +420,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(user?.staff?.pos != "DOCTOR" && featureValidator() ? [{
+    ...(user?.staff?.pos != "DOCTOR" ? [{
       title: "Announcement",
       url: "/announcement",
     }] : []),

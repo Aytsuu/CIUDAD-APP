@@ -47,17 +47,12 @@ export const usePostAnnouncementRecipient = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (recipients: Record<string, any>[]) =>
-      postAnnouncementRecipient(recipients),
-    onSuccess: (_, variables) => {
-      if (variables.length && (variables[0].ann || variables[0].ann_id)) {
-        queryClient.invalidateQueries({
-          queryKey: ["announcementRecipients", variables[0].ann || variables[0].ann_id],
-        });
-      }
+    mutationFn: (values: any) => postAnnouncementRecipient(values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcement_recipients"] });
     },
-    onError: (err: any) => {
-      console.error("Error submitting recipient:", err.response?.data || err.message);
+    onError: (err) => {
+      console.error("Error submitting recipient:", err);
     },
   });
 };
