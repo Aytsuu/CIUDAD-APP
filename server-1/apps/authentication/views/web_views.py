@@ -27,19 +27,25 @@ logger = logging.getLogger(__name__)
 class SignupView(APIView):
     permission_classes = [AllowAny]
 
+    @transaction.atomic
     def post(self, request):
         try:
             email = request.data.get('email', None)
             phone = request.data.get('phone')
             password = request.data.get('password')
-            username = request.data.get('username')
             resident_id = request.data.get('resident_id')
             br = request.data.get('br')
 
             # Check if account already exists
             if Account.objects.filter(~Q(email=None) & Q(email=email)).exists():
                 return Response(
-                    {'error': 'Account with this email already exists'},
+                    {'email': 'Account with this email already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if Account.objects.filter(phone=phone).exists():
+                return Response(
+                    {'phone': 'Account with this phone already exists'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -65,16 +71,15 @@ class SignupView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-            with transaction.atomic():
-                # Password is hashed internally by create_user
-                account = Account.objects.create_user(
-                    email=email,
-                    phone=phone,
-                    username=phone,
-                    password=password,
-                    rp=resident_profile,
-                    br=business_respondent
-                )
+            # Password is hashed internally by create_user
+            account = Account.objects.create_user(
+                email=email,
+                phone=phone,
+                username=phone,
+                password=password,
+                rp=resident_profile,
+                br=business_respondent
+            )
 
             # Return user data
             serializer = UserAccountSerializer(account)
@@ -285,4 +290,3 @@ class VerifyWebAccRegistration(APIView):
 #         serializer = self.get_serializer(data={'refresh': refresh})
 #         serializer.is_valid(raise_exception=True)
 #         return Response(serializer.validated_data, status=status.HTTP_200_OK)
-

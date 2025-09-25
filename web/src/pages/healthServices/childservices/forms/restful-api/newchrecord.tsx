@@ -196,6 +196,8 @@ export const useChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
+
       showSuccessToast("submitted successfully!");
       navigate(-1);
     },

@@ -52,7 +52,7 @@ export default function ForwardedCHimmunizationTable() {
     isLoading,
     refetch
   } = useQuery({
-    queryKey: ["ChildHealthHistoryRecordRecords", staff_id, debouncedSearchQuery, patientType, currentPage, pageSize],
+    queryKey: ["forwardedChildHealthHistoryRecord", staff_id, debouncedSearchQuery, patientType, currentPage, pageSize],
     queryFn: () => getChildHealthHistoryRecordRecords(staff_id!, debouncedSearchQuery, patientType, currentPage, pageSize),
     refetchOnMount: true,
     staleTime: 300000,

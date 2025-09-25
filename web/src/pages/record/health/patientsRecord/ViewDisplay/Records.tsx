@@ -267,8 +267,16 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                                 </div>
                               </div>
 
-                              {/* Children Section - Always displayed if loading or has children */}
-                              {(childrenLoading || formattedChildren.length > 0) && (
+                            
+                            </>
+                          )}
+                        </div>
+                      )
+                    );
+                  })}
+
+                    {/* Children Section - Always displayed if loading or has children */}
+                    {(childrenLoading || formattedChildren.length > 0) && (
                                 <div className="mt-6">
                                   <div className={`p-4 rounded-lg border border-indigo-200`}>
                                     <div className="flex items-center justify-between">
@@ -316,20 +324,19 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                                   </div>
                                 </div>
                               )}
-                            </>
-                          )}
-                        </div>
-                      )
-                    );
-                  })}
                 </>
               )}
             </div>
+
+
           }
           cardClassName="border shadow-sm rounded-md"
           headerClassName="pb-3 border-b"
           contentClassName="pt-4"
         />
+
+
+        
       </TabsContent>
     </Tabs>
   );

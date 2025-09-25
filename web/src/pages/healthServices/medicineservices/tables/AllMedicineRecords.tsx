@@ -180,7 +180,6 @@ export default function AllMedicineRecords() {
   };
 
   return (
-    <MainLayoutComponent title="Medicine Records" description="Manage and view patient's medicine records">
       <div className="w-full h-full flex flex-col">
         {/* Summary Cards - Updated with EnhancedCardLayout */}
         <div className="w-full">
@@ -341,6 +340,5 @@ export default function AllMedicineRecords() {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
   );
 }

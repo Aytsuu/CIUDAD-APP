@@ -45,7 +45,7 @@ import AntigenInventoryReportsTabs from "@/pages/healthServices/Reports/inventor
 
 import MonthlyNewChildrenRecords from "@/pages/healthServices/Reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/Reports/newchildren-list-report/records";
-export const reports_router = [
+export const healthreports_router = [
   {
     path: "/bhw-monthly-reports",
     element: <BHWReportsMainTable />,

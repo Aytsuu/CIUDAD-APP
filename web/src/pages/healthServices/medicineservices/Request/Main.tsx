@@ -33,7 +33,6 @@ export default function MedicineRequestMain() {
   }
 
   return (
-    <MainLayoutComponent title="Medicine Requests" description="Manage and process medicine requests efficiently.">
       <Card className="border shadow-sm">
         <CardHeader className="p-0">
           <Tabs value={selectedView} onValueChange={setSelectedView} className="w-full">
@@ -61,6 +60,5 @@ export default function MedicineRequestMain() {
           </Tabs>
         </CardHeader>
       </Card>
-    </MainLayoutComponent>
   );
 }

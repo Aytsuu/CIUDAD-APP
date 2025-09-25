@@ -554,7 +554,7 @@ export default function MedicineRequestDetail() {
           </CardContent>
         </Card>
 
-        {/* Debug Component - Only in Development */}
+        {/* Debug Component - Only in Development
         {process.env.NODE_ENV === 'development' && (
           <Card className="mt-4 border-yellow-200 bg-yellow-50">
             <CardContent>
@@ -655,7 +655,7 @@ export default function MedicineRequestDetail() {
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Medicine Display */}
         <Card className="mt-4">
@@ -703,7 +703,7 @@ export default function MedicineRequestDetail() {
               )}
             </div>
 
-            {/* Debug info for selected medicines */}
+            {/* Debug info for selected medicines
             {selectedMedicines.length > 0 && (
               <div className="mt-4 p-4 bg-gray-100 rounded">
                 <h4 className="font-semibold mb-2">Selected Medicines Debug Info:</h4>
@@ -735,7 +735,7 @@ export default function MedicineRequestDetail() {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </CardContent>
         </Card>
 

@@ -78,6 +78,7 @@ export const useImmunizationMutations = () => {
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
       queryClient.invalidateQueries({ queryKey: ["vaccines"] });
       queryClient.invalidateQueries({ queryKey: ["antigentransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
 
 
    
