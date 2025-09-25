@@ -9,6 +9,7 @@ import DisbursementVoucherList from "@/screens/treasurer/disbursement-voucher/di
 import IllegalDumpCreateForm from "@/screens/report/illegal-dumping/resident/illegal-dump-create";
 import WasteIllegalDumpingResMain from "@/screens/report/illegal-dumping/resident/illegal-dump-main-res";
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
+import CertChoices from "@/screens/request/certification-request/cert-choices";
 
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
@@ -18,6 +19,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <WasteIllegalDumping/>
+    return <App/>
 }
  

@@ -10,7 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Ordinance, getAllOrdinances, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders, updateOrdinance } from './restful-api/OrdinanceGetAPI';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
@@ -30,7 +30,6 @@ type OrdinanceItem = Ordinance;
 
 
 function OrdinancePage() {
-    const navigate = useNavigate();
     const [ordinanceItems, setOrdinanceItems] = useState<OrdinanceItem[]>([]);
     const [ordinanceFolders, setOrdinanceFolders] = useState<OrdinanceFolder[]>([]);
     const [filter, setFilter] = useState<string>("all");
@@ -237,10 +236,7 @@ function OrdinancePage() {
         }
     };
 
-    const requestToggleRepealed = (item: OrdinanceItem) => {
-        setOrdinanceToToggle(item);
-        setRepealDialogOpen(true);
-    };
+    // Removed unused requestToggleRepealed handler
 
     const confirmToggleRepealed = async () => {
         if (!ordinanceToToggle) return;
@@ -445,13 +441,13 @@ function OrdinancePage() {
             const analysisResult = {
                 summary: result.summary,
                 keyPoints: result.keyPoints,
-                recommendations: result.recommendations,
                 analysisType: "summary",
                 timestamp: new Date().toISOString(),
                 riskLevel: "low" as const,
                 complianceStatus: "compliant" as const,
                 confidence: 0.8,
-                analysisTimestamp: new Date().toISOString()
+                analysisTimestamp: new Date().toISOString(),
+                recommendations: []
             };
             
             // Save the analysis result to localStorage
@@ -538,12 +534,6 @@ function OrdinancePage() {
                 keyDifferences: comparisonResult.differences, // Differences as key differences
                 similarities: comparisonResult.similarities, // Keep similarities
                 differences: comparisonResult.differences, // Keep differences
-                recommendations: [
-                    'Review both documents for compliance',
-                    'Check for conflicting provisions',
-                    'Ensure consistency in legal language',
-                    'Verify effective dates and penalties'
-                ],
                 analysisType: "amendment_comparison",
                 timestamp: new Date().toISOString(),
                 similarityScore: comparisonResult.similarityScore,
@@ -551,6 +541,7 @@ function OrdinancePage() {
                 complianceStatus: "compliant" as const,
                 confidence: 0.8,
                 analysisTimestamp: new Date().toISOString(),
+                recommendations: [],
                 metadata: {
                     ordinanceCount: allOrdinances.length,
                     categories: [...new Set(allOrdinances.map(ord => ord.ord_category))],
@@ -1232,26 +1223,11 @@ function OrdinancePage() {
                                                         </div>
                                                     )}
 
-                                                    {/* Recommendations */}
-                                                    {selectedFolder.amendmentComparisonResult.recommendations.length > 0 && (
-                                                        <div className="bg-white rounded p-3 border border-green-100">
-                                                            <div className="text-xs font-medium text-green-700 mb-2">Recommendations</div>
-                                                            <ul className="space-y-1">
-                                                                {selectedFolder.amendmentComparisonResult.recommendations.map((recommendation: string, index: number) => (
-                                                                    <li key={index} className="flex items-start gap-2">
-                                                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                                                        <span className="text-xs text-gray-700">{recommendation}</span>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-
                                                     {/* Metadata */}
                                                     <div className="flex items-center gap-4 text-xs text-gray-600">
                                                         <span>Total Ordinances: {selectedFolder.amendmentComparisonResult.metadata?.ordinanceCount || 0}</span>
                                                         <span>Years: {selectedFolder.amendmentComparisonResult.metadata?.yearRange?.min || 0} - {selectedFolder.amendmentComparisonResult.metadata?.yearRange?.max || 0}</span>
-                                                        <span>Confidence: {Math.round((selectedFolder.amendmentComparisonResult.confidence || 0) * 100)}%</span>
+                                                        
                                                     </div>
                                                 </div>
                                             </div>
@@ -1282,8 +1258,7 @@ function OrdinancePage() {
                                                             )}
                                                             {(individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === selectedFolder.id) ? 'Analyzing...' : 'Analyze'}
                                                         </Button>
-                                                        
-                                                        {/* <Button
+                                                        <Button
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => {
@@ -1297,7 +1272,7 @@ function OrdinancePage() {
                                                         >
                                                             <Eye className="h-3 w-3 mr-1" />
                                                             View File
-                                                        </Button> */}
+                                                        </Button>
                                                         
                                                         
                                                     </div>

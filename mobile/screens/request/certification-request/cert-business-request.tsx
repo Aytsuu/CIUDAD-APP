@@ -45,12 +45,7 @@ const CertPermit: React.FC = () => {
       
       setBusinessName(business.bus_name || "");
       
-      const addressParts = [
-        business.bus_street,
-        business.sitio
-      ].filter(Boolean); 
-      
-      const fullAddress = addressParts.join(", ");
+      const fullAddress = (business as any).bus_location || "";
       setBusinessAddress(fullAddress || "Address not available");
       
       setGrossSales(business.bus_gross_sales?.toString() || "");
