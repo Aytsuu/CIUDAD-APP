@@ -2,7 +2,7 @@ import React from "react"
 import _ScreenLayout from "@/screens/_ScreenLayout"
 import { Text, View, TouchableOpacity, ScrollView, Alert } from "react-native"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
+import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { IncidentReportSchema } from "@/form-schema/report-schema"
 import { FormInput } from "@/components/ui/form/form-input"
@@ -15,11 +15,17 @@ import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
 import { useGetReportType } from "../queries/reportFetch"
 import { formatReportType } from "@/helpers/formatReportType"
-import { capitalize, capitalizeAllFields } from "@/helpers/capitalize"
 import { useRouter } from "expo-router"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { AlertCircle } from "@/lib/icons/AlertCircle"
+import PageLayout from "@/screens/_PageLayout"
+import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input"
+import { useToastContext } from "@/components/ui/toast"
+import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
+import { LoadingModal } from "@/components/ui/loading-modal"
+import { SubmitButton } from "@/components/ui/button/submit-button"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
@@ -55,45 +61,50 @@ export default function IncidentReportForm() {
   // ================= STATE INITIALIZATION =================
   const router = useRouter()
   const { user } = useAuth();
-  const defaultValues = generateDefaultValues(IncidentReportSchema)
-  
+  const { toast } = useToastContext()
+
   // Form state
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
   const [customIncidentType, setCustomIncidentType] = React.useState<string>("")
   const [severityLevel, setSeverityLevel] = React.useState<string>("")
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [formErrors, setFormErrors] = React.useState<Record<string, string>>({})
+  const [formErrors, setFormErrors] = React.useState<FormErrors>({})
 
   // API hooks
   const { mutateAsync: addIncidentReport } = useAddIncidentReport()
-  const { data: sitioList, isLoading: isLoadingSitioList, error: sitioError } = useGetSitio()
-  const { data: irReportType, isLoading: isLoadingIRReportType, error: reportTypeError } = useGetReportType()
+  const { data: reportTypes, isLoading: isLoadingReportTypes, error: reportTypeError } = useGetReportType()
 
-  // Form setup
-  const { control, trigger, getValues, watch } = useForm<IncidentReport>({
+  // Form configuration
+  const form = useForm<IncidentReport>({
     resolver: zodResolver(IncidentReportSchema),
-    defaultValues,
+    defaultValues: generateDefaultValues(IncidentReportSchema)
   })
 
-  const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList])
-  const formattedRT = React.useMemo(() => formatReportType(irReportType), [irReportType])
+  const {
+    control,
+    trigger,
+    getValues,
+    watch,
+    reset
+  } = form
+
+  // ================= COMPUTED VALUES =================
+  const formattedReportTypes = React.useMemo(() => formatReportType(reportTypes), [reportTypes])
 
   const selectedIncidentType = watch("ir_type")
   const isOtherTypeSelected = selectedIncidentType === "other"
 
   // ================= SIDE EFFECTS =================
   React.useEffect(() => {
-    const type = watch('ir_type')
-    setIsOtherType(type === 'other')
-    if (type !== 'other') {
-      setAddReportType('')
+    if (!isOtherTypeSelected) {
+      setCustomIncidentType("")
+      setFormErrors((prev) => ({ ...prev, otherType: undefined }))
     }
-  }, [watch('ir_type')])
+  }, [isOtherTypeSelected])
 
-  // Clear media error when image is selected
   React.useEffect(() => {
     if (selectedImages.length > 0) {
-      setFormErrors(prev => ({ ...prev, media: '' }))
+      setFormErrors((prev) => ({ ...prev, media: undefined }))
     }
   }, [selectedImages])
 
@@ -105,7 +116,7 @@ export default function IncidentReportForm() {
 
   // ================= VALIDATION =================
   const validateCustomFields = (): FormErrors => {
-    const errors: FormErrors = {} 
+    const errors: FormErrors = {}
 
     // Validate media requirement
     if (selectedImages.length === 0) {
@@ -122,25 +133,34 @@ export default function IncidentReportForm() {
       errors.severity = "Select a severity level"
     }
 
-    setFormErrors(errors)
-    return formIsValid && Object.keys(errors).length === 0
+    return errors
   }
 
-  const submit = async () => {
-    const isFormValid = await validateForm()
+  const validateForm = async (): Promise<boolean> => {
+    // Validate react-hook-form fields
+    const isFormValid = await trigger(["ir_add_details", "ir_date", "ir_type", "ir_time", "ir_area"])
 
-    if (!isFormValid) {
-      return
-    }
-    
+    // Validate custom fields
+    const customErrors = validateCustomFields()
+    setFormErrors(customErrors)
+
+    return isFormValid && Object.keys(customErrors).length === 0
+  }
+
+  // ================= HANDLERS =================
+  const handleSubmit = async () => {
+    const isValid = await validateForm()
+    if (!isValid) return
+
     try {
       setIsSubmitting(true)
-      const values = getValues()
+      const formData = getValues()
+      const { ir_time, ir_involved, ...restData } = formData
 
-      const files = selectedImages.map((media: any) => ({
+      const files = selectedImages.map((media) => ({
         name: media.name,
         type: media.type,
-        file: media.file
+        file: media.file,
       }))
 
       const submissionData: Record<string, any> = {
@@ -164,8 +184,21 @@ export default function IncidentReportForm() {
       setSelectedImages([])
       setSeverityLevel("")
     } catch (error) {
+      console.error("Submission error:", error)
+
+      let errorMessage = "Failed to submit report. Please try again."
+
+      if (axios.isAxiosError(error)) {
+        const responseData = error.response?.data
+        if (responseData?.message) {
+          errorMessage = responseData.message
+        }
+        console.error("API Error:", responseData)
+      }
+
+      toast.error(errorMessage)
+    } finally {
       setIsSubmitting(false)
-      console.error('Submission error:', error)
     }
   }
 
@@ -173,36 +206,37 @@ export default function IncidentReportForm() {
     router.back()
   }
 
-  // Loading state
-  if (isLoadingSitioList || isLoadingIRReportType) {
-    return (
-      <_ScreenLayout
-        showBackButton={false}
-        showExitButton={false}
-      >
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#3B82F6" />
-        </View>
-      </_ScreenLayout>
-    )
-  }
+  // ================= RENDER HELPERS =================
+  const renderErrorState = () => (
+    <PageLayout>
+      <View className="flex-1 justify-center items-center px-6">
+        <AlertCircle size={48} className="text-red-500 mb-4" />
+        <Text className="text-lg font-semibold text-gray-900 mb-2 text-center">Unable to Load Form</Text>
+        <Text className="text-gray-600 text-center mb-6">
+          There was an error loading the form data. Please check your connection and try again.
+        </Text>
+        <Button onPress={handleGoBack} className="bg-gray-600">
+          <Text className="text-white font-medium">Go Back</Text>
+        </Button>
+      </View>
+    </PageLayout>
+  )
 
-  // Error state
-  if (sitioError || reportTypeError) {
-    return (
-      <_ScreenLayout
-        showBackButton={false}
-        showExitButton={false}
-      >
-        <View className="flex-1 justify-center items-center px-6">
-          <AlertCircle size={48} className="text-red-500 mb-4" />
-          <Text className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Form</Text>
-          <Text className="text-gray-600 text-center mb-6">
-            There was an error loading the form data. Please check your connection and try again.
-          </Text>
-          <Button onPress={() => router.back()} className="bg-gray-600">
-            <Text className="text-white">Go Back</Text>
-          </Button>
+  const renderCustomIncidentTypeInput = () => (
+    <View className="mb-4">
+      <Text className="text-sm font-medium text-gray-700 mb-2">Specify Incident Type</Text>
+      <Input
+        value={customIncidentType}
+        onChangeText={setCustomIncidentType}
+        placeholder="Enter the type of incident"
+        className={`${formErrors.otherType ? "border-red-500" : "border-gray-300"}`}
+        accessibilityLabel="Custom incident type"
+        accessibilityHint="Enter a custom incident type when 'Other' is selected"
+      />
+      {formErrors.otherType && (
+        <View className="flex-row items-center mt-1">
+          <AlertCircle size={14} className="text-red-500 mr-1" />
+          <Text className="text-red-500 text-xs">{formErrors.otherType}</Text>
         </View>
       )}
     </View>
@@ -316,17 +350,19 @@ export default function IncidentReportForm() {
   if (reportTypeError) return renderErrorState()
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleGoBack}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
         >
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Incident Report</Text>}
-      customRightAction={<View className="w-10 h-10"/>}
+      headerTitle={<Text className="text-black text-[13px]">Report an Incident</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 px-6 py-2">
         {/* Form Fields */}
@@ -352,18 +388,22 @@ export default function IncidentReportForm() {
             </View>
           </View>
 
-            <FormSelect 
-              label="Sitio" 
-              control={control} 
-              name="ir_sitio" 
-              options={formattedSitio}
-            />
+          {/* Number of People Involved */}
+          <FormInput
+            control={control}
+            name="ir_involved"
+            label="Involved (optional)"
+            placeholder="0"
+            keyboardType="numeric"
+          />
 
-            <FormInput 
-              label="Street Address" 
-              control={control} 
-              name="ir_street"
-              placeholder="Enter the street address"/>
+          {/* Location */}
+          <FormInput
+            label="Incident Location"
+            control={control}
+            name="ir_area"
+            placeholder="Enter the exact location"
+          />
 
           {/* Additional Details */}
           <FormTextArea
