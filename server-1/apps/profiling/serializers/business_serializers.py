@@ -77,11 +77,13 @@ class BusinessRespondentTableSerializer(serializers.ModelSerializer):
     ).data
   
 class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
+  registered_by = serializers.SerializerMethodField()
+
   class Meta:
     model = BusinessRespondent
     fields = ['br_id', 'br_date_registered', 'br_lname', 
               'br_fname', 'br_mname', 'br_sex', 'br_dob',
-              'br_contact']
+              'br_contact', 'registered_by']
 
   def get_per_age(self, obj):
     dob = obj.br_dob
@@ -91,6 +93,18 @@ class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
         (today.month, today.day) < (dob.month, dob.day)
     )
     return age
+  
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 
 class BusinessInfoSerializer(serializers.ModelSerializer):
@@ -180,7 +194,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   def _create_business_instance(self, validated_data, rp, br):
       business = Business(
         rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-        br=BusinessRespondent.objects.get(br_id=br) if br else None,
+        br=BusinessRespondent.objects.get(br_id=br.br_id) if br else None,
         bus_date_verified=date.today(),
         **validated_data
       )

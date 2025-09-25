@@ -12,6 +12,7 @@ export type Receipt = {
     inv_change: number;
     inv_nat_of_collection: string;
     inv_payor: string; // Added this field
+    inv_discount_reason: string;
     // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { delCouncilEvent, restoreCouncilEvent, delAttendee, delAttendanceSheet, restoreAttendanceSheet } from "../api/councilEventdelreq";
-import { CouncilEvent, Attendee, AttendanceSheet } from "../councilEventTypes";
+import { delCouncilEvent, restoreCouncilEvent, delAttendanceSheet, restoreAttendanceSheet } from "../api/councilEventdelreq";
+import { CouncilEvent, AttendanceSheet } from "../councilEventTypes";
 
 export const useDeleteCouncilEvent = () => {
   const queryClient = useQueryClient();
@@ -103,40 +103,40 @@ export const useRestoreCouncilEvent = () => {
   });
 };
 
-export const useDeleteAttendee = () => {
-  const queryClient = useQueryClient();
+// export const useDeleteAttendee = () => {
+//   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: (atn_id: number) => delAttendee(atn_id),
-    onSuccess: (_, atn_id) => {
-      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) => 
-        old.filter(attendee => attendee.atn_id !== atn_id)
-      );
-      queryClient.invalidateQueries({ queryKey: ["attendees"] });
-      toast.success("Attendee deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to delete attendee", {
-        description: error.message,
-        duration: 2000
-      });
-    },
-    onMutate: async (atn_id) => {
-      await queryClient.cancelQueries({ queryKey: ['attendees'] });
-      const previousAttendees = queryClient.getQueryData(['attendees']);
-      queryClient.setQueryData(['attendees'], (old: Attendee[] = []) => 
-        old.filter(attendee => attendee.atn_id !== atn_id)
-      );
-      return { previousAttendees };
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendees'] });
-    }
-  });
-};
+//   return useMutation({
+//     mutationFn: (atn_id: number) => delAttendee(atn_id),
+//     onSuccess: (_, atn_id) => {
+//       queryClient.setQueryData(["attendees"], (old: Attendee[] = []) => 
+//         old.filter(attendee => attendee.atn_id !== atn_id)
+//       );
+//       queryClient.invalidateQueries({ queryKey: ["attendees"] });
+//       toast.success("Attendee deleted successfully", {
+//         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//         duration: 2000
+//       });
+//     },
+//     onError: (error: Error) => {
+//       toast.error("Failed to delete attendee", {
+//         description: error.message,
+//         duration: 2000
+//       });
+//     },
+//     onMutate: async (atn_id) => {
+//       await queryClient.cancelQueries({ queryKey: ['attendees'] });
+//       const previousAttendees = queryClient.getQueryData(['attendees']);
+//       queryClient.setQueryData(['attendees'], (old: Attendee[] = []) => 
+//         old.filter(attendee => attendee.atn_id !== atn_id)
+//       );
+//       return { previousAttendees };
+//     },
+//     onSettled: () => {
+//       queryClient.invalidateQueries({ queryKey: ['attendees'] });
+//     }
+//   });
+// };
 
 export const useArchiveAttendanceSheet = () => {
   const queryClient = useQueryClient();

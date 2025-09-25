@@ -15,6 +15,7 @@ export interface Complainant {
   cpnt_number: string;
   cpnt_relation_to_respondent: string;
   add: Address;
+  rp_id: string;
 }
 
 export interface Accused {
@@ -24,6 +25,7 @@ export interface Accused {
   acsd_gender: string;
   acsd_description: string;
   add: Address;
+  rp_id: string;
 }
 
 export interface ComplaintFile {
@@ -45,4 +47,5 @@ export interface Complaint {
   complainant: Complainant[];
   accused_persons: Accused[];
   complaint_file?: ComplaintFile[];
+  
 }

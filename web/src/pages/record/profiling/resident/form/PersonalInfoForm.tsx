@@ -38,46 +38,46 @@ type PersonalInfoFormProps = {
 
 // ==================== CONSTANTS ====================
 const SEX_OPTIONS = [
-  { id: "female", name: "FEMALE" },
-  { id: "male", name: "MALE" },
+  { id: "FEMALE", name: "FEMALE" },
+  { id: "MALE", name: "MALE" },
 ];
 
 const MARITAL_STATUS_OPTIONS = [
-  { id: "single", name: "SINGLE" },
-  { id: "married", name: "MARRIED" },
-  { id: "divorced", name: "DIVORCED" },
-  { id: "widowed", name: "WIDOWED" },
+  { id: "SINGLE", name: "SINGLE" },
+  { id: "MARRIED", name: "MARRIED" },
+  { id: "DIVORCED", name: "DIVORCED" },
+  { id: "WIDOWED", name: "WIDOWED" },
 ];
 
 const RELIGION_OPTIONS = [
-  { id: "roman catholic", name: "ROMAN CATHOLIC" },
-  { id: "muslim", name: "MUSLIM" },
-  { id: "iglesia ni cristo", name: "IGLESIA NI CRISTO" },
-  { id: "born again", name: "BORN AGAIN" },
-]
+  { id: "ROMAN CATHOLIC", name: "ROMAN CATHOLIC" },
+  { id: "MUSLIM", name: "MUSLIM" },
+  { id: "IGLESIA NI CRISTO", name: "IGLESIA NI CRISTO" },
+  { id: "BORN AGAIN", name: "BORN AGAIN" },
+];
 
 const EDUCATIONAL_ATTAINMENT = [
-  { id: "elementary", name: "ELEMENTARY" },
-  { id: "high school", name: "HIGH SCHOOL" },
-  { id: "vocational / technical", name: "VOCATIONAL / TECHNICAL" },
-  { id: "college level", name: "COLLEGE LEVEL" },
-  { id: "bachelor's degree", name: "BACHELOR'S DEGREE" },
-  { id: "master's degree", name: "MASTER'S DEGREE" },
-  { id: "doctorate degree", name: "DOCTORATE DEGREE" }
+  { id: "ELEMENTARY", name: "ELEMENTARY" },
+  { id: "HIGH SCHOOL", name: "HIGH SCHOOL" },
+  { id: "VOCATIONAL / TECHNICAL", name: "VOCATIONAL / TECHNICAL" },
+  { id: "COLLEGE LEVEL", name: "COLLEGE LEVEL" },
+  { id: "BACHELOR'S DEGREE", name: "BACHELOR'S DEGREE" },
+  { id: "MASTER'S DEGREE", name: "MASTER'S DEGREE" },
+  { id: "DOCTORATE DEGREE", name: "DOCTORATE DEGREE" },
 ];
 
 const PWD_OPTIONS = [
-  { id: "visual disability", name: "VISUAL DISABILITY" },
-  { id: "hearing disability", name: "HEARING DISABILITY" },
-  { id: "speech impairment", name: "SPEECH IMPAIRMENT" },
-  { id: "learning disability", name: "LEARNING DISABILITY" },
-  { id: "intellectual disability", name: "INTELLECTUAL DISABILITY" },
-  { id: "mental disability", name: "MENTAL DISABILITY" },
-  { id: "psychosocial disability", name: "PSYCHOSOCIAL DISABILITY" },
-  { id: "physical disability", name: "PHYSICAL DISABILITY" },
-  { id: "cancer", name: "CANCER" },
-  { id: "rare disease", name: "RARE DISEASE" },
-  { id: "multiple disabilities", name: "MULTIPLE DISABILITIES" }
+  { id: "VISUAL DISABILITY", name: "VISUAL DISABILITY" },
+  { id: "HEARING DISABILITY", name: "HEARING DISABILITY" },
+  { id: "SPEECH IMPAIRMENT", name: "SPEECH IMPAIRMENT" },
+  { id: "LEARNING DISABILITY", name: "LEARNING DISABILITY" },
+  { id: "INTELLECTUAL DISABILITY", name: "INTELLECTUAL DISABILITY" },
+  { id: "MENTAL DISABILITY", name: "MENTAL DISABILITY" },
+  { id: "PSYCHOSOCIAL DISABILITY", name: "PSYCHOSOCIAL DISABILITY" },
+  { id: "PHYSICAL DISABILITY", name: "PHYSICAL DISABILITY" },
+  { id: "CANCER", name: "CANCER" },
+  { id: "RARE DISEASE", name: "RARE DISEASE" },
+  { id: "MULTIPLE DISABILITIES", name: "MULTIPLE DISABILITIES" },
 ];
 
 // ==================== COMPONENT ====================
@@ -275,8 +275,7 @@ const PersonalInfoForm = ({
             </div>
           ))
         }
-        {(formType !== Type.Viewing) && 
-          (!watch(`${prefix}per_id` as any) || watch(`${prefix}per_id` as any) == "undefined") &&
+        {(formType !== Type.Viewing) &&
           <div>
             <Button 
               variant={"outline"} 

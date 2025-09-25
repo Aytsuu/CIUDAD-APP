@@ -58,7 +58,7 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
                 truck: values.truck,
                 date: values.date,
                 time: values.time,
-                collectors: values.collectors
+                collectors: values.loaders
             }
         }, {
             onSuccess: () => {
@@ -72,7 +72,7 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
         resolver: zodResolver(EditAcceptPickupRequestSchema),
         defaultValues: {
             driver: assignment?.driver ? String(assignment.driver) : "",
-            collectors: assignment?.collectors?.map(id => String(id)) || [],
+            loaders: assignment?.collectors?.map(id => String(id)) || [],
             truck: assignment?.truck ? String(assignment.truck) : "",
             date: assignment?.pick_date || "",
             time: assignment?.pick_time || "",

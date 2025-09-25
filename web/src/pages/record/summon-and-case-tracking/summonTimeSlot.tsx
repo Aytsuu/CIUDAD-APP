@@ -14,9 +14,7 @@ import { useAddSummonTimeSlots } from "./queries/summonInsertQueries";
 type TimeSlot = {
   id: number;
   displayStart: string; 
-  displayEnd: string;  
-  rawStart: string;   
-  rawEnd: string;     
+  rawStart: string;    
 };
 
 const formatTimeTo12Hour = (time24h: string) => {
@@ -38,21 +36,17 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
     resolver: zodResolver(SummonTimeSchema),
     defaultValues: {
       start_time: "",
-      end_time: "",
       sd_id: String(sd_id),
     }
   });
 
   const handleAddTimeSlot = () => {
     const rawStart = form.getValues("start_time"); 
-    const rawEnd = form.getValues("end_time");    
     
     const newTimeSlot = {
       id: Date.now(),
       displayStart: formatTimeTo12Hour(rawStart),
-      displayEnd: formatTimeTo12Hour(rawEnd),
       rawStart,
-      rawEnd
     };
     
     setTimeSlots([...timeSlots, newTimeSlot]);
@@ -67,7 +61,6 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
     const submissionData = timeSlots.map(slot => ({
       sd_id: Number(sd_id),
       st_start_time: slot.rawStart, 
-      st_end_time: slot.rawEnd,
       st_is_booked: false
     }));
 
@@ -84,7 +77,7 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
             timeSlots.map((slot) => (
               <Card key={slot.id} className="flex items-center justify-between p-3">
                 <Label className="font-medium">
-                  {slot.displayStart} - {slot.displayEnd}
+                  {slot.displayStart}
                 </Label>
                 <Button 
                   variant="ghost" 
@@ -109,16 +102,9 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
           <div className="flex flex-col gap-4 md:flex-row justify-center items-center w-full">
             <FormDateTimeInput
               control={form.control}
-              label="Start Time"
+              label="Time"
               type="time"
               name="start_time"
-            />
-
-            <FormDateTimeInput
-              control={form.control}
-              label="End Time"
-              type="time"
-              name="end_time"
             />
           </div>
           <div className='flex flex-col sm:flex-row justify-center items-center gap-2'>

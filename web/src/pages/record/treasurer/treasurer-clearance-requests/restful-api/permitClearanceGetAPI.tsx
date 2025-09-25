@@ -96,33 +96,11 @@ export const getBusinesses = async () => {
     const businessesWithAddresses = businesses.map((business: any) => {
       console.log("Processing business:", business.bus_name, "with add_id:", business.add_id, "br_id:", business.br_id);
       
-             let fullAddress = '';
-       
-       // Construct address directly from business data
-       const addressParts = [];
-       
-       if (business.bus_street) {
-         addressParts.push(business.bus_street);
-       }
-       
-       if (business.sitio) {
-         addressParts.push(`Sitio ${business.sitio}`);
-       }
-       
-       if (business.add_barangay) {
-         addressParts.push(business.add_barangay);
-       }
-       
-       if (business.add_city) {
-         addressParts.push(business.add_city);
-       }
-       
-       if (business.add_province) {
-         addressParts.push(business.add_province);
-       }
-       
-       fullAddress = addressParts.join(', ');
-       console.log("Constructed address from business data:", fullAddress);
+      // Prefer backend-provided business location if available
+      const fullAddress = business.bus_location || '';
+      if (!fullAddress) {
+        console.log("No bus_location available for:", business.bus_name);
+      }
       
       // Get requestor data
       let requestor = '';

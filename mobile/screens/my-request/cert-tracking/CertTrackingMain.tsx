@@ -4,14 +4,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useRouter } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { useCertTracking, useCancelCertificate } from "./queries/certTrackingQueries";
+import { useCertTracking, useCancelCertificate, useCancelBusinessPermit } from "./queries/certTrackingQueries";
+import CertTrackingPersonal from "./certTrackingPersonal";
+import CertTrackingBusiness from "./certTrackingBusiness";
 
 export default function CertTrackingMain() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
-  const { data, isLoading, isError } = useCertTracking(user?.resident?.rp_id || "");
-  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.resident?.rp_id || "");
+  const rp = (user as any)?.rp ?? "";
+  const { data, isLoading, isError } = useCertTracking(rp);
+  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(rp);
+  const { mutate: cancelBusiness, isPending: isCancellingBiz } = useCancelBusinessPermit(rp);
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
 
@@ -64,7 +68,15 @@ export default function CertTrackingMain() {
       'Are you sure you want to cancel this request?',
       [
         { text: 'No', style: 'cancel' },
-        { text: 'Yes', style: 'destructive', onPress: () => cancelCert(String(item?.cr_id)) }
+        { text: 'Yes', style: 'destructive', onPress: () => {
+            const crId = String(item?.cr_id || '').trim();
+            const bprId = String(item?.bpr_id || '').trim();
+            if (crId) {
+              cancelCert(crId);
+            } else if (bprId) {
+              cancelBusiness(bprId);
+            }
+          } }
       ]
     );
   }
@@ -144,22 +156,35 @@ export default function CertTrackingMain() {
 
         {!isLoading && !isError && (
           <>
-            {/* Tabs */}
-            <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'personal' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setActiveTab('personal')}
+            {/* Tabs - mimic garbage pickup main */}
+            <View className="bg-white border-b border-gray-200 mb-3">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 8 }}
               >
-                <Text className={`text-sm ${activeTab === 'personal' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Personal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'business' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setActiveTab('business')}
-              >
-                <Text className={`text-sm ${activeTab === 'business' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Business</Text>
-              </TouchableOpacity>
+                {[
+                  { key: 'personal' as 'personal' | 'business', label: 'Personal' },
+                  { key: 'business' as 'personal' | 'business', label: 'Business' },
+                ].map((tab) => (
+                  <TouchableOpacity
+                    key={tab.key}
+                    onPress={() => setActiveTab(tab.key)}
+                    className={`px-3 py-4 mx-1 items-center border-b-2 ${
+                      activeTab === tab.key ? 'border-blue-500' : 'border-transparent'
+                    }`}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${
+                        activeTab === tab.key ? 'text-blue-600' : 'text-gray-500'
+                      }`}
+                    >
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
 
             {/* Status Filters */}
@@ -195,81 +220,11 @@ export default function CertTrackingMain() {
             </View>
 
             {/* Tab Content */}
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {activeTab === 'personal' ? (
-                <>
-                  {data?.personal?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter).length ? (
-                    data.personal
-                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter)
-                      .map((item: any, idx: number) => (
-                      <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-gray-900 font-medium">{wrapPurpose(item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification")}</Text>
-                          {getStatusBadge(extractStatus(item))}
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
-                          <View className="mt-3">
-                            <TouchableOpacity
-                              onPress={() => handleCancel(item)}
-                              disabled={isCancelling}
-                              className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                              activeOpacity={0.8}
-                            >
-                              <Text className="text-red-700 text-xs font-medium">{isCancelling ? 'Cancelling…' : 'Cancel Request'}</Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                      ))
-                  ) : (
-                    <Text className="text-gray-500 text-sm mb-4">No personal certification requests.</Text>
-                  )}
-                </>
-              ) : (
-                <>
-                  {data?.business?.filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter).length ? (
-                    data.business
-                      .filter((i: any) => statusFilter === 'all' || getNormalizedStatus(extractStatus(i)) === statusFilter)
-                      .map((item: any, idx: number) => (
-                      <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center">
-                          <Text className="text-gray-900 font-medium">{wrapPurpose(item?.purpose ?? "Business Permit")}</Text>
-                          {getStatusBadge(extractStatus(item))}
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ibp_date_of_issuance)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.cr_date_rejected || item?.date_cancelled)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) !== 'completed' && getNormalizedStatus(extractStatus(item)) !== 'cancelled' && (
-                          <View className="mt-3">
-                            <TouchableOpacity
-                              onPress={() => handleCancel(item)}
-                              disabled={isCancelling}
-                              className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                              activeOpacity={0.8}
-                            >
-                              <Text className="text-red-700 text-xs font-medium">{isCancelling ? 'Cancelling…' : 'Cancel Request'}</Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                      ))
-                  ) : (
-                    <Text className="text-gray-500 text-sm">No business permit requests.</Text>
-                  )}
-                </>
-              )}
-            </ScrollView>
+            {activeTab === 'personal' ? (
+              <CertTrackingPersonal />
+            ) : (
+              <CertTrackingBusiness />
+            )}
           </>
         )}
       </View>

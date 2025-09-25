@@ -12,7 +12,7 @@ export const useResolveCase = (onSuccess?: () => void) => {
             toast.loading("Marking case...", { id: "resolveCase" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['caseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] })
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             toast.success('Case marked as resolved', {
                 id: "resolveCase",
@@ -36,12 +36,12 @@ export const useEscalateCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
 
      return useMutation({
-       mutationFn: ({ srId, comp_id }: { srId: string, comp_id: string }) =>escalateCase(srId, comp_id),
+       mutationFn: ( sr_id: string) =>escalateCase(sr_id),
         onMutate: () =>{
             toast.loading("Marking case...", { id: "escalateCase" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['caseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] })
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             toast.success('Case marked as escalated', {
                 id: "escalateCase",
@@ -112,6 +112,8 @@ export const useAcceptRequest = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonPendingReq'] })
+            queryClient.invalidateQueries({ queryKey: ['summonAcceptedReq'] })
+
             toast.success('Request Accepted', {
                 id: "acceptReq",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -140,6 +142,7 @@ export const useRejectRequest = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonPendingReq'] })
+            queryClient.invalidateQueries({ queryKey: ['summonRejectedReq'] })
             toast.success('Request Rejected', {
                 id: "rejectReq",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

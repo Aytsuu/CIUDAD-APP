@@ -13,6 +13,7 @@ class CouncilScheduling(models.Model):
     ce_date = models.DateField(default=date.today)
     ce_time = models.TimeField()
     ce_description = models.CharField(max_length=500)
+    ce_rows = models.IntegerField(null=True)
     ce_is_archive = models.BooleanField(default=False)
     
     staff = models.ForeignKey(
@@ -26,23 +27,23 @@ class CouncilScheduling(models.Model):
     class Meta:
         db_table = 'council_event'
 
-class CouncilAttendees(models.Model):
-    atn_id = models.BigAutoField(primary_key=True)
-    atn_name = models.CharField(max_length=200, default='')
-    atn_designation = models.CharField(max_length=200, default='')
-    atn_present_or_absent = models.CharField(max_length=100)
-    ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+# class CouncilAttendees(models.Model):
+#     atn_id = models.BigAutoField(primary_key=True)
+#     atn_name = models.CharField(max_length=200, default='')
+#     atn_designation = models.CharField(max_length=200, default='')
+#     atn_present_or_absent = models.CharField(max_length=100)
+#     ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
     
-    staff = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
-    )
+#     staff = models.ForeignKey(
+#         'administration.Staff',
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         db_column='staff_id'
+#     )
 
-    class Meta:
-        db_table = 'attendees'
+#     class Meta:
+#         db_table = 'attendees'
 
 class CouncilAttendance(models.Model):
     att_id = models.BigAutoField(primary_key=True)
@@ -288,6 +289,7 @@ class Ordinance(models.Model):
     ord_parent = models.CharField(max_length=50, null=True, blank=True, help_text="ord_num of the parent ordinance (if this is an amendment)")
     ord_is_ammend = models.BooleanField(default=False, help_text="Whether this ordinance is an amendment to another")
     ord_ammend_ver = models.IntegerField(null=True, blank=True, help_text="Version number of the amendment")
+    ord_repealed = models.BooleanField(default=False, help_text="Whether this ordinance is repealed")
 
     of_id = models.ForeignKey(
         'OrdinanceFile',
@@ -306,7 +308,34 @@ class Ordinance(models.Model):
         db_column='staff_id'
     )
     
+    def clean(self):
+        # An ordinance cannot be marked as an amendment if it is repealed
+        if self.ord_repealed and self.ord_is_ammend:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'ord_is_ammend': 'A repealed ordinance cannot be marked as an amendment.'
+            })
+
+        # If this ordinance amends another, ensure the parent is not repealed
+        if self.ord_is_ammend and self.ord_parent:
+            try:
+                parent = Ordinance.objects.get(ord_num=self.ord_parent)
+                if parent.ord_repealed:
+                    from django.core.exceptions import ValidationError
+                    raise ValidationError({
+                        'ord_parent': 'Cannot amend a repealed ordinance.'
+                    })
+            except Ordinance.DoesNotExist:
+                # Let other validations handle missing parent if needed
+                pass
+
     def save(self, *args, **kwargs):
+        # Run validations before saving
+        try:
+            self.full_clean()
+        except Exception:
+            # Re-raise to preserve default behavior upstream
+            raise
         if not self.ord_num:  # If no ordinance number provided
             # Generate ordinance number: ORD-YYYY-XXXX
             year = getattr(self, 'ord_year', 2024)
