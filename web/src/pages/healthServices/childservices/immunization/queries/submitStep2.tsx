@@ -70,6 +70,17 @@ export const useImmunizationMutations = () => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords", chrec_id] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", chrec_id] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["unvaccinatedResidents"] }); 
+      queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["antigentransactions"] });
+
+
+   
 
       navigate(-1);
       showSuccessToast("Immunization data saved successfully!");

@@ -76,6 +76,7 @@ export const useSubmitVaccinationRecord = () => {
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
       queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["unvaccinatedResidents"] }); 
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["vaccineStocks"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
