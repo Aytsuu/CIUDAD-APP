@@ -41,8 +41,8 @@ export default function FeatureSelection({
     return ids;
   }, [assignedFeatures]);
 
-  const totalAssigned = assignedFeatures.length;
-  const totalFeatures = features.length;
+  const totalAssigned = assignedFeatures?.length || 0;
+  const totalFeatures = features?.length || 0;
 
   // =================== HANDLERS ===================
   // Optimistic update for feature assignment
@@ -83,7 +83,7 @@ export default function FeatureSelection({
 
           // Update with real data
           setAssignedFeatures((prev) =>
-            prev.map((item) =>
+            prev?.map((item) =>
               item.feat.feat_id === feature.feat_id && item.assi_id === tempId
                 ? {
                     ...item,
@@ -185,7 +185,7 @@ export default function FeatureSelection({
       {/* Feature categories - Accordion */}
       <ScrollArea className="h-[calc(100vh-300px)]">
         <div className="w-full pr-4 pt-1 pb-16 space-y-4">
-          {features.map((feature) => {
+          {features?.map((feature) => {
             const isAssigned = isFeatureAssigned(feature.feat_id);
             const isLoading = loadingFeatures.has(feature.feat_id);
 
