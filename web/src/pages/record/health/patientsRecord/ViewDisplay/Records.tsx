@@ -8,24 +8,6 @@ import { FaDog, FaFirstAid } from "react-icons/fa";
 import { MdPregnantWoman } from "react-icons/md";
 import { useGetChildren } from "../queries/fetch";
 
-// Skeleton component for loading state
-const ChildHealthSkeleton = () => (
-  <div className="p-4 rounded-lg border border-pink-200">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-3">
-        <Skeleton className="w-9 h-9 rounded-lg" />
-        <div>
-          <Skeleton className="h-5 w-40 mb-2" />
-          <div className="flex items-center space-x-4 mt-1">
-            <Skeleton className="h-6 w-24" />
-          </div>
-        </div>
-      </div>
-      <Skeleton className="h-10 w-24" />
-    </div>
-  </div>
-);
-
 // Children List Skeleton
 const ChildrenListSkeleton = () => (
   <div className="mt-4 ml-8 space-y-3">
@@ -52,17 +34,17 @@ const ChildrenListSkeleton = () => (
 );
 
 // Format children data similar to your formatChildHealthData function
-const formatChildrenData = (childrenData:any) => {
+const formatChildrenData = (childrenData: any) => {
   if (!childrenData?.children) return [];
-  return childrenData.children.map((child:any) => {
+  return childrenData.children.map((child: any) => {
     const personalInfo = child.personal_info || {};
     const addressInfo = child.address || {};
     const childHealthInfo = child.child_health_info || {};
-    
+
     // Calculate age from DOB
     const dob = personalInfo.per_dob || "";
     const age = dob ? calculateAge(dob).toString() : "";
-    
+
     return {
       chrec_id: child.chrec_id || 0,
       pat_id: child.pat_id || "",
@@ -81,8 +63,8 @@ const formatChildrenData = (childrenData:any) => {
       landmarks: addressInfo.add_landmarks || "",
       pat_type: "CHILD",
       address: addressInfo.full_address || "",
-      mother_fname: child.parent_info?.parent_name?.split(' ')[0] || "",
-      mother_lname: child.parent_info?.parent_name?.split(' ').slice(1).join(' ') || "",
+      mother_fname: child.parent_info?.parent_name?.split(" ")[0] || "",
+      mother_lname: child.parent_info?.parent_name?.split(" ").slice(1).join(" ") || "",
       mother_mname: "",
       mother_contact: "",
       mother_occupation: childHealthInfo.mother_occupation || "",
@@ -105,45 +87,33 @@ const formatChildrenData = (childrenData:any) => {
 };
 
 // Helper function to calculate age
-const calculateAge = (dob:any) => {
+const calculateAge = (dob: any) => {
   const birthDate = new Date(dob);
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-  
+
   return age;
 };
 
-export default function Records({
-  vaccinationCount,
-  medicineCount,
-  firstAidCount,
-  postpartumCount,
-  medicalconCount,
-  patientLinkData,
-  childHealthCount,
-  childHealthRecords,
-  prenatalCount,
-  famplanCount,
-  animalbitesCount,
-}:any) {
+export default function Records({ vaccinationCount, medicineCount, firstAidCount, postpartumCount, medicalconCount, patientLinkData, childHealthCount, childHealthRecords, prenatalCount, famplanCount, animalbitesCount }: any) {
   // Use the hook to get children data
   const { data: childrenData, isLoading: childrenLoading } = useGetChildren(patientLinkData?.pat_id);
-  
+
   console.log("Patient ID:", patientLinkData?.pat_id);
   console.log("Children Data:", childrenData);
   console.log("Children Loading:", childrenLoading);
-  
+
   // Format children data
   const formattedChildren = childrenData ? formatChildrenData(childrenData) : [];
   console.log("Formatted Children:", formattedChildren);
-  
+
   const firstChildHealthRecord = childHealthRecords && childHealthRecords.length > 0 ? childHealthRecords[0] : null;
-  
+
   // Check if all service counts are zero or undefined (excluding children)
   const hasNoRecords =
     (!vaccinationCount || vaccinationCount === 0) &&
@@ -155,7 +125,7 @@ export default function Records({
     (!prenatalCount || prenatalCount === 0) &&
     (!famplanCount || famplanCount === 0) &&
     (!animalbitesCount || animalbitesCount === 0) &&
-    (formattedChildren.length === 0);
+    formattedChildren.length === 0;
 
   const services = [
     {
@@ -249,7 +219,7 @@ export default function Records({
       bgColor: "bg-red-200",
       textColor: "text-red-600",
       state: { params: { patientData: patientLinkData } }
-    },
+    }
   ];
 
   return (
@@ -263,134 +233,95 @@ export default function Records({
               {hasNoRecords && !childrenLoading ? (
                 <div className="p-6 text-center bg-gray-50 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-700">No Records Found</h3>
-                  <p className="text-sm text-gray-500 mt-2">
-                    There are currently no records available for this patient. Please check back later or add new records.
-                  </p>
+                  <p className="text-sm text-gray-500 mt-2">There are currently no records available for this patient. Please check back later or add new records.</p>
                 </div>
               ) : (
                 <>
                   {/* Regular Services */}
-                  {services.map(
-                    (service, index) => {
-                      const shouldShowService = service.count > 0;
-                      
-                      return shouldShowService && (
+                  {services.map((service, index) => {
+                    const shouldShowService = service.count > 0;
+
+                    return (
+                      shouldShowService && (
                         <div key={index}>
                           {childrenLoading ? (
-                            <ChildHealthSkeleton />
+                            <ChildrenListSkeleton />
                           ) : (
-                            <div className={`p-4 rounded-lg border ${service.borderColor}`}>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                  <div className={`p-2 rounded-lg ${service.bgColor}`}>{service.icon}</div>
-                                  <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">{service.title}</h3>
-                                    <div className="flex items-center space-x-4 mt-1">
-                                      <span className={`text-sm text-gray-600 ${service.bgColor} px-2 py-1 rounded-md`}>
-                                        {service.count !== undefined ? service.count : "0"} Records
-                                      </span>
+                            <>
+                              <div className={`p-4 rounded-lg border ${service.borderColor}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className={`p-2 rounded-lg ${service.bgColor}`}>{service.icon}</div>
+                                    <div>
+                                      <h3 className="text-lg font-semibold text-gray-900">{service.title}</h3>
+                                      <div className="flex items-center space-x-4 mt-1">
+                                        <span className={`text-sm text-gray-600 ${service.bgColor} px-2 py-1 rounded-md`}>{service.count !== undefined ? service.count : "0"} Records</span>
+                                      </div>
                                     </div>
                                   </div>
+                                  <Link to={service.link} state={service.state} className="transition-transform hover:scale-105">
+                                    <Button variant="outline" size="sm" className={`h-10 px-6 bg-white ${service.borderColor} ${service.textColor} font-medium`} disabled={service.disabled}>
+                                      View Details
+                                    </Button>
+                                  </Link>
                                 </div>
-                                <Link
-                                  to={service.link}
-                                  state={service.state}
-                                  className="transition-transform hover:scale-105"
-                                >
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-10 px-6 bg-white ${service.borderColor} ${service.textColor} font-medium`}
-                                    disabled={service.disabled}
-                                  >
-                                    View Details
-                                  </Button>
-                                </Link>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                  )}
-                  
-                  {/* Children Section - Always displayed if loading or has children */}
-                  {(childrenLoading || formattedChildren.length > 0) && (
-                    <div className="mt-6">
-                      <div className={`p-4 rounded-lg border border-indigo-200`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className={`p-2 rounded-lg bg-indigo-100`}>
-                              <Baby className="w-5 h-5 text-indigo-600" />
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">Children</h3>
-                              <div className="flex items-center space-x-4 mt-1">
-                                <span className={`text-sm text-gray-600 bg-indigo-100 px-2 py-1 rounded-md`}>
-                                  {childrenLoading ? "Loading..." : `${formattedChildren.length} Children`}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Children List - Automatically displayed */}
-                        <div className="mt-4 space-y-3">
-                          {childrenLoading ? (
-                            <ChildrenListSkeleton />
-                          ) : formattedChildren.length > 0 ? (
-                            <>
-                              <h4 className="text-md font-semibold text-gray-700 mb-3">Children List:</h4>
-                              {formattedChildren.map((child:any, childIndex:any) => (
-                                <div key={childIndex} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="p-2 rounded-lg bg-indigo-100">
-                                        <Baby className="w-4 h-4 text-indigo-600" />
-                                      </div>
-                                      <div>
-                                        <h5 className="text-sm font-medium text-gray-900">
-                                          {child.fname} {child.mname} {child.lname}
-                                        </h5>
-                                        <div className="flex items-center space-x-2 mt-1">
-                                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
-                                            {child.age} years old
-                                          </span>
-                                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
-                                            {child.sex}
-                                          </span>
-                                          <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
-                                            Birth Order: {child.birth_order}
-                                          </span>
+
+                              {/* Children Section - Always displayed if loading or has children */}
+                              {(childrenLoading || formattedChildren.length > 0) && (
+                                <div className="mt-6">
+                                  <div className={`p-4 rounded-lg border border-indigo-200`}>
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-3">
+                                        <div className={`p-2 rounded-lg bg-indigo-100`}>
+                                          <Baby className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <div>
+                                          <div className="flex items-center space-x-4 mt-1"></div>
                                         </div>
                                       </div>
                                     </div>
-                                    <Link
-                                      to="/services/childhealthrecords/records"
-                                      state={{ ChildHealthRecord: child }}
-                                      className="transition-transform hover:scale-105"
-                                    >
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 px-4 bg-white border-indigo-300 text-indigo-700 font-medium text-xs"
-                                      >
-                                        View Child
-                                      </Button>
-                                    </Link>
+                                    {/* Children List - Automatically displayed if there are children records */}
+                                    {formattedChildren.length > 0 && (
+                                      <div className="mt-4 space-y-3">
+                                        <h4 className="text-md font-semibold text-gray-700 mb-3">Children List:</h4>
+                                        {formattedChildren.map((child: any, childIndex: any) => (
+                                          <div key={childIndex} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center space-x-3">
+                                                <div className="p-2 rounded-lg bg-indigo-100">
+                                                  <Baby className="w-4 h-4 text-indigo-600" />
+                                                </div>
+                                                <div>
+                                                  <h5 className="text-sm font-medium text-gray-900">
+                                                    {child.fname} {child.mname} {child.lname}
+                                                  </h5>
+                                                  <div className="flex items-center space-x-2 mt-1">
+                                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{child.age} years old</span>
+                                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{child.sex}</span>
+                                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">Birth Order: {child.birth_order}</span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              <Link to="/services/childhealthrecords/records" state={{ ChildHealthRecord: child }} className="transition-transform hover:scale-105">
+                                                <Button variant="outline" size="sm" className="h-8 px-4 bg-white border-indigo-300 text-indigo-700 font-medium text-xs">
+                                                  View Child
+                                                </Button>
+                                              </Link>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              ))}
+                              )}
                             </>
-                          ) : (
-                            <div className="p-4 text-center text-gray-500">
-                              No children records found.
-                            </div>
                           )}
                         </div>
-                      </div>
-                    </div>
-                  )}
+                      )
+                    );
+                  })}
                 </>
               )}
             </div>
