@@ -23,7 +23,7 @@ function ServiceChargePage() {
 
   const [selectedSC, setSelectedSC] = useState<ExtendedServiceCharge | null>(null);
   const queryClient = useQueryClient();
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [refreshTick, _setRefreshTick] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -78,11 +78,11 @@ function ServiceChargePage() {
   }
 
   // When print dialog/template closes, refresh table and force a remount to avoid UI glitch
-  const handleTemplateClose = async () => {
-    setSelectedSC(null);
-    await queryClient.invalidateQueries({ queryKey: ["paidServiceCharges"] });
-    setRefreshTick(t => t + 1);
-  };
+  // const handleTemplateClose = async () => {
+  //   setSelectedSC(null);
+  //   await queryClient.invalidateQueries({ queryKey: ["paidServiceCharges"] });
+  //   setRefreshTick(t => t + 1);
+  // };
 
   const columns: ColumnDef<ServiceCharge>[] = [
     {

@@ -38,13 +38,13 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (values: z.infer<typeof AcceptPickupRequestSchema>) => 
+        mutationFn: (values: any) => 
             addPickupAssignmentandCollectors(values.garb_id, {
                 date: values.date,
                 driver: values.driver,
                 time: values.time,
                 truck: values.truck,
-                collectors: values.collectors,
+                collectors: values.collectors || [],
                 staff_id: values.staff_id
             }),
         onSuccess: () => {
