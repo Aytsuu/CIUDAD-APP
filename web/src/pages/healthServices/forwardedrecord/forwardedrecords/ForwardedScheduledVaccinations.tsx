@@ -11,7 +11,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { VaccinationRecord } from "../../vaccination/tables/columns/types";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useAuth } from "@/context/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import ViewButton from "@/components/ui/view-button";

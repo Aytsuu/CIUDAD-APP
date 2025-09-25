@@ -1,7 +1,7 @@
 "use client"
 
 // src/components/cards/MonthInfoCard.tsx
-import { Folder, FileText } from "lucide-react"
+import { FileText } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 export interface MedicineMonthItem {

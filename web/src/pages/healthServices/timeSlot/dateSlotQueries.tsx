@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dateSlotService } from "./dateSlotService";
-import { DateSlot, SlotConfiguration, BookingRequest, BulkConfigureRequest } from "./types";
+import { SlotConfiguration, BookingRequest } from "./types";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 // Query keys
