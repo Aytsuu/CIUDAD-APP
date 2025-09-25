@@ -11,7 +11,7 @@ export const useLoginMutation = () => {
   return useMutation<TokenResponse, Error, LoginCredentials>({
     mutationFn: async (credentials) => {
       const response = await api.post('authentication/web/login/', credentials);
-      console.log(response.data);
+
       return response.data;
     },
     onMutate: () => {
@@ -61,7 +61,7 @@ export const useSendEmailOTPMutation = () => {
   
   return useMutation<{ message: string }, Error, Record<string, any>>({
     mutationFn: async (data) => {
-      console.log(data)
+
       const response = await api.post('authentication/email/sendOtp/', data);
       return response.data;
     },
