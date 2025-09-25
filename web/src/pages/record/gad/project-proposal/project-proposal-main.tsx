@@ -535,7 +535,7 @@ function GADProjectProposal() {
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
                   disabled={
-                    !selectedProject }
+                    selectedProject?.gprIsArchive === true}
                 >
                   <Edit size={16} /> Edit
                 </Button>

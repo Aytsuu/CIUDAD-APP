@@ -72,11 +72,11 @@ const CouncilCalendarPage = () => {
       rawDate: parseISO(event.ce_date),
       place: event.ce_place,
       description: event.ce_description,
-      type: event.ce_type,
       is_archive: event.ce_is_archive,
       ce_id: event.ce_id,
       ce_date: event.ce_date,
       ce_time: event.ce_time,
+      ce_rows: event.ce_rows,
     }));
 
   // Filter events for current month
@@ -178,11 +178,6 @@ const CouncilCalendarPage = () => {
           <Text className="text-primaryBlue text-lg font-semibold flex-1">
             {item.title}
           </Text>
-          <View className="bg-blue-100 px-2 py-1 rounded">
-            <Text className="text-primaryBlue text-xs font-medium">
-              {item.type}
-            </Text>
-          </View>
         </View>
         <Text className="text-gray-600 mt-2">{item.description}</Text>
         <View className="flex-row items-center mt-3">

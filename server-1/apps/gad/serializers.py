@@ -5,8 +5,11 @@ from decimal import Decimal
 from utils.supabase_client import upload_to_storage, remove_from_storage
 import json
 from decimal import Decimal
+import logging
+
 
 Staff = apps.get_model('administration', 'Staff')
+logger = logging.getLogger(__name__)
 
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -417,7 +420,7 @@ class ProjectProposalSerializer(serializers.ModelSerializer):
         return None
     
     def validate_gpr_header_img(self, value):
-        if value is None:
+        if value is None or isinstance(value, str):
             return value
         if not isinstance(value, dict) or 'name' not in value or 'type' not in value or 'file' not in value or not value['file'].startswith('data:'):
             raise serializers.ValidationError({
@@ -662,7 +665,11 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
     def get_total(self, obj):
         try:
             items = [self._normalize_budget_item(i) for i in (obj.dev_gad_items or [])]
-            total = sum(Decimal(str(i.get('price', 0))) for i in items)
+            # Sum amount × pax (fall back to price if amount missing)
+            total = sum(
+                Decimal(str((i.get('amount', i.get('price', 0))))) * Decimal(str(i.get('pax', 1)))
+                for i in items
+            )
             return str(total)
         except Exception:
             return "0"
@@ -734,11 +741,13 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
 
     def _normalize_budget_item(self, item):
         if not isinstance(item, dict):
-            return { 'name': '', 'pax': 0, 'price': 0 }
+            return { 'name': '', 'pax': 0, 'amount': 0 }
+        # Prefer 'amount'; fall back to 'price' or gdb_* variants
+        amount_value = item.get('amount', item.get('price', item.get('gdb_amount', item.get('gdb_price', 0))))
         return {
             'name': item.get('name', item.get('gdb_name', '')),
             'pax': item.get('pax', item.get('gdb_pax', 0)),
-            'price': item.get('price', item.get('gdb_price', 0)),
+            'amount': amount_value,
         }
 
     def _ensure_array(self, value):
@@ -774,10 +783,23 @@ class GADDevelopmentPlanSerializer(serializers.ModelSerializer):
         # Present dev_project as text (already handled)
         data['dev_project'] = getattr(instance, 'dev_project', '') or ""
         
-        # Present dev_activity as JSON array (keep as is for frontend processing)
-        data['dev_activity'] = getattr(instance, 'dev_activity', []) or []
+        # Present dev_activity as JSON array; coerce from JSON text if needed
+        try:
+            dev_activity_value = getattr(instance, 'dev_activity', []) or []
+            if isinstance(dev_activity_value, str):
+                s = dev_activity_value.strip()
+                if s.startswith('[') and s.endswith(']'):
+                    try:
+                        data['dev_activity'] = json.loads(s)
+                    except Exception:
+                        data['dev_activity'] = []
+                else:
+                    data['dev_activity'] = []
+            else:
+                data['dev_activity'] = dev_activity_value
+        except Exception:
+            data['dev_activity'] = []
         
-        # Present other arrays as comma-separated strings for readability in table
         for field in ['dev_res_person', 'dev_indicator']:
             value = getattr(instance, field, [])
             try:

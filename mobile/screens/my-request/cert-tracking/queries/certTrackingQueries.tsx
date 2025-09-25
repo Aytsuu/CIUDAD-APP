@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPersonalCertifications, getBusinessPermitRequests, cancelCertificate } from "../restful-API/certTrackingGetAPI";
+import { getPersonalCertifications, getBusinessPermitRequests, cancelCertificate, cancelBusinessPermit } from "../restful-API/certTrackingGetAPI";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useCertTracking = (residentId: string) => {
@@ -17,7 +17,9 @@ export const useCertTracking = (residentId: string) => {
             };
 
             return {
-                personal: Array.isArray(personal) ? personal.filter(byResident) : [],
+                // Personal endpoint is already filtered by rp on the server
+                personal: Array.isArray(personal) ? personal : [],
+                // Business list is broad; filter by resident client-side
                 business: Array.isArray(business) ? business.filter(byResident) : []
             } as { personal: any[]; business: any[] };
         },
@@ -33,6 +35,16 @@ export const useCancelCertificate = (residentId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (cr_id: string) => cancelCertificate(cr_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
+    }
+  })
+}
+
+export const useCancelBusinessPermit = (residentId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bpr_id: string) => cancelBusinessPermit(bpr_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cert-tracking", residentId] });
     }

@@ -1,16 +1,10 @@
-import { z } from "zod";
 import { api } from "@/api/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToastContext } from "@/components/ui/toast";
-import { formatDate } from "@/helpers/dateHelpers";
-
-
 
 
 export const wasteColData = async (collectionInfo: Record<string, any>) => {
     try {
         console.log({
-            wc_date: formatDate(collectionInfo.date),
+            wc_day: collectionInfo.day,
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions,
             wc_is_archive: false,
@@ -21,7 +15,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
         });
 
         const res = await api.post('waste/waste-collection-sched/', {
-            wc_date: formatDate(collectionInfo.date),
+            wc_day: collectionInfo.day,
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,

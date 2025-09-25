@@ -22,7 +22,6 @@ export default function SummonRejectedReq() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [selectedIncident, setSelectedIncident] = useState<string>("0");
-    const [editingRowId, setEditingRowId] = useState<string | null>(null);
 
     
     console.log('fetchedData:', rejectedReq);
@@ -135,14 +134,11 @@ export default function SummonRejectedReq() {
                                     <ComplaintRecordForSummon 
                                         comp_id={complaint} 
                                         sr_id={String(row.original.sr_id)}
-                                        onSuccess={() => setEditingRowId(null)}
                                         isPending={false}
                                     />
                                 </div>
                             </div>
                         }
-                        isOpen={editingRowId == row.original.sr_id}
-                        onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
                     />
                 );
             },
