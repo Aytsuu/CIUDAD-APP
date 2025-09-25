@@ -382,7 +382,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
           </div>
           <Label className="flex text-xl text-gray-100 items-center gap-4">
             {businessInfo?.br ? 
-              fullName(businessInfo?.br.per_lname, businessInfo?.br.per_fname, businessInfo?.br.per_mname) : 
+              fullName(businessInfo?.br.br_lname, businessInfo?.br.br_fname, businessInfo?.br.br_mname) : 
               fullName(businessInfo?.rp.per_lname, businessInfo?.rp.per_fname, businessInfo?.rp.per_mname)
             }
             {formType == Type.Editing && <div>

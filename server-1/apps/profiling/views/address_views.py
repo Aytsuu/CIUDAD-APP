@@ -6,72 +6,38 @@ from django.utils import timezone
 from ..serializers.address_serializers import *
 from apps.administration.models import Staff
 from ..double_queries import *
+import copy
 
 class AddressBulkCreateView(generics.CreateAPIView):
   permission_classes = [AllowAny]
-  serializer_class = AddressBulkCreateSerializer
-  queryset = Address.objects.all()
 
   @transaction.atomic
-  def create(self, request, *args, **kwargs):
-    serializer = self.get_serializer(data=request.data, many=True)
-    serializer.is_valid(raise_exception=True)
+  def post(self, request):
+    addresses_req = request.data
 
-    # Prepare unique addresses only (skip if already exists)
-    seen = set()
-    existing_keys = set()
-    existing_addresses = []
-    instances = []
-    for item in serializer.validated_data:
-        key = (
-          item['add_province'],
-          item['add_city'],
-          item['add_barangay'],
-          item['add_external_sitio'],
-          item['sitio'],
-          item['add_street'],
-        )
-        if key in seen:
-           continue
-        seen.add(key)
-        exists = Address.objects.filter(
-            add_province=item['add_province'],
-            add_city=item['add_city'],
-            add_barangay=item['add_barangay'],
-            add_external_sitio=item['add_external_sitio'],
-            sitio=item['sitio'],
-            add_street=item['add_street'],
-        ).first()
-        if exists:
-          if key not in existing_keys:
-            existing_addresses.append({  
-              "add_id": exists.add_id,
-              "sitio": exists.sitio.sitio_name if exists.sitio else None,
-              "add_external_sitio": exists.add_external_sitio if exists.add_external_sitio else None,
-              "add_street": exists.add_street
-            })
-            existing_keys.add(key)
-        else:
-          instances.append(Address(**item))
+    addresses = []
+    for request in addresses_req:
+      added, created = Address.objects.get_or_create(
+        add_province=request['add_province'],
+        add_city=request['add_city'],
+        add_barangay=request['add_barangay'],
+        add_external_sitio=request['add_external_sitio'],
+        sitio=Sitio.objects.filter(sitio_name=request['sitio']).first(),
+        add_street=request['add_street'],
+      )
+
+      addresses.append(added) if added else addresses.append(created)
     
-    created_instances = []
-    for instance in instances:
-      instance.save()
-      created_instances.append(instance)
-
-    if created_instances.length > 0:
+    if len(addresses) > 0:
       double_queries = PostQueries()
-      response = double_queries.address(request.data)
+      response = double_queries.address(addresses_req)
       if not response.ok:
         try:
           error_details = response.json()
         except ValueError:
           error_details = response.text
         raise serializers.ValidationError({'error': error_details})
-      
-      created_serializer = self.get_serializer(created_instances, many=True).data
-      response_data = created_serializer + existing_addresses 
-      return Response(response_data, status=status.HTTP_201_CREATED)
+      return Response(data=AddressBaseSerializer(addresses, many=True).data, status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
     
 class PerAddressBulkCreateView(generics.CreateAPIView):
@@ -81,9 +47,10 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
 
   @transaction.atomic
   def create(self, request, *args, **kwargs):
-    staff_id = request.data.get('staff_id', None)
-    history_id = request.data.get('history_id', None)
-    per_add = request.data.get('per_add')
+    copy_data = copy.deepcopy(request.data)
+    staff_id = copy_data.get('staff_id', None)
+    history_id = copy_data.get('history_id', None)
+    per_add = copy_data.get('per_add')
 
     per_id = per_add[0].get('per') if per_add else None
     if per_id:

@@ -203,7 +203,7 @@ export default function SignIn() {
           <FormInput
             control={phoneForm.control}
             name="phone"
-            type="tel"
+            type="number"
             label="Phone Number"
             placeholder="09XXXXXXXXX"
           />

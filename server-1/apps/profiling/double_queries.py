@@ -77,8 +77,9 @@ class UpdateQueries:
         self.client = config("CLIENT", default="http://127.0.0.1:8001")
 
     def personal(self, data, per_id):
-        response = requests.post(
+        response = requests.patch(
             f"{self.client}/health-profiling/personal/update/{per_id}/",
             json=data
         )
         return response
+        

@@ -275,8 +275,7 @@ const PersonalInfoForm = ({
             </div>
           ))
         }
-        {(formType !== Type.Viewing) && 
-          (!watch(`${prefix}per_id` as any) || watch(`${prefix}per_id` as any) == "undefined") &&
+        {(formType !== Type.Viewing) &&
           <div>
             <Button 
               variant={"outline"} 

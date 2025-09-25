@@ -18,11 +18,12 @@ class PersonalUpdateView(APIView):
     serializer = PersonalUpdateSerializer(
       instance,
       data=request.data,
-      partial=True
+      partial=True,
+      context={'request': request}
     )
 
     if serializer.is_valid():
-        serializer.save(pk=pk)
+        serializer.save()
         return Response(serializer.data)
     
     return Response(serializer.errors, status=400)
@@ -43,7 +44,6 @@ class PersonalModificationCreateView(APIView):
   permission_classes = [AllowAny]
   def post(self, request):
     personal = request.data.get("personal", None)
-    print(personal)
     if not personal:
       return Response(status=status.HTTP_400_BAD_REQUEST)
 

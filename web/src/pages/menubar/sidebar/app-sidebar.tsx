@@ -173,7 +173,7 @@ export function AppSidebar() {
                 title: "Weekly Accomplishment",
                 url: "/report/weekly-accomplishment",
               },
-              { title: "Securado", url: "/report/securado" },
+              // { title: "Securado", url: "/report/securado" },
             ],
           },
         ]
@@ -420,7 +420,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(user?.staff?.pos != "DOCTOR" && featureValidator() ? [{
+    ...(user?.staff?.pos != "DOCTOR" ? [{
       title: "Announcement",
       url: "/announcement",
     }] : []),

@@ -145,12 +145,12 @@ export default function PhoneOTP({ phone, serverOtp, onSuccess, onResend }: Phon
       </div>
 
       {/* OTP Input */}
-      <div className="flex justify-center gap-3">
+      <div className="flex justify-center gap-3"> 
         {otp.map((digit, index) => (
           <Input
             key={index}
             ref={(el) => (inputRefs.current[index] = el)}
-            type="text"
+            type="number"
             inputMode="numeric"
             pattern="[0-9]"
             maxLength={1}
