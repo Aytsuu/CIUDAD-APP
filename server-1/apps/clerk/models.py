@@ -8,7 +8,7 @@ spay_due_date = models.DateField(default=default_due_date)
 
 
 class ClerkCertificate(models.Model):
-    cr_id = models.BigAutoField(primary_key=True)
+    cr_id = models.CharField(primary_key=True)
     cr_req_request_date = models.DateTimeField(default = datetime.now)
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
@@ -37,6 +37,7 @@ class ClerkCertificate(models.Model):
 
     class Meta:
         db_table = 'certification_request'
+        managed = False
 
 
 class NonResidentCertificateRequest(models.Model):

@@ -185,6 +185,19 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             logger.error(f"Error getting purpose and rate: {str(e)}")
             return None
 
+    def create(self, validated_data):
+        if 'cr_id' not in validated_data or not validated_data['cr_id']:
+            from django.utils import timezone
+            from .models import ClerkCertificate
+            year_suffix = timezone.now().year % 100
+            try:
+                existing_count = ClerkCertificate.objects.filter(cr_id__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                existing_count = ClerkCertificate.objects.count()
+            seq = existing_count + 1
+            validated_data['cr_id'] = f"CR{seq:03d}-{year_suffix:02d}"
+        return super().create(validated_data)
+
     class Meta:
         model = ClerkCertificate
         fields = [
