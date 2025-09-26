@@ -22,6 +22,7 @@ function DonationTracker() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -50,12 +51,19 @@ function DonationTracker() {
     { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies" },
   ];
 
+  const statusOptions = [
+    { id: "all", name: "All Statuses" },
+    { id: "Stashed", name: "Stashed" },
+    { id: "Allotted", name: "Allotted" },
+  ];
+
   // Filter data based on search query and category
   const filteredData = donations.filter((donation) => {
     const searchString = `${donation.don_num} ${donation.don_donor} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_date}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === "all" || donation.don_category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesStatus = statusFilter === "all" || donation.don_status === statusFilter;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   // Calculate pagination values
@@ -108,6 +116,26 @@ function DonationTracker() {
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_qty")}</div>
       ),
+    },
+    {
+      accessorKey: "don_status", 
+      header: "Condition",
+      cell: ({ row }) => {
+        const status = row.getValue("don_status") as string;
+        return (
+          <div className="text-center">
+            <span 
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                status === "Stashed" 
+                  ? "bg-yellow-100 text-yellow-800" 
+                  : "bg-green-100 text-green-800"
+              }`}
+            >
+              {status}
+            </span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "don_date", 
@@ -210,6 +238,14 @@ function DonationTracker() {
             options={categoryOptions}
             value={categoryFilter}
             onChange={(value) => setCategoryFilter(value)}
+          />
+          <SelectLayout
+            className="bg-white"
+            label=""
+            placeholder="Filter by Status"
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(value) => setStatusFilter(value)}
           />
         </div>
         <DialogLayout

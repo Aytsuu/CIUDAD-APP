@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Archive, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
+import { Eye, Ban, ArchiveRestore, Trash, Loader2, Plus} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -154,7 +154,7 @@ const TruckManagement = () => {
             }`}
             onClick={() => setTruckViewMode("archive")}
           >
-            Archived Trucks
+            Disposed Trucks
           </button>
         </div>
 
@@ -264,18 +264,18 @@ const TruckManagement = () => {
                                     {deleteTruck.isPending ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
-                                      <Archive className="h-4 w-4" />
+                                      <Trash className="h-4 w-4" />
                                     )}
                                   </Button>
                                 }
-                                title="Confirm Archive"
-                                description={`Are you sure you want to archive truck ${truck.truck_plate_num}? It will be moved to the archived trucks list.`}
-                                actionLabel="Archive"
+                                title="Confirm Dispose"
+                                description={`Are you sure you want to record truck ${truck.truck_plate_num} as disposed? It will be moved to the disposed trucks list.`}
+                                actionLabel="Confirm"
                                 onClick={() => handleDeleteTruck(truck.truck_id, false)}
                               />
                             </div>
                           }
-                          content="Archive"
+                          content="Dispose"
                         />
                       )}
 
@@ -293,7 +293,7 @@ const TruckManagement = () => {
                                     {deleteTruck.isPending ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
                                     ) : (
-                                      <Trash className="h-4 w-4 text-red-500" />
+                                      <Ban className="h-4 w-4 text-red-500" />
                                     )}
                                   </Button>
                                 }

@@ -16,6 +16,7 @@ class Donation(models.Model):
     don_description = models.CharField(max_length=200, null=True, blank=True)
     don_category = models.CharField(max_length=100, default='')
     don_date = models.DateField(default=date.today)
+    don_status = models.CharField(max_length=100, default='')
 
     staff = models.ForeignKey(
         'administration.Staff',

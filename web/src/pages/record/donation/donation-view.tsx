@@ -37,6 +37,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
       don_description: donation?.don_description || "",
       don_category: donation?.don_category || "",
       don_date: donation?.don_date || new Date().toISOString().split("T")[0],
+      don_status: "Stashed",
     },
   });
 
@@ -69,6 +70,16 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
       <Form {...form}>
         <form className="flex flex-col gap-4">
+          <FormSelect
+            control={form.control}
+            name="don_status"
+            label="Status"
+            options={[
+              { id: "Stashed", name: "Stashed" },
+              { id: "Allotted", name: "Allotted" },
+            ]}
+            readOnly={!isEditing}
+          />
           {/* Donor Name */}
           <FormField
             control={form.control}
@@ -197,15 +208,14 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                 />
               </>
             ) : (
-                <Button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className=""
-                >
-                  Edit
-                </Button>
-              )
-            }
+              <Button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className=""
+              >
+                Edit
+              </Button>
+            )}
           </div>
         </form>
       </Form>

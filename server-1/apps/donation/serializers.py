@@ -24,7 +24,7 @@ class DonationSerializer(serializers.ModelSerializer):
         model = Donation
         fields = [
             'don_num', 'don_donor', 'don_item_name', 'don_qty', 'don_description',
-            'don_category', 'don_date', 'staff', 'per_id', 'donor_name'
+            'don_category', 'don_date', 'staff', 'per_id', 'donor_name', 'don_status'
         ]
         extra_kwargs = {
             'don_num': {'read_only': True},
