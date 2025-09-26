@@ -630,7 +630,7 @@ export default function BudgetPlanParent() {
       dtl_proposed_budget: detail.dtl_proposed_budget?.toString() || "0.00"
     }))
 
-    return { items: customItems.length > 0 ? customItems : [{ dtl_budget_item: "", dtl_proposed_budget: "" }] }
+    return { items: customItems.length > 0 ? customItems : [] }
   }
 
   // Trigger fetching when shouldClone is true

@@ -1,4 +1,4 @@
-// import { useRef, useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 // import { ChevronLeft, ChevronRightIcon } from "lucide-react";
 // import { Button } from "@/components/ui/button/button";
 // import { Label } from "@/components/ui/label";
@@ -35,7 +35,6 @@
 //   ) => void;
 //   totalBudgetObli: number;
 //   balUnapp: number;
-//   beyondLimit: boolean;
 //   currentStep?: "withLimits" | "withoutLimits";
 // };
 
@@ -52,15 +51,12 @@
 //   updateFormData, 
 //   totalBudgetObli, 
 //   balUnapp, 
-//   beyondLimit, 
 //   currentStep = "withLimits" 
 // }: Props) {
 //   const year = new Date().getFullYear();
 //   const {user} = useAuth();
-//   const totalBudgetToast = useRef<string | number | null>(null);
 //   const [totalBudgetObligations, setTotalBudgetObligations] = useState(totalBudgetObli);
 //   const [balUnappropriated, setBalUnappropriated] = useState(balUnapp);
-//   const [isBeyondLimit, setIsBeyondLimit] = useState(beyondLimit);
 //   const [currentForm, setCurrentForm] = useState<"page1" | "page2">(currentStep === "withLimits" ? "page1" : "page2");
 //   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
 //   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,9 +88,9 @@
 //     }),
 //     page2: useForm<z.infer<typeof BudgetItemsStep3Schema>>({
 //       resolver: zodResolver(BudgetItemsStep3Schema),
-//       defaultValues: formData2.items && formData2.items.length > 0 
-//         ? formData2 
-//         : { items: [{ dtl_budget_item: "", dtl_proposed_budget: "" }] },
+//       defaultValues: formData2.items && formData2.items.length > 0
+//         ? formData2
+//         : { items: [] }, 
 //     }),
 //   };
 
@@ -129,22 +125,6 @@
     
 //     const newBalance = availableResources - totalBudget;
 //     setBalUnappropriated(newBalance);
-
-//     if (newBalance < 0) {
-//       if (!totalBudgetToast.current) {
-//         setIsBeyondLimit(true);
-//         totalBudgetToast.current = toast.error("Insufficient funds! Budget obligations exceed available resources.", {
-//           duration: Number.POSITIVE_INFINITY,
-//           style: { border: "1px solid rgb(225, 193, 193)", padding: "16px", color: "#b91c1c", background: "#fef2f2" },
-//         });
-//       }
-//     } else {
-//       if (totalBudgetToast.current !== null) {
-//         setIsBeyondLimit(false);
-//         toast.dismiss(totalBudgetToast.current);
-//         totalBudgetToast.current = null;
-//       }
-//     }
 //   }, [forms.page1.watch(), forms.page2.watch(), availableResources]);
 
 //   const { mutate: createBudgetPlan } = useInsertBudgetPlan();
@@ -250,7 +230,18 @@
 //     const currentValues = forms[currentForm].getValues();
 //     updateFormData(currentForm, currentValues);
     
-//     // Always use parent's onBack which should handle the step navigation
+//     // If we're on page2 (without limits), go back to page1 (with limits)
+//     if (currentForm === "page2") {
+//       setCurrentForm("page1");
+//     }
+//   };
+
+//   const handleBackToHeader = async () => {
+//     // Save current form data before navigating back
+//     const currentValues = forms[currentForm].getValues();
+//     updateFormData(currentForm, currentValues);
+    
+//     // Always go back to budget header regardless of current form
 //     onBack();
 //   };
 
@@ -279,11 +270,6 @@
 //       return;
 //     }
 
-//     if (isBeyondLimit) {
-//       toast.error("Cannot submit with insufficient funds");
-//       return;
-//     }
-
 //     setIsSubmitting(true);
 //     try {
 //       const submissionData = prepareSubmissionData();
@@ -300,13 +286,12 @@
 //       });
 //     } catch (error) {
 //       console.error("Error preparing submission:", error);
-//       toast.error("Failed to prepare submission data");
 //       setIsSubmitting(false);
 //     }
 //   };
 
-//   // Add navigation buttons for better UX
-//   const renderNavigationButtons = () => {
+//   // Button 1: Next button (only appears on with limits form)
+//   const renderNextButton = () => {
 //     if (currentForm === "page1") {
 //       return (
 //         <Button 
@@ -318,39 +303,59 @@
 //           <ChevronRightIcon className="w-4 h-4" />
 //         </Button>
 //       );
-//     } else {
-//       return (
-//         <div className="flex gap-2">
-//           <Button 
-//             variant="outline"
-//             onClick={handlePrevious}
-//             disabled={isSubmitting}
-//             className="flex items-center gap-2"
-//           >
-//             <ChevronLeft className="w-4 h-4" />
-//             Previous
-//           </Button>
-//           <Button 
-//             onClick={handleSubmit}  
-//             disabled={isBeyondLimit || isSubmitting}
-//             className="bg-green-600 hover:bg-green-700 text-white"
-//           >
-//             {isSubmitting ? "Submitting..." : "Submit Budget Plan"}
-//           </Button>
-//         </div>
-//       );
 //     }
+//     return null;
 //   };
 
-//   // Update the back button label based on current form
-//   const getBackButtonLabel = () => {
-//     if (currentForm === "page1") {
-//       return "Back to Budget Header";
-//     } else {
-//       return "Back to Fixed Budget Items";
+//   // Button 2: Previous button (only appears on without limits form, beside submit)
+//   const renderPreviousButton = () => {
+//     if (currentForm === "page2") {
+//       return (
+//         <Button 
+//           variant="outline"
+//           onClick={handlePrevious}
+//           disabled={isSubmitting}
+//           className="flex items-center gap-2"
+//         >
+//           <ChevronLeft className="w-4 h-4" />
+//           Previous
+//         </Button>
+//       );
 //     }
+//     return null;
 //   };
-  
+
+//   // Button 3: Back to Budget Header (appears on both forms)
+//   const renderBackToHeaderButton = () => {
+//     return (
+//       <Button 
+//         variant="outline"  
+//         onClick={handleBackToHeader} 
+//         className="flex items-center gap-2"
+//         disabled={isSubmitting}
+//       >
+//         <ChevronLeft className="w-4 h-4" />
+//         Back to Budget Header
+//       </Button>
+//     );
+//   };
+
+//   // Button 4: Submit button (only appears on without limits form)
+//   const renderSubmitButton = () => {
+//     if (currentForm === "page2") {
+//       return (
+//         <Button 
+//           onClick={handleSubmit}  
+//           disabled={isSubmitting}
+//           className="bg-green-600 hover:bg-green-700 text-white"
+//         >
+//           {isSubmitting ? "Submitting..." : "Submit Budget Plan"}
+//         </Button>
+//       );
+//     }
+//     return null;
+//   };
+
 //   return (
 //     <div className="w-full min-h-screen bg-snow p-4 md:p-6 lg:p-8">
 //       <div className="flex flex-col gap-4 mb-6">
@@ -413,8 +418,6 @@
 //         {currentForm === "page1" && (
 //           <CreateBudgetWithLimits
 //             form={forms.page1}
-//             updateFormData={(data) => updateFormData("page1", data)}
-//             onNext={handleNext}
 //           />
 //         )}
 //         {currentForm === "page2" && (
@@ -425,18 +428,22 @@
 
 //         <div className="bg-white border-t border-gray-200 p-4 md:p-6">
 //           <div className="flex justify-between items-center">
-//             {/* Back button - label changes based on current form */}
-//             <Button 
-//               variant="outline"  
-//               onClick={handlePrevious} 
-//               className="flex items-center gap-2"
-//               disabled={isSubmitting}
-//             >
-//               <ChevronLeft className="w-4 h-4" />
-//               {getBackButtonLabel()}
-//             </Button>
+//             {/* Left side: Back to Budget Header button (always visible) */}
+//             {renderBackToHeaderButton()}
             
-//             {renderNavigationButtons()}
+//             {/* Right side: Navigation buttons */}
+//             <div className="flex gap-2">
+//               {/* On page1: Only Next button */}
+//               {currentForm === "page1" && renderNextButton()}
+              
+//               {/* On page2: Previous and Submit buttons */}
+//               {currentForm === "page2" && (
+//                 <>
+//                   {renderPreviousButton()}
+//                   {renderSubmitButton()}
+//                 </>
+//               )}
+//             </div>
 //           </div>
 //         </div>
 //       </div>
@@ -445,7 +452,6 @@
 // }
 
 // export default BudgetPlanMainForm;
-
 
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRightIcon } from "lucide-react";
@@ -488,7 +494,7 @@ type Props = {
 };
 
 const styles = {
-  labelDesign: "w-full text-left text-blue text-sm md:text-base",
+  labelDesign: "w-full text-left text-primary text-sm md:text-base",
   highlightLabel: "w-full text-left text-darkGray text-sm md:text-base font-medium",
 };
 
@@ -537,9 +543,9 @@ function BudgetPlanMainForm({
     }),
     page2: useForm<z.infer<typeof BudgetItemsStep3Schema>>({
       resolver: zodResolver(BudgetItemsStep3Schema),
-      defaultValues: formData2.items && formData2.items.length > 0 
-        ? formData2 
-        : { items: [{ dtl_budget_item: "", dtl_proposed_budget: "" }] },
+      defaultValues: formData2.items && formData2.items.length > 0
+        ? formData2
+        : { items: [] }, // Empty array as default
     }),
   };
 
@@ -593,10 +599,10 @@ function BudgetPlanMainForm({
     if (currentForm === "page1") {
       forms.page1.reset(formData1);
     } else {
-      // Ensure formData2 has proper structure
+      // Ensure formData2 has proper structure - use EMPTY array when no items exist
       const formDataWithDefault = formData2.items && formData2.items.length > 0 
         ? formData2 
-        : { items: [{ dtl_budget_item: "", dtl_proposed_budget: "" }] };
+        : { items: [] }; // Empty array - no default row
       forms.page2.reset(formDataWithDefault);
     }
   }, [currentForm, formData1, formData2, forms.page1, forms.page2]);
