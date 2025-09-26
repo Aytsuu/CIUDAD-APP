@@ -4,7 +4,6 @@ import { CircleCheck } from "lucide-react";
 import { delWasteTruck, restoreWasteTruck } from "../request/truckDelReq";
 import { WasteTruck } from "../waste-personnel-types";
 
-// Hook for deleting/archiving Waste Truck
 export const useDeleteWasteTruck = () => {
   const queryClient = useQueryClient();
 
@@ -16,12 +15,10 @@ export const useDeleteWasteTruck = () => {
       const previousTrucks = queryClient.getQueryData<WasteTruck[]>(['wasteTrucks']);
       
       if (permanent) {
-        // Remove from cache if permanent delete
         queryClient.setQueryData<WasteTruck[]>(["wasteTrucks"], (old = []) => 
           old.filter((truck: WasteTruck) => truck.truck_id !== truck_id)
         );
       } else {
-        // Update archive status in cache for soft delete
         queryClient.setQueryData<WasteTruck[]>(["wasteTrucks"], (old = []) => 
           old.map((truck: WasteTruck) => 
             truck.truck_id === truck_id ? { ...truck, truck_is_archive: true } : truck
@@ -41,7 +38,7 @@ export const useDeleteWasteTruck = () => {
       });
     },
     onSuccess: (_, { permanent }) => {
-      toast.success(`Waste truck ${permanent ? "deleted" : "archived"} successfully`, {
+      toast.success(`Waste truck ${permanent ? "deleted" : "marked as disposed"} successfully`, {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
       });

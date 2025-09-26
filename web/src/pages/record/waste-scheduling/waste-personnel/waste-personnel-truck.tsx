@@ -7,12 +7,12 @@ import { PersonnelCategory, PersonnelData } from "./waste-personnel-types";
 import TruckManagement from "./waste-truck-form";
 
 const WastePersonnelDashboard = () => {
-  const [activeTab, setActiveTab] = useState<PersonnelCategory>("Waste Driver");
+  const [activeTab, setActiveTab] = useState<PersonnelCategory>("Driver Loader");
   
   // Add display name mapping
   const categoryDisplayNames: Record<PersonnelCategory, string> = {
-    "Waste Driver": "Driver Loader",
-    "Waste Collector": "Waste Loader",
+    "Driver Loader": "Driver Loader",
+    "Loader": "Waste Loader",
     "Trucks": "Trucks"
   };
 
@@ -30,18 +30,18 @@ const WastePersonnelDashboard = () => {
 
   const normalizePosition = (title: string) => {
     const lower = title.toLowerCase();
-    if (lower.includes("Waste Driver") || lower.includes("waste driver"))
-      return "Waste Driver";
-    if (lower.includes("Waste Collector") || lower.includes("waste collector"))
-      return "Waste Collector";
+    if (lower.includes("Driver Loader") || lower.includes("driver loader"))
+      return "Driver Loader";
+    if (lower.includes("Loader") || lower.includes("loader"))
+      return "Loader";
     return title;
   };
 
   const personnelData: PersonnelData = {
-    "Waste Driver": personnel
+    "Driver Loader": personnel
       .filter(
         (p) =>
-          normalizePosition(p.staff.position?.title || "") === "Waste Driver"
+          normalizePosition(p.staff.position?.title || "") === "Driver Loader"
       )
       .map((p) => ({
         id: p.wstp_id.toString(),
@@ -50,13 +50,13 @@ const WastePersonnelDashboard = () => {
         } ${p.staff.profile.personal?.lname || ""} ${
           p.staff.profile.personal?.suffix || ""
         }`,
-        position: "Waste Driver",
+        position: "Driver Loader",
         contact: p.staff.profile.personal?.contact || "N/A",
       })),
-    "Waste Collector": personnel
+    "Loader": personnel
       .filter(
         (p) =>
-          normalizePosition(p.staff.position?.title || "") === "Waste Collector"
+          normalizePosition(p.staff.position?.title || "") === "Loader"
       )
       .map((p) => ({
         id: p.wstp_id.toString(),
@@ -65,21 +65,21 @@ const WastePersonnelDashboard = () => {
         } ${p.staff.profile.personal?.lname || ""} ${
           p.staff.profile.personal?.suffix || ""
         }`,
-        position: "Waste Collector",
+        position: "Loader",
         contact: p.staff.profile.personal?.contact || "N/A",
       })),
   };
 
   const getCategoryIcon = (category: PersonnelCategory) => {
     switch (category) {
-      case "Waste Driver":
+      case "Driver Loader":
         return (
           <div className="relative">
             <User className="h-5 w-5" />
             <Truck className="h-3 w-3 absolute -bottom-1 -right-1" />
           </div>
         );
-      case "Waste Collector":
+      case "Loader":
         return <Trash2 className="h-5 w-5" />;
       case "Trucks":
         return <Truck className="h-5 w-5" />;
@@ -88,9 +88,9 @@ const WastePersonnelDashboard = () => {
 
   const getCategoryColor = (category: PersonnelCategory) => {
     switch (category) {
-      case "Waste Driver":
+      case "Driver Loader":
         return "bg-yellow-100 text-yellow-600";
-      case "Waste Collector":
+      case "Loader":
         return "bg-sky-100 text-sky-600";
       case "Trucks":
         return "bg-purple-100 text-purple-600";
@@ -127,8 +127,8 @@ const WastePersonnelDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {(
           [
-            "Waste Driver",
-            "Waste Collector",
+            "Driver Loader",
+            "Loader",
             "Trucks",
           ] as PersonnelCategory[]
         ).map((category) => (
@@ -196,8 +196,8 @@ const WastePersonnelDashboard = () => {
           <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
             {(
               [
-                "Waste Driver",
-                "Waste Collector",
+                "Driver Loader",
+                "Loader",
                 "Trucks",
               ] as PersonnelCategory[]
             ).map((category) => (
