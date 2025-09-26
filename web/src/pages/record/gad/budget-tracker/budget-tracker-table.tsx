@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
+import {
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+  DialogContent,
+} from "@/components/ui/dialog/dialog";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import {
@@ -11,6 +17,7 @@ import {
   Calendar,
   ArrowUpDown,
   Trash,
+  FileText,
 } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -112,9 +119,7 @@ function BudgetTracker() {
 
     const month = entry.gbud_datetime?.slice(5, 7);
     const matchesMonth = selectedMonth === "All" || month === selectedMonth;
-    const matchesFilter =
-      selectedFilter === "All";
-
+    const matchesFilter = selectedFilter === "All";
 
     return matchesMonth && matchesFilter;
   });
@@ -125,7 +130,7 @@ function BudgetTracker() {
     currentPage * pageSize
   );
 
-    const calculateTotalProposedWithoutActual = () => {
+  const calculateTotalProposedWithoutActual = () => {
     if (!budgetEntries || budgetEntries.length === 0) return 0;
 
     return budgetEntries.reduce((total, entry) => {
@@ -174,7 +179,7 @@ function BudgetTracker() {
     let balance = currentYearBudget ? Number(currentYearBudget) : 0;
 
     activeEntries.forEach((entry) => {
-      if ( entry.gbud_actual_expense !== null) {
+      if (entry.gbud_actual_expense !== null) {
         const amount = Number(entry.gbud_actual_expense) || 0;
         balance -= amount;
       }
@@ -197,7 +202,14 @@ function BudgetTracker() {
       ),
       cell: ({ row }) => (
         <div className="">
-          {new Date(row.getValue("gbud_datetime")).toLocaleString()}
+          {new Date(row.getValue("gbud_datetime")).toLocaleString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })}
         </div>
       ),
     },
@@ -208,13 +220,17 @@ function BudgetTracker() {
         const { gbud_exp_particulars } = row.original;
         let displayParticulars = "";
 
-        if (gbud_exp_particulars && typeof gbud_exp_particulars === 'string') {
+        if (gbud_exp_particulars && typeof gbud_exp_particulars === "string") {
           try {
             const parsed = JSON.parse(gbud_exp_particulars);
             if (Array.isArray(parsed)) {
-              displayParticulars = parsed
-                .map((item: { name: string; pax: string; amount: number }) => item.name)
-                .join(", ") || "No items";
+              displayParticulars =
+                parsed
+                  .map(
+                    (item: { name: string; pax: string; amount: number }) =>
+                      item.name
+                  )
+                  .join(", ") || "No items";
             } else {
               displayParticulars = gbud_exp_particulars;
             }
@@ -222,9 +238,13 @@ function BudgetTracker() {
             displayParticulars = gbud_exp_particulars;
           }
         } else if (Array.isArray(gbud_exp_particulars)) {
-          displayParticulars = gbud_exp_particulars
-            .map((item: { name: string; pax: string; amount: number }) => item.name)
-            .join(", ") || "No items";
+          displayParticulars =
+            gbud_exp_particulars
+              .map(
+                (item: { name: string; pax: string; amount: number }) =>
+                  item.name
+              )
+              .join(", ") || "No items";
         } else {
           displayParticulars = "No particulars";
         }
@@ -236,17 +256,14 @@ function BudgetTracker() {
       accessorKey: "gbud_amount",
       header: "Amount",
       cell: ({ row }) => {
-        const {
-          gbud_actual_expense,
-          gbud_proposed_budget,
-        } = row.original;
+        const { gbud_actual_expense, gbud_proposed_budget } = row.original;
         const num = (val: any) =>
           val !== undefined && val !== null ? +val : undefined;
 
         let amount: number = 0;
-          const actual = num(gbud_actual_expense);
-          const proposed = num(gbud_proposed_budget);
-          amount = actual && actual > 0 ? actual : proposed ?? 0;
+        const actual = num(gbud_actual_expense);
+        const proposed = num(gbud_proposed_budget);
+        amount = actual && actual > 0 ? actual : proposed ?? 0;
         return <div>Php {amount.toFixed(2)}</div>;
       },
     },
@@ -261,8 +278,7 @@ function BudgetTracker() {
 
         return (
           <div className="flex justify-center gap-2">
-            {
-            (!hasReferenceNum || !hasFiles) ? (
+            {!hasReferenceNum || !hasFiles ? (
               <span className="text-red-500">
                 Missing
                 {!hasReferenceNum && " Reference Number"}
@@ -567,71 +583,77 @@ function BudgetTracker() {
         </div>
       </div>
 
-      <DialogLayout
-        isOpen={isSuppDocDialogOpen}
-        onOpenChange={setIsSuppDocDialogOpen}
-        trigger={null}
-        className="max-w-[90vw] w-[90vw] max-h-[90vh] p-4 flex flex-col"
-        title="Supporting Documents"
-        description="View all supporting documents for this entry."
-        mainContent={
-          <div className="flex-1 overflow-y-auto space-y-6">
-            {selectedRowFiles && selectedRowFiles.length > 0 ? (
-              selectedRowFiles.map((file, index) => {
-                // Infer type and name if missing
-                const inferredType =
-                  file.gbf_url?.includes(".jpg") ||
-                  file.gbf_url?.includes(".jpeg")
-                    ? "image/jpeg"
-                    : file.gbf_url?.includes(".png")
-                    ? "image/png"
-                    : "application/octet-stream";
-                const inferredName =
-                  file.gbf_url?.split("/").pop() || `Document ${index + 1}`;
+      <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
+          <DialogHeader className="sticky top-0 z-10 pb-4 border-b ">
+            <div className="flex items-center justify-between">
+              <DialogTitle>Supporting Documents</DialogTitle>
+            </div>
+          </DialogHeader>
 
-                return (
-                  <div key={file.gbf_id} className="flex flex-col items-center">
-                    {(inferredType.startsWith("image/") || !file.gbf_type) &&
-                    file.gbf_url ? (
-                      <img
-                        src={file.gbf_url}
-                        alt={file.gbf_name || inferredName}
-                        className="max-h-[70vh] max-w-full object-contain mx-auto"
-                        onError={(e) => {
-                          console.error("Image load failed:", {
-                            url: file.gbf_url,
-                            inferredType,
-                            inferredName,
-                          });
-                          (e.target as HTMLImageElement).src =
-                            "/placeholder-image.png";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg text-center">
-                        <p className="mt-2 text-sm text-gray-600">
-                          {file.gbf_name || inferredName}
-                        </p>
-                        <p className="mt-2 text-sm text-red-500">
-                          Image preview not available (Type:{" "}
-                          {file.gbf_type || inferredType})
+          <div className="flex-1 overflow-y-auto p-4">
+            {selectedRowFiles && selectedRowFiles.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {selectedRowFiles.map((file, index) => {
+                  const inferredType = file.gbf_url?.includes(".pdf")
+                    ? "application/pdf"
+                    : "image/jpeg";
+
+                  const fileType = file.gbf_type || inferredType;
+                  const fileName = file.gbf_name || `Document ${index + 1}`;
+                  const isImage = fileType.startsWith("image/");
+                  const isPDF = fileType === "application/pdf";
+
+                  return (
+                    <div
+                      key={file.gbf_id}
+                      className="border border-gray-200 rounded-lg overflow-hidden bg-white cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() =>
+                        file.gbf_url && window.open(file.gbf_url, "_blank")
+                      }
+                    >
+                      {/* Document Preview */}
+                      <div className="h-40 bg-gray-50 flex items-center justify-center">
+                        {isImage && file.gbf_url ? (
+                          <img
+                            src={file.gbf_url}
+                            alt={fileName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              console.error("Image load failed:", file.gbf_url);
+                              (e.target as HTMLImageElement).src =
+                                "/placeholder-image.png";
+                            }}
+                          />
+                        ) : (
+                          <FileText
+                            size={32}
+                            className={isPDF ? "text-red-500" : "text-gray-400"}
+                          />
+                        )}
+                      </div>
+
+                      {/* Document Info */}
+                      <div className="p-3">
+                        <p className="text-xs text-gray-500 mt-1">
+                          {isPDF ? "PDF Document" : "Image Document"}
                         </p>
                       </div>
-                    )}
-                    <p className="mt-2 text-sm text-gray-500">
-                      {file.gbf_name || inferredName}
-                    </p>
-                  </div>
-                );
-              })
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">
-                No supporting documents available.
-              </p>
+              <div className="flex flex-col items-center justify-center h-full">
+                <FileText size={64} className="text-gray-300 mb-4" />
+                <p className="text-gray-500 text-lg">
+                  No supporting documents available
+                </p>
+              </div>
             )}
           </div>
-        }
-      />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -76,25 +76,30 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         ? new Date(budgetEntry.gbud_datetime).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
-    const matchingProject = projectProposals.find(
-      (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
-    );
-    const projectTitle = matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
+      const matchingProject = projectProposals.find(
+        (p) =>
+          p.dev_id === budgetEntry.dev &&
+          p.project_index === budgetEntry.gbud_project_index
+      );
+      const projectTitle =
+        matchingProject?.gpr_title || budgetEntry.gbud_exp_project || "";
 
       let recordedItems: { name: string; pax: string; amount: number }[] = [];
-    if (budgetEntry.gbud_exp_particulars) {
-      if (typeof budgetEntry.gbud_exp_particulars === "string") {
-        try {
-          recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
-        } catch (e) {
-          console.error("Failed to parse gbud_exp_particulars:", budgetEntry.gbud_exp_particulars);
-          recordedItems = [];
+      if (budgetEntry.gbud_exp_particulars) {
+        if (typeof budgetEntry.gbud_exp_particulars === "string") {
+          try {
+            recordedItems = JSON.parse(budgetEntry.gbud_exp_particulars);
+          } catch (e) {
+            console.error(
+              "Failed to parse gbud_exp_particulars:",
+              budgetEntry.gbud_exp_particulars
+            );
+            recordedItems = [];
+          }
+        } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
+          recordedItems = budgetEntry.gbud_exp_particulars;
         }
-      } else if (Array.isArray(budgetEntry.gbud_exp_particulars)) {
-        recordedItems = budgetEntry.gbud_exp_particulars;
       }
-    }
-
 
       const formValues: FormValues = {
         gbud_datetime: formattedDate,
@@ -173,7 +178,8 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_proposed_budget: values.gbud_proposed_budget,
         gbud_actual_expense: values.gbud_actual_expense,
         gbud_reference_num: values.gbud_reference_num,
-        gbud_remaining_bal: remainingBalance - (values.gbud_actual_expense || 0),
+        gbud_remaining_bal:
+          remainingBalance - (values.gbud_actual_expense || 0),
         dev: values.dev,
         gbud_project_index: values.gbud_project_index,
       },
@@ -222,8 +228,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
 
   const currentYearBudget = yearBudgets?.find((b) => b.gbudy_year === year);
   const selectedProject = projectProposals?.find(
-  (p) => p.dev_id === budgetEntry.dev && p.project_index === budgetEntry.gbud_project_index
-);
+    (p) =>
+      p.dev_id === budgetEntry.dev &&
+      p.project_index === budgetEntry.gbud_project_index
+  );
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
@@ -255,9 +263,12 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                       onSelect={(value, item) => {
                         field.onChange(value);
                         if (item) {
-                        form.setValue("dev", item.dev_id);
-                        form.setValue("gbud_project_index", item.project_index);
-                       }
+                          form.setValue("dev", item.dev_id);
+                          form.setValue(
+                            "gbud_project_index",
+                            item.project_index
+                          );
+                        }
                       }}
                       readOnly={true}
                     />
@@ -282,9 +293,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                           <span className="text-sm text-gray-500 ml-2">
                             {item.pax}
                           </span>
-                          {selectedProject.recorded_items.includes(
-                            item.name
-                          )}
+                          {selectedProject.recorded_items.includes(item.name)}
                         </div>
                         <span>₱{item.amount.toLocaleString()}</span>
                       </div>
@@ -355,6 +364,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                   placeholder="Enter reference number"
                   readOnly={!isEditing}
                 />
+
                 {isEditing ? (
                   <MediaUpload
                     title="Supporting Documents"
@@ -364,31 +374,16 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     activeVideoId={activeVideoId}
                     setActiveVideoId={setActiveVideoId}
                   />
-                ) : mediaFiles.length > 0 ? (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium">
-                      Supporting Doc(s)
-                    </label>
-                    {mediaFiles.map((file) => (
-                      <div key={file.id} className="border rounded-md p-2">
-                        <img
-                          src={file.url}
-                          onError={(e) => {
-                            console.error("Failed to load image:", {
-                              url: file.url,
-                              encoded: encodeURI(file.url || ""),
-                              decoded: decodeURI(file.url || ""),
-                            });
-                            e.currentTarget.src = "/placeholder.jpg";
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
                 ) : (
-                  <div className="p-2 border rounded text-sm text-gray-500">
-                    No supporting docs uploaded
-                  </div>
+                  <MediaUpload
+                    title="Supporting Documents"
+                    description="Uploaded proof of transaction"
+                    mediaFiles={mediaFiles}
+                    setMediaFiles={setMediaFiles}
+                    activeVideoId={activeVideoId}
+                    setActiveVideoId={setActiveVideoId}
+                    hideRemoveButton={true}
+                  />
                 )}
               </>
             </div>
