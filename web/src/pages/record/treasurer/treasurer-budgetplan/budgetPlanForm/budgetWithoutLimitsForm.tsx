@@ -132,9 +132,7 @@ export default function CreateBudgetPlanWithoutLimits({
     name: "items"
   });
 
-  // Simplified initialization - rely on parent to provide proper data
   useEffect(() => {
-    // Check if we have any items, if not, add one empty item
     const currentItems = form.getValues("items");
     if (!currentItems || currentItems.length === 0) {
       append({
