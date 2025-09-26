@@ -7,6 +7,7 @@ export type DonationInput = {
   don_description?: string;
   don_date: string;
   staff?: string | null;
+  don_status: string;
 };
 
 export type Donation = {
@@ -19,6 +20,7 @@ export type Donation = {
   don_receiver: string;
   don_description?: string;
   don_date: string;
+  don_status: string;
 };
 
 export type Donations = {
@@ -30,6 +32,7 @@ export type Donations = {
   don_description?: string;
   don_date: string;
   per_id?: number | null;
+  don_status: string;
 };
 
 export type Personal = {
