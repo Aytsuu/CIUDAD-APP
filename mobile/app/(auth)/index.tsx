@@ -1,4 +1,4 @@
-import App from "@/screens/auth/login";
+// import App from "@/screens/auth/login";
 import Homepage from "@/screens/health/home";
 
 // Makes the Error Overlay dissapear
@@ -9,6 +9,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <App/>
+    return <Homepage/>
 }
  

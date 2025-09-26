@@ -50,8 +50,8 @@ class ChildHealthRecordsView(generics.ListAPIView):
             'patrec__pat_id__rp_id__per',
             'patrec__pat_id__trans_id'
         ).prefetch_related(
-            'patrec__pat_id__rp_id__per__personaladdress',
-            'patrec__pat_id__rp_id__per__personaladdres__add',
+            'patrec__pat_id__rp_id__per__personal_addresses',
+            'patrec__pat_id__rp_id__per__personal_addresses__add',
             'child_health_histories'
         ).order_by('-created_at')
         
@@ -1047,7 +1047,7 @@ class UpdateChildHealthRecordAPIView(APIView):
         todays_historical_record = data.get('todaysHistoricalRecord', {})
         original_record = data.get('originalRecord', {})
         
-        print("SubmittedData",submitted_data)
+        print("SubmittedData", submitted_data)
         try:
             # Validate required fields
             if not submitted_data.get('pat_id'):
@@ -1177,13 +1177,23 @@ class UpdateChildHealthRecordAPIView(APIView):
         chvital_id = None
         bmi_id = None
         
+        # NEW: Check if we should use PATCH for immunization status
+        passed_status = submitted_data.get('passed_status')
+        use_patch = passed_status == 'immunization'
+        
+        if use_patch:
+            print("Using PATCH method for immunization status update")
+            return self._handle_patch_update(
+                submitted_data, staff_instance, todays_historical_record,
+                original_record, current_chhist_id, chnotes_id, chrec_id
+            )
+        
+        # Original same-day update logic (PUT method)
         if submitted_data.get('vitalSigns') and len(submitted_data['vitalSigns']) > 0:
             vital_sign = submitted_data['vitalSigns'][0]
             
             # Handle body measurements update
             existing_chvital_id = todays_historical_record.get('chvital_id')
-            
-           
             
             # Handle follow-up visit (existing logic)
             original_followv_id = todays_historical_record.get('followv_id')
@@ -1297,10 +1307,7 @@ class UpdateChildHealthRecordAPIView(APIView):
                         # consider if you want to delete it or leave it as is
                         print("No meaningful content to update in existing notes")
         
-        
-        
-        
-          # Create child health history
+        # Create child health history
         # Get the staff instance if selectedStaffId is provided
         assigned_staff = None
         selected_staff_id = submitted_data.get('selectedStaffId')
@@ -1315,8 +1322,6 @@ class UpdateChildHealthRecordAPIView(APIView):
         ChildHealth_History.objects.filter(chhist_id=current_chhist_id).update(
             status=submitted_data.get('status', 'recorded'),
             assigned_to=assigned_staff
-
-            
         )
         
         # Update the child health record timestamp
@@ -1334,12 +1339,64 @@ class UpdateChildHealthRecordAPIView(APIView):
             "followv_id": followv_id
         }
 
-   
+    def _handle_patch_update(self, submitted_data, staff_instance, 
+                           todays_historical_record, original_record, 
+                           current_chhist_id, chnotes_id, chrec_id):
+        """Handle PATCH update specifically for immunization status"""
+        print("Performing PATCH update for immunization status")
+        
+        # For PATCH updates, only update specific fields without creating new records
+        update_fields = {}
+        
+        # Update status if provided
+        if 'status' in submitted_data:
+            update_fields['status'] = submitted_data['status']
+        
+        # Update assigned staff if provided
+        assigned_staff = None
+        selected_staff_id = submitted_data.get('selectedStaffId')
+        if selected_staff_id:
+            try:
+                assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+                update_fields['assigned_to'] = assigned_staff
+            except Staff.DoesNotExist:
+                print(f"Staff with ID {selected_staff_id} not found")
+        
+        # Only update if there are fields to update
+        if update_fields:
+            ChildHealth_History.objects.filter(chhist_id=current_chhist_id).update(**update_fields)
+            print(f"PATCH updated ChildHealth_History {current_chhist_id} with fields: {list(update_fields.keys())}")
+        
+        # Update timestamp
+        ChildHealthrecord.objects.filter(chrec_id=chrec_id).update(updated_at=timezone.now())
+        
+        # For PATCH updates, we only handle specific operations:
+        # 1. Update supplement statuses if provided
+        if 'historicalSupplementStatuses' in submitted_data:
+            self._handle_historical_supplement_statuses(submitted_data, original_record)
+        
+        # 2. Update breastfeeding dates if provided  
+        if 'BFchecks' in submitted_data:
+            self._handle_breastfeeding_dates(submitted_data, current_chhist_id, original_record)
+        
+        # 3. Handle medicines if provided (immunization might involve medicine dispensing)
+        if 'medicines' in submitted_data:
+            self._handle_medicines(submitted_data, staff_instance, current_chhist_id)
+        
+        # Note: For PATCH, we skip creating new vital signs, notes, or follow-up visits
+        # as these are typically not needed for immunization-only updates
+        
+        return {
+            "success": True,
+            "chvital_id": None,  # No new vital signs in PATCH
+            "bmi_id": None,      # No new BMI in PATCH  
+            "followv_id": None   # No new follow-up in PATCH
+        }
 
     def _handle_new_record_creation(self, submitted_data, staff_instance, 
                                 chrec_id, patrec_id, original_record):
         """Handle creation of new child health records"""
-           # Create child health history
+        # Create child health history
         # Get the staff instance if selectedStaffId is provided
         assigned_staff = None
         selected_staff_id = submitted_data.get('selectedStaffId')
@@ -1349,7 +1406,6 @@ class UpdateChildHealthRecordAPIView(APIView):
             except Staff.DoesNotExist:
                 raise ValueError(f"Staff with ID {selected_staff_id} does not exist")
 
-     
         # Create new child health history
         new_chhist = ChildHealth_History.objects.create(
             created_at=timezone.now(),
@@ -1357,7 +1413,6 @@ class UpdateChildHealthRecordAPIView(APIView):
             status=submitted_data.get('status', 'recorded'),
             tt_status=submitted_data.get('tt_status'),
             assigned_to=assigned_staff
-
         )
         current_chhist_id = new_chhist.chhist_id
         
@@ -1462,6 +1517,8 @@ class UpdateChildHealthRecordAPIView(APIView):
             "followv_id": followv_id,
             "bmi_id": bmi_id
         }
+        
+
         
     def _handle_breastfeeding_dates(self, submitted_data, chhist_id, original_record=None):
         """
