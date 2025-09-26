@@ -54,7 +54,7 @@ function DonationTracker() {
   const statusOptions = [
     { id: "all", name: "All Statuses" },
     { id: "Stashed", name: "Stashed" },
-    { id: "Alloted", name: "Alloted" },
+    { id: "Allotted", name: "Allotted" },
   ];
 
   // Filter data based on search query and category

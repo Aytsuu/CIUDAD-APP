@@ -76,7 +76,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             label="Status"
             options={[
               { id: "Stashed", name: "Stashed" },
-              { id: "Alloted", name: "Alloted" },
+              { id: "Allotted", name: "Allotted" },
             ]}
             readOnly={!isEditing}
           />
