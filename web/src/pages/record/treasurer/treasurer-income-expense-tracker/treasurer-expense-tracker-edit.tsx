@@ -166,25 +166,64 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
         }
                 
         const particularAccBudget = selectedParticular.proposedBudget;
-        const subtractedAmount = particularAccBudget - parseFloat(values.iet_amount);
-        const subtractedActualAmount = particularAccBudget - actualAmount;
+        // const subtractedAmount = particularAccBudget - parseFloat(values.iet_amount);
+        // const subtractedActualAmount = particularAccBudget - actualAmount;
 
-    
-        if (subtractedAmount < 0) {
-            form.setError("iet_amount", {
-                type: "manual",
-                message: `Insufficient Balance`,
-            });
-            return
+        if(Number(values.iet_actual_amount) > 0){
+
+            if(prevActualAmount == 0){ // if bag o pa mag add og actual expense
+                let budget = prevAmount + particularAccBudget;
+                let subtractedActualAMT = budget - Number(values.iet_actual_amount);
+
+                if (subtractedActualAMT < 0) {
+                    form.setError("iet_actual_amount", {
+                        type: "manual",
+                        message: `Insufficient Balance`,
+                    });
+                    return
+                }  
+            }            
+            else{ // if mo update sa actual expense
+                let budget = prevActualAmount + particularAccBudget;                
+                let subtractedActualAMT = budget - Number(values.iet_actual_amount);            
+                
+                if (subtractedActualAMT < 0) {
+                    form.setError("iet_actual_amount", {
+                        type: "manual",
+                        message: `Insufficient Balance`,
+                    });
+                    return
+                }              
+            }
         }
+        else{
+            let budget = prevAmount + particularAccBudget;
+            let subtractAMT = budget - parseFloat(values.iet_amount);
+
+            if (subtractAMT < 0) {
+                form.setError("iet_amount", {
+                    type: "manual",
+                    message: `Insufficient Balance`,
+                });
+                return
+            }
+        }
+    
+        // if (subtractedAmount < 0) {
+        //     form.setError("iet_amount", {
+        //         type: "manual",
+        //         message: `Insufficient Balance`,
+        //     });
+        //     return
+        // }
         
-        if (subtractedActualAmount < 0) {
-            form.setError("iet_actual_amount", {
-                type: "manual",
-                message: `Insufficient Balance`,
-            });
-            return
-        }     
+        // if (subtractedActualAmount < 0) {
+        //     form.setError("iet_actual_amount", {
+        //         type: "manual",
+        //         message: `Insufficient Balance`,
+        //     });
+        //     return
+        // }     
 
         if(!values.iet_additional_notes){
             values.iet_additional_notes = "None";
