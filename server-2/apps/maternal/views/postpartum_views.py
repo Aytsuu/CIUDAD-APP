@@ -117,10 +117,54 @@ def get_patient_postpartum_count(request, pat_id):
 # postpartum latest record retrieve
 @api_view(['GET'])
 def get_latest_patient_postpartum_records(request, pat_id):
-    """ Get all postpartum records for a specific patient """
+    def get_spouse_info_for_resident_mother(patient):
+        # Returns spouse info if patient is Resident and role is Mother
+        spouse_details = None
+        try:
+            # Get ResidentProfile
+            rp = getattr(patient, 'rp_id', None)
+            if not rp:
+                return None
+            # Find FamilyComposition where rp == patient.rp_id and fc_role == 'Mother'
+            from apps.healthProfiling.models import FamilyComposition
+            mother_fc = FamilyComposition.objects.filter(rp=rp, fc_role__iexact='Mother').first()
+            if not mother_fc:
+                return None
+            fam = getattr(mother_fc, 'fam', None)
+            if not fam:
+                return None
+            # Find FamilyComposition in same family where fc_role == 'Father'
+            father_fc = FamilyComposition.objects.filter(fam=fam, fc_role__iexact='Father').first()
+            if not father_fc:
+                return None
+            father_rp = getattr(father_fc, 'rp', None)
+            if not father_rp:
+                return None
+            personal_info = getattr(father_rp, 'per', None)
+            spouse_details = {
+                "fam_id": getattr(fam, 'fam_id', None),
+                "fc_role": getattr(father_fc, 'fc_role', None),
+                "fc_id": getattr(father_fc, 'fc_id', None),
+                "spouse_info": {
+                    "per_fname": getattr(personal_info, 'per_fname', None),
+                    "per_mname": getattr(personal_info, 'per_mname', None),
+                    "per_lname": getattr(personal_info, 'per_lname', None),
+                    "per_suffix": getattr(personal_info, 'per_suffix', None),
+                    "per_dob": getattr(personal_info, 'per_dob', None),
+                    "per_sex": getattr(personal_info, 'per_sex', None),
+                    "per_contact": getattr(personal_info, 'per_contact', None),
+                    "per_status": getattr(personal_info, 'per_status', None),
+                    "per_religion": getattr(personal_info, 'per_religion', None),
+                    "per_edAttainment": getattr(personal_info, 'per_edAttainment', None)
+                } if personal_info else None
+            }
+        except Exception as e:
+            logger.error(f"Error fetching spouse info for resident mother: {str(e)}")
+        return spouse_details
+
+    # Main function logic
     try:
         patient = Patient.objects.get(pat_id=pat_id)
-        
         latest_record = PostpartumRecord.objects.filter(
             patrec_id__pat_id=patient
         ).select_related(
@@ -137,7 +181,7 @@ def get_latest_patient_postpartum_records(request, pat_id):
                     patrec_id__pat_id=patient,
                     spouse_id__isnull=False
                 ).select_related('spouse_id').order_by('-created_at').first()
-                
+
                 if latest_prenatal and latest_prenatal.spouse_id:
                     spouse_info = {
                         "spouse_lname": latest_prenatal.spouse_id.spouse_lname,
@@ -145,9 +189,11 @@ def get_latest_patient_postpartum_records(request, pat_id):
                         "spouse_mname": latest_prenatal.spouse_id.spouse_mname,
                         "spouse_dob": latest_prenatal.spouse_id.spouse_dob,
                     }
+                elif getattr(patient, 'pat_type', None) == 'Resident':
+                    spouse_info = get_spouse_info_for_resident_mother(patient)
             except Exception as e:
                 logger.error(f"Error fetching spouse info from prenatal: {str(e)}")
-            
+
             return Response({
                 'pat_id': pat_id,
                 'message': 'No postpartum records found for this patient',
@@ -164,15 +210,17 @@ def get_latest_patient_postpartum_records(request, pat_id):
                 "spouse_mname": latest_record.spouse_id.spouse_mname,
                 "spouse_dob": latest_record.spouse_id.spouse_dob,
             }
+        elif getattr(patient, 'pat_type', None) == 'Resident':
+            spouse_info = get_spouse_info_for_resident_mother(patient)
 
         serializer = PostpartumCompleteSerializer(latest_record)
-        
+
         return Response({
             'pat_id': pat_id,
             'latest_postpartum_record': serializer.data,
             'spouse_info': spouse_info
         }, status=status.HTTP_200_OK)
-        
+
     except Patient.DoesNotExist:
         return Response(
             {'error': f'Patient with ID {pat_id} does not exist'},
@@ -184,3 +232,13 @@ def get_latest_patient_postpartum_records(request, pat_id):
             {'error': f'Failed to fetch latest postpartum record: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    
+
+class PostpartumRecordsListView(generics.ListAPIView):
+    serializer_class = PostpartumCompleteSerializer
+
+    def get_queryset(self):
+        pat_id = self.kwargs.get('pat_id')
+        return PostpartumRecord.objects.filter(
+            patrec_id__pat_id__pat_id=pat_id
+        ).order_by('-created_at')

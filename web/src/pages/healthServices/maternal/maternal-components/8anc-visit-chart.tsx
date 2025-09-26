@@ -45,12 +45,13 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
 		return <div className="text-center text-gray-500">No pregnancy data available</div>
 	}
 
-	const normalizeStatus = (statusRaw: string): "Active" | "Completed" | "Pregnancy Loss" => {
-    const s = statusRaw.toLowerCase()
-    if (s === "active") return "Active"
-    if (s === "completed") return "Completed"
-    return "Pregnancy Loss" // covers both "pregnancy loss" and any unknown variants
-  }
+	const normalizeStatus = (statusRaw: string | undefined): "Active" | "Completed" | "Pregnancy Loss" => {
+  if (!statusRaw) return "Pregnancy Loss";
+  const s = statusRaw.toLowerCase();
+  if (s === "active") return "Active";
+  if (s === "completed") return "Completed";
+  return "Pregnancy Loss";
+}
 
   // counts
   const completedPregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Completed").length;
@@ -66,10 +67,10 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
 						<span className="flex flex-col">
               <div className="flex items-center">
                 <Clock size={16} color="green"/>
-                <h3 className="text-sm font-semibold ml-1">1st Trimester</h3>
+                <h3 className="text-sm font-semibold ml-1">1-3 months</h3>
               </div>
 							<div className="flex">
-                <p className="text-[11px] pl-5 text-black/50 font-bold italic">12 wks and 6 days</p>
+                <p className="text-[11px] pl-5 text-black/50 font-bold italic">Atleast 1 visit</p>
               </div>
 						</span>
 						<div className="flex justify-center p-4">
@@ -81,10 +82,10 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
 						<span className="flex flex-col">
               <div className="flex items-center">
                 <Clock size={16} color="green"/>
-                <h3 className="text-sm font-semibold ml-1">2nd Trimester</h3>
+                <h3 className="text-sm font-semibold ml-1">4-6 months</h3>
               </div>
 							<div className="flex">
-                <p className="text-[11px] pl-5 text-black/50 font-bold italic">13 wks to 27 wks and 6 days</p>
+                <p className="text-[11px] pl-5 text-black/50 font-bold italic">Atleast 2 visits</p>
               </div>
 						</span>
 						<div className="flex justify-center p-4">
@@ -96,10 +97,10 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
 						<span className="flex flex-col">
               <div className="flex items-center">
                 <Clock size={16} color="green"/>
-                <h3 className="text-sm font-semibold ml-1">3rd Trimester</h3>
+                <h3 className="text-sm font-semibold ml-1">7-9 months</h3>
               </div>
 							<div className="flex">
-                <p className="text-[11px] pl-5 text-black/50 font-bold italic">28 wks to 40 wks</p>
+                <p className="text-[11px] pl-5 text-black/50 font-bold italic">Atleast 5 visits</p>
               </div>
 						</span>
 						<div className="flex justify-center p-4">

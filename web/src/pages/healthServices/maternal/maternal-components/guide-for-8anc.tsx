@@ -9,21 +9,21 @@ export function ANCVisitsGuide() {
       visits: "At least 1 visit",
       description: "Initial prenatal assessment and health screening",
       icon: <Heart className="h-5 w-5" />,
-      color: "bg-blue-100 text-blue-500 border-blue-200",
+      color: "bg-blue-100/50 text-blue-500 border-blue-200",
     },
     {
       period: "4-6 Months",
-      visits: "Minimum 2 visits",
+      visits: "Atleast 2 visits",
       description: "Regular monitoring and developmental assessments",
       icon: <Calendar className="h-5 w-5" />,
-      color: "bg-green-100 text-green-700 border-green-200",
+      color: "bg-blue-200/50 text-blue-600 border-blue-300",
     },
     {
       period: "7-9 Months",
       visits: "At least 5 visits",
       description: "Intensive monitoring as delivery approaches",
       icon: <Clock className="h-5 w-5" />,
-      color: "bg-primary/10 text-primary border-primary/20",
+      color: "bg-blue-300/50 text-blue-700 border-blue-400",
     },
   ]
 

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Calendar, MapPin, User, Heart, Shield } from "lucide-react";
+import { Calendar, MapPin, Map, User, Heart, Shield } from "lucide-react";
 import { calculateAge } from "@/helpers/ageCalculator";
 
 // Define Patient interface for type safety
@@ -138,7 +138,7 @@ export const PatientInfoCard = ({ patient }: PatientInfoCardProps) => {
           </div>
 
           <div className="flex items-start gap-3">
-          <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+            <Map className="w-5 h-5 text-red-600 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-gray-900 leading-relaxed">
               {patient.address?.add_sitio || "No sitio provided"}

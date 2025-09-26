@@ -74,16 +74,15 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const bodyMeasurement = prenatalForm.body_measurement_details;
   // const vitalSigns = prenatalForm.vital_signs_details;
   const obstetricHistory = prenatalForm.obstetric_history;
-  // const medicalHistory = prenatalForm.medical_histories || [];
+  const medicalHistory = prenatalForm.medical_history || [];
   const previousHospitalizations = prenatalForm.previous_hospitalizations || [];
-  console.log(previousHospitalizations)
+  const ttStatus = prenatalForm.tt_statuses || [];
   const previousPregnancies = prenatalForm.previous_pregnancy;
   const labResults = prenatalForm.laboratory_results || [];
   const checklist = prenatalForm.checklist_data;
   const riskCodes = prenatalForm.obstetric_risk_codes;
   const birthPlan = prenatalForm.birth_plan_details;
-  // const prenatalCare = prenatalForm.prenatal_care_entries || [];
-  const ancVisit = prenatalForm.anc_visit_guide;
+  const ancVisit = prenatalForm?.anc_visit_guide;
 
   // age calculation
   const age = personalInfo?.per_dob ? 
@@ -134,7 +133,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
 
   return (
-    <div className="flex max-w-6xl mx-auto m-5 overflow-hidden border border-gray-500">
+    <div className="flex max-w-7xl mx-auto m-5 overflow-hidden border border-gray-500">
       <div className="mx-10 my-5">
         {/* Header */}
         <div>
@@ -163,34 +162,33 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                   : ""} 
               />
               <div className="flex">
-              <Checkbox 
-                name="ageTenToFourteen"
-                className="ml-1 mr-1 mt-4" 
-                checked={ageTenToFourteen || false} 
-                disabled
-              />
-              <Label className="mt-4">10-14YO</Label>
+                <Checkbox 
+                  name="ageTenToFourteen"
+                  className="ml-1 mr-1 mt-4" 
+                  checked={ageTenToFourteen || false} 
+                  disabled
+                />
+                <Label className="mt-4">10-14YO</Label>
+              </div>
+              <div className="flex">
+                <Checkbox 
+                  name="ageFifteenToNineteen"
+                  className="ml-1 mr-1 mt-4" 
+                  checked={ageFifteenToNineteen || false} 
+                  disabled
+                />
+                <Label className="mt-4">15-19</Label>
+              </div>
+              <div className="flex">
+                <Checkbox 
+                  name="ageTwentyToFortyNine"
+                  className="ml-1 mr-1 mt-4" 
+                  checked={ageTwentyToFortyNine || false} 
+                  disabled
+                />
+                <Label className="mt-4">20-49</Label>
+              </div>
             </div>
-            <div className="flex">
-              <Checkbox 
-                name="ageFifteenToNineteen"
-                className="ml-1 mr-1 mt-4" 
-                checked={ageFifteenToNineteen || false} 
-                disabled
-              />
-              <Label className="mt-4">15-19</Label>
-            </div>
-            <div className="flex">
-              <Checkbox 
-                name="ageTwentyToFortyNine"
-                className="ml-1 mr-1 mt-4" 
-                checked={ageTwentyToFortyNine || false} 
-                disabled
-              />
-              <Label className="mt-4">20-49</Label>
-            </div>
-            </div>
-            
           </div>
 
           <div className="flex pb-2">
@@ -290,11 +288,18 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                     <InputLineLonger className="w-[30vh]" value="" />
                   </div>
                   <div>
-                    <InputLine className="w-[43vh]" value="" />
+                    {medicalHistory.length > 0 ? (
+                      medicalHistory.map((pi:any) => (
+                        <InputLineLonger key={pi.ill_id} className="w-[43vh] text-sm" value={`(${pi.ill_date || "unknown date"}) ${pi.illness_name},`} />
+                      ))
+                    ) : (
+                      <InputLineLonger className="w-[43vh]" value="" />
+                    )}
+                    
                   </div>
 
                   <div className="flex">
-                    <Label className="mt-4">PREVIOUS HOSPITALIZATION:</Label>
+                    <Label className="mt-4 mb-1">PREVIOUS HOSPITALIZATION:</Label>
                   </div>
                   <div>
                     {previousHospitalizations.length > 0 ? (
@@ -302,7 +307,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                         <InputLineLonger  
                           key={hospitalizations.pfph_id} 
                           className="w-[43vh] text-sm break-words resize-none overflow-y-auto min-h-[3.5rem] max-h-32" 
-                          value={`(${hospitalizations.prev_hospitalization_year}) ${hospitalizations.prev_hospitalization}`} 
+                          value={`(${hospitalizations.prev_hospitalization_year}) ${hospitalizations.prev_hospitalization},`} 
                         />
                       ))
                     ): 
@@ -416,24 +421,19 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
               </div>
             </div>
 
-            {/* tetanus values */}
-            <div className="p-5 border border-black">
-              <p className="text-sm"></p>
-            </div>
+            {/* tetanus values - mapped for each TT dose */}
+            {["TT1", "TT2", "TT3", "TT4", "TT5"].map((tt) => {
+              const status = ttStatus.find((item: any) => item.tts_status === tt);
+              return (
+                <div key={tt} className="p-2 border border-black">
+                  <p className="text-sm text-center">{status ? status.tts_date_given : ""}</p>
+                </div>
+              );
+            })}
             <div className="p-2 border border-black">
-              <p className="text-sm"></p>
-            </div>
-            <div className="p-2 border border-black">
-              <p className="text-sm"></p>
-            </div>
-            <div className="p-2 border border-black">
-              <p className="text-sm"></p>
-            </div>
-            <div className="p-2 border border-black">
-              <p className="text-sm"></p>
-            </div>
-            <div className="p-2 border border-black">
-              <p className="text-sm"></p>
+              <p className="text-sm">
+                {ttStatus.some((item: any) => item.tts_status === "TT5") ? "Fully Immunized" : ""}
+              </p>
             </div>
           </div>
         </div>
@@ -476,17 +476,17 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
               {/* 4anc visits values */}
               <div className="flex text-center items-center justify-center p-3 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_1st_tri}<br /></p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_1st_tri || ''}<br /></p>
               </div>
               <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_2nd_tri}</p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_2nd_tri || ''}</p>
               </div>
               <div className="grid grid-cols-2">
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_3rd_tri_one}</p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_one || ''}</p>
                 </div>
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_3rd_tri_two}</p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_two || ''}</p>
                 </div>
               </div>
             </div>

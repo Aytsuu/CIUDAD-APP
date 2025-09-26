@@ -59,7 +59,7 @@ export default function AllMedicineRecords() {
         province: address.add_province || "",
         pat_type: record.patient_details.pat_type || "",
         medicine_count: record.medicine_count || 0,
-        address: addressString // Will be empty string if no address parts
+        address: addressString 
       };
     });
   }, [medicineRecords]);

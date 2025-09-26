@@ -13,6 +13,9 @@ export default function PrenatalViewingTwo() {
 
    const { data: prenatalCareData, isLoading } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "")
    const prenatalCare = prenatalCareData?.prenatal_records || [];
+   console.log("Patient Data: ", patientData)
+
+   // const {}
 
 
    if (isLoading) {
@@ -25,7 +28,7 @@ export default function PrenatalViewingTwo() {
 
 
    return (
-      <div className="max-w-6xl mx-auto h-[128rem] overflow-hidden m-5 border border-gray-500">
+      <div className="max-w-7xl mx-auto h-[128rem] overflow-hidden m-5 border border-gray-500">
          <div className="mx-10 my-5">
             <div>
                <p className="text-sm pb-5 mt-10">CEBU CITY HEALTH DEPARTMENT <br /> 2020</p>
@@ -66,13 +69,13 @@ export default function PrenatalViewingTwo() {
                                  <td className="border-b border-t border-r border-black p-2 text-sm">
                                     <div>
                                        {visit.pfpc_fundal_ht && (
-                                          <div>FH: {visit.pfpc_fundal_ht}</div>
+                                          <div>Fundal Height: {visit.pfpc_fundal_ht}</div>
                                        )}
                                        {visit.pfpc_fetal_hr && (
-                                          <div>FHR: {visit.pfpc_fetal_hr}</div>
+                                          <div>Fetal Heart Rate: {visit.pfpc_fetal_hr} bpm</div>
                                        )}
                                        {visit.pfpc_fetal_pos && (
-                                          <div>Position: {visit.pfpc_fetal_pos}</div>
+                                          <div>Fetal Position: {visit.pfpc_fetal_pos}</div>
                                        )}
                                        {!visit.pfpc_fundal_ht && !visit.pfpc_fetal_hr && !visit.pfpc_fetal_pos && '-'}
                                     </div>
