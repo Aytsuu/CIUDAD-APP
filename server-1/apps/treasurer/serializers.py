@@ -193,6 +193,16 @@ class Disbursement_VoucherSerializer(serializers.ModelSerializer):
         model = Disbursement_Voucher
         fields = '__all__'
         read_only_fields = ['dis_is_archive']
+        extra_kwargs = {
+            'dis_tin': {'required': False}, 
+            'dis_date': {'required': False}, 
+            'dis_fund': {'required': False},
+            'dis_checknum': {'required': False},
+            'dis_bank': {'required': False},
+            'dis_or_num': {'required': False},
+            'dis_paydate': {'required': False},
+            'dis_payacc': {'required': False},
+        }
 
 # =========================== INCOME & EXPENSE ==========================
 

@@ -26,6 +26,8 @@ export function DocumentCard({
       : doc.psd_name
     : "Unknown";
   
+  const isPDF = doc.psd_type === "application/pdf" || doc.psd_name?.toLowerCase().endsWith('.pdf');
+  
   return (
     <div className="flex flex-col items-center p-4 rounded-lg">
       <div className="relative w-full h-64 flex justify-center items-center">
@@ -116,7 +118,7 @@ export function DocumentCard({
         ) : (
           <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md">
             <p className="mt-2 text-sm text-gray-600">
-              {displayName}
+              {isPDF ? "PDF Document" : displayName}
             </p>
             {doc.psd_url ? (
               <a
@@ -125,7 +127,7 @@ export function DocumentCard({
                 rel="noopener noreferrer"
                 className="mt-2 text-blue-600 hover:underline"
               >
-                View Document
+                {isPDF ? "View PDF" : "View Document"}
               </a>
             ) : (
               <p className="mt-2 text-sm text-red-500">No file available</p>
@@ -134,7 +136,7 @@ export function DocumentCard({
         )}
       </div>
       <p className="mt-2 text-sm text-gray-500 text-center">
-        {displayName} {isArchived}
+        {displayName} {isArchived && "(Archived)"}
       </p>
     </div>
   );
