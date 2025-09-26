@@ -449,151 +449,150 @@ export default function PendingCards() {
     setCurrentPage(1)
   }, [searchQuery, selectedSitio])
 
-   const columns: ColumnDef<GarbageRequestPending>[] = [
-          {
-              accessorKey: "garb_id",
-              header: ({ column }) => (
-                  <div
-                      className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                  >
-                      Request No.
-                      <ArrowUpDown size={14} />
-                  </div>
-              ),
-              cell: ({ row }) => (
-                <div>
-                  <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
-                    <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
-                      {row.original.garb_id}
-                    </p>
-                  </div>
-                </div>
-              )
-          },
-          {
-              accessorKey: "garb_created_at",
-              header: ({ column }) => (
-                  <div
-                      className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                  >
-                      Date Requested
-                      <ArrowUpDown size={14} />
-                  </div>
-              ),
-              cell: ({ row }) => (
-                  <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
-              )
-          },
-          {
-              accessorKey: "garb_requester",
-              header: "Requester",
-          },
-          {
-              accessorKey: "sitio_name",
-              header: "Sitio"
-          },
-           {
-              accessorKey: "garb_waste_type",
-              header: "Waste Type"
-          },
-          {
-            accessorKey: "",
-            header: "   ",
-              cell: ({ row }) => {
-                  return (
-                      <DialogLayout
-                          className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
-                          trigger={
-                              <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
-                                  <span className="text-sm font-medium group-hover:text-primary">View</span>
-                                  <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
-                                      <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
-                                  </div>
-                              </Button>
-                          }
-                          title={`Garbage Pickup Request No. ${row.original.garb_id}`}
-                          description="Full details of the request filed."
-                          mainContent={
-                            <div className="flex flex-col h-full overflow-y-hidden">
-                                  <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
-                                      <ViewGarbageRequestDetails
-                                          garb_id = {row.original.garb_id}
-                                          garb_requester={row.original.garb_requester}
-                                          garb_location={row.original.garb_location}
-                                          garb_created_at={row.original.garb_created_at}
-                                          garb_pref_date={row.original.garb_pref_date}
-                                          garb_pref_time = {row.original.garb_pref_time}
-                                          garb_additional_notes={row.original.garb_additional_notes}
-                                          file_url={row.original.file_url}
-                                          sitio_name={row.original.sitio_name}
-                                          garb_waste_type = {row.original.garb_waste_type}
-                                          isPending = {true}
-                                      />
-                                  </div>
+  const columns: ColumnDef<GarbageRequestPending>[] = [
+      {
+          accessorKey: "garb_id",
+          header: ({ column }) => (
+              <div
+                  className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >
+                  Request No.
+                  <ArrowUpDown size={14} />
+              </div>
+          ),
+          cell: ({ row }) => (
+            <div>
+              <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+                <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+                  {row.original.garb_id}
+                </p>
+              </div>
+            </div>
+          )
+      },
+      {
+          accessorKey: "garb_created_at",
+          header: ({ column }) => (
+              <div
+                  className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >
+                  Date Requested
+                  <ArrowUpDown size={14} />
+              </div>
+          ),
+          cell: ({ row }) => (
+              <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
+          )
+      },
+      {
+          accessorKey: "garb_requester",
+          header: "Requester",
+      },
+      {
+          accessorKey: "sitio_name",
+          header: "Sitio"
+      },
+        {
+          accessorKey: "garb_waste_type",
+          header: "Waste Type"
+      },
+      {
+        accessorKey: "",
+        header: "   ",
+          cell: ({ row }) => {
+              return (
+                  <DialogLayout
+                      className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
+                      trigger={
+                          <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
+                              <span className="text-sm font-medium group-hover:text-primary">View</span>
+                              <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+                                  <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+                              </div>
+                          </Button>
+                      }
+                      title={`Garbage Pickup Request No. ${row.original.garb_id}`}
+                      description="Full details of the request filed."
+                      mainContent={
+                        <div className="flex flex-col h-full overflow-y-hidden">
+                              <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
+                                  <ViewGarbageRequestDetails
+                                      garb_id = {row.original.garb_id}
+                                      garb_requester={row.original.garb_requester}
+                                      garb_location={row.original.garb_location}
+                                      garb_created_at={row.original.garb_created_at}
+                                      garb_pref_date={row.original.garb_pref_date}
+                                      garb_pref_time = {row.original.garb_pref_time}
+                                      garb_additional_notes={row.original.garb_additional_notes}
+                                      file_url={row.original.file_url}
+                                      sitio_name={row.original.sitio_name}
+                                      garb_waste_type = {row.original.garb_waste_type}
+                                  />
+                              </div>
 
-                                  <div className="flex flex-cols-2 gap-4 justify-end mt-3">
-                                    <TooltipLayout
-                                        trigger={
-                                          <div>
-                                            <DialogLayout
-                                              trigger={
-                                                <div className="bg-green-600 flex p-3 items-center gap-2 justify-center hover:bg-green-700 text-white rounded-lg cursor-pointer transition-colors">
-                                                  <CheckCircle size={20} /> Accept 
-                                                </div>
-                                              }
-                                              title="Schedule & Assign for Pickup"
-                                              description="Set date, time, team and vehicle for garbage pickup."
-                                              mainContent={
-                                                <AcceptPickupRequest
-                                                  garb_id={row.original.garb_id}
-                                                  pref_date={row.original.garb_pref_date}
-                                                  pref_time={row.original.garb_pref_time}
-                                                  onSuccess={() => setAcceptedRowId(null)}
-                                                />
-                                              }
-                                              // isOpen={acceptedRowId === row.original.garb_id}
-                                              // onOpenChange={(open) => setAcceptedRowId(open ? row.original.garb_id : null)}
+                              <div className="flex flex-cols-2 gap-4 justify-end mt-3">
+                                <TooltipLayout
+                                    trigger={
+                                      <div>
+                                        <DialogLayout
+                                          trigger={
+                                            <div className="bg-green-600 flex p-3 items-center gap-2 justify-center hover:bg-green-700 text-white rounded-lg cursor-pointer transition-colors">
+                                              <CheckCircle size={20} /> Accept 
+                                            </div>
+                                          }
+                                          title="Schedule & Assign for Pickup"
+                                          description="Set date, time, team and vehicle for garbage pickup."
+                                          mainContent={
+                                            <AcceptPickupRequest
+                                              garb_id={row.original.garb_id}
+                                              pref_date={row.original.garb_pref_date}
+                                              pref_time={row.original.garb_pref_time}
+                                              onSuccess={() => setAcceptedRowId(null)}
                                             />
-                                          </div>
-                                        }
-                                        content="Accept"
-                                      />
+                                          }
+                                          // isOpen={acceptedRowId === row.original.garb_id}
+                                          // onOpenChange={(open) => setAcceptedRowId(open ? row.original.garb_id : null)}
+                                        />
+                                      </div>
+                                    }
+                                    content="Accept"
+                                  />
 
-                                      <TooltipLayout
-                                        trigger={
-                                          <div>
-                                            <DialogLayout
-                                              trigger={
-                                                <div className="bg-red-600 hover:bg-red-700 p-3 flex items-center gap-2 justify-center text-white rounded-lg cursor-pointer transition-colors">
-                                                  <XCircle size={20} /> Reject
-                                                </div>
-                                              }
-                                              title="Confirm Rejection"
-                                              description="Reject the selected garbage pickup request. A reason is required before confirming this action."
-                                              mainContent={
-                                                <RejectPickupForm
-                                                  garb_id={row.original.garb_id}
-                                                  onSuccess={() => setRejectedRowId(null)}
-                                                />
-                                              }
-                                              // isOpen={rejectedRowId === row.original.garb_id}
-                                              // onOpenChange={(open) => setRejectedRowId(open ? row.original.garb_id : null)}
+                                  <TooltipLayout
+                                    trigger={
+                                      <div>
+                                        <DialogLayout
+                                          trigger={
+                                            <div className="bg-red-600 hover:bg-red-700 p-3 flex items-center gap-2 justify-center text-white rounded-lg cursor-pointer transition-colors">
+                                              <XCircle size={20} /> Reject
+                                            </div>
+                                          }
+                                          title="Confirm Rejection"
+                                          description="Reject the selected garbage pickup request. A reason is required before confirming this action."
+                                          mainContent={
+                                            <RejectPickupForm
+                                              garb_id={row.original.garb_id}
+                                              onSuccess={() => setRejectedRowId(null)}
                                             />
-                                          </div>
-                                        }
-                                        content="Reject"
-                                      />
-                                  </div>
-                            </div>
-                          }
-                          // isOpen={editingRowId == row.original.sr_id}
-                          // onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
-                      />
-                  );
-              },
-          }
+                                          }
+                                          // isOpen={rejectedRowId === row.original.garb_id}
+                                          // onOpenChange={(open) => setRejectedRowId(open ? row.original.garb_id : null)}
+                                        />
+                                      </div>
+                                    }
+                                    content="Reject"
+                                  />
+                              </div>
+                        </div>
+                      }
+                      // isOpen={editingRowId == row.original.sr_id}
+                      // onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
+                  />
+              );
+          },
+      }
   ];
 
   if (isLoading) {

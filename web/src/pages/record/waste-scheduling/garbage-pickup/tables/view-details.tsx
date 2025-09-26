@@ -17,19 +17,21 @@ export default function ViewGarbageRequestDetails({
   garb_additional_notes,
   file_url,
   garb_waste_type,
-  isPending,
+  rejection_reason,
+  dec_date
 }: {
   garb_id: string
   garb_requester: string
   garb_location: string
   sitio_name: string
   garb_created_at: string
-  garb_pref_date: string
-  garb_pref_time: string
+  garb_pref_date?: string
+  garb_pref_time?: string
   garb_additional_notes?: string
   file_url: string
-  garb_waste_type: string
-  isPending: boolean
+  garb_waste_type: string;
+  rejection_reason?: string;
+  dec_date?: string;
 }) {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -97,7 +99,7 @@ export default function ViewGarbageRequestDetails({
               <Label className="text-sm font-medium text-slate-600">Preferred Time</Label>
               <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
                 <Clock className="w-4 h-4 text-emerald-600" />
-                <span className="font-semibold text-slate-900">{formatTime(garb_pref_time)}</span>
+                <span className="font-semibold text-slate-900">{formatTime(garb_pref_time || '')}</span>
               </div>
             </div>
 
