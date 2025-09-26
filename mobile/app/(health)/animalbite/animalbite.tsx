@@ -1,6 +1,6 @@
-import Animalbite from "@/screens/health/animalbites/animalbite"
+import AnimalBites from "@/screens/health/animalbites/animalbite"
 
 
 export default () => {
-    return <Animalbite/>
+    return <AnimalBites/>
 }

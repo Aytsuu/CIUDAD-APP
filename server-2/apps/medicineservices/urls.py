@@ -7,7 +7,7 @@ from .views.update_views import *
 from .views.pending_table_views import *
 from .views.count_views import *
 from .views.register_patient_views import *
-
+from .viewsbackup import *
 urlpatterns=[
         
         # TABLE VIEWS
@@ -38,6 +38,15 @@ urlpatterns=[
         path('register-patient/', RegisterPatientAPIView.as_view(), name='register-patient'),
 
         
+        # Kurt urls and views
+        path('indiv-medicine-record/<str:pat_id>/', IndividualMedicineRecordView.as_view(), name='inv-medrecord'),
+        path("user-pending-items/", UserAllMedicineRequestItemsView.as_view(), name="user-pending-medicine-items"),
+        path("user-all-items/", UserAllMedicineRequestItemsView.as_view(), name="user-all-medicine-items"),
+        path('submit-request/', SubmitMedicineRequestView.as_view(), name='submit-medicine-request'),
+        path('cancel-medicine-request-item/<int:medreqitem_id>/', MedicineRequestItemCancel.as_view(), name="cancel-medicine-request-item"),
+        path('medicine-request/check-pending/<str:pat_id>/<str:med_id>/', CheckPendingMedicineRequestView.as_view(), name='check-pending-medicine-request'),
+        path('user-requests/', UserMedicineRequestsView.as_view(), name='user-medicine-requests'),
+        path('medicine-request-items-by-request/<str:medreq_id>/', MedicineRequestItemsByRequestView.as_view(), name='medicine_request_items_by_request'),
         
         # path('medicine-request/', MedicineRequestProcessingView.as_view(), name='medicine_request-processing'),
         # path('medrec-totalrecords/', MedicineTotalCountAPIView.as_view(), name='medrec-totalrecords'),

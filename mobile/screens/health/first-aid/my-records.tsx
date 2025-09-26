@@ -140,7 +140,7 @@ export default function MyFirstAidRecordsScreen() {
   const params = useLocalSearchParams<{ pat_id?: string }>();
   const patIdFromParams = params.pat_id;
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  const rp_id = user?.rp;
 
   console.log("[DEBUG] my-records patIdFromParams:", patIdFromParams);
   console.log("[DEBUG] rp_id from auth:", rp_id);

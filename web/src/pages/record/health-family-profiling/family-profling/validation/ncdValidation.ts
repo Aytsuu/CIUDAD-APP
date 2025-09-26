@@ -4,29 +4,38 @@
  * Prepares NCD record data for submission to the API
  */
 export function prepareNCDRecordForSubmission(ncdRecord: any) {
-  if (!ncdRecord || !ncdRecord.resident_id) {
-    console.warn('Invalid NCD record: missing resident_id');
+  if (!ncdRecord || !ncdRecord.id) {
+    console.warn('Invalid NCD record: missing id (resident ID)');
+    console.log('NCD record received:', ncdRecord);
+    return null;
+  }
+
+  // Extract the nested ncdFormSchema data
+  const ncdData = ncdRecord.ncdFormSchema;
+  if (!ncdData) {
+    console.warn('Invalid NCD record: missing ncdFormSchema');
+    console.log('NCD record received:', ncdRecord);
     return null;
   }
 
   // Transform the record to match backend API expectations
   const payload: Record<string, any> = {
-    rp_id: ncdRecord.resident_id, // Map resident_id to rp_id for backend
+    rp_id: ncdRecord.id, // Use the resident ID from the form
     
     // Map form field names to backend model field names
-    ncd_riskclass_age: ncdRecord.ncd_riskclass_age || ncdRecord.risk_class_age || '',
-    ncd_comorbidities: ncdRecord.ncd_comorbidities || ncdRecord.comorbidities || '',
-    ncd_lifestyle_risk: ncdRecord.ncd_lifestyle_risk || ncdRecord.lifestyle_risk || '',
-    ncd_maintenance_status: ncdRecord.ncd_maintenance_status || ncdRecord.maintenance_status || 'NO'
+    ncd_riskclass_age: ncdData.riskClassAgeGroup || '',
+    ncd_comorbidities: ncdData.comorbidities === "Others" && ncdData.comorbiditiesOthers 
+      ? ncdData.comorbiditiesOthers 
+      : ncdData.comorbidities || '',
+    ncd_lifestyle_risk: ncdData.lifestyleRisk === "Others" && ncdData.lifestyleRiskOthers
+      ? ncdData.lifestyleRiskOthers
+      : ncdData.lifestyleRisk || '',
+    ncd_maintenance_status: ncdData.inMaintenance || 'no'
   };
 
-  // Remove empty string values to prevent validation errors
-  Object.keys(payload).forEach(key => {
-    if (payload[key] === '' && key !== 'rp_id') {
-      delete payload[key];
-    }
-  });
+  console.log('Prepared NCD payload:', payload);
 
+  // Don't remove empty values as the backend handles optional fields
   return payload;
 }
 
@@ -41,15 +50,21 @@ export function validateNCDRecord(ncdRecord: any) {
     return { isValid: false, errors };
   }
 
-  if (!ncdRecord.resident_id) {
+  if (!ncdRecord.id) {
     errors.push('Resident selection is required');
   }
 
+  const ncdData = ncdRecord.ncdFormSchema;
+  if (!ncdData) {
+    errors.push('NCD form data is missing');
+    return { isValid: false, errors };
+  }
+
   // Check if at least one NCD field has meaningful data
-  const hasRiskClassAge = ncdRecord.ncd_riskclass_age || ncdRecord.risk_class_age;
-  const hasComorbidities = ncdRecord.ncd_comorbidities || ncdRecord.comorbidities;
-  const hasLifestyleRisk = ncdRecord.ncd_lifestyle_risk || ncdRecord.lifestyle_risk;
-  const hasMaintenanceStatus = ncdRecord.ncd_maintenance_status || ncdRecord.maintenance_status;
+  const hasRiskClassAge = ncdData.riskClassAgeGroup;
+  const hasComorbidities = ncdData.comorbidities;
+  const hasLifestyleRisk = ncdData.lifestyleRisk;
+  const hasMaintenanceStatus = ncdData.inMaintenance;
 
   if (!hasRiskClassAge && !hasComorbidities && !hasLifestyleRisk && !hasMaintenanceStatus) {
     errors.push('At least one NCD field must be provided');

@@ -162,7 +162,7 @@ export default function MyVaccinationRecordsScreen() {
 
   // Get logged-in user
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  const rp_id = user?.rp;
 
   const {
     data: patientData,

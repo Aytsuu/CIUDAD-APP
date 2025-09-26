@@ -4,28 +4,35 @@
  * Prepares TB record data for submission to the API
  */
 export function prepareTBRecordForSubmission(tbRecord: any) {
-  if (!tbRecord || !tbRecord.resident_id) {
-    console.warn('Invalid TB record: missing resident_id');
+  if (!tbRecord || !tbRecord.id) {
+    console.warn('Invalid TB record: missing id (resident ID)');
+    console.log('TB record received:', tbRecord);
+    return null;
+  }
+
+  // Extract the nested tbSurveilanceSchema data
+  const tbData = tbRecord.tbSurveilanceSchema;
+  if (!tbData) {
+    console.warn('Invalid TB record: missing tbSurveilanceSchema');
+    console.log('TB record received:', tbRecord);
     return null;
   }
 
   // Transform the record to match backend API expectations
   const payload: Record<string, any> = {
-    rp_id: tbRecord.resident_id, // Map resident_id to rp_id for backend
+    rp_id: tbRecord.id, // Use the resident ID from the form
     
     // Map form field names to backend model field names
-    tb_meds_source: tbRecord.tb_meds_source || tbRecord.meds_source || '',
-    tb_days_taking_meds: tbRecord.tb_days_taking_meds || tbRecord.days_taking_meds || 0,
-    tb_status: tbRecord.tb_status || tbRecord.status || ''
+    tb_meds_source: tbData.srcAntiTBmeds === "Others" && tbData.srcAntiTBmedsOthers 
+      ? tbData.srcAntiTBmedsOthers 
+      : tbData.srcAntiTBmeds || '',
+    tb_days_taking_meds: parseInt(tbData.noOfDaysTakingMeds) || 0,
+    tb_status: tbData.tbStatus || ''
   };
 
-  // Remove empty string values to prevent validation errors
-  Object.keys(payload).forEach(key => {
-    if (payload[key] === '' && key !== 'rp_id') {
-      delete payload[key];
-    }
-  });
+  console.log('Prepared TB payload:', payload);
 
+  // Don't remove empty values as the backend handles optional fields
   return payload;
 }
 
@@ -40,13 +47,23 @@ export function validateTBRecord(tbRecord: any) {
     return { isValid: false, errors };
   }
 
-  if (!tbRecord.resident_id) {
+  if (!tbRecord.id) {
     errors.push('Resident selection is required');
   }
 
+  const tbData = tbRecord.tbSurveilanceSchema;
+  if (!tbData) {
+    errors.push('TB form data is missing');
+    return { isValid: false, errors };
+  }
+
   // Basic validation for required TB fields
-  if (!tbRecord.tb_status && !tbRecord.status) {
+  if (!tbData.tbStatus) {
     errors.push('TB status is required');
+  }
+
+  if (!tbData.srcAntiTBmeds) {
+    errors.push('Source of anti-TB medication is required');
   }
 
   return {

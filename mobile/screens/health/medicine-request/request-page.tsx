@@ -37,11 +37,10 @@ export default function MedicineRequestScreen() {
   const { cartItems } = useGlobalCartState();
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  // Fetch medicines using react-query
   const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, searchQuery);
-  // const userId = "PT20030001";
+
   const { user } = useAuth();
-  const userId = user?.resident?.rp_id;
+  const userId = user?.rp;
   console.log("RP_ID:", userId);
   useEffect(() => {
     const checkPendingRequests = async () => {

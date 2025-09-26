@@ -39,7 +39,7 @@ export default function MyFpRecordsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   // If 'resident' is not part of User type, add a type guard or update the type definition
-  const rp_id = (user && 'resident' in user && (user as any).resident?.rp_id) || null;
+  const rp_id = user?.rp;
   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
   const [isComparing, setIsComparing] = useState(false);
 

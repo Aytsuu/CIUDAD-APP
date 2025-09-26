@@ -19,5 +19,5 @@ urlpatterns = [
     path('animalbites/create-record/', CreateAnimalBiteRecordView.as_view(), name='create-animal-bite-record'),
     path('animalbites/patient-details/', AnimalbitePatientDetailsView.as_view(), name='animal-bite-patient-details'),
         path('count/<str:pat_id>/',AnimalBiteReferralCountView.as_view()),
-
+    path('infographic/', AnimalBiteInfographicView.as_view(), name='animalbite-infographic'),
 ]

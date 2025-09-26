@@ -39,3 +39,23 @@ export const getMaternalCount = async () => {
     throw error;
   }
 }
+
+// pregnancy details
+export const getPregnancyDetails = async (filters: MaternalPatientFilters & { patientId: string }) => {
+  try {
+    const params = new URLSearchParams();
+    if(filters.page) params.append('page', filters.page.toString());
+    if(filters.page_size) params.append('page_size', filters.page_size.toString());
+    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
+    if(filters.search) params.append('search', filters.search);
+    const queryString = params.toString();
+    const url = queryString
+      ? `maternal/pregnancy/${filters.patientId}/details/?${queryString}`
+      : `maternal/pregnancy/${filters.patientId}/details/`;
+    const res = await api2.get(url);
+    return res.data || {count: 0, next: null, previous: null, results: []};
+  } catch (error) {
+    console.error("Error fetching pregnancy details: ", error);
+    return error || {count: 0, next: null, previous: null, results: []};
+  }
+}

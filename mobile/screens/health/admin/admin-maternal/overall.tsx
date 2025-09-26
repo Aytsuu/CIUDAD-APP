@@ -36,12 +36,6 @@ interface maternalRecords {
    completed_pregnancy_count?: number;
 }
 
-interface FPPatientsCount {
-  total_fp_patients: number;
-  resident_fp_patients: number;
-  transient_fp_patients: number;
-}
-
 type TabType = "all" | "resident" | "transient";
 
 // Memoized StatusBadge Component
@@ -78,7 +72,6 @@ const StatusBadge = React.memo<{ type: string }>(({ type }) => {
   );
 });
 
-// Memoized TabBar Component
 const TabBar = React.memo<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
@@ -335,11 +328,14 @@ export default function OverallMaternalRecordsScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const handleRecordPress = useCallback((pat_id: string) => {
+  const handleRecordPress = useCallback((record: maternalRecords) => {
     try {
       router.push({
         pathname: "/admin/maternal/individual",
-        params: { pat_id },
+        params: {
+          pat_id: record.pat_id,
+          patientData: JSON.stringify(record),
+        },
       });
     } catch (error) {
       console.log("Navigation error:", error);
@@ -360,7 +356,7 @@ export default function OverallMaternalRecordsScreen() {
   const renderItem = useCallback(({ item }: { item: maternalRecords }) => (
     <MaternalRecordCard
       record={item}
-      onPress={() => handleRecordPress(item.pat_id)}
+      onPress={() => handleRecordPress(item)}
     />
   ), [handleRecordPress]);
 

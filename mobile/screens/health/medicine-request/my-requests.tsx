@@ -338,8 +338,8 @@ const MedicineRequestTracker: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Determine user type and ID
-  const isResident = !!user?.resident?.rp_id;
-  const userId = user?.resident?.rp_id || null;
+  const isResident = !!user?.rp;
+  const userId = user?.rp || null;
   const isUserReady = isAuthenticated && !!userId;
 
   // Debug log

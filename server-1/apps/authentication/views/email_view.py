@@ -26,6 +26,7 @@ class emailOTPView(APIView):
         otp = generate_otp()
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
+        print(otp)
         return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)
         
 class ValidateEmailOTPView(APIView):

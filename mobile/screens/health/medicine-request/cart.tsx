@@ -16,7 +16,7 @@ export default function CartScreen() {
 
   const requiresPrescription = cartItems.some(item => item.med_type === "Prescription");
 const { user } = useAuth();
-  const userId = user?.resident?.rp_id;
+  const userId = user?.rp;
   // console.log("Auth user:", JSON.stringify(user, null, 2));
 
 
@@ -133,7 +133,7 @@ const handleConfirm = async () => {
     }));
     formData.append("medicines", JSON.stringify(medicineData)); // Single string
 
-    const rpId = user?.resident?.rp_id;   // e.g., "RP12345"
+    const rpId = user?.rp;   // e.g., "RP12345"
     const patId = user?.resident?.patient?.pat_id;  // e.g., "PT20230001"
     console.log("rp id and pat_id: ", rpId, patId);
 

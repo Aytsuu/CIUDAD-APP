@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 interface FPRecord {
   fprecord: number
-  patient_id: string
+  pat_id: string
   client_id: string
   patient_name: string
   patient_age: number
@@ -253,7 +253,7 @@ export default function MyFPDashboardScreen() {
   const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params
   const patIdFromParams = params.pat_id;
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  const rp_id = user?.rp;
 
   // NEW: Debug logs
   console.log("[DEBUG] fp-dashboard patIdFromParams:", patIdFromParams);
@@ -264,8 +264,8 @@ export default function MyFPDashboardScreen() {
     enabled: !patIdFromParams && !!rp_id, // Skip if pat_id provided (admin)
   });
 
-  const patient_id = patIdFromParams || patientData?.pat_id;
-  console.log("[DEBUG] patient_id used for FP records:", patient_id);
+  const pat_id = patIdFromParams || patientData?.pat_id;
+  console.log("[DEBUG] pat_id used for FP records:", pat_id);
 
   const {
     data: records = [],
@@ -273,7 +273,7 @@ export default function MyFPDashboardScreen() {
     isError: isErrorRecords,
     error: errorRecords,
     refetch,
-  } = useFPRecordsByPatientId(patient_id);
+  } = useFPRecordsByPatientId(pat_id);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -324,7 +324,7 @@ export default function MyFPDashboardScreen() {
   }
 
   // NEW: Auth check only if no pat_id and no user
-  if (!patient_id && !user) {
+  if (!pat_id && !user) {
     return (
       <View className="flex-1 justify-center items-center p-6 bg-gray-50">
         <AlertCircle size={48} color="#9CA3AF" />

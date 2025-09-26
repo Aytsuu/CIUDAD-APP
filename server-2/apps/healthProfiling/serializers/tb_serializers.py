@@ -25,12 +25,10 @@ class TBSurveilanceSerializer(serializers.ModelSerializer):
 
 class TBSurveilanceCreateSerializer(serializers.ModelSerializer):
     rp_id = serializers.CharField(write_only=True)
-    tb_id = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = TBsurveilance
         fields = [
-            'tb_id',
             'tb_meds_source',
             'tb_days_taking_meds',
             'tb_status',
@@ -46,12 +44,7 @@ class TBSurveilanceCreateSerializer(serializers.ModelSerializer):
         except ResidentProfile.DoesNotExist:
             raise serializers.ValidationError(f"ResidentProfile with id {rp_id} does not exist")
             
-        # Auto-generate tb_id if not provided
-        if not validated_data.get('tb_id'):
-            # Generate based on resident ID and count
-            existing_count = TBsurveilance.objects.filter(rp=rp).count()
-            validated_data['tb_id'] = f"TB-{rp_id}-{existing_count + 1:03d}"
-            
+        # BigAutoField will auto-generate the tb_id, no manual assignment needed
         return super().create(validated_data)
 
 class TBSurveilanceUpdateSerializer(serializers.ModelSerializer):
