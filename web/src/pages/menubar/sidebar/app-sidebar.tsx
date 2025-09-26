@@ -248,8 +248,8 @@ export function AppSidebar() {
                 url: "/treasurer-income-expense-main",
               },
               {
-                title: "Income & Disbursement",
-                url: "/treasurer-income-and-disbursement",
+                title: "Disbursement Voucher",
+                url: "/treasurer-disbursement",
               },
               {
                 title: "Payment Request",
