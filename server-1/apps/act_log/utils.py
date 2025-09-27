@@ -56,8 +56,7 @@ def create_activity_log(
         feature, created = Feature.objects.get_or_create(
             feat_name=feat_name,
             defaults={
-                'feat_category': module_name.title(),
-                'feat_url': f'/{module_name}/'
+                'feat_category': module_name.title()
             }
         )
     else:
@@ -65,25 +64,29 @@ def create_activity_log(
         feature, created = Feature.objects.get_or_create(
             feat_name=f'{module_name.title()} Management',
             defaults={
-                'feat_category': module_name.title(),
-                'feat_url': f'/{module_name}/'
+                'feat_category': module_name.title()
             }
         )
     
  
-    activity_log = ActivityLog.objects.create(
-        act_timestamp=timezone.now(),
-        act_type=act_type,
-        act_description=act_description,
-        act_module=module_name,
-        act_action=act_action,
-        act_record_id=record_id,
-        feat=feature,
-        staff=staff,
-        **kwargs
-    )
-    
-    return activity_log
+    try:
+        activity_log = ActivityLog.objects.create(
+            act_timestamp=timezone.now(),
+            act_type=act_type,
+            act_description=act_description,
+            act_module=module_name,
+            act_action=act_action,
+            act_record_id=record_id,
+            feat=feature,
+            staff=staff,
+            **kwargs
+        )
+        return activity_log
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create activity log: {str(e)}")
+        raise e
 
 def log_model_change(model_instance, action, staff, description=None, **kwargs):
    

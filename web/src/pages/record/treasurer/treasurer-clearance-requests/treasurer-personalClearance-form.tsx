@@ -27,8 +27,87 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const [selectedHasDisability, setSelectedHasDisability] = useState<boolean>(false);
     const queryClient = useQueryClient();
     const { user } = useAuth();
-    const staffId = user?.staff?.staff_id as string | undefined;
+    
+    // Try multiple ways to get staff_id
+    const getStaffId = () => {
+        if (!user?.staff) return undefined;
+        
+        // Try different possible field names
+        const staff = user.staff;
+        let staffId = staff.staff_id || staff.id || staff.staffId || staff.staff_ID;
+        
+        // Handle truncated staff_id by padding with zeros
+        if (staffId && typeof staffId === 'string') {
+            // If staff_id is less than 11 digits, pad with leading zeros
+            if (staffId.length < 11) {
+                staffId = staffId.padStart(11, '0');
+                console.log(`Padded staff_id from ${staff.staff_id} to ${staffId}`);
+            }
+        }
+        
+        return staffId;
+    };
+    
+    const staffId = getStaffId();
+    
+    // Debug: Log user and staff data
+    useEffect(() => {
+        console.log('User data:', user);
+        console.log('Staff data:', user?.staff);
+        console.log('Staff ID from user.staff.staff_id:', user?.staff?.staff_id);
+        console.log('Staff ID type:', typeof user?.staff?.staff_id);
+        console.log('Staff ID length:', user?.staff?.staff_id?.length);
+    }, [user]);
     const { data: residents = [], isLoading: residentLoading} = useGetResidents()
+    
+    // Debug: Log residents data
+    useEffect(() => {
+        console.log('Residents data:', residents);
+        if (residents.length > 0) {
+            console.log('First resident:', residents[0]);
+            console.log('Available resident IDs:', residents.map(r => r.rp_id));
+            console.log('Resident data structure check:', {
+                hasRpId: residents[0].hasOwnProperty('rp_id'),
+                rpIdType: typeof residents[0].rp_id,
+                rpIdValue: residents[0].rp_id,
+                fullName: residents[0].full_name
+            });
+        }
+    }, [residents]);
+    
+    // Debug: Log staff data
+    useEffect(() => {
+        console.log('User data:', user);
+        console.log('Staff data:', user?.staff);
+        console.log('Staff ID from user.staff.staff_id:', user?.staff?.staff_id);
+        console.log('Staff ID type:', typeof user?.staff?.staff_id);
+        console.log('Staff ID length:', user?.staff?.staff_id?.length);
+        console.log('Final staff ID being used:', staffId);
+        
+        // Test API call to get staff data
+        const testStaffAPI = async () => {
+            try {
+                const response = await fetch('/api/administration/staff/list/table/');
+                const data = await response.json();
+                console.log('Available staff data:', data);
+                if (data.results) {
+                    console.log('Available staff IDs:', data.results.map((s: any) => s.staff_id));
+                    
+                    // Check if current staff_id exists in the list
+                    if (staffId) {
+                        const staffExists = data.results.some((s: any) => s.staff_id === staffId);
+                        console.log(`Staff ID ${staffId} exists in available staff:`, staffExists);
+                        if (!staffExists) {
+                            console.error(`Staff ID ${staffId} not found in available staff list!`);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch staff data:', error);
+            }
+        };
+        testStaffAPI();
+    }, [user, staffId]);
     const { data: purposes = [], isLoading: _purposesLoading} = useGetPurposeAndRate()
 
     // Read selected flags so they're used (and log for debugging)
@@ -59,7 +138,9 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     const nonResidentForm = useForm<z.infer<typeof NonResidentFormSchema>>({
         resolver: zodResolver(NonResidentFormSchema),
         defaultValues: {
-            requester: "",
+            last_name: "",
+            first_name: "",
+            middle_name: "",
             purpose: "", 
             address: "",
             birthdate: "",
@@ -75,11 +156,33 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 return;
             }
 
+            // Validate staff_id format
+            if (staffId.length !== 11) {
+                toast.error(`Invalid staff ID format. Expected 11 digits, got ${staffId.length}. Please re-login and try again.`);
+                console.error(`Invalid staff ID format: ${staffId} (length: ${staffId.length})`);
+                return;
+            }
+
+            // Validate that a resident is selected
+            if (!values.rp_id) {
+                toast.error("Please select a resident from the list.");
+                return;
+            }
+
+            // Validate that a purpose is selected
+            if (!values.purpose) {
+                toast.error("Please select a purpose.");
+                return;
+            }
+
             const payload = {
                 ...values   
             };
             
-            console.log(payload)
+            console.log('Form values:', values);
+            console.log('Payload being sent:', payload);
+            console.log('Staff ID:', staffId);
+            
             await createPersonalClearance(payload, staffId);
             if (onSuccess) onSuccess();
             toast.success("Personal clearance created successfully!");
@@ -87,14 +190,21 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             residentForm.reset();
             await queryClient.invalidateQueries({ queryKey: ["residentReq"] });
             
-          
-            
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating personal clearance:', error);
-            toast.error("Failed to create personal clearance. Please try again.");
+            toast.error(error.message || "Failed to create personal clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Helper function to format requester name in all capital letters
+    const formatRequesterName = (lastName: string, firstName: string, middleName?: string): string => {
+        const nameParts = [lastName, firstName];
+        if (middleName && middleName.trim()) {
+            nameParts.push(middleName);
+        }
+        return nameParts.join(', ').toUpperCase();
     };
 
     const onSubmitNonResident = async (values: z.infer<typeof NonResidentFormSchema>) => {
@@ -106,11 +216,17 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 return;
             }
 
+            // Combine name fields into requester field using helper function
+            const requester = formatRequesterName(values.last_name, values.first_name, values.middle_name);
+
             const payload = {
-                ...values,
+                requester: requester,
+                purpose: values.purpose,
+                address: values.address,
+                birthdate: values.birthdate,
             };
             
-            console.log(payload)
+            console.log('Non-resident payload:', payload);
             await createNonResidentPersonalClearance(payload, staffId);
             toast.success("Personal clearance created successfully!");
             
@@ -169,8 +285,23 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                 placeholder="Search resident by name"
                                                 emptyText="No residents found"
                                                 onSelect={async (value: string, item: any) => {
+                                                    console.log('Selected resident item:', item);
+                                                    
+                                                    // Validate that we have a valid rp_id
+                                                    if (!item?.rp_id) {
+                                                        console.error('No rp_id found in selected item:', item);
+                                                        toast.error("Invalid resident selected. Please try again.");
+                                                        return;
+                                                    }
+                                                    
+                                                    // Set the display value for the field
                                                     field.onChange(value);
-                                                    residentForm.setValue('rp_id', item?.rp_id || '');
+                                                    // Set the actual rp_id for form submission
+                                                    residentForm.setValue('rp_id', item.rp_id);
+                                                    
+                                                    console.log('Set rp_id to:', item.rp_id);
+                                                    console.log('Display value set to:', value);
+                                                    
                                                 // helper to compute and set flags
                                                 const computeAndSet = (dobValue: any, disabilityValue: any) => {
                                                     const dobStr = dobValue ? String(dobValue) : '';
@@ -239,7 +370,10 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                         </div>
 
                         <div className="flex justify-end">
-                            <Button disabled={isSubmitting}>
+                            <Button 
+                                disabled={isSubmitting || !residentForm.watch('rp_id') || !residentForm.watch('purpose')}
+                                type="submit"
+                            >
                                 {isSubmitting ? "Creating..." : "Proceed"}
                             </Button>
                         </div>
@@ -252,12 +386,23 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 <Form {...nonResidentForm}>
                     <form onSubmit={nonResidentForm.handleSubmit(onSubmitNonResident)} className="flex flex-col gap-7">
                         <div className="flex flex-col gap-5">
+                        
                             <FormInput
-                                name="requester"
-                                label="Requester"
+                                name="last_name"
+                                label="Last Name"
                                 control={nonResidentForm.control}
                             />
-
+                           <FormInput
+                                name="first_name"
+                                label="First Name"
+                                control={nonResidentForm.control}
+                            />
+                            <FormInput
+                                name="middle_name"
+                                label="Middle Name (Optional)"
+                                control={nonResidentForm.control}
+                            />
+                           
                             <FormInput
                                 name="address"
                                 label="Address"
