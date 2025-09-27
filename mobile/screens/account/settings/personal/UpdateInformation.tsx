@@ -40,19 +40,10 @@ export default function UpdateInformation() {
   const submit = () => {
     const personal = uppercaseAll(getValues("personalInfoSchema"))
     const {per_addresses: new_per_addresses, ...new_per} = personal;
-    console.log(new_per_addresses.list)
     if(isEqual(per, new_per) && isEqual(per_addresses, new_per_addresses.list)) {
       toast.info("No changes were made")
       router.back();
       return;
-    }
-
-    if (isEqual(per_addresses, new_per_addresses.list)) {
-      setValue("personalInfoSchema.per_addresses.list", [])
-    } else {
-      setValue("personalInfoSchema.per_addresses.list", 
-        new_per_addresses.map((add: Record<string, any>) => !per_addresses.includes(add)
-      ))
     }
 
     router.push("/(account)/settings/personal/scan");

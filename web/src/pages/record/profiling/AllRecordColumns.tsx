@@ -16,7 +16,8 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
         ""}`}>
         {row.original.type}
       </Badge>
-    )
+    ),
+    size: 100
   },
   {
     accessorKey: 'id',
@@ -60,20 +61,22 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
   },
   {
     accessorKey: 'suffix',
-    header: "Suffix"
+    header: "Suffix",
+    size: 100
   },
   {
     accessorKey: 'sex',
     header: "Sex",
     cell: ({row}) => (
       row.original.sex[0]
-    )
+    ),
+    size: 100
   },
   {
     accessorKey: 'date_registered',
-    header: "Date Registered",
+    header: "Registered",
     cell: ({row}) => (
-      formatDate(row.original.date_registered, "long" as any)
+      formatDate(row.original.date_registered, "short" as any)
     )
   },
   {

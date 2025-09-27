@@ -59,6 +59,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
   const { data: businessInfo, isLoading: isLoadingBusInfo } = useBusinessInfo(params?.busId)
   const { data: businessHistory, isLoading: isLoadingHistory } = useBusinessHistory(params?.busId)
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
     false, // is staff
     false, // exclude independent
@@ -66,7 +67,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     debouncedSearchQuery, // search query
     false // disable query
   )
-  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
 
   const formattedSitio = formatSitio(sitioList)
   const formattedResidents = formatResidents(residentsList)

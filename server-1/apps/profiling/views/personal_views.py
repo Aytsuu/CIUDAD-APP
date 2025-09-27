@@ -65,7 +65,7 @@ class PersonalModificationCreateView(APIView):
     if len(per_addresses) > 0:
       instances = [
         PersonalAddressModification(
-          per=mod_request,
+          pm=mod_request,
           add=Address.objects.get_or_create(
             add_province=per_add['add_province'],
             add_city=per_add['add_city'],
@@ -73,7 +73,7 @@ class PersonalModificationCreateView(APIView):
             add_external_sitio=per_add['add_external_sitio'],
             sitio=Sitio.objects.filter(sitio_name=per_add.get('sitio', None)).first(),
             add_street=per_add['add_street'],
-          )
+          )[0]
         ) 
         for per_add in per_addresses
       ]

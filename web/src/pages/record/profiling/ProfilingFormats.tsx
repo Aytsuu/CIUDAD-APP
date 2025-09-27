@@ -11,10 +11,10 @@ export const formatResidents = (residents: any) => {
     id: `${resident.rp_id} ${resident.name}`,
     name: (
       <div className="flex gap-4 items-center">
-        <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
-          #{resident.rp_id}
+        <span className="bg-green-500 text-white font-medium py-1 px-2 text-[14px] rounded-full shadow-md">
+          {resident.rp_id}
         </span>
-        {resident.name}
+        <span className="font-medium text-gray-700">{resident.name}</span>
       </div>
     ),
     per_id: resident.personal_info.per_id
@@ -108,9 +108,9 @@ export const formatOwnedBusinesses = (businesses: any) => {
     id: `${bus.bus_id} ${bus.bus_name} ${bus.bus_gross_sales} ${bus.bus_status}`,
     name: (
       <div className="flex flex-col w-full items-start">
-        <p className="text-[15px]">{bus.bus_name}</p>
+        <p className="text-[15px] font-medium text-gray-700">{bus.bus_name}</p>
         <div className="flex w-full justify-between items-center">
-          <p className="text-xs text-gray-700">Gross Sales: {formatCurrency(bus.bus_gross_sales)}</p>
+          <p className="text-xs text-gray-700 font-medium">Gross Sales: {formatCurrency(bus.bus_gross_sales)}</p>
           <Badge className={`${bus.bus_status == 'Pending' ? 
             "bg-amber-500 hover:bg-amber-500" : 
             "bg-green-500 hover:bg-green-500"}`}>

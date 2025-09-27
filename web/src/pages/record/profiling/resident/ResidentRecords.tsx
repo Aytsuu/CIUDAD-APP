@@ -10,7 +10,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
+import { useModificationRequests, useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -48,6 +48,7 @@ export default function ResidentRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
+  // const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests() -- personal modification
   const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
   const { data: residentsTableData, isLoading } = useResidentsTable(
     currentPage,
