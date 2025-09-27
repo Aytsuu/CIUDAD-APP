@@ -191,86 +191,98 @@ export default function PrenatalFormFirstPg({
     const latestPF = latestPrenatalData?.latest_prenatal_form
 
     if (isFromIndividualRecord && latestPrenatalData && !latestPrenatalLoading) {
-      setValue("pregnancy_id", latestPrenatalData.pregnancy_id || "")
+      form.setValue("pregnancy_id", latestPrenatalData.pregnancy_id || "")
       
-      if(latestPF?.spouse_details) {
-        setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "")
-        setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "")
-        setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
-        setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
-        setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || latestPF.pf_occupation || "")
+      if(latestPF?.spouse_details?.spouse_info) {
+        const residentSpouse = latestPF?.spouse_details?.spouse_info
+        form.setValue("motherPersonalInfo.husbandLName", residentSpouse?.per_lname || "")
+        form.setValue("motherPersonalInfo.husbandFName", residentSpouse?.per_fname || "")
+        form.setValue("motherPersonalInfo.husbandMName", residentSpouse?.per_mname || "")
+        form.setValue("motherPersonalInfo.husbandDob", residentSpouse?.per_dob || "")
+        form.setValue("motherPersonalInfo.occupation", residentSpouse?.spouse_occupation || latestPF.pf_occupation || "")
+      } else {
+        form.setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "")
+        form.setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "")
+        form.setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "")
+        form.setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "")
+        form.setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || latestPF.pf_occupation || "")
       }
 
       if (latestPF && activePregnancyId) {
-        setValue("medicalHistory.previousComplications", latestPF.previous_complications || "")
-        setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "")
-        setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "")
-        setValue("followUpSchedule.aogWeeks", latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || "")
-        setValue("followUpSchedule.aogDays", latestPF.prenatal_care_entries[0]?.pfpc_aog_days || "")
+        form.setValue("medicalHistory.previousComplications", latestPF.previous_complications || "")
+        form.setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "")
+        form.setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "")
+        form.setValue("followUpSchedule.aogWeeks", latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || "")
+        form.setValue("followUpSchedule.aogDays", latestPF.prenatal_care_entries[0]?.pfpc_aog_days || "")
 
         if (latestPF.body_measurement_details) {
           const bodyMeasurement = latestPF.body_measurement_details
-          setValue("motherPersonalInfo.motherWt", bodyMeasurement.weight || "")
-          setValue("motherPersonalInfo.motherHt", bodyMeasurement.height || "")
+          form.setValue("motherPersonalInfo.motherWt", bodyMeasurement.weight || "")
+          form.setValue("motherPersonalInfo.motherHt", bodyMeasurement.height || "")
         }
 
         if (latestPF.previous_pregnancy) {
           const prevPregnancy = latestPF.previous_pregnancy
-          setValue("previousPregnancy.dateOfDelivery", prevPregnancy.date_of_delivery || "")
-          setValue("previousPregnancy.outcome", prevPregnancy.outcome || "")
-          setValue("previousPregnancy.typeOfDelivery", prevPregnancy.type_of_delivery || "")
-          setValue("previousPregnancy.babysWt", prevPregnancy.babys_wt || "")
-          setValue("previousPregnancy.gender", prevPregnancy.gender || "")
-          setValue("previousPregnancy.ballardScore", prevPregnancy.ballard_score || "")
-          setValue("previousPregnancy.apgarScore", prevPregnancy.apgar_score || "")
+          form.setValue("previousPregnancy.dateOfDelivery", prevPregnancy.date_of_delivery || "")
+          form.setValue("previousPregnancy.outcome", prevPregnancy.outcome || "")
+          form.setValue("previousPregnancy.typeOfDelivery", prevPregnancy.type_of_delivery || "")
+          form.setValue("previousPregnancy.babysWt", prevPregnancy.babys_wt || "")
+          form.setValue("previousPregnancy.gender", prevPregnancy.gender || "")
+          form.setValue("previousPregnancy.ballardScore", prevPregnancy.ballard_score || "")
+          form.setValue("previousPregnancy.apgarScore", prevPregnancy.apgar_score || "")
         }
 
         // guide for 4anc visits
         if (latestPF.anc_visit_guide) {
           const ancVisits = latestPF.anc_visit_guide
-          setValue("ancVisits.firstTri", ancVisits.pfav_1st_tri || "")
-          setValue("ancVisits.secondTri", ancVisits.pfav_2nd_tri || "")
-          setValue("ancVisits.thirdTriOne", ancVisits.pfav_3rd_tri_one || "")
-          setValue("ancVisits.thirdTriTwo", ancVisits.pfav_3rd_tri_two || "")
+          form.setValue("ancVisits.firstTri", ancVisits.pfav_1st_tri || "")
+          form.setValue("ancVisits.secondTri", ancVisits.pfav_2nd_tri || "")
+          form.setValue("ancVisits.thirdTriOne", ancVisits.pfav_3rd_tri_one || "")
+          form.setValue("ancVisits.thirdTriTwo", ancVisits.pfav_3rd_tri_two || "")
         }
 
         // checklist
         if(latestPF.checklist_data) {
           const checklist = latestPF.checklist_data
-          setValue("assessmentChecklist.increasedBP", checklist.increased_bp)
-          setValue("assessmentChecklist.epigastricPain", checklist.epigastric_pain)
-          setValue("assessmentChecklist.nausea", checklist.nausea)
-          setValue("assessmentChecklist.blurringOfVision", checklist.blurring_of_vision)
-          setValue("assessmentChecklist.edema", checklist.edema)
-          setValue("assessmentChecklist.severeHeadache", checklist.severe_headache)
-          setValue("assessmentChecklist.abnormalVaginalDischarges", checklist.abnormal_vaginal_discharges)
-          setValue("assessmentChecklist.vaginalBleeding", checklist.vaginal_bleeding)
-          setValue("assessmentChecklist.chillsFever", checklist.chills_fever)
-          setValue("assessmentChecklist.diffInBreathing", checklist.diff_in_breathing)
-          setValue("assessmentChecklist.varicosities", checklist.varicosities)
-          setValue("assessmentChecklist.abdominalPain", checklist.abdominal_pain)
+          form.setValue("assessmentChecklist.increasedBP", checklist.increased_bp)
+          form.setValue("assessmentChecklist.epigastricPain", checklist.epigastric_pain)
+          form.setValue("assessmentChecklist.nausea", checklist.nausea)
+          form.setValue("assessmentChecklist.blurringOfVision", checklist.blurring_of_vision)
+          form.setValue("assessmentChecklist.edema", checklist.edema)
+          form.setValue("assessmentChecklist.severeHeadache", checklist.severe_headache)
+          form.setValue("assessmentChecklist.abnormalVaginalDischarges", checklist.abnormal_vaginal_discharges)
+          form.setValue("assessmentChecklist.vaginalBleeding", checklist.vaginal_bleeding)
+          form.setValue("assessmentChecklist.chillsFever", checklist.chills_fever)
+          form.setValue("assessmentChecklist.diffInBreathing", checklist.diff_in_breathing)
+          form.setValue("assessmentChecklist.varicosities", checklist.varicosities)
+          form.setValue("assessmentChecklist.abdominalPain", checklist.abdominal_pain)
         }
 
         // risk codes
         if (latestPF.obstetric_risk_codes) {
           const riskCodes = latestPF.obstetric_risk_codes
-          setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", riskCodes.pforc_prev_c_section)
-          setValue("riskCodes.hasOneOrMoreOfTheFF.miscarriages", riskCodes.pforc_3_consecutive_miscarriages)
-          setValue("riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage", riskCodes.pforc_postpartum_hemorrhage)
+          form.setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", riskCodes.pforc_prev_c_section)
+          form.setValue("riskCodes.hasOneOrMoreOfTheFF.miscarriages", riskCodes.pforc_3_consecutive_miscarriages)
+          form.setValue("riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage", riskCodes.pforc_postpartum_hemorrhage)
         }
 
         // birth plan
         if (latestPF.birth_plan_details) {
           const birthPlan = latestPF.birth_plan_details
-          setValue("pregnancyPlan.planPlaceOfDel", birthPlan.place_of_delivery_plan)
-          setValue("pregnancyPlan.planNewbornScreening", birthPlan.newborn_screening_plan)
+          form.setValue("pregnancyPlan.planPlaceOfDel", birthPlan.place_of_delivery_plan)
+          form.setValue("pregnancyPlan.planNewbornScreening", birthPlan.newborn_screening_plan)
+        }
+
+        if (latestPF?.laboratory_results) {
+          form.setValue("labResults.labResultsData", latestPF.laboratory_results)
         }
       }
     }
-  }, [latestPrenatalData, latestPrenatalLoading, isFromIndividualRecord, activePregnancyId, setValue])
+  }, [latestPrenatalData, latestPrenatalLoading, isFromIndividualRecord, activePregnancyId, form])
+  
   // Automatically calculate AOG when LMP changes
   useEffect(() => {
-    const lmpValue = form.watch("presentPregnancy.pf_lmp");
+    const lmpValue = form.getValues("presentPregnancy.pf_lmp");
     if (lmpValue) {
       const lmpDate = new Date(lmpValue);
       if (!isNaN(lmpDate.getTime())) {

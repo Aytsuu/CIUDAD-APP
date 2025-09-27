@@ -89,7 +89,7 @@ export function PregnancyAccordion({
   selectedPatient,
   getStatusBadge,
   getRecordTypeBadge,
-  // onCompletePregnancy,
+  onCompletePregnancy,
   onCompleteRecord,
   onPregnancyLossRecord,
 }: PregnancyAccordionProps) {
@@ -100,14 +100,6 @@ export function PregnancyAccordion({
       </div>
     );
   }
-
-  // const handleCompletePregnancy = (pregnancyId: string) => {
-  //   if (onCompletePregnancy) {
-  //     onCompletePregnancy(pregnancyId)
-  //   } else {
-  //     console.log(`Completing pregnancy: ${pregnancyId} (no onCompletePregnancy prop provided)`)
-  //   }
-  // }
 
   const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
     if (onCompleteRecord) {
@@ -252,11 +244,18 @@ export function PregnancyAccordion({
                                 {showCompleteButton && (
                                   <TooltipLayout
                                     trigger={
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
                                         className="h-8 bg-green-500 text-white border-green-200 hover:bg-green-400 hover:text-white"
-                                        onClick={() => handleCompleteRecord(record.id, record.recordType)}
+                                        onClick={() => {
+                                          // For prenatal records, mark the pregnancy as complete
+                                          if (record.recordType === "Prenatal" && onCompletePregnancy) {
+                                            onCompletePregnancy(record.pregnancyId);
+                                          } else {
+                                            handleCompleteRecord(record.id, record.recordType);
+                                          }
+                                        }}
                                       >
                                         <CheckCircle2 className="w-3 h-3" />
                                         Complete
@@ -273,7 +272,12 @@ export function PregnancyAccordion({
                                         variant="outline"
                                         size="sm"
                                         className="h-8 bg-red-500 text-white border-red-200 hover:bg-red-400 hover:text-white"
-                                        onClick={() => handlePregnancyLossRecord(record.id, "Prenatal")}
+                                        onClick={() => {
+                                          if (record.recordType === "Prenatal" && onPregnancyLossRecord) {
+                                            onPregnancyLossRecord(record.pregnancyId, "Prenatal")
+                                          }
+                                          handlePregnancyLossRecord(record.id, "Prenatal")
+                                        }}
                                       >
                                         <HeartHandshake className="w-3 h-3" />
                                         Pregnancy Loss
@@ -289,17 +293,6 @@ export function PregnancyAccordion({
                         <CardContent className="pt-0">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
-                              <p className="text-gray-600">
-                                <strong>Address:</strong> {record.address}
-                              </p>
-                              <p className="text-gray-600">
-                                <strong>Sitio:</strong> {record.sitio}
-                              </p>
-                              <p className="text-gray-600">
-                                <strong>Type:</strong> {record.type}
-                              </p>
-                            </div>
-                            <div>
                               {record.recordType === "Prenatal" && record.gestationalFormatted && (
                                 <p className="text-gray-600">
                                   <strong>Gestational Age:</strong> {record.gestationalFormatted}
@@ -313,11 +306,6 @@ export function PregnancyAccordion({
                               {record.postpartum_end_date && (
                                 <p className="text-gray-600">
                                   <strong>Postpartum End Date:</strong> {new Date(record.postpartum_end_date).toLocaleDateString()}
-                                </p>
-                              )}
-                              {record.notes && (
-                                <p className="text-gray-600">
-                                  <strong>Visited:</strong> {record.notes}
                                 </p>
                               )}
                               {record.notes && (

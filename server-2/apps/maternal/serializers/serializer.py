@@ -9,7 +9,6 @@ from apps.maternal.models import *
 from apps.maternal.serializers.postpartum_serializer import *
 from apps.patientrecords.serializers.patients_serializers import *
 from apps.administration.models import Staff 
-from apps.healthProfiling.models import PersonalAddress, FamilyComposition
 
 from utils.supabase_client import upload_to_storage
 

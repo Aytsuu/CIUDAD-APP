@@ -27,6 +27,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import ViewButton from "@/components/ui/view-button";
 
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { capitalize } from "@/helpers/capitalize";
@@ -211,7 +212,7 @@ export const columns: ColumnDef<Report>[] = [
             }
           }}
       >
-        <Button variant="outline">View</Button>
+        <ViewButton onClick={() => {}} />
       </Link>
     ),
     enableSorting: false,

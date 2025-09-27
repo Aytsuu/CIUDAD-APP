@@ -501,12 +501,14 @@ export default function IndividualMaternalRecordScreen() {
             {nextFollowVisit ? (
               <View className="p-3 flex-row justify-between items-center w-full">
                 <View className="flex-row items-center">
-                  <Clock size={18} color="#2563eb" style={{ marginRight: 8 }} />
+                  <Clock size={18} color="#2563eb" style={{ marginRight: 5 }} />
                   <Text className="font-semibold text-blue-700">Upcoming follow-up visit</Text>
                 </View>
-                <Text className="text-sm italic text-blue-700">
-                  {nextFollowVisit?.followv_description} on <Text className="font-bold">{dateWords()}</Text>
-                </Text>
+                <View className="items-center">
+                  <Text className="font-semibold italic text-blue-700">{dateWords()}</Text>
+                  <Text className="text-blue-700 text-sm">{nextFollowVisit.followv_description}</Text>
+                </View>
+               
               </View>
             ) : (
               <View className="p-3">
