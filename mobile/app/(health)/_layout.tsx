@@ -80,7 +80,8 @@ export default () => {
 
 
                 <Stack.Screen name="admin/maternal/overall" options={{headerShown: false}}/>
-                <Stack.Screen name="admin/maternal/individual" options={{headerShown: false}}/> 
+                <Stack.Screen name="admin/maternal/individual" options={{headerShown: false}}/>
+                <Stack.Screen name="maternal/my-records" options={{headerShown: false}}/>
 
 
                 <Stack.Screen name="vaccination/my-records" options={{ headerShown: false }} />

@@ -13,7 +13,6 @@ import { LoadingState } from "@/components/ui/loading-state"
 import { PaginationControls } from "../admin/components/pagination-layout"
 import { useIndividualMedicineRecords } from "../admin/admin-medicinerecords/queries/fetch"
 import { getPatientByResidentId } from "../animalbites/api/get-api"
-// import { PatientInfoCard } from "../admin/components/patientcards"
 import { MedicineRecordCard } from "../admin/admin-medicinerecords/medicine-record-cad"
 
 export default function IndividualMedicineRecords() {
@@ -29,10 +28,7 @@ export default function IndividualMedicineRecords() {
 
   const {
     data: patientData,
-    isLoading: isPatientLoading,
-    isError: isPatientError,
-    error: patientError,
-    refetch: refetchPatientData,
+    isLoading: isPatientLoading
   } = useQuery({
     queryKey: ["patientByResidentId", rp_id],
     queryFn: () => {
