@@ -8,18 +8,19 @@ from django.db.models import Q
 from datetime import datetime
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
+from apps.act_log.utils import ActivityLogMixin
 from .models import Budget_Plan_Detail, Budget_Plan
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 import logging
 logger = logging.getLogger(__name__)
 
-class BudgetPlanView(generics.ListCreateAPIView):
+class BudgetPlanView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
     queryset = Budget_Plan.objects.all()
 
-class BudgetPlanDetailView(generics.ListCreateAPIView):
+class BudgetPlanDetailView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Budget_Plan_DetailSerializer
     queryset = Budget_Plan_Detail.objects.all()
@@ -35,7 +36,7 @@ class BudgetPlanDetailView(generics.ListCreateAPIView):
             return super().create(request, *args, **kwargs) 
         
 
-class BudgetPlanHistoryView(generics.ListCreateAPIView):
+class BudgetPlanHistoryView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanHistorySerializer
     queryset = Budget_Plan_History.objects.all()
@@ -667,7 +668,7 @@ class PurposeAndRatesByPurposeView(generics.RetrieveAPIView):
 #     serializer_class = InvoiceSerializers
 #     queryset = Invoice.objects.all()
 
-class InvoiceView(generics.ListCreateAPIView):
+class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
     
@@ -711,7 +712,7 @@ class ClearanceRequestDetailView(generics.RetrieveAPIView):
         return ClerkCertificate.objects.select_related('rp_id').all()
 
 
-class UpdatePaymentStatusView(generics.UpdateAPIView):
+class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = PaymentStatusUpdateSerializer
     lookup_field = 'cr_id'
     permission_classes = [AllowAny]
@@ -760,6 +761,9 @@ class UpdatePaymentStatusView(generics.UpdateAPIView):
                             
                             # Get staff member from the clearance request
                             staff_id = getattr(instance.ra_id, 'staff_id', '00003250722') if instance.ra_id else '00003250722'
+                            # Format staff_id properly (pad with leading zeros if needed)
+                            if len(str(staff_id)) < 11:
+                                staff_id = str(staff_id).zfill(11)
                             staff = Staff.objects.filter(staff_id=staff_id).first()
                             
                             if staff:

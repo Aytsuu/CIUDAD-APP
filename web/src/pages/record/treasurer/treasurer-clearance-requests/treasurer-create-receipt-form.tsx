@@ -68,6 +68,16 @@ import { Loader2 } from "lucide-react";
        hasDisabilityEligible
      )
    );
+   
+   // Check if resident is eligible for free service (voter_id, senior, or disabled)
+   // These residents don't need discounts since they already get free service
+   const isEligibleForFreeService = Boolean(
+     effectiveIsResident && (
+       voter_id !== null && voter_id !== undefined ||
+       isSeniorEligible ||
+       hasDisabilityEligible
+     )
+   );
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);
@@ -245,15 +255,15 @@ import { Loader2 } from "lucide-react";
                         )}
                     </div>
                     
-                    {/* Discount Button (hidden for free/voter requests) */}
-                    {!isFree && !isAlreadyPaid && (
+                    {/* Discount Button (disabled for residents with free service eligibility) */}
+                    {!isAlreadyPaid && (
                         <Button
                             type="button"
                             variant="outline"
-                            disabled={nat_col === "Service Charge"}
+                            disabled={nat_col === "Service Charge" || isEligibleForFreeService}
                             className={`
                                 flex items-center gap-2 border-green-500 
-                                ${nat_col === "Service Charge" 
+                                ${nat_col === "Service Charge" || isEligibleForFreeService
                                 ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
                                 : "text-green-600 hover:bg-green-50 hover:text-green-700"}
                             `}

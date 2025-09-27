@@ -13,14 +13,13 @@ import {
   RefreshControl
 } from "react-native";
 import {
-  Shield,
   User,
   Trash2,
   Truck,
-  Archive,
   ArchiveRestore,
   Plus,
-  ChevronLeft
+  ChevronLeft,
+  Ban
 } from "lucide-react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -38,7 +37,7 @@ import { SearchInput } from "@/components/ui/search-input";
 export default function WastePersonnelMain() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [selectedRole, setSelectedRole] = useState<Role>("Watchman");
+  const [selectedRole, setSelectedRole] = useState<Role>("Loader");
   const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
   const searchInputRef = useRef<TextInput>(null);
 
@@ -66,14 +65,22 @@ export default function WastePersonnelMain() {
     setRefreshing(false)
   }
 
-  const personnelData = {
-    Watchman: personnel.filter((p) => p.position === "Watchman"),
-    "Waste Driver": personnel.filter((p) => p.position === "Waste Driver"),
-    "Waste Collector": personnel.filter(
-      (p) => p.position === "Waste Collector"
-    ),
-    Trucks: trucks,
-  };
+const normalizePosition = (title: string) => {
+  const lower = title.toLowerCase();
+  if (lower.includes("driver loader")) return "Driver Loader";
+  if (lower.includes("loader")) return "Loader";
+  return title;
+};
+
+const personnelData = {
+  "Driver Loader": personnel.filter((p) => 
+    normalizePosition(p.position) === "Driver Loader"
+  ),
+  "Loader": personnel.filter((p) => 
+    normalizePosition(p.position) === "Loader"
+  ),
+  Trucks: trucks,
+};
 
   const filteredTrucks = personnelData.Trucks.filter((truck) => {
     const searchString =
@@ -107,15 +114,11 @@ export default function WastePersonnelMain() {
 
   const buttonData = [
     {
-      label: "Watchman",
-      icon: <Shield size={width < 400 ? 22 : 28} color="green" />,
-    },
-    {
-      label: "Waste Driver",
+      label: "Driver Loader",
       icon: <User size={width < 400 ? 22 : 28} color="orange" />,
     },
     {
-      label: "Waste Collector",
+      label: "Loader",
       icon: <Trash2 size={width < 400 ? 22 : 25} color="blue" />,
     },
     {
@@ -197,7 +200,7 @@ export default function WastePersonnelMain() {
                     }`}
                     onPress={() => setTruckViewMode("archive")}
                   >
-                    <Text className="text-sm font-medium">Archived</Text>
+                    <Text className="text-sm font-medium">Disposed</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -296,13 +299,13 @@ export default function WastePersonnelMain() {
                               {deleteTruckMutation.isPending ? (
                                 <ActivityIndicator size="small" color="#f59e0b" />
                               ) : (
-                                <Archive size={20} color="#ef4444" />
+                                <Trash2 size={20} color="#ef4444" />
                               )}
                             </TouchableOpacity>
                           }
-                          title="Confirm Archive"
-                          description={`Archive truck ${truck.truck_plate_num}?`}
-                          actionLabel="Archive"
+                          title="Confirm Dispose"
+                          description={`Are you sure you want to record truck ${truck.truck_plate_num} as disposed? It will be moved to the disposed trucks list.`}
+                          actionLabel="Confirm"
                           onPress={() => deleteTruckMutation.mutate({ id: truck.truck_id, permanent: false })}
                           loading={deleteTruckMutation.isPending}
                         />
@@ -317,7 +320,7 @@ export default function WastePersonnelMain() {
                               {deleteTruckMutation.isPending ? (
                                 <ActivityIndicator size="small" color="#ef4444" />
                               ) : (
-                                <Trash2 size={20} color="#ef4444" />
+                                <Ban size={20} color="#ef4444" />
                               )}
                             </TouchableOpacity>
                           }
@@ -366,7 +369,7 @@ export default function WastePersonnelMain() {
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {item.position}
+                      {item.contact}
                     </Text>
                   </View>
                 </View>

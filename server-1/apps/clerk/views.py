@@ -159,7 +159,7 @@ logger = logging.getLogger(__name__)
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UpdateServiceChargeRequestView(generics.UpdateAPIView):
+class UpdateServiceChargeRequestView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = ServiceChargeRequestSerializer
     queryset = ServiceChargeRequest.objects.all()
     lookup_field = 'sr_id'
@@ -272,11 +272,11 @@ class SummonScheduleByServiceRequestView(generics.ListAPIView):
             'st_id'
         ).order_by('sd_id__sd_date', 'st_id__st_start_time')
 
-class SummonScheduleCreateView(generics.ListCreateAPIView):
+class SummonScheduleCreateView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = SummonScheduleSerializer
     queryset = SummonSchedule.objects.all()
     
-class UpdateSummonScheduleView(generics.UpdateAPIView):
+class UpdateSummonScheduleView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = SummonScheduleSerializer
     queryset = SummonSchedule.objects.all()
     lookup_field = 'ss_id'
@@ -467,20 +467,31 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                 from apps.act_log.utils import create_activity_log
                 from apps.administration.models import Staff
 
-                staff_id = request.data.get('ra_id') or '00005250821'
-                staff = Staff.objects.filter(staff_id=staff_id).first()
-
-                if staff:
-                    create_activity_log(
-                        act_type="Personal Clearance Request Created",
-                        act_description=f"Personal clearance request {certificate.cr_id} created for {certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'}",
-                        staff=staff,
-                        record_id=certificate.cr_id,
-                        feat_name="Personal Clearance Management"
-                    )
-                    logger.info(f"Activity logged for certificate creation: {certificate.cr_id}")
+                # Get staff_id from request data
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Handle both string and integer staff_id
+                    staff_id_str = str(staff_id).strip()
+                    if len(staff_id_str) < 11:
+                        staff_id_str = staff_id_str.zfill(11)
+                    
+                    # Check if staff exists
+                    staff = Staff.objects.filter(staff_id=staff_id_str).first()
+                    
+                    if staff:
+                        create_activity_log(
+                            act_type="Personal Clearance Request Created",
+                            act_description=f"Personal clearance request {certificate.cr_id} created for {certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'}",
+                            staff=staff,
+                            record_id=certificate.cr_id,
+                            feat_name="Personal Clearance Management"
+                        )
+                        logger.info(f"Activity logged for certificate creation: {certificate.cr_id}")
+                    else:
+                        logger.warning(f"Staff with ID {staff_id_str} not found for activity logging")
                 else:
-                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    logger.warning("No staff_id provided in request for activity logging")
 
             except Exception as log_error:
                 logger.error(f"Failed to log activity for certificate creation: {str(log_error)}")
@@ -519,7 +530,7 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
-class NonResidentsCertReqView(generics.ListCreateAPIView):
+class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = NonResidentCertReqSerializer
     queryset = NonResidentCertificateRequest.objects.all()

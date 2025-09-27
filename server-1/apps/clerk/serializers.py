@@ -147,7 +147,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
-    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(),  required=False, allow_null=True)
+    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
 
     def get_resident_details(self, obj):
         try:
@@ -185,6 +185,65 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             logger.error(f"Error getting purpose and rate: {str(e)}")
             return None
 
+    def validate_staff_id(self, value):
+        """Validate and format staff_id properly"""
+        if not value:
+            return None
+        
+        # Convert to string and strip whitespace
+        staff_id_str = str(value).strip()
+        
+        # Pad with leading zeros if less than 11 digits
+        if len(staff_id_str) < 11:
+            staff_id_str = staff_id_str.zfill(11)
+        
+        # Verify the staff exists
+        from apps.administration.models import Staff
+        try:
+            staff = Staff.objects.get(staff_id=staff_id_str)
+            return staff
+        except Staff.DoesNotExist:
+            raise serializers.ValidationError(f"Staff with ID {staff_id_str} does not exist")
+        except Staff.MultipleObjectsReturned:
+            # This shouldn't happen with primary key, but handle it
+            staff = Staff.objects.filter(staff_id=staff_id_str).first()
+            return staff
+
+    def validate_rp_id(self, value):
+        """Validate and format rp_id properly"""
+        if not value:
+            raise serializers.ValidationError("Resident profile ID (rp_id) is required")
+        
+        rp_id_str = str(value).strip()
+        
+        if "(ID:" in rp_id_str and ")" in rp_id_str:
+            try:
+                
+                start_idx = rp_id_str.find("(ID:") + 4
+                end_idx = rp_id_str.find(")", start_idx)
+                if start_idx > 3 and end_idx > start_idx:
+                    rp_id_str = rp_id_str[start_idx:end_idx].strip()
+                    print(f"Extracted rp_id from display string: {rp_id_str}")
+            except Exception as e:
+                print(f"Error extracting ID from display string: {e}")
+                raise serializers.ValidationError("Invalid resident profile format")
+        
+        # Pad with leading zeros if less than 11 digits
+        if len(rp_id_str) < 11:
+            rp_id_str = rp_id_str.zfill(11)
+        
+        # Verify the resident profile exists
+        from apps.profiling.models import ResidentProfile
+        try:
+            resident = ResidentProfile.objects.get(rp_id=rp_id_str)
+            return resident
+        except ResidentProfile.DoesNotExist:
+            raise serializers.ValidationError(f"Resident profile with ID {rp_id_str} does not exist")
+        except ResidentProfile.MultipleObjectsReturned:
+            # This shouldn't happen with primary key, but handle it
+            resident = ResidentProfile.objects.filter(rp_id=rp_id_str).first()
+            return resident
+
     def create(self, validated_data):
         if 'cr_id' not in validated_data or not validated_data['cr_id']:
             from django.utils import timezone
@@ -215,6 +274,9 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'invoice',
             'staff_id'
         ]
+        extra_kwargs = {
+            'cr_id': {'read_only': True}
+        }
 
 
 # Business Permit Serializers

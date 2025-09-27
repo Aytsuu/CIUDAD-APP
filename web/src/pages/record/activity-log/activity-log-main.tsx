@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button/button';
 import { useNavigate } from 'react-router';
 import { getAllActivityLogs } from './restful-api/activityLogAPI';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, UserCircle } from 'lucide-react';
 
 interface ActivityLog {
   act_id: number;
@@ -109,7 +109,7 @@ const ActivityLogMain = () => {
                       </div>
                       <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
                         <span className="inline-flex items-center gap-1">
-                          <span className="material-icons text-base align-middle">groups</span>
+                          <UserCircle className="w-5 h-5" />
                           {log.staff_name}
                         </span>
                         <span className="mx-2">•</span>

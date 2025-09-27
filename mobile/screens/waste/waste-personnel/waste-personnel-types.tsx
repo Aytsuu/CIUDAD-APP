@@ -41,4 +41,4 @@ export const SearchFormSchema = z.object({
 
 export type SearchFormValues = z.infer<typeof SearchFormSchema>;
 
-export type Role = "Watchman" | "Waste Driver" | "Waste Collector" | "Trucks";
+export type Role = "Driver Loader" | "Loader" | "Trucks";

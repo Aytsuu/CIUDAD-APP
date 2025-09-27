@@ -534,6 +534,9 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.administration.models import Staff
                     
                     staff_id = getattr(business_permit.staff_id, 'staff_id', '00003250722') if business_permit.staff_id else '00003250722'
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
@@ -610,6 +613,9 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     
                     # Use a default staff ID if none is available
                     staff_id = '00003250722'  # Default staff ID
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
@@ -646,6 +652,9 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
             'req_type', 'req_status', 'req_payment_status',
             'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
+        extra_kwargs = {
+            'cr_id': {'read_only': True}
+        }
 
     def get_resident_details(self, obj):
         return {
@@ -702,6 +711,9 @@ class ClearanceRequestDetailSerializer(serializers.ModelSerializer):
             'req_type', 'req_status', 'req_payment_status',
             'req_transac_id', 'req_amount', 'req_purpose', 'invoice', 'payment_details', 'pr_id'
         ]
+        extra_kwargs = {
+            'cr_id': {'read_only': True}
+        }
 
     def get_resident_details(self, obj):
         try:
@@ -769,6 +781,7 @@ class ResidentNameSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     per_dob = serializers.DateField(source='per.per_dob', allow_null=True)
     per_disability = serializers.CharField(source='per.per_disability', allow_null=True)
+    rp_id = serializers.CharField()  
 
     class Meta:
         model = ResidentProfile
@@ -786,4 +799,12 @@ class ResidentNameSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if not instance.rp_id: 
             return None
+        
+        # Ensure rp_id is properly formatted as string and not truncated
+        if 'rp_id' in data:
+            data['rp_id'] = str(data['rp_id'])
+            # Pad with leading zeros if less than 11 digits to match expected format
+            if len(data['rp_id']) < 11:
+                data['rp_id'] = data['rp_id'].zfill(11)
+        
         return data
