@@ -6,6 +6,7 @@ import {
   postAnnouncementRecipient,
   postAnnouncementFile,
   deleteAnnouncement,
+  getCreatedReceivedAnnouncements
 } from "./restful-api";
 
 // Fetch all announcements
@@ -26,6 +27,16 @@ export const useGetAnnouncementRecipient = (ann_id: number) => {
     staleTime: 5000,
   });
 };
+
+
+export function useGetCreatedReceivedAnnouncements(staff_id: string) {
+  return useQuery({
+    queryKey: ["createdReceivedAnnouncements", staff_id],
+    queryFn: () => getCreatedReceivedAnnouncements(staff_id),
+    enabled: !!staff_id,
+    staleTime: 5000,
+  });
+}
 
 // Create new announcement
 export const usePostAnnouncement = () => {

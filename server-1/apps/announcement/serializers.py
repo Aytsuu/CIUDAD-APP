@@ -97,6 +97,7 @@ class RecipientInputSerializer(serializers.Serializer):
 
 class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
     recipients = RecipientInputSerializer(many=True)
+
     class Meta:
         model = AnnouncementRecipient
         fields = ['recipients']
@@ -104,27 +105,31 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         recipients_data = validated_data.get("recipients", [])
+
+        # Bulk create the recipients
         created_recipients = AnnouncementRecipient.objects.bulk_create(
             [AnnouncementRecipient(**recipient) for recipient in recipients_data]
         )
-        
+
         rec_list = []
 
+        # Collect recipients (staff or residents)
         for recipient in created_recipients:
             if recipient.ar_category == "staff":
-                pos = Position.objects.get(pos_title__icontains=recipient.ar_type)
-                staff_members = Staff.objects.filter(pos=pos)
-                rec_list.extend(staff_members)
+                pos = Position.objects.filter(pos_title__icontains=recipient.ar_type).first()
+                if pos:
+                    staff_members = Staff.objects.filter(pos=pos)
+                    rec_list.extend(staff_members)
             else:
-                resident = ResidentProfile.objects.all()
-                rec_list.extend(resident)
+                residents = ResidentProfile.objects.all()
+                rec_list.extend(residents)
 
-        for recipient in rec_list:
-
-            acc = Account.objects.filter(rp=recipient.pk).first()
+        # Send emails
+        for rec in rec_list:
+            acc = Account.objects.filter(rp=rec.pk).first()
             if not acc or not acc.email:
                 continue
-                
+
             for recipient in created_recipients:
                 announcement = recipient.ann
                 if not getattr(announcement, 'ann_to_email', False):
@@ -141,16 +146,18 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
                         'ann_type': getattr(announcement, 'ann_type', None),
                         'staff_id': getattr(announcement.staff, 'id', 'N/A'),
                         'current_date': now(),
-                        'files': list(announcement.announcementfile_set.values(
-                            'af_name', 'af_type', 'af_url'
-                        ))
+                        'files': list(
+                            announcement.announcementfile_set.values(
+                                'af_name', 'af_type', 'af_url'
+                            )
+                        ),
                     }
 
                     send_email(
                         subject=f"New Announcement: {announcement.ann_title}",
                         context=context,
                         recipient_email=acc.email,
-                        from_email="ganzoganzo188@gmail.com"
+                        from_email="ganzoganzo188@gmail.com",
                     )
                     logger.info(f"Email sent for announcement {announcement.pk} to {acc.email}")
 
@@ -160,7 +167,8 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
         return created_recipients
 
 
+
 class AnnouncementRecipientFilteredSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementRecipient
-        fields = ['ar_id', 'ann', 'ar_type' 'ar_category']
+        fields = ['ar_id', 'ann', 'ar_type', 'ar_category']

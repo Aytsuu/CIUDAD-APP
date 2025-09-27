@@ -108,3 +108,13 @@ export const postAnnouncementFile = async (files: Record<string, any>[]) => {
     throw err;
   }
 };
+
+export const getCreatedReceivedAnnouncements = async (staff_id: string) => {
+  try {
+    const response = await api.get(`announcement/created-received/${staff_id}/`);
+    return response.data || { created: [], received: [] };
+  } catch (err) {
+    console.error("API Error:", err);
+    return { created: [], received: [] };
+  }
+};
