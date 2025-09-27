@@ -242,11 +242,11 @@ const ActiveMethods = ({ records }: { records: FPRecord[] }) => {
 
 const clientTypeOptions = [
   { id: "all", name: "All Types" },
-  { id: "current_user", name: "Current User" },
-  { id: "changing_method", name: "Changing Method" },
-  { id: "changing_clinic", name: "Changing Clinic" },
+  { id: "currentuser", name: "Current User" },
+  { id: "changingmethod", name: "Changing Method" },
+  { id: "changingclinic", name: "Changing Clinic" },
   { id: "restart", name: "Restart" },
-  { id: "new_acceptor", name: "New Acceptor" },
+  { id: "newacceptor", name: "New Acceptor" },
 ];
 
 export default function MyFPDashboardScreen() {
@@ -312,9 +312,9 @@ export default function MyFPDashboardScreen() {
 
   if (isErrorPatient || isErrorRecords) {
     return (
-      <View className="flex-1 justify-center items-center p-6 bg-red-50">
+      <View className="flex-1 justify-center items-center p-6">
         <AlertCircle size={48} color="#EF4444" />
-        <Text className="text-xl font-semibold text-red-800 mt-4">Error Loading Records</Text>
+        <Text className="text-xl font-semibold text-red-500 mt-4">No records found</Text>
         <Text className="text-gray-600 mt-2 text-center">{(errorPatient || errorRecords)?.message ?? "Please try again later."}</Text>
         <Button onPress={() => router.back()} className="mt-4 bg-blue-600">
           <Text className="text-white">Back</Text>

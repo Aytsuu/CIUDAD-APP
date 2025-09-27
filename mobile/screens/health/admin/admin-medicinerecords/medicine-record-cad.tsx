@@ -1,98 +1,197 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, Alert, ScrollView, Modal, Image } from "react-native";
-import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Pill, RefreshCw, Plus, Download, ChevronRight, MapPin, Clock, X, ArrowLeft, ArrowRight } from "lucide-react-native";
+import React, { useState } from "react";
+import { View, Image, TouchableOpacity, Linking, Platform, Modal } from "react-native";
 import { Text } from "@/components/ui/text";
+import { Pill, FileText, Calendar, Clock, X } from "lucide-react-native";
+import { format, parseISO, isValid } from "date-fns";
 
-import { localDateFormatter } from "@/helpers/localDateFormatter";
-import { SignatureModal } from "../components/signature-modal";
-import {DocumentModal} from "../components/document-modal";
+interface MedicineRecord {
+  medrec_id: number;
+  medrec_qty: number;
+  reason: string;
+  requested_at: string;
+  fulfilled_at: string;
+  signature: string;
+  minv_id: number;
+  medicine_name: string;
+  medicine_category: string;
+  dosage: string;
+  form: string;
+  files: Array<{
+    medf_id: number;
+    medf_name: string;
+    medf_type: string;
+    medf_url: string;
+    created_at: string;
+  }>;
+  status: string;
+}
 
+interface MedicineRecordCardProps {
+  record: MedicineRecord;
+}
 
+export function MedicineRecordCard({ record }: MedicineRecordCardProps) {
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-export const MedicineRecordCard: React.FC<{
-    record: any;
-  }> = ({ record }) => {
-    const [docModalVisible, setDocModalVisible] = useState(false);
-    const [sigModalVisible, setSigModalVisible] = useState(false);
-    const [selectedDocIndex, setSelectedDocIndex] = useState(0);
-  
-    const handleDocumentPress = (index: number) => {
-      setSelectedDocIndex(index);
-      setDocModalVisible(true);
-    };
-  
+  const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, "MMM dd, yyyy") : "Invalid Date";
+    } catch {
+      return "Invalid Date";
+    }
+  };
+
+  const renderSignature = () => {
+    // Only render signature on mobile platforms (iOS/Android)
+    if (Platform.OS !== "ios" && Platform.OS !== "android") {
+      return null; // Do not show signature on web
+    }
+
+    if (!record.signature) {
+      return (
+        <Text className="text-gray-500 text-sm italic">No signature</Text>
+      );
+    }
+
+    // Construct data URL for base64-encoded signature
+    const signatureUri = `data:image/png;base64,${record.signature}`;
     return (
-      <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm">
-        {/* Header */}
-        <View className="p-4 border-b border-gray-100">
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 mr-3">
-              <View className="flex-row items-center mb-1">
-                <View className="w-10 h-10 bg-blue-50 border border-blue-500 rounded-full items-center justify-center mr-3 shadow-sm">
-                  <Pill color="#2563EB" size={20} />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-lg text-gray-900">{record.medicine_name}</Text>
-                  <Text className="text-gray-500 text-sm">{record.medicine_category}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-  
-        {/* Details */}
-        <View className="p-4">
-          <View className="flex-row items-center mb-3">
-            <Pill size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Dosage: <Text className="font-medium text-gray-900">{record.dosage}</Text> • {record.form}
-            </Text>
-          </View>
-  
-          <View className="flex-row items-center mb-3">
-            <Calendar size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Date Requested: <Text className="font-medium text-gray-900">{localDateFormatter(record.requested_at)}</Text>
-            </Text>
-          </View>
-  
-          {/* Signature Section */}
-          {record.signature && (
-            <View className="mb-3 pt-3 border-t border-gray-100">
-              <TouchableOpacity onPress={() => setSigModalVisible(true)} className="flex-row items-center">
-                <FileText size={16} color="#6B7280" />
-                <Text className="ml-2 text-blue-600 text-sm">View Signature</Text>
-              </TouchableOpacity>
-              <SignatureModal signature={record.signature} isVisible={sigModalVisible} onClose={() => setSigModalVisible(false)} />
-            </View>
-          )}
-  
-          {/* Documents Section */}
-          {record.files && record.files.length > 0 && (
-            <View className="pt-3 border-t border-gray-100">
-              <Text className="text-gray-600 text-sm mb-2">Documents:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
-                {record.files.map((file: any, index: any) => (
-                  <TouchableOpacity key={file.medf_id || index} onPress={() => handleDocumentPress(index)} className="mr-3 p-2 border border-gray-200 rounded-lg bg-gray-50">
-                    <FileText size={20} color="#3B82F6" />
-                    <Text className="text-xs text-gray-600 mt-1" numberOfLines={1}>
-                      {file.medf_name || `Document ${index + 1}`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <DocumentModal files={record.files} isVisible={docModalVisible} onClose={() => setDocModalVisible(false)} initialIndex={selectedDocIndex} />
-            </View>
-          )}
-  
-          {record.notes && (
-            <View className="mt-3 pt-3 border-t border-gray-100">
-              <Text className="text-gray-600 text-sm">
-                Notes: <Text className="font-medium text-gray-900">{record.notes}</Text>
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
+      <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+        <Image
+          source={{ uri: signatureUri }}
+          style={{ width: 100, height: 50, resizeMode: "contain" }}
+          className="mt-2"
+        />
+      </TouchableOpacity>
     );
   };
+
+  const renderFiles = () => {
+    if (!record.files || record.files.length === 0) {
+      return (
+        <Text className="text-gray-500 text-sm italic">No files</Text>
+      );
+    }
+    return record.files.map((file) => (
+      <TouchableOpacity
+        key={file.medf_id}
+        onPress={() => Linking.openURL(file.medf_url)}
+        className="flex-row items-center mt-2"
+      >
+        <FileText size={16} color="#3B82F6" />
+        <Text className="text-blue-600 underline text-sm ml-2 truncate">
+          {file.medf_name}
+        </Text>
+      </TouchableOpacity>
+    ));
+  };
+
+  return (
+    <>
+      <View className="bg-white rounded-xl p-4 mb-4 border border-gray-200 shadow-sm">
+        <View className="flex-col">
+          {/* Header: Medicine Name and Status */}
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center">
+              <Pill size={20} color="#3B82F6" />
+              <Text className="ml-2 text-base font-semibold text-gray-900 truncate">
+                {record.medicine_name} ({record.dosage})
+              </Text>
+            </View>
+            <Text
+              className={`text-sm font-medium ${
+                record.status === "Fulfilled" ? "text-green-600" : "text-yellow-600"
+              }`}
+            >
+              {record.status}
+            </Text>
+          </View>
+
+          {/* Two-Column Row: Category and Form */}
+          <View className="flex-row justify-between mb-2">
+            <View className="flex-1 mr-2">
+              <Text className="text-gray-600 text-sm">
+                <Text className="font-medium text-black">Category: </Text>
+                {record.medicine_category}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-600 text-sm">
+                <Text className="font-medium text-black">Form: </Text>
+                {record.form}
+              </Text>
+            </View>
+          </View>
+
+          {/* Two-Column Row: Quantity and Reason */}
+          <View className="flex-row justify-between mb-2">
+            <View className="flex-1 mr-2">
+              <Text className="text-gray-600 text-sm">
+                <Text className="font-medium text-black">Qty: </Text>
+                {record.medrec_qty}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-600 text-sm truncate">
+                <Text className="font-medium text-black">Reason: </Text>
+                {record.reason}
+              </Text>
+            </View>
+          </View>
+
+          {/* Requested and Fulfilled Dates */}
+          <View className="mt-2 flex-row items-center">
+            <Calendar size={16} color="#6B7280" />
+            <Text className="ml-2 text-gray-600 text-sm">
+              Requested: {formatDate(record.requested_at)}
+            </Text>
+          </View>
+          <View className="mt-1 flex-row items-center">
+            <Clock size={16} color="#6B7280" />
+            <Text className="ml-2 text-gray-600 text-sm">
+              Fulfilled: {formatDate(record.fulfilled_at)}
+            </Text>
+          </View>
+
+          {/* Signature Section (Mobile Only) */}
+          {(Platform.OS === "ios" || Platform.OS === "android") && (
+            <View className="mt-2">
+              <Text className="text-gray-600 text-sm font-medium">Signature:</Text>
+              {renderSignature()}
+            </View>
+          )}
+
+          {/* Files Section */}
+          <View className="mt-2">
+            <Text className="text-gray-600 text-sm font-medium">Files:</Text>
+            {renderFiles()}
+          </View>
+        </View>
+      </View>
+
+      {/* Modal for Enlarged Signature View */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View className="flex-1 bg-black/70 justify-center items-center">
+          <View className="bg-white rounded-xl p-4 w-[90%] max-w-md">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-lg font-semibold text-gray-900">Signature</Text>
+              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+                <X size={24} color="#374151" />
+              </TouchableOpacity>
+            </View>
+            <Image
+              source={{ uri: `data:image/png;base64,${record.signature}` }}
+              style={{ width: "100%", height: 200, resizeMode: "contain" }}
+            />
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}

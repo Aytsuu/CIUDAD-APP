@@ -15,6 +15,7 @@ import { useIndividualMedicineRecords } from "../admin/admin-medicinerecords/que
 import { getPatientByResidentId } from "../animalbites/api/get-api"
 // import { PatientInfoCard } from "../admin/components/patientcards"
 import { MedicineRecordCard } from "../admin/admin-medicinerecords/medicine-record-cad"
+import { getPatientById } from "../admin/admin-animalbites/api/get-api"
 
 export default function IndividualMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -23,25 +24,29 @@ export default function IndividualMedicineRecords() {
   const [pageSize] = useState(10)
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
+const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params
+  const patIdFromParams = params.pat_id;
+  const { user } = useAuth();
+  const rp_id = user?.rp;
 
-  const { user } = useAuth()
-  const rp_id = user?.rp
-
-  const {
-    data: patientData,
-    isLoading: isPatientLoading,
-    isError: isPatientError,
-    error: patientError,
-    refetch: refetchPatientData,
-  } = useQuery({
-    queryKey: ["patientByResidentId", rp_id],
-    queryFn: () => {
-      if (!rp_id) throw new Error("Resident ID is undefined")
-      return getPatientByResidentId(rp_id)
-    },
-    enabled: !!rp_id,
-  })
-
+  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = useQuery({
+      queryKey: ["patientDetails", patIdFromParams || rp_id],
+      queryFn: async () => {
+        if (patIdFromParams) {
+          console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams);
+          return await getPatientById(patIdFromParams);
+        } else if (rp_id) {
+          console.log("[DEBUG] Fetching patient with rp_id:", rp_id);
+          return await getPatientByResidentId(rp_id);
+        }
+        return null;
+      },
+      enabled: !!(patIdFromParams || rp_id),
+    });
+  
+    const patient_id = patIdFromParams || patientData?.pat_id;
+    console.log("[DEBUG] patient_id used for records:", patient_id);
+  
   const {
     data: apiResponse,
     isLoading,
@@ -88,7 +93,7 @@ export default function IndividualMedicineRecords() {
     )
   }
 
-  if (isPatientLoading) {
+  if (isLoadingPatient) {
     return <LoadingState />
   }
 
@@ -200,7 +205,7 @@ export default function IndividualMedicineRecords() {
 
         <View className="px-4 pb-4">
           {medicineRecords.length === 0 ? (
-            <View className="bg-white rounded-xl p-8 items-center border border-gray-200">
+            <View className="bg-white rounded-xl p-8 mt-16 items-center">
               <Pill size={64} color="#9CA3AF" />
               <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No medicine records found</Text>
               <Text className="text-gray-600 text-center mt-2 mb-4">

@@ -1,272 +1,289 @@
-// screens/first-aid/my-records.tsx
 import React, { useState, useMemo } from "react";
-import { View, FlatList, TextInput, Text, Image, TouchableOpacity, RefreshControl } from "react-native";
-import { User, FileText, AlertCircle, Package, Clock, Search, ChevronLeft, Calendar, RefreshCw } from "lucide-react-native";
-import { router } from "expo-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import PageLayout from "@/screens/_PageLayout";
-import { useAuth } from "@/contexts/AuthContext";
-import { LoadingState } from "@/components/ui/loading-state";
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
+import { Search, ChevronLeft, AlertCircle, User, FileText, Users, RefreshCw } from "lucide-react-native";
+import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { api2 } from "@/api/api";
+import { Button } from "@/components/ui/button";
+import { router } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { getFirstaidRecords } from "../admin/admin-firstaid/restful-api/getAPI";
 import { FirstAidRecord } from "../admin/admin-firstaid/types";
-import { useLocalSearchParams } from "expo-router";
-import { getPatientById, getPatientByResidentId } from "../animalbites/api/get-api";
 
-// Update FirstAidRecord type to match API response
-// interface FirstAidRecord {
-//   farec_id: string | number;
-//   created_at: string;
-//   finv: number;
-//   finv_details: {
-//     fa_detail?: {
-//       fa_name?: string;
-//       catlist?: string;
-//     };
-//   };
-//   patrec: number;
-//   patrec_details: any;
-//   qty: string;
-//   reason?: string;
-//   signature?: string;
-//   staff: string;
-// }
+interface FirstAidPatientsCount {
+  total_firstaid_patients: number;
+  resident_firstaid_patients: number;
+  transient_firstaid_patients: number;
+}
 
-// Reuse the FirstAidRecordCard component
-const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
-  <Card className="mb-3 bg-white border-slate-200">
-    <CardContent className="p-4">
-      <View className="flex-row justify-between items-start mb-3">
-        <View className="flex-row items-center">
-          <Calendar size={16} color="#64748B" />
-          <Text className="ml-2 text-slate-600 text-sm">
-            {new Date(item.created_at || "").toLocaleDateString()}
-          </Text>
-        </View>
-        <Badge variant="outline" className="border-blue-200 bg-blue-50">
-          <Text className="text-blue-700 text-xs">#{item.farec_id}</Text>
-        </Badge>
-      </View>
-      
-      <View className="mb-3">
-        <Text className="font-semibold text-lg text-slate-900 mb-1">
-          {item.finv_details?.fa_detail?.fa_name || "Unknown Item"}
-        </Text>
-        <Text className="text-slate-600 text-sm">
-          {item.finv_details?.fa_detail?.catlist || "N/A"}
-        </Text>
-      </View>
-      
-      <View className="flex-row items-center mb-3">
-        <Package size={16} color="#64748B" />
-        <Text className="ml-2 text-slate-600 text-sm">
-          Quantity: <Text className="text-slate-900 font-medium">{item.qty}</Text>
-        </Text>
-      </View>
-      
-      {item.reason && (
-        <View className="mb-3">
-          <Text className="text-slate-600 text-sm mb-1">Reason:</Text>
-          <Text className="text-slate-900">{item.reason}</Text>
-        </View>
-      )}
-      
-      {item.signature && (
-        <View className="mt-3 pt-3 border-t border-slate-200">
-          <Text className="text-slate-600 text-sm mb-2">Patient Signature:</Text>
-          <Image 
-            source={{ uri: `data:image/png;base64,${item.signature}` }}
-            className="h-16 w-40 border border-slate-200 rounded-md"
-            resizeMode="contain"
-          />
-        </View>
-      )}
-    </CardContent>
-  </Card>
+interface ApiResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: FirstAidRecord[];
+}
+
+type TabType = "all" | "resident" | "transient";
+
+// Components
+const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
+  const getTypeConfig = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "resident":
+        return {
+          color: "text-green-700",
+          bgColor: "bg-green-100",
+          borderColor: "border-green-200",
+        };
+      case "transient":
+        return {
+          color: "text-amber-700",
+          bgColor: "bg-amber-100",
+          borderColor: "border-amber-200",
+        };
+      default:
+        return {
+          color: "text-gray-700",
+          bgColor: "bg-gray-100",
+          borderColor: "border-gray-200",
+        };
+    }
+  };
+
+  const typeConfig = getTypeConfig(type);
+  return (
+    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
+        {type}
+      </Text>
+    </View>
+  );
+};
+
+const TabBar: React.FC<{
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  counts: { all: number; resident: number; transient: number };
+}> = ({ activeTab, setActiveTab, counts }) => (
+  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+    <TouchableOpacity
+      onPress={() => setActiveTab("all")}
+      className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>
+        All ({counts.all})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab("resident")}
+      className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>
+        Residents ({counts.resident})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab("transient")}
+      className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>
+        Transients ({counts.transient})
+      </Text>
+    </TouchableOpacity>
+  </View>
 );
 
-const PatientInfoCard = ({ patientData }: { patientData: any }) => {
+const FirstAidRecordCard: React.FC<{
+  record: FirstAidRecord;
+  onPress: () => void;
+}> = ({ record, onPress }) => {
   const formatAddress = () => {
-    if (!patientData?.address) return "No address provided";
-    const address = patientData.address;
+    const address = record.patient_details.address;
     return [address.add_street, address.add_barangay, address.add_city, address.add_province]
       .filter(Boolean)
       .join(", ");
   };
 
+  const calculatePatientAge = () => {
+    return calculateAge(record.patient_details.personal_info.per_dob).toString();
+  };
+
   return (
-    <Card className="mb-4 bg-white border-slate-200">
-      <CardContent className="p-4">
-        <View className="flex-row items-center mb-4">
-          <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-blue-100">
-            <User size={20} color="#3B82F6" />
+    <TouchableOpacity
+      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
+      activeOpacity={0.8}
+      onPress={onPress}
+    >
+      {/* Header */}
+      <View className="p-4 border-b border-gray-100">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center mb-1">
+              <View className="w-10 h-10 bg-red-600 rounded-full items-center justify-center mr-3">
+                <User color="white" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-lg text-gray-900">
+                  {record.patient_details.personal_info.per_lname}, {record.patient_details.personal_info.per_fname} {record.patient_details.personal_info.per_mname}
+                </Text>
+                <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
+              </View>
+            </View>
           </View>
-          <Text className="text-lg font-semibold text-gray-800">Patient Information</Text>
+          <StatusBadge type={record.patient_details.pat_type} />
         </View>
-        <View className="space-y-3">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-gray-500">Full Name</Text>
-            <Text className="text-sm font-medium text-gray-900">
-              {patientData?.personal_info?.per_fname || "N/A"} {patientData?.personal_info?.per_mname || ""} {patientData?.personal_info?.per_lname || "N/A"}
+      </View>
+
+      {/* Details */}
+      <View className="p-4">
+        <View className="flex-row items-center mb-3">
+          <Users size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Age: <Text className="font-medium text-gray-900">{calculatePatientAge()}</Text> • {record.patient_details.personal_info.per_sex}
+          </Text>
+        </View>
+        <View className="flex-row items-center mb-3">
+          <FileText size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Address: <Text className="font-medium text-gray-900">{formatAddress() || "No address provided"}</Text>
+          </Text>
+        </View>
+        {record.patient_details.address.add_sitio && (
+          <View className="flex-row items-center mb-3">
+            <FileText size={16} color="#6B7280" />
+            <Text className="ml-2 text-gray-600 text-sm">
+              Sitio: <Text className="font-medium text-gray-900">{record.patient_details.address.add_sitio}</Text>
             </Text>
           </View>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-gray-500">Age</Text>
-            <Text className="text-sm font-medium text-gray-900">
-              {patientData?.personal_info?.per_dob ? calculateAge(patientData.personal_info.per_dob) : "N/A"}
-            </Text>
-          </View>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-gray-500">Sex</Text>
-            <Text className="text-sm font-medium text-gray-900">{patientData?.personal_info?.per_sex || "N/A"}</Text>
-          </View>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-gray-500">Address</Text>
-            <Text className="text-sm font-medium text-gray-900">{formatAddress()}</Text>
-          </View>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-gray-500">Type</Text>
-            <Text className="text-sm font-medium text-gray-900">{patientData?.pat_type || "N/A"}</Text>
-          </View>
+        )}
+        <View className="flex-row items-center">
+          <FileText size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Records: <Text className="font-medium text-gray-900">{record.firstaid_count}</Text>
+          </Text>
         </View>
-      </CardContent>
-    </Card>
+      </View>
+    </TouchableOpacity>
   );
 };
 
-export default function MyFirstAidRecordsScreen() {
-  const params = useLocalSearchParams<{ pat_id?: string }>();
-  const patIdFromParams = params.pat_id;
-  const { user } = useAuth();
-  const rp_id = user?.rp;
-
-  console.log("[DEBUG] my-records patIdFromParams:", patIdFromParams);
-  console.log("[DEBUG] rp_id from auth:", rp_id);
-
-  // Fetch patient data
-  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient, refetch: refetchPatient } = useQuery({
-    queryKey: ["patientDetails", patIdFromParams || rp_id],
-    queryFn: async () => {
-      if (patIdFromParams) {
-        console.log(`🔍 Fetching patient with ID: ${patIdFromParams}`);
-        return await getPatientById(patIdFromParams); // Admin/transient view
-      } else if (rp_id) {
-        console.log(`🔍 Fetching patient with resident ID: ${rp_id}`);
-        return await getPatientByResidentId(rp_id); // User view
-      }
-      return null;
-    },
-    enabled: !!(patIdFromParams || rp_id),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
-  const patient_id = patIdFromParams || patientData?.pat_id;
-  console.log("[DEBUG] patient_id used for First Aid records:", patient_id);
-
-  // Fetch records
-  const {
-    data: recordsData = [], // Default to empty array
-    isLoading: isLoadingRecords,
-    isError: isErrorRecords,
-    error: errorRecords,
-    refetch: refetchRecords
-  } = useQuery({
-    queryKey: ["firstAidRecords", patient_id],
-    queryFn: async () => {
-      if (!patient_id) throw new Error("No patient ID available");
-      console.log(`🔍 Fetching First Aid records for pat_id: ${patient_id}`);
-      try {
-        const res = await api2.get(`firstaid/indiv-firstaid-record/${patient_id}/`);
-        console.log("[DEBUG] First Aid records response:", JSON.stringify(res.data, null, 2));
-        // Handle paginated response with results array
-        return Array.isArray(res.data.results) ? res.data.results : [];
-      } catch (error:any) {
-        console.error("❌ Error fetching First Aid records:", error.response?.status, error.message);
-        if (error.response && error.response.status === 404) {
-          console.log("[DEBUG] 404: No First Aid records found for pat_id:", patient_id);
-          return []; // Treat 404 as no records
-        }
-        throw error; // Re-throw other errors
-      }
-    },
-    enabled: !!patient_id,
-    staleTime: 5 * 60 * 1000,
-  });
-
+export default function AllFirstAidRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("all");
+
+  const {
+    data: apiResponse,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching
+  } = useQuery<ApiResponse>({
+    queryKey: ["firstAidRecords"],
+    queryFn: getFirstaidRecords,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  // Extract results array from API response
+  const firstAidRecords = apiResponse?.results || [];
 
   const filteredData = useMemo(() => {
-    console.log("[DEBUG] recordsData:", JSON.stringify(recordsData, null, 2));
-    console.log("[DEBUG] filteredData processing, searchQuery:", searchQuery);
-    if (!Array.isArray(recordsData)) return [];
-    const lowerQuery = searchQuery.toLowerCase();
-    const filtered = recordsData.filter((item: FirstAidRecord) => {
-      const nameMatch = item.finv_details?.fa_detail?.fa_name?.toLowerCase()?.includes(lowerQuery) || false;
-      const reasonMatch = item.reason?.toLowerCase()?.includes(lowerQuery) || false;
-      const idMatch = item.farec_id?.toString().toLowerCase().includes(lowerQuery) || false;
-      console.log("[DEBUG] Item:", item.farec_id, "Matches:", { nameMatch, reasonMatch, idMatch });
-      return nameMatch || reasonMatch || idMatch;
-    });
-    console.log("[DEBUG] filteredData length:", filtered.length);
-    return filtered;
-  }, [recordsData, searchQuery]);
+    if (!firstAidRecords) return [];
 
-  const onRefresh = async () => {
+    let result = firstAidRecords;
+
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      result = result.filter(
+        (record) =>
+          record.patient_details.personal_info.per_fname.toLowerCase().includes(lowerCaseQuery) ||
+          record.patient_details.personal_info.per_lname.toLowerCase().includes(lowerCaseQuery) ||
+          record.pat_id.toLowerCase().includes(lowerCaseQuery) ||
+          record.patient_details.address.add_sitio?.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+
+    if (activeTab !== "all") {
+      result = result.filter((record) =>
+        record.patient_details.pat_type.toLowerCase() === activeTab
+      );
+    }
+
+    return result;
+  }, [firstAidRecords, searchQuery, activeTab]);
+
+  const counts = useMemo(() => {
+    if (!firstAidRecords) return { all: 0, resident: 0, transient: 0 };
+
+    const residentCount = firstAidRecords.filter(r => r.patient_details.pat_type.toLowerCase() === "resident").length;
+    const transientCount = firstAidRecords.filter(r => r.patient_details.pat_type.toLowerCase() === "transient").length;
+
+    return {
+      all: firstAidRecords.length,
+      resident: residentCount,
+      transient: transientCount,
+    };
+  }, [firstAidRecords]);
+
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await refetchRecords();
-    await refetchPatient();
+    try {
+      await refetch();
+    } catch (e) {
+      console.error("Refetch error:", e);
+    }
     setRefreshing(false);
+  }, [refetch]);
+
+  const handleRecordPress = (record: FirstAidRecord) => {
+    try {
+      console.log("[DEBUG] Navigating to /first-aid/my-records with pat_id:", record.pat_id);
+      router.push({
+        pathname: "/my-records/all-records",
+        params: { pat_id: record.pat_id }
+      });
+    } catch (error) {
+      console.error("Navigation error:", error);
+    }
   };
 
-  if (isLoadingPatient || isLoadingRecords) {
+  if (isLoading) {
     return <LoadingState />;
   }
 
-  if (isErrorPatient || (isErrorRecords)) {
+  if (isError) {
     return (
-      <View className="flex-1 justify-center items-center p-6 bg-red-50">
-        <AlertCircle size={48} color="#EF4444" />
-        <Text className="text-xl font-semibold text-red-800 mt-4">
-          {isErrorPatient ? "Patient Not Found" : "Error Loading Records"}
-        </Text>
-        <Text className="text-gray-600 mt-2 text-center">
-          {(errorPatient || errorRecords)?.message ?? "Please try again later."}
-        </Text>
-        <View className="flex-row mt-4 space-x-4">
-          <TouchableOpacity onPress={onRefresh} className="bg-blue-600 px-4 py-2 rounded-lg">
-            <Text className="text-white">Retry</Text>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.back()} className="bg-gray-600 px-4 py-2 rounded-lg">
-            <Text className="text-white">Go Back</Text>
+        }
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">First Aid Records</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+          <AlertCircle size={64} color="#EF4444" />
+          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
+          <Text className="text-gray-600 text-center mt-2 mb-6">
+            Failed to load data: {error?.message || "Unknown error"}. Please check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
+          >
+            <RefreshCw size={18} color="white" />
+            <Text className="ml-2 text-white font-medium">Try Again</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    );
-  }
-
-  if (!patient_id && !user) {
-    return (
-      <View className="flex-1 justify-center items-center p-6 bg-gray-50">
-        <AlertCircle size={48} color="#9CA3AF" />
-        <Text className="text-xl font-semibold text-gray-800 mt-4">Authentication Required</Text>
-        <Text className="text-gray-500 mt-2 text-center">Please log in to view your first aid records.</Text>
-      </View>
-    );
-  }
-
-  if (!patientData) {
-    return (
-      <View className="flex-1 justify-center items-center p-6 bg-gray-50">
-        <AlertCircle size={48} color="#9CA3AF" />
-        <Text className="text-xl font-semibold text-gray-800 mt-4">Patient Not Found</Text>
-        <Text className="text-gray-500 mt-2 text-center">No patient data available for this ID.</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4 bg-blue-600 px-4 py-2 rounded-lg">
-          <Text className="text-white">Go Back</Text>
-        </TouchableOpacity>
-      </View>
+      </PageLayout>
     );
   }
 
@@ -280,14 +297,13 @@ export default function MyFirstAidRecordsScreen() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-slate-900 text-lg font-semibold">{patIdFromParams ? 'First Aid Records' : 'My First Aid Records'}</Text>}
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">First Aid Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
-        <PatientInfoCard patientData={patientData} />
-        
-        <View className="mx-4 mb-4">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-white rounded-xl">
+        {/* Search Bar */}
+        <View className="bg-white px-4 py-3 border-b border-gray-200">
+          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
@@ -299,34 +315,49 @@ export default function MyFirstAidRecordsScreen() {
           </View>
         </View>
 
-        <FlatList
-          data={filteredData}
-          renderItem={({ item }) => <FirstAidRecordCard item={item} />}
-          keyExtractor={(item) => item.farec_id.toString()}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <View className="px-4 mb-4">
-              <Text className="text-lg font-semibold text-gray-900">
-                Records ({filteredData.length})
-              </Text>
-            </View>
-          }
-          ListEmptyComponent={() => (
-            <View className="justify-center items-center py-20">
-              <FileText size={48} color="#D1D5DB" />
-              <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
-                No records found
-              </Text>
-              <Text className="text-gray-500 text-center">
-                {searchQuery
-                  ? "No records match your search criteria."
-                  : "No first aid records available for this patient."}
-              </Text>
-            </View>
-          )}
-        />
+        {/* Tab Bar */}
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {/* Records List */}
+        {firstAidRecords.length === 0 ? (
+          <View className="flex-1 justify-center items-center px-6">
+            <FileText size={64} color="#9CA3AF" />
+            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
+            <Text className="text-gray-600 text-center mt-2">
+              There are no first aid records available yet.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => `firstaid-${item.pat_id}`}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 16 }}
+            initialNumToRender={15}
+            maxToRenderPerBatch={20}
+            windowSize={21}
+            renderItem={({ item }) => (
+              <FirstAidRecordCard
+                record={item}
+                onPress={() => handleRecordPress(item)}
+              />
+            )}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-20">
+                <FileText size={48} color="#D1D5DB" />
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
+                  No records in this category
+                </Text>
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? `No ${activeTab} records match your search.`
+                    : `No ${activeTab} records found.`}
+                </Text>
+              </View>
+            )}
+          />
+        )}
       </View>
     </PageLayout>
   );
