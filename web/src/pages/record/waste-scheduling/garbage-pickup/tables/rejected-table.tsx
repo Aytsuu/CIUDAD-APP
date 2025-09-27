@@ -389,14 +389,15 @@ export default function RejectedTable() {
                                       garb_requester={row.original.garb_requester}
                                       garb_location={row.original.garb_location}
                                       garb_created_at={row.original.garb_created_at}
-                                      // garb_pref_date={row.original.garb_pref_date}
-                                      // garb_pref_time = {row.original.garb_pref_time}
-                                      // garb_additional_notes={row.original.garb_additional_notes}
+                                      garb_pref_date={row.original.garb_pref_date}
+                                      garb_pref_time = {row.original.garb_pref_time}
+                                      garb_additional_notes={row.original.garb_additional_notes}
                                       file_url={row.original.file_url}
                                       sitio_name={row.original.sitio_name}
                                       garb_waste_type = {row.original.garb_waste_type}
                                       rejection_reason = {row.original.dec_reason}
                                       dec_date = {row.original.dec_date || ''}
+                                      staff_name={row.original.staff_name}
                                   />
                               </div>
                         </div>

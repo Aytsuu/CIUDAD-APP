@@ -11,7 +11,6 @@ export const getBudgetDetails = async (planId: string): Promise<BudgetPlan> => {
     }
 }
 
-
 export const getBudgetPlan = async () => {
     try{
         const res = await api.get('treasurer/budget-plan/');

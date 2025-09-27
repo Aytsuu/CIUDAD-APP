@@ -8,11 +8,10 @@ export type BudgetPlanType = BudgetPlan
 export const usegetBudgetPlan = () => {
     return useQuery<BudgetPlanType[]>({
         queryKey: ["budgetPlan"], 
-        queryFn: () => getBudgetPlan(),
+        queryFn: getBudgetPlan,
         staleTime: 1000 * 60 * 30,
     });
 };
-
 
 export type BudgetPlanDetailType = BudgetPlanDetail
 
@@ -23,7 +22,6 @@ export const usegetBudgetPlanDetail = (plan_id: string) => {
         staleTime: 1000 * 60 * 30,
     })
 }
-
 
 export type BudgetPlanHistory = {
   bph_id: string;

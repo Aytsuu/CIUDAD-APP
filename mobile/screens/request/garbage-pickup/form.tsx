@@ -35,7 +35,7 @@ export default function GarbagePickupForm() {
   ];
 
   const sitioOptions = fetchedSitio.map(sitio => ({
-    value: sitio.sitio_id,  
+    value: sitio.sitio_id.toString(),  
     label: sitio.sitio_name 
   }));
 

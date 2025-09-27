@@ -105,6 +105,9 @@ export type GarbageRequestReject = {
     garb_location: string;
     garb_waste_type: string;
     garb_created_at: string;
+    garb_pref_time: string;
+    garb_pref_date: string;
+    garb_additional_notes: string;
     dec_id?: string | null;  
     dec_date?: string | null;
     dec_reason: string;
