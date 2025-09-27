@@ -91,13 +91,15 @@ export const usePersonalHistory = (per_id: string) => {
 export const useResidentsList = (
   is_staff: boolean = false,
   exclude_independent: boolean = false,
+  isSearchOnly: boolean = false,
+  search: string = "",
   disable: boolean = false
 ) => {
   return useQuery({
-    queryKey: ["residentsList", is_staff, exclude_independent, disable],
+    queryKey: ["residentsList", search, isSearchOnly, is_staff, exclude_independent, disable],
     queryFn: () => {
       if(disable) return [];
-      return getResidentsList(is_staff, exclude_independent)
+      return getResidentsList(is_staff, exclude_independent, isSearchOnly, search)
     },
     staleTime: 5000,  
   });

@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
-import { Link } from "react-router"
+import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building, Paperclip } from "lucide-react"
+import { Link, useNavigate } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { capitalize } from "@/helpers/capitalize"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Spinner } from "@/components/ui/spinner"
+import { Combobox } from "@/components/ui/combobox"
 
 const profiles = [
   {
@@ -39,6 +40,7 @@ const profiles = [
 
 export default function ResidentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
+  const navigate = useNavigate();
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
@@ -70,8 +72,8 @@ export default function ResidentRecords() {
 
   // ----------------- HANDLERS --------------------
 
+  // ----------------- RENDER --------------------
   return (
-    // ----------------- RENDER --------------------
     <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
       <div className="space-y-6">
         {/* Search and Actions */}
@@ -118,6 +120,34 @@ export default function ResidentRecords() {
                     )}
                   </Button>
                 </Link>
+
+                <div>
+                  <Combobox
+                    options={[]}
+                    value={""}
+                    customTrigger={
+                      <Button variant="outline" className="w-full sm:w-auto">
+                        <Paperclip className="cursor-pointer"/>
+                        Modification Request
+                      </Button>
+                    }
+                    onChange={(value) => {
+                      navigate('view/personal', {
+                        state: {
+                          params: {
+                            type: "viewing",
+                            busId: value?.split(' ')[0],
+                          }
+                        }
+                      })
+                    }}
+                    staticVal={true}
+                    variant="modal"
+                    placeholder="Search request by resident no, name..."
+                    modalTitle="Profile Modification Requests"
+                    emptyMessage={"No modification requests."}
+                  />
+                </div>
 
                 <Link
                   to="/profiling/resident/registration"

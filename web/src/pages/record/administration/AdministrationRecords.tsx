@@ -231,7 +231,7 @@ export default function AdministrationRecords() {
       <div className="flex items-center gap-2 pb-8">
         <CircleAlert size={18} />
         <p className="text-sm">
-          Staff with admin/midwife position cannot be modified.
+          Staff with <span className="font-bold text-blue-500">ADMIN </span>position cannot be modified.
         </p>
       </div>
     </MainLayoutComponent>

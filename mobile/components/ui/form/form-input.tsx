@@ -13,7 +13,8 @@ interface FormInputProps {
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
   editable?: boolean;
-  maxInput?: number; // New optional prop
+  maxInput?: number;
+  upper?: boolean
 }
 
 export const FormInput = ({
@@ -26,7 +27,8 @@ export const FormInput = ({
   returnKeyType = 'next',
   submitBehavior = 'newline',
   editable = true,
-  maxInput, // New prop
+  maxInput,
+  upper = false
 }: FormInputProps) => {
   return (
     <Controller
@@ -56,7 +58,7 @@ export const FormInput = ({
               `}
               placeholder={placeholder}
               placeholderTextColor="#888"
-              value={value != null ? String(value): ''}
+              value={value != null ? upper ? String(value).toUpperCase() : String(value) : ''}
               onChangeText={handleChange} // Use the custom handler
               onBlur={onBlur}
               secureTextEntry={secureTextEntry}

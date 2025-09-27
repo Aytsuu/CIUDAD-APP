@@ -21,6 +21,7 @@ export const Combobox =
   size,
   variant = "popover",
   modalTitle,
+  onSearchChange
 }: {
   options: { id: string; name: React.ReactNode }[] 
   value: string
@@ -35,6 +36,7 @@ export const Combobox =
   size?: number
   variant?: "popover" | "modal"
   modalTitle?: string
+  onSearchChange?: (value: string) => void
 }) => {
   const [open, setOpen] = React.useState(false)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
@@ -108,7 +110,7 @@ export const Combobox =
 
   const commandContent = (
     <Command className="w-full">
-      <CommandInput placeholder={placeholder} className="w-full" />
+      <CommandInput placeholder={placeholder} className="w-full" onValueChange={onSearchChange}/>
       <CommandList className={cn("max-h-[300px] overflow-auto", variant === "modal" && "max-h-[60vh]")}>
         <CommandEmpty>{emptyMessage}</CommandEmpty>
         <CommandGroup>

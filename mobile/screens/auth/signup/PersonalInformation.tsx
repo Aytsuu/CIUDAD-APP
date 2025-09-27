@@ -16,47 +16,47 @@ import { SubmitButton } from "@/components/ui/button/submit-button"
 
 
 const sexOptions: { label: string; value: string }[] = [
-  { label: "Male", value: "male" },
-  { label: "Female", value: "female" },
-]
+  { label: "MALE", value: "MALE" },
+  { label: "FEMALE", value: "FEMALE" },
+];
 
 const civilStatusOptions: { label: string; value: string }[] = [
-  { label: "Single", value: "single" },
-  { label: "Married", value: "married" },
-  { label: "Widowed", value: "widowed" },
-]
+  { label: "SINGLE", value: "SINGLE" },
+  { label: "MARRIED", value: "MARRIED" },
+  { label: "WIDOWED", value: "WIDOWED" },
+];
 
 const religionOptions: { label: string; value: string }[] = [
-  { label: "Roman Catholic", value: "roman catholic" },
-  { label: "Muslim", value: "muslim" },
-  { label: "Iglesia ni Cristo", value: "iglesia ni cristo" },
-  { label: "Born Again", value: "born again" },
-]
+  { label: "ROMAN CATHOLIC", value: "ROMAN CATHOLIC" },
+  { label: "MUSLIM", value: "MUSLIM" },
+  { label: "IGLESIA NI CRISTO", value: "IGLESIA NI CRISTO" },
+  { label: "BORN AGAIN", value: "BORN AGAIN" },
+];
 
 const edAttainmentOptions: { label: string; value: string }[] = [
-  { label: "No Formal Education", value: "no formal education" },
-  { label: "Elementary", value: "elementary" },
-  { label: "High School", value: "high school" },
-  { label: "Vocational / Technical", value: "vocational / technical" },
-  { label: "College Level", value: "college level" },
-  { label: "Bachelor's Degree", value: "bachelor's degree" },
-  { label: "Master's Degree", value: "master's degree" },
-  { label: "Doctorate Degree", value: "doctorate degree" },
+  { label: "NO FORMAL EDUCATION", value: "NO FORMAL EDUCATION" },
+  { label: "ELEMENTARY", value: "ELEMENTARY" },
+  { label: "HIGH SCHOOL", value: "HIGH SCHOOL" },
+  { label: "VOCATIONAL / TECHNICAL", value: "VOCATIONAL / TECHNICAL" },
+  { label: "COLLEGE LEVEL", value: "COLLEGE LEVEL" },
+  { label: "BACHELOR'S DEGREE", value: "BACHELOR'S DEGREE" },
+  { label: "MASTER'S DEGREE", value: "MASTER'S DEGREE" },
+  { label: "DOCTORATE DEGREE", value: "DOCTORATE DEGREE" },
 ];
 
 const pwdOptions: { label: string; value: string }[] = [
-  { label: "Visual Disability", value: "visual disability" },
-  { label: "Hearing Disability", value: "hearing disability" },
-  { label: "Speech Impairment", value: "speech impairment" },
-  { label: "Learning Disability", value: "learning disability" },
-  { label: "Intellectual Disability", value: "intellectual disability" },
-  { label: "Mental Disability", value: "mental disability" },
-  { label: "Psychosocial Disability", value: "psychosocial disability" },
-  { label: "Physical Disability", value: "physical disability" },
-  { label: "Cancer", value: "cancer" },
-  { label: "Rare Disease", value: "rare disease" },
-  { label: "Multiple Disabilities", value: "multiple disabilities" },
-]
+  { label: "VISUAL DISABILITY", value: "VISUAL DISABILITY" },
+  { label: "HEARING DISABILITY", value: "HEARING DISABILITY" },
+  { label: "SPEECH IMPAIRMENT", value: "SPEECH IMPAIRMENT" },
+  { label: "LEARNING DISABILITY", value: "LEARNING DISABILITY" },
+  { label: "INTELLECTUAL DISABILITY", value: "INTELLECTUAL DISABILITY" },
+  { label: "MENTAL DISABILITY", value: "MENTAL DISABILITY" },
+  { label: "PSYCHOSOCIAL DISABILITY", value: "PSYCHOSOCIAL DISABILITY" },
+  { label: "PHYSICAL DISABILITY", value: "PHYSICAL DISABILITY" },
+  { label: "CANCER", value: "CANCER" },
+  { label: "RARE DISEASE", value: "RARE DISEASE" },
+  { label: "MULTIPLE DISABILITIES", value: "MULTIPLE DISABILITIES" },
+];
 
 const PersonalInformation = React.memo(({ params } : {params: Record<string, any>}) => {
   const router = useRouter();
@@ -127,19 +127,19 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
         <View className="space-y-4">
           <View className="grid space-x-3">
             <View className="flex-1">
-              <FormInput control={control} label="First Name" name={`${params.name}.per_fname`} />
+              <FormInput control={control} label="First Name" name={`${params.name}.per_fname`} upper={true}/>
             </View>
             <View className="flex-1">
-              <FormInput control={control} label="Last Name" name={`${params.name}.per_lname`} />
+              <FormInput control={control} label="Last Name" name={`${params.name}.per_lname`} upper={true}/>
             </View>
           </View>
 
           <View className="flex-row gap-2">
             <View className="flex-1">
-              <FormInput control={control} label="Middle Name" name={`${params.name}.per_mname`} />
+              <FormInput control={control} label="Middle Name" name={`${params.name}.per_mname`} upper={true}/>
             </View>
             <View className="w-24">
-              <FormInput control={control} label="Suffix" name={`${params.name}.per_suffix`} placeholder="Jr, Sr" />
+              <FormInput control={control} label="Suffix" name={`${params.name}.per_suffix`} placeholder="Jr, Sr" upper={true}/>
             </View>
           </View>
         </View>

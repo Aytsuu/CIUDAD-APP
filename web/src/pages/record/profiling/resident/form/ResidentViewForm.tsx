@@ -390,7 +390,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
               </Form>
               {registered_by.length > 0 && <div className="flex">
                 <div className="space-y-1">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-3 items-center">
                     <Label className="text-xs font-medium text-black/50 uppercase tracking-wide">Registered By</Label>
                     <Badge className="bg-green-500 hover:bg-green-500">{staffType}</Badge>
                   </div>

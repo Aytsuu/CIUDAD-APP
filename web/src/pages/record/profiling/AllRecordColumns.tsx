@@ -11,8 +11,8 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
     accessorKey: 'type',
     header: "",
     cell: ({ row }) => (
-      <Badge className={`${row.original.type == 'Business' ? 
-        "bg-purple-500 hover:bg-purple-400" :
+      <Badge className={`rounded-full ${row.original.type == 'Business' ? 
+        "bg-purple-50 border-purple-400 text-purple-700 hover:bg-purple-50" :
         ""}`}>
         {row.original.type}
       </Badge>

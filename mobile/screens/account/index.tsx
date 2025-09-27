@@ -39,10 +39,10 @@ export default () => {
       icon: Service,
       route: "/(account)/support"
     },
-    {
-      name: "Terms & Condition",
-      icon: TermsCondition
-    },
+    // {
+    //   name: "Terms & Condition",
+    //   icon: TermsCondition
+    // },
     {
       name: "Settings",
       icon: Settings,

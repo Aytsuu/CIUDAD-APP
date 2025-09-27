@@ -102,6 +102,14 @@ class PersonalModification(AbstractModels):
     class Meta:
         db_table = 'personal_modification'
 
+class PersonalAddressModification(models.Model):
+    pam_id = models.BigAutoField(primary_key=True)
+    pm = models.ForeignKey(PersonalModification, on_delete=models.CASCADE, related_name="modified_addresses")
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "personal_address_modification"
+
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')

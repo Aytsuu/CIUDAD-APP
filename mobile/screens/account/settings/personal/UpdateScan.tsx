@@ -24,10 +24,13 @@ export default function UpdateScan() {
   const submit = async () => {
     setIsSubmitting(true)
     const personalInfoSchema = getValues("personalInfoSchema");
+    const {per_addresses, ...per } = personalInfoSchema
     try {
-      console.log("data:",personalInfoSchema)
       await addPersonalModification({
-        personal: personalInfoSchema
+        personal: {
+          ...personalInfoSchema,
+          per_addresses: per_addresses.list
+        }
       });
       toast.success("Your request has been delivered.")
       router.back();

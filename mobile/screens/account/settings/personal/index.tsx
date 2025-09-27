@@ -21,6 +21,20 @@ export default () => {
     </View>
   );
 
+  // Helper to format address
+  const formatAddress = (address: any) => {
+    if (!address) return "Not specified";
+    
+    const parts = [];
+    if (address.add_street) parts.push(address.add_street);
+    if (address.sitio && address.sitio !== address.add_street) parts.push(`${address.sitio}`);
+    if (address.add_barangay) parts.push(`BRGY. ${address.add_barangay}`);
+    if (address.add_city) parts.push(address.add_city);
+    if (address.add_province) parts.push(address.add_province);
+    
+    return parts.join(", ");
+  };
+
   // =================== MAIN RENDER ===================
   return (
     <PageLayout
@@ -47,6 +61,7 @@ export default () => {
           <Pen className="text-white" size={16}/>
         </TouchableOpacity>
       }
+      showScrollIndicator={false}
     >
       <View className="flex-1 px-6">
         {user?.rp ? (
@@ -62,6 +77,24 @@ export default () => {
             <InfoRow label="Religion" value={personalData?.per_religion} />
             <InfoRow label="Contact Number" value={personalData?.per_contact} />
             <InfoRow label="Disability" value={personalData?.per_disability} />
+            
+            {/* Address Section */}
+            {personalData?.per_addresses && personalData.per_addresses.length > 0 && (
+              <View className="mt-6">
+                {personalData.per_addresses.map((address: any, index: number) => (
+                  <View key={address.add_id || index} className="mb-4">
+                    <View className="items-start gap-1 py-4 px-4 border-gray-100 bg-primaryBlue rounded-xl">
+                      <Text className="text-white/80 text-sm flex-1">
+                        {`Address ${index + 1}`}
+                      </Text>
+                      <Text className="text-white text-sm font-medium">
+                        {formatAddress(address)}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         ) : (
           <View>

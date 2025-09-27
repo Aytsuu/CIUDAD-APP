@@ -16,26 +16,43 @@ export default function UpdateInformation() {
   // ===================== STATE INITIALIZATION =====================
   const params = useLocalSearchParams();
   const data = React.useMemo(() => JSON.parse(params?.data as string), [params])
+  const { per_addresses, ...per } = data; 
   const { toast } = useToastContext();
-  const { getValues, reset, setValue, formState } = useRegistrationFormContext();
+  const { getValues, setValue } = useRegistrationFormContext();
   const { data: personalModReq, isLoading } = useGetPersonalModificationReq(data?.per_id);
 
   // ===================== SIDE EFFECTS =====================
   React.useEffect(() => {
     if(data) {
-      Object.entries(data).map(([key, val]) => {
-        setValue(`personalInfoSchema.${key}` as any, typeof val == "string" ? val.toLowerCase() : val)
+      Object.entries(per).map(([key, val]) => {
+        setValue(`personalInfoSchema.${key}` as any, val)
       })
     }
-  }, [data]) 
+  }, [per]) 
+
+  React.useEffect(() => {
+    if(per_addresses?.length > 0) {
+      setValue('personalInfoSchema.per_addresses.list', per_addresses)
+    }
+  }, [per_addresses])
 
   // ===================== HANDLERS =====================
   const submit = () => {
     const personal = uppercaseAll(getValues("personalInfoSchema"))
-    if(isEqual(data, personal)) {
+    const {per_addresses: new_per_addresses, ...new_per} = personal;
+    console.log(new_per_addresses.list)
+    if(isEqual(per, new_per) && isEqual(per_addresses, new_per_addresses.list)) {
       toast.info("No changes were made")
       router.back();
       return;
+    }
+
+    if (isEqual(per_addresses, new_per_addresses.list)) {
+      setValue("personalInfoSchema.per_addresses.list", [])
+    } else {
+      setValue("personalInfoSchema.per_addresses.list", 
+        new_per_addresses.map((add: Record<string, any>) => !per_addresses.includes(add)
+      ))
     }
 
     router.push("/(account)/settings/personal/scan");

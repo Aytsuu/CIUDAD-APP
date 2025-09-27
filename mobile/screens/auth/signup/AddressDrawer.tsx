@@ -51,7 +51,7 @@ export const AddressDrawer = ({
   React.useEffect(() => {
     if (barangay?.trim().toLowerCase() === "san roque" || 
         barangay?.trim().toLowerCase() === "ciudad") {
-      setValue('personalInfoSchema.per_addresses.new.add_barangay', "San Roque (ciudad)");
+      setValue('personalInfoSchema.per_addresses.new.add_barangay', "SAN ROQUE (CIUDAD)");
     }
 
     if (barangay?.trim().toLowerCase() === "san roque (ciudad)") {

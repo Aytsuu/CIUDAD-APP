@@ -13,13 +13,17 @@ export const getPerAddressesList = async () => {
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
 export const getResidentsList = async (
   is_staff: boolean = false, 
-  exclude_independent: boolean = false
+  exclude_independent: boolean = false,
+  isSearchOnly: boolean = false,
+  search: string = ""
 ) => {
   try {
     const res = await api.get("profiling/resident/", {
       params: {
         is_staff,
-        exclude_independent
+        exclude_independent,
+        is_search_only: isSearchOnly,
+        search
       }
     });
     return res.data;

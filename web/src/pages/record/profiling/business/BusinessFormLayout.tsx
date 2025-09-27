@@ -30,6 +30,7 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
 import _ from 'lodash'
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -44,6 +45,8 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const [formType, setFormType] = React.useState<Type>(params?.type || tab_params?.type)
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const form = useForm<z.infer<typeof businessFormSchema>>({
     resolver: zodResolver(businessFormSchema),
@@ -56,7 +59,13 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
   const { data: businessInfo, isLoading: isLoadingBusInfo } = useBusinessInfo(params?.busId)
   const { data: businessHistory, isLoading: isLoadingHistory } = useBusinessHistory(params?.busId)
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
+    false, // is staff
+    false, // exclude independent
+    true, // is search only
+    debouncedSearchQuery, // search query
+    false // disable query
+  )
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
 
   const formattedSitio = formatSitio(sitioList)
@@ -460,6 +469,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
                     setMediaFiles={setMediaFiles}
                     setActiveVideoId={setActiveVideoId}
                     submit={submit}
+                    setSearchQuery={setSearchQuery}
                   />
                 </form>
               </Form>
