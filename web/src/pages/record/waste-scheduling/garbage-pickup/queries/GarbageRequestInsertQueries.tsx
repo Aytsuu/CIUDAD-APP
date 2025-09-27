@@ -44,7 +44,7 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
                 driver: values.driver,
                 time: values.time,
                 truck: values.truck,
-                collectors: values.collectors,
+                collectors: values.loaders,
                 staff_id: values.staff_id
             }),
         onSuccess: () => {
