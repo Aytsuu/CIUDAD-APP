@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Plus, ChevronLeft } from "lucide-react-native";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetDonations} from "./donation-queries";
+import { useGetDonations } from "./donation-queries";
 import { Donation } from "../donation-types";
 import { useRouter } from "expo-router";
 import { SearchInput } from "@/components/ui/search-input";
@@ -40,6 +40,7 @@ const DonationTracker = () => {
         donation.don_category,
         donation.don_qty,
         donation.don_date,
+        donation.don_status,
       ]
         .join(" ")
         .toLowerCase();
@@ -136,9 +137,20 @@ const DonationTracker = () => {
               </CardHeader>
 
               <CardContent className="pt-0">
-                <Text className="text-sm text-black leading-5 mb-4">
+                <View className="flex-row justify-between mb-2">
+                <Text className="text-sm text-black leading-5">
                   Donor: {donation.don_donor}
                 </Text>
+                <Text
+                  className={`px-2 w-20 text-center py-1 rounded-full text-xs font-medium  ${
+                    donation.don_status === "Stashed"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  {donation.don_status}
+                </Text>
+                </View>
                 <View className="border-t border-gray-200 pt-3">
                   <Text className="text-sm font-medium text-black">
                     Category: {donation.don_category}

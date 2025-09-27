@@ -31,6 +31,7 @@ const DonationAdd = () => {
       don_description: undefined,
       don_category: '',
       don_date: new Date().toISOString().split('T')[0],
+      don_status: "Stashed",
     },
   });
 
@@ -81,6 +82,30 @@ const DonationAdd = () => {
           <ChevronLeft size={30} color="black" className="text-white" />
         </TouchableOpacity>
       }
+      footer={<View>
+          <ConfirmationModal
+            trigger={
+              <TouchableOpacity
+                className="bg-primaryBlue py-3 rounded-lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Text className="text-white text-base font-semibold text-center">Saving...</Text>
+                  </>
+                ) : (
+                  <Text className="text-white text-base font-semibold text-center">Save</Text>
+                )}
+              </TouchableOpacity>
+            }
+            title="Confirm Donation"
+            description="Are you sure you want to save this donation?"
+            actionLabel="Save Donation"
+            onPress={handleSubmit(onSubmit)}
+            loading={isSubmitting}
+            loadingMessage="Saving donation..."
+          />
+        </View>}
     >
       <View className="space-y-4 p-4 flex-1">
         <View className="mb-4">
@@ -156,33 +181,7 @@ const DonationAdd = () => {
           control={control}
           name="don_date"
           label="Donation Date"
-        />
-
-        {/* Submit Button with Confirmation Modal */}
-        <View className="mt-auto pt-4 bg-white border-t border-gray-200 px-4 pb-4">
-          <ConfirmationModal
-            trigger={
-              <TouchableOpacity
-                className="bg-primaryBlue py-3 rounded-lg"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Text className="text-white text-base font-semibold text-center">Saving...</Text>
-                  </>
-                ) : (
-                  <Text className="text-white text-base font-semibold text-center">Save</Text>
-                )}
-              </TouchableOpacity>
-            }
-            title="Confirm Donation"
-            description="Are you sure you want to save this donation?"
-            actionLabel="Save Donation"
-            onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
-            loadingMessage="Saving donation..."
-          />
-        </View>
+        />   
       </View>
     </PageLayout>
   );

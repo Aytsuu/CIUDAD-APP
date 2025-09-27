@@ -1,16 +1,3 @@
-export interface PaymentResponse {
-  checkout_url: string;
-  payment_intent_id: string;
-  [key: string]: any; // For any additional properties
-}
-
-export interface PaymentStatusResponse {
-  status: string;
-  paid: boolean;
-  amount?: number;
-  payment_method?: string;
-}
-
 export type DonationInput = {
   don_num?: string;
   don_donor: string;
@@ -19,6 +6,7 @@ export type DonationInput = {
   don_category: string;
   don_description?: string;
   don_date: string;
+  don_status: any;
 };
 
 export type Donation = {
@@ -30,6 +18,7 @@ export type Donation = {
   don_description?: string;
   don_date: string;
   per_id?: number | null;
+  don_status: any;
 };
 
 export type Personal = {
