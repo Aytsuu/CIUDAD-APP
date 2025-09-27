@@ -375,14 +375,362 @@
 //   )
 // }
 
-import { Eye, ImageIcon, Pen, Search, ChevronRight, ArrowUpDown } from "lucide-react"
+// import { Eye, ImageIcon, Pen, Search, ChevronRight, ArrowUpDown } from "lucide-react"
+// import { Skeleton } from "@/components/ui/skeleton"
+// import { formatTimestamp } from "@/helpers/timestampformatter"
+// import DialogLayout from "@/components/ui/dialog/dialog-layout"
+// import { Label } from "@/components/ui/label"
+// import { useState, useEffect } from "react"
+// import { formatTime } from "@/helpers/timeFormatter"
+// import EditAcceptPickupRequest from "../assignment-edit-form"
+// import { Input } from "@/components/ui/input"
+// import { Button } from "@/components/ui/button/button"
+// import { useGetGarbageAcceptRequest, type GarbageRequestAccept } from "../queries/GarbageRequestFetchQueries"
+// import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+// import { SelectLayout } from "@/components/ui/select/select-layout"
+// import React from "react"
+// import { DataTable } from "@/components/ui/table/data-table"  
+// import ViewGarbageRequestDetails from "./view-details"
+// import { ColumnDef } from "@tanstack/react-table"
+
+// export default function AcceptedTable() {
+//   const { data: acceptedReqData = [], isLoading } = useGetGarbageAcceptRequest()
+//   const [selectedAssignment, setSelectedAssignment] = useState<GarbageRequestAccept | null>(null)
+//   const [isEditing, setIsEditing] = useState(false)
+//   const [searchQuery, setSearchQuery] = useState("")
+//   const [selectedSitio, setSelectedSitio] = useState("0")
+//   const [pageSize, setPageSize] = React.useState<number>(10)
+//   const [currentPage, setCurrentPage] = useState(1)
+
+//   const filteredData = acceptedReqData.filter((request) => {
+//     const matchesSitio = selectedSitio === "0" || request.sitio_name === selectedSitio
+//     const matchesSearch = searchQuery === "" || `
+//       ${request.garb_id} 
+//       ${request.garb_requester} 
+//       ${request.garb_location} 
+//       ${request.garb_waste_type} 
+//       ${request.garb_created_at} 
+//       ${request.garb_additional_notes} 
+//       ${request.dec_date}
+//       ${request.sitio_name}
+//       ${request.staff_name}
+//     `.toLowerCase().includes(searchQuery.toLowerCase())
+    
+//     return matchesSitio && matchesSearch
+//   })
+
+//   const sitioOptions = [
+//     { id: "0", name: "All Sitios" },
+//     ...Array.from(new Set(acceptedReqData.map(item => item.sitio_name)))
+//       .filter(name => name)
+//       .map(name => ({ id: name, name }))
+//   ]
+
+//   const totalItems = filteredData.length
+//   const totalPages = Math.ceil(totalItems / pageSize)
+//   const startIndex = (currentPage - 1) * pageSize
+//   const endIndex = startIndex + pageSize
+//   const paginatedData = filteredData.slice(startIndex, endIndex)
+
+//   useEffect(() => {
+//     setCurrentPage(1)
+//   }, [searchQuery, selectedSitio])
+
+//   const columns: ColumnDef<GarbageRequestAccept>[] = [
+//       {
+//           accessorKey: "garb_id",
+//           header: ({ column }) => (
+//               <div
+//                   className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//                   onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//               >
+//                   Request No.
+//                   <ArrowUpDown size={14} />
+//               </div>
+//           ),
+//           cell: ({ row }) => (
+//             <div>
+//               <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+//                 <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+//                   {row.original.garb_id}
+//                 </p>
+//               </div>
+//             </div>
+//           )
+//       },
+//       {
+//           accessorKey: "garb_created_at",
+//           header: ({ column }) => (
+//               <div
+//                   className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//                   onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//               >
+//                   Date Requested
+//                   <ArrowUpDown size={14} />
+//               </div>
+//           ),
+//           cell: ({ row }) => (
+//               <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
+//           )
+//       },
+//       {
+//           accessorKey: "garb_requester",
+//           header: "Requester",
+//       },
+//       {
+//           accessorKey: "sitio_name",
+//           header: "Sitio"
+//       },
+//         {
+//           accessorKey: "garb_waste_type",
+//           header: "Waste Type"
+//       },
+//       {
+//         accessorKey: "",
+//         header: "   ",
+//           cell: ({ row }) => {
+//               return (
+//                   <DialogLayout
+//                       className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
+//                       trigger={
+//                           <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
+//                               <span className="text-sm font-medium group-hover:text-primary">View</span>
+//                               <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+//                                   <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+//                               </div>
+//                           </Button>
+//                       }
+//                       title={`Garbage Pickup Request No. ${row.original.garb_id}`}
+//                       description="Full details of the request filed."
+//                       mainContent={
+//                         <div className="flex flex-col h-full overflow-y-hidden">
+//                               <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
+//                                   <ViewGarbageRequestDetails
+//                                       garb_id = {row.original.garb_id}
+//                                       garb_requester={row.original.garb_requester}
+//                                       garb_location={row.original.garb_location}
+//                                       garb_created_at={row.original.garb_created_at}
+//                                       garb_pref_date={row.original.garb_pref_date}
+//                                       garb_pref_time = {row.original.garb_pref_time}
+//                                       garb_additional_notes={row.original.garb_additional_notes}
+//                                       file_url={row.original.file_url}
+//                                       sitio_name={row.original.sitio_name}
+//                                       garb_waste_type = {row.original.garb_waste_type}
+//                                   />
+//                               </div>
+//                         </div>
+//                       }
+//                       // isOpen={editingRowId == row.original.sr_id}
+//                       // onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
+//                   />
+//               );
+//           },
+//       }
+//   ];
+
+//   const handleViewAssignment = (assignment: GarbageRequestAccept) => {
+//     setSelectedAssignment(assignment)
+//     setIsEditing(false)
+//   }
+
+//   const handleEditSuccess = () => {
+//     setIsEditing(false)
+//     setSelectedAssignment(null)
+//   }
+
+//   if (isLoading) {
+//     return (
+//       <div className="w-full h-full">
+//         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+//         <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+//         <Skeleton className="h-10 w-full mb-4 opacity-30" />
+//         <div className="space-y-4">
+//           {Array.from({ length: 5 }).map((_, i) => (
+//             <Skeleton key={i} className="h-32 w-full opacity-30" />
+//           ))}
+//         </div>
+//       </div>
+//     )
+//   }
+
+//   return (
+//     <div className="bg-white rounded-lg shadow-sm">
+//       {selectedAssignment && (
+//         <DialogLayout
+//           isOpen={!!selectedAssignment}
+//           onOpenChange={(open) => {
+//             if (!open) {
+//               setSelectedAssignment(null)
+//               setIsEditing(false)
+//             }
+//           }}
+//           title={isEditing ? "Edit Pickup Assignment" : "Pickup Assignment and Schedule Details"}
+//           description={isEditing ? "" : "Detailed information about the garbage pickup assignment"}
+//           mainContent={
+//             isEditing ? (
+//               <EditAcceptPickupRequest
+//                 pick_id={selectedAssignment.pickup_assignment_id ?? ""}
+//                 acl_id={selectedAssignment.assignment_collector_ids ?? []}
+//                 onSuccess={handleEditSuccess}
+//                 assignment={{
+//                   driver: selectedAssignment.driver_id ?? undefined,
+//                   truck: selectedAssignment.truck_id ?? undefined,
+//                   pick_date: selectedAssignment.assignment_info?.pick_date,
+//                   pick_time: selectedAssignment.assignment_info?.pick_time,
+//                   collectors: selectedAssignment.collector_ids,
+//                 }}
+//               />
+//             ) : (
+//               <div className="flex flex-col gap-4 p-4">
+//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                   <div className="border-b pb-2">
+//                     <Label className="text-sm font-medium text-gray-500">Driver</Label>
+//                     <p className="font-sm">{selectedAssignment.assignment_info?.driver || "Not assigned"}</p>
+//                   </div>
+//                   <div className="border-b pb-2">
+//                     <Label className="text-sm font-medium text-gray-500">Truck</Label>
+//                     <p className="font-sm">{selectedAssignment.assignment_info?.truck || "Not assigned"}</p>
+//                   </div>
+//                   <div className="border-b pb-2">
+//                     <Label className="text-sm font-medium text-gray-500">Scheduled Date</Label>
+//                     <p className="font-sm">{selectedAssignment.assignment_info?.pick_date || "Not scheduled"}</p>
+//                   </div>
+//                   <div className="border-b pb-2">
+//                     <Label className="text-sm font-medium text-gray-500">Scheduled Time</Label>
+//                     <p className="font-sm">
+//                       {selectedAssignment.assignment_info?.pick_time
+//                         ? formatTime(selectedAssignment.assignment_info.pick_time)
+//                         : "Not scheduled"}
+//                     </p>
+//                   </div>
+//                 </div>
+//                 <div className="mt-4">
+//                   <Label className="text-sm font-medium text-gray-500">Collectors</Label>
+//                   <div className="mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+//                     {selectedAssignment.assignment_info?.collectors?.length ? (
+//                       <ul className="list-disc pl-5 space-y-1">
+//                         {selectedAssignment.assignment_info.collectors.map((collector, index) => (
+//                           <li key={index} className="font-sm py-1">
+//                             {collector}
+//                           </li>
+//                         ))}
+//                       </ul>
+//                     ) : (
+//                       <p className="font-sm text-center py-2">No collectors assigned</p>
+//                     )}
+//                   </div>
+//                 </div>
+//                 <div className="mt-6 flex justify-end">
+//                   <Button
+//                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+//                     onClick={() => setIsEditing(true)}
+//                   >
+//                     <Pen size={16} />
+//                     Edit Assignment
+//                   </Button>
+//                 </div>
+//               </div>
+//             )
+//           }
+//         />
+//       )}
+
+//       {/* Header with Count, Search, and Filters */}
+//       <div className="flex flex-col gap-4 p-6">
+//         {/* Title and Count */}
+//         <div className="flex items-center space-x-2">
+//           <h2 className="text-lg font-medium text-gray-800">Accepted Requests ({totalItems})</h2>
+//         </div>
+
+//         {/* Filters Row - REORDERED */}
+//         <div className="flex flex-col md:flex-row justify-between gap-4 w-full">
+//             {/* Left Group - Search and Sitio Filter */}
+//             <div className="flex flex-col md:flex-row gap-4 flex-1 max-w-3xl">
+//               {/* Search Input */}
+//               <div className="relative flex-1 max-w-[500px]">
+//                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+//                 <Input
+//                   placeholder="Search..."
+//                   className="pl-10 bg-white w-full"
+//                   value={searchQuery}
+//                   onChange={(e) => setSearchQuery(e.target.value)}
+//                 />
+//               </div>
+
+//               {/* Sitio Filter */}
+//               <div className="w-full md:w-[250px]">
+//                 <SelectLayout
+//                   className="w-full bg-white"
+//                   placeholder="Filter by Sitio"
+//                   options={sitioOptions}
+//                   value={selectedSitio}
+//                   label=""
+//                   onChange={(value) => setSelectedSitio(value)}
+//                 />
+//               </div>
+//             </div>
+
+//             {/* Right Group - Page Size Control */}
+//             <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+//               <span className="text-sm whitespace-nowrap">Show</span>
+//               <Select 
+//                 value={pageSize.toString()} 
+//                 onValueChange={(value) => {
+//                   setPageSize(Number.parseInt(value))
+//                   setCurrentPage(1)
+//                 }}
+//               >
+//                 <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+//                   <SelectValue />
+//                 </SelectTrigger>
+//                 <SelectContent>
+//                   <SelectItem value="5">5</SelectItem>
+//                   <SelectItem value="10">10</SelectItem>
+//                   <SelectItem value="25">25</SelectItem>
+//                   <SelectItem value="50">50</SelectItem>
+//                   <SelectItem value="100">100</SelectItem>
+//                 </SelectContent>
+//               </Select>
+//               <span className="text-sm whitespace-nowrap">entries</span>
+//             </div>
+//         </div>
+//       </div>
+
+//       {/* Cards Container */}
+//       <div className="p-6 pt-0">
+//         {totalItems === 0 ? (
+//           <div className="text-center py-12">
+//             <p className="text-gray-500">No accepted requests found matching your criteria.</p>
+//           </div>
+//         ) : (
+//           <>
+           
+//             <div className="space-y-3">
+//                 <DataTable columns={columns} data={paginatedData}/>
+//             </div>
+//             {/* Pagination Footer */}
+//             <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4 mt-6">
+//               <p className="text-gray-600">
+//                 Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} entries
+//               </p>
+//               {totalItems > 0 && (
+//                 <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+//               )}
+//             </div>
+//           </>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }
+
+
+import { Search, ChevronRight, ArrowUpDown } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
-import { formatTime } from "@/helpers/timeFormatter"
-import EditAcceptPickupRequest from "../assignment-edit-form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
 import { useGetGarbageAcceptRequest, type GarbageRequestAccept } from "../queries/GarbageRequestFetchQueries"
@@ -396,8 +744,8 @@ import { ColumnDef } from "@tanstack/react-table"
 
 export default function AcceptedTable() {
   const { data: acceptedReqData = [], isLoading } = useGetGarbageAcceptRequest()
-  const [selectedAssignment, setSelectedAssignment] = useState<GarbageRequestAccept | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const [viewDetailsRowId, setViewDetailsRowId] = useState<string | null>(null)
+
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSitio, setSelectedSitio] = useState("0")
   const [pageSize, setPageSize] = React.useState<number>(10)
@@ -437,107 +785,111 @@ export default function AcceptedTable() {
     setCurrentPage(1)
   }, [searchQuery, selectedSitio])
 
-  const columns: ColumnDef<GarbageRequestAccept>[] = [
-      {
-          accessorKey: "garb_id",
-          header: ({ column }) => (
-              <div
-                  className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              >
-                  Request No.
-                  <ArrowUpDown size={14} />
-              </div>
-          ),
-          cell: ({ row }) => (
-            <div>
-              <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
-                <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
-                  {row.original.garb_id}
-                </p>
-              </div>
-            </div>
-          )
-      },
-      {
-          accessorKey: "garb_created_at",
-          header: ({ column }) => (
-              <div
-                  className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              >
-                  Date Requested
-                  <ArrowUpDown size={14} />
-              </div>
-          ),
-          cell: ({ row }) => (
-              <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
-          )
-      },
-      {
-          accessorKey: "garb_requester",
-          header: "Requester",
-      },
-      {
-          accessorKey: "sitio_name",
-          header: "Sitio"
-      },
-        {
-          accessorKey: "garb_waste_type",
-          header: "Waste Type"
-      },
-      {
-        accessorKey: "",
-        header: "   ",
-          cell: ({ row }) => {
-              return (
-                  <DialogLayout
-                      className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
-                      trigger={
-                          <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
-                              <span className="text-sm font-medium group-hover:text-primary">View</span>
-                              <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
-                                  <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
-                              </div>
-                          </Button>
-                      }
-                      title={`Garbage Pickup Request No. ${row.original.garb_id}`}
-                      description="Full details of the request filed."
-                      mainContent={
-                        <div className="flex flex-col h-full overflow-y-hidden">
-                              <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
-                                  <ViewGarbageRequestDetails
-                                      garb_id = {row.original.garb_id}
-                                      garb_requester={row.original.garb_requester}
-                                      garb_location={row.original.garb_location}
-                                      garb_created_at={row.original.garb_created_at}
-                                      // garb_pref_date={row.original.garb_pref_date}
-                                      // garb_pref_time = {row.original.garb_pref_time}
-                                      garb_additional_notes={row.original.garb_additional_notes}
-                                      file_url={row.original.file_url}
-                                      sitio_name={row.original.sitio_name}
-                                      garb_waste_type = {row.original.garb_waste_type}
-                                  />
-                              </div>
-                        </div>
-                      }
-                      // isOpen={editingRowId == row.original.sr_id}
-                      // onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
-                  />
-              );
-          },
-      }
-  ];
-
-  const handleViewAssignment = (assignment: GarbageRequestAccept) => {
-    setSelectedAssignment(assignment)
-    setIsEditing(false)
-  }
-
   const handleEditSuccess = () => {
-    setIsEditing(false)
-    setSelectedAssignment(null)
+    setViewDetailsRowId(null) // Close the dialog on successful edit
   }
+
+  const columns: ColumnDef<GarbageRequestAccept>[] = [
+    {
+      accessorKey: "garb_id",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div>
+          <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
+            <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
+              {row.original.garb_id}
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "garb_created_at",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
+      )
+    },
+    {
+      accessorKey: "garb_requester",
+      header: "Requester",
+    },
+    {
+      accessorKey: "sitio_name",
+      header: "Sitio"
+    },
+    {
+      accessorKey: "garb_waste_type",
+      header: "Waste Type"
+    },
+    {
+      accessorKey: "",
+      header: "   ",
+      cell: ({ row }) => {
+        return (
+          <DialogLayout
+            className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
+            trigger={
+              <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
+                <span className="text-sm font-medium group-hover:text-primary">View</span>
+                <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+                  <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+                </div>
+              </Button>
+            }
+            title={`Garbage Pickup Request No. ${row.original.garb_id}`}
+            description="Full details of the request filed."
+            mainContent={
+              <div className="flex flex-col h-full overflow-y-hidden">
+                <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
+                  <ViewGarbageRequestDetails
+                    garb_id={row.original.garb_id}
+                    garb_requester={row.original.garb_requester}
+                    garb_location={row.original.garb_location}
+                    garb_created_at={row.original.garb_created_at}
+                    garb_pref_date={row.original.garb_pref_date}
+                    garb_pref_time={row.original.garb_pref_time}
+                    garb_additional_notes={row.original.garb_additional_notes}
+                    file_url={row.original.file_url}
+                    sitio_name={row.original.sitio_name}
+                    garb_waste_type={row.original.garb_waste_type}
+                    enableAssignmentEditing={true}
+                    pickup_assignment_id={row.original.pickup_assignment_id || ""}
+                    assignment_collector_ids={row.original.assignment_collector_ids || []}
+                    driver_id={row.original.driver_id || ''}
+                    truck_id = {row.original.truck_id || ''}
+                    collector_ids={row.original.collector_ids || []}
+                    assignment_info={row.original.assignment_info || {}}
+                    onEditSuccess={handleEditSuccess}
+                    staff_name = {row.original.staff_name}
+                    dec_date={row.original.dec_date}
+                  />
+                </div>
+              </div>
+            }
+            isOpen={viewDetailsRowId === row.original.garb_id}
+            onOpenChange={(open) => setViewDetailsRowId(open ? row.original.garb_id : null)}
+          />
+        );
+      },
+    }
+  ];
 
   if (isLoading) {
     return (
@@ -556,86 +908,6 @@ export default function AcceptedTable() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
-      {selectedAssignment && (
-        <DialogLayout
-          isOpen={!!selectedAssignment}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedAssignment(null)
-              setIsEditing(false)
-            }
-          }}
-          title={isEditing ? "Edit Pickup Assignment" : "Pickup Assignment and Schedule Details"}
-          description={isEditing ? "" : "Detailed information about the garbage pickup assignment"}
-          mainContent={
-            isEditing ? (
-              <EditAcceptPickupRequest
-                pick_id={selectedAssignment.pickup_assignment_id ?? ""}
-                acl_id={selectedAssignment.assignment_collector_ids ?? []}
-                onSuccess={handleEditSuccess}
-                assignment={{
-                  driver: selectedAssignment.driver_id ?? undefined,
-                  truck: selectedAssignment.truck_id ?? undefined,
-                  pick_date: selectedAssignment.assignment_info?.pick_date,
-                  pick_time: selectedAssignment.assignment_info?.pick_time,
-                  collectors: selectedAssignment.collector_ids,
-                }}
-              />
-            ) : (
-              <div className="flex flex-col gap-4 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border-b pb-2">
-                    <Label className="text-sm font-medium text-gray-500">Driver</Label>
-                    <p className="font-sm">{selectedAssignment.assignment_info?.driver || "Not assigned"}</p>
-                  </div>
-                  <div className="border-b pb-2">
-                    <Label className="text-sm font-medium text-gray-500">Truck</Label>
-                    <p className="font-sm">{selectedAssignment.assignment_info?.truck || "Not assigned"}</p>
-                  </div>
-                  <div className="border-b pb-2">
-                    <Label className="text-sm font-medium text-gray-500">Scheduled Date</Label>
-                    <p className="font-sm">{selectedAssignment.assignment_info?.pick_date || "Not scheduled"}</p>
-                  </div>
-                  <div className="border-b pb-2">
-                    <Label className="text-sm font-medium text-gray-500">Scheduled Time</Label>
-                    <p className="font-sm">
-                      {selectedAssignment.assignment_info?.pick_time
-                        ? formatTime(selectedAssignment.assignment_info.pick_time)
-                        : "Not scheduled"}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <Label className="text-sm font-medium text-gray-500">Collectors</Label>
-                  <div className="mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
-                    {selectedAssignment.assignment_info?.collectors?.length ? (
-                      <ul className="list-disc pl-5 space-y-1">
-                        {selectedAssignment.assignment_info.collectors.map((collector, index) => (
-                          <li key={index} className="font-sm py-1">
-                            {collector}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="font-sm text-center py-2">No collectors assigned</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Pen size={16} />
-                    Edit Assignment
-                  </Button>
-                </div>
-              </div>
-            )
-          }
-        />
-      )}
-
       {/* Header with Count, Search, and Filters */}
       <div className="flex flex-col gap-4 p-6">
         {/* Title and Count */}
@@ -643,57 +915,57 @@ export default function AcceptedTable() {
           <h2 className="text-lg font-medium text-gray-800">Accepted Requests ({totalItems})</h2>
         </div>
 
-        {/* Filters Row - REORDERED */}
+        {/* Filters Row */}
         <div className="flex flex-col md:flex-row justify-between gap-4 w-full">
-            {/* Left Group - Search and Sitio Filter */}
-            <div className="flex flex-col md:flex-row gap-4 flex-1 max-w-3xl">
-              {/* Search Input */}
-              <div className="relative flex-1 max-w-[500px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 bg-white w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* Sitio Filter */}
-              <div className="w-full md:w-[250px]">
-                <SelectLayout
-                  className="w-full bg-white"
-                  placeholder="Filter by Sitio"
-                  options={sitioOptions}
-                  value={selectedSitio}
-                  label=""
-                  onChange={(value) => setSelectedSitio(value)}
-                />
-              </div>
+          {/* Left Group - Search and Sitio Filter */}
+          <div className="flex flex-col md:flex-row gap-4 flex-1 max-w-3xl">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-[500px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+              <Input
+                placeholder="Search..."
+                className="pl-10 bg-white w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
 
-            {/* Right Group - Page Size Control */}
-            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-              <span className="text-sm whitespace-nowrap">Show</span>
-              <Select 
-                value={pageSize.toString()} 
-                onValueChange={(value) => {
-                  setPageSize(Number.parseInt(value))
-                  setCurrentPage(1)
-                }}
-              >
-                <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm whitespace-nowrap">entries</span>
+            {/* Sitio Filter */}
+            <div className="w-full md:w-[250px]">
+              <SelectLayout
+                className="w-full bg-white"
+                placeholder="Filter by Sitio"
+                options={sitioOptions}
+                value={selectedSitio}
+                label=""
+                onChange={(value) => setSelectedSitio(value)}
+              />
             </div>
+          </div>
+
+          {/* Right Group - Page Size Control */}
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            <span className="text-sm whitespace-nowrap">Show</span>
+            <Select 
+              value={pageSize.toString()} 
+              onValueChange={(value) => {
+                setPageSize(Number.parseInt(value))
+                setCurrentPage(1)
+              }}
+            >
+              <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm whitespace-nowrap">entries</span>
+          </div>
         </div>
       </div>
 
@@ -705,10 +977,10 @@ export default function AcceptedTable() {
           </div>
         ) : (
           <>
-           
             <div className="space-y-3">
-                <DataTable columns={columns} data={paginatedData}/>
+              <DataTable columns={columns} data={paginatedData}/>
             </div>
+            
             {/* Pagination Footer */}
             <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4 mt-6">
               <p className="text-gray-600">

@@ -128,6 +128,8 @@ export type GarbageRequestAccept = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_time: string;
+  garb_pref_date: string;
   garb_additional_notes: string; 
   dec_date: string;
   truck_id: string | null;
@@ -135,7 +137,7 @@ export type GarbageRequestAccept = {
   collector_ids?: string[];
   pickup_assignment_id?: string | null;
   assignment_collector_ids?: string[];
-  assignment_info?: {
+  assignment_info: {
     driver?: string;
     collectors?: string[];
     pick_time?: string;

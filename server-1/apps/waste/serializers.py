@@ -557,6 +557,8 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             'garb_created_at',
             'garb_requester',
             'garb_additional_notes',
+            'garb_pref_time',
+            'garb_pref_date',
             'truck_id',
             'driver_id',
             'collector_ids',
