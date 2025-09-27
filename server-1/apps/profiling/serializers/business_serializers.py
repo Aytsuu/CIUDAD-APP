@@ -3,8 +3,9 @@ from ..models import *
 from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
-from utils.supabase_client import supabase, upload_to_storage, remove_from_storage
+from utils.supabase_client import upload_to_storage, remove_from_storage
 from datetime import datetime
+from ..utils import *
 import logging
 
 logger = logging.getLogger(__name__)
@@ -167,6 +168,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
         if per:
           br = BusinessRespondent.objects.create(
+            br_id=generate_busrespondent_no(),
             br_lname=per.get("per_lname", None),
             br_fname=per.get("per_fname", None),
             br_mname=per.get("per_mname", None),
@@ -177,13 +179,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
           )
 
         # Handle respondent/rp/br logic
-        business_instance = self._create_business_instance(
+        business_instance = self.create_business_instance(
             validated_data, rp, br
         )
 
         # Handle file uploads
         if create_files:
-            self._upload_files(business_instance, create_files)
+            self.upload_files(business_instance, create_files)
 
         return business_instance
 
@@ -191,19 +193,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         logger.error(f"Business creation failed: {str(e)}")
         raise serializers.ValidationError(str(e))
 
-  def _create_business_instance(self, validated_data, rp, br):
-      business = Business(
-        rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-        br=BusinessRespondent.objects.get(br_id=br.br_id) if br else None,
-        bus_date_verified=date.today(),
-        **validated_data
-      )
+  def create_business_instance(self, validated_data, rp, br):
+    business = Business(
+      bus_id=generate_business_no(),
+      rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
+      br=BusinessRespondent.objects.get(br_id=br.br_id) if br else None,
+      bus_date_verified=date.today(),
+      **validated_data
+    )
 
-      business._history_user = validated_data.get('staff', None)
-      business.save()
-      return business
+    business._history_user = validated_data.get('staff', None)
+    business.save()
+    return business
   
-  def _upload_files(self, business_instance, files):
+  def upload_files(self, business_instance, files):
       business_files = []
       for file_data in files:
         folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"

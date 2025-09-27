@@ -11,8 +11,8 @@ import { formatCurrency } from "@/helpers/currencyFormat";
 export const activeColumns: ColumnDef<BusinessRecord>[] = [
   {
     accessorKey: "bus_id",
-    header: "No.",
-    size: 50
+    header: "Business ID",
+    size: 100
   },
   {
     accessorKey: "bus_name",
@@ -136,8 +136,8 @@ export const pendingColumns: ColumnDef<BusinessRecord>[] = [
 export const respondentColumns: ColumnDef<BusinessRespondent>[] = [
   {
     accessorKey: "br_id",
-    header: "No.",
-    size: 60
+    header: "Respondent ID",
+    size: 200
   },
   {
     accessorKey: "br_lname",

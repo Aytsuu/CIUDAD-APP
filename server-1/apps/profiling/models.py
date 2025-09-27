@@ -197,7 +197,7 @@ class RequestRegistrationComposition(AbstractModels):
         db_table = 'request_registration_composition'
 
 class BusinessRespondent(AbstractModels):
-    br_id = models.BigAutoField(primary_key=True)
+    br_id = models.CharField(max_length=100, primary_key=True)
     br_date_registered = models.DateField(default=date.today)
     br_lname = models.CharField(max_length=50)
     br_fname = models.CharField(max_length=50)
@@ -211,7 +211,7 @@ class BusinessRespondent(AbstractModels):
         db_table = 'business_respondent'
 
 class Business(AbstractModels):
-    bus_id = models.BigAutoField(primary_key=True)
+    bus_id = models.CharField(max_length=100,primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
     bus_location = models.TextField()

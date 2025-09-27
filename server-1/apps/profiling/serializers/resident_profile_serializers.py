@@ -7,6 +7,7 @@ from ..serializers.address_serializers import *
 from apps.account.serializers import UserAccountSerializer
 from apps.administration.models import Staff
 from datetime import datetime
+from ..utils import *
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -111,7 +112,7 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
 
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
-            rp_id = self.generate_resident_no(),
+            rp_id = generate_resident_no(),
             per = personal,
             staff = staff
         )
@@ -124,18 +125,6 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             'per': PersonalWithHistorySerializer(instance.per).data,
             'staff': instance.staff_id,
         }
-
-    def generate_resident_no(self):
-        next_val = ResidentProfile.objects.count() + 1
-        date = datetime.now()
-        year = str(date.year - 2000)
-        month = str(date.month).zfill(2)
-        day = str(date.day).zfill(2)
-
-        formatted = f"{next_val:05d}"
-        resident_id = f"{formatted}{year}{month}{day}"
-        
-        return resident_id
 
 class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_id = serializers.IntegerField(source='per.per_id')
