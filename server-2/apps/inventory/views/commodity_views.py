@@ -16,10 +16,25 @@ from pagination import StandardResultsPagination
 import re
 
 
-
 class CommodityListView(generics.ListCreateAPIView):
-    serializer_class=CommodityListSerializers
-    queryset=CommodityList.objects.all()
+    serializer_class = CommodityListSerializers
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = CommodityList.objects.all()
+        
+        # Add search functionality
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(com_name__icontains=search_query) |
+                models.Q(com_id__icontains=search_query) |
+                models.Q(user_type__icontains=search_query) |
+                models.Q(gender_type__icontains=search_query)
+            )
+        
+        return queryset.order_by('com_name')
+    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 class CommodityCountView(APIView):

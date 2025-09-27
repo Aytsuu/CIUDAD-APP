@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getConsultationHistory, getMedicalRecord, getPreviousBMI,getMedConPHHistory } from "../restful-api/get";
 
-export const useConsultationHistory = (patientId: string, page: number, pageSize: number) => {
+export const useConsultationHistory = (patientId?: string, page?: number, pageSize?: number, searchQuery?: string) => {
   return useQuery<any>({
-    queryKey: ["consultationHistory", patientId, page, pageSize],
-    queryFn: () => getConsultationHistory(patientId, page, pageSize),
+    queryKey: ["consultationHistory", patientId, page, pageSize, searchQuery],
+    queryFn: () => getConsultationHistory(patientId, page, pageSize, searchQuery),
     enabled: !!patientId
   });
 };

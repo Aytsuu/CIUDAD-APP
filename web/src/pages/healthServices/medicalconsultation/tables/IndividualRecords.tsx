@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Loader2, ChevronLeft, HeartPulse, Calendar } from "lucide-react";
+import { ArrowUpDown, Loader2, ChevronLeft, HeartPulse, Calendar, Search } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -14,10 +14,9 @@ import { Patient } from "../../restful-api-patient/type";
 import { useConsultationHistory } from "../queries/fetchQueries";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Badge } from "@/components/ui/badge";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
-import { useAuth } from "@/context/AuthContext";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { getServiceTypeColor } from "./servicetype-badge";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
@@ -25,7 +24,7 @@ export default function InvMedicalConRecords() {
   const { patientData } = params || {};
 
   const navigate = useNavigate();
-  const [searchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
@@ -36,13 +35,12 @@ export default function InvMedicalConRecords() {
     }
   }, [patientData]);
 
-  // Use the consultation history hook with pagination
-  const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
+  // Use the consultation history hook with search
+  const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize, searchQuery);
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
 
   const medicalRecords = useMemo(() => {
     console.log("Medical Records Response:", medicalRecordsResponse);
-
     return medicalRecordsResponse?.results || medicalRecordsResponse || [];
   }, [medicalRecordsResponse]);
 
@@ -76,25 +74,18 @@ export default function InvMedicalConRecords() {
       id: history.medhist_id || Math.random().toString(36).substring(2, 9),
       illness: history.illness_name || history.ill?.illname || "N/A",
       ill_date: history.ill_date ? String(history.ill_date) : "Not specified",
+      patrec_type: history?.patrec_type || "N/A",
       isError: false
     }));
   }, [medHistoryData, isMedHistoryLoading, isMedHistoryError, medHistoryError]);
 
-  // Client-side filtering for search
-  const filteredData = useMemo(() => {
-    const formattedData = medicalRecords;
-    if (!searchQuery) return formattedData;
+  // Handle search input change with debounce
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
 
-    return formattedData.filter((record: any) => {
-      const searchText = `${record.medrec_id} 
-        ${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} 
-        ${record.bmi_details.bmi} 
-        ${record.created_at}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [searchQuery, medicalRecords]);
-
-  // Updated columns call - pass all medical records
+  // Updated columns call
   const columns = useMemo(() => {
     return getMedicalConsultationColumns(patientData);
   }, [medicalRecords, patientData]);
@@ -130,73 +121,111 @@ export default function InvMedicalConRecords() {
         </div>
       )}
 
-      <div className="flex w-full flex-col md:flex-row gap-4">
-        {/* Medical History Section */}
-        <div className="mb-6 w-full md:w-1/2">
-          <div className="bg-white  rounded-lg overflow-hidden">
-            {isMedHistoryLoading ? (
-              <div className="p-4 text-center">Loading medical history...</div>
-            ) : isMedHistoryError ? (
-              <div className="p-4">
-                <div className="flex items-center gap-2 text-red-500">
-                  <AlertCircle className="h-5 w-5" />
-                  <span>Failed to load medical history</span>
-                </div>
-                {process.env.NODE_ENV === "development" && <p className="text-xs text-gray-500 mt-2">Error: {medHistoryError.message}</p>}
+      {/* Medical History Section */}
+      <div className="mb-6 w-full">
+        <div className="bg-white rounded-lg overflow-hidden">
+          {isMedHistoryLoading ? (
+            <div className="p-4 text-center">Loading medical history...</div>
+          ) : isMedHistoryError ? (
+            <div className="p-4">
+              <div className="flex items-center gap-2 text-red-500">
+                <AlertCircle className="h-5 w-5" />
+                <span>Failed to load medical history</span>
               </div>
-            ) : (
-              <CardLayout
-                title={
-                  <div className="flex items-center gap-2 text-red-500">
-                    <HeartPulse className="h-5 w-5 text-red-500" />
-                    <span className="text-lg font-semibold text-red-500">Medical History</span>
-                  </div>
-                }
-                content={
-                  <div className="flex flex-col gap-4">
-                    {getMedicalHistoryCardsData().length > 0 ? (
-                      getMedicalHistoryCardsData().map((history: any) => (
-                        <div key={history.id} className={`border rounded-lg p-4 ${history.isError ? "bg-red-50 border-red-200" : ""}`}>
-                          <div className="flex justify-between items-start">
-                            <h3 className={`font-medium ${history.isError ? "text-red-600" : "text-gray-900"}`}>{history.illness}</h3>
-                            {!history.isError && (
-                              <Badge variant="outline" className="text-gray-600">
-                                <Calendar className="h-4 w-4 mr-1" />
-                                Diagnosed in {history.ill_date}
-                              </Badge>
-                            )}
+              {process.env.NODE_ENV === "development" && <p className="text-xs text-gray-500 mt-2">Error: {medHistoryError.message}</p>}
+            </div>
+          ) : (
+            <CardLayout
+              title={
+                <div className="flex items-center gap-2 text-sky-600">
+                  <HeartPulse className="h-5 w-5 text-sky-500" />
+                  <span className="text-lg font-semibold text-sky-500">Medical History</span>
+                </div>
+              }
+              cardClassName="shadow-lg rounded-md"
+              content={
+                <div className="overflow-y-auto max-h-64 w-full space-y-1.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+                  {getMedicalHistoryCardsData().length > 0 ? (
+                    getMedicalHistoryCardsData().map((history: any) => {
+                      const serviceColor = getServiceTypeColor(history.patrec_type);
+
+                      return (
+                        <div key={history.id} className={`border rounded-md p-3 w-full ${history.isError ? "bg-red-50 border-red-200" : "bg-gray-50/50 border-gray-200"}`}>
+                          <div className="space-y-1.5">
+                            {/* Illness Name */}
+                            <h3 className={`font-medium text-sm ${history.isError ? "text-red-600" : "text-gray-800"}`}>{history.illness}</h3>
+
+                            {/* Meta information */}
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-600">
+                                Service: <span className={`font-medium px-2 py-0.5 rounded-full text-xs ${history.isError ? "text-red-600 bg-red-100" : serviceColor}`}>{history.patrec_type}</span>
+                              </span>
+                              {!history.isError && (
+                                <span className="flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {history.ill_date}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="col-span-full text-center text-gray-500 py-4">No medical history records found</div>
-                    )}
-                  </div>
-                }
-              />
-            )}
-          </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-gray-500 py-6 text-sm">No medical history records found</div>
+                  )}
+                </div>
+              }
+            />
+          )}
         </div>
       </div>
-      {/* Medical Consultations Section */}
-      <div className="w-full lg:flex justify-between items-center mb-4 gap-6">
-        <div className="flex gap-2 items-center p-2">
-          <Syringe className="h-6 w-6 text-blue" />
-          <p className="text-sm font-medium text-gray-800 pr-2">Total Medical Consultations</p>
-          <p className="text-2xl font-bold text-gray-900">{isMedicalRecordsLoading ? "..." : totalCount}</p>
-        </div>
 
-        <ProtectedComponentButton exclude={["DOCTOR"]}>
-          <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>
-            <Link to="/services/medical-consultation/form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
-              New Consultation Record
-            </Link>
-          </Button>
-        </ProtectedComponentButton>
+
+{/* Medical Consultations Section */}
+<div className="w-full lg:flex justify-between items-center px-4 gap-6 mt-4 bg-white py-4 border">
+  <div className="flex gap-2 items-center p-2">
+    <div className="flex items-center justify-center">
+      <Syringe className="h-5 w-5 text-blue-600" />
+    </div>
+    <div>
+      <p className="text-sm font-medium text-gray-800 ">records</p>
+    </div>
+    <p className="text-sm font-bold text-gray-900">{isMedicalRecordsLoading ? "..." : totalCount}</p>
+  </div>
+
+  <ProtectedComponentButton exclude={["DOCTOR"]}>
+    <div className="flex flex-1 justify-between items-center gap-2">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+        <Input 
+          placeholder="Search by date, diagnosis, assessment, or findings..." 
+          className="pl-10 bg-white w-full" 
+          value={searchQuery} 
+          onChange={handleSearchChange} 
+        />
       </div>
+      <div>
+        <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>
+          <Link
+            to="/services/medical-consultation/form"
+            state={{
+              params: {
+                mode: "fromindivrecord",
+                patientData: patientData
+              }
+            }}
+          >
+            New Consultation Record
+          </Link>
+        </Button>
+      </div>
+    </div>
+  </ProtectedComponentButton>
+</div>
 
       <div className="h-full w-full rounded-md">
-        <div className="w-full sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+        <div className="w-full sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
@@ -206,7 +235,7 @@ export default function InvMedicalConRecords() {
               onChange={(e) => {
                 const value = +e.target.value;
                 setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1); // Reset to first page when changing page size
+                setCurrentPage(1);
               }}
               min="1"
               disabled={isMedicalRecordsLoading || isMedicalRecordsError}
@@ -215,12 +244,7 @@ export default function InvMedicalConRecords() {
           </div>
           <div>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" aria-label="Export data" disabled={isMedicalRecordsLoading || isMedicalRecordsError || filteredData.length === 0}>
-                  <ArrowUpDown className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild></DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem>Export as CSV</DropdownMenuItem>
                 <DropdownMenuItem>Export as Excel</DropdownMenuItem>
@@ -230,12 +254,12 @@ export default function InvMedicalConRecords() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
+        <div className="bg-white w-full overflow-x-auto border">
           {isMedicalRecordsLoading ? (
             <>
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading medicine records...</span>
+                <span className="ml-2">Loading medical records...</span>
               </div>
             </>
           ) : isMedicalRecordsError ? (
@@ -244,7 +268,7 @@ export default function InvMedicalConRecords() {
               <span>Failed to load medical records</span>
             </div>
           ) : (
-            <DataTable columns={columns} data={filteredData} />
+            <DataTable columns={columns} data={medicalRecords} />
           )}
         </div>
 

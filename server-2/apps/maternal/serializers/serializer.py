@@ -17,10 +17,11 @@ from utils.supabase_client import upload_to_storage
 # serializer for models not in maternal
 class MedicalHistorySerializer(serializers.ModelSerializer):
     illness_name = serializers.CharField(source='ill.illname', read_only=True)
+    patrec_type = serializers.CharField(source='patrec.patrec_type', read_only=True)  # Add this line
+
     class Meta:
         model = MedicalHistory
-        fields = ['medhist_id', 'ill_date', 'ill', 'illness_name', 'created_at'] 
-
+        fields = '__all__'
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalHistory

@@ -17,18 +17,23 @@ class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
         
     
+# serializers.py
 class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
     bmi_details = BodyMeasurementSerializer(source='bm', read_only=True)
     find_details = FindingSerializer(source='find', read_only=True)
     patrec_details = PatientMedConsultationRecordSerializer(source='patrec.pat_id', read_only=True)
-
     staff_details = StaffMinimalSerializer(source='staff', read_only=True)
+    
+    # Add formatted date for easier searching
+    formatted_date = serializers.SerializerMethodField()
     
     class Meta:
         model = MedicalConsultation_Record
         fields = '__all__'
     
+    def get_formatted_date(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d') if obj.created_at else None
     
 # serializers.py
 # serializers.py

@@ -321,6 +321,7 @@ class MedicalHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     remarks = models.TextField(default="", blank=True, null=True)
     is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
+
     class Meta:
         db_table = 'medical_history'   
 
@@ -338,9 +339,8 @@ class Diagnosis(models.Model):
     class Meta:
         db_table = 'diagnosis'   
      
-# Section of the physical exam (e.g., "Skin/Extremities", "HEENT")
 class PESection(models.Model):
-    pe_section_id = models.BigAutoField(primary_key=True)
+    pe_section_id = models.BigAutoField(primary_key=True)  
     title = models.CharField(max_length=255)  # Display name
 
     class Meta:

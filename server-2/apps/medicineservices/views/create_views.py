@@ -337,6 +337,7 @@ class CreateChildServiceMedicineRecordView(generics.CreateAPIView):
             raise Exception(f"Medicine record with ID {medrec_id} not found")
             
 
+
 class CreateMedicineRequestAllocationAPIView(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -509,6 +510,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                 "error": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
             
+    
     
 #=========== MEDICINE REQUEST WEB PROCESSING --REQ THROUGH DOCTORS END =========
 class CreateMedicineRequestProcessingView(generics.ListCreateAPIView): 

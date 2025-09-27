@@ -91,7 +91,8 @@ export const getMedicalConsultationColumns = (patientData: any ): ColumnDef<any>
     cell: ({ row }) => {
       const navigate = useNavigate();
       return (
-        <ViewButton
+       <div className="flex justify-center">
+         <ViewButton
           onClick={() => {
             navigate("/services/medical-consultation/records/history", {
               state: {
@@ -99,7 +100,9 @@ export const getMedicalConsultationColumns = (patientData: any ): ColumnDef<any>
               }
             });
           }}
-        />
+          />
+       </div>
+     
       );
     }
   }

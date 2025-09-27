@@ -29,11 +29,16 @@ export function PendingFollowupsSection({ chrecId }: { chrecId: string }) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return "bg-green-100 text-green-800";
-      case 'pending': return "bg-orange-100 text-orange-800";
-      case 'cancelled': return "bg-red-100 text-red-800";
-      case 'rescheduled': return "bg-blue-100 text-blue-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-orange-100 text-orange-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      case "rescheduled":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -47,12 +52,7 @@ export function PendingFollowupsSection({ chrecId }: { chrecId: string }) {
   }
 
   if (!pendingFollowupsData?.pending_followups?.length) {
-    return (
-      <div className="text-center p-4 border rounded-lg bg-gray-50">
-        <CheckCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-gray-600">No pending followups</p>
-      </div>
-    );
+    return <></>;
   }
 
   return (
@@ -74,9 +74,7 @@ export function PendingFollowupsSection({ chrecId }: { chrecId: string }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
                   <h4 className="font-medium text-gray-900 truncate">{followup.followv_description}</h4>
-                  <Badge className={`text-xs ${getStatusColor(followup.followv_status)}`}>
-                    {followup.followv_status}
-                  </Badge>
+                  <Badge className={`text-xs ${getStatusColor(followup.followv_status)}`}>{followup.followv_status}</Badge>
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
@@ -84,7 +82,7 @@ export function PendingFollowupsSection({ chrecId }: { chrecId: string }) {
                     <Calendar className="h-4 w-4" />
                     <span>Due: {new Date(followup.followv_date).toLocaleDateString()}</span>
                   </div>
-{/*                   
+                  {/*                   
                   {followup.notes_count > 0 && (
                     <div className="flex items-center gap-1">
                       <FileText className="h-4 w-4" />
@@ -92,7 +90,7 @@ export function PendingFollowupsSection({ chrecId }: { chrecId: string }) {
                     </div>
                   )} */}
                 </div>
-{/* 
+                {/* 
                 {followup.child_health_notes.length > 0 && (
                   <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
                     <div className="text-gray-700 font-medium mb-1">Notes:</div>
@@ -109,11 +107,7 @@ export function PendingFollowupsSection({ chrecId }: { chrecId: string }) {
               </div>
 
               <div className="flex-shrink-0">
-                <Select 
-                  value={followup.followv_status} 
-                  onValueChange={(value) => handleStatusChange(followup.followv_id, value)} 
-                  disabled={completingFollowup === followup.followv_id}
-                >
+                <Select value={followup.followv_status} onValueChange={(value) => handleStatusChange(followup.followv_id, value)} disabled={completingFollowup === followup.followv_id}>
                   <SelectTrigger className="w-32 h-9">
                     <SelectValue />
                   </SelectTrigger>

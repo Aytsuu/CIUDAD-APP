@@ -5,10 +5,14 @@ import AllMedicineRecords from "./tables/AllMedicineRecords";
 import MedicineRequestMain from "./Request/Main";
 import { useAuth } from "@/context/AuthContext";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { useReportsCount } from "../count-return/count";
+
+
 export default function MainMedicine() {
   const [selectedView, setSelectedView] = useState("records");
   const [isMounted, setIsMounted] = useState(false);
   const { user } = useAuth();
+  const { data, isLoading } = useReportsCount();
 
   useEffect(() => {
     setIsMounted(true);
@@ -62,8 +66,19 @@ export default function MainMedicine() {
             </TabsTrigger>
             
             {/* Only show Requests tab if user has permission */}
-              <TabsTrigger value="requests" className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+              <TabsTrigger value="requests" className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative">
                 Medicine Requests
+                {isLoading ? (
+                  <span className="ml-2 text-xs font-semibold text-gray-500">
+                  .
+                  </span>
+                ) : (
+                  data?.data?.medrequest_count > 0 && (
+                  <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center absolute -top-1 -right-1">
+                  {data.data?.medrequest_count}
+                  </span>
+                  )
+                )}
               </TabsTrigger>
             
           </TabsList>

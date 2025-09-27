@@ -60,9 +60,7 @@ class MedicineRequestItem(models.Model):
     status = models.CharField(max_length=20, default='pending') #refered  or confirm
     is_archived = models.BooleanField(default=False)
     archive_reason = models.TextField(blank=True, null=True)  
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    
+    created_at = models.DateTimeField(auto_now_add=True)  
 
 
     def __str__(self):

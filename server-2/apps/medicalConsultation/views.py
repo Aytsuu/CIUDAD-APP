@@ -25,6 +25,7 @@ from apps.childhealthservices.serializers import ChildHealthHistoryFullSerialize
 from apps.inventory.models import MedicineInventory
 from pagination import *
 from apps.healthProfiling.models import *
+from apps.medicineservices.serializers import MedicineRequestItemSerializer
 
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
@@ -105,6 +106,8 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    
     
     
 #================== MEDICAL CONSULTAION FORWARDED TABLE==================
@@ -358,18 +361,18 @@ class CombinedHealthRecordsView(APIView):
         
         return {}
 
-# USE FOR ADDING MEDICAL RECORD
-class MedicalConsultationRecordView(generics.CreateAPIView):
-    serializer_class = MedicalConsultationRecordSerializer
-    queryset  =MedicalConsultation_Record.objects.all()
+# # USE FOR ADDING MEDICAL RECORD
+# class MedicalConsultationRecordView(generics.CreateAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     queryset  =MedicalConsultation_Record.objects.all()
     
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)
     
-class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
-    serializer_class = MedicalConsultationRecordSerializer
-    queryset = MedicalConsultation_Record.objects.all()
-    lookup_field = 'medrec_id'
+# class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     queryset = MedicalConsultation_Record.objects.all()
+#     lookup_field = 'medrec_id'
 
 
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
@@ -378,12 +381,25 @@ class ViewMedicalConsultationRecordView(generics.ListAPIView):
     
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
-        return MedicalConsultation_Record.objects.filter(
+        search_query = self.request.GET.get('search', '').strip()
+        
+        queryset = MedicalConsultation_Record.objects.filter(
             patrec__pat_id=pat_id,
             medrec_status='completed' 
         ).order_by('-created_at')
-
-
+        
+        # Add search functionality
+        if search_query:
+            queryset = queryset.filter(
+                Q(created_at__icontains=search_query) |
+                Q(find__assessment_summary__icontains=search_query) |
+                Q(find__subj_summary__icontains=search_query) |
+                Q(find__obj_summary__icontains=search_query) |
+                Q(find__plantreatment_summary__icontains=search_query) |
+                Q(medrec_chief_complaint__icontains=search_query)
+            )
+        
+        return queryset
 
 class PendingPatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
@@ -427,7 +443,6 @@ class PendingMedConCountView(APIView):
             .filter(status="check-up")
             .count()
         )
-        
         # Total count
         total_count = med_con_count + child_checkup_count
         
@@ -435,22 +450,24 @@ class PendingMedConCountView(APIView):
             "count": total_count
         })
     
-class MedicalConsultationTotalCountAPIView(APIView):
-    def get(self, request):
-        try:
-            # Count total unique medical consultation records
-            total_records = MedicalConsultation_Record.objects.count()
+    
+# class MedicalConsultationTotalCountAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             # Count total unique medical consultation records
+#             total_records = MedicalConsultation_Record.objects.count()
             
-            return Response({
-                'success': True,
-                'total_records': total_records
-            }, status=status.HTTP_200_OK)
+#             return Response({
+#                 'success': True,
+#                 'total_records': total_records
+#             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 #================================ CREATE STEP1
@@ -562,8 +579,6 @@ class CreateMedicalConsultationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-from apps.medicineservices.serializers import MedicineRequestItemSerializer
-
 # ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -611,7 +626,7 @@ class SoapFormSubmissionView(APIView):
                 # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
                     minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('medrec_qty', 0)
+                    requested_qty = medicine.get('medreqitem_qty', 0)
                     
                     # Update MedicineInventory with temporary deduction
                     if minv_id and requested_qty > 0:
@@ -733,8 +748,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
             if medicine_request_data and medicine_request_data.get("medicines"):
                 # Create MedicineRequest first
                 med_request_data = {
-                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
-                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'rp_id': medicine_request_data.get('rp_id'),  
+                    'pat_id': medicine_request_data.get('pat_id'), 
                     'status': 'pending',
                     'mode': medicine_request_data.get('mode', 'walk-in')
                 }

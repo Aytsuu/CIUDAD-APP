@@ -33,7 +33,11 @@ class ReportsCount(APIView):
             pregnancy_count = Pregnancy.objects.distinct().count()
             family_planning_count = FP_Record.objects.filter(patrec__patrec_type='Family Planning').distinct().count()
             animabites_count = AnimalBite_Referral.objects.count()
-        
+            medrequest_count = MedicineRequestItem.objects.filter(status='confirmed').distinct('medreq_id').count()
+            apprequest_count = MedicineRequest.objects.filter(
+                mode='app',
+                items__status='pending'
+            ).distinct().count()
         
             # Total count
             antigen_count =  vaccine_count + immunization_count
@@ -59,7 +63,9 @@ class ReportsCount(APIView):
                     'vaccination_records_count': vaccnerecord_count,
                     'pregnancy_count': pregnancy_count,
                     'family_planning_count': family_planning_count,
-                    'animal_bites_count': animabites_count
+                    'animal_bites_count': animabites_count,
+                    'medrequest_count': medrequest_count,
+                    'apprequest_count': apprequest_count
                     
                     
                 }

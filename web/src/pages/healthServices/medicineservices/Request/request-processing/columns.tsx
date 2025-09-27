@@ -39,18 +39,18 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
       </div>
     ),
     cell: ({ row }) => {
-      const { fullName, age, sex, contact } = getPatientDisplayInfo(row.original);
-      const patientId = row.original.pat_id_value || row.original.pat_id;
+      const { fullName, age, sex } = getPatientDisplayInfo(row.original);
+      // const patientId = row.original.pat_id_value || row.original.pat_id;
 
       return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
+        <div className="flex justify-centerw-full first-letter:px-2">
+          <div className="flex flex-col w-[200px] ">
             <div className="font-medium truncate">{fullName}</div>
             <div className="text-sm text-darkGray">
               {sex}, {age}
             </div>
-            <div className="text-sm text-darkGray">{contact}</div>
-            {patientId && <div className="text-xs text-blue-600">Patient ID: {patientId}</div>}
+            {/* <div className="text-sm text-darkGray">{contact}</div> */}
+            {/* {patientId && <div className="text-xs text-blue-600">Patient ID: {patientId}</div>} */}
             <div className="text-xs text-gray-500">Type: {row.original.pat_type || "N/A"}</div>
           </div>
         </div>
@@ -61,8 +61,8 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
     accessorKey: "address",
     header: "Address",
     cell: ({ row }) => (
-      <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.address?.full_address || "No address provided"}</div>
+      <div className="flex justify-center w-full px-4">
+        <div className="w-[300px] ">{row.original.address?.full_address || "No address provided"}</div>
       </div>
     )
   },
@@ -200,7 +200,7 @@ export const confirmedItemsColumns: ColumnDef<any>[] = [
     accessorKey: "quantity",
     header: "Quantity",
     cell: ({ row }) => <div className="min-w-[100px] px-3 py-2 text-center">{row.original.medreqitem_qty || 0}</div>
-  },
+  }
   // {
   //   id: "actions",
   //   header: "Actions",

@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Printer } from "lucide-react";
 import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
@@ -23,8 +23,23 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString("en-US", options);
 };
 
+// Tab component
+const TabButton = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+      active
+        ? "border-blue-600 text-blue-600"
+        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+    }`}
+  >
+    {children}
+  </button>
+);
+
 export default function CurrentConsultationCard({ consultation, patientData, className = "" }: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"medical" | "philhealth">("medical");
   const bhw = `${consultation.staff_details?.rp?.per?.per_fname || ""} ${consultation.staff_details?.rp?.per?.per_lname || ""} ${consultation.staff_details?.rp?.per?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
@@ -293,11 +308,14 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               display: flex;
               flex-direction: column;
             }
-            /* Hide print button */
+            /* Hide print button and tabs */
             .no-print {
               display: none;
             }
             button {
+              display: none;
+            }
+            .tabs-container {
               display: none;
             }
             /* Page breaks */
@@ -323,224 +341,275 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
     }, 250);
   };
 
-  return (
-    <div className={`bg-white ${className}`}>
-      {/* Print Button */}
+  // Medical Consultation Content
+  const MedicalConsultationContent = () => (
+    <div>
+      {/* Print Button - Only shown in medical consultation tab */}
       <div className="no-print mb-4 flex justify-end gap-2">
         <Button onClick={handlePrint} variant="outline" className="flex gap-2 py-2 px-4 rounded border border-zinc-400">
           <Printer /> Print
         </Button>
       </div>
 
+
+      <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 sm:mb-8 md:mb-10">PATIENT RECORD</h3>
+
+      <div className="space-y-6 sm:space-y-8">
+        {/* Patient Information Section */}
+        {/* Row 1: Name and Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm">Name:</span>
+            <div className="border-b border-black flex-1 min-w-0">
+              <span className="text-sm truncate">{` ${patientData?.personal_info?.per_lname} ${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_mname || ""} ${patientData?.personal_info?.per_suffix || ""}`}</span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm">Date:</span>
+            <div className="border-b border-black flex-1">
+              <span className="text-sm">{formatDate(consultation.created_at)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Age, Sex, and Date of Birth */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm">Age:</span>
+            <div className="border-b border-black flex-1">
+              <span className="text-sm">{patientData.personal_info.per_dob && consultation.created_at ? Math.floor((new Date(consultation.created_at).getTime() - new Date(patientData.personal_info.per_dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : "N/A"}</span>
+            </div>
+            <span className="font-bold text-black text-sm sm:ml-4">Sex:</span>
+            <div className="border-b border-black flex-1">
+              <span className="text-sm">{patientData.personal_info.per_sex}</span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm">Date of Birth:</span>
+            <div className="border-b border-black flex-1">
+              <span className="text-sm">{patientData.personal_info.per_dob}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Address and BHW Assigned */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm">Address:</span>
+            <div className="border-b border-black flex-1 min-w-0">
+              <span className="text-sm line-clamp-2">{patientData.addressFull}</span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm">BHW Assigned:</span>
+            <div className="border-b border-black flex-1">
+              <span className="text-sm">{bhw}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Vital Signs Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Left Column - BP, RR, HR, Temperature */}
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-baseline gap-2 flex-1">
+                <span className="font-bold text-black text-sm">BP:</span>
+                <div className="border-b border-black flex-1">
+                  <span className="text-sm">{consultation.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}</span>
+                </div>
+                <span className="text-black text-sm">mmHg</span>
+              </div>
+              <div className="flex items-baseline gap-2 flex-1">
+                <span className="font-bold text-black text-sm">RR:</span>
+                <div className="border-b border-black flex-1">
+                  <span className="text-sm">{consultation.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}</span>
+                </div>
+                <span className="text-black text-sm">cpm</span>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-baseline gap-2 flex-1">
+                <span className="font-bold text-black text-sm">HR:</span>
+                <div className="border-b border-black flex-1">
+                  <span className="text-sm">{consultation.vital_signs?.vital_pulse || "N/A"}</span>
+                </div>
+                <span className="text-black text-sm">bpm</span>
+              </div>
+              <div className="flex items-baseline gap-2 flex-1">
+                <span className="font-bold text-black text-sm">Temperature:</span>
+                <div className="border-b border-black flex-1">
+                  <span className="text-sm">{consultation.vital_signs?.vital_temp || "N/A"}</span>
+                </div>
+                <span className="text-black text-sm">°C</span>
+              </div>
+            </div>
+          </div>
+          {/* Right Column - WT, HT */}
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-baseline gap-2">
+              <span className="font-bold text-black text-sm">WT:</span>
+              <div className="border-b border-black flex-1">
+                <span className="text-sm">
+                  {parseFloat(consultation.bmi_details?.weight ?? "0")
+                    .toFixed(2)
+                    .replace(/\.00$/, "")}
+                </span>
+              </div>
+              <span className="text-black text-sm">kg</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-bold text-black text-sm">HT:</span>
+              <div className="border-b border-black flex-1">
+                <span className="text-sm">
+                  {parseFloat(consultation.bmi_details?.height ?? "0")
+                    .toFixed(2)
+                    .replace(/\.00$/, "")}
+                </span>
+              </div>
+              <span className="text-black text-sm">cm</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Chief Complaint */}
+        <div className="pt-2">
+          <div className="flex flex-col sm:flex-row items-baseline gap-2">
+            <span className="font-bold text-black text-sm sm:min-w-[120px]">Chief of Complaint:</span>
+            <div className="border-b border-black flex-1 min-w-0">
+              <span className="text-sm">{consultation.medrec_chief_complaint}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* History and Treatment Section */}
+        <div className="py-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2">
+            {/* History of Present Illness/Findings */}
+            <div className="border border-black py-4">
+              <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">History of Present Illness/Findings</h5>
+              <div className="space-y-3 px-3">
+                <div>
+                  <span className="font-bold text-black text-sm">Subjective Summary:</span>
+                  <div className="text-sm mt-1">{consultation.find_details?.subj_summary}</div>
+                </div>
+                <div>
+                  <span className="font-bold text-black text-sm">Objective Summary:</span>
+                  <div className="text-sm mt-1">
+                    {(() => {
+                      const lines = consultation.find_details?.obj_summary?.split("-") || [];
+                      const grouped: { [key: string]: string[] } = {};
+
+                      // Group by keyword (part before colon)
+                      lines.forEach((line: string) => {
+                        const trimmed = line.trim();
+                        if (trimmed) {
+                          const colonIndex = trimmed.indexOf(":");
+                          if (colonIndex > -1) {
+                            const keyword = trimmed.substring(0, colonIndex).trim();
+                            const value = trimmed.substring(colonIndex + 1).trim();
+                            if (!grouped[keyword]) {
+                              grouped[keyword] = [];
+                            }
+                            grouped[keyword].push(value);
+                          } else {
+                            // If no colon, treat as standalone item
+                            if (!grouped["Other"]) {
+                              grouped["Other"] = [];
+                            }
+                            grouped["Other"].push(trimmed);
+                          }
+                        }
+                      });
+
+                      // Render grouped items
+                      return Object.entries(grouped).map(([keyword, values], index) => <div key={index}>{keyword !== "Other" ? `${keyword}: ${values.join(", ")}` : values.join(", ")}</div>);
+                    })()}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-bold text-black text-sm">Diagnosis:</span>
+                  <div className="text-sm mt-1">
+                    {consultation.find_details?.assessment_summary?.split(",").map((item: any, index: any) => (
+                      <div key={index}>{item.trim()}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Plan/Treatment */}
+            <div className="border border-black py-4">
+              <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">Plan Treatment</h5>
+              <div className="space-y-2 px-3">
+                <div>
+                  <div className="text-sm mt-1">
+                    {consultation.find_details?.plantreatment_summary?.split("-").map((item: any, index: any) => (
+                      <div key={index}>{item.trim()}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // PhilHealth Content
+  const PhilHealthContent = () => (
+    <div>
+      <PhysicalExamTable 
+        consultation={consultation} 
+        patientData={patientData} 
+        examSections={examSections} 
+        isPhysicalExamLoading={isPhysicalExamLoading} 
+        phHistoryData={phHistoryData} 
+        isLoading={!phHistoryData} 
+        isError={false} 
+      />
+    </div>
+  );
+
+  return (
+    <div className={`bg-white ${className}`}>
+      {/* Tabs Navigation */}
+      <div className="tabs-container no-print border-b border-gray-200 mb-6">
+        <div className="flex space-x-4">
+          <TabButton 
+            active={activeTab === "medical"} 
+            onClick={() => setActiveTab("medical")}
+          >
+            Current Medical Consultation
+          </TabButton>
+          <TabButton 
+            active={activeTab === "philhealth"} 
+            onClick={() => setActiveTab("philhealth")}
+          >
+            PhilHealth
+          </TabButton>
+        </div>
+      </div>
+
       {/* Content to be printed */}
       <div ref={printRef}>
-        <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 sm:mb-8 md:mb-10">PATIENT RECORD</h3>
 
-        {/* Patient Information Section */}
-        <div className="space-y-6 sm:space-y-8">
-          {/* Row 1: Name and Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm">Name:</span>
-              <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm truncate">{` ${patientData?.personal_info?.per_lname} ${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_mname || ""} ${patientData?.personal_info?.per_suffix || ""}`}</span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm">Date:</span>
-              <div className="border-b border-black flex-1">
-                <span className="text-sm">{formatDate(consultation.created_at)}</span>
-              </div>
-            </div>
+        {/* Tab Content */}
+        <div className="print-section">
+          {activeTab === "medical" ? <MedicalConsultationContent /> : <PhilHealthContent />}
+        </div>
+
+        {/* Print version shows both sections */}
+        <div className="hidden print:block">
+          <div className="mb-8">
+            <h4 className="font-bold text-lg mb-4">Current Medical Consultation</h4>
+            <MedicalConsultationContent />
           </div>
-
-          {/* Row 2: Age, Sex, and Date of Birth */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm">Age:</span>
-              <div className="border-b border-black flex-1">
-                <span className="text-sm">{patientData.personal_info.per_dob && consultation.created_at ? Math.floor((new Date(consultation.created_at).getTime() - new Date(patientData.personal_info.per_dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : "N/A"}</span>
-              </div>
-              <span className="font-bold text-black text-sm sm:ml-4">Sex:</span>
-              <div className="border-b border-black flex-1">
-                <span className="text-sm">{patientData.personal_info.per_sex}</span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm">Date of Birth:</span>
-              <div className="border-b border-black flex-1">
-                <span className="text-sm">{patientData.personal_info.per_dob}</span>
-              </div>
-            </div>
+          <div>
+            <h4 className="font-bold text-lg mb-4">PhilHealth</h4>
+            <PhilHealthContent />
           </div>
-
-          {/* Row 3: Address and BHW Assigned */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm">Address:</span>
-              <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm line-clamp-2">{patientData.addressFull}</span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm">BHW Assigned:</span>
-              <div className="border-b border-black flex-1">
-                <span className="text-sm">{bhw}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Vital Signs Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Left Column - BP, RR, HR, Temperature */}
-            <div className="flex flex-col space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm">BP:</span>
-                  <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}</span>
-                  </div>
-                  <span className="text-black text-sm">mmHg</span>
-                </div>
-                <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm">RR:</span>
-                  <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}</span>
-                  </div>
-                  <span className="text-black text-sm">cpm</span>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm">HR:</span>
-                  <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs?.vital_pulse || "N/A"}</span>
-                  </div>
-                  <span className="text-black text-sm">bpm</span>
-                </div>
-                <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm">Temperature:</span>
-                  <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs?.vital_temp || "N/A"}</span>
-                  </div>
-                  <span className="text-black text-sm">°C</span>
-                </div>
-              </div>
-            </div>
-            {/* Right Column - WT, HT */}
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-baseline gap-2">
-                <span className="font-bold text-black text-sm">WT:</span>
-                <div className="border-b border-black flex-1">
-                  <span className="text-sm">
-                    {parseFloat(consultation.bmi_details?.weight ?? "0")
-                      .toFixed(2)
-                      .replace(/\.00$/, "")}
-                  </span>
-                </div>
-                <span className="text-black text-sm">kg</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-bold text-black text-sm">HT:</span>
-                <div className="border-b border-black flex-1">
-                  <span className="text-sm">
-                    {parseFloat(consultation.bmi_details?.height ?? "0")
-                      .toFixed(2)
-                      .replace(/\.00$/, "")}
-                  </span>
-                </div>
-                <span className="text-black text-sm">cm</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Chief Complaint */}
-          <div className="pt-2">
-            <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm sm:min-w-[120px]">Chief of Complaint:</span>
-              <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm">{consultation.medrec_chief_complaint}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* History and Treatment Section */}
-          <div className="py-4 mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2">
-              {/* History of Present Illness/Findings */}
-              <div className="border border-black py-4">
-                <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">History of Present Illness/Findings</h5>
-                <div className="space-y-3 px-3">
-                  <div>
-                    <span className="font-bold text-black text-sm">Subjective Summary:</span>
-                    <div className="text-sm mt-1">{consultation.find_details?.subj_summary}</div>
-                  </div>
-                  <div>
-                    <span className="font-bold text-black text-sm">Objective Summary:</span>
-                    <div className="text-sm mt-1">
-                      {(() => {
-                        const lines = consultation.find_details?.obj_summary?.split("-") || [];
-                        const grouped: { [key: string]: string[] } = {};
-
-                        // Group by keyword (part before colon)
-                        lines.forEach((line: string) => {
-                          const trimmed = line.trim();
-                          if (trimmed) {
-                            const colonIndex = trimmed.indexOf(":");
-                            if (colonIndex > -1) {
-                              const keyword = trimmed.substring(0, colonIndex).trim();
-                              const value = trimmed.substring(colonIndex + 1).trim();
-                              if (!grouped[keyword]) {
-                                grouped[keyword] = [];
-                              }
-                              grouped[keyword].push(value);
-                            } else {
-                              // If no colon, treat as standalone item
-                              if (!grouped["Other"]) {
-                                grouped["Other"] = [];
-                              }
-                              grouped["Other"].push(trimmed);
-                            }
-                          }
-                        });
-
-                        // Render grouped items
-                        return Object.entries(grouped).map(([keyword, values], index) => <div key={index}>{keyword !== "Other" ? `${keyword}: ${values.join(", ")}` : values.join(", ")}</div>);
-                      })()}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-bold text-black text-sm">Diagnosis:</span>
-                    <div className="text-sm mt-1">
-                      {consultation.find_details?.assessment_summary?.split(",").map((item: any, index: any) => (
-                        <div key={index}>{item.trim()}</div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Plan/Treatment */}
-              <div className="border border-black py-4">
-                <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">Plan Treatment</h5>
-                <div className="space-y-2 px-3">
-                  <div>
-                    <div className="text-sm mt-1">
-                      {consultation.find_details?.plantreatment_summary?.split("-").map((item: any, index: any) => (
-                        <div key={index}>{item.trim()}</div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* PhilHealth Section */}
-          {/* <PhilHealthSection consultation={consultation} patientData={patientData} /> */}
-
-          {/* Physical Exam Table */}
-          <PhysicalExamTable consultation={consultation} patientData={patientData} examSections={examSections} isPhysicalExamLoading={isPhysicalExamLoading} phHistoryData={phHistoryData} isLoading={!phHistoryData} isError={false} />
         </div>
       </div>
     </div>

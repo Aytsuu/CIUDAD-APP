@@ -82,7 +82,6 @@ export default function DisplayMedicalConsultation() {
 
   return (
     <LayoutWithBack title="Medical Consultation Record" description="View consultation details and patient information">
-      {/* Current Consultation Card - Always visible */}
 
       {/* Consultation History Section */}
       <Card className="w-full mt-6 shadow-lg border-0">
