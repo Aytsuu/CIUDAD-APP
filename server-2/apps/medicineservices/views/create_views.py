@@ -476,6 +476,7 @@ class CreateMedicineRequestAllocationAPIView(APIView):
                         medicine_inventory.save()
                     else:
                         medicine_inventory.minv_qty_avail -= medrec_qty
+
                         medicine_inventory.save()
                     
                 except MedicineInventory.DoesNotExist:

@@ -440,6 +440,7 @@ export default function MedicineRequestDetail() {
       requested_at: request.requested_at,
       staff_id: staff_id,
       signature: signature,
+      mode: request.mode,
       pat_id: currentPatId || patientDataFetch?.pat_id,
       selected_medicines: validSelectedMedicines.map((med) => ({
         minv_id: med.original_stock_id || med.minv_id, // Use original stock ID for API

@@ -23,7 +23,10 @@ logger = logging.getLogger(__name__)
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
         patient = get_object_or_404(Patient, pat_id=pat_id)
-
+        
+        # Get search parameter from query string
+        search_query = request.GET.get('search', '').strip()
+        
         try:
             all_patrec_w_medhis = PatientRecord.objects.filter(
                 pat_id=patient
@@ -34,12 +37,22 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 return Response({
                     'patient': patient.pat_id,
                     'medical_history': [],
-                    'message': 'No medical history found for this patient'
+                    'message': 'No medical history found for this patient',
+                    'search_query': search_query if search_query else None
                 })
 
             medical_history_obj = MedicalHistory.objects.filter(
                 patrec__in=all_patrec_w_medhis 
             ).select_related('ill', 'patrec').order_by('-created_at')
+            
+            # Apply search filter if search query is provided
+            if search_query:
+                medical_history_obj = medical_history_obj.filter(
+                    models.Q(ill__illname__icontains=search_query) |
+                    models.Q(ill__ill_code__icontains=search_query) |
+                    models.Q(ill__ill_description__icontains=search_query)
+                )
+                print(f"Applied search filter: '{search_query}'")
 
             print(f'Found medical history for patient: {patient.pat_id}')
 
@@ -47,15 +60,20 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
             
             return Response({
                 'patient': patient.pat_id,
-                'medical_history': medhis_data
+                'medical_history': medhis_data,
+                'search_query': search_query if search_query else None,
+                'search_results_count': len(medhis_data)
             })
 
         except Exception as e:
             print(f"Error fetching medical history: {e}")
             return Response({
                 'patient': patient.pat_id,
-                'medical_history': []
-            })
+                'medical_history': [],
+                'search_query': search_query if search_query else None,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
 
 # obstetrical history GET
 class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):

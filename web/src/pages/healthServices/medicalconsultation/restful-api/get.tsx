@@ -69,3 +69,20 @@ export const getMedConPHHistory =async(pat_id:string)=>{
     throw error;
   }
 }
+
+
+export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
+  try {
+    const params = new URLSearchParams();
+    if (searchQuery) {
+      params.append('search', searchQuery);
+    }
+    
+    const url = `/medical-consultation/family-medhistory/${pat_id}/${searchQuery ? `?${params.toString()}` : ''}`;
+    const response = await api2.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching family history:", error);
+    throw error;
+  }
+};

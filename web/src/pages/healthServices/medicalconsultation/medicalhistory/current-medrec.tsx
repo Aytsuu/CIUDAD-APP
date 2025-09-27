@@ -1,13 +1,14 @@
 import { useRef, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Printer } from "lucide-react";
+import { Printer,Stethoscope } from "lucide-react";
 import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
 import PhysicalExamTable from "./philhealth-display";
-import {useMedConPHHistory} from "../queries/fetchQueries";
-
+import { useMedConPHHistory, useFamHistory } from "../queries/fetchQueries";
+import { ConsultationHistoryTable } from "./table-history";
 interface CurrentConsultationCardProps {
   consultation: any;
   patientData: any;
+  currentConsultationId: number | undefined;
   className?: string;
 }
 
@@ -37,13 +38,19 @@ const TabButton = ({ active, onClick, children }: { active: boolean; onClick: ()
   </button>
 );
 
-export default function CurrentConsultationCard({ consultation, patientData, className = "" }: CurrentConsultationCardProps) {
+export default function CurrentConsultationCard({ 
+  consultation, 
+  patientData, 
+  currentConsultationId,
+  className = "" 
+}: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<"medical" | "philhealth">("medical");
-  const bhw = `${consultation.staff_details?.rp?.per?.per_fname || ""} ${consultation.staff_details?.rp?.per?.per_lname || ""} ${consultation.staff_details?.rp?.per?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
+  const [activeTab, setActiveTab] = useState<"medical" | "philhealth" | "history">("medical");
+  const bhw = `${consultation?.staff_details?.rp?.per?.per_fname || ""} ${consultation?.staff_details?.rp?.per?.per_lname || ""} ${consultation?.staff_details?.rp?.per?.per_mname || ""} ${consultation?.staff_details?.rp?.per?.per_suffix || ""}`;
   const { sectionsQuery, optionsQuery } = usePhysicalExamQueries();
   const isPhysicalExamLoading = sectionsQuery.isLoading || optionsQuery.isLoading;
   const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
+  const { data: famHistoryData } = useFamHistory(patientData?.pat_id || "");
 
   console.log("consultation data:", consultation);
 
@@ -351,7 +358,6 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
         </Button>
       </div>
 
-
       <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 sm:mb-8 md:mb-10">PATIENT RECORD</h3>
 
       <div className="space-y-6 sm:space-y-8">
@@ -367,7 +373,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm">Date:</span>
             <div className="border-b border-black flex-1">
-              <span className="text-sm">{formatDate(consultation.created_at)}</span>
+              <span className="text-sm">{formatDate(consultation?.created_at)}</span>
             </div>
           </div>
         </div>
@@ -377,17 +383,17 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm">Age:</span>
             <div className="border-b border-black flex-1">
-              <span className="text-sm">{patientData.personal_info.per_dob && consultation.created_at ? Math.floor((new Date(consultation.created_at).getTime() - new Date(patientData.personal_info.per_dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : "N/A"}</span>
+              <span className="text-sm">{patientData?.personal_info?.per_dob && consultation?.created_at ? Math.floor((new Date(consultation.created_at).getTime() - new Date(patientData.personal_info.per_dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : "N/A"}</span>
             </div>
             <span className="font-bold text-black text-sm sm:ml-4">Sex:</span>
             <div className="border-b border-black flex-1">
-              <span className="text-sm">{patientData.personal_info.per_sex}</span>
+              <span className="text-sm">{patientData?.personal_info?.per_sex}</span>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm">Date of Birth:</span>
             <div className="border-b border-black flex-1">
-              <span className="text-sm">{patientData.personal_info.per_dob}</span>
+              <span className="text-sm">{patientData?.personal_info?.per_dob}</span>
             </div>
           </div>
         </div>
@@ -397,7 +403,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm">Address:</span>
             <div className="border-b border-black flex-1 min-w-0">
-              <span className="text-sm line-clamp-2">{patientData.addressFull}</span>
+              <span className="text-sm line-clamp-2">{patientData?.addressFull}</span>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
@@ -416,14 +422,14 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               <div className="flex items-baseline gap-2 flex-1">
                 <span className="font-bold text-black text-sm">BP:</span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}</span>
+                  <span className="text-sm">{consultation?.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}</span>
                 </div>
                 <span className="text-black text-sm">mmHg</span>
               </div>
               <div className="flex items-baseline gap-2 flex-1">
                 <span className="font-bold text-black text-sm">RR:</span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}</span>
+                  <span className="text-sm">{consultation?.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}</span>
                 </div>
                 <span className="text-black text-sm">cpm</span>
               </div>
@@ -432,14 +438,14 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               <div className="flex items-baseline gap-2 flex-1">
                 <span className="font-bold text-black text-sm">HR:</span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs?.vital_pulse || "N/A"}</span>
+                  <span className="text-sm">{consultation?.vital_signs?.vital_pulse || "N/A"}</span>
                 </div>
                 <span className="text-black text-sm">bpm</span>
               </div>
               <div className="flex items-baseline gap-2 flex-1">
                 <span className="font-bold text-black text-sm">Temperature:</span>
                 <div className="border-b border-black flex-1">
-                  <span className="text-sm">{consultation.vital_signs?.vital_temp || "N/A"}</span>
+                  <span className="text-sm">{consultation?.vital_signs?.vital_temp || "N/A"}</span>
                 </div>
                 <span className="text-black text-sm">°C</span>
               </div>
@@ -451,7 +457,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               <span className="font-bold text-black text-sm">WT:</span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">
-                  {parseFloat(consultation.bmi_details?.weight ?? "0")
+                  {parseFloat(consultation?.bmi_details?.weight ?? "0")
                     .toFixed(2)
                     .replace(/\.00$/, "")}
                 </span>
@@ -462,7 +468,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               <span className="font-bold text-black text-sm">HT:</span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">
-                  {parseFloat(consultation.bmi_details?.height ?? "0")
+                  {parseFloat(consultation?.bmi_details?.height ?? "0")
                     .toFixed(2)
                     .replace(/\.00$/, "")}
                 </span>
@@ -477,7 +483,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           <div className="flex flex-col sm:flex-row items-baseline gap-2">
             <span className="font-bold text-black text-sm sm:min-w-[120px]">Chief of Complaint:</span>
             <div className="border-b border-black flex-1 min-w-0">
-              <span className="text-sm">{consultation.medrec_chief_complaint}</span>
+              <span className="text-sm">{consultation?.medrec_chief_complaint}</span>
             </div>
           </div>
         </div>
@@ -491,13 +497,13 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               <div className="space-y-3 px-3">
                 <div>
                   <span className="font-bold text-black text-sm">Subjective Summary:</span>
-                  <div className="text-sm mt-1">{consultation.find_details?.subj_summary}</div>
+                  <div className="text-sm mt-1">{consultation?.find_details?.subj_summary}</div>
                 </div>
                 <div>
                   <span className="font-bold text-black text-sm">Objective Summary:</span>
                   <div className="text-sm mt-1">
                     {(() => {
-                      const lines = consultation.find_details?.obj_summary?.split("-") || [];
+                      const lines = consultation?.find_details?.obj_summary?.split("-") || [];
                       const grouped: { [key: string]: string[] } = {};
 
                       // Group by keyword (part before colon)
@@ -530,7 +536,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
                 <div>
                   <span className="font-bold text-black text-sm">Diagnosis:</span>
                   <div className="text-sm mt-1">
-                    {consultation.find_details?.assessment_summary?.split(",").map((item: any, index: any) => (
+                    {consultation?.find_details?.assessment_summary?.split(",").map((item: any, index: any) => (
                       <div key={index}>{item.trim()}</div>
                     ))}
                   </div>
@@ -544,7 +550,7 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
               <div className="space-y-2 px-3">
                 <div>
                   <div className="text-sm mt-1">
-                    {consultation.find_details?.plantreatment_summary?.split("-").map((item: any, index: any) => (
+                    {consultation?.find_details?.plantreatment_summary?.split("-").map((item: any, index: any) => (
                       <div key={index}>{item.trim()}</div>
                     ))}
                   </div>
@@ -566,8 +572,29 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
         examSections={examSections} 
         isPhysicalExamLoading={isPhysicalExamLoading} 
         phHistoryData={phHistoryData} 
+        famHistoryData={famHistoryData}
         isLoading={!phHistoryData} 
         isError={false} 
+      />
+    </div>
+  );
+
+  // Consultation History Content
+  const ConsultationHistoryContent = () => (
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-blue-50 rounded-lg">
+          <Stethoscope className="h-6 w-6 text-blue-600" />
+        </div>
+        <div>
+          <h2 className="font-bold text-xl text-gray-900">Consultation History</h2>
+          <p className="text-sm text-gray-600">Previous medical consultations and records</p>
+        </div>
+      </div>
+
+      <ConsultationHistoryTable 
+        patientId={patientData?.pat_id}
+        currentConsultationId={currentConsultationId}
       />
     </div>
   );
@@ -589,26 +616,37 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           >
             PhilHealth
           </TabButton>
+          <TabButton 
+            active={activeTab === "history"} 
+            onClick={() => setActiveTab("history")}
+          >
+            Consultation History
+          </TabButton>
         </div>
       </div>
 
       {/* Content to be printed */}
       <div ref={printRef}>
-
         {/* Tab Content */}
         <div className="print-section">
-          {activeTab === "medical" ? <MedicalConsultationContent /> : <PhilHealthContent />}
+          {activeTab === "medical" && <MedicalConsultationContent />}
+          {activeTab === "philhealth" && <PhilHealthContent />}
+          {activeTab === "history" && <ConsultationHistoryContent />}
         </div>
 
-        {/* Print version shows both sections */}
+        {/* Print version shows all sections */}
         <div className="hidden print:block">
           <div className="mb-8">
             <h4 className="font-bold text-lg mb-4">Current Medical Consultation</h4>
             <MedicalConsultationContent />
           </div>
-          <div>
+          <div className="mb-8">
             <h4 className="font-bold text-lg mb-4">PhilHealth</h4>
             <PhilHealthContent />
+          </div>
+          <div>
+            <h4 className="font-bold text-lg mb-4">Consultation History</h4>
+            <ConsultationHistoryContent />
           </div>
         </div>
       </div>

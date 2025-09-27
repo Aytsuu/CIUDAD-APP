@@ -321,17 +321,9 @@ class MedicalHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     remarks = models.TextField(default="", blank=True, null=True)
     is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
-
+    is_from_famhistory=models.BooleanField(default=False)
     class Meta:
         db_table = 'medical_history'   
-
-class FamilyPastMedicalHistory(models.Model):      
-    fammedhist_id= models.BigAutoField(primary_key=True)
-    ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='ill_id')
-    remarks = models.TextField(default="", blank=True, null=True)
-    pat=models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='family_medical_history', null=True, db_column='pat_id')
-    created_at = models.DateTimeField(auto_now_add=True)
-    
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
