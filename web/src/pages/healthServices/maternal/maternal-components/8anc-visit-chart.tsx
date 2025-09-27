@@ -45,16 +45,16 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
 		return <div className="text-center text-gray-500">No pregnancy data available</div>
 	}
 
-	const normalizeStatus = (statusRaw: string | undefined): "Active" | "Completed" | "Pregnancy Loss" => {
-  if (!statusRaw) return "Pregnancy Loss";
-  const s = statusRaw.toLowerCase();
-  if (s === "active") return "Active";
-  if (s === "completed") return "Completed";
-  return "Pregnancy Loss";
-}
+// 	const normalizeStatus = (statusRaw: string | undefined): "Active" | "Completed" | "Pregnancy Loss" => {
+//   if (!statusRaw) return "Pregnancy Loss";
+//   const s = statusRaw.toLowerCase();
+//   if (s === "active") return "Active";
+//   if (s === "completed") return "Completed";
+//   return "Pregnancy Loss";
+// }
 
   // counts
-  const completedPregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Completed").length;
+  // const completedPregnancies = pregnancies.filter(p => normalizeStatus(p.status) === "Completed").length;
 	
 
 	return (
