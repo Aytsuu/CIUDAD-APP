@@ -94,6 +94,7 @@ export function PregnancyAccordion({
       </View>
     )
   }
+  
 
   const toggleExpanded = (pregnancyId: string) => {
     const newExpanded = new Set(expandedItems)
@@ -167,7 +168,7 @@ export function PregnancyAccordion({
                     const visitNumber = record.visitNumber || sortedRecords.length - recordIndex
 
                     return (
-                      <Card key={record.id} className="border-l-4 border-l-blue-200 bg-white">
+                      <Card key={record.id} className="border-l-4 mb-3 shadow-lg border-l-blue-200 bg-white">
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-3">
                                 <View className="flex-row items-center gap-2">
@@ -205,7 +206,7 @@ export function PregnancyAccordion({
                             </View>
                             
                             </View>
-                            <View className="flex-row gap-2 mb-3 justify-end">
+                            <View className="flex-row gap-2 mb-3 mr-3 justify-end">
                                 <TouchableOpacity className="flex-row items-center bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg">
                                     <Eye size={14} color="#374151" />
                                     <Text className="ml-1 text-sm text-gray-700">View</Text>
