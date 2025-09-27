@@ -42,7 +42,7 @@ export default function MyAnimalBiteRecordsScreen() {
   const params = useLocalSearchParams<{ pat_id?: string }>();
   const patIdFromParams = params.pat_id;
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  const rp_id = user?.rp;
 
   // NEW: Debug logs to verify params
   console.log("[DEBUG] patIdFromParams:", patIdFromParams);

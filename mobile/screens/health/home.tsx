@@ -35,7 +35,7 @@ const Homepage = () => {
 
   // Determine user role
   const isAdmin = !!user?.staff; // Admin if staff object exists
-  const isResident = !!user?.resident || !!user?.rp; // Resident if resident or rp exists
+  const isResident = !!user?.rp; // Resident if resident or rp exists
 
   // Wait for auth check to complete
   if (!hasCheckedAuth) {

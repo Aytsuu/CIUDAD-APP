@@ -15,18 +15,18 @@ class emailOTPView(APIView):
     def post(self, request):
         email = request.data.get('email')
         auth_type = request.data.get('type')
-        print(request.data)
+
         if auth_type == 'signin':
             if not Account.objects.filter(email=email).exists():
-                raise serializers.ValidationError({"email" : "Email is not registered."})
+                raise serializers.ValidationError({"email" : "Email is not registered"})
         else:
             if Account.objects.filter(email=email).exists():
-                raise serializers.ValidationError({"email" : "Email is already in use."})
+                raise serializers.ValidationError({"email" : "Email is already in use"})
 
         otp = generate_otp()
+        print(f"Generated OTP for {email}: {otp}")
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
-        print(otp)
         return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)
         
 class ValidateEmailOTPView(APIView):
