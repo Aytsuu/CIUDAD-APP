@@ -123,7 +123,7 @@ export default function RespondentDetails() {
     }
     return (
       <div className="flex justify-center">
-        <div className="w-full max-w-5xl mt-5 border">
+        <div className="w-full mt-5 border">
           <DataTable
             columns={businessDetailsColumns()}
             data={businesses.filter((b: any) => b.bus_status !== "Pending")}

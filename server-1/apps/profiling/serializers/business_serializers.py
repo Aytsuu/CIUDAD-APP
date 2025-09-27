@@ -46,24 +46,11 @@ class BusinessHistoryBaseSerializer(serializers.ModelSerializer):
       return None
 
 class BusinessTableSerializer(serializers.ModelSerializer):
-  respondent = serializers.SerializerMethodField()
-
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_location', 'bus_status',
-              'bus_date_of_registration', 'bus_date_verified', 'respondent', 
+              'bus_date_of_registration', 'bus_date_verified', 
               'rp', 'br']
-    
-  def get_respondent(self, obj):
-    if obj.br:
-        per = obj.br
-        middle = f" {per.br_mname}" if per.br_mname else ""
-        return f"{per.br_lname}, {per.br_fname}{middle}"
-    if obj.rp:
-        per = obj.rp.per
-        middle = f" {per.per_mname}" if per.per_mname else ""
-        return f"{per.per_lname}, {per.per_fname}{middle}"
-    return None
 
 class BusinessRespondentTableSerializer(serializers.ModelSerializer):
   businesses = serializers.SerializerMethodField()

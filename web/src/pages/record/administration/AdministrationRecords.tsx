@@ -10,7 +10,6 @@ import {
   Plus,
   Users,
   FileDown,
-  Loader2,
   CircleAlert,
 } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
@@ -30,6 +29,7 @@ import { useAuth } from "@/context/AuthContext";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SitioManagement from "./SitioManagement";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AdministrationRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -173,7 +173,7 @@ export default function AdministrationRecords() {
         {/* Loading State */}
         {isLoadingStaffs && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Spinner size="lg" />
             <span className="ml-2 text-gray-600">Loading staffs...</span>
           </div>
         )}

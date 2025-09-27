@@ -133,6 +133,12 @@ export default function ResidentViewForm({ params }: { params: any }) {
   
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
+    if(currentPath !== selectedItem) {
+      setSelectedItem(currentPath)
+    }
+  }, [currentPath, selectedItem])
+
+  React.useEffect(() => {
     if (isLoadingFam || isLoadingPersonalInfo || isLoadingBusinesses || isLoadingPersonalHistory) showLoading()
     else hideLoading()
   }, [isLoadingFam, isLoadingPersonalInfo, isLoadingBusinesses, isLoadingPersonalHistory])
@@ -293,7 +299,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const renderBusinessContent = () => {
     return (
       <div className="flex justify-center">
-        <div className="w-full max-w-5xl mt-5 border">
+        <div className="w-full mt-5 border">
           <DataTable
             columns={businessDetailsColumns()}
             data={businesses}

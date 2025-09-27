@@ -142,12 +142,13 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
+    fam_id = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
-        fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
+        fields = ['rp_id','per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
                   'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability',
-                    'per_addresses', 'per_age', 'rp_date_registered', 'registered_by']
+                    'per_addresses', 'per_age', 'rp_date_registered', 'fam_id', 'registered_by']
         read_only_fields = fields
 
     def get_per_age(self, obj):
@@ -175,6 +176,11 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
             staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
             return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+    
+    def get_fam_id(self, obj):
+        families = obj.family_compositions.all().first()
+        return families.fam.fam_id if families else None
+
 
 
 class ResidentProfileListSerializer(serializers.ModelSerializer):

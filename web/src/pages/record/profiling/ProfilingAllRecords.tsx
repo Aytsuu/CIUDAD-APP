@@ -13,6 +13,7 @@ import { useLoading } from "@/context/LoadingContext"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { allRecordColumns } from "./AllRecordColumns"
 import { useProfilingAllRecord } from "./queries/profilingFetchQueries"
+import { Spinner } from "@/components/ui/spinner"
 
 
 export default function ProfilingAllRecords() {
@@ -140,7 +141,7 @@ export default function ProfilingAllRecords() {
             {/* Loading State */}
             {isLoading && (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <Spinner size="lg"/>
                 <span className="ml-2 text-gray-600">Loading records...</span>
               </div>
             )}

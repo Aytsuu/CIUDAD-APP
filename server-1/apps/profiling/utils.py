@@ -11,24 +11,6 @@ def generate_resident_no():
   
   return resident_id
 
-def generate_busrespondent_no():
-  next_val = BusinessRespondent.objects.count() + 1
-  date = datetime.now()
-  year = str(date.year - 2000)
-  month = str(date.month).zfill(2)
-  day = str(date.day).zfill(2)
-
-  resident_id = f"BR-{year}{month}{day}-{next_val}"
-  
-  return resident_id
-
-def generate_business_no():
-  next_val = Business.objects.count() + 1
-  date = datetime.now()
-  year = str(date.year - 2000)
-  month = str(date.month).zfill(2)
-  return f"BUS-{year}{month}-{next_val}"
-
 def generate_hh_no():
   next_val = Household.objects.count() + 1
   date = datetime.now()
@@ -48,3 +30,23 @@ def generate_fam_no(building_type):
   family_id = f"{year}{month}{day}{next_val}-{type[building_type.lower()]}"
   
   return family_id
+
+def generate_busrespondent_no():
+  next_val = BusinessRespondent.objects.count() + 1
+  date = datetime.now()
+  year = str(date.year - 2000)
+  month = str(date.month).zfill(2)
+  day = str(date.day).zfill(2)
+
+  resident_id = f"BR-{year}{month}{day}-{next_val}"
+  
+  return resident_id
+
+def generate_business_no():
+  next_val = Business.objects.count() + 1
+  date = datetime.now()
+  year = str(date.year - 2000)
+  month = str(date.month).zfill(2)
+  return f"BUS-{year}{month}-{next_val}"
+
+  

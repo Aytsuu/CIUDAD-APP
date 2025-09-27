@@ -44,6 +44,9 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
       </div>
     ),
+    cell: ({ row }) => (
+      `STF-${row.original.staff_id}`
+    )
   },
   {
     accessorKey: "lname",
