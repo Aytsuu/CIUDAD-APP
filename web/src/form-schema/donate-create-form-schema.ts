@@ -19,7 +19,7 @@ const ClerkDonateCreateSchema = z.object({
   don_description: z.string().optional(),
   don_category: z.string().min(1, "Category is required"),
   don_date: z.string().min(1, "Donation date is required"),
-  don_status: z.enum(["Stashed", "Alloted"]).default("Stashed"),
+  don_status: z.enum(["Stashed", "Allotted"]).default("Stashed"),
   staff: z.string().optional().nullable(),
 });
 

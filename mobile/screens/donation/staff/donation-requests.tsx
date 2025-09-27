@@ -4,13 +4,11 @@ import { formatDate } from "@/helpers/dateHelpers";
 export const getdonationreq = async () => {
     try {
         const res = await api.get('donation/donation-record/');
-        
-        // Handle empty/undefined responses
         const data = res.data?.data ?? res.data ?? [];
         return Array.isArray(data) ? data : [];
     } catch (err) {
         console.error("API Error:", err);
-        return [];  // Always return an array
+        return [];
     }
 };
 
@@ -27,17 +25,6 @@ export const getPersonalList = async () => {
 
 export const postdonationreq= async (donationInfo: Record<string, any>) => {
     try {
-
-        console.log({
-            don_num: donationInfo.don_num,
-            don_donor: donationInfo.don_donor,
-            don_item_name: donationInfo.don_item_name,
-            don_qty: donationInfo.don_qty,
-            don_description: donationInfo.don_description,
-            don_category: donationInfo.don_category,
-            don_date: formatDate(donationInfo.don_date),  
-        });
-
         const res = await api.post('donation/donation-record/', {
             don_num: donationInfo.don_num,
             don_donor: donationInfo.don_donor,
@@ -46,6 +33,7 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
             don_date: formatDate(donationInfo.don_date), 
+            don_status: donationInfo.don_status,
         });
 
         return res.data.don_num;
@@ -63,7 +51,8 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
             don_qty: donationInfo.don_qty,
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
-            don_date: formatDate(donationInfo.don_date), // Use the formatted date
+            don_date: formatDate(donationInfo.don_date),
+            don_status: donationInfo.don_status,
         });
 
         return res.data;
