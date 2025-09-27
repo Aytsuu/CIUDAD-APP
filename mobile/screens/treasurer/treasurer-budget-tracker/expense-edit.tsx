@@ -184,6 +184,49 @@ function ExpenseEdit() {
       return;
     }
 
+    const particularAccBudget = selectedParticular.proposedBudget;
+
+    //trap if the entered amount/actual expense is greater than the budget
+    if(Number(values.iet_actual_amount) > 0){
+
+      if(prevActualAmount == 0){ // if bag o pa mag add og actual expense
+          let budget = prevAmount + particularAccBudget;
+          let subtractedActualAMT = budget - Number(values.iet_actual_amount);
+
+          if (subtractedActualAMT < 0) {
+              form.setError("iet_actual_amount", {
+                  type: "manual",
+                  message: `Insufficient Balance`,
+              });
+              return
+          }  
+      }            
+      else{ // if mo update/edit ra sa actual expense
+          let budget = prevActualAmount + particularAccBudget;                
+          let subtractedActualAMT = budget - Number(values.iet_actual_amount);            
+          
+          if (subtractedActualAMT < 0) {
+              form.setError("iet_actual_amount", {
+                  type: "manual",
+                  message: `Insufficient Balance`,
+              });
+              return
+          }              
+      }
+    }
+    else{
+        let budget = prevAmount + particularAccBudget;
+        let subtractAMT = budget - parseFloat(values.iet_amount);
+
+        if (subtractAMT < 0) {
+            form.setError("iet_amount", {
+                type: "manual",
+                message: `Insufficient Balance`,
+            });
+            return
+        }
+    }
+
     // Calculate budget changes
     if (amount) {
       if (actualAmount) {

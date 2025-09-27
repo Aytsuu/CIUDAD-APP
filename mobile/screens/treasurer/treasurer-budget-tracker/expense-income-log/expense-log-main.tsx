@@ -496,6 +496,7 @@ const ExpenseLogMain = () => {
           </TouchableOpacity>
         }
         headerTitle={<Text className="text-gray-900 text-[13px]">Expense Log</Text>}
+        wrapScroll={false}
       >
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#2a3a61" />
@@ -520,6 +521,7 @@ const ExpenseLogMain = () => {
         rightAction={
             <View className="w-10 h-10 rounded-full items-center justify-center"></View>
         }    
+        wrapScroll={false}
     >
       <View className="flex-1 px-4">
         {/* Search and Filters */}
