@@ -8,6 +8,7 @@ import {
   StatusBar,
   Image,
   Modal,
+  Linking,
 } from "react-native";
 import {
   ChevronLeft,
@@ -15,6 +16,7 @@ import {
   ArchiveRestore,
   Trash,
   X,
+  Download,
 } from "lucide-react-native";
 import { useGetSupportDocs } from "./queries/projprop-fetchqueries";
 import { useAddSupportDocument } from "./queries/projprop-addqueries";
@@ -144,6 +146,15 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     setViewImageModalVisible(true);
   };
 
+  // Add download/open file function like in DisbursementView
+  const handleDownloadFile = async (doc: SupportDoc) => {
+    try {
+      await Linking.openURL(doc.psd_url);
+    } catch (error) {
+      console.error("Error opening file:", error);
+    }
+  };
+
   const renderSupportingDocument = () => (
     <ScrollView className="flex-1 bg-white p-4">
       {!disableDocumentManagement && (
@@ -230,6 +241,18 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 <Text className="text-gray-500 text-sm">
                   Document preview not available
                 </Text>
+                {/* Add download button for non-image files */}
+                {doc.psd_url && (
+                  <TouchableOpacity
+                    onPress={() => handleDownloadFile(doc)}
+                    className="flex-row items-center bg-blue-100 px-3 py-2 rounded-lg mt-3"
+                  >
+                    <Download size={16} color="#3b82f6" />
+                    <Text className="text-blue-600 text-sm ml-2">
+                      Open Document
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
@@ -625,7 +648,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                   Upload
                 </Text>
               </TouchableOpacity>
-            </View>
+              </View>
 
             <MediaPicker
               selectedImages={selectedImages}
