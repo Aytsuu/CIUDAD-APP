@@ -1,5 +1,5 @@
 import React from "react";
-import { useFieldArray } from "react-hook-form";
+import { useFieldArray, useWatch } from "react-hook-form";
 import {
   Dimensions,
   ScrollView,
@@ -24,6 +24,7 @@ export const AddressDrawer = ({
   visible: boolean;
   onClose: () => void;
 }) => {
+  // ===================== STATE INITIALIZATION =====================
   const { toast } = useToastContext();
   const { height: screenHeight } = Dimensions.get("window");
   const { control, trigger, watch, getValues, resetField, setValue } =
@@ -41,38 +42,30 @@ export const AddressDrawer = ({
     name: "personalInfoSchema.per_addresses.list",
   });
 
+  const barangay = useWatch({
+    control,
+    name: "personalInfoSchema.per_addresses.new.add_barangay"
+  })
+  
+  // ===================== SIDE EFFECTS =====================
   React.useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      if (name === "personalInfoSchema.per_addresses.new.add_barangay") {
-        const barangay =
-          value.personalInfoSchema?.per_addresses?.new?.add_barangay;
+    if (barangay?.trim().toLowerCase() === "san roque" || 
+        barangay?.trim().toLowerCase() === "ciudad") {
+      setValue('personalInfoSchema.per_addresses.new.add_barangay', "San Roque (ciudad)");
+    }
 
-        if (barangay?.trim().toLowerCase() === "san roque" || 
-            barangay?.trim().toLowerCase() === "ciudad")
-          setValue('personalInfoSchema.per_addresses.new.add_barangay', "San Roque (ciudad)")
-
-        if (barangay && barangay.trim().toLowerCase() === "san roque (ciudad)") {
-          setIsInternalAddress(true);
-        } else {
-          setIsInternalAddress(false);
-        }
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch]);
-
-  React.useEffect(() => {
-    const barangay = getValues(
-      "personalInfoSchema.per_addresses.new.add_barangay"
-    );
-    if (barangay && barangay.trim().toLowerCase() === "san roque (ciudad)") {
+    if (barangay?.trim().toLowerCase() === "san roque (ciudad)") {
       setIsInternalAddress(true);
-    } else {
+    } else if(barangay != undefined) {
       setIsInternalAddress(false);
     }
-  }, [getValues("personalInfoSchema.per_addresses.new.add_barangay")]);
+  }, [barangay]);
 
+  React.useEffect(() => {
+    setIsInternalAddress(true)
+  }, []);
+
+  // ===================== HANDLERS =====================
   const handleSave = async () => {
     const formIsValid = await trigger([
       "personalInfoSchema.per_addresses.new.add_province",
@@ -83,21 +76,21 @@ export const AddressDrawer = ({
         : "personalInfoSchema.per_addresses.new.add_external_sitio",
       "personalInfoSchema.per_addresses.new.add_street",
     ]);
-
+    
     if (!formIsValid) {
       return;
     }
 
-    const list = getValues("personalInfoSchema.per_addresses.list");
+    const list = getValues("personalInfoSchema.per_addresses.list") || [];
     const values = getValues("personalInfoSchema.per_addresses.new");
     const alreadyAdded = list.some(
       (address) =>
-        address.add_province == values.add_province &&
-        address.add_city == values.add_city &&
-        address.add_barangay == values.add_barangay &&
-        address.add_external_sitio == values.add_external_sitio &&
-        address.sitio == values.sitio &&
-        address.add_street == values.add_street
+        address.add_province.toLowerCase() == values.add_province.toLowerCase() &&
+        address.add_city.toLowerCase() == values.add_city.toLowerCase() &&
+        address.add_barangay.toLowerCase() == values.add_barangay.toLowerCase() &&
+        address.add_external_sitio.toLowerCase() == values.add_external_sitio.toLowerCase() &&
+        address.sitio.toLowerCase() == values.sitio.toLowerCase() &&
+        address.add_street.toLowerCase() == values.add_street.toLowerCase()
     );
 
     if (alreadyAdded) {
@@ -119,6 +112,7 @@ export const AddressDrawer = ({
     onClose();
   };
 
+  // ===================== RENDER =====================
   return (
     <Drawer 
       header="Add Address" 

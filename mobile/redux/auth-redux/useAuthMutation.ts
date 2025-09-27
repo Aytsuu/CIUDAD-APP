@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import {useAppDispatch} from "@/redux/redux";
-import { setLoading, setError, clearAuthState, clearError, clearOtpState, setAuthData, setOtpSent } from "./authSlice";
+import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
 import { api } from "@/api/api";
-import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, OTPCredentials, EmailOTPCredentials } from "./auth-types";
+import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse, EmailOTPCredentials } from "./auth-types";
 
 export const useLoginMutation = () => {
   const dispatch = useAppDispatch();
@@ -137,11 +137,9 @@ export const useVerifyOTPMutation = () => {
 export const useSendEmailOTPMutation = () => {
   const dispatch = useAppDispatch();
   
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: async (email) => {
-      console.log('📧 Sending Email OTP to:', email);
-      const response = await api.post('authentication/email/sendOtp/', { email });
-      console.log('✅ Email OTP sent successfully');
+  return useMutation<{ message: string }, Error, Record<string, any>>({
+    mutationFn: async (data) => {
+      const response = await api.post('authentication/email/sendOtp/', data);
       return response.data;
     },
     onMutate: () => {
@@ -216,7 +214,6 @@ export const useLogoutMutation = () => {
     onSettled: () => {
       dispatch(clearAuthState());
       dispatch(setLoading(false));
-      
       queryClient.clear();
     },
   });

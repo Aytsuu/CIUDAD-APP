@@ -41,7 +41,8 @@ urlpatterns = [
     path('immunization-save/',SaveImmunizationDataAPIView.as_view(),name='save-immunization-data'),
     path('next-ufcno/',NextUFCNumberAPIView.as_view(),name='next-ufc-number'),
     path('latest-vital-bm/<str:pat_id>/', LatestVitalBMAPIView.as_view(), name='latest-vital-bm'),
-    
+    path('patients/<int:chrec_id>/pending-followups-with-notes/', ChildHealthPendingFollowUpView.as_view(), name='patient-pending-followups-with-notes'),
+    path('followups/<int:followv_id>/',FollowUpVisitUpdateView.as_view(), name='update-followup-status'),
     # FORWARDED
     path('child-immunization-status-table/<str:assigned_to>/', ChildHealthImmunizationStatusListView.as_view(), name='child-immunization-status-assigned'),
 

@@ -15,6 +15,7 @@ import {
   ArchiveRestore,
   Trash,
   ChevronLeft,
+  ClipboardCheck
 } from "lucide-react-native";
 import { useGetProjectProposals } from "./queries/projprop-fetchqueries";
 import {
@@ -26,18 +27,20 @@ import { ProjectProposalView } from "./projprop-view";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import ScreenLayout from "@/screens/_ScreenLayout";
+import { SelectLayout } from "@/components/ui/select-layout";
 import { ProjectProposal } from "./projprop-types";
 
 const ProjectProposalList: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
-  const [pageSize] = useState(5);
+  const [pageSize] = useState(5); 
   const [currentPage, setCurrentPage] = useState(1);
-
+  
   const {
     data: projects = [],
     isLoading,
@@ -48,9 +51,25 @@ const ProjectProposalList: React.FC = () => {
   const { mutate: archiveProject } = useArchiveProjectProposal();
   const { mutate: restoreProject } = useRestoreProjectProposal();
 
-  const filteredProjects = projects.filter((project: ProjectProposal) => {
-    return viewMode === "active" ? !project.gprIsArchive : project.gprIsArchive;
-  });
+  const statusColors = {
+    pending: "text-blue-800",
+    amend: "text-yellow-500",
+    approved: "text-green-500",
+    rejected: "text-red-500",
+    viewed: "text-darkGray",
+    resubmitted: "text-indigo-600",
+  };
+
+  const filteredProjects = projects
+    .filter((project: ProjectProposal) => {
+      return viewMode === "active"
+        ? !project.gprIsArchive
+        : project.gprIsArchive;
+    })
+    .filter((project: ProjectProposal) => {
+      if (selectedFilter === "All") return true;
+      return project.status === selectedFilter;
+    });
 
   // Calculate pagination values
   const totalPages = Math.ceil(filteredProjects.length / pageSize);
@@ -64,19 +83,21 @@ const ProjectProposalList: React.FC = () => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount =
-        typeof item.amount === "string"
-          ? parseFloat(item.amount) || 0
-          : item.amount || 0;
-      const paxCount =
-        typeof item.pax === "string"
-          ? parseInt(item.pax.replace(/\D/g, "")) || 1
-          : 1;
-      return projectSum + paxCount * amount;
+      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+      const paxCount = typeof item.pax === 'string' 
+        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
+        : 1;
+      return projectSum + (paxCount * amount);
     }, 0);
 
     return sum + projectTotal;
   }, 0);
+
+  const handleViewLogs = () => {
+    router.push({
+      pathname: "/gad/project-proposal/projprop-logs",
+    });
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -241,6 +262,27 @@ const ProjectProposalList: React.FC = () => {
           </View>
         </View>
 
+        <View className="mb-4">
+          <SelectLayout
+            options={[
+              { label: "All", value: "All" },
+              { label: "Pending", value: "Pending" },
+              { label: "Viewed", value: "Viewed" },
+              { label: "Amend", value: "Amend" },
+              { label: "Resubmitted", value: "Resubmitted" },
+              { label: "Approved", value: "Approved" },
+              { label: "Rejected", value: "Rejected" },
+            ]}
+            selectedValue={selectedFilter}
+            onSelect={(option) => {
+              setSelectedFilter(option.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Select Status"
+            isInModal={true}
+          />
+        </View>
+
         <View className="flex-row justify-between mb-2">
           <View className="px-2 py-2 rounded-lg">
             <Text className="font-medium ">
@@ -253,6 +295,16 @@ const ProjectProposalList: React.FC = () => {
                 }).format(totalBudget)}
               </Text>
             </Text>
+          </View>
+          <View className="flex-row justify-end p-2">
+            <TouchableOpacity
+              onPress={handleViewLogs}
+              className="bg-primaryBlue px-3 py-2 rounded-md"
+            >
+              <Text className="text-white text-[17px]">
+                <ClipboardCheck size={14} color="white" /> Logs
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -288,18 +340,20 @@ const ProjectProposalList: React.FC = () => {
                 </Text>
                 <View className="flex-row">
                   {viewMode === "active" ? (
-                    <ConfirmationModal
-                      trigger={
-                        <TouchableOpacity className="p-1">
-                          <Archive color="#ef4444" size={20} />
-                        </TouchableOpacity>
-                      }
-                      title={`Archive "${project.projectTitle}"`}
-                      description="Are you sure you want to archive this project proposal?"
-                      actionLabel="Archive"
-                      onPress={() => handleArchivePress(project)}
-                      loading={isProcessing}
-                    />
+                     ["Pending", "Amend", "Rejected"].includes(project.status) && (
+                      <ConfirmationModal
+                        trigger={
+                          <TouchableOpacity className="p-1">
+                            <Archive color="#ef4444" size={20} />
+                          </TouchableOpacity>
+                        }
+                        title={`Archive "${project.projectTitle}"`}
+                        description="Are you sure you want to archive this project proposal?"
+                        actionLabel="Archive"
+                        onPress={() => handleArchivePress(project)}
+                        loading={isProcessing}
+                      />
+                    )
                   ) : (
                     <>
                       <ConfirmationModal
@@ -353,18 +407,31 @@ const ProjectProposalList: React.FC = () => {
                       }).format(
                         project.budgetItems.reduce((grandTotal, item) => {
                           const amount = item.amount || 0;
-                          const paxCount =
-                            typeof item.pax === "string"
-                              ? parseInt(item.pax) ||
-                                (item.pax.includes("pax")
-                                  ? parseInt(item.pax) || 1
-                                  : 1)
-                              : 1;
+                          const paxCount = typeof item.pax === 'string' 
+                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                                    : 1;
                           return grandTotal + paxCount * amount;
                         }, 0)
                       )
                     : "N/A"}
                 </Text>
+              </View>
+
+              <View className="mb-3">
+                <Text
+                  className={`text-sm font-medium ${
+                    statusColors[
+                      project.status.toLowerCase() as keyof typeof statusColors
+                    ] || "text-gray-500"
+                  }`}
+                >
+                  {project.status || "Pending"}
+                </Text>
+                {project.statusReason && (
+                  <Text className="text-sm text-gray-600 mt-1">
+                    Remarks(s): {project.statusReason}
+                  </Text>
+                )}
               </View>
             </TouchableOpacity>
           ))

@@ -33,7 +33,7 @@ export default function Records() {
       description: 'Access your maternal health records',
       route: '/maternal-records',
       icon: Baby,
-      image: require('@/assets/images/Health/Home/Maternal1.jpg'),
+      image: require('@/assets/images/Health/Home/Maternal.jpg'),
       color: '#DC2626'
     },
     {
@@ -57,8 +57,8 @@ export default function Records() {
      {
       id: 5,
       name: 'Vaccination Records',
-      description: 'View animal bite treatment records',
-      route: '/animalbite/my-records/',
+      description: 'View vaccination records',
+      route: '/vaccination/my-records/',
       icon: Dog,
       image: require('@/assets/images/Health/Home/vaccination.jpg'),
       color: '#1E40AF'
@@ -77,6 +77,15 @@ export default function Records() {
       name: 'Child Health Records',
       description: 'View animal bite treatment records',
       route: '/animalbite/my-records/',
+      icon: Dog,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#1E40AF'
+    },
+     {
+      id: 8,
+      name: 'Medicine Records',
+      description: 'View medicine treatment records',
+      route: '/medicine-records/my-records/',
       icon: Dog,
       image: require('@/assets/images/Health/Home/child-health.jpg'),
       color: '#1E40AF'

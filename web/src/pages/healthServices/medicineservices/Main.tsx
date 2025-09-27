@@ -3,14 +3,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import AllMedicineRecords from "./tables/AllMedicineRecords";
 import MedicineRequestMain from "./Request/Main";
-
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 export default function MainMedicine() {
-  const [selectedView, setSelectedView] = useState("requests"); // Start with direct default
+  const [selectedView, setSelectedView] = useState("records");
   const [isMounted, setIsMounted] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
-    // Only access localStorage after component mounts (client-side)
     const savedView = localStorage.getItem("selectedMedicineView");
     if (savedView && ["requests", "records"].includes(savedView)) {
       setSelectedView(savedView);
@@ -23,39 +24,58 @@ export default function MainMedicine() {
     }
   }, [selectedView, isMounted]);
 
+  // Get user position for conditional logic
+  const userPosition = user?.staff?.pos;
+  const userPositionTitle = typeof userPosition === 'string' 
+    ? userPosition 
+    : userPosition?.pos_title || '';
+
+  // Check if user should have access to requests
+  const canAccessRequests = !["Nurse", "Midwife"].some(excludedPos => 
+    userPositionTitle.toLowerCase().includes(excludedPos.toLowerCase())
+  );
+
+  // Ensure selectedView is valid based on permissions
+  useEffect(() => {
+    if (isMounted && selectedView === "requests" && !canAccessRequests) {
+      setSelectedView("records"); // Fallback to records if no permission
+    }
+  }, [isMounted, canAccessRequests, selectedView]);
+
   if (!isMounted) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (
-    <MainLayoutComponent
-      title="Medicine Management"
-      description="Manage medicine requests and records efficiently."
-    >
+    <MainLayoutComponent title="Medicine Management" description="Manage medicine requests and records efficiently.">
       <div className="bg-white p-4">
         <Tabs
-          value={selectedView} // Use value instead of defaultValue
+          value={selectedView}
           className="mb-4"
           onValueChange={(value) => setSelectedView(value)}
         >
-          <TabsList className="grid grid-cols-2 w-full sm:w-[300px]">
-            <TabsTrigger
-              value="requests"
-              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
-              Medicine Requests
-            </TabsTrigger>
-            <TabsTrigger
-              value="records"
-              className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
-            >
+          <TabsList className="grid w-full sm:w-[300px]" style={{ 
+            gridTemplateColumns: canAccessRequests ? "1fr 1fr" : "1fr" 
+          }}>
+            <TabsTrigger value="records" className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
               All Records
             </TabsTrigger>
+            
+            {/* Only show Requests tab if user has permission */}
+              <TabsTrigger value="requests" className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                Medicine Requests
+              </TabsTrigger>
+            
           </TabsList>
         </Tabs>
 
-        {selectedView === "requests" && <MedicineRequestMain />}
-        {selectedView === "records" && <AllMedicineRecords />}
+        {selectedView === "requests" ? (
+          <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <MedicineRequestMain />
+          </ProtectedComponentButton>
+        ) : (
+          <AllMedicineRecords />
+        )}
       </div>
     </MainLayoutComponent>
   );

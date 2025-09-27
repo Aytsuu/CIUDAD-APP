@@ -19,10 +19,11 @@ import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { useLoading } from "@/context/LoadingContext";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { GrowthChart } from "./growth-chart";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+
 
 export default function InvChildHealthRecords() {
   const { showLoading, hideLoading } = useLoading();
-
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
@@ -270,19 +271,22 @@ export default function InvChildHealthRecords() {
                 <DropdownMenuItem>Export as PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
-              {latestRecord && (
-                <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
-                  {isLatestRecordImmunizationOrCheckup ? (
-                    <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                      <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
-                    </div>
-                  ) : (
-                    <Button onClick={navigateToUpdateLatest}>New record</Button>
-                  )}
-                </div>
-              )}
-            </div>
+
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+              <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
+                {latestRecord && (
+                  <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+                    {isLatestRecordImmunizationOrCheckup ? (
+                      <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                        <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
+                      </div>
+                    ) : (
+                      <Button onClick={navigateToUpdateLatest}>New record</Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ProtectedComponentButton>
           </div>
         </div>
 

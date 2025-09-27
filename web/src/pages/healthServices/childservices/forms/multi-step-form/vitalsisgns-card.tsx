@@ -18,7 +18,7 @@ interface VitalSignFormCardProps {
   submitButtonText?: string;
   cancelButtonText?: string;
   isReadOnly?: boolean;
-  allowNotesEdit?: boolean; // New prop to allow notes editing
+  allowNotesEdit?: boolean;
 }
 
 export const VitalSignFormCard = ({ 
@@ -28,15 +28,10 @@ export const VitalSignFormCard = ({
   onSubmit, 
   onCancel, 
   submitButtonText = "Save", 
-  cancelButtonText = "Cancel", 
+  cancelButtonText = "Cancel",
   isReadOnly = false,
-  allowNotesEdit = false // Default to false
+  allowNotesEdit = false
 }: VitalSignFormCardProps) => {
-  // Watch the date field to check if it's today
-  
-  // Notes field is editable if allowNotesEdit is true, regardless of other restrictions
-  const isNotesEditable = allowNotesEdit;
-
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="space-y-4">
@@ -65,6 +60,7 @@ export const VitalSignFormCard = ({
             label="Height (cm)" 
             type="number" 
             placeholder="Enter height" 
+            readOnly={isReadOnly}
           />
           <FormInput 
             control={control} 
@@ -72,7 +68,7 @@ export const VitalSignFormCard = ({
             label="Weight (kg)" 
             type="number" 
             placeholder="Enter weight" 
-          
+            readOnly={isReadOnly}
           />
           <FormInput 
             control={control} 
@@ -80,7 +76,7 @@ export const VitalSignFormCard = ({
             label="Temperature (°C)" 
             type="number" 
             placeholder="Enter temperature" 
-          
+            readOnly={isReadOnly}
           />
         </div>
 
@@ -94,6 +90,7 @@ export const VitalSignFormCard = ({
                   checked={field.value} 
                   onCheckedChange={field.onChange} 
                   className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  disabled={isReadOnly}
                 />
               </FormControl>
               <FormLabel className="text-sm font-medium text-gray-700">Are you going to use this weighing for OPT tracking reports?</FormLabel>
@@ -108,8 +105,7 @@ export const VitalSignFormCard = ({
             label="Remarks" 
             placeholder="Enter remarks" 
             rows={2} 
-           
-            
+            readOnly={isReadOnly}
           />
           <FormTextArea 
             control={control} 
@@ -117,6 +113,7 @@ export const VitalSignFormCard = ({
             label="Notes" 
             placeholder="Enter notes" 
             rows={2} 
+            readOnly={!allowNotesEdit && isReadOnly}
           />
         </div>
 
@@ -126,6 +123,7 @@ export const VitalSignFormCard = ({
             name="followUpVisit" 
             label="Follow-up date" 
             type="date" 
+            readOnly={isReadOnly}
           />
           <FormTextArea 
             control={control} 
@@ -133,7 +131,7 @@ export const VitalSignFormCard = ({
             label="Follow-up reason" 
             placeholder="Enter reason for follow-up" 
             rows={2} 
-           
+            readOnly={isReadOnly}
           />
         </div>
       </div>
@@ -141,10 +139,10 @@ export const VitalSignFormCard = ({
   );
 };
 
-// View Mode Card - Updated to show edit button for notes when allowNotesEdit is true
+// View Mode Card
 export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; index: number; onEdit: () => void; allowNotesEdit?: boolean }) => {
   const isTodayDate = isToday(data.date);
-  const canEdit = !isTodayDate || allowNotesEdit; // Allow edit if it's not today OR if notes editing is allowed
+  const canEdit = allowNotesEdit;
 
   return (
     <div className="space-y-3">
@@ -211,10 +209,10 @@ export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; 
   );
 };
 
-// Edit Mode Card - Updated to pass allowNotesEdit prop
+// Edit Mode Card
 export const EditCard = ({ data, index, control, handleSubmit, onUpdate, onCancel, allowNotesEdit = false }: { data: any; index: number; control: Control<any>; handleSubmit: UseFormHandleSubmit<any>; onUpdate: (index: number, values: any) => void; onCancel: () => void; allowNotesEdit?: boolean }) => {
+  const isReadOnly = !allowNotesEdit;
   const isTodayDate = isToday(data.date);
-  const isReadOnly = isTodayDate && !allowNotesEdit;
 
   return (
     <VitalSignFormCard 
@@ -225,7 +223,7 @@ export const EditCard = ({ data, index, control, handleSubmit, onUpdate, onCance
       onCancel={onCancel} 
       submitButtonText="Save" 
       cancelButtonText="Cancel" 
-      isReadOnly={isReadOnly}
+      isReadOnly={isReadOnly && !isTodayDate}
       allowNotesEdit={allowNotesEdit}
     />
   );
@@ -240,7 +238,7 @@ interface VitalSignsCardViewProps {
   onStartEdit: (index: number, data: any) => void;
   onCancelEdit: () => void;
   editVitalSignFormReset: (data: any) => void;
-  allowNotesEdit?: boolean; // New prop
+  allowNotesEdit?: boolean;
 }
 
 export const VitalSignsCardView = ({ data, editingRowIndex, editVitalSignFormControl, editVitalSignFormHandleSubmit, onUpdateVitalSign, onStartEdit, onCancelEdit, editVitalSignFormReset, allowNotesEdit = false }: VitalSignsCardViewProps) => {
@@ -249,7 +247,7 @@ export const VitalSignsCardView = ({ data, editingRowIndex, editVitalSignFormCon
       {data.map((item, index) => {
         const isEditing = editingRowIndex === index;
         const isTodayDate = isToday(item.date);
-        const canEdit = !isTodayDate || allowNotesEdit; // Allow edit if not today OR notes editing is allowed
+        const canEdit = allowNotesEdit || isTodayDate;
 
         return (
           <div key={index} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">

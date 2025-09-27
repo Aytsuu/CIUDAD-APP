@@ -15,9 +15,10 @@ import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
-import { FilterSitio } from "../../Reports/filter-sitio";
-import { SelectedFiltersChips } from "../../Reports/selectedFiltersChipsProps ";
+import { FilterSitio } from "../../reports/filter-sitio";
+import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function AllFirstAidRecords() {
   const navigate = useNavigate();
@@ -27,31 +28,31 @@ export default function AllFirstAidRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
-  
+
   // Fetch sitio data
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
-  
+
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  
+
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
-  
+
   // Build the combined search query that includes selected sitios
   const combinedSearchQuery = useMemo(() => {
     let query = debouncedSearchQuery || "";
-    
+
     if (selectedSitios.length > 0) {
       const sitioQuery = selectedSitios.join(",");
       query = query ? `${query},${sitioQuery}` : sitioQuery;
     }
-    
+
     return query || undefined;
   }, [debouncedSearchQuery, selectedSitios]);
-  
+
   // Build query parameters
   const queryParams = useMemo(
     () => ({
@@ -62,10 +63,10 @@ export default function AllFirstAidRecords() {
     }),
     [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
   );
-  
+
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useFirstaidRecords(queryParams);
-  
+
   useEffect(() => {
     if (isLoading) {
       showLoading();
@@ -73,7 +74,7 @@ export default function AllFirstAidRecords() {
       hideLoading();
     }
   }, [isLoading, showLoading, hideLoading]);
-  
+
   // Handle API response structure
   const {
     firstAidRecords,
@@ -83,7 +84,7 @@ export default function AllFirstAidRecords() {
     if (!apiResponse) {
       return { firstAidRecords: [], totalCount: 0, totalPages: 1 };
     }
-    
+
     if (apiResponse.results) {
       return {
         firstAidRecords: apiResponse.results,
@@ -100,7 +101,7 @@ export default function AllFirstAidRecords() {
       return { firstAidRecords: [], totalCount: 0, totalPages: 1 };
     }
   }, [apiResponse, pageSize]);
-  
+
   const formatFirstAidData = useCallback((): any[] => {
     if (!firstAidRecords || !Array.isArray(firstAidRecords)) {
       return [];
@@ -131,10 +132,10 @@ export default function AllFirstAidRecords() {
       };
     });
   }, [firstAidRecords]);
-  
+
   const formattedData = formatFirstAidData();
   const totalPages = apiTotalPages || Math.ceil(totalCount / pageSize);
-  
+
   // Calculate resident and transient counts
   const calculateCounts = useCallback(() => {
     if (!firstAidRecords) return { residents: 0, transients: 0 };
@@ -148,9 +149,9 @@ export default function AllFirstAidRecords() {
     });
     return { residents, transients };
   }, [firstAidRecords]);
-  
+
   const { residents, transients } = calculateCounts();
-  
+
   // Sitio filter handlers
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
@@ -159,7 +160,7 @@ export default function AllFirstAidRecords() {
       setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
     }
   };
-  
+
   const handleSelectAllSitios = (checked: boolean) => {
     if (checked && sitios.length > 0) {
       setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
@@ -167,11 +168,11 @@ export default function AllFirstAidRecords() {
       setSelectedSitios([]);
     }
   };
-  
+
   const handleManualSitioSearch = (value: string) => {
     // Not used since we're using the main search field
   };
-  
+
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "patient",
@@ -275,163 +276,140 @@ export default function AllFirstAidRecords() {
       }
     }
   ];
-  
+
   return (
-   <MainLayoutComponent title="First Aid Records" description="Manage and view first aid records" >
-     <div className="w-full h-full flex flex-col">
-      
-      {/* Summary Cards - Updated with EnhancedCardLayout and dynamic icons */}
-      <div className="w-full">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <EnhancedCardLayout
-            title="Total Records"
-            description="All first aid records"
-            value={totalCount}
-            valueDescription="Total records"
-            icon={<Users className="h-5 w-5 text-muted-foreground" />}
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
+    <MainLayoutComponent title="First Aid Records" description="Manage and view first aid records">
+      <div className="w-full h-full flex flex-col">
+        {/* Summary Cards - Updated with EnhancedCardLayout and dynamic icons */}
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <EnhancedCardLayout title="Total Records" description="All first aid records" value={totalCount} valueDescription="Total records" icon={<Users className="h-5 w-5 text-muted-foreground" />} cardClassName="border shadow-sm rounded-lg" headerClassName="pb-2" contentClassName="pt-0" />
 
-          <EnhancedCardLayout
-            title="Resident Patients"
-            description="Patients who are residents"
-            value={residents}
-            valueDescription="Total residents"
-            icon={<Home className="h-5 w-5 text-muted-foreground" />}
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
-
-          <EnhancedCardLayout
-            title="Transient Patients"
-            description="Patients who are transients"
-            value={transients}
-            valueDescription="Total transients"
-            icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
-        </div>
-      </div>
-      
-      {/* Filters Section */}
-      <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
-        <div className="w-full flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search by name, nature of request, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          </div>
-          <SelectLayout
-            placeholder="Patient Type"
-            label=""
-            className="bg-white w-full sm:w-48"
-            options={[
-              { id: "all", name: "All Types" },
-              { id: "resident", name: "Resident" },
-              { id: "transient", name: "Transient" }
-            ]}
-            value={patientTypeFilter}
-            onChange={(value) => setPatientTypeFilter(value)}
-          />
-          <FilterSitio 
-            sitios={sitios} 
-            isLoading={isLoadingSitios} 
-            selectedSitios={selectedSitios} 
-            onSitioSelection={handleSitioSelection} 
-            onSelectAll={handleSelectAllSitios} 
-            onManualSearch={handleManualSitioSearch}
-            manualSearchValue=""
-          />
-        </div>
-        <div className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto">
-            <Link
-              to="/firstaid-request-form"
-              state={{
-                params: {
-                  mode: "fromallrecordtable"
-                }
-              }}
-            >
-              New Request
-            </Link>
-          </Button>
-        </div>
-      </div>
-      
-      {/* Selected Filters Chips */}
-      {selectedSitios.length > 0 && (
-        <SelectedFiltersChips 
-          items={selectedSitios} 
-          onRemove={(sitio:any) => handleSitioSelection(sitio, false)} 
-          onClearAll={() => setSelectedSitios([])} 
-          label="Filtered by sitios" 
-          chipColor="bg-blue-100" 
-          textColor="text-blue-800" 
-        />
-      )}
-      
-      <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-8"
-              value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1);
-              }}
-              min="1"
+            <EnhancedCardLayout
+              title="Resident Patients"
+              description="Patients who are residents"
+              value={residents}
+              valueDescription="Total residents"
+              icon={<Home className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
             />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
-          <div className="flex justify-end sm:justify-start">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                  <FileInput size={16} />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <EnhancedCardLayout
+              title="Transient Patients"
+              description="Patients who are transients"
+              value={transients}
+              valueDescription="Total transients"
+              icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
           </div>
         </div>
-        <div className="bg-white w-full overflow-x-auto border">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading...</span>
+
+        {/* Filters Section */}
+        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search by name, nature of request, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-          ) : error ? (
-            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span>Error loading data. Please try again.</span>
+            <SelectLayout
+              placeholder="Patient Type"
+              label=""
+              className="bg-white w-full sm:w-48"
+              options={[
+                { id: "all", name: "All Types" },
+                { id: "resident", name: "Resident" },
+                { id: "transient", name: "Transient" }
+              ]}
+              value={patientTypeFilter}
+              onChange={(value) => setPatientTypeFilter(value)}
+            />
+            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue="" />
+          </div>
+          
+
+          <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">
+                <Link
+                  to="/firstaid-request-form"
+                  state={{
+                    params: {
+                      mode: "fromallrecordtable"
+                    }
+                  }}
+                >
+                  New Request
+                </Link>
+              </Button>
             </div>
-          ) : (
-            <DataTable columns={columns} data={formattedData} />
-          )}
+          </ProtectedComponentButton>
         </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
-          </p>
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
+        {/* Selected Filters Chips */}
+        {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
+
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                  setCurrentPage(1);
+                }}
+                min="1"
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div className="flex justify-end sm:justify-start">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
+                    <FileInput size={16} />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto border">
+            {isLoading ? (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading...</span>
+              </div>
+            ) : error ? (
+              <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+                <span>Error loading data. Please try again.</span>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={formattedData} />
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+            </p>
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-   </MainLayoutComponent>
+    </MainLayoutComponent>
   );
 }

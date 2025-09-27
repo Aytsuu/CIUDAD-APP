@@ -78,3 +78,14 @@ export const getLatestVitals = async (id:any) => {
     throw err;
   }
 };
+
+
+export const getChildnotesfollowup = async (chrec_id: any) => {
+  try {
+    const response = await api2.get(`/child-health/patients/${chrec_id}/pending-followups-with-notes/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+  }

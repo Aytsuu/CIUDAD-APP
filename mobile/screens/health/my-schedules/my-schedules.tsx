@@ -1,463 +1,436 @@
-// import React, { useState, useMemo } from "react"
-// import {
-//   View,
-//   TouchableOpacity,
-//   TextInput,
-//   ActivityIndicator,
-//   RefreshControl,
-//   FlatList,
-//   ScrollView,
-// } from "react-native"
-// import { Search, ArrowLeft, AlertCircle, Calendar, User, FileText, Filter, FileWarning, ChevronLeft } from "lucide-react-native"
-// import { Text } from "@/components/ui/text"
-// import { router } from "expo-router"
-// import { format } from "date-fns"
-// import { useAllFollowUpVisits } from "./fetch"
-// import PageLayout from "@/screens/_PageLayout"
-// import { useAuth } from "@/contexts/AuthContext"
-// import { LoadingState } from "@/components/ui/loading-state"
+import React, { useState, useMemo } from "react"
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native"
+import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, MapPin, RefreshCw } from "lucide-react-native"
+import { Text } from "@/components/ui/text"
+import { router } from "expo-router"
+import { format } from "date-fns"
+import { useAppointmentsByResidentId } from "./fetch"
+import PageLayout from "@/screens/_PageLayout"
+import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
 
-// type ScheduleRecord = {
-//   id: number
-//   patient: {
-//     firstName: string
-//     lastName: string
-//     middleName: string
-//     gender: string
-//     age: number
-//     ageTime: string
-//     patientId: string
-//   }
-//   scheduledDate: string
-//   purpose: string
-//   status: "Pending" | "Completed" | "Missed" | "Cancelled"
-//   sitio: string
-//   type: "Transient" | "Resident"
-//   patrecType: string
-// }
+type ScheduleRecord = {
+  id: number
+  patient: {
+    firstName: string
+    lastName: string
+    middleName: string
+    gender: string
+    age: number
+    ageTime: string
+    patientId: string
+  }
+  scheduledDate: string
+  purpose: string
+  status: "Pending" | "Completed" | "Missed"
+  sitio: string
+  type: "Transient" | "Resident"
+  patrecType: string
+}
 
-// type FilterType = "All" | "Pending" | "Completed" | "Missed" | "Cancelled"
+type FilterType = "All" | "Pending" | "Completed" | "Missed"
+type TabType = "pending" | "completed" | "missed" 
 
-// export default function MyAppointmentsScreen() {
-//   const { user } = useAuth()
-//   const rp_id = user?.resident?.rp_id
-//   const [searchQuery, setSearchQuery] = useState("")
-//   const [refreshing, setRefreshing] = useState(false)
-//   const [activeFilter, setActiveFilter] = useState<FilterType>("All")
-//   const [showFilters, setShowFilters] = useState(false)
+// Components
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const getStatusConfig = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return {
+          color: 'text-yellow-700',
+          bgColor: 'bg-yellow-100',
+          borderColor: 'border-yellow-200',
+        }
+      case 'completed':
+        return {
+          color: 'text-green-700',
+          bgColor: 'bg-green-100',
+          borderColor: 'border-green-200',
+        }
+      case 'missed':
+        return {
+          color: 'text-red-700',
+          bgColor: 'bg-red-100',
+          borderColor: 'border-red-200',
+        }
+      default:
+        return {
+          color: 'text-gray-700',
+          bgColor: 'bg-gray-100',
+          borderColor: 'border-gray-200',
+        }
+    }
+  }
 
-//   // Fetch all data at once
-//   const appointmentsPerPage = 1000
-//   const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
-//     page: 1,
-//     page_size: appointmentsPerPage,
-//     status: activeFilter !== "All" ? activeFilter : undefined,
-//     search: searchQuery || undefined,
-//   })
+  const statusConfig = getStatusConfig(status)
+  return (
+    <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
+      <Text className={`text-xs font-semibold ${statusConfig.color}`}>
+        {status}
+      </Text>
+    </View>
+  )
+}
 
-//   // Debugging: Log API response and user
-//   console.log("API Response:", paginatedData)
-//   console.log("Raw results:", paginatedData?.results)
-//   console.log("Current user ID:", rp_id)
+const TabBar: React.FC<{
+  activeTab: TabType
+  setActiveTab: (tab: TabType) => void
+  counts: { pending: number; completed: number; missed: number; }
+}> = ({ activeTab, setActiveTab, counts }) => (
+  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+    <TouchableOpacity
+      onPress={() => setActiveTab('pending')}
+      className={`flex-1 items-center py-3 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Pending ({counts.pending})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('completed')}
+      className={`flex-1 items-center py-3 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Completed ({counts.completed})
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('missed')}
+      className={`flex-1 items-center py-3 ${activeTab === 'missed' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'missed' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Missed ({counts.missed})
+      </Text>
+    </TouchableOpacity>
+  
+  </View>
+)
 
-//   // Utility functions defined before useMemo
-//   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
-//     console.log("getAppointmentStatus called with:", { scheduledDate, currentStatus })
-//     const today = new Date()
-//     today.setHours(0, 0, 0, 0)
-//     const appointmentDate = new Date(scheduledDate)
-//     appointmentDate.setHours(0, 0, 0, 0)
+const AppointmentCard: React.FC<{
+  appointment: ScheduleRecord
+  actualStatus: string
+  onPress: () => void
+}> = ({ appointment, actualStatus, onPress }) => {
+  const formatDateSafely = (dateString: string) => {
+    if (!dateString) return "N/A"
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy")
+    } catch (e) {
+      return "Invalid Date"
+    }
+  }
 
-//     if (appointmentDate < today && currentStatus.toLowerCase() === "pending") {
-//       console.log(`Appointment on ${scheduledDate} marked as Missed (was ${currentStatus})`)
-//       return "Missed"
-//     }
-//     return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) as "Pending" | "Completed" | "Missed" | "Cancelled"
-//   }
+  return (
+    <TouchableOpacity
+      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
+      activeOpacity={0.8}
+      onPress={onPress}
+    >
+      {/* Header */}
+      <View className="p-4 border-b border-gray-100">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center mb-1">
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
+                <User color="white" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-lg text-gray-900">
+                  Appointment: {appointment.id}
+                </Text>
+                <Text className="text-gray-500 text-sm">ID: {appointment.patient.patientId}</Text>
+              </View>
+            </View>
+          </View>
+          <View className="items-end">
+            <StatusBadge status={actualStatus} />
+          </View>
+        </View>
+      </View>
 
-//   const formatDateSafely = (dateString: string) => {
-//     if (!dateString) {
-//       console.warn("formatDateSafely: No date string provided")
-//       return "N/A"
-//     }
-//     try {
-//       const formatted = format(new Date(dateString), "MMM dd, yyyy")
-//       console.log(`Formatted date ${dateString} to ${formatted}`)
-//       return formatted
-//     } catch (e) {
-//       console.error("formatDateSafely error:", e, { dateString })
-//       return "Invalid Date"
-//     }
-//   }
+      {/* Details */}
+      <View className="p-4">
+        <View className="flex-row items-center mb-3">
+          <Calendar size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Scheduled: <Text className="font-medium text-gray-900">{formatDateSafely(appointment.scheduledDate)}</Text>
+          </Text>
+        </View>
+        <View className="flex-row items-center mb-3">
+          <FileText size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Purpose: <Text className="font-medium text-gray-900">{appointment.purpose}</Text>
+          </Text>
+        </View>
+        {/* <View className="flex-row items-center mb-3">
+          <User size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Patient Type: <Text className="font-medium text-gray-900">{appointment.type}</Text>
+          </Text>
+        </View> */}
+        <View className="flex-row items-center">
+          <MapPin size={16} color="#6B7280" />
+          <Text className="ml-2 text-gray-600 text-sm">
+            Location: <Text className="font-medium text-gray-900">{appointment.sitio || "N/A"}</Text>
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )
+}
 
-//   const getStatusColor = (status: string) => {
-//     const normalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-//     const colors = {
-//       Pending: "bg-yellow-500 border-yellow-500 text-yellow-700",
-//       Completed: "bg-green-500 border-green-500 text-green-700",
-//       Missed: "bg-red-500 border-red-500 text-red-700",
-//       Cancelled: "bg-gray-500 border-gray-%00 text-gray-700",
-//     }
-//     const selectedColor = colors[normalizedStatus as keyof typeof colors] || colors.Cancelled
-//     console.log(`Status ${status} mapped to color class: ${selectedColor}`)
-//     return selectedColor
-//   }
+export default function MyAppointmentsScreen() {
+  const { user } = useAuth()
+  const rp_id = user?.resident?.rp_id
+  const [searchQuery, setSearchQuery] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabType>("pending")
 
-//   // Transform API data to match ScheduleRecord type and filter by current user
-//   const userAppointments = useMemo(() => {
-//     if (!paginatedData?.results) {
-//       console.warn("No results in paginatedData")
-//       return []
-//     }
+  const { data: appointments = [], isLoading, isError, refetch } = useAppointmentsByResidentId(
+    rp_id || ""
+  )
 
-//     const transformed = paginatedData.results
-//       .map((visit: any) => {
-//         console.log("Processing visit:", visit)
-//         try {
-//           const patientDetails = visit.patient_details
-//           if (!patientDetails) {
-//             console.warn("No patient details found for visit:", visit)
-//             return null
-//           }
+  // Utility functions
+  const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
+    console.log("getAppointmentStatus called with:", { scheduledDate, currentStatus })
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const appointmentDate = new Date(scheduledDate)
+    appointmentDate.setHours(0, 0, 0, 0)
 
-//           const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
-//           const address = patientDetails.address || {}
+    if (appointmentDate < today && currentStatus.toLowerCase() === "pending") {
+      console.log(`Appointment on ${scheduledDate} marked as Missed (was ${currentStatus})`)
+      return "Missed"
+    }
+    return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
+  }
 
-//           // Check if this appointment belongs to the current user
-//           const patientId = patientDetails.pat_id || patientInfo.pat_id || ""
-//           console.log(`Comparing patientId ${patientId} with rp_id ${rp_id}`)
-//           if (patientId !== rp_id) {
-//             console.log(`Skipping appointment ${visit.followv_id || visit.id}: not for current user`)
-//             return null
-//           }
+  // Transform API data to match ScheduleRecord type (for logged-in user only)
+  const userAppointments = useMemo(() => {
+    if (!appointments || appointments.length === 0) {
+      console.warn("No appointments data")
+      return []
+    }
 
-//           const calculateAge = (dob: string) => {
-//             if (!dob) {
-//               console.warn("No DOB provided for age calculation")
-//               return { age: 0, ageTime: "yrs" }
-//             }
-//             try {
-//               const birthDate = new Date(dob)
-//               const today = new Date()
-//               let age = today.getFullYear() - birthDate.getFullYear()
-//               const monthDiff = today.getMonth() - birthDate.getMonth()
+    // Calculate age from user's DOB (assume user.resident has per_dob or similar; adjust as needed)
+    const calculateAge = (dob: string) => {
+      if (!dob) {
+        console.warn("No DOB provided for age calculation")
+        return { age: 0, ageTime: "yrs" }
+      }
+      try {
+        const birthDate = new Date(dob)
+        const today = new Date()
+        let age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
 
-//               if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-//                 age--
-//               }
-//               console.log(`Calculated age for DOB ${dob}: ${age} yrs`)
-//               return { age: Math.max(0, age), ageTime: "yrs" }
-//             } catch (e) {
-//               console.error("Error calculating age:", e, { dob })
-//               return { age: 0, ageTime: "yrs" }
-//             }
-//           }
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--
+        }
+        console.log(`Calculated age for DOB ${dob}: ${age} yrs`)
+        return { age: Math.max(0, age), ageTime: "yrs" }
+      } catch (e) {
+        console.error("Error calculating age:", e, { dob })
+        return { age: 0, ageTime: "yrs" }
+      }
+    }
 
-//           const ageInfo = calculateAge(patientInfo.per_dob)
+    const userDob = user?.resident?.per_dob || user?.resident?.dob // Adjust field name as per your user object
+    const ageInfo = calculateAge(userDob)
 
-//           const formatDate = (dateStr: string) => {
-//             if (!dateStr) {
-//               console.warn("No date string for formatDate")
-//               return new Date().toISOString().split("T")[0]
-//             }
-//             try {
-//               const formatted = new Date(dateStr).toISOString().split("T")[0]
-//               console.log(`Formatted date ${dateStr} to ${formatted}`)
-//               return formatted
-//             } catch (e) {
-//               console.error("Error formatting date:", e, { dateStr })
-//               return dateStr
-//             }
-//           }
+    const transformed = appointments.map((visit: any) => {
+      console.log("Processing visit:", visit)
+      try {
+        const record: ScheduleRecord = {
+          id: visit.followv_id || 0,
+          patient: {
+            firstName: user?.resident?.per_fname || user?.resident?.firstName || "Unknown",
+            lastName: user?.resident?.per_lname || user?.resident?.lastName || "Unknown",
+            middleName: user?.resident?.per_mname || user?.resident?.middleName || "",
+            gender: user?.resident?.per_sex || user?.resident?.gender || "Unknown",
+            age: ageInfo.age,
+            ageTime: ageInfo.ageTime,
+            patientId: rp_id || "", // Use rp_id as patientId for consistency
+          },
+          scheduledDate: visit.followv_date || "",
+          purpose: visit.followv_description || "Follow-up Visit",
+          status: (visit.followv_status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
+          sitio: "", // Default; response lacks address—fetch separately if needed
+          type: "Resident", // Assuming resident user
+          patrecType: "Follow-up",
+        }
 
-//           const record: ScheduleRecord = {
-//             id: visit.followv_id || visit.id || 0,
-//             patient: {
-//               firstName: patientInfo.per_fname || "Unknown",
-//               lastName: patientInfo.per_lname || "Unknown",
-//               middleName: patientInfo.per_mname || "",
-//               gender: patientInfo.per_sex || "Unknown",
-//               age: ageInfo.age,
-//               ageTime: ageInfo.ageTime,
-//               patientId: patientId,
-//             },
-//             scheduledDate: formatDate(visit.followv_date || visit.date),
-//             purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-//             status: (visit.followv_status || visit.status || "Pending").charAt(0).toUpperCase() +
-//               (visit.followv_status || visit.status || "Pending").slice(1) as "Pending" | "Completed" | "Missed" | "Cancelled",
-//             sitio: address.add_sitio || address.sitio || address.location || "Unknown",
-//             type: patientDetails.pat_type === "Transient" ? "Transient" : "Resident",
-//             patrecType: patientDetails.patrec_type || "Unknown",
-//           }
+        console.log("Transformed record:", record)
+        return record
+      } catch (error) {
+        console.error("Error transforming visit data:", error, visit)
+        return null
+      }
+    }).filter(Boolean)
 
-//           console.log("Transformed record:", record)
-//           return record
-//         } catch (error) {
-//           console.error("Error transforming visit data:", error, visit)
-//           return null
-//         }
-//       })
-//       .filter(Boolean)
+    console.log("Transformed user appointments:", transformed)
+    return transformed
+  }, [appointments, rp_id, user])
 
-//     console.log("Transformed user appointments:", transformed)
-//     return transformed
-//   }, [paginatedData, rp_id])
+  // Filter and sort appointments based on search and active tab
+  const filteredAppointments = useMemo(() => {
+    let result = userAppointments
+      .map((appt:any) => ({ ...appt, status: getAppointmentStatus(appt.scheduledDate, appt.status) }))
+      .filter((appt:any) => {
+        if (activeTab === 'pending' && appt.status !== 'Pending') return false
+        if (activeTab === 'completed' && appt.status !== 'Completed') return false
+        if (activeTab === 'missed' && appt.status !== 'Missed') return false
 
-//   // Filter appointments (client-side search and status only)
-//   const filteredAppointments = useMemo(() => {
-//     let result = userAppointments
+        if (searchQuery.trim()) {
+          const query = searchQuery.toLowerCase()
+          return (
+            `${appt.patient.firstName} ${appt.patient.lastName}`.toLowerCase().includes(query) ||
+            appt.patient.patientId.toLowerCase().includes(query) ||
+            appt.purpose.toLowerCase().includes(query) ||
+            appt.scheduledDate.toLowerCase().includes(query) ||
+            appt.sitio.toLowerCase().includes(query)
+          )
+        }
+        return true
+      })
 
-//     if (searchQuery) {
-//       const lowerCaseQuery = searchQuery.toLowerCase()
-//       result = result.filter(
-//         (appointment: { purpose: string; sitio: string }) =>
-//           appointment.purpose.toLowerCase().includes(lowerCaseQuery) ||
-//           appointment.sitio.toLowerCase().includes(lowerCaseQuery)
-//       )
-//       console.log("Applied search filter:", { searchQuery, resultCount: result.length })
-//     }
+    // Sort by date descending
+    result.sort((a:any, b:any) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
 
-//     if (activeFilter !== "All") {
-//       result = result.filter((appointment: { scheduledDate: string; status: string }) => getAppointmentStatus(appointment.scheduledDate, appointment.status) === activeFilter)
-//       console.log("Applied status filter:", { activeFilter, resultCount: result.length })
-//     }
+    return result
+  }, [userAppointments, searchQuery, activeTab])
 
-//     console.log("Final filtered appointments:", result)
-//     return result // No time-based sorting or filtering
-//   }, [userAppointments, searchQuery, activeFilter])
+  // Calculate stats for tabs
+  const counts = useMemo(() => {
+    return {
+      pending: userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Pending").length,
+      completed: userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Completed").length,
+      missed: userAppointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Missed").length,
+    }
+  }, [userAppointments])
 
-//   // Calculate stats for display
-//   const stats = useMemo(() => {
-//     const stats = {
-//       totalAppointments: userAppointments.length,
-//       pendingAppointments: userAppointments.filter((a: { scheduledDate: any; status: string }) => getAppointmentStatus(a.scheduledDate, a.status) === "Pending").length,
-//       completedAppointments: userAppointments.filter((a: { scheduledDate: any; status: string }) => getAppointmentStatus(a.scheduledDate, a.status) === "Completed").length,
-//       missedAppointments: userAppointments.filter((a: { scheduledDate: any; status: string }) => getAppointmentStatus(a.scheduledDate, a.status) === "Missed").length,
-//       upcomingAppointments: userAppointments.filter((a: { scheduledDate: any | number | Date; status: string }) => {
-//         const appointmentDate = new Date(a.scheduledDate)
-//         const today = new Date()
-//         return appointmentDate >= today && getAppointmentStatus(a.scheduledDate, a.status) === "Pending"
-//       }).length,
-//     }
-//     console.log("Stats calculated:", stats)
-//     return stats
-//   }, [userAppointments])
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await refetch()
+    } catch (e) {
+      console.error("Refetch error:", e)
+    }
+    setRefreshing(false)
+  }, [refetch])
 
-//   const onRefresh = React.useCallback(async () => {
-//     console.log("Refresh triggered")
-//     setRefreshing(true)
-//     try {
-//       await refetch()
-//       console.log("Refetch successful")
-//     } catch (e) {
-//       console.error("Refetch error:", e)
-//     }
-//     setRefreshing(false)
-//   }, [refetch])
+  const handleAppointmentPress = (appointment: ScheduleRecord) => {
+    console.log("View appointment:", { id: appointment.id, patient: appointment.patient.patientId })
+    // Navigate to appointment details or perform action
+  }
 
-//   const handleFilterPress = (filter: FilterType) => {
-//     console.log("Filter selected:", filter)
-//     setActiveFilter(filter)
-//     setShowFilters(false)
-//   }
+  if (isLoading) { return <LoadingState/> }
 
-//   if (isLoading) {
-//       return <LoadingState/>}
+  if (isError) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+      >
+        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+          <AlertCircle size={64} color="#EF4444" />
+          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading appointments</Text>
+          <Text className="text-gray-600 text-center mt-2 mb-6">
+            Failed to load appointment data. Please check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
+          >
+            <RefreshCw size={18} color="white" />
+            <Text className="ml-2 text-white font-medium">Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </PageLayout>
+    )
+  }
 
-//   if (error) {
-//     return (
-//       <View className="flex-1 justify-center items-center p-4 bg-red-50">
-//         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
-//           <AlertCircle size={48} color="#EF4444" />
-//           <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
-//           <Text className="text-gray-700 text-center leading-6">
-//             Failed to load your appointments. Please try again later.
-//           </Text>
-//           <TouchableOpacity onPress={onRefresh} className="mt-6 px-6 py-3 bg-red-500 rounded-xl">
-//             <Text className="text-white font-semibold">Retry</Text>
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     )
-//   }
+  return (
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        <View className="bg-white px-4 py-3 border-b border-gray-200">
+          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+            <Search size={20} color="#6B7280" />
+            <TextInput
+              className="flex-1 ml-3 text-gray-800 text-base"
+              placeholder="Search appointments..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+        </View>
 
-//   return (
-//     <PageLayout
-//           leftAction={
-//             <TouchableOpacity
-//               onPress={() => router.back()}
-//               className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-//             >
-//               <ChevronLeft size={24} className="text-gray-700" />
-//             </TouchableOpacity>
-//           }
-//           headerTitle={<Text className="text-gray-900 text-[13px]">My Appointments</Text>}
-//           rightAction={ <TouchableOpacity onPress={() => setShowFilters(!showFilters)} className="p-2">
-//               <Filter size={20} color="blue" />
-//             </TouchableOpacity>}
-//         >
-//     <View className="flex-1 bg-gray-100">
-//       {/* Header */}
-//       <View className="bg-white shadow-md">
-        
-//          {showFilters && (
-//             <View className="bg-white rounded-2xl shadow-md p-4 mt-2">
-//               {["All", "Pending", "Completed", "Missed", "Cancelled"].map((filter) => (
-//                 <TouchableOpacity
-//                   key={filter}
-//                   onPress={() => handleFilterPress(filter as FilterType)}
-//                   className={`py-2 px-4 rounded-lg ${activeFilter === filter ? "bg-blue-50" : ""}`}
-//                 >
-//                   <Text className={`font-medium text-base ${activeFilter === filter ? "text-blue-600" : "text-gray-700"}`}>
-//                     {filter}
-//                   </Text>
-//                 </TouchableOpacity>
-//               ))}
-//             </View>
-//           )} 
-//         {/* Search and Filter Bar */}
-//         <View className="px-4 pb-4">
-//           <View className="flex-row items-center gap-3">
-//             <View className="flex-1 flex-row items-center p-3 border border-gray-200 bg-white rounded-2xl shadow-sm">
-//               <Search size={20} color="#6B7280" />
-//               <TextInput
-//                 className="flex-1 ml-3 text-gray-800 text-base"
-//                 placeholder="Search..."
-//                 placeholderTextColor="#9CA3AF"
-//                 value={searchQuery}
-//                 onChangeText={setSearchQuery}
-//               />
-//             </View>
-           
-//           </View>
+        {/* Tab Bar */}
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
-//           {/* Filter Dropdown */}
-          
-//         </View>
-//       </View>
-
-//       {/* Stats and Appointments */}
-//       <FlatList
-//         data={filteredAppointments}
-//         keyExtractor={(item) => `appointment-${item.id}`}
-//         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-//         showsVerticalScrollIndicator={false}
-//         initialNumToRender={10}
-//         maxToRenderPerBatch={20}
-//         windowSize={21}
-//         ListHeaderComponent={() => (
-//           <View className="p-4">
-           
-
-//             {/* Statistics Cards */}
-//             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-//               <View className="flex-row gap-3">
-//                 <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-//                   <View className="flex-row items-center mb-2">
-//                     <Calendar size={20} color="#3B82F6" />
-//                     <Text className="ml-2 text-gray-600 text-sm font-medium">Total</Text>
-//                   </View>
-//                   <Text className="text-3xl font-bold text-gray-900">{stats.totalAppointments}</Text>
-//                 </View>
-//                 <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-//                   <View className="flex-row items-center mb-2">
-//                     <Calendar size={20} color="#F59E0B" />
-//                     <Text className="ml-2 text-gray-600 text-sm font-medium">Upcoming</Text>
-//                   </View>
-//                   <Text className="text-3xl font-bold text-gray-900">{stats.upcomingAppointments}</Text>
-//                 </View>
-//                 <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-//                   <View className="flex-row items-center mb-2">
-//                     <FileText size={20} color="#10B981" />
-//                     <Text className="ml-2 text-gray-600 text-sm font-medium">Completed</Text>
-//                   </View>
-//                   <Text className="text-3xl font-bold text-gray-900">{stats.completedAppointments}</Text>
-//                 </View>
-//                  <View className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-//                   <View className="flex-row items-center mb-2">
-//                     <FileWarning size={20} color="red" />
-//                     <Text className="ml-2 text-gray-600 text-sm font-medium">Missed</Text>
-//                   </View>
-//                   <Text className="text-3xl font-bold text-gray-900">{stats.missedAppointments}</Text>
-//                 </View>
-//               </View>
-//             </ScrollView>
-
-//             {/* Appointments Header */}
-//             <View className="mt-4 mb-2 flex-row justify-between items-center">
-//               <Text className="text-lg font-bold text-gray-900">Your Appointments ({filteredAppointments.length})</Text>
-//             </View>
-//           </View>
-//         )}
-//         renderItem={({ item: appointment }) => {
-//           const actualStatus = getAppointmentStatus(appointment.scheduledDate, appointment.status)
-//           return (
-//             <TouchableOpacity
-//               className="bg-white rounded-2xl shadow-md border border-gray-200 mx-4 mb-4 overflow-hidden"
-//               activeOpacity={0.8}
-//               onPress={() => {
-//                 console.log("View appointment:", { id: appointment.id, patient: appointment.patient.patientId })
-//                 // Add navigation to details screen if needed
-//                 // router.push(`/appointment/${appointment.id}`)
-//               }}
-//             >
-//               {/* Appointment Header */}
-//               <View className="p-5">
-//                 <View className="flex-row items-center mb-4">
-//                   {/* Avatar */}
-//                   <View className="w-12 h-12 bg-blue-600 rounded-full items-center justify-center mr-4 shadow-md">
-//                     <Calendar color="white" size={20} />
-//                   </View>
-//                   {/* Appointment Info */}
-//                   <View className="flex-1">
-//                     <Text className="font-bold text-lg text-gray-900 mb-1">
-//                       Appointment #{appointment.id}
-//                     </Text>
-//                     <Text className="text-gray-500 text-sm">
-//                       {formatDateSafely(appointment.scheduledDate)}
-//                     </Text>
-//                   </View>
-//                   {/* Status Badge */}
-//                   <View className={`px-3 py-1 rounded-full border ${getStatusColor(actualStatus)}`}>
-//                     <Text className="text-xs font-semibold">{actualStatus}</Text>
-//                   </View>
-//                 </View>
-//                 {/* Appointment Details */}
-//                 <View className="bg-gray-50 rounded-lg p-4">
-//                   <View className="flex-row items-center mb-3">
-//                     <FileText size={16} color="#6B7280" />
-//                     <Text className="text-gray-600 text-sm ml-2">
-//                       Purpose: <Text className="font-semibold text-gray-900">{appointment.purpose}</Text>
-//                     </Text>
-//                   </View>
-//                   <View className="flex-row items-center">
-//                     <User size={16} color="#6B7280" />
-//                     <Text className="text-gray-600 text-sm ml-2">
-//                       Location: <Text className="font-semibold text-gray-900">{appointment.sitio}</Text>
-//                     </Text>
-//                   </View>
-//                 </View>
-//               </View>
-//               {/* Action Indicator */}
-//               {/* <View className="bg-blue-600 px-5 py-3">
-//                 <Text className="text-white font-semibold text-center">View Details →</Text>
-//               </View> */}
-//             </TouchableOpacity>
-//           )
-//         }}
-//         ListEmptyComponent={() => (
-//           <View className="p-6 items-center">
-//             <Calendar size={48} color="#D1D5DB" />
-//             <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">No Appointments Found</Text>
-//             <Text className="text-gray-500 text-center leading-6">
-//               {searchQuery
-//                 ? "No appointments match your search criteria."
-//                 : "You don't have any appointments scheduled yet."}
-//             </Text>
-//           </View>
-//         )}
-//       />
-//     </View>
-//     </PageLayout>
-//   )
-// }
+        {/* Appointments List */}
+        {userAppointments.length === 0 ? (
+          <View className="flex-1 justify-center items-center px-6">
+            <Calendar size={64} color="#9CA3AF" />
+            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No appointments found</Text>
+            <Text className="text-gray-600 text-center mt-2">
+              There are no appointments scheduled yet.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredAppointments}
+            keyExtractor={(item) => `appointment-${item.id}`}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 16 }}
+            initialNumToRender={15}
+            maxToRenderPerBatch={20}
+            windowSize={21}
+            renderItem={({ item }) => {
+              const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
+              return (
+                <AppointmentCard
+                  appointment={item}
+                  actualStatus={actualStatus}
+                  onPress={() => handleAppointmentPress(item)}
+                />
+              )
+            }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-20">
+                <Calendar size={48} color="#D1D5DB" />
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No appointments in this category</Text>
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? `No ${activeTab} appointments match your search.`
+                    : `No ${activeTab} appointments found.`}
+                </Text>
+              </View>
+            )}
+          />
+        )}
+      </View>
+    </PageLayout>
+  )
+}

@@ -196,6 +196,7 @@ isSubmitting: boolean;
 newVitalSigns: VitalSignType[];
 setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
 passed_status: string;
+chrecId: string;
 }
 
 

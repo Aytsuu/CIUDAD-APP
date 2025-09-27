@@ -506,6 +506,7 @@ export default function ChildHealthRecordForm() {
                 newVitalSigns={newVitalSigns}
                 setNewVitalSigns={setNewVitalSigns}
                 passed_status={passed_status || ""}
+                chrecId={chrecId}
               />
             )}
           </div>

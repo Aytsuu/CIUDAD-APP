@@ -15,6 +15,7 @@ import { useIndivPatientVaccinationRecords, useFollowupVaccines, useUnvaccinated
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
@@ -138,17 +139,20 @@ export default function IndivVaccinationRecords() {
                     onChange={(value) => setfilter(value as filter)}
                   />
                 </div> */}
-            <Button className="w-full sm:w-auto">
-              <Link
-                to="/services/vaccination/form"
-                state={{
-                  mode: "addnewvaccination_record",
-                  params: { patientData }
-                }}
-              >
-                New Vaccination Record
-              </Link>
-            </Button>
+
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+              <Button className="w-full sm:w-auto">
+                <Link
+                  to="/services/vaccination/form"
+                  state={{
+                    mode: "addnewvaccination_record",
+                    params: { patientData }
+                  }}
+                >
+                  New Vaccination Record
+                </Link>
+              </Button>
+            </ProtectedComponentButton>
           </div>
         </div>
 

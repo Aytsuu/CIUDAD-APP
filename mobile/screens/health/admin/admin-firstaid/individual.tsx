@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, FlatList,TextInput,RefreshControl,Image } from "react-native";
+import { 
+  View, 
+  TouchableOpacity, 
+  FlatList,
+  TextInput,
+  RefreshControl,
+  Image
+} from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Search, ChevronLeft, Heart, FileText, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react-native";
@@ -12,7 +19,6 @@ import { FirstAidRecord } from "./types";
 import { calculateAge } from "@/helpers/ageCalculator";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
-import { StatsCard } from "@/components/healthcomponents/stats-card";
 
 const PatientInfoCard = ({ patientData }: { patientData: any }) => {
   const formatAddress = () => {
@@ -23,10 +29,10 @@ const PatientInfoCard = ({ patientData }: { patientData: any }) => {
       .join(", ");
   };
 
-  // const calculatePatientAge = () => {
-  //   if (!patientData?.patient_details?.personal_info?.per_dob) return "N/A";
-  //   return calculateAge(patientData.patient_details.personal_info.per_dob).toString();
-  // };
+  const calculatePatientAge = () => {
+    if (!patientData?.patient_details?.personal_info?.per_dob) return "N/A";
+    return calculateAge(patientData.patient_details.personal_info.per_dob).toString();
+  };
 };
 
 const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
@@ -81,7 +87,21 @@ const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
   </Card>
 );
 
-
+const StatsCard = ({ count }: { count: number }) => (
+  <Card className="mx-4 mb-4 bg- border-slate-200">
+    <CardContent className="p-4">
+      <View className="flex-row items-center">
+        <View className="w-10 h-10 bg-red-100 rounded-lg items-center justify-center mr-3">
+          <Heart size={20} color="#DC2626" />
+        </View>
+        <View>
+          <Text className="text-slate-600 text-sm">Total Records</Text>
+          <Text className="text-2xl font-bold text-slate-900">{count}</Text>
+        </View>
+      </View>
+    </CardContent>
+  </Card>
+);
 
 export default function IndivFirstAidRecords() {
   const { patientData: patientDataString } = useLocalSearchParams();
@@ -206,6 +226,10 @@ export default function IndivFirstAidRecords() {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
+        {/* Patient Info */}
+        {/* <PatientInfoCard patientData={patientData} /> */}
+        
+        {/* Stats */}
         <StatsCard count={firstAidCount} />
 
         {/* Search Bar */}

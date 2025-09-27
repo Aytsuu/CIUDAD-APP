@@ -31,8 +31,6 @@ export default function DependentInformation() {
     completeStep
   } = useProgressContext();
 
-  console.log(watch("dependentInfoSchema.list"))
-
   React.useEffect(() => {
     const dependents = watch("dependentInfoSchema.list")
     if(dependents.length > 0) {

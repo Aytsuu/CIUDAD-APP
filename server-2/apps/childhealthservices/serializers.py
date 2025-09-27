@@ -65,6 +65,12 @@ class LatestVitalBMSerializer(serializers.Serializer):
     vital_created_at = serializers.DateTimeField(source='vital.created_at')
      
    
+class ChildHealthNotesBaseSerializer(serializers.ModelSerializer):
+    followv_details = FollowUpVisitSerializerBase(source='followv', read_only=True)
+    class Meta:
+            model = ChildHealthNotes
+            fields = '__all__'
+        
 class ChildHealthNotesSerializer(serializers.ModelSerializer):
     chhist_details = ChildHealthHistorySerializerBase(source='chhist', read_only=True)
     followv_details = FollowUpVisitSerializerBase(source='followv', read_only=True)

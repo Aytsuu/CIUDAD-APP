@@ -1,18 +1,22 @@
 import React, { useState, useMemo } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, User, FileText, Users,  RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Users, UserCheck, UserPlus, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { router } from "expo-router";
+import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFirstaidRecords } from "./restful-api/getAPI";
-import { FirstAidRecord} from "./types";
+import { FirstAidRecord, PersonalInfo, Address } from "./types";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { calculateAge } from "@/helpers/ageCalculator";
 
 interface FirstAidPatientsCount {
   total_firstaid_patients: number;
-  resident_firstaid_patients: number;
+  resident_firstaid_patients: number; 
   transient_firstaid_patients: number;
 }
 

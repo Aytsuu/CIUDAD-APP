@@ -1,5 +1,5 @@
 // src/features/medicine/pages/IndivMedicineRecords.tsx
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { medicineRecordColumns } from "./columns/inv-med-col";
 import { useIndividualMedicineRecords } from "../queries/fetch";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function IndivMedicineRecords() {
   const location = useLocation();
@@ -103,27 +104,29 @@ export default function IndivMedicineRecords() {
             <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
           </div>
 
-          <div className="flex flex-1 justify-between items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search by medicine name, category..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div className="flex flex-1 justify-between items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+                <Input placeholder="Search by medicine name, category..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              </div>
+              <div>
+                <Button className="w-full sm:w-auto">
+                  <Link
+                    to="/services/medicine/form"
+                    state={{
+                      params: {
+                        mode: "fromindivrecord",
+                        patientData: patientData
+                      }
+                    }}
+                  >
+                    New Medicine Record
+                  </Link>
+                </Button>
+              </div>
             </div>
-            <div>
-              <Button className="w-full sm:w-auto">
-                <Link
-                  to="/services/medicine/form"
-                  state={{
-                    params: {
-                      mode: "fromindivrecord",
-                      patientData: patientData
-                    }
-                  }}
-                >
-                  New Medicine Record
-                </Link>
-              </Button>
-            </div>
-          </div>
+          </ProtectedComponentButton>
         </div>
 
         <div className="h-full w-full rounded-md bg-white border">

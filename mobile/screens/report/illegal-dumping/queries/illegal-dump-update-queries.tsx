@@ -14,7 +14,7 @@ type FileData = {
 };
 
 
-export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => {
+export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 
@@ -71,7 +71,7 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
 
 // =========================================== RESIDENT ========================================
 
-export const useUpdateWasteResReport = (rep_id: string, onSuccess?: () => void) => {
+export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 

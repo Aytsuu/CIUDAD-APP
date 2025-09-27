@@ -14,9 +14,13 @@ import { Heart } from "lucide-react";
 import { FirstAidRecord } from "../types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { firstAidColumns } from "./columns/indiv-records-col";
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+
 export default function IndivFirstAidRecords() {
   const location = useLocation();
   const patientData = location.state?.params?.patientData;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -161,21 +165,23 @@ export default function IndivFirstAidRecords() {
           </div>
         </div>
 
-        <div className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto">
-            <Link
-              to="/firstaid-request-form"
-              state={{
-                params: {
-                  mode: "fromindivrecord",
-                  patientData
-                }
-              }}
-            >
-              New Request
-            </Link>
-          </Button>
-        </div>
+        <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <div className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
+              <Link
+                to="/firstaid-request-form"
+                state={{
+                  params: {
+                    mode: "fromindivrecord",
+                    patientData
+                  }
+                }}
+              >
+                New Request
+              </Link>
+            </Button>
+          </div>
+        </ProtectedComponentButton>
       </div>
 
       <div className="h-full w-full bg-white">

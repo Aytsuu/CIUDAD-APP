@@ -16,12 +16,13 @@ import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFet
 import CardLayout from "@/components/ui/card/card-layout";
 import { Badge } from "@/components/ui/badge";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function InvMedicalConRecords() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
-  const mode = params.mode || "";
 
   const navigate = useNavigate();
   const [searchQuery] = useState("");
@@ -39,8 +40,6 @@ export default function InvMedicalConRecords() {
   const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize);
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id);
 
-
-
   const medicalRecords = useMemo(() => {
     console.log("Medical Records Response:", medicalRecordsResponse);
 
@@ -49,7 +48,6 @@ export default function InvMedicalConRecords() {
 
   const totalCount = medicalRecordsResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
-
 
   const getMedicalHistoryCardsData = useCallback(() => {
     if (isMedHistoryLoading) {
@@ -132,7 +130,6 @@ export default function InvMedicalConRecords() {
         </div>
       )}
 
-
       <div className="flex w-full flex-col md:flex-row gap-4">
         {/* Medical History Section */}
         <div className="mb-6 w-full md:w-1/2">
@@ -189,13 +186,13 @@ export default function InvMedicalConRecords() {
           <p className="text-2xl font-bold text-gray-900">{isMedicalRecordsLoading ? "..." : totalCount}</p>
         </div>
 
-        {mode !== "doctor" && (
+        <ProtectedComponentButton exclude={["DOCTOR"]}>
           <Button className="w-full sm:w-auto" disabled={isMedicalRecordsLoading || isMedicalRecordsError}>
             <Link to="/services/medical-consultation/form" state={{ params: { patientData, mode: "fromindivrecord" } }}>
               New Consultation Record
             </Link>
           </Button>
-        )}
+        </ProtectedComponentButton>
       </div>
 
       <div className="h-full w-full rounded-md">

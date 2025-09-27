@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Loader2, Search, Home, UserCheck, Users, FileInput } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useMedicalRecord } from "../queries/fetchQueries";
@@ -18,9 +18,9 @@ import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQue
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function AllMedicalConsRecord() {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,17 +39,17 @@ export default function AllMedicalConsRecord() {
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
-  
+
   // Build the combined search query that includes selected sitios
   const combinedSearchQuery = useMemo(() => {
     let query = debouncedSearchQuery || "";
-    
+
     // If sitios are selected, add them to the search query with COMMA separation
     if (selectedSitios.length > 0) {
       const sitioQuery = selectedSitios.join(",");
       query = query ? `${query},${sitioQuery}` : sitioQuery;
     }
-    
+
     return query || undefined;
   }, [debouncedSearchQuery, selectedSitios]);
 
@@ -171,7 +171,7 @@ export default function AllMedicalConsRecord() {
   }, [medicalRecords]);
 
   const { residents, transients } = calculateCounts();
-  
+
   // Sitio filter handlers
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
@@ -180,7 +180,7 @@ export default function AllMedicalConsRecord() {
       setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
     }
   };
-  
+
   const handleSelectAllSitios = (checked: boolean) => {
     if (checked && sitios.length > 0) {
       setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
@@ -188,8 +188,6 @@ export default function AllMedicalConsRecord() {
       setSelectedSitios([]);
     }
   };
-  
-
 
   return (
     <MainLayoutComponent title="Medical Consultation" description="Manage Medical Consultation">
@@ -237,12 +235,7 @@ export default function AllMedicalConsRecord() {
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input 
-                placeholder="Search by name, patient ID, household number, address, or sitio..." 
-                className="pl-10 bg-white w-full" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-              />
+              <Input placeholder="Search by name, patient ID, household number, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <SelectLayout
               placeholder="Filter records"
@@ -256,42 +249,29 @@ export default function AllMedicalConsRecord() {
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
             />
-            <FilterSitio 
-              sitios={sitios} 
-              isLoading={isLoadingSitios} 
-              selectedSitios={selectedSitios} 
-              onSitioSelection={handleSitioSelection} 
-              onSelectAll={handleSelectAllSitios} 
-              manualSearchValue=""
-            />
+            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
           </div>
-          <div className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">
-              <Link
-                to="/services/medical-consultation/form"
-                state={{
-                  params: {
-                    mode: "fromallrecordtable"
-                  }
-                }}
-              >
-                New Record
-              </Link>
-            </Button>
-          </div>
+
+          <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">
+                <Link
+                  to="/services/medical-consultation/form"
+                  state={{
+                    params: {
+                      mode: "fromallrecordtable"
+                    }
+                  }}
+                >
+                  New Record
+                </Link>
+              </Button>
+            </div>
+          </ProtectedComponentButton>
         </div>
-        
+
         {/* Selected Filters Chips */}
-        {selectedSitios.length > 0 && (
-          <SelectedFiltersChips 
-            items={selectedSitios} 
-            onRemove={(sitio:any) => handleSitioSelection(sitio, false)} 
-            onClearAll={() => setSelectedSitios([])} 
-            label="Filtered by sitios" 
-            chipColor="bg-blue-100" 
-            textColor="text-blue-800" 
-          />
-        )}
+        {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
 
         <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
