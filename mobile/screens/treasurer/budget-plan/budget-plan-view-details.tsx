@@ -16,6 +16,8 @@ export default function BudgetPlanView() {
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(plan_id as string);
     const [activeTab, setActiveTab] = useState<"plan" | "history" | "documents">("plan");
 
+    console.log('Archive in main', fetchedData?.plan_is_archive)
+
     if (isLoading) {
         return (
             <SafeAreaView className="flex-1 justify-center items-center">
@@ -86,7 +88,7 @@ export default function BudgetPlanView() {
             {/* Scrollable Content Area */}
             <View className="flex-1">
                 {activeTab === "plan" && (
-                    <ScrollView className="flex-1 pt-2 px-4">
+                    <ScrollView className="flex-1">
                         <MobileBudgetPlanView budgetData={fetchedData} />
                     </ScrollView>
                 )}
@@ -96,7 +98,10 @@ export default function BudgetPlanView() {
                 )}
 
                 {activeTab === "documents" && (
-                    <BudgetPlanSuppDocs plan_id = {plan_id as string}/>
+                    <BudgetPlanSuppDocs 
+                        plan_id={plan_id as string} 
+                        isArchive={fetchedData?.plan_is_archive || false}
+                    />
                 )}
             </View>
           </View>

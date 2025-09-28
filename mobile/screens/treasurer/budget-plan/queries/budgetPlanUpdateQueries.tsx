@@ -10,6 +10,7 @@ export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
         mutationFn: (plan_id: number) => archiveBudgetPlan(plan_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['budgetDetails'] })
             toast.success('Budget Plan is archived successfully')
             
             onSuccess?.();
@@ -29,6 +30,7 @@ export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
         mutationFn: (plan_id: number) => restoreBudgetPlan(plan_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['budgetDetails'] })
             toast.success('Budget Plan is restored successfully')
             
             onSuccess?.();

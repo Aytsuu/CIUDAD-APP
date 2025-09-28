@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { deleteBudgetPlan } from "../restful-API/budgetPlanDeleteAPI";
+import { deleteBudgetPlan, deleteBudgetPlanFile } from "../restful-API/budgetPlanDeleteAPI";
 
 export const useDeleteBudgetPlan = () => {
     const queryClient = useQueryClient();
@@ -8,7 +8,7 @@ export const useDeleteBudgetPlan = () => {
 
     return useMutation({
         mutationFn: deleteBudgetPlan,
-        onMutate: async (plan_id) => {
+        onMutate: async () => {
             await queryClient.cancelQueries({ queryKey: ['budgetPlan'] });
         },
         onSuccess: () => {
@@ -21,3 +21,22 @@ export const useDeleteBudgetPlan = () => {
         }
     });
 };
+
+export const useDeleteBudgetPlanFile = () => {
+    const queryClient = useQueryClient();
+     const {toast} = useToastContext();
+      return useMutation({
+        mutationFn: deleteBudgetPlanFile,
+        onMutate: async () => {
+            await queryClient.cancelQueries({ queryKey: ['budgetPlanFiles'] });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['budgetPlanFiles'] });
+            toast.success("Document deleted successfully")
+        },
+        onError: (err) => {
+            toast.error("Failed to delete document")
+            console.error("Failed to delete file:", err);
+        }
+    });
+}
