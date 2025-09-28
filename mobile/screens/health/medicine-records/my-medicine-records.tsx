@@ -35,7 +35,7 @@ export default function IndividualMedicineRecords() {
     refetch: refetchPatientData,
   } = useQuery({
     queryKey: ["patientByResidentId", rp_id],
-    queryFn: () => {
+    queryFn: () => {2
       if (!rp_id) throw new Error("Resident ID is undefined")
       return getPatientByResidentId(rp_id)
     },
@@ -43,6 +43,7 @@ export default function IndividualMedicineRecords() {
   })
 
   const {
+
     data: apiResponse,
     isLoading,
     isError,

@@ -120,7 +120,7 @@ def apply_patient_search_filter(queryset, search_query):
         combined_query |= term_query
     
     return queryset.filter(combined_query).distinct()
-    return queryset.filter(combined_query).distinct()
+
 def apply_patient_type_filter(queryset, patient_type):
     """Reusable patient type filter"""
     search_terms = [term.strip().lower() for term in patient_type.split(',') if term.strip()]

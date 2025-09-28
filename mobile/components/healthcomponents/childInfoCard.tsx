@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, HeartPulse, Baby, User, Home,Milk,MapPin as Location, UserRound } from "lucide-react-native";
+import { Calendar, HeartPulse, Baby, User, Home, Milk, MapPin as Location, UserRound } from "lucide-react-native";
 // import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 
 interface ChildHealthRecord {
@@ -58,8 +58,102 @@ const formatDateOfBirth = (dob?: string) => {
   }
 };
 
-const getSexColor = (sex: string) => {
-  return sex.toLowerCase() === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700';
+// FIXED: Safe access for sex color with proper null/undefined checking
+const getSexColor = (sex: string | undefined | null) => {
+  // Safe check for sex existence and type
+  if (!sex || typeof sex !== 'string' || sex.trim() === '') {
+    return 'bg-gray-100 text-gray-700';
+  }
+  
+  const lowerSex = sex.toLowerCase().trim();
+  
+  return lowerSex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700';
+};
+
+// FIXED: Safe access for sex display text
+const getSexDisplayText = (sex: string | undefined | null) => {
+  if (!sex || typeof sex !== 'string' || sex.trim() === '') {
+    return "Not specified";
+  }
+  return sex.trim();
+};
+
+// FIXED: Safe access for age display
+const getAgeDisplayText = (age: string | undefined | null) => {
+  if (!age || typeof age !== 'string' || age.trim() === '') {
+    return "Age not specified";
+  }
+  return age.trim();
+};
+
+// FIXED: Safe access for birth order
+const getBirthOrderDisplay = (birthOrder: string | undefined | null) => {
+  if (!birthOrder || typeof birthOrder !== 'string' || birthOrder.trim() === '') {
+    return null;
+  }
+  return birthOrder.trim();
+};
+
+// FIXED: Safe access for patient ID
+const getPatientIdDisplay = (patId: string | undefined | null) => {
+  if (!patId || typeof patId !== 'string' || patId.trim() === '') {
+    return "ID: Not provided";
+  }
+  return `ID: ${patId.trim()}`;
+};
+
+// FIXED: Safe access for feeding type
+const getFeedingTypeDisplay = (feedingType: string | undefined | null) => {
+  if (!feedingType || typeof feedingType !== 'string' || feedingType.trim() === '') {
+    return null;
+  }
+  return feedingType.trim();
+};
+
+// FIXED: Safe access for address
+const getAddressDisplay = (address: string | undefined | null) => {
+  if (!address || typeof address !== 'string' || address.trim() === '') {
+    return "No address provided";
+  }
+  return address.trim();
+};
+
+// FIXED: Safe access for landmarks
+const getLandmarksDisplay = (landmarks: string | undefined | null) => {
+  if (!landmarks || typeof landmarks !== 'string' || landmarks.trim() === '') {
+    return null;
+  }
+  return landmarks.trim();
+};
+
+// FIXED: Safe access for parent names
+const formatParentName = (fname?: string, mname?: string, lname?: string, fallback: string = "Not provided") => {
+  const name = `${fname || ''} ${mname ? mname + ' ' : ''}${lname || ''}`.trim();
+  return name || fallback;
+};
+
+// FIXED: Safe access for parent occupation
+const getOccupationDisplay = (occupation: string | undefined | null) => {
+  if (!occupation || typeof occupation !== 'string' || occupation.trim() === '') {
+    return null;
+  }
+  return occupation.trim();
+};
+
+// FIXED: Safe access for parent age
+const getParentAgeDisplay = (age: string | undefined | null) => {
+  if (!age || typeof age !== 'string' || age.trim() === '') {
+    return null;
+  }
+  return `Age: ${age.trim()}`;
+};
+
+// FIXED: Safe access for medical details
+const getMedicalDetailDisplay = (detail: string | undefined | null) => {
+  if (!detail || typeof detail !== 'string' || detail.trim() === '') {
+    return null;
+  }
+  return detail.trim();
 };
 
 const EmptyChildState = () => (
@@ -77,8 +171,26 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
 
   const fullName = formatFullName(child);
   const dob = formatDateOfBirth(child.dob);
-  const motherName = `${child.mother_fname} ${child.mother_mname ? child.mother_mname + ' ' : ''}${child.mother_lname}`.trim();
-  const fatherName = `${child.father_fname} ${child.father_mname ? child.father_mname + ' ' : ''}${child.father_lname}`.trim();
+  const motherName = formatParentName(child.mother_fname, child.mother_mname, child.mother_lname, "Mother not provided");
+  const fatherName = formatParentName(child.father_fname, child.father_mname, child.father_lname, "Father not provided");
+  
+  // Safe access for all properties
+  const sexDisplay = getSexDisplayText(child.sex);
+  const ageDisplay = getAgeDisplayText(child.age);
+  const birthOrder = getBirthOrderDisplay(child.birth_order);
+  const patientId = getPatientIdDisplay(child.pat_id);
+  const feedingType = getFeedingTypeDisplay(child.type_of_feeding);
+  const address = getAddressDisplay(child.address);
+  const landmarks = getLandmarksDisplay(child.landmarks);
+  const motherOccupation = getOccupationDisplay(child.mother_occupation);
+  const fatherOccupation = getOccupationDisplay(child.father_occupation);
+  const motherAge = getParentAgeDisplay(child.mother_age);
+  const fatherAge = getParentAgeDisplay(child.father_age);
+  const deliveryType = getMedicalDetailDisplay(child.delivery_type);
+  const birthLocation = getMedicalDetailDisplay(child.pod_location);
+  const ttStatus = getMedicalDetailDisplay(child.tt_status);
+
+  const hasMedicalDetails = deliveryType || birthLocation || ttStatus;
 
   return (
     <Card className="bg-white rounded-xl shadow-sm border-0 overflow-hidden">
@@ -95,13 +207,14 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
               </Text>
               <View className="flex-row items-center mt-1">
                 <Badge className={`mr-2 ${getSexColor(child.sex)}`}>
-                  <Text className="text-xs font-medium">{child.sex}</Text>
+                  <Text className="text-xs font-medium">{sexDisplay}</Text>
                 </Badge>
-                <Text className="text-sm text-gray-600">{child.age}</Text>
-                {child.birth_order && (
+                <Text className="text-sm text-gray-600">{ageDisplay}</Text>
+                {birthOrder && (
                   <Badge className="ml-2 bg-purple-100 text-purple-700">
                     <Text className="text-xs font-medium">
-                      {/* {getOrdinalSuffix(parseInt(child.birth_order, 10))} Born */}
+                      {/* {getOrdinalSuffix(parseInt(birthOrder, 10))} Born */}
+                      {birthOrder} Born
                     </Text>
                   </Badge>
                 )}
@@ -109,7 +222,7 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
             </View>
           </View>
           <View className="items-end">
-            <Text className="text-xs text-gray-500">ID: {child.pat_id}</Text>
+            <Text className="text-xs text-gray-500">{patientId}</Text>
           </View>
         </View>
       </CardHeader>
@@ -125,13 +238,13 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
               <Text className="text-sm font-semibold text-blue-800">{dob}</Text>
             </View>
           </View>
-          {child.type_of_feeding && (
+          {feedingType && (
             <View className="flex-row items-center flex-1 border-l border-blue-200 pl-3">
               <Milk size={16} className="text-blue-600 mr-2" />
               <View>
                 <Text className="text-xs text-blue-600">Feeding</Text>
                 <Text className="text-sm font-semibold text-blue-800" numberOfLines={1}>
-                  {child.type_of_feeding}
+                  {feedingType}
                 </Text>
               </View>
             </View>
@@ -145,13 +258,13 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
             <View className="flex-1">
               <Text className="text-xs text-blue-600 mb-1">Address</Text>
               <Text className="text-sm text-blue-800 font-semibold" numberOfLines={2}>
-                {child.address || "No address provided"}
+                {address}
               </Text>
-              {child.landmarks && (
+              {landmarks && (
                 <View className="flex-row items-center mt-1">
                   <Location size={12} className="text-orange-500 mr-1" />
                   <Text className="text-xs text-gray-600" numberOfLines={1}>
-                    {child.landmarks}
+                    {landmarks}
                   </Text>
                 </View>
               )}
@@ -172,14 +285,14 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
               <User size={12} className="text-pink-500 mr-2" />
               <View className="flex-1"> 
                 <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
-                  Mother: {motherName || "Mother not provided"}
+                  Mother: {motherName}
                 </Text>
-                {child.mother_occupation && (
-                  <Text className="text-xs text-gray-500">{child.mother_occupation}</Text>
+                {motherOccupation && (
+                  <Text className="text-xs text-gray-500">{motherOccupation}</Text>
                 )}
               </View>
-              {child.mother_age && (
-                <Text className="text-xs text-gray-500">Age: {child.mother_age}</Text>
+              {motherAge && (
+                <Text className="text-xs text-gray-500">{motherAge}</Text>
               )}
             </View>
 
@@ -188,21 +301,21 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
               <User size={12} className="text-blue-500 mr-2" />
               <View className="flex-1">
                 <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
-                  Father: {fatherName || "Father not provided"}
+                  Father: {fatherName}
                 </Text>
-                {child.father_occupation && (
-                  <Text className="text-xs text-gray-500">{child.father_occupation}</Text>
+                {fatherOccupation && (
+                  <Text className="text-xs text-gray-500">{fatherOccupation}</Text>
                 )}
               </View>
-              {child.father_age && (
-                <Text className="text-xs text-gray-500">Age: {child.father_age}</Text>
+              {fatherAge && (
+                <Text className="text-xs text-gray-500">{fatherAge}</Text>
               )}
             </View>
           </View>
         </View>
 
         {/* Additional Medical Info */}
-        {(child.delivery_type || child.pod_location || child.tt_status) && (
+        {hasMedicalDetails && (
           <View className="bg-green-50 rounded-lg p-3">
             <View className="flex-row items-center mb-2">
               <HeartPulse size={16} className="text-green-600 mr-2" />
@@ -210,24 +323,24 @@ export const ChildHealthRecordCard: React.FC<ChildHealthRecordCardProps> = ({ ch
             </View>
             
             <View className="space-y-1">
-              {child.delivery_type && (
+              {deliveryType && (
                 <View className="flex-row justify-between">
                   <Text className="text-xs text-gray-600">Delivery Type:</Text>
-                  <Text className="text-xs font-medium text-gray-800">{child.delivery_type}</Text>
+                  <Text className="text-xs font-medium text-gray-800">{deliveryType}</Text>
                 </View>
               )}
-              {child.pod_location && (
+              {birthLocation && (
                 <View className="flex-row justify-between">
                   <Text className="text-xs text-gray-600">Birth Location:</Text>
                   <Text className="text-xs font-medium text-gray-800" numberOfLines={1}>
-                    {child.pod_location}
+                    {birthLocation}
                   </Text>
                 </View>
               )}
-              {child.tt_status && (
+              {ttStatus && (
                 <View className="flex-row justify-between">
                   <Text className="text-xs text-gray-600">TT Status:</Text>
-                  <Text className="text-xs font-medium text-gray-800">{child.tt_status}</Text>
+                  <Text className="text-xs font-medium text-gray-800">{ttStatus}</Text>
                 </View>
               )}
             </View>

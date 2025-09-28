@@ -40,6 +40,9 @@ export default () => {
                 <Stack.Screen name="maternal/bookingpage" options={{ headerShown: false }} />
                 <Stack.Screen name="medicine-request/request-page" options={{ headerShown: false }} />
 
+                <Stack.Screen name="childhealth/my-records" options={{ headerShown: false }} />
+
+
 
                 <Stack.Screen name="admin/animalbites/individual" options={{ headerShown: false }} />
                 <Stack.Screen name="admin/animalbites/overall" options={{ headerShown: false }} />

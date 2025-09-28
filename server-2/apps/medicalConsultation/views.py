@@ -56,15 +56,12 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         # Combined search (patient name, patient ID, household number, and sitio)
         search_query = self.request.query_params.get('search', '').strip()
-        sitio_search = self.request.query_params.get('sitio', '').strip()
         
         # Combine search and sitio parameters
         combined_search_terms = []
         if search_query and len(search_query) >= 2:  # Allow shorter search terms
             combined_search_terms.append(search_query)
-        if sitio_search:
-            combined_search_terms.append(sitio_search)
-        
+    
         if combined_search_terms:
             filters_applied = True
             combined_search = ','.join(combined_search_terms)

@@ -75,8 +75,8 @@ export default function Records() {
      {
       id: 7,
       name: 'Child Health Records',
-      description: 'View animal bite treatment records',
-      route: '/animalbite/my-records/',
+      description: 'View Child Health records',
+      route: '/childhealth/my-records/',
       icon: Dog,
       image: require('@/assets/images/Health/Home/child-health.jpg'),
       color: '#1E40AF'

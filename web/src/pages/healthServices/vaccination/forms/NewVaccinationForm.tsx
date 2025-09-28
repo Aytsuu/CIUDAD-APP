@@ -47,6 +47,7 @@ export default function VaccinationRecordForm() {
   const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(null);
   const [vaccineHistory, setVaccineHistory] = useState<VaccinationRecord[]>([]);
   const [isVaccineCompleted, setIsVaccineCompleted] = useState(false);
+  const [isDoseExceeded, setIsDoseExceeded] = useState(false);
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
   const patientToUse = shouldShowPatientSearch ? selectedPatientData : patientDataFromLocation;
@@ -85,7 +86,7 @@ export default function VaccinationRecordForm() {
     }
   });
 
-  const { setValue } = form;
+  const { setValue, watch } = form;
 
   // Use useEffect to update vital signs when latestVitals changes
   useEffect(() => {
@@ -111,6 +112,26 @@ export default function VaccinationRecordForm() {
       form.setValue("pat_id", patientDataFromLocation.pat_id.toString());
     }
   }, [form, patientToUse, shouldShowPatientSearch, selectedPatientData, patientDataFromLocation]);
+
+  // Watch for changes in dose number and total dose to validate
+  const currentDose = watch("vachist_doseNo");
+  const totalDose = watch("vacrec_totaldose");
+
+  useEffect(() => {
+    // Check if current dose exceeds total dose
+    if (currentDose && totalDose) {
+      const doseNum = Number(currentDose);
+      const totalDoseNum = Number(totalDose);
+      
+      if (doseNum > totalDoseNum) {
+        setIsDoseExceeded(true);
+      } else {
+        setIsDoseExceeded(false);
+      }
+    } else {
+      setIsDoseExceeded(false);
+    }
+  }, [currentDose, totalDose]);
 
   const handleSignatureChange = useCallback((signature: string | null) => {
     setSignature(signature);
@@ -139,6 +160,7 @@ export default function VaccinationRecordForm() {
     form.setValue("followv_date", "");
     form.setValue("vacrec_totaldose", "");
     setIsVaccineCompleted(false);
+    setIsDoseExceeded(false);
 
     if (value) {
       const [vacStck_id, vac_id, vac_name] = value.split(",");
@@ -166,16 +188,31 @@ export default function VaccinationRecordForm() {
           const existingRecord = currentVaccineHistory.find((record) => record.vacrec_details?.vacrec_totaldose);
 
           if (existingRecord && existingRecord.vacrec_details?.vacrec_totaldose) {
-            form.setValue("vacrec_totaldose", existingRecord.vacrec_details.vacrec_totaldose.toString());
+            const totalDoseValue = existingRecord.vacrec_details.vacrec_totaldose.toString();
+            form.setValue("vacrec_totaldose", totalDoseValue);
+            
+            // Check if current dose exceeds total dose for conditional vaccines
+            if (doseNumber > Number(totalDoseValue)) {
+              setIsVaccineCompleted(true);
+              showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${totalDoseValue})`);
+            }
           } else {
             // If no existing record, set to empty or let user input
             form.setValue("vacrec_totaldose", "");
           }
         } else if (vaccinelist.no_of_doses) {
           // For non-conditional vaccines, use the no_of_doses from vaccinelist
-          form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
+          const totalDoseValue = vaccinelist.no_of_doses.toString();
+          form.setValue("vacrec_totaldose", totalDoseValue);
+          
+          // Check if current dose exceeds total dose
+          if (doseNumber > Number(totalDoseValue)) {
+            setIsVaccineCompleted(true);
+            showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${totalDoseValue})`);
+          }
         }
 
+        // Set vaccine completion status
         const isCompleted =
           vaccinelist.vac_type_choices !== "conditional" &&
           currentVaccineHistory.some((record) => {
@@ -213,6 +250,7 @@ export default function VaccinationRecordForm() {
       }
     }
   };
+
   const submitStep2 = useSubmitVaccinationRecord();
 
   const onSubmit = async (data: VaccineSchemaType) => {
@@ -236,7 +274,6 @@ export default function VaccinationRecordForm() {
         vac_id: vac_id.trim(),
         vac_name: vac_name.trim(),
         expiry_date: expiry_date.trim(),
-
         followUpData,
         vaccinationHistory: vaccineHistory
       });
@@ -269,7 +306,11 @@ export default function VaccinationRecordForm() {
     form.handleSubmit(onSubmit)();
   };
 
-  const hasInvalidFields = (shouldShowPatientSearch && !selectedPatientId) || !form.watch("vaccinetype") || !form.watch("vachist_doseNo");
+  const hasInvalidFields = (shouldShowPatientSearch && !selectedPatientId) || 
+                          !form.watch("vaccinetype") || 
+                          !form.watch("vachist_doseNo") || 
+                          isVaccineCompleted || 
+                          isDoseExceeded;
 
   return (
     <>
@@ -338,7 +379,16 @@ export default function VaccinationRecordForm() {
                       />
                       {form.watch("vaccinetype") && (
                         <div className="mt-4 flex flex-col sm:flex-row sm:space-x-4">
-                          <FormInput control={form.control} name="vacrec_totaldose" label="Total Doses Required" placeholder="Enter total doses" type="number" readOnly={selectedVaccineType !== "conditional"} />
+                          <FormInput 
+                            control={form.control} 
+                            name="vacrec_totaldose" 
+                            label="Total Doses Required" 
+                            placeholder="Enter total doses" 
+                            type="number" 
+                            readOnly={selectedVaccineType !== "conditional" || isDoseExceeded
+
+                            } 
+                          />
 
                           <FormDateTimeInput control={form.control} name="followv_date" label="Next Follow-up Visit Date" type="date" />
                         </div>
@@ -347,9 +397,18 @@ export default function VaccinationRecordForm() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormDateTimeInput control={form.control} name="datevaccinated" label="Date Vaccinated" type="date" readOnly />
-                      <FormInput control={form.control} name="vachist_doseNo" label="Dose Number" placeholder="Enter dose number" type="number" />
+                      <FormInput 
+                        control={form.control} 
+                        name="vachist_doseNo" 
+                        label="Dose Number" 
+                        placeholder="Enter dose number" 
+                        type="number" 
+                        readOnly={isDoseExceeded}
+                        min={1}
+                      />
                     </div>
                   </div>
+
 
                   <div className="border-t border-gray-200 my-8"></div>
 
@@ -397,7 +456,11 @@ export default function VaccinationRecordForm() {
                     <Button variant="outline" className="w-[120px] border-gray-300 hover:bg-gray-50 bg-transparent" type="button" onClick={() => form.reset()}>
                       Cancel
                     </Button>
-                    <Button type="submit" className="w-[120px]" disabled={hasInvalidFields || submitting || isVaccineCompleted}>
+                    <Button 
+                      type="submit" 
+                      className="w-[120px]" 
+                      disabled={hasInvalidFields || submitting || isVaccineCompleted || isDoseExceeded}
+                    >
                       {submitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

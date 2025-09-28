@@ -30,9 +30,6 @@ from apps.inventory.models import *
 from apps.medicalConsultation.utils import apply_patient_type_filter
 
 
-# views.py
-
-
 class ChildHealthRecordsView(generics.ListAPIView):
     serializer_class = ChildHealthrecordSerializer
     pagination_class = StandardResultsPagination
@@ -59,12 +56,21 @@ class ChildHealthRecordsView(generics.ListAPIView):
         filters_applied = False
         original_count = queryset.count()
         
-        # Search filter
+        # Combined search (patient name, patient ID, household number, and sitio)
         search_query = self.request.query_params.get('search', '').strip()
+        sitio_search = self.request.query_params.get('sitio', '').strip()
         
-        if search_query and len(search_query) >= 2:
+        # Combine search and sitio parameters
+        combined_search_terms = []
+        if search_query and len(search_query) >= 2:  # Allow shorter search terms
+            combined_search_terms.append(search_query)
+        if sitio_search:
+            combined_search_terms.append(sitio_search)
+        
+        if combined_search_terms:
             filters_applied = True
-            queryset = self._apply_child_search_filter(queryset, search_query)
+            combined_search = ','.join(combined_search_terms)
+            queryset = self._apply_child_search_filter(queryset, combined_search)
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
         
@@ -76,39 +82,68 @@ class ChildHealthRecordsView(generics.ListAPIView):
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
         
-    
+       
         
         return queryset
     
-    def _apply_child_search_filter(self, queryset, search_term):
-        """
-        Apply search filter for child health records
-        """
-        return queryset.filter(
-            Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__per_mname__icontains=search_term) |
-            Q(family_no__icontains=search_term) |
-            Q(ufc_no__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_sitio__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_street__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_barangay__icontains=search_term)
-        )
+    def _apply_child_search_filter(self, queryset, search_query):
+        """Reusable search filter for child health records with multiple term support"""
+        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
+        if not search_terms:
+            return queryset
+        
+        combined_query = Q()
+        
+        for term in search_terms:
+            term_query = Q()
+            
+            # Search by child/patient name (both resident and transient)
+            term_query |= (
+                Q(patrec__pat_id__rp_id__per__per_fname__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__per_mname__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__per_lname__icontains=term) |
+                Q(patrec__pat_id__trans_id__tran_fname__icontains=term) |
+                Q(patrec__pat_id__trans_id__tran_mname__icontains=term) |
+                Q(patrec__pat_id__trans_id__tran_lname__icontains=term)
+            )
+            
+            # Search by patient ID, resident profile ID, and transient ID
+            term_query |= (
+                Q(patrec__pat_id__pat_id__icontains=term) |
+                Q(patrec__pat_id__rp_id__rp_id__icontains=term) |
+                Q(patrec__pat_id__trans_id__trans_id__icontains=term)
+            )
+            
+            # Search by family number and UFC number
+            term_query |= (
+                Q(family_no__icontains=term) |
+                Q(ufc_no__icontains=term)
+            )
+            
+            # Search by address for residents
+            term_query |= (
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_external_sitio__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_province__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_city__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_street__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_barangay__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=term)
+            )
+            
+            # Search by address for transients
+            term_query |= (
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_sitio__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_street__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_barangay__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_province__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_city__icontains=term)
+            )
+            
+            # Add this term's query to the combined OR query
+            combined_query |= term_query
+        
+        return queryset.filter(combined_query).distinct()
     
-    def _apply_status_filter(self, queryset, status):
-        """
-        Filter by TT status
-        """
-        # Filter by TT status from child health histories
-        if status.lower() == 'completed':
-            return queryset.filter(child_health_histories__tt_status='completed')
-        elif status.lower() == 'pending':
-            return queryset.filter(child_health_histories__tt_status='pending')
-        elif status.lower() == 'active':
-            return queryset.filter(child_health_histories__status='active')
-        elif status.lower() == 'inactive':
-            return queryset.filter(child_health_histories__status='inactive')
-        return queryset
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -120,6 +155,7 @@ class ChildHealthRecordsView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
 
 class ChildHealthHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealth_History.objects.all()
@@ -408,9 +444,11 @@ class GeChildHealthRecordCountView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        
 class ChildHealthRecordByPatIDView(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request, pat_id):
-       
         try:
             chrec = ChildHealthrecord.objects.get(
                 patrec__pat_id=pat_id,
@@ -419,9 +457,37 @@ class ChildHealthRecordByPatIDView(APIView):
         except ChildHealthrecord.DoesNotExist:
             return Response({"detail": "Child health record not found."})
 
+        # Check if pagination parameters are present
+        if any(param in request.query_params for param in ['page', 'page_size']):
+            # Paginate health histories
+            health_histories = chrec.child_health_histories.all().order_by('-created_at')
+            paginator = self.pagination_class()
+            paginated_histories = paginator.paginate_queryset(health_histories, request)
+            
+            if paginated_histories is not None:
+                # Get the main serialized data
+                serializer = ChildHealthrecordSerializerFull(chrec)
+                data = serializer.data
+                
+                # Serialize paginated health histories
+                history_serializer = ChildHealthHistorySerializer(paginated_histories, many=True)
+                data['child_health_histories'] = history_serializer.data
+                
+                # Add pagination metadata
+                data['health_histories_pagination'] = {
+                    'count': paginator.page.paginator.count,
+                    'next': paginator.get_next_link(),
+                    'previous': paginator.get_previous_link(),
+                    'page_size': paginator.page_size,
+                    'total_pages': paginator.page.paginator.num_pages,
+                    'current_page': paginator.page.number,
+                }
+                
+                return Response(data)
+
+        # Return original response if no pagination requested
         serializer = ChildHealthrecordSerializerFull(chrec)
         return Response(serializer.data)
-    
 
 class ChildHealthImmunizationCountView(APIView):
     def get(self, request, *args, **kwargs):

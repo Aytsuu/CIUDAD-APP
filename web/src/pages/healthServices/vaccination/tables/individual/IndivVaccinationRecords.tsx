@@ -17,6 +17,7 @@ import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
+
 export default function IndivVaccinationRecords() {
   const location = useLocation();
   const { params } = location.state || {};

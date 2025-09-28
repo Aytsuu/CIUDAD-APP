@@ -147,7 +147,7 @@ class VaccinationHistorRecordView(generics.ListAPIView):
             vacrec__patrec_id__pat_id=pat_id
         ).exclude(
             vachist_status='forwarded'
-        ).order_by('-created_at')  # Optional: latest first
+        ).order_by('-created_at')  
     
 
 class ForwardedVaccinationHistoryView(generics.ListAPIView):

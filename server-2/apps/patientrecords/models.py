@@ -192,33 +192,33 @@ class VitalSigns(models.Model):
     class Meta:
         db_table = 'vital_signs'
     
-    def save(self, *args, **kwargs):
-        # Only fill empty fields if this is a new record and patrec exists
-        if not self.pk and self.patrec:
-            self._fill_empty_with_previous_values()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # Only fill empty fields if this is a new record and patrec exists
+    #     if not self.pk and self.patrec:
+    #         self._fill_empty_with_previous_values()
+    #     super().save(*args, **kwargs)
     
-    def _fill_empty_with_previous_values(self):
-        """Fill empty vital sign fields with the most recent values from patient history"""
-        # Get the most recent vital signs for this patient
-        latest_vitals = VitalSigns.objects.filter(
-            patrec=self.patrec
-        ).order_by('-created_at').first()
+    # def _fill_empty_with_previous_values(self):
+    #     """Fill empty vital sign fields with the most recent values from patient history"""
+    #     # Get the most recent vital signs for this patient
+    #     latest_vitals = VitalSigns.objects.filter(
+    #         patrec=self.patrec
+    #     ).order_by('-created_at').first()
         
-        if latest_vitals:
-            # List of vital sign fields to check
-            vital_fields = [
-                'vital_bp_systolic', 'vital_bp_diastolic', 'vital_temp',
-                'vital_RR', 'vital_o2', 'vital_pulse'
-            ]
+    #     if latest_vitals:
+    #         # List of vital sign fields to check
+    #         vital_fields = [
+    #             'vital_bp_systolic', 'vital_bp_diastolic', 'vital_temp',
+    #             'vital_RR', 'vital_o2', 'vital_pulse'
+    #         ]
             
-            for field in vital_fields:
-                current_value = getattr(self, field)
-                # If current field is empty or None, use previous value
-                if not current_value or current_value.strip() == "":
-                    previous_value = getattr(latest_vitals, field)
-                    if previous_value and previous_value.strip():
-                        setattr(self, field, previous_value)
+    #         for field in vital_fields:
+    #             current_value = getattr(self, field)
+    #             # If current field is empty or None, use previous value
+    #             if not current_value or current_value.strip() == "":
+    #                 previous_value = getattr(latest_vitals, field)
+    #                 if previous_value and previous_value.strip():
+    #                     setattr(self, field, previous_value)
 
 
 

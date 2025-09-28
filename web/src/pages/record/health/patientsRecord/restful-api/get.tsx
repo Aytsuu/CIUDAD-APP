@@ -113,8 +113,6 @@ export const getAllTransientAddresses = async () => {
 
 
 
-
-
   export const checkPatientExistsGet = async (rp_id: string): Promise<boolean> => {
     try {
         const res = await api2.get(`medicine/check-patient-exists/${rp_id}/`);

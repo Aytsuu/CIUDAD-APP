@@ -77,8 +77,8 @@ export default function MedicineRequestDetail() {
   // Set currentPatId if patient already exists
   useEffect(() => {
     const patientData = patientExists as any;
-    if (patientData?.exists && patientData?.patient?.pat_id) {
-      setCurrentPatId(patientData.patient.pat_id);
+    if (patientData?.exists && patientData?.pat_id) {
+      setCurrentPatId(patientData.pat_id);
     }
   }, [patientExists]);
 

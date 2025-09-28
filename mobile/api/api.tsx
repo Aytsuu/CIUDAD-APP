@@ -19,7 +19,7 @@ export const api2 = axios.create({
 //   baseURL: Constants.expoConfig?.extra?.apiUrl2,
 //   withCredentials: true,
 //   headers: {
-//     "Content-Type": "application/json",
+//     "Content-Type": "application/json",r
 //     "Accept": "application/json",
 //   },
 // });
