@@ -10,7 +10,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useModificationRequests, useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
+import { usePersonalModification, useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -18,6 +18,7 @@ import { capitalize } from "@/helpers/capitalize"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Spinner } from "@/components/ui/spinner"
 import { Combobox } from "@/components/ui/combobox"
+import { formatPersonalModification } from "../ProfilingFormats"
 
 const profiles = [
   {
@@ -48,7 +49,7 @@ export default function ResidentRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
-  // const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests() -- personal modification
+  const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification()
   const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
   const { data: residentsTableData, isLoading } = useResidentsTable(
     currentPage,
@@ -60,6 +61,8 @@ export default function ResidentRecords() {
   const totalCount = residentsTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  const formattedPersonalModification = formatPersonalModification(personalModification)
+
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
@@ -67,9 +70,9 @@ export default function ResidentRecords() {
   }, [debouncedSearchQuery])
 
   React.useEffect(() => {
-    if(isLoading) showLoading();
+    if(isLoading || isLoadingRequests) showLoading();
     else hideLoading();
-  }, [isLoading])
+  }, [isLoading, isLoadingRequests])
 
   // ----------------- HANDLERS --------------------
 
@@ -124,7 +127,7 @@ export default function ResidentRecords() {
 
                 <div>
                   <Combobox
-                    options={[]}
+                    options={formattedPersonalModification}
                     value={""}
                     customTrigger={
                       <Button variant="outline" className="w-full sm:w-auto">
@@ -133,11 +136,16 @@ export default function ResidentRecords() {
                       </Button>
                     }
                     onChange={(value) => {
+                      const rp_id = value?.split(" ")[0]
+                      const fam_id = value?.split(" ")[1]
                       navigate('view/personal', {
                         state: {
                           params: {
                             type: "viewing",
-                            busId: value?.split(' ')[0],
+                            data: {
+                              residentId: rp_id,
+                              familyId: fam_id
+                            }
                           }
                         }
                       })

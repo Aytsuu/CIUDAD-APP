@@ -25,8 +25,6 @@ const registrationSteps = [
 
 export default function FamilyProfileForm() {
   const { showLoading, hideLoading } = useLoading();
-  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(); 
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = generateDefaultValues(familyFormSchema);
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
@@ -36,6 +34,11 @@ export default function FamilyProfileForm() {
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
+    searchQuery
+  );
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(); 
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
     defaultValues
@@ -90,6 +93,7 @@ export default function FamilyProfileForm() {
               form={form}
               households={formattedHouseholds}
               onSubmit={() => nextStep()}
+              setSearchQuery={setSearchQuery}
             />
           )}
           {currentStep === 2 && (

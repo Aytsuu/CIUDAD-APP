@@ -82,13 +82,16 @@ class PersonalModificationCreateView(APIView):
 
     return Response(status=status.HTTP_200_OK)
 
-class PersonalModificationRequestsView(APIView):
-  def get(self, request, *args, **kwargs):
-    per = kwargs.get('per')
-    instances = PersonalModification.objects.filter(per=per)
-    if len(instances) > 0:
-      return Response(data=PersonalBaseSerializer(instances, many=True).data, status=status.HTTP_200_OK)
+class PersonalModificationRequestsView(generics.ListAPIView):
+  serializer_class = PersonalModificationBaseSerializer
 
-    return Response(status=status.HTTP_200_OK)
+  def get_queryset(self):
+    per = self.request.query_params.get('per', None)
+    queryset = PersonalModification.objects.all()
+
+    if per:
+      queryset = queryset.filter(per=per)
+      
+    return queryset
   
 

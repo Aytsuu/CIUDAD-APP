@@ -21,6 +21,7 @@ export const Combobox =
   size,
   variant = "popover",
   modalTitle,
+  modalTitleClassName,
   onSearchChange
 }: {
   options: { id: string; name: React.ReactNode }[] 
@@ -34,7 +35,8 @@ export const Combobox =
   staticVal?: boolean;
   align?: "start" | "center" | "end"
   size?: number
-  variant?: "popover" | "modal"
+  variant?: "popover" | "modal",
+  modalTitleClassName?: string
   modalTitle?: string
   onSearchChange?: (value: string) => void
 }) => {
@@ -166,7 +168,7 @@ export const Combobox =
           >
             {modalTitle && (
               <DialogHeader className="px-4 py-3 border-b">
-                <DialogTitle className="text-lg font-semibold">{modalTitle}</DialogTitle>
+                <DialogTitle className={cn("text-lg font-semibold", modalTitleClassName)}>{modalTitle}</DialogTitle>
               </DialogHeader>
             )}
             <div className="p-0">

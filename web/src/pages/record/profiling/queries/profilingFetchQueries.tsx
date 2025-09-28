@@ -88,6 +88,21 @@ export const usePersonalHistory = (per_id: string) => {
   })
 }
 
+export const usePersonalModification = () => {
+  return useQuery({
+    queryKey: ['personalModification'],
+    queryFn: async () => {
+      try {
+        const res = await api.get("profiling/personal/modification-list/");
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 export const useResidentsList = (
   is_staff: boolean = false,
   exclude_independent: boolean = false,
@@ -342,10 +357,10 @@ export const useModificationRequests = () => {
 
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
-export const useHouseholdsList = () => {
+export const useHouseholdsList = (search: string) => {
   return useQuery({
-    queryKey: ["householdsList"],
-    queryFn: getHouseholdList,
+    queryKey: ["householdsList", search],
+    queryFn: () => getHouseholdList(search),
     staleTime: 5000,
   });
 };

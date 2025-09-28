@@ -25,7 +25,8 @@ export default function LivingSoloForm({
   selectOwnedHouses,
   setSelectOwnedHouses,
   onSubmit,
-  setSearchQuery
+  setResidentSearch,
+  setHouseSearch
 }: {
   isRegistrationTab: boolean;
   prefix?: string;
@@ -40,7 +41,8 @@ export default function LivingSoloForm({
   selectOwnedHouses: boolean;
   setSelectOwnedHouses: React.Dispatch<React.SetStateAction<boolean>>
   onSubmit: () => void;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>
+  setResidentSearch: React.Dispatch<React.SetStateAction<string>>
+  setHouseSearch: React.Dispatch<React.SetStateAction<string>>
 }) {
   return (
     <>
@@ -54,7 +56,7 @@ export default function LivingSoloForm({
               options={residents}
               value={form.watch("id") as string}
               onChange={(value) => form.setValue("id", value)}
-              onSearchChange={(value) => setSearchQuery(value)}
+              onSearchChange={(value) => setResidentSearch(value)}
               placeholder="Select a resident"
               triggerClassName="font-normal"
               emptyMessage={
@@ -99,6 +101,7 @@ export default function LivingSoloForm({
                 options={households}
                 value={form.watch(`${prefix}householdNo` as any)}
                 onChange={(value) => form.setValue(`${prefix}householdNo` as any, value as string)}
+                onSearchChange={(value) => setHouseSearch(value)}
                 placeholder="Select a household"
                 triggerClassName="font-normal"
                 emptyMessage={

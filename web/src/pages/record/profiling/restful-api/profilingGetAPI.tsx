@@ -164,9 +164,13 @@ export const getHouseholdTable = async (page: number, pageSize: number, searchQu
   }
 }
 
-export const getHouseholdList = async () => {
+export const getHouseholdList = async (search: string) => {
   try {
-    const res = await api.get("profiling/household/list/");
+    const res = await api.get("profiling/household/list/", {
+      params: {
+        search
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;

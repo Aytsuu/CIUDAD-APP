@@ -24,7 +24,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
-import { useDebounce } from "@/hooks/use-debounce"
 
 export default function SoloFormLayout({ tab_params } : { tab_params?: Record<string, any> }) {
   // ================= STATE INITIALIZATION ==================
@@ -45,18 +44,20 @@ export default function SoloFormLayout({ tab_params } : { tab_params?: Record<st
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
   const [buildingReadOnly, setBuildingReadOnly] = React.useState<boolean>(false)
   const [selectOwnedHouses, setSelectOwnedHouses] = React.useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [residentSearch, setResidentSearch] = React.useState<string>("");
+  const [houseSearch, setHouseSearch] = React.useState<string>("");
 
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
     false, // is_staff
     true, // exclude_independent
     true, // is search only
-    debouncedSearchQuery, //search
+    residentSearch, //search
     false // disable query
   )
 
-  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList()
+  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
+    houseSearch
+  )
   const formattedResidents = formatResidents(residentsList)
   const formattedHouseholds = formatHouseholds(householdsList)
 
@@ -193,7 +194,8 @@ export default function SoloFormLayout({ tab_params } : { tab_params?: Record<st
           selectOwnedHouses={selectOwnedHouses}
           setSelectOwnedHouses={setSelectOwnedHouses}
           onSubmit={submit}
-          setSearchQuery={setSearchQuery}
+          setResidentSearch={setResidentSearch}
+          setHouseSearch={setHouseSearch}
         />
       </form>
     </Form>

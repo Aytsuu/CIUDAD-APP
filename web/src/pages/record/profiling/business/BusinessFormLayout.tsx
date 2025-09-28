@@ -30,7 +30,6 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
 import _ from 'lodash'
-import { useDebounce } from "@/hooks/use-debounce"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -46,7 +45,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const [formType, setFormType] = React.useState<Type>(params?.type || tab_params?.type)
   const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const form = useForm<z.infer<typeof businessFormSchema>>({
     resolver: zodResolver(businessFormSchema),
@@ -64,7 +62,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
     false, // is staff
     false, // exclude independent
     true, // is search only
-    debouncedSearchQuery, // search query
+    searchQuery, // search query
     false // disable query
   )
 
