@@ -147,7 +147,7 @@ export const formatPersonalModification = (requests: any) => {
           </Badge>
         </div>
         <div className="flex w-full justify-between items-center mt-1">
-          <p className="text-sm text-amber-600 font-medium">Modification Request Pending</p>
+          <p className="text-sm text-amber-600 font-medium">Pending Request</p>
         </div>
       </div>
     ),
@@ -169,10 +169,7 @@ export const formatModificationRequests = (requests: any) => {
           </Badge>
         </div>
         <div className="flex w-full justify-between items-center mt-1">
-          <p className="text-xs text-gray-600">Modification Request Pending</p>
-          <Badge className="bg-amber-500 hover:bg-amber-500">
-            Pending Review
-          </Badge>
+          <p className="text-sm text-amber-600 font-medium">Pending Request</p>
         </div>
       </div>
     ),

@@ -54,6 +54,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
   const { data: personalHistory, isLoading: isLoadingPersonalHistory } = usePersonalHistory(personalInfo?.per_id)
+  // const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification(
+  //   personalInfo?.per_id
+  // )
 
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(personalInfo)
   const family = familyMembers?.results || []

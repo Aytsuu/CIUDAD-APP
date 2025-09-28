@@ -88,12 +88,16 @@ export const usePersonalHistory = (per_id: string) => {
   })
 }
 
-export const usePersonalModification = () => {
+export const usePersonalModification = (per_id?: string) => {
   return useQuery({
-    queryKey: ['personalModification'],
+    queryKey: ['personalModification', per_id],
     queryFn: async () => {
       try {
-        const res = await api.get("profiling/personal/modification-list/");
+        const res = await api.get("profiling/personal/modification-list/", {
+          params: {
+            per: per_id
+          }
+        });
         return res.data;
       } catch (err) {
         throw err;

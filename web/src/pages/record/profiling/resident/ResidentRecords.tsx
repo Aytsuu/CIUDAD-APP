@@ -3,22 +3,20 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building, Paperclip } from "lucide-react"
+import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
 import { Link, useNavigate } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { usePersonalModification, useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
+import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { capitalize } from "@/helpers/capitalize"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Spinner } from "@/components/ui/spinner"
-import { Combobox } from "@/components/ui/combobox"
-import { formatPersonalModification } from "../ProfilingFormats"
 
 const profiles = [
   {
@@ -49,7 +47,7 @@ export default function ResidentRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
-  const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification()
+  // const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification()
   const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
   const { data: residentsTableData, isLoading } = useResidentsTable(
     currentPage,
@@ -61,7 +59,7 @@ export default function ResidentRecords() {
   const totalCount = residentsTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const formattedPersonalModification = formatPersonalModification(personalModification)
+  // const formattedPersonalModification = formatPersonalModification(personalModification)
 
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
@@ -70,9 +68,9 @@ export default function ResidentRecords() {
   }, [debouncedSearchQuery])
 
   React.useEffect(() => {
-    if(isLoading || isLoadingRequests) showLoading();
+    if(isLoading) showLoading();
     else hideLoading();
-  }, [isLoading, isLoadingRequests])
+  }, [isLoading])
 
   // ----------------- HANDLERS --------------------
 
@@ -125,14 +123,14 @@ export default function ResidentRecords() {
                   </Button>
                 </Link>
 
-                <div>
+                {/* <div>
                   <Combobox
                     options={formattedPersonalModification}
                     value={""}
                     customTrigger={
                       <Button variant="outline" className="w-full sm:w-auto">
                         <Paperclip className="cursor-pointer"/>
-                        Modification Request
+                        Edit Request
                       </Button>
                     }
                     onChange={(value) => {
@@ -153,10 +151,10 @@ export default function ResidentRecords() {
                     staticVal={true}
                     variant="modal"
                     placeholder="Search request by resident no, name..."
-                    modalTitle="Profile Modification Requests"
+                    modalTitle="Profile Edit Requests"
                     emptyMessage={"No modification requests."}
                   />
-                </div>
+                </div> */}
 
                 <Link
                   to="/profiling/resident/registration"
