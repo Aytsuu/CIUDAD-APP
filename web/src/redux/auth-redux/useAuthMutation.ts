@@ -11,7 +11,7 @@ export const useLoginMutation = () => {
   return useMutation<TokenResponse, Error, LoginCredentials>({
     mutationFn: async (credentials) => {
       const response = await api.post('authentication/web/login/', credentials);
-      console.log(response.data);
+
       return response.data;
     },
     onMutate: () => {
@@ -59,26 +59,32 @@ export const useSignupMutation = () => {
 export const useSendEmailOTPMutation = () => {
   const dispatch = useAppDispatch();
   
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: async (email) => {
-      const response = await api.post('authentication/email/sendOtp/', { email });
-      return response.data;
+  return useMutation<{ message: string }, Error, Record<string, any>>({
+    mutationFn: async (data) => {
+      try {
+        const response = await api.post('authentication/email/sendOtp/', data);
+        return response.data;
+      } catch (err) {
+        console.error(err)
+        throw err;
+      }
     },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
+    // onMutate: () => {
+    //   dispatch(setLoading(true));
+    //   dispatch(clearError());
+    // },
     onSuccess: (data, email) => {
       if (data.message) {
         dispatch(setOtpSent({ sent: true, email }));
       }
       dispatch(setLoading(false));
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.email || "Failed to send OTP";
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
+    // onError: (error: any) => {
+    //   const message = error?.response?.data?.email || "Failed to send OTP";
+    //   console.log(message)
+    //   dispatch(setError(message));
+    //   dispatch(setLoading(false));
+    // },
   });
 };
 
