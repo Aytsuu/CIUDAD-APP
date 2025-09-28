@@ -19,7 +19,7 @@ function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportRes
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
 
-    const { mutate: updateRep, isPending } = useUpdateWasteReport(rep_id, onSuccess);
+    const { mutate: updateRep, isPending } = useUpdateWasteReport(String(rep_id), onSuccess);
 
 
     const handleMarkAsResolved = () => {

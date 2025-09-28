@@ -2,35 +2,26 @@ import AllChildHealthRecords from "@/pages/healthServices/childservices/tables/C
 import InvChildHealthRecords from "@/pages/healthServices/childservices/tables/ChildHR_inv_records";
 import ChildHealthRecordForm from "@/pages/healthServices/childservices/forms/muti-step-form/Main";
 import ChildHealthHistoryDetail from "@/pages/healthServices/childservices/viewrecords/Viewhistory";
-import ChildImmunization from "@/pages/healthServices/childservices/immunization/Main";
-import ChildMedicalConsultation from "@/pages/healthServices/doctor/child-medical-con/Main";
 
 
 export const childHealthServices = [
   {
-    path: "/all-child-health-records",
+    path: "/services/childhealthrecords",
     element: <AllChildHealthRecords />,
   },
   {
-    path: "//child-health-records",
+    path: "/services/childhealthrecords/records",
     element: <InvChildHealthRecords />,
   },
   {
-    path: "/child-health-history-detail",
+    path: "/services/childhealthrecords/records/history",
     element: <ChildHealthHistoryDetail />,
   },
   {
-    path: "/child-health-record/form",
+    path: "/services/childhealthrecords/form",
     element: <ChildHealthRecordForm />,
   },
-  {
-    path: "/child-medical-consultation",
-    element: <ChildMedicalConsultation />,
-  },
-  {
-    path: "/child-immunization",
-    element: <ChildImmunization />,
-  }
+  
+  
 
 ];
-

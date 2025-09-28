@@ -42,9 +42,13 @@ export const getPositions = async (staff_type: string) => {
   }
 };
 
-export const getFeatures = async () => {
+export const getFeatures = async (category: string) => {
   try {
-    const res = await api.get("administration/feature/");
+    const res = await api.get("administration/feature/", {
+      params: {
+        category
+      }
+    });
     return res.data;
   } catch (err) {
     console.error(err);

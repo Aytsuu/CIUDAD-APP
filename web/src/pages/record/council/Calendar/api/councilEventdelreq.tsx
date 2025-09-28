@@ -30,15 +30,15 @@ export const restoreCouncilEvent = async (ce_id: number) => {
   }
 };
 
-export const delAttendee = async (atn_id: number) => {
-  try {
-    const res = await api.delete(`council/attendees/${atn_id}/`);
+// export const delAttendee = async (atn_id: number) => {
+//   try {
+//     const res = await api.delete(`council/attendees/${atn_id}/`);
 
-    return res.data;
-  } catch (err) {
-    throw err;
-  }
-};
+//     return res.data;
+//   } catch (err) {
+//     throw err;
+//   }
+// };
 
 export const delAttendanceSheet = async (
   att_id: number,

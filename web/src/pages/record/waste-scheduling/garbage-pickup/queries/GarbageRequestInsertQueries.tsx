@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import z from "zod"
-import { RejectPickupRequestSchema, AcceptPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
+import { RejectPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
 import { addPickupAssignmentandCollectors, addDecision } from "../restful-api/GarbageRequestPostAPI";
 import { showSuccessToast } from "@/components/ui/toast";
 import { showErrorToast } from "@/components/ui/toast";
@@ -38,13 +38,13 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (values: z.infer<typeof AcceptPickupRequestSchema>) => 
+        mutationFn: (values: any) => 
             addPickupAssignmentandCollectors(values.garb_id, {
                 date: values.date,
                 driver: values.driver,
                 time: values.time,
                 truck: values.truck,
-                collectors: values.collectors,
+                collectors: values.collectors || [],
                 staff_id: values.staff_id
             }),
         onSuccess: () => {

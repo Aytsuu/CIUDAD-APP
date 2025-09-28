@@ -48,7 +48,7 @@ export default function EditGeneralDetails({
       if(head) {
         form.setValue("householdHead", head.id);
       }
-      form.setValue("nhts", household.hh_nhts.toLowerCase());
+      form.setValue("nhts", household.hh_nhts);
       // form.setValue("address", household.);
 
     }
@@ -131,8 +131,8 @@ export default function EditGeneralDetails({
           </Label> : ""}
         </div>
         <FormSelect control={form.control} name="nhts" label="NHTS Household" options={[
-          { id: "yes", name: "Yes" },
-          { id: "no", name: "No" },
+          { id: "YES", name: "YES" },
+          { id: "NO", name: "NO" },
         ]}/>
         <div className="flex justify-end mt-8">
           {!isSaving ? (<Button>Save</Button>) : (

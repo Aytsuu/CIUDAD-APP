@@ -25,7 +25,7 @@ export const hotspotColumns: EventDetailColumn<Hotspot>[] = [
 
 export const wasteColColumns: EventDetailColumn<WasteCollectionSchedFull>[] = [
   { accessorKey: "collectors_names", header: "Waste Collectors" },
-  { accessorKey: "wc_date", header: "Collection Date" },
+  { accessorKey: "wc_day", header: "Collection Day" },
   {
     accessorKey: "wc_time",
     header: "Collection Time",

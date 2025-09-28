@@ -4,18 +4,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BudgetPlan } from "../budgetPlanInterfaces"
 import { showSuccessToast } from "@/components/ui/toast"
 import { showErrorToast } from "@/components/ui/toast"
-
+import { useNavigate } from "react-router"
 
 const BudgetPlanDetailSchema = z.object({
     dtl_budget_item: z.string().min(1, "Budget item is required"),
     dtl_proposed_budget: z.union([z.string(), z.number()])
     .transform(val => typeof val === 'string' ? parseFloat(val) : val),
-    dtl_budget_category: z.string().min(1, "Category is required")
 });
 
 
 export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate()
+    
 
     return useMutation({
         mutationFn: async (values: {
@@ -29,13 +30,16 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
                     return {
                         dtl_proposed_budget: parsed.dtl_proposed_budget, 
                         dtl_budget_item: parsed.dtl_budget_item,
-                        dtl_budget_category: parsed.dtl_budget_category
                     };
                 });
+
+                console.log('Validated header:', values.newBudgetHeader)
+                console.log('Validated Details:', validatedDetails)
 
                 const planId = await budget_plan(values.newBudgetHeader);
                 if (!planId) throw new Error("Failed to create budget plan");
 
+                console.log('Validated')
                 await budget_plan_details(validatedDetails, planId);
                 return planId;
             } catch (error) {
@@ -50,7 +54,7 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
 
             
             if (onSuccess) onSuccess(planId);
-            window.location.href = "/treasurer-budget-plan";
+            navigate('/treasurer-budget-plan')
         },
         onError: () => {
             showErrorToast('Failed to create budget plan');

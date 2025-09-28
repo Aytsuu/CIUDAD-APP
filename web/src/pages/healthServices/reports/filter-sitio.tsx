@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface Sitio {
@@ -17,15 +16,15 @@ interface FilterSitioProps {
   selectedSitios: string[];
   onSitioSelection: (sitioName: string, checked: boolean) => void;
   onSelectAll: (checked: boolean) => void;
-  onManualSearch: (value: string) => void;
-  manualSearchValue: string;
+  onManualSearch?: (value: string) => void;
+  manualSearchValue?: string;
 }
 
 export function FilterSitio({ sitios, isLoading = false, selectedSitios, onSitioSelection, onSelectAll, onManualSearch, manualSearchValue }: FilterSitioProps) {
   const [showFilter, setShowFilter] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       <Button onClick={() => setShowFilter(!showFilter)} className="gap-2" variant="outline">
         <Filter className="h-4 w-4" />
         Filter Sitios
@@ -41,9 +40,9 @@ export function FilterSitio({ sitios, isLoading = false, selectedSitios, onSitio
             </div>
           ) : (
             <>
-              <div className="mb-2">
-                <Input placeholder="Search sitios..." value={manualSearchValue} onChange={(e) => onManualSearch(e.target.value)} className="w-full text-sm" />
-              </div>
+              {/* <div className="mb-2">
+                <Input placeholder="Search sitios..." value={manualSearchValue} onChange={(e) => onManualSearch?.(e.target.value || "")} className="w-full text-sm" />
+              </div> */}
 
               <div className="flex items-center space-x-2 mb-2 p-2 border-b">
                 <Checkbox id="select-all-sitios" checked={selectedSitios.length === sitios.length && sitios.length > 0} onCheckedChange={(checked) => onSelectAll(checked as boolean)} />

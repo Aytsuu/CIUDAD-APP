@@ -88,7 +88,7 @@ export default function PendingCards() {
         {/* Title and Count */}
         <div className="flex items-center space-x-2">
           <h2 className="text-lg font-medium text-gray-800">Pending Requests ({totalItems})</h2>
-        </div>
+        </div>  
 
         {/* Filters Row - Modified layout */}
         <div className="flex flex-col md:flex-row justify-between gap-4 w-full">

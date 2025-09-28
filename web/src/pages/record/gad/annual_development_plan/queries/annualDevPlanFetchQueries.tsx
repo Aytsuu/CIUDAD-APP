@@ -1,12 +1,12 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createAnnualDevPlan } from "../restful-api/annualPostAPI";
-import { getAnnualDevPlanById } from "../restful-api/annualGetAPI";
+import { getAnnualDevPlanById, getAnnualDevPlansByYear } from "../restful-api/annualGetAPI";
 import { updateAnnualDevPlan } from "../restful-api/annualPutAPI";
 
 export interface BudgetItem {
     gdb_name: string;
     gdb_pax: string;
-    gdb_price: string;
+    gdb_amount: string;
 }
 
 export interface AnnualDevPlanFormData {
@@ -22,6 +22,8 @@ export interface AnnualDevPlanFormData {
 }
 
 export const useCreateAnnualDevPlan = () => {
+    const queryClient = useQueryClient();
+    
     return useMutation({
         mutationFn: async (args: { formData: AnnualDevPlanFormData; budgetItems: BudgetItem[]; resPersons?: string[] }) => {
             const { formData, budgetItems, resPersons } = args;
@@ -33,11 +35,22 @@ export const useCreateAnnualDevPlan = () => {
                 dev_activity: restFormData.dev_activity || null, // Keep as JSON string
                 dev_res_person: JSON.stringify(resPersons && resPersons.length ? resPersons : (restFormData.dev_res_person ? [restFormData.dev_res_person] : [])),
                 dev_indicator: JSON.stringify(restFormData.dev_indicator ? [restFormData.dev_indicator] : []),
-                dev_budget_items: JSON.stringify(budgetItems),
+                dev_budget_items: JSON.stringify(
+                    budgetItems.map((item) => ({
+                        name: item.gdb_name,
+                        pax: item.gdb_pax,
+                        amount: Number(item.gdb_amount || "0"),
+                    }))
+                ),
                 staff: staff || null,
             };
 
             return await createAnnualDevPlan(payload);
+        },
+        onSuccess: () => {
+            // Invalidate and refetch annual dev plans queries to update the calendar
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlan"] });
         },
     });
 };
@@ -54,6 +67,8 @@ export const useGetAnnualDevPlanById = (devId?: string) => {
 };
 
 export const useUpdateAnnualDevPlan = () => {
+    const queryClient = useQueryClient();
+    
     return useMutation({
         mutationFn: async (args: { devId: number; formData: AnnualDevPlanFormData; budgetItems: BudgetItem[] }) => {
             const { devId, formData, budgetItems } = args;
@@ -61,9 +76,30 @@ export const useUpdateAnnualDevPlan = () => {
             const payload = {
                 ...restFormData,
                 staff: staff || null,
-                budgets: budgetItems,
+                dev_budget_items: JSON.stringify(
+                    budgetItems.map((item) => ({
+                        name: item.gdb_name,
+                        pax: item.gdb_pax,
+                        amount: Number(item.gdb_amount || "0"),
+                    }))
+                ),
             };
             return await updateAnnualDevPlan(devId, payload);
         },
+        onSuccess: () => {
+            // Invalidate and refetch annual dev plans queries to update the calendar
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlans"] });
+            queryClient.invalidateQueries({ queryKey: ["annualDevPlan"] });
+        },
+    });
+};
+
+export const useGetAnnualDevPlansByYear = (year: number) => {
+    return useQuery({
+        queryKey: ["annualDevPlans", year],
+        queryFn: async () => {
+            return await getAnnualDevPlansByYear(year);
+        },
+        enabled: Boolean(year),
     });
 };

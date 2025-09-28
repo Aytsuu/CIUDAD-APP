@@ -22,7 +22,7 @@ def get_resident_profile_list(request):
     ).select_related(
         'per'
     ).prefetch_related(
-        'per__personaladdress_set__add__sitio'
+        'per__personal_addresses__add__sitio'
     )
 
     serializer = ResidentProfileSerializer(residents, many=True)
@@ -45,7 +45,7 @@ class PatientListView(generics.ListAPIView):
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
-                'rp_id__per__personaladdress_set',
+                'rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',
@@ -326,7 +326,7 @@ class PatientView(generics.ListCreateAPIView):
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
-                'rp_id__per__personaladdress_set',
+                'rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',
@@ -372,7 +372,7 @@ class PatientDetailView(generics.RetrieveAPIView):
         return Patient.objects.select_related(
             'rp_id__per'
         ).prefetch_related(
-            'rp_id__per__personaladdress_set__add__sitio'
+            'rp_id__per__personal_addresses__add__sitio'
         ).prefetch_related(
             'rp_id__household_set'
         )

@@ -267,7 +267,7 @@ export default function MaternalAllRecords() {
           <div className="flex justify-center gap-2 ">
             <TooltipLayout
               trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border border-gray text-black px-4 rounded-lg cursor-pointer ">
+                <div className="bg-white hover:bg-[#f3f2f2] text-black px-4 rounded-lg cursor-pointer ">
                   <Link
                     to="/services/maternalindividualrecords"
                     state={{
@@ -290,7 +290,6 @@ export default function MaternalAllRecords() {
                       },
                     }}
                   >
-                    {/* <p className="font-semibold">View</p> */}
                     <ViewButton onClick={() => {}} />
                   </Link>
                 </div>

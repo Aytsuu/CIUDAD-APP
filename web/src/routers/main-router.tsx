@@ -36,8 +36,10 @@ import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
 import { team_router } from "./team-router";
+import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
+import { healthreports_router } from "./health-reports-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -46,15 +48,21 @@ export const main_router: RouteObject[] = [
     children: withTransition([
       {
         path: "/",
-        element: <Navigate to="/dashboard" />,
+        element: <ProtectedRoute>
+          <Navigate to="/dashboard" />
+        </ProtectedRoute>,
       },
       {
         path: "dashboard",
-        element: <Dashboard />,
+        element: <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>,
       },
       {
         path: "announcement",
-        element: <AnnouncementDashboard />,
+        element: <ProtectedRoute exclude={["DOCTOR"]}>
+          <AnnouncementDashboard />
+        </ProtectedRoute>,
       },
       ...administration_router.map((route) => ({
         ...route,
@@ -94,7 +102,14 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
-      ...team_router,
+      ...team_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute>
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...ord_router.map((route) => ({
         ...route,
         element: (
@@ -159,6 +174,14 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
+      ...activity_log_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute>
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...clearances_router.map((route) => ({
         ...route,
         children: route.children.map((route) => ({
@@ -170,7 +193,14 @@ export const main_router: RouteObject[] = [
           ),
         }))
       })),
-      ...maternal_router,
+      ...maternal_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="SERVICES">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...vaccination,
       ...childHealthServices,
       ...gad_router,
@@ -189,6 +219,7 @@ export const main_router: RouteObject[] = [
       ...viewprofile_router,
       ...template_router,
       ...bhw_daily_notes_router,
+      ...healthreports_router,
       ])
     }
 ]

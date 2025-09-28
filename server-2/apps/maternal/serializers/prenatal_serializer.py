@@ -1080,6 +1080,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                         print(f"Linked to staff: {staff.staff_id}")
                     except Staff.DoesNotExist:
                         print(f"Staff with ID {assessed_by} not found. Proceeding without staff link.")
+                        staff = None
 
                 # create Prenatal_Form
                 prenatal_form = Prenatal_Form.objects.create(
@@ -1089,7 +1090,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     spouse_id=spouse,
                     bm_id=body_measurement,
                     followv_id=follow_up_visit,
-                    staff_id=staff,
+                    staff_id=staff if staff else None,
                     **validated_data 
                 )
                 print(f"Created prenatal form: {prenatal_form.pf_id}")

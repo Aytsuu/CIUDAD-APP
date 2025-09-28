@@ -10,7 +10,7 @@ import { getSitio } from "../request/waste-col-get-request";
 
 export type WasteCollectionSchedFull = {
     wc_num: number;
-    wc_date: string;
+    wc_day: string;
     wc_time: string;
     wc_add_info: string;
     wc_is_archive: boolean;

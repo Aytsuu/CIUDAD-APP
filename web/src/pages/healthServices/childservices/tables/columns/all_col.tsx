@@ -111,7 +111,7 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
       <div className="flex justify-center gap-2">
         <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
           <Link
-            to={`/child-health-records`}
+            to={`/services/childhealthrecords/records/history`}
             state={{
               ChildHealthRecord: row.original,
               mode: "addnewchildhealthrecord",

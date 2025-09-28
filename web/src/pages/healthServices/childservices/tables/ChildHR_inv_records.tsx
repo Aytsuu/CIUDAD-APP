@@ -19,10 +19,10 @@ import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
 import { useLoading } from "@/context/LoadingContext";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { GrowthChart } from "./growth-chart";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function InvChildHealthRecords() {
   const { showLoading, hideLoading } = useLoading();
-
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
@@ -167,6 +167,14 @@ export default function InvChildHealthRecords() {
     });
   }, [searchQuery, processedHistoryData]);
 
+  const isLatestRecordFromToday = useMemo(() => {
+    if (!latestRecord || !latestRecord.rawCreatedAt) return false;
+
+    const latestRecordDate = new Date(latestRecord.rawCreatedAt).toDateString();
+    const currentDate = new Date().toDateString();
+
+    return latestRecordDate === currentDate;
+  }, [latestRecord]);
   const currentData = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
@@ -176,7 +184,7 @@ export default function InvChildHealthRecords() {
 
   const navigateToUpdateLatest = () => {
     if (latestRecord && childData) {
-      navigate("/child-health-record/form", {
+      navigate("/services/childhealthrecords/form", {
         state: {
           params: {
             chhistId: latestRecord.chhist_id,
@@ -270,19 +278,21 @@ export default function InvChildHealthRecords() {
                 <DropdownMenuItem>Export as PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
-              {latestRecord && (
-                <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
-                  {isLatestRecordImmunizationOrCheckup ? (
-                    <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
-                      <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
-                    </div>
-                  ) : (
-                    <Button onClick={navigateToUpdateLatest}>New record</Button>
-                  )}
-                </div>
-              )}
-            </div>
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+              <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
+                {latestRecord && !isLatestRecordFromToday && (
+                  <div className="ml-auto mt-4 sm:mt-0 flex flex-col items-end gap-2">
+                    {isLatestRecordImmunizationOrCheckup ? (
+                      <div className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+                        <span className="text-sm font-medium">{latestRecord.status === "immunization" ? "This child is currently receiving an immunization." : "This child is currently undergoing a health check-up."}</span>
+                      </div>
+                    ) : (
+                      <Button onClick={navigateToUpdateLatest}>New record</Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ProtectedComponentButton>
           </div>
         </div>
 

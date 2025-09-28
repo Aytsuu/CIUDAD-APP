@@ -1,22 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ChevronLeft } from 'lucide-react-native';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { FormInput } from '@/components/ui/form/form-input';
+import { useRouter } from 'expo-router';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormSelect } from '@/components/ui/form/form-select';
 import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
-import { FormDateInput } from '@/components/ui/form/form-date-input';
-import { FormTimeInput } from '@/components/ui/form/form-time-input';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input';
-import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
-import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
-import { Textarea } from '@/components/ui/textarea';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
@@ -25,6 +17,17 @@ import { useGetWasteTrucks } from './queries/waste-col-fetch-queries';
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useCreateWasteSchedule } from './queries/waste-col-add-queries';
 import { useAssignCollectors } from './queries/waste-col-add-queries';
+import { useGetWasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
+
+const dayOptions = [
+  { label: "Monday", value: "Monday" },
+  { label: "Tuesday", value: "Tuesday" },
+  { label: "Wednesday", value: "Wednesday" },
+  { label: "Thursday", value: "Thursday" },
+  { label: "Friday", value: "Friday" },
+  { label: "Saturday", value: "Saturday" },
+  { label: "Sunday", value: "Sunday" }
+];
 
 
 
@@ -41,8 +44,9 @@ function WasteColCreate() {
   const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
   const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
   const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio(); 
+  const { data: wasteCollectionData = [], isLoading: isLoadingWasteData} = useGetWasteCollectionSchedFull();
 
-  const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
+  const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
 
 
     //Options
@@ -73,7 +77,7 @@ function WasteColCreate() {
   const form = useForm<z.infer<typeof WasteColSchedSchema>>({
     resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: '',
+            day: '',
             time: '',
             additionalInstructions: '',
             selectedSitios: '',
@@ -86,6 +90,52 @@ function WasteColCreate() {
 
 
     const onSubmit = (values: z.infer<typeof WasteColSchedSchema>) => {
+        const [hour, minute] = values.time.split(":");
+        const formattedTime = `${hour}:${minute}:00`;
+
+        //checks for sitio with the same day
+        const selectedSitioName = sitioOptions.find(sitio => sitio.value === values.selectedSitios)?.label; 
+        
+
+        const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+            schedule.wc_day === values.day &&
+            schedule.sitio_name === selectedSitioName
+        );
+
+        //checks for overlapping day and time
+        const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+            schedule.wc_day === values.day && 
+            schedule.wc_time === formattedTime
+        );     
+        
+        //return if there is overlapping schedule
+        if (hasDuplicateSchedule) {
+            form.setError("day", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });          
+            
+            form.setError("time", {
+                type: "manual",
+                message: `There is already a schedule for ${values.day} at ${values.time}.`,
+            });  
+
+            return; 
+        }      
+
+        //return if the sitio has already a schedule for that day
+        if (hasSameSitioSameDay) {
+            form.setError("day", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+
+            form.setError("selectedSitios", {
+                type: "manual",
+                message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+            });
+            return;
+        }        
 
         if(!values.additionalInstructions){
           values.additionalInstructions = "None"
@@ -131,12 +181,12 @@ function WasteColCreate() {
       contentPadding="medium"
 
       // State Management
-      loading={isPending}
-      loadingMessage="Creating schedule..."
+      loading={isPending || isLoading}
+      loadingMessage={ isPending ? "Creating schedule..." : "Loading..."}
 
       footer={
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-md w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
             >
               <Text className="text-white text-base font-semibold">Schedule</Text>
@@ -146,17 +196,16 @@ function WasteColCreate() {
     >
         <View className="w-full px-4">
 
-            <FormDateTimeInput
-              control={form.control}
-              label="Date"
-              name="date"
-              type="date"
-              minimumDate={new Date(Date.now() + 86400000)}
+            <FormSelect
+                control={form.control}
+                name="day"
+                label="Collection Day"
+                options={dayOptions}
             />
 
             <FormDateTimeInput
               control={form.control}
-              label="Time"
+              label="Collection Time"
               name="time"
               type="time"
             />

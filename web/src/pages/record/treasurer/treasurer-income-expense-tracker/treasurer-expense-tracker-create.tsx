@@ -50,6 +50,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
         resolver: zodResolver(IncomeExpenseFormSchema),
         defaultValues: {
             iet_serial_num: "",
+            iet_check_num: "",
             iet_entryType: "",
             iet_datetime: "",
             iet_particulars: "",
@@ -106,6 +107,19 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
             'type': media.type,
             'file': media.file
         }))
+
+        if(!values.iet_serial_num && !values.iet_check_num){
+            form.setError('iet_serial_num', {
+                type: 'manual',
+                message: "Please enter a data either on this field"
+            });
+
+            form.setError('iet_check_num', {
+                type: 'manual',
+                message: "Please enter a data either on this field"
+            });
+            return; 
+        }
 
         if (inputYear !== years) {
             form.setError('iet_datetime', {
@@ -302,7 +316,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                                 name="iet_serial_num"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Serial Number</FormLabel>
+                                        <FormLabel>Serial No.</FormLabel>
                                         <FormControl>
                                             <Input {...field} placeholder="Enter serial number" />
                                         </FormControl>
@@ -311,6 +325,22 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                                 )}
                             />
                         </div>
+
+                        <div className="pb-5">
+                            <FormField
+                                control={form.control}
+                                name="iet_check_num"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Check No.</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Enter check number" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>                        
 
                         <div className="pb-5">
                             <FormField

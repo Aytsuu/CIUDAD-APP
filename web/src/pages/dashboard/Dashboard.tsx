@@ -8,7 +8,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { DonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
 import { CouncilEventsSidebar } from "@/components/analytics/council/ce-event-sidebar";
-import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
+// import StaffAttendanceRankingChart from "@/components/analytics/council/attendance-section-charts";
 import { WastePersonnelCards } from "@/components/analytics/waste/wastepersonnel-analytics-queries";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
@@ -23,9 +23,12 @@ import { format } from "date-fns";
 
 // HEALTH
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Dashboard() {
   const currentMonth = format(new Date(), "yyyy-MM");
+  const { user } = useAuth()
+  console.log(user?.staff)  
 
   return (
     <MainLayoutComponent title="Dashboard" description="Overview of key metrics, data, and insights">
@@ -42,7 +45,7 @@ export default function Dashboard() {
           </div>
           <div className="grid">
             <ReportSectionCharts />
-            <StaffAttendanceRankingChart />
+            {/* <StaffAttendanceRankingChart /> */}
             <GADQuarterlyBudgetChart />
           </div>
           <div className="grid">

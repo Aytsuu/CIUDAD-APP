@@ -8,20 +8,16 @@ export const useUpdateHousehold = () => {
     mutationFn: (householdInfo: Record<string, any>) => updateHousehold(householdInfo), 
     onSuccess: (data) => {
       queryClient.setQueryData(['householdData'], (old: any) => {
-        if (!old) return data; // If no cache, just set the new data
+        if (!old) return data;
         if (old.hh_id === data.hh_id) {
           return {
             ...old,
             head: data.head,
             hh_nhts: data.hh_nhts,
-            // Optionally spread all of data if you want to update more fields:
-            // ...data
           };
         }
         return old;
       });
-      // queryClient.invalidateQueries({queryKey: ['householdData']});
-      // queryClient.invalidateQueries({queryKey: ['households']});
     }
   })
 }

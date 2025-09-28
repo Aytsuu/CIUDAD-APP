@@ -94,61 +94,63 @@ export const ComplaintForm = () => {
 
       const formData = new FormData();
 
-      const complainantData = data.complainant.map((comp) => {
+      const complainantData = data.complainant?.map((comp) => {
         const fullAddress = [
-          comp.address.street,
-          comp.address.barangay,
-          comp.address.city,
-          comp.address.province,
+          comp.address?.street,
+          comp.address?.barangay,
+          comp.address?.city,
+          comp.address?.province,
         ]
           .filter(Boolean)
           .join(", ")
           .toUpperCase();
 
         return {
-          name: comp.fullName,
-          gender: comp.gender,
-          contactNumber: comp.contactNumber,
-          age: comp.age,
-          relation_to_respondent: comp.relation_to_respondent,
-          address: fullAddress,
+          cpnt_name: comp.fullName,
+          cpnt_gender: comp.genderInput || comp.gender,
+          cpnt_number: comp.contactNumber,
+          cpnt_age: comp.age,
+          cpnt_relation_to_respondent: comp.relation_to_respondent,
+          cpnt_address: fullAddress,
+          rp_id: comp.rp_id || null, // Optional resident profile ID
         };
       });
       formData.append("complainant", JSON.stringify(complainantData));
 
-      const accusedData = data.accused.map((acc) => {
+      const accusedData = data.accused?.map((acc) => {
         const fullAddress = [
-          acc.address.street,
-          acc.address.barangay,
-          acc.address.city,
-          acc.address.province,
+          acc.address?.street,
+          acc.address?.barangay,
+          acc.address?.city,
+          acc.address?.province,
         ]
           .filter(Boolean)
           .join(", ")
           .toUpperCase();
 
         return {
-          alias: acc.alias,
-          age: acc.age,
-          gender: acc.gender,
-          description: acc.description,
-          address: fullAddress,
+          acsd_name: acc.alias, // Using alias as name
+          acsd_age: acc.age,
+          acsd_gender: acc.genderInput || acc.gender,
+          acsd_description: acc.description,
+          acsd_address: fullAddress,
+          rp_id: acc.rp_id || null, // Optional resident profile ID
         };
       });
-      formData.append("accused", JSON.stringify(accusedData));
-      formData.append("incident_type", data.incident.type);
-      formData.append("allegation", data.incident.description);
-      formData.append("location", data?.incident?.location ?? "");
+      formData.append("accused_persons", JSON.stringify(accusedData));
 
-      const dateTimeString = `${data.incident.date}T${data.incident.time}`;
+      formData.append("comp_incident_type", data.incident?.type as any);
+      formData.append("comp_allegation", data.incident?.description as any);
+      formData.append("comp_location", data.incident?.location ?? "");
+
+      // DateTime - backend expects string format
+      const dateTimeString = `${data.incident?.date}T${data.incident?.time}`;
       const dateTime = new Date(dateTimeString);
       if (isNaN(dateTime.getTime())) {
         throw new Error("Invalid date or time format");
       }
+      formData.append("comp_datetime", dateTimeString);
 
-      formData.append("datetime", dateTimeString);
-
-      // Handle uploaded files
       if (data.documents && data.documents.length > 0) {
         const uploadedFiles = data.documents.filter(
           (fileData: any) =>
@@ -157,33 +159,48 @@ export const ComplaintForm = () => {
 
         if (uploadedFiles.length > 0) {
           const fileDataForBackend = uploadedFiles.map((fileData: any) => ({
-            name: fileData.name,
-            size: fileData.size,
-            type: fileData.type,
-            publicUrl: fileData.publicUrl,
-            storagePath: fileData.storagePath,
+            cf_filename: fileData.name,
+            cf_size: fileData.size,
+            cf_type: fileData.type || "document",
+            cf_path: fileData.publicUrl,
+            cf_storage_path: fileData.storagePath,
           }));
 
-          formData.append("uploaded_files", JSON.stringify(fileDataForBackend));
+          formData.append("complaint_files", JSON.stringify(fileDataForBackend));
         }
       }
+
+      console.log("Submitting complaint with data:", {
+        complainant: complainantData,
+        accused_persons: accusedData,
+        comp_incident_type: data.incident?.type,
+        comp_allegation: data.incident?.description,
+        comp_location: data.incident?.location,
+        comp_datetime: dateTimeString,
+      });
 
       const response = await postComplaint.mutateAsync(formData);
 
       if (response) {
         await handleSendAlert();
-      }
 
-      toast.success("Complaint submitted successfully");
-      setTimeout(() => {
-        navigate("/complaint");
-      }, 1000);
-      setStep(1);
-      setShowConfirmModal(false);
+        const successMessage = response.comp_id
+          ? `Complaint #${response.comp_id} submitted successfully`
+          : "Complaint submitted successfully";
+
+        toast.success(successMessage);
+
+        methods.reset();
+        setStep(1);
+        setShowConfirmModal(false);
+
+        setTimeout(() => {
+          navigate("/complaint");
+        }, 1000);
+      }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to submit complaint";
-      toast.error(errorMessage);
+      console.error("Error submitting complaint:", error);
+      toast.error("Failed to submit complaint");
     } finally {
       setIsSubmitting(false);
     }
@@ -201,16 +218,21 @@ export const ComplaintForm = () => {
   };
 
   const handleSendAlert = async () => {
-    await send({
-      title: "Complaint Report Filed",
-      message: "Your request has been processed",
-      recipient_ids: [user?.acc_id || ""],
-      metadata: {
-        action_url: "/home",
-        sender_name: "System",
-        sender_avatar: `${user?.profile_image}` || "",
-      },
-    });
+    try {
+      await send({
+        title: "Complaint Report Filed",
+        message: "Your complaint has been submitted and is now being processed",
+        recipient_ids: [user?.acc_id || ""],
+        metadata: {
+          action_url: "/complaint",
+          sender_name: "Barangay System",
+          sender_avatar: `${user?.profile_image}` || "",
+        },
+      });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      // Don't throw error here as complaint was already submitted successfully
+    }
   };
 
   const confirmSubmit = () => {
@@ -311,6 +333,7 @@ export const ComplaintForm = () => {
                       variant="secondary"
                       onClick={prevStep}
                       className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+                      disabled={isSubmitting}
                     >
                       <ChevronLeft className="w-4 h-4" /> Previous
                     </Button>
@@ -324,6 +347,7 @@ export const ComplaintForm = () => {
                       variant="secondary"
                       onClick={nextStep}
                       className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+                      disabled={isSubmitting}
                     >
                       Next <ChevronRight className="w-4 h-4" />
                     </Button>

@@ -116,12 +116,12 @@ class CompleteRegistrationView(APIView):
         add_province=add["add_province"],
         add_city=add["add_city"],
         add_barangay = add["add_barangay"],
-        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+        sitio=Sitio.objects.filter(sitio_name=add["sitio"]).first(),
         add_external_sitio=add["add_external_sitio"],
         add_street=add["add_street"]
       )[0]
       for add in addresses
-    ]
+    ] 
 
     # Create Personal record
     per_instance = Personal(**personal)
@@ -159,18 +159,20 @@ class CompleteRegistrationView(APIView):
         hh_id = generate_hh_no(),
         hh_nhts = house['nhts'],
         add = Address.objects.get_or_create(
-          add_province="Cebu",
-          add_city="Cebu City",
-          add_barangay="San Roque (ciudad)",
-          sitio=Sitio.objects.filter(sitio_id=data[1]).first(),
+          add_province="CEBU",
+          add_city="CEBU CITY",
+          add_barangay="SAN ROQUE (CIUDAD)",
+          sitio=Sitio.objects.filter(sitio_name=data[1]).first(),
           add_street=data[2]
         )[0],
         rp = rp,
         staff = staff
       ))
     
-    if len(house_instances) > 0:
-      created_instances = Household.objects.bulk_create(house_instances)
+    created_instances = []
+    for house in house_instances:
+       house.save()
+       created_instances.append(house)
     
     return created_instances
   
@@ -187,7 +189,7 @@ class CompleteRegistrationView(APIView):
     )
 
     FamilyComposition.objects.create(
-      fc_role="Independent",
+      fc_role="INDEPENDENT",
       fam=fam,
       rp=rp
     )
