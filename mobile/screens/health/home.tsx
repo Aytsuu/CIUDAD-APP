@@ -1,41 +1,48 @@
-// MultipleFiles/home.tsx
 import React from "react";
 import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
-import { router } from "expo-router";
-import {
-  Archive,
-  Baby,
-  Calendar,
-  Dog,
-  Heart,
-  Pill,
-  Stethoscope,
-  UserCircle,
-  Users,
-  ShieldPlus,
-  BookHeart,
-  ChevronRight,
-  ChevronLeft,
-  NotebookPen,
-  UserRoundPlus,
-  Venus,
-  BriefcaseMedical,
-  SyringeIcon,
-} from "lucide-react-native";
+import { router, Href } from "expo-router"; // Import Href
+import { Archive,Baby,Calendar,Dog,Heart,Pill,Stethoscope,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,NotebookPen,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon} from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
-import { useAuth } from "@/contexts/AuthContext"; // Updated import to match AuthContext
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import NotificationBadge from "./my-schedules/notifbadge";
+import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 
 const { width } = Dimensions.get("window");
 
+// Define proper types for routes
+interface QuickAction {
+  title: string;
+  route: Href;
+  icon: React.ComponentType<any>;
+  color: string;
+  bgColor: string;
+}
+
+interface FeaturedService {
+  title: string;
+  subtitle: string;
+  route: Href;
+  icon: React.ComponentType<any>;
+  color: string;
+  bgColor: string;
+  image: any;
+}
+
+interface Module {
+  name: string;
+  route: Href;
+  icon: React.ComponentType<any>;
+}
+
 const Homepage = () => {
-  const { user, hasCheckedAuth } = useAuth(); // Access user and auth status
+  const { user, hasCheckedAuth } = useAuth(); 
 
   // Determine user role
-  const isAdmin = !!user?.staff; // Admin if staff object exists
-  const isResident = !!user?.rp; // Resident if resident or rp exists
+  const isAdmin = !!user?.staff;
+  const isResident = !!user?.rp;
 
   // Wait for auth check to complete
   if (!hasCheckedAuth) {
@@ -46,32 +53,34 @@ const Homepage = () => {
     );
   }
 
-  const modules = [
-    { name: "Child Health Records", route: "admin/childhealth/overall", icon: Baby },
-    { name: "Family Planning", route: "admin/familyplanning/overall", icon: Heart },
-    { name: "Animal Bites", route: "admin/animalbites/overall", icon: Dog },
-    { name: "Maternal Records", route: "admin/maternal/overall", icon: Venus },
-    { name: "Medical Consultation", route: "(health)/medicine-request/my-requests", icon: Stethoscope },
-    { name: "Profiling", route: "admin/medicinerequest/medicinerequest", icon: UserRoundPlus },
-    { name: "Patient Records", route: "admin/patientsrecord/patientrecords", icon: Users },
-    { name: "Schedules", route: "admin/schedules/all-appointment", icon: Calendar },
-    { name: "Inventory", route: "admin/inventory/medicine", icon: Archive },
-    { name: "BHW Daily Field", route: "", icon: NotebookPen },
-    { name: "First Aid", route: "admin/first-aid/overall", icon: BriefcaseMedical },
-    { name: "Vaccination", route: "admin/vaccination/overall", icon: SyringeIcon },
-    { name: "Medicine", route: "admin/medicinerecords/overall", icon: BriefcaseMedical },
+  // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
+
+  const modules: Module[] = [
+    { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
+    { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
+    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
+    { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
+    { name: "Medical Consultation", route: "(health)/medicine-request/my-requests" as Href, icon: Stethoscope },
+    { name: "Profiling", route: "admin/medicinerequest/medicinerequest" as Href, icon: UserRoundPlus },
+    { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
+    { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
+    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
+    { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
+    { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
+    { name: "Medicine", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
   ];
 
-  const quickActions = [
-    { title: "Request Medicine", route: "/medicine-request/med-request", icon: Pill, color: "#1E40AF", bgColor: "#1e40af" },
-    { title: "My Records", route: "/my-records/all-records", icon: UserCircle, color: "#15803d", bgColor: "#15803d" },
+  const quickActions: QuickAction[] = [
+    { title: "Request Medicine", route: "/medicine-request/med-request" as Href, icon: Pill, color: "#1E40AF", bgColor: "#1e40af" },
+    { title: "My Records", route: "/my-records/all-records" as Href, icon: UserCircle, color: "#15803d", bgColor: "#15803d" },
   ];
 
-  const featuredServices = [
+  const featuredServices: FeaturedService[] = [
     {
       title: "Family Planning",
       subtitle: "Your Family, Your Future. Plan it right.",
-      route: "/family-planning/famplanning",
+      route: "/family-planning/famplanning" as Href,
       icon: Heart,
       color: "#059669",
       bgColor: "#ECFDF5",
@@ -80,7 +89,7 @@ const Homepage = () => {
     {
       title: "Animal Bites",
       subtitle: "First aid & Prevention.",
-      route: "/animalbite/animalbite",
+      route: "/animalbite/animalbite" as Href,
       icon: Dog,
       color: "#1E40AF",
       bgColor: "#EFF6FF",
@@ -89,7 +98,14 @@ const Homepage = () => {
   ];
 
   const handleViewWeeklySchedule = () => {
-    router.push("/admin/scheduler/schedule-weekly");
+    router.push("/admin/scheduler/schedule-weekly" as Href);
+  };
+
+  // Safe router push function
+  const safeRouterPush = (route: Href) => {
+    if (route) {
+      router.push(route);
+    }
   };
 
   return (
@@ -116,11 +132,7 @@ const Homepage = () => {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Today's Schedule Widget (Admin Only) */}
-        {isResident && (
-          <View className="px-6 mt-5 mb-3">
-            <TodayScheduleWidget />
-          </View>
-        )}
+        {isResident && (  <View className="px-6 mt-5 mb-3"> <TodayScheduleWidget /> </View> )}
 
         {/* Featured Services */}
         <View className="mt-3">
@@ -134,7 +146,7 @@ const Homepage = () => {
                 {featuredServices.map((service, index) => (
                   <TouchableOpacity
                     key={index}
-                    onPress={() => router.push(service.route)}
+                    onPress={() => safeRouterPush(service.route)}
                     className="w-64 transform transition-transform duration-200 active:scale-95"
                   >
                     <View className="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -150,7 +162,7 @@ const Homepage = () => {
                         <service.icon size={20} color={service.color} />
                         <TouchableOpacity
                           className="bg-green-700 px-4 py-1.5 rounded-full"
-                          onPress={() => router.push(service.route)}
+                          onPress={() => safeRouterPush(service.route)}
                         >
                           <Text className="text-white text-xs font-PoppinsSemiBold">Learn More</Text>
                         </TouchableOpacity>
@@ -170,7 +182,7 @@ const Homepage = () => {
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (
-                <TouchableOpacity key={index} onPress={() => router.push(action.route)} className="flex-1">
+                <TouchableOpacity key={index} onPress={() => safeRouterPush(action.route)} className="flex-1">
                   <View className="p-4 rounded-2xl shadow-lg relative" style={{ backgroundColor: action.color }}>
                     <Icon size={32} color="white" />
                     <Text className="text-white font-PoppinsSemiBold text-md mt-3">{action.title}</Text>
@@ -190,7 +202,7 @@ const Homepage = () => {
             <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
             <TouchableOpacity
               className="bg-blue-700 p-1 rounded-xl relative"
-              onPress={() => router.push("/my-schedules/my-schedules")}
+              onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
               <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
               {/* Notification Badge */}
@@ -199,7 +211,7 @@ const Homepage = () => {
           </View>
 
           <View className="flex-row mt-3 gap-4">
-            <TouchableOpacity onPress={() => router.push("/maternal/maternal-landing")} className="flex-1">
+            <TouchableOpacity onPress={() => router.push("/maternal/maternal-landing" as Href)} className="flex-1">
               <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <View className="h-32 relative">
                   <Image
@@ -218,7 +230,7 @@ const Homepage = () => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push("/medconsultation/med-landing")} className="flex-1">
+            <TouchableOpacity onPress={() => router.push("/medconsultation/med-landing" as Href)} className="flex-1">
               <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <View className="h-32 relative">
                   <Image
@@ -249,7 +261,7 @@ const Homepage = () => {
                 return (
                   <TouchableOpacity
                     key={index}
-                    onPress={() => module.route && router.push(module.route)} // Skip if route is empty
+                    onPress={() => module.route && safeRouterPush(module.route)}
                     className="w-[30%] bg-blue-900 p-3 rounded-2xl mb-4 items-center"
                   >
                     <Icon size={43} color="white" />

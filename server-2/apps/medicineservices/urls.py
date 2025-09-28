@@ -7,7 +7,9 @@ from .views.update_views import *
 from .views.pending_table_views import *
 from .views.count_views import *
 from .views.register_patient_views import *
-from .viewsbackup import *
+from .views.medrequest_views import *
+
+
 urlpatterns=[
         
         # TABLE VIEWS
@@ -44,7 +46,7 @@ urlpatterns=[
         path("user-all-items/", UserAllMedicineRequestItemsView.as_view(), name="user-all-medicine-items"),
         path('submit-request/', SubmitMedicineRequestView.as_view(), name='submit-medicine-request'),
         path('cancel-medicine-request-item/<int:medreqitem_id>/', MedicineRequestItemCancel.as_view(), name="cancel-medicine-request-item"),
-        path('medicine-request/check-pending/<str:pat_id>/<str:med_id>/', CheckPendingMedicineRequestView.as_view(), name='check-pending-medicine-request'),
+        path('medicine-request/check-pending/<str:rp_id>/<str:med_id>/', CheckPendingMedicineRequestView.as_view(), name='check-pending-medicine-request'),
         path('user-requests/', UserMedicineRequestsView.as_view(), name='user-medicine-requests'),
         path('medicine-request-items-by-request/<str:medreq_id>/', MedicineRequestItemsByRequestView.as_view(), name='medicine_request_items_by_request'),
         

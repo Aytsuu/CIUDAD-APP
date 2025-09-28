@@ -284,22 +284,22 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
     def get_checklist_data(self, obj):
         checklist = obj.pf_checklist.first()
         if checklist:
-            return {
-                'pfc_id': checklist.pfc_id,
-                'increased_bp': checklist.increased_bp,
-                'nausea': checklist.nausea,
-                'edema': checklist.edema,
-                'abno_vaginal_disch': checklist.abno_vaginal_disch,
-                'chills_fever': checklist.chills_fever,
-                'varicosities': checklist.varicosities,
-                'epigastric_pain': checklist.epigastric_pain,
-                'blurring_vision': checklist.blurring_vision,
-                'severe_headache': checklist.severe_headache,
-                'vaginal_bleeding': checklist.vaginal_bleeding,
-                'diff_in_breathing': checklist.diff_in_breathing,
-                'abdominal_pain': checklist.abdominal_pain,
-                'created_at': checklist.created_at
-            }
+                return {
+                    'pfc_id': checklist.pfc_id,
+                    'increased_bp': checklist.increased_bp,
+                    'nausea': checklist.nausea,
+                    'edema': checklist.edema,
+                    'abno_vaginal_disch': checklist.abno_vaginal_disch,
+                    'chills_fever': checklist.chills_fever,
+                    'varicosities': checklist.varicosities,
+                    'epigastric_pain': checklist.epigastric_pain,
+                    'blurring_vision': checklist.blurring_vision,
+                    'severe_headache': checklist.severe_headache,
+                    'vaginal_bleeding': checklist.vaginal_bleeding,
+                    'diff_in_breathing': checklist.diff_in_breathing,
+                    'abdominal_pain': checklist.abdominal_pain,
+                    'created_at': checklist.created_at
+                }
         return None
 
     def get_birth_plan_details(self, obj):
@@ -335,9 +335,11 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     spouse_details = serializers.SerializerMethodField()
     follow_up_visit_details = serializers.SerializerMethodField()
     staff_details = serializers.SerializerMethodField()
+    tt_statuses = serializers.SerializerMethodField()
 
     previous_pregnancy = serializers.SerializerMethodField()
     obstetric_history = serializers.SerializerMethodField()
+    medical_history = serializers.SerializerMethodField()
 
     # Related data
     previous_hospitalizations = serializers.SerializerMethodField()
@@ -352,9 +354,9 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
         model = Prenatal_Form
         fields = [
             'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
-            'patient_details', 'pregnancy_details', 'vital_signs_details', 
+            'patient_details', 'pregnancy_details', 'vital_signs_details', 'tt_statuses',
             'body_measurement_details', 'spouse_details', 'follow_up_visit_details', 'obstetric_history',
-            'staff_details', 'previous_hospitalizations','previous_pregnancy', 
+            'staff_details', 'previous_hospitalizations','previous_pregnancy', 'medical_history',
             'laboratory_results', 'anc_visit_guide', 'checklist_data', 'birth_plan_details',
             'obstetric_risk_codes', 'prenatal_care_entries'
         ]
@@ -401,10 +403,9 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                                 patient_data['address'] = {
                                     'add_street': address.add_street,
                                     'add_sitio': address.sitio.sitio_name if hasattr(address, 'sitio') and address.sitio else None,
-                                    'add_brgy': address.add_brgy,
+                                    'add_barangay': address.add_barangay,
                                     'add_city': address.add_city,
                                     'add_province': address.add_province,
-                                    'add_zipcode': address.add_zipcode,
                                 }
                             else:
                                 print(f"No PersonalAddress found for personal ID: {personal.per_id}")
@@ -417,10 +418,9 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                                     patient_data['address'] = {
                                         'add_street': getattr(personal, 'add_street', None),
                                         'add_sitio': getattr(personal, 'add_sitio', None),
-                                        'add_brgy': getattr(personal, 'add_brgy', None),
+                                        'add_barangay': getattr(personal, 'add_barangay', None),
                                         'add_city': getattr(personal, 'add_city', None),
                                         'add_province': getattr(personal, 'add_province', None),
-                                        'add_zipcode': getattr(personal, 'add_zipcode', None),
                                     }
                             except Exception as e2:
                                 print(f"Alternative address approach failed: {e2}")
@@ -429,13 +429,13 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                         try:
                             family_composition = FamilyComposition.objects.filter(
                                 rp=patient.rp_id
-                            ).select_related('fam_id').first()
-                            
-                            if family_composition and family_composition.fam_id:
+                            ).select_related('fam').first()
+
+                            if family_composition and family_composition.fam:
                                 patient_data['family'] = {
-                                    'fam_id': family_composition.fam_id.fam_id,
+                                    'fam_id': family_composition.fam.fam_id,
                                     'fc_role': family_composition.fc_role,
-                                    'fam_date_registered': family_composition.fam_id.fam_date_registered,
+                                    'fam_date_registered': family_composition.fam.fam_date_registered,
                                 }
                         except Exception as e:
                             print(f"Error getting family info: {e}")
@@ -465,10 +465,9 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                         patient_data['address'] = {
                             'add_street': trans_address.tradd_street,
                             'add_sitio': trans_address.tradd_sitio,
-                            'add_brgy': trans_address.tradd_barangay,
+                            'add_barangay': trans_address.tradd_barangay,
                             'add_city': trans_address.tradd_city,
                             'add_province': trans_address.tradd_province,
-                            'add_zipcode': None,  # TransientAddress doesn't have zipcode field
                         }
                     else:
                         # No address associated with this transient
@@ -476,13 +475,13 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                     
                     # Transients don't have family compositions
                     patient_data['family'] = {
-                        'fam_id': None,
+                        'fam': None,
                         'note': 'Transient patients do not have family compositions'
                     }
                     
                     # Transients don't have family compositions
                     patient_data['family'] = {
-                        'fam_id': None,
+                        'fam': None,
                         'note': 'Transient patients do not have family compositions'
                     }
                     
@@ -543,6 +542,16 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f'Error retrieving obstetrical history details: {e}')
             return None
+        
+    def get_medical_history(self, obj):
+        if obj.patrec_id:
+            medical_history = MedicalHistory.objects.filter(patrec=obj.patrec_id).select_related('ill')
+            return [{
+                'ill_id': mh.ill.ill_id if mh.ill else None,
+                'illness_name': mh.ill.illname if mh.ill else None,
+                'ill_date': mh.ill_date,
+            } for mh in medical_history]
+        return []
 
     def get_vital_signs_details(self, obj):
         if obj.vital_id:
@@ -583,12 +592,27 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             }
         return None
     
+    def get_tt_statuses(self, obj):
+        if obj.patrec_id:
+            tts = TT_Status.objects.filter(pf_id=obj).prefetch_related('pf_id')
+            return [{
+                'tts_id': tt.tts_id,
+                'tts_status': tt.tts_status,
+                'tts_date_given': tt.tts_date_given,
+            } for tt in tts]
+    
     def get_staff_details(self, obj):
         if obj.staff_id:
+            staff = obj.staff_id
+            staff_name = None
+            if hasattr(staff, 'rp') and staff.rp and hasattr(staff.rp, 'per') and staff.rp.per:
+                personal = staff.rp.per
+                name_parts = [personal.per_fname, personal.per_mname, personal.per_lname]
+                staff_name = ' '.join([part for part in name_parts if part])
+                
             return {
-                'staff_id': obj.staff_id.staff_id,
-                'staff_fname': getattr(obj.staff_id, 'staff_fname', 'Unknown'),
-                'staff_lname': getattr(obj.staff_id, 'staff_lname', 'Unknown'),
+                'staff_id': staff.staff_id,
+                'staff_name': staff_name
             }
         return None
     
@@ -848,7 +872,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 for med_history_data_item in medical_history_data:
                     ill = med_history_data_item.get('ill')
-                    year = med_history_data_item.get('year')
+                    ill_date = med_history_data_item.get('ill_date')
                     
                     if not ill:
                         continue
@@ -857,7 +881,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     existing_record = MedicalHistory.objects.filter(
                         patrec__pat_id=patient_record.pat_id,
                         ill=ill,
-                        year=year
+                        ill_date=ill_date
                     ).first()
                     
                     if existing_record:
@@ -868,7 +892,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     MedicalHistory.objects.create(
                         patrec=patient_record,
                         ill=ill,
-                        year=year
+                        ill_date=ill_date
                     )
                     
                     created_count += 1
@@ -884,7 +908,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     # creation of all records logic
     def create(self, validated_data):
         print(f"Creating prenatal record with validated data: {validated_data}")
-        
         # Pop nested data
         pat_id = validated_data.pop('pat_id')
         patrec_type = validated_data.pop('patrec_type', 'Prenatal')  
@@ -911,6 +934,37 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 patient = Patient.objects.get(pat_id=pat_id)
                 print(f"Found patient: {patient.pat_id}")
+
+                # --- NEW LOGIC: Check for latest prenatal form with follow-up visit and pending status ---
+                latest_prenatal_form = Prenatal_Form.objects.filter(
+                    pregnancy_id__pat_id=patient,
+                    followv_id__isnull=False
+                ).order_by('-created_at').first()
+
+                if latest_prenatal_form and latest_prenatal_form.followv_id and latest_prenatal_form.followv_id.followv_status == 'pending':
+                    followup_dt = latest_prenatal_form.followv_id.followv_date
+                    today_dt = date.today()
+                    days_diff = (today_dt - followup_dt).days
+                    # If follow-up date is today or earlier, mark as completed
+                    if followup_dt <= today_dt and days_diff <= 0:
+                        latest_prenatal_form.followv_id.followv_status = 'completed'
+                        latest_prenatal_form.followv_id.save()
+                        print(f"Marked previous follow-up as completed.")
+                    # If follow-up date is before today, mark as missed
+                    elif followup_dt < today_dt:
+                        latest_prenatal_form.followv_id.followv_status = 'missed'
+                        latest_prenatal_form.followv_id.save()
+                        print(f"Marked previous follow-up as missed.")
+
+                # If last follow-up is missed and more than 7 days have passed, do not mark as completed ever
+                if latest_prenatal_form and latest_prenatal_form.followv_id and latest_prenatal_form.followv_id.followv_status == 'missed':
+                    followup_dt = latest_prenatal_form.followv_id.followv_date
+                    today_dt = date.today()
+                    days_diff = (today_dt - followup_dt).days
+                    if days_diff > 7:
+                        print(f"Last missed follow-up is beyond 7 days; will not mark as completed.")
+
+                # --- END NEW LOGIC ---
 
                 # handle Pregnancy (create new or link to existing active)
                 pregnancy = None
@@ -1137,4 +1191,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrenatalAppointmentRequest
-        fields = ['requested_at', 'confirmed_at', 'rp_id', 'pat_id']
+        fields = ['requested_at', 'confirmed_at', 'status', 'rp_id', 'pat_id']
+        extra_kwargs = {
+            'pat_id': {'required': False, 'allow_null': True},
+        }

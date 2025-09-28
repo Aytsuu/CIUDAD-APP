@@ -182,7 +182,7 @@ export default function Records() {
         {/* Additional Info */}
         <View className="px-6 pt-6">
 
-            <Text className="text-blue-800 text-sm">{pat_id ? "" : 'Your medical records are securely stored and only accessible to you and authorized healthcare providers.'}</Text>
+            <Text className="text-blue-800 text-sm italic">{pat_id ? "" : 'Your medical records are securely stored and only accessible to you and authorized healthcare providers.'}</Text>
             
         </View>
       </ScrollView>

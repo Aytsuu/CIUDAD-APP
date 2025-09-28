@@ -7,6 +7,7 @@ import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/ui/loading-state';
+import { formatDate } from '@/helpers/dateHelpers';
 
 // Types
 interface MedicineRequestItem {
@@ -78,6 +79,13 @@ const getStatusConfig = (status: string) => {
         borderColor: 'border-yellow-200', 
         label: 'Pending' 
       };
+       case 'rejected':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-red-200', 
+        label: 'Rejected' 
+      };
     case 'confirmed':
       return { 
         color: 'text-orange-700', 
@@ -124,21 +132,21 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return "N/A";
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch (e) {
-    return "Invalid Date";
-  }
-};
+// const formatDate = (dateString: string) => {
+//   if (!dateString) return "N/A";
+//   try {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString('en-US', {
+//       year: 'numeric',
+//       month: 'short',
+//       day: 'numeric',
+//       hour: '2-digit',
+//       minute: '2-digit',
+//     });
+//   } catch (e) {
+//     return "Invalid Date";
+//   }
+// };
 
 // Components
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
@@ -511,6 +519,15 @@ const MedicineRequestTracker: React.FC = () => {
 
         {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {activeTab === 'ready_for_pickup' && (
+  <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+    <Text className="text-blue-800 text-sm font-medium">
+      Reminder: Medicines are available for pickup at the Barangay Health Center 
+      every weekdays, 8:00 AM - 5:00 PM only.
+    </Text>
+  </View>
+)}
 
         {/* Requests List */}
         {requests.length === 0 ? (

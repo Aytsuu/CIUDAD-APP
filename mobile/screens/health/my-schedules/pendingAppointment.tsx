@@ -6,7 +6,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 
 export const usePendingAppointments = () => {
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id
+  const rp_id = user?.rp;
   const { data: appointmentsData, isLoading, error } = useAllFollowUpVisits({
     page_size: 1000
   });

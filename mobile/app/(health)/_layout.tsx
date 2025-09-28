@@ -16,12 +16,11 @@ export default () => {
 
   // Determine user roles
   const isAdmin = !!user?.staff; // Admin if staff object exists
-  const isResident = !!user?.resident || !!user?.rp; // Resident if resident or rp exists
+  const isResident = !!user?.rp; // Resident if resident or rp exists
 
   return (
     <QueryClientProvider client={queryClient}>
-     <Stack screenOptions={{ headerShown: false }}> {/* Add screenOptions here */}
-        {/* Public Screens (accessible to all) */}
+     <Stack screenOptions={{ headerShown: false }}> 
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="home" options={{ headerShown: false }} />
 
@@ -35,7 +34,6 @@ export default () => {
             <Stack.Screen name="medicine-request/med-request" options={{ headerShown: false }} />
             <Stack.Screen name="medicine-request/confirmation" options={{ headerShown: false }} />
             <Stack.Screen name="medicine-request/details" options={{ headerShown: false }} />
-            <Stack.Screen name="medicine-request/request-details" options={{ headerShown: false }} />
             <Stack.Screen name="medicine-request/my-requests" options={{ headerShown: false }} />
             <Stack.Screen name="family-planning/familyplanning" options={{ headerShown: false }} />
             <Stack.Screen name="family-planning/famplanning" options={{ headerShown: false }} />

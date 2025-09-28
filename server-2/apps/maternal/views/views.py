@@ -26,7 +26,6 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
         try:
             all_patrec_w_medhis = PatientRecord.objects.filter(
                 pat_id=patient,
-                patrec_type__in=['Prenatal', 'Family Planning', 'Medical Consultation']
             )
             print("Found patient records w/ medical history for patient: ", patient.pat_id)
 
@@ -335,6 +334,7 @@ def get_patient_prenatal_count(request, pat_id):
 
 @api_view(['GET'])
 def get_latest_patient_prenatal_record(request, pat_id):
+
     try:
         patient = Patient.objects.get(pat_id=pat_id)
 
@@ -343,18 +343,50 @@ def get_latest_patient_prenatal_record(request, pat_id):
             status='active'
         ).order_by('-created_at').first()
 
+        spouse_data = None
+
+        if patient.pat_type == 'Resident' and patient.rp_id:
+            from apps.healthProfiling.models import FamilyComposition
+            # Find current family composition for this resident
+            current_composition = FamilyComposition.objects.filter(
+                rp=patient.rp_id
+            ).order_by('-fam__fam_date_registered', '-fc_id').first()
+            if current_composition and current_composition.fc_role.lower() == 'mother':
+                # Find Father in same family
+                father_comp = FamilyComposition.objects.filter(
+                    fam=current_composition.fam,
+                    fc_role__iexact='Father'
+                ).select_related('rp__per').first()
+                if father_comp and father_comp.rp and hasattr(father_comp.rp, 'per') and father_comp.rp.per:
+                    father_personal = father_comp.rp.per
+                    spouse_data = {
+                        'fam_id': str(current_composition.fam.fam_id),
+                        'fc_role': 'Father',
+                        'fc_id': father_comp.fc_id,
+                        'spouse_info': {
+                            'per_fname': father_personal.per_fname,
+                            'per_mname': father_personal.per_mname,
+                            'per_lname': father_personal.per_lname,
+                            'per_suffix': father_personal.per_suffix,
+                            'per_dob': father_personal.per_dob,
+                            'per_sex': father_personal.per_sex,
+                            'per_contact': father_personal.per_contact,
+                            'per_status': father_personal.per_status,
+                            'per_religion': father_personal.per_religion,
+                            'per_edAttainment': father_personal.per_edAttainment,
+                        }
+                    }
+
         if not active_pregnancy:
             latest_completed_or_pregloss = Pregnancy.objects.filter(
                 pat_id=patient,
                 status__in=['completed', 'pregnancy loss']
             ).order_by('-created_at').first()
 
-            if latest_completed_or_pregloss:
+            if not spouse_data and latest_completed_or_pregloss:
                 latest_pf_spouse = Prenatal_Form.objects.filter(
                     pregnancy_id=latest_completed_or_pregloss
                 ).select_related('spouse_id').order_by('created_at').first()
-
-                spouse_data = None
                 if latest_pf_spouse:
                     spouse_serializer = SpouseCreateSerializer(latest_pf_spouse.spouse_id)
                     spouse_data = spouse_serializer.data
@@ -386,13 +418,17 @@ def get_latest_patient_prenatal_record(request, pat_id):
             }, status=status.HTTP_200_OK)
 
         serializer = PrenatalDetailSerializer(latest_pf)
+        # Attach spouse info if available
+        result_data = serializer.data
+        if spouse_data:
+            result_data['spouse_details'] = spouse_data
 
         return Response({
             'pat_id': pat_id,
             'pregnancy_id': active_pregnancy.pregnancy_id,
-            'latest_prenatal_form': serializer.data
+            'latest_prenatal_form': result_data
         }, status=status.HTTP_200_OK)
-    
+
     except Patient.DoesNotExist:
         return Response({
             'error': f'Patient does not exist'

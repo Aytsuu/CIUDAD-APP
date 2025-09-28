@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from "react-native"
-import { router } from "expo-router"
-import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X, Ban, ChevronLeft, Clock } from "lucide-react-native"
-import { useGlobalCartState } from "./cart-state"
-import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries"
-import PageLayout from "@/screens/_PageLayout"
-import { api2 } from "@/api/api"
-import { useAuth } from "@/contexts/AuthContext"
-import { LoadingState } from "@/components/ui/loading-state"
+import { useState, useEffect, useMemo } from "react";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
+import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill, Filter, X, Ban, ChevronLeft, Clock } from "lucide-react-native";
+import { useGlobalCartState } from "./cart-state";
+import { useMedicines } from "../admin/admin-inventory/queries/medicine/MedicineFetchQueries";
+import PageLayout from "@/screens/_PageLayout";
+import { api2 } from "@/api/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { LoadingState } from "@/components/ui/loading-state";
 
 // Updated type definition to match the API response
 export type MedicineDisplay = {
@@ -24,33 +24,44 @@ export type MedicineDisplay = {
     expiry_date: string;
     inventory_type: string;
   }[];
-  // status: string;
 };
 
 export default function MedicineRequestScreen() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
-  const [showCategories, setShowCategories] = useState(false)
-  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set())
-  const [loadingPending, setLoadingPending] = useState(false)
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery); // Debounced for API fetch
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showCategories, setShowCategories] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
+  const [loadingPending, setLoadingPending] = useState(false);
   const { cartItems } = useGlobalCartState();
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, searchQuery);
-
+  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, debouncedSearchQuery); // Use debounced for fetch
   const { user } = useAuth();
   const userId = user?.rp;
+
   console.log("RP_ID:", userId);
+
+  // Debounce the search query (delay API fetch by 500ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 1000);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
   useEffect(() => {
     const checkPendingRequests = async () => {
-      if (!fetchedMedicines?.medicines || !userId) return;
-
+      if (!fetchedMedicines?.medicines || !userId) {
+        setLoadingPending(false);
+        return;
+      }
       setLoadingPending(true);
       const pendingSet = new Set<string>();
-
       try {
-        // Check each medicine for pending requests
         for (const medicine of fetchedMedicines.medicines) {
           try {
             const response = await api2.get(`/medicine/medicine-request/check-pending/${userId}/${medicine.med_id}/`);
@@ -58,10 +69,9 @@ export default function MedicineRequestScreen() {
               pendingSet.add(medicine.med_id);
             }
           } catch (error) {
-            console.error(`Error checking pending request for medicine ${medicine.med_id}:`, error);
+            console.error(`Error checking pending for ${medicine.med_id}:`, error);
           }
         }
-
         setPendingRequests(pendingSet);
       } catch (error) {
         console.error("Error fetching pending requests:", error);
@@ -69,15 +79,14 @@ export default function MedicineRequestScreen() {
         setLoadingPending(false);
       }
     };
-
     checkPendingRequests();
   }, [fetchedMedicines, userId]);
 
-  // Process and filter medicines`
+  // Process and filter medicines (client-side filter uses immediate searchQuery for instant feedback)
   const medicines = useMemo(() => {
     if (!fetchedMedicines || !fetchedMedicines.medicines) return [];
 
-    const lowercasedQuery = searchQuery.toLowerCase();
+    const lowercasedQuery = searchQuery.toLowerCase(); // Use immediate searchQuery for client-side filtering
 
     return fetchedMedicines.medicines.filter((medicine: MedicineDisplay) => {
       const matchesSearch =
@@ -92,21 +101,19 @@ export default function MedicineRequestScreen() {
     });
   }, [fetchedMedicines, searchQuery, selectedCategory]);
 
-  // Extract unique categories for filter dropdown (simplified since we don't have categories in new API)
+  // Extract unique categories for filter dropdown
   const categories = useMemo(() => {
-    return ["All"]; // Simplified since the new API doesn't provide categories
+    return ["All"];
   }, []);
 
-  // Ha ndle press on a medicine item
+  // Handle press on a medicine item
   const handleMedicinePress = (medicine: MedicineDisplay) => {
-    // Check if medicine is out of stock or has pending request
     const isOutOfStock = medicine.total_qty_available <= 0;
     const hasPendingRequest = pendingRequests.has(medicine.med_id);
 
     if (isOutOfStock || hasPendingRequest) {
-      return; // Do nothing if out of stock or has pending request
+      return;
     }
-    // Get the first inventory item for details
     const firstInventory = medicine.inventory_items[0];
 
     const medicineString = JSON.stringify({
@@ -124,10 +131,12 @@ export default function MedicineRequestScreen() {
     });
   };
 
+  // Render loading state
+  if (isLoading || loadingPending) {
+    return <LoadingState />;
+  }
 
- if (isLoading) {
-     return <LoadingState/>}
-
+  // Render error state
   if (isError) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -139,25 +148,29 @@ export default function MedicineRequestScreen() {
           {error && <Text className="text-sm text-gray-500 mt-1">Error: {error.message}</Text>}
         </View>
       </SafeAreaView>
-    )
+    );
   }
 
+  // Main render
   return (
-    <PageLayout leftAction={
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center" >
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
           <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity> }
+        </TouchableOpacity>
+      }
       headerTitle={<Text className="text-gray-900 text-[13px]">Request Medicine</Text>}
-      rightAction={<TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
-        <ShoppingBag size={24} color="blue" />
-        {cartItems.length > 0 && (
-          <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
-            <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
-          </View>
-        )}
-      </TouchableOpacity>}    >
-
-      {/* Search and Filter */}
+      rightAction={
+        <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="p-2 relative">
+          <ShoppingBag size={24} color="blue" />
+          {cartItems.length > 0 && (
+            <View className="absolute -top-1 -right-1 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
+              <Text className="text-white text-xs font-bold">{cartItems.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      }
+    >
       <View className="p-4 bg-white shadow-sm">
         <View className="flex-row items-center border border-gray-300 rounded-lg px-3 py-2 bg-gray-50">
           <Search size={20} color="#9CA3AF" />
@@ -175,7 +188,6 @@ export default function MedicineRequestScreen() {
           )}
         </View>
 
-        {/* Category Filter */}
         <TouchableOpacity
           onPress={() => setShowCategories(!showCategories)}
           className="flex-row items-center justify-between mt-3 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
@@ -193,16 +205,12 @@ export default function MedicineRequestScreen() {
                 <TouchableOpacity
                   key={category as string}
                   onPress={() => {
-                    setSelectedCategory(category as string)
-                    setShowCategories(false)
+                    setSelectedCategory(category as string);
+                    setShowCategories(false);
                   }}
-                  className={`py-3 px-4 ${selectedCategory === category ? "bg-blue-50" : "bg-white"
-                    } border-b border-gray-100 last:border-b-0`}
+                  className={`py-3 px-4 ${selectedCategory === category ? "bg-blue-50" : "bg-white"} border-b border-gray-100 last:border-b-0`}
                 >
-                  <Text
-                    className={`text-gray-800 ${selectedCategory === category ? "font-semibold text-blue-600" : ""
-                      }`}
-                  >
+                  <Text className={`text-gray-800 ${selectedCategory === category ? "font-semibold text-blue-600" : ""}`}>
                     {category as string}
                   </Text>
                 </TouchableOpacity>
@@ -212,8 +220,7 @@ export default function MedicineRequestScreen() {
         )}
       </View>
 
-      {/* Medicine List */}
-      <View className="flex-1 bg-white ">
+      <View className="flex-1 bg-white">
         <Text className="ml-4">Available Medicines</Text>
         <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
           {medicines.length > 0 ? (
@@ -227,18 +234,16 @@ export default function MedicineRequestScreen() {
                   <TouchableOpacity
                     key={medicine.med_id}
                     onPress={() => handleMedicinePress(medicine)}
-                    className={`flex-row items-center justify-between p-4 mb-3 rounded-lg shadow-sm border ${isDisabled
-                        ? "bg-gray-100 border-gray-300 opacity-70"
-                        : "bg-white border-gray-300"
-                      }`}
+                    className={`flex-row items-center justify-between p-4 mb-3 rounded-lg shadow-sm border ${
+                      isDisabled ? "bg-gray-100 border-gray-300 opacity-70" : "bg-white border-gray-300"
+                    }`}
                     disabled={isDisabled}
                   >
                     <View className="flex-row items-center flex-1">
                       <Pill size={24} color={isDisabled ? "#9CA3AF" : "blue"} />
                       <View className="flex-1 ml-4">
                         <View className="flex-row items-center justify-between">
-                          <Text className={`text-lg font-semibold ${isDisabled ? "text-gray-500" : "text-gray-900"
-                            }`}>
+                          <Text className={`text-lg font-semibold ${isDisabled ? "text-gray-500" : "text-gray-900"}`}>
                             {medicine.med_name || "Unknown Medicine"}
                           </Text>
                           {isOutOfStock && (
@@ -256,28 +261,24 @@ export default function MedicineRequestScreen() {
                         </View>
 
                         <View className="flex-row items-center justify-between mt-1">
-                          <Text className={`text-sm font-medium ${isOutOfStock ? "text-gray-400" : "text-gray-700"
-                            }`}>
+                          <Text className={`text-sm font-medium ${isOutOfStock ? "text-gray-400" : "text-gray-700"}`}>
                             {medicine.med_type || "Unknown Type"}
                           </Text>
                           {!isOutOfStock && (
                             <Text className="text-green-600 text-sm font-medium">
                               {/* In Stock: {medicine.total_qty_available} */}
-                              {/* Medicine type: {medicine.med_type} */}
                             </Text>
                           )}
                         </View>
 
                         {medicine.inventory_items[0]?.form && (
-                          <Text className={`text-sm mt-1 ${isOutOfStock ? "text-gray-400" : "text-gray-600"
-                            }`}>
+                          <Text className={`text-sm mt-1 ${isOutOfStock ? "text-gray-400" : "text-gray-600"}`}>
                             Form: {medicine.inventory_items[0].form}
                           </Text>
                         )}
 
                         {medicine.inventory_items[0]?.dosage && (
-                          <Text className={`text-sm mt-1 ${isOutOfStock ? "text-gray-400" : "text-gray-600"
-                            }`}>
+                          <Text className={`text-sm mt-1 ${isOutOfStock ? "text-gray-400" : "text-gray-600"}`}>
                             Dosage: {medicine.inventory_items[0].dosage}
                           </Text>
                         )}
@@ -311,5 +312,5 @@ export default function MedicineRequestScreen() {
         </ScrollView>
       </View>
     </PageLayout>
-  )
+  );
 }
