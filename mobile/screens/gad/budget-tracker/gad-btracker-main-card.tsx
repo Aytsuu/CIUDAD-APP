@@ -14,8 +14,6 @@ import { SearchInput } from '@/components/ui/search-input';
 const GADBudgetTrackerMain = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Query hook
   const { 
     data: fetchedData = [], 
     isLoading, 

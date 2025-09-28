@@ -91,7 +91,7 @@ function GADAddEntryForm() {
       gbud_reference_num: null,
       gbud_remaining_bal: 0,
       gbudy: 0,
-      staff: user?.staff?.staff_id || null,
+      staff: null,
     },
     context: { calculateRemainingBalance },
   });
@@ -306,6 +306,38 @@ useEffect(() => {
       }
       headerTitle={<Text>Create Budget Entry</Text>}
       rightAction={<View />}
+      footer={ <View >
+        <TouchableOpacity
+          className="bg-blue-500 py-3 rounded-lg"
+          onPress={form.handleSubmit(onSubmit)}
+          disabled={
+            isSubmitting ||
+            !form.formState.isValid ||
+            (!hasUnrecordedItems())
+          }
+        >
+          <View className="flex-row justify-center items-center">
+            <Text className="text-white text-base font-semibold">
+              {isSubmitting ? "Saving..." : "Save Entry"}
+            </Text>
+            {isSubmitting && (
+              <ActivityIndicator size="small" color="white" className="ml-2" />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {!form.formState.isValid && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Please fill out all required fields correctly
+          </Text>
+        )}
+
+        {!hasUnrecordedItems() && (
+          <Text className="text-red-500 text-xs mt-2 text-center">
+            Note: Add at least one new budget item to save
+          </Text>
+        )}
+      </View>}
     >
       <ScrollView
         className="flex-1 p-4"
@@ -579,40 +611,6 @@ useEffect(() => {
           )}
         </View>
       </Modal>
-
-      {/* Submit Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <TouchableOpacity
-          className="bg-blue-500 py-3 rounded-lg"
-          onPress={form.handleSubmit(onSubmit)}
-          disabled={
-            isSubmitting ||
-            !form.formState.isValid ||
-            (!hasUnrecordedItems())
-          }
-        >
-          <View className="flex-row justify-center items-center">
-            <Text className="text-white text-base font-semibold">
-              {isSubmitting ? "Saving..." : "Save Entry"}
-            </Text>
-            {isSubmitting && (
-              <ActivityIndicator size="small" color="white" className="ml-2" />
-            )}
-          </View>
-        </TouchableOpacity>
-
-        {!form.formState.isValid && (
-          <Text className="text-red-500 text-xs mt-2 text-center">
-            Please fill out all required fields correctly
-          </Text>
-        )}
-
-        {!hasUnrecordedItems() && (
-          <Text className="text-red-500 text-xs mt-2 text-center">
-            Note: Add at least one new budget item to save
-          </Text>
-        )}
-      </View>
     </PageLayout>
   );
 }

@@ -8,6 +8,8 @@ import {
   Modal,
   ScrollView,
   RefreshControl,
+  Linking,
+  Dimensions,
 } from "react-native";
 import {
   Search,
@@ -19,6 +21,8 @@ import {
   X,
   CircleAlert,
   ClipboardCheck,
+  FileText,
+  ChevronRight,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Button } from "@/components/ui/button";
@@ -41,6 +45,7 @@ const BudgetTrackerRecords = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
   const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,8 +56,7 @@ const BudgetTrackerRecords = () => {
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<GADBudgetFile[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
-
-  const { data: entries = [], isLoading, refetch } = useGADBudgets(year); //imong fetch na query
+  const { data: entries = [], isLoading, refetch } = useGADBudgets(year); 
   const { data: yearBudgets = [] } = useGetGADYearBudgets();
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
@@ -110,8 +114,34 @@ const BudgetTrackerRecords = () => {
   const handleViewFiles = (files: GADBudgetFile[] | null | undefined) => {
     if (files && files.length > 0) {
       setSelectedFiles(files);
+      setCurrentFileIndex(0); // Reset to first file
       setViewFilesModalVisible(true);
     }
+  };
+
+  const handleOpenFile = () => {
+    const currentFile = selectedFiles[currentFileIndex];
+    if (currentFile && (currentFile.gbf_type === 'application/pdf' || currentFile.gbf_url?.includes('.pdf'))) {
+      Linking.openURL(currentFile.gbf_url).catch(err => {
+        console.error("Failed to open PDF:", err);
+      });
+    }
+  };
+
+  const nextFile = () => {
+    setCurrentFileIndex(prev => 
+      prev === selectedFiles.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevFile = () => {
+    setCurrentFileIndex(prev => 
+      prev === 0 ? selectedFiles.length - 1 : prev - 1
+    );
+  };
+
+  const isPDF = (file: GADBudgetFile) => {
+    return file.gbf_type === 'application/pdf' || file.gbf_url?.includes('.pdf') || file.gbf_name?.toLowerCase().includes('.pdf');
   };
 
   const handleCreate = () => {
@@ -335,9 +365,7 @@ const BudgetTrackerRecords = () => {
       }
       headerTitle={<Text>{year} Budget Records</Text>}
       rightAction={
-        <TouchableOpacity>
-          <ChevronLeft size={30} color="black" className="text-white" />
-        </TouchableOpacity>
+        <View/>
       }
     >
       <View className="flex p-2">
@@ -507,6 +535,7 @@ const BudgetTrackerRecords = () => {
           </TabsContent>
         </Tabs>
 
+        {/* Enhanced Modal with PDF Support */}
         <Modal
           visible={viewFilesModalVisible}
           transparent={true}
@@ -514,7 +543,7 @@ const BudgetTrackerRecords = () => {
         >
           <View className="flex-1 bg-black/90 justify-center items-center">
             <TouchableOpacity
-              className="absolute top-4 right-4 z-10"
+              className="absolute top-10 right-5 z-10"
               onPress={() => setViewFilesModalVisible(false)}
             >
               <X size={24} color="white" />
@@ -522,52 +551,63 @@ const BudgetTrackerRecords = () => {
 
             {selectedFiles.length > 0 && (
               <>
-                <Image
-                  source={{ uri: selectedFiles[currentFileIndex]?.gbf_url }}
-                  className="w-full h-4/5"
-                  resizeMode="contain"
-                />
-                <Text className="text-white mt-2">
-                  {selectedFiles[currentFileIndex]?.gbf_name}
-                </Text>
+                {/* File counter */}
+                <View className="absolute top-10 left-5 z-10 bg-white/80 px-3 py-1 rounded-full">
+                  <Text className="text-sm font-medium">
+                    {currentFileIndex + 1} / {selectedFiles.length}
+                  </Text>
+                </View>
 
-                {selectedFiles.length > 1 && (
-                  <View className="flex-row mt-4">
-                    <TouchableOpacity
-                      onPress={() =>
-                        setCurrentFileIndex((prev) => Math.max(0, prev - 1))
-                      }
-                      disabled={currentFileIndex === 0}
-                      className="p-2"
-                    >
-                      <ChevronLeft
-                        size={24}
-                        color={currentFileIndex === 0 ? "gray" : "white"}
-                      />
-                    </TouchableOpacity>
-                    <Text className="text-white mx-4">
-                      {currentFileIndex + 1} / {selectedFiles.length}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() =>
-                        setCurrentFileIndex((prev) =>
-                          Math.min(selectedFiles.length - 1, prev + 1)
-                        )
-                      }
-                      disabled={currentFileIndex === selectedFiles.length - 1}
-                      className="p-2"
-                    >
-                      <ChevronLeft
-                        size={24}
-                        color={
-                          currentFileIndex === selectedFiles.length - 1
-                            ? "gray"
-                            : "white"
-                        }
-                        className="rotate-180"
-                      />
-                    </TouchableOpacity>
+                {isPDF(selectedFiles[currentFileIndex]) ? (
+                  // PDF Display
+                  <View className="w-full h-full justify-center items-center p-4">
+                    <View className="w-full max-w-md aspect-[4/3] bg-gray-100 rounded-lg justify-center items-center p-4">
+                      <FileText size={72} color="#0ea5e9" />
+                      <Text className="text-lg mt-4 font-medium text-center">
+                        {selectedFiles[currentFileIndex]?.gbf_name || "PDF Document"}
+                      </Text>
+                      <Text className="text-sm mt-2 text-center">
+                        This document is in PDF format. Tap below to open it in your PDF viewer.
+                      </Text>
+                      <TouchableOpacity
+                        className="mt-6 bg-blue-500 px-6 py-3 rounded-md"
+                        onPress={handleOpenFile}
+                      >
+                        <Text className="text-white font-medium">Open PDF</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
+                ) : (
+                  // Image Display
+                  <>
+                    <Image
+                      source={{ uri: selectedFiles[currentFileIndex]?.gbf_url }}
+                      style={{ width: screenWidth, height: screenHeight * 0.8 }}
+                      resizeMode="contain"
+                    />
+                    <Text className="text-white mt-2 text-center px-4">
+                      {selectedFiles[currentFileIndex]?.gbf_name}
+                    </Text>
+                  </>
+                )}
+
+                {/* Navigation arrows - show only if multiple files */}
+                {selectedFiles.length > 1 && (
+                  <>
+                    <TouchableOpacity
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 w-12 h-12 rounded-full justify-center items-center"
+                      onPress={prevFile}
+                    >
+                      <ChevronLeft size={24} color="white" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 w-12 h-12 rounded-full justify-center items-center"
+                      onPress={nextFile}
+                    >
+                      <ChevronRight size={24} color="white" />
+                    </TouchableOpacity>
+                  </>
                 )}
               </>
             )}
