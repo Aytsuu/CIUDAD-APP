@@ -150,24 +150,32 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       return;
     }
 
-    // Validate actual expense against remaining balance
-    if (values.gbud_actual_expense) {
-      const actualExpense = Number(values.gbud_actual_expense);
-      if (actualExpense > remainingBalance) {
-        form.setError("gbud_actual_expense", {
-          type: "manual",
-          message: `Actual expense exceeds remaining balance of ₱${remainingBalance.toLocaleString()}`,
-        });
-        return;
-      }
-      if (actualExpense < 0) {
-        form.setError("gbud_actual_expense", {
-          type: "manual",
-          message: `Actual expense cannot be negative`,
-        });
-        return;
-      }
+    // Get the current actual expense from the form
+  const currentActualExpense = Number(values.gbud_actual_expense) || 0;
+  
+  // Get the original actual expense from the budget entry
+  const originalActualExpense = budgetEntry?.gbud_actual_expense 
+    ? Number(budgetEntry.gbud_actual_expense) 
+    : 0;
+
+  // Only validate if the actual expense has been CHANGED (increased)
+  if (currentActualExpense !== originalActualExpense) {
+    if (currentActualExpense > remainingBalance + originalActualExpense) {
+      form.setError("gbud_actual_expense", {
+        type: "manual",
+        message: `Actual expense exceeds available balance. Maximum allowed: ₱${(remainingBalance + originalActualExpense).toLocaleString()}`,
+      });
+      return;
     }
+    
+    if (currentActualExpense < 0) {
+      form.setError("gbud_actual_expense", {
+        type: "manual",
+        message: `Actual expense cannot be negative`,
+      });
+      return;
+    }
+  }
 
     const budgetData = {
       gbud_datetime: new Date(values.gbud_datetime).toISOString(),
