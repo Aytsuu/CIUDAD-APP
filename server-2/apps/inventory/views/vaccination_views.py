@@ -16,7 +16,7 @@ import re
 from django.db.models import Q
 from pagination import *
 from apps.inventory.serializers.vaccine_serializers import *
-
+from apps.vaccination.models import *
 
 # =======================AGE GROUP================================#
 
@@ -278,25 +278,99 @@ class ConditionalVaccineListView(generics.ListCreateAPIView):
     serializer_class = CondtionaleVaccineSerializer
     queryset = ConditionalVaccine.objects.all()
     
-    
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
     lookup_field = 'vac_id'
+    
     def destroy(self, request, *args, **kwargs):
-        """Override destroy method to handle ProtectedError properly"""
+        """Override destroy method to check for critical connections before deletion"""
         try:
             instance = self.get_object()
-            print(f"Attempting to delete instance: {instance}")
+            vac_id = instance.vac_id
+            
+            print(f"Attempting to delete VaccineList: {instance.vac_name} (ID: {vac_id})")
+            
+            # 1. FIRST CHECK: Check if vaccine has any stock records (CRITICAL - prevent deletion)
+            stock_count = VaccineStock.objects.filter(vac_id=vac_id).count()
+            if stock_count > 0:
+                return Response(
+                    {
+                        "error": f"Cannot delete vaccine. It has {stock_count} stock record(s) associated with it.",
+                        "stock_records_count": stock_count,
+                        "message": "Please remove all stock records first before deleting this vaccine."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 2. SECOND CHECK: Check if vaccine has any vaccination history records (CRITICAL - prevent deletion)
+            vaccination_history_count = VaccinationHistory.objects.filter(vac_id=vac_id).count()
+            if vaccination_history_count > 0:
+                return Response(
+                    {
+                        "error": f"Cannot delete vaccine. It has {vaccination_history_count} vaccination history record(s) associated with it.",
+                        "vaccination_history_count": vaccination_history_count,
+                        "message": "This vaccine has been used in vaccination records and cannot be deleted."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 3. If no critical connections found, proceed with deleting configuration tables
+            try:
+                # Delete ConditionalVaccine records (safe to delete - just configuration)
+                conditional_count, _ = ConditionalVaccine.objects.filter(vac_id=vac_id).delete()
+                print(f"Deleted {conditional_count} ConditionalVaccine records")
+                
+                # Delete VaccineInterval records (safe to delete - just configuration)
+                interval_count, _ = VaccineInterval.objects.filter(vac_id=vac_id).delete()
+                print(f"Deleted {interval_count} VaccineInterval records")
+                
+                # Delete RoutineFrequency record (OneToOne) - safe to delete
+                try:
+                    routine_freq = RoutineFrequency.objects.get(vac_id=vac_id)
+                    routine_freq.delete()
+                    print("Deleted RoutineFrequency record")
+                except RoutineFrequency.DoesNotExist:
+                    print("No RoutineFrequency record found")
+                
+            except Exception as rel_error:
+                print(f"Error deleting configuration records: {rel_error}")
+                # Even if configuration deletion fails, we can still try to delete the main record
+                # since these are just configuration tables
+            
+            # 4. Now delete the main VaccineList record
             instance.delete()
-            print("Delete succeeded")
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except ProtectedError as e:
-            print(f"ProtectedError caught: {e}")
+            print("VaccineList deleted successfully")
+            
             return Response(
-                {"error": "Cannot delete. It is still in use by other records."},
+                {
+                    "message": "Vaccine deleted successfully",
+                    "details": {
+                        "vaccine_name": instance.vac_name,
+                        "deleted_configuration_records": {
+                            "conditional_vaccines": conditional_count,
+                            "vaccine_intervals": interval_count,
+                            "routine_frequency": 1 if RoutineFrequency.objects.filter(vac_id=vac_id).exists() else 0
+                        }
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except ProtectedError as e:
+            print(f"ProtectedError: {e}")
+            # This shouldn't happen now, but just in case
+            return Response(
+                {"error": "Cannot delete due to database constraints."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        except Exception as e:
+            print(f"Unexpected error during deletion: {e}")
+            return Response(
+                {"error": f"Delete failed: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
 class ConditionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CondtionaleVaccineSerializer
     queryset = ConditionalVaccine.objects.all()
