@@ -9,8 +9,6 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useDeleteBudgetPlanFile } from "./queries/budgetPlanDeleteQueries";
 
 export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: string, isArchive: boolean }) {
-
-    console.log('archive stat', isArchive)
     const router = useRouter();
     const { data: suppDocs = [], isLoading } = useGetBudgetPlanSuppDoc(plan_id);
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);

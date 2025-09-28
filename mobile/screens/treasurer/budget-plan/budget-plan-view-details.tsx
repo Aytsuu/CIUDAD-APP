@@ -16,8 +16,6 @@ export default function BudgetPlanView() {
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(plan_id as string);
     const [activeTab, setActiveTab] = useState<"plan" | "history" | "documents">("plan");
 
-    console.log('Archive in main', fetchedData?.plan_is_archive)
-
     if (isLoading) {
         return (
             <SafeAreaView className="flex-1 justify-center items-center">
