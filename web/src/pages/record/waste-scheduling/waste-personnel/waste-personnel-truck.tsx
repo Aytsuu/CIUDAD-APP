@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { Truck, User, Trash2 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
 import { PersonnelCategory, PersonnelData } from "./waste-personnel-types";
 import TruckManagement from "./waste-truck-form";
 
 const WastePersonnelDashboard = () => {
   const [activeTab, setActiveTab] = useState<PersonnelCategory>("Driver Loader");
-  
-  // Add display name mapping
   const categoryDisplayNames: Record<PersonnelCategory, string> = {
     "Driver Loader": "Driver Loader",
     "Loader": "Waste Loader",
@@ -97,17 +95,6 @@ const WastePersonnelDashboard = () => {
     }
   };
 
-  if (isTrucksLoading || isPersonnelLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
-
   if (isTrucksError || isPersonnelError) {
     return <div className="text-red-500 p-4">Error loading data</div>;
   }
@@ -134,53 +121,59 @@ const WastePersonnelDashboard = () => {
         ).map((category) => (
           <CardLayout
             key={category}
-            content={
-              <div className="flex flex-col items-start gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 rounded-lg ${getCategoryColor(category)}`}
-                  >
-                    {getCategoryIcon(category)}
-                  </div>
-                  <span className="text-2xl font-semibold">
-                    {category === "Trucks"
-                      ? trucks.filter((t) => !t.truck_is_archive).length
-                      : personnelData[category].length}
-                  </span>
+             content={
+              isPersonnelLoading || (category === "Trucks" && isTrucksLoading) ? (
+                <div className="flex items-center justify-center py-8">
+                  <Spinner size="md" />
                 </div>
-                <div>
-                  <h3 className="font-medium">{categoryDisplayNames[category]}</h3>
-                  {(category === "Trucks" ||
-                    personnelData[category].length > 0) && (
+              ) : (
+                <div className="flex flex-col items-start gap-3">
+                  <div className="flex items-center gap-3">
                     <div
-                      className={`flex items-center gap-1 text-sm ${
-                        category === "Trucks"
-                          ? "text-purple-600"
-                          : "text-green-600"
-                      }`}
+                      className={`p-2 rounded-lg ${getCategoryColor(category)}`}
                     >
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          category === "Trucks"
-                            ? "bg-purple-500"
-                            : "bg-green-500"
-                        }`}
-                      ></span>
-                      <span>
-                        {category === "Trucks"
-                          ? `Operational: ${
-                              trucks.filter(
-                                (t) =>
-                                  t.truck_status === "Operational" &&
-                                  t.truck_is_archive === false
-                              ).length
-                            }`
-                          : "Active"}
-                      </span>
+                      {getCategoryIcon(category)}
                     </div>
-                  )}
+                    <span className="text-2xl font-semibold">
+                      {category === "Trucks"
+                        ? trucks.filter((t) => !t.truck_is_archive).length
+                        : personnelData[category].length}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{categoryDisplayNames[category]}</h3>
+                    {(category === "Trucks" ||
+                      personnelData[category].length > 0) && (
+                      <div
+                        className={`flex items-center gap-1 text-sm ${
+                          category === "Trucks"
+                            ? "text-purple-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            category === "Trucks"
+                              ? "bg-purple-500"
+                              : "bg-green-500"
+                          }`}
+                        ></span>
+                        <span>
+                          {category === "Trucks"
+                            ? `Operational: ${
+                                trucks.filter(
+                                  (t) =>
+                                    t.truck_status === "Operational" &&
+                                    t.truck_is_archive === false
+                                ).length
+                              }`
+                            : "Active"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )
             }
             cardClassName="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
           />
@@ -216,7 +209,11 @@ const WastePersonnelDashboard = () => {
           </div>
         </div>
 
-        {activeTab === "Trucks" ? (
+        {isPersonnelLoading && activeTab !== "Trucks" ? (
+          <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        ) : activeTab === "Trucks" ? (
           <TruckManagement />
         ) : (
           <div className="bg-white rounded-lg shadow-sm border p-4">

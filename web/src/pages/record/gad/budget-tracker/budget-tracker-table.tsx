@@ -30,7 +30,7 @@ import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import {
   useArchiveGADBudget,
   useRestoreGADBudget,
@@ -395,27 +395,6 @@ function BudgetTracker() {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="bg-snow w-full h-full">
-        <div className="flex flex-col gap-3 mb-4">
-          <Skeleton className="h-10 w-1/4 mb-3 opacity-30" />
-          <Skeleton className="h-6 w-1/3 opacity-30" />
-        </div>
-        <Skeleton className="h-6 w-full mb-6 opacity-30" />
-        <div className="flex flex-row gap-5 mb-5">
-          <Skeleton className="h-6 w-1/4 opacity-30" />
-          <Skeleton className="h-6 w-1/4 opacity-30" />
-        </div>
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-          <Skeleton className="h-10 w-1/2 opacity-30" />
-          <Skeleton className="h-10 w-1/4 opacity-30" />
-        </div>
-        <Skeleton className="h-64 w-full opacity-30" />
-      </div>
-    );
-  }
-
   if (error) {
     return <div className="text-red-500">{error.message}</div>;
   }
@@ -554,7 +533,11 @@ function BudgetTracker() {
         </div>
 
         <div className="px-6 pb-6">
-          {activeTab === "active" ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Spinner size="lg" />
+            </div>
+          ) : activeTab === "active" ? (
             <DataTable
               columns={columns}
               data={paginatedData.filter((entry) => !entry.gbud_is_archive)}
@@ -568,20 +551,22 @@ function BudgetTracker() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {(currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-          {filteredData.length} rows
-        </p>
-        <div className="w-full sm:w-auto flex justify-center">
-          <PaginationLayout
-            totalPages={totalPages}
-            currentPage={currentPage}
-            onPageChange={(page) => setCurrentPage(page)}
-          />
+      {!isLoading && (
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
+          </p>
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
         <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
