@@ -12,7 +12,7 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 // import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 // import { FormDateInput } from '@/components/ui/form/form-date-input';
 // import { FormTimeInput } from '@/components/ui/form/form-time-input';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
@@ -35,7 +35,7 @@ function ExpenseCreateForm() {
   const { data: budgetItems = [] } = useBudgetItems(years);
   const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
 
-  const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
+  const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 

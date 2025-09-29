@@ -25,8 +25,26 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useIncomeData } from './queries/income-expense-FetchQueries';
 import { useArchiveOrRestoreIncome, useDeleteIncome } from './queries/income-expense-DeleteQueries';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import PageLayout from '@/screens/_PageLayout';
+import { useDebounce } from '@/hooks/use-debounce';
+
+// Add month options
+const monthOptions = [
+  { id: "All", name: "All" },
+  { id: "01", name: "January" },
+  { id: "02", name: "February" },
+  { id: "03", name: "March" },
+  { id: "04", name: "April" },
+  { id: "05", name: "May" },
+  { id: "06", name: "June" },
+  { id: "07", name: "July" },
+  { id: "08", name: "August" },
+  { id: "09", name: "September" },
+  { id: "10", name: "October" },
+  { id: "11", name: "November" },
+  { id: "12", name: "December" }
+];
 
 const IncomeTracking = () => {
   const router = useRouter();
@@ -34,14 +52,24 @@ const IncomeTracking = () => {
   const year = params.budYear as string;
   const [activeTab, setActiveTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('All');
   const [selectedTab, setSelectedTab] = useState('income');
+  
+  // Add debouncing for search
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data: fetchedData = [], isLoading, isError, refetch } = useIncomeData(year ? parseInt(year) : new Date().getFullYear());
+  // Fetch data with search and filter parameters
+  const { data: fetchedData = [], isLoading, isError, refetch } = useIncomeData(
+    year ? parseInt(year) : new Date().getFullYear(),
+    debouncedSearchQuery,
+    selectedMonth
+  );
+  
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreIncome();
   const { mutate: deleteIncome, isPending: isDeletePending } = useDeleteIncome();
   const { data: mainCardData = [] } = useIncomeExpenseMainCard();
   
-  const matchedYearData = mainCardData.find(item => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = mainCardData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
   
   const trackingOptions = [
@@ -49,18 +77,26 @@ const IncomeTracking = () => {
     { label: 'Expense', value: 'expense' },
   ];
 
-  const filteredData = fetchedData.filter(row => {
-    if (activeTab === 'active' ? row.inc_is_archive === false : row.inc_is_archive === true) {
-      if (searchQuery) {
-        return Object.values(row)
-          .join(' ')
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-      }
-      return true;
-    }
-    return false;
-  });
+  // Month filter options
+  const monthFilterOptions = monthOptions.map(month => ({
+    label: month.name,
+    value: month.id
+  }));
+
+  // Filter the data based only on archive status (search and month filtering now done in backend)
+  const filteredData = fetchedData.filter(row => 
+    activeTab === 'active' ? row.inc_is_archive === false : row.inc_is_archive === true
+  );
+
+  // Handle search input change
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  // Handle month change
+  const handleMonthChange = (option: { label: string; value: string }) => {
+    setSelectedMonth(option.value);
+  };
 
   const handleTabSelect = (option: { label: string; value: string }) => {
     setSelectedTab(option.value);
@@ -134,7 +170,6 @@ const IncomeTracking = () => {
     <Card className="mb-4 border border-gray-200">
       <CardHeader className="flex-row justify-between items-center">
         <CardTitle className="text-lg text-[#2a3a61]">
-          {/* {new Date(item.inc_datetime).toLocaleDateString()} */}
           {new Date(item.inc_datetime).toLocaleString("en-US", {
               timeZone: "UTC",
               dateStyle: "medium",
@@ -268,82 +303,94 @@ const IncomeTracking = () => {
       }
       wrapScroll={false} 
     >
-      {isLoading || isArchivePending || isDeletePending ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-          <Text className="text-sm text-gray-500 mt-2">
-            {isArchivePending ? "Updating entry..." : 
-             isDeletePending ? "Deleting entry..." : 
-             "Loading..."}
-          </Text>
-        </View>
-      ) : (
-        <View className="flex-1 px-4">
-          {/* Search and Filters */}
-          <View className="mb-4">
-            <View className="flex-row items-center gap-2">
-              <View className="relative flex-1">
-                <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-                <TextInput
-                  placeholder="Search..."
-                  className="pl-4 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
-              
-              <View className="w-[120px] pb-5">
-                <SelectLayout
-                  options={trackingOptions}
-                  className="h-8"
-                  selectedValue={selectedTab}
-                  onSelect={handleTabSelect}
-                  placeholder="Type"
-                  isInModal={false}
-                />
-              </View>
+      <View className="flex-1 px-4">
+        {/* Search and Filters */}
+        <View className="mb-4">
+          <View className="flex-row items-center gap-2 mb-2">
+            <View className="relative flex-1">
+              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
+              <TextInput
+                placeholder="Search..."
+                className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+              />
             </View>
             
-            <Button
-              onPress={handleCreate}
-              className="bg-primaryBlue mt-3"
-            >
-              <Text className="text-white text-[17px]">
-                <Plus size={16} color="white" className="mr-2" /> Create
-              </Text>
-            </Button>
+            <View className="w-[120px] pb-5">
+              <SelectLayout
+                options={trackingOptions}
+                className="h-8"
+                selectedValue={selectedTab}
+                onSelect={handleTabSelect}
+                placeholder="Type"
+                isInModal={false}
+              />
+            </View>
           </View>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
-              <TabsTrigger 
-                value="active" 
-                className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-              >
-                <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                  Active
-                </Text>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="archive"
-                className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-              >
-                <View className="flex-row items-center justify-center">
-                  <Archive 
-                    size={16} 
-                    className="mr-1" 
-                    color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'} 
-                  />
-                  <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
-                    Archive
-                  </Text>
-                </View>
-              </TabsTrigger>
-            </TabsList>
+          {/* Month Filter */}
+          <View className="pb-6">
+            <SelectLayout
+              options={monthFilterOptions}
+              className="h-8"
+              selectedValue={selectedMonth}
+              onSelect={handleMonthChange}
+              placeholder="Select Month"
+              isInModal={false}
+            />
+          </View>
+          
+          <Button
+            onPress={handleCreate}
+            className="bg-primaryBlue mt-2"
+          >
+            <Text className="text-white text-[17px]">
+              <Plus size={16} color="white" className="mr-2" /> Create
+            </Text>
+          </Button>
+        </View>
 
-            {/* Active Entries */}
-            <TabsContent value="active">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
+            <TabsTrigger 
+              value="active" 
+              className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="archive"
+              className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <View className="flex-row items-center justify-center">
+                <Archive 
+                  size={16} 
+                  className="mr-1" 
+                  color={activeTab === 'archive' ? '#00A8F0' : '#6b7280'} 
+                />
+                <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'} pl-1`}>
+                  Archive
+                </Text>
+              </View>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Active Entries */}
+          <TabsContent value="active">
+            {isLoading || isArchivePending || isDeletePending ? (
+              <View className="h-64 justify-center items-center">
+                <ActivityIndicator size="large" color="#2a3a61" />
+                <Text className="text-sm text-gray-500 mt-2">
+                  {isArchivePending ? "Updating entry..." : 
+                   isDeletePending ? "Deleting entry..." : 
+                   "Loading..."}
+                </Text>
+              </View>
+            ) : (
               <FlatList
                 data={filteredData.filter(item => !item.inc_is_archive)}
                 renderItem={renderItem}
@@ -356,10 +403,21 @@ const IncomeTracking = () => {
                   </Text>
                 }
               />
-            </TabsContent>
+            )}
+          </TabsContent>
 
-            {/* Archived Entries */}
-            <TabsContent value="archive">
+          {/* Archived Entries */}
+          <TabsContent value="archive">
+            {isLoading || isArchivePending || isDeletePending ? (
+              <View className="h-64 justify-center items-center">
+                <ActivityIndicator size="large" color="#2a3a61" />
+                <Text className="text-sm text-gray-500 mt-2">
+                  {isArchivePending ? "Updating entry..." : 
+                   isDeletePending ? "Deleting entry..." : 
+                   "Loading..."}
+                </Text>
+              </View>
+            ) : (
               <FlatList
                 data={filteredData.filter(item => item.inc_is_archive)}
                 renderItem={renderItem}
@@ -372,10 +430,10 @@ const IncomeTracking = () => {
                   </Text>
                 }
               />
-            </TabsContent>
-          </Tabs>
-        </View>
-      )}
+            )}
+          </TabsContent>
+        </Tabs>
+      </View>
     </PageLayout>
   );
 };

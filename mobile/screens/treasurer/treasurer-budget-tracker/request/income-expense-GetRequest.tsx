@@ -2,27 +2,35 @@ import { api } from "@/api/api";
 
 
 // MAIN CARD FOR INCOME and EXPENSE
-export const getIncomeExpenseMainCard = async () => {
+export const getIncomeExpenseMainCard = async (searchQuery?: string) => {
     try {
-
-        const res = await api.get('treasurer/income-expense-main/');
-        return res.data;
+        const params: any = {};
+        if (searchQuery) params.search = searchQuery;
         
+        const res = await api.get('treasurer/income-expense-main/', { params });
+        return res.data;
     } catch (err) {
         console.error(err);
+        throw err;
     }
 };
 
 
+
 //RETRIEVE EXPENSES
-export const getIncomeExpense = async (year?: number) => {
+export const getIncomeExpense = async (year?: number, searchQuery?: string, selectedMonth?: string) => {
     try {
-        const params = year ? { params: { year } } : {};
-        const res = await api.get('treasurer/income-expense-tracking/', params);
+        const params: any = {};
+        if (year) params.year = year;
+        if (searchQuery) params.search = searchQuery;
+        if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
+        
+        const res = await api.get('treasurer/income-expense-tracking/', { params });
+        console.log("EXPENSE W/ URL: ", res)
         return res.data;
     } catch (err) {
         console.error(err);
-        throw err; // Important for React Query error handling
+        throw err;
     }
 };
 
@@ -41,15 +49,19 @@ export const getParticulars = async (year?: number) => {
 
 
 // RETRIEVE EXPENSE LOG
-export const getExpenseLog = async (year?: number) => {
+export const getExpenseLog = async (year?: number, searchQuery?: string, selectedMonth?: string) => {
     try {
-        const params = year ? { params: { year } } : {};
-        const res = await api.get('treasurer/expense-log/', params);
-        console.log("EXPENSE LOG PO: ", res)
-        return res.data;
+        const params: any = {};
+        if (year) params.year = year;
+        if (searchQuery) params.search = searchQuery;
+        if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
         
+        const res = await api.get('treasurer/expense-log/', { params });
+        console.log("EXPENSE LOG PO: ", res);
+        return res.data;
     } catch (err) {
         console.error(err);
+        throw err;
     }
 };
 
@@ -57,10 +69,14 @@ export const getExpenseLog = async (year?: number) => {
 // ================================== INCOMEEEE =================================
 
 
-export const getIncomeData = async (year?: number) => {
+export const getIncomeData = async (year?: number, searchQuery?: string, selectedMonth?: string) => {
     try {
-        const params = year ? { params: { year } } : {};
-        const res = await api.get('treasurer/income-tracking/', params);
+        const params: any = {};
+        if (year) params.year = year;
+        if (searchQuery) params.search = searchQuery;
+        if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
+        
+        const res = await api.get('treasurer/income-tracking/', { params });
         return res.data;
     } catch (err) {
         console.error(err);
