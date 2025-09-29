@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, ClockArrowUp, FileDown, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
-import { Link, useNavigate } from "react-router"
+import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
@@ -39,7 +39,6 @@ const profiles = [
 
 export default function ResidentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
-  const navigate = useNavigate();
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
