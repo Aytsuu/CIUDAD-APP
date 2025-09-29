@@ -198,8 +198,8 @@ export default function AllVaccinationRecords() {
       };
 
       router.push({
-        pathname: "/(health)/admin/vaccination/individual",
-        params: { patientData: JSON.stringify(patientData) }
+        pathname: "/(health)/vaccination/my-records",
+        params: { patId: patientData.pat_id, mode: "admin" }
       });
     } catch (error) {
       console.log("Navigation error:", error);

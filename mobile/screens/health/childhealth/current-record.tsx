@@ -9,11 +9,11 @@ import PageLayout from "@/screens/_PageLayout";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 
 // Import the separated Card components
-import { VitalSignsCard} from "./render-cards/vitalsigns-card";
+import { VitalSignsCard } from "./render-cards/vitalsigns-card";
 import { ImmunizationCard } from "./render-cards/immunization-card";
 import { BFCheckCard } from "./render-cards/bfchecks-card";
-import { MedicinesCard} from "./render-cards/medicine-card";
-import {SupplementStatusCard} from "./render-cards/supplement-card";
+import { MedicinesCard } from "./render-cards/medicine-card";
+import { SupplementStatusCard } from "./render-cards/supplement-card";
 
 export default function ChildHealthRecordDetails() {
   const router = useRouter();
@@ -187,7 +187,7 @@ export default function ChildHealthRecordDetails() {
     const medicineRecords = processedRecords
       .flatMap(
         (record) =>
-          record.rawRecord.child_health_supplements?.map((supplement:any) => ({
+          record.rawRecord.child_health_supplements?.map((supplement: any) => ({
             record,
             supplement
           })) || []
@@ -203,7 +203,7 @@ export default function ChildHealthRecordDetails() {
   }, [processedRecords, currentRecord]);
 
   // Helper function to extract DOB from the nested record structure
-  const extractDOBFromRecord = (record:any) => {
+  const extractDOBFromRecord = (record: any) => {
     return record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
   };
 
@@ -268,38 +268,11 @@ export default function ChildHealthRecordDetails() {
 
           {/* Tab Content */}
           <View className="min-h-[200px]">
-            {activeTab === "vitals" && (
-              <VitalSignsCard 
-                processedRecords={processedRecords} 
-                currentRecord={currentRecord} 
-                extractDOBFromRecord={extractDOBFromRecord} 
-              />
-            )}
-            {activeTab === "immunization" && (
-              <ImmunizationCard 
-                processedRecords={processedRecords} 
-                currentRecord={currentRecord} 
-                extractDOBFromRecord={extractDOBFromRecord} 
-              />
-            )}
-            {activeTab === "supplements" && (
-              <SupplementStatusCard 
-                processedRecords={processedRecords} 
-                currentRecord={currentRecord} 
-              />
-            )}
-            {activeTab === "bf" && (
-              <BFCheckCard 
-                processedRecords={processedRecords} 
-                currentRecord={currentRecord} 
-              />
-            )}
-            {activeTab === "medicines" && (
-              <MedicinesCard
-                medicinesInfo={medicinesInfo} 
-                currentRecord={currentRecord} 
-              />
-            )}
+            {activeTab === "vitals" && <VitalSignsCard processedRecords={processedRecords} currentRecord={currentRecord} extractDOBFromRecord={extractDOBFromRecord} />}
+            {activeTab === "immunization" && <ImmunizationCard processedRecords={processedRecords} currentRecord={currentRecord} extractDOBFromRecord={extractDOBFromRecord} />}
+            {activeTab === "supplements" && <SupplementStatusCard processedRecords={processedRecords} currentRecord={currentRecord} />}
+            {activeTab === "bf" && <BFCheckCard processedRecords={processedRecords} currentRecord={currentRecord} />}
+            {activeTab === "medicines" && <MedicinesCard medicinesInfo={medicinesInfo} currentRecord={currentRecord} />}
           </View>
         </View>
       </ScrollView>

@@ -1,57 +1,34 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/redux/redux";
-import {
-  useLoginMutation,
-  useSignupMutation,
-  useSendEmailOTPMutation,
-  useVerifyEmailOTPMutation,
-  useLogoutMutation,
-} from "@/redux/auth-redux/useAuthMutation";
-import {
-  setAuthChecked,
-  clearOtpState,
-  clearError,
-} from "@/redux/auth-redux/authSlice";
-import {
-  LoginCredentials,
-  SignupCredentials,
-} from "@/redux/auth-redux/auth-types";
+import { useLoginMutation, useSignupMutation, useSendEmailOTPMutation, useVerifyEmailOTPMutation, useLogoutMutation } from "@/redux/auth-redux/useAuthMutation";
+import { setAuthChecked, clearOtpState, clearError } from "@/redux/auth-redux/authSlice";
+import { LoginCredentials, SignupCredentials } from "@/redux/auth-redux/auth-types";
 import { KeychainService } from "@/services/keychainService";
 import { usePatientByResidentId } from "@/screens/health/patientchecker/queries";
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
-  const {
-    user,
-    isAuthenticated,
-    isLoading,
-    error,
-    hasCheckedAuth,
-    otpSent,
-    email,
-    phone,
-    accessToken,
-  } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, isLoading, error, hasCheckedAuth, otpSent, email, phone, accessToken } = useAppSelector((state) => state.auth);
 
-  const [pat_id, setPatId] = useState<string | null>(null);
+  const [pat_id, setPatId] = useState<string | null>("PR20030001");
   // Mutations
   const loginMutation = useLoginMutation();
   const signupMutation = useSignupMutation();
   const sendEmailOTPMutation = useSendEmailOTPMutation();
   const verifyEmailOTPMutation = useVerifyEmailOTPMutation();
   const logoutMutation = useLogoutMutation();
-  const { data: patientData, error: patientError } = usePatientByResidentId( user?.rp || "");
+  const { data: patientData, error: patientError } = usePatientByResidentId(user?.rp || "");
 
   useEffect(() => {
     if (user && patientData?.pat_id) {
       console.log("User is associated with patient ID:", patientData.pat_id);
       setPatId(patientData.pat_id);
-    } else if (patientError) {
+    } else if (patientError || null) {
       console.error("Error fetching patient data:", patientError);
-      setPatId(null);
+      setPatId("PR20030001");
     } else {
       console.log("No patient ID associated with user.");
-      setPatId(null);
+      setPatId("PR20030001");
     }
   }, [user, patientData, patientError]);
 
@@ -89,7 +66,7 @@ export const useAuth = () => {
       const result = await signupMutation.mutateAsync(credentials);
       return {
         requiresConfirmation: result.requireConfirmation ?? false,
-        user: result.user,
+        user: result.user
       };
     },
     [signupMutation]
@@ -137,14 +114,7 @@ export const useAuth = () => {
     pat_id,
     user,
     isAuthenticated,
-    isLoading:
-      isLoading ||
-      loginMutation.isPending ||
-      signupMutation.isPending ||
-      sendEmailOTPMutation.isPending ||
-      verifyEmailOTPMutation.isPending ||
-      logoutMutation.isPending ||
-      error,
+    isLoading: isLoading || loginMutation.isPending || signupMutation.isPending || sendEmailOTPMutation.isPending || verifyEmailOTPMutation.isPending || logoutMutation.isPending || error,
     hasCheckedAuth,
     otpSent,
     email,
@@ -162,6 +132,6 @@ export const useAuth = () => {
     signupLoading: signupMutation.isPending,
     emailOtpLoading: sendEmailOTPMutation.isPending,
     verifyEmailOtpLoading: verifyEmailOTPMutation.isPending,
-    logoutLoading: logoutMutation.isPending,
+    logoutLoading: logoutMutation.isPending
   };
 };

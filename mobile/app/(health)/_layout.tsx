@@ -68,7 +68,7 @@ export default () => {
                 <Stack.Screen name="admin/scheduler/schedule-main" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/scheduler/schedule-weekly" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/scheduler/schedule-today" options={{headerShown:false}}/>
-                <Stack.Screen name="admin/childhealth/individual" options={{headerShown:false}}/>
+                {/* <Stack.Screen name="admin/childhealth/individual" options={{headerShown:false}}/> */}
                 <Stack.Screen name="admin/childhealth/overall" options={{headerShown:false}}/>
                 <Stack.Screen name="admin/childhealth/history" options={{headerShown:false}}/>
   
@@ -80,7 +80,7 @@ export default () => {
                 <Stack.Screen name="admin/medicinerecords/overall" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/medicinerecords/individual" options={{headerShown: false}}/>
                 <Stack.Screen name="admin/vaccination/overall" options={{headerShown: false}}/>
-                <Stack.Screen name="admin/vaccination/individual" options={{headerShown: false}}/>
+                {/* <Stack.Screen name="admin/vaccination/individual" options={{headerShown: false}}/> */}
 
 
                 <Stack.Screen name="admin/maternal/overall" options={{headerShown: false}}/>

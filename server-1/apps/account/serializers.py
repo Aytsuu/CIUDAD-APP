@@ -35,6 +35,7 @@ class PhoneVerificationBaseSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"phone": "Phone is not registered"})
         instance = PhoneVerification(**validated_data)
         instance.pv_otp = generate_otp()
+        print(instance.pv_otp)
         instance.save()
         return instance
     

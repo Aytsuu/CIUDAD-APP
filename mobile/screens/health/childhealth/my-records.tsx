@@ -19,44 +19,84 @@ import { GrowthChart } from "./growth-chart";
 import PageLayout from "@/screens/_PageLayout";
 import { PaginationControls } from "../admin/components/pagination-layout";
 import NoRecordsCard from "../admin/components/no-records-card";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function InvChildHealthRecords() {
   const navigation = useNavigation();
-  const route = useRoute();
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const { pat_id } = useAuth();
+  const [patId, setPatientId] = useState("");
+
+  // Parse the parameters from strings to objects with proper error handling
+  const childrenID = useMemo(() => {
+    try {
+      const parsedId = typeof params.patId === "string" ? params.patId : "";
+      return parsedId;
+    } catch (error) {
+      console.error("Error parsing record:", error);
+      return null;
+    }
+  }, [params.patId]);
+
+  let ChildHealthRecord = null;
+  if (params && params.ChildHealthRecord) {
+    ChildHealthRecord = JSON.parse(params.ChildHealthRecord as string);
+    if (!ChildHealthRecord?.chrec_id || !ChildHealthRecord?.pat_id || !ChildHealthRecord?.dob) {
+      console.error("Parsed ChildHealthRecord is missing required fields", {
+        chrec_id: ChildHealthRecord?.chrec_id,
+        pat_id: ChildHealthRecord?.pat_id,
+        dob: ChildHealthRecord?.dob,
+        ChildHealthRecord
+      });
+    }
+  } else {
+    console.error("Params or ChildHealthRecord is missing", { params });
+  }
+
+  const [childDatafromAdmin] = useState(ChildHealthRecord);
+  const mode = typeof params.mode === "string" ? params.mode : null;
 
   // Get patient ID from route params with safe access
-  const [patientId, setPatientId] = useState("PR20200001");
-  const patId = patientId;
+  useEffect(() => {
+    console.log(" CHILD ID:", childrenID);
+    console.log(" MODE:", mode);
+    if (mode == "parents") {
+      setPatientId(childrenID || "");
+    } else if (mode == "admin") {
+      setPatientId(childDatafromAdmin?.pat_id);
+    } else {
+      setPatientId(pat_id || "");
+    }
+  }, [childrenID, mode]);
 
-  // State
+  const { data: childData, isLoading: isChildDataLoading, isError: isChildDataError, error: childDataError, refetch: refetchChildData } = useChildData(patId || "");
   const [activeTab, setActiveTab] = useState("status");
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5); // Show 5 records per page
 
-  // Use the useChildData hook
-  const { data: childData, isLoading: isChildDataLoading, isError: isChildDataError, error: childDataError, refetch: refetchChildData } = useChildData(patId);
 
-  // DEBUG: Log the raw data
   useEffect(() => {
-    console.log("🔍 RAW CHILD DATA:", childData);
-    console.log("🔍 Is Loading:", isChildDataLoading);
-    console.log("🔍 Is Error:", isChildDataError);
+    console.log("-----RAW CHILD DATA:", childData);
+    console.log("----Is Loading:", isChildDataLoading);
+    console.log("-----Is Error:", isChildDataError);
   }, [childData, isChildDataLoading, isChildDataError]);
 
   // FIXED: Transform child data based on actual API response structure
   const transformChildData = useMemo(() => {
     if (!childData) {
-      console.log("❌ No child data available for transformation");
+      console.log("------No child data available for transformation");
       return null;
     }
 
-    console.log("🔄 TRANSFORMING CHILD DATA STRUCTURE:", childData);
+    console.log("-----TRANSFORMING CHILD DATA STRUCTURE:", childData);
 
     // Based on your API response, the main data is an object with chrec_id and child_health_histories
     const mainData = childData;
     if (!mainData) {
-      console.log("❌ No main data found in response");
+      console.log("-----No main data found in response");
       return null;
     }
 
@@ -92,7 +132,7 @@ export default function InvChildHealthRecords() {
 
     const transformedData = {
       // Patient basic info
-      pat_id: chrecDetails?.patient || patDetails.pat_id || patientId,
+      pat_id: chrecDetails?.patient || patDetails.pat_id || patId,
       fname: personalInfo?.per_fname || "",
       lname: personalInfo?.per_lname || "",
       mname: personalInfo?.per_mname || "",
@@ -132,8 +172,17 @@ export default function InvChildHealthRecords() {
 
     console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
     return transformedData;
-  }, [childData, patientId]);
+  }, [childData, patId]);
 
+  // Other hooks remain the same
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading, refetch: refetchUnvaccinated } = useUnvaccinatedVaccines(patId, transformChildData?.dob || undefined);
+  const { data: followUps = [], isLoading: followupLoading, refetch: refetchFollowups, isError: isUnVacError } = useFollowupChildHealthandVaccines(patId);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading, refetch: refetchVaccinations, isError: isVacError } = usePatientVaccinationDetails(patId);
+  const { data: nutritionalStatusData = [], isLoading: isGrowthLoading, isError: isgrowthError, refetch: refetchNutritional } = useNutriotionalStatus(patId);
+
+  const isLoading = isChildDataLoading || followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || isGrowthLoading;
+
+  // State
   // FIXED: Process history data based on actual API structure (matching web version)
   const processedHistoryData = useMemo(() => {
     if (!childData || !childData.child_health_histories) {
@@ -213,7 +262,7 @@ export default function InvChildHealthRecords() {
         // IDs
         chhist_id: record.chhist_id,
         chrec_id: childData.chrec_id,
-        patrec: patientId,
+        patrec: patId,
 
         // Basic info
         id: index + 1,
@@ -272,7 +321,7 @@ export default function InvChildHealthRecords() {
 
       return processedRecord;
     });
-  }, [childData, transformChildData, patientId]);
+  }, [childData, transformChildData, patId]);
 
   // NEW: Check if no records found
   const noRecordsFound = useMemo(() => {
@@ -289,14 +338,6 @@ export default function InvChildHealthRecords() {
   const totalPages = Math.ceil(processedHistoryData.length / pageSize);
   const startEntry = processedHistoryData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endEntry = Math.min(currentPage * pageSize, processedHistoryData.length);
-
-  // Other hooks remain the same
-  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading, refetch: refetchUnvaccinated } = useUnvaccinatedVaccines(patId, transformChildData?.dob || "");
-  const { data: followUps = [], isLoading: followupLoading, refetch: refetchFollowups, isError: isUnVacError } = useFollowupChildHealthandVaccines(patId);
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading, refetch: refetchVaccinations, isError: isVacError } = usePatientVaccinationDetails(patId);
-  const { data: nutritionalStatusData = [], isLoading: isGrowthLoading, isError: isgrowthError, refetch: refetchNutritional } = useNutriotionalStatus(patId);
-
-  const isLoading = isChildDataLoading || followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || isGrowthLoading;
 
   // NEW: Function to navigate to detailed record view
   const navigateToRecordDetails = useCallback(
@@ -516,63 +557,21 @@ export default function InvChildHealthRecords() {
 
   if (isChildDataLoading) {
     return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
-        rightAction={<View className="w-10 h-10" />}
-      >
-        <View className="flex-1 items-center justify-center">
-          <LoadingState />
-        </View>
-      </PageLayout>
+      <View className="flex-1 items-center justify-center">
+        <LoadingState />
+      </View>
     );
   }
 
-  // NEW: Handle case when no patient ID is provided
-  if (!patId) {
+  const error = isChildDataError || isgrowthError || isVacError || isUnVacError;
+  if (error) {
     return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
-        rightAction={<View className="w-10 h-10" />}
-      >
-        <View className="flex-1 items-center justify-center p-5">
-          <View className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 items-center">
-            <FileText size={48} color="#f59e0b" />
-            <Text className="text-yellow-800 text-lg font-semibold mt-4 text-center">No Patient Selected</Text>
-            <Text className="text-yellow-600 text-base text-center mt-2">Please select a patient to view their health records.</Text>
-          </View>
-        </View>
-      </PageLayout>
-    );
-  }
-
-  if (isChildDataError && !patId && isgrowthError && isVacError && isUnVacError) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} color="#374151" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
-        rightAction={<View className="w-10 h-10" />}
-      >
-        <View className="flex-1 items-center justify-center p-5">
-          <Text className="text-red-500 text-base text-center mb-4">Error loading data: {childDataError?.message || "Unknown error"}</Text>
-          <Button variant="outline" onPress={onRefresh}>
-            <Text>Refresh</Text>
-          </Button>
-        </View>
-      </PageLayout>
+      <View className="flex-1 items-center justify-center p-5">
+        <Text className="text-red-500 text-base text-center mb-4">Error loading data: {childDataError?.message || "Unknown error"}</Text>
+        <Button variant="outline" onPress={onRefresh}>
+          <Text>Refresh</Text>
+        </Button>
+      </View>
     );
   }
 
@@ -673,4 +672,3 @@ export default function InvChildHealthRecords() {
     </PageLayout>
   );
 }
-

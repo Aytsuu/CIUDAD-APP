@@ -266,8 +266,6 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                                   </Link>
                                 </div>
                               </div>
-
-                            
                             </>
                           )}
                         </div>
@@ -275,68 +273,63 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
                     );
                   })}
 
-                    {/* Children Section - Always displayed if loading or has children */}
-                    {(childrenLoading || formattedChildren.length > 0) && (
-                                <div className="mt-6">
-                                  <div className={`p-4 rounded-lg border border-indigo-200`}>
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-3">
-                                        <div className={`p-2 rounded-lg bg-indigo-100`}>
-                                          <Baby className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                          <div className="flex items-center space-x-4 mt-1"></div>
-                                        </div>
+                  {/* Children Section - Always displayed if loading or has children */}
+                  {(childrenLoading || formattedChildren.length > 0) && (
+                    <div className="mt-6">
+                      <div className={`p-4 rounded-lg border border-indigo-200`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`p-2 rounded-lg bg-indigo-100`}>
+                              <Baby className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <div>
+                              <div className="flex items-center space-x-4 mt-1"></div>
+                            </div>
+                          </div>
+                        </div>
+                        {/* Children List - Automatically displayed if there are children records */}
+                        {formattedChildren.length > 0 && (
+                          <div className="mt-4 space-y-3">
+                            <h4 className="text-md font-semibold text-gray-700 mb-3">Children List:</h4>
+                            {formattedChildren.map((child: any, childIndex: any) => (
+                              <div key={childIndex} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="p-2 rounded-lg bg-indigo-100">
+                                      <Baby className="w-4 h-4 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                      <h5 className="text-sm font-medium text-gray-900">
+                                        {child.fname} {child.mname} {child.lname}
+                                      </h5>
+                                      <div className="flex items-center space-x-2 mt-1">
+                                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{child.age} years old</span>
+                                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{child.sex}</span>
+                                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">Birth Order: {child.birth_order}</span>
                                       </div>
                                     </div>
-                                    {/* Children List - Automatically displayed if there are children records */}
-                                    {formattedChildren.length > 0 && (
-                                      <div className="mt-4 space-y-3">
-                                        <h4 className="text-md font-semibold text-gray-700 mb-3">Children List:</h4>
-                                        {formattedChildren.map((child: any, childIndex: any) => (
-                                          <div key={childIndex} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
-                                            <div className="flex items-center justify-between">
-                                              <div className="flex items-center space-x-3">
-                                                <div className="p-2 rounded-lg bg-indigo-100">
-                                                  <Baby className="w-4 h-4 text-indigo-600" />
-                                                </div>
-                                                <div>
-                                                  <h5 className="text-sm font-medium text-gray-900">
-                                                    {child.fname} {child.mname} {child.lname}
-                                                  </h5>
-                                                  <div className="flex items-center space-x-2 mt-1">
-                                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{child.age} years old</span>
-                                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">{child.sex}</span>
-                                                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-md">Birth Order: {child.birth_order}</span>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                              <Link to="/services/childhealthrecords/records" state={{ ChildHealthRecord: child }} className="transition-transform hover:scale-105">
-                                                <Button variant="outline" size="sm" className="h-8 px-4 bg-white border-indigo-300 text-indigo-700 font-medium text-xs">
-                                                  View Child
-                                                </Button>
-                                              </Link>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
                                   </div>
+                                  <Link to="/services/childhealthrecords/records" state={{ ChildHealthRecord: child }} className="transition-transform hover:scale-105">
+                                    <Button variant="outline" size="sm" className="h-8 px-4 bg-white border-indigo-300 text-indigo-700 font-medium text-xs">
+                                      View Child
+                                    </Button>
+                                  </Link>
                                 </div>
-                              )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
-
-
           }
           cardClassName="border shadow-sm rounded-md"
           headerClassName="pb-3 border-b"
           contentClassName="pt-4"
         />
-
-
-        
       </TabsContent>
     </Tabs>
   );
