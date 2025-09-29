@@ -223,6 +223,7 @@ class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
     permission_classes = [AllowAny]
     queryset = Budget_Plan.objects.all()
     serializer_class = BudgetPlanSerializer
+    
     lookup_field = 'plan_id'
 
 class UpdateBudgetPlan(generics.UpdateAPIView):
