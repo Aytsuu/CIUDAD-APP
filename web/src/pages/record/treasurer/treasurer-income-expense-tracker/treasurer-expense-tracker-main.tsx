@@ -12,18 +12,19 @@ import IncomeandExpenseCreateForm from "./treasurer-expense-tracker-create";
 import IncomeandExpenseEditForm from "./treasurer-expense-tracker-edit";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useIncomeExpense, type IncomeExpense } from "./queries/treasurerIncomeExpenseFetchQueries";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDeleteIncomeExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { useArchiveOrRestoreExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { NavLink } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { Spinner } from "@/components/ui/spinner";
+import { useDebounce } from "@/hooks/use-debounce"
 
 
 
@@ -34,6 +35,7 @@ function IncomeandExpenseTracking() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
     // Month filter options
     const monthOptions = [
@@ -59,15 +61,20 @@ function IncomeandExpenseTracking() {
     const totInc = location.state?.totalInc;
 
 
-    const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
+    // const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
+    const { data: fetchedData = [], isLoading } = useIncomeExpense(
+        year ? parseInt(year) : new Date().getFullYear(),
+        debouncedSearchQuery,
+        selectedMonth
+    );
 
     const { data: budgetItems = [] } = useBudgetItems(year);
 
-    const {  data: fetchIncData = [] } = useIncomeExpenseMainCard();
+    const {  data: fetchIncData = [] } = useIncomeExpenseMainCard("");
 
     console.log("AMBOT: ", fetchedData)
 
-    const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchIncData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;  
 
@@ -75,27 +82,10 @@ function IncomeandExpenseTracking() {
     
     // Filter the data based on the selected month and search query
     const filteredData = React.useMemo(() => {
-        let result = fetchedData.filter(row => 
+        return fetchedData.filter(row => 
             activeTab === "active" ? row.iet_is_archive === false : row.iet_is_archive === true
         );
-      
-        if (selectedMonth !== "All") {
-            result = result.filter(item => {
-                const month = item.iet_datetime?.slice(5, 7);
-                return month === selectedMonth;
-            });
-        }
-      
-        if (searchQuery) {
-            result = result.filter(item =>
-                Object.values(item)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-            );
-        }
-        return result;
-    }, [fetchedData, activeTab, selectedMonth, searchQuery]);
+    }, [fetchedData, activeTab]);
 
     // Calculate total pages for pagination
     const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -105,6 +95,16 @@ function IncomeandExpenseTracking() {
         (currentPage - 1) * pageSize,
         currentPage * pageSize
     );
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setCurrentPage(1);
+    };
+
+    const handleMonthChange = (value: string) => {
+        setSelectedMonth(value);
+        setCurrentPage(1);
+    };
 
 
     const { mutate: deleteEntry } = useDeleteIncomeExpense();
@@ -423,14 +423,10 @@ function IncomeandExpenseTracking() {
 
 
     if (isLoading) {
-        return (
-            <div className="w-full h-full">
-              <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-              <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-              <Skeleton className="h-10 w-full mb-4 opacity-30" />
-              <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-            </div>
-          );
+        <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+            <span className="ml-2 text-gray-600">Loading expense entry...</span>
+        </div>
     }
 
     return (
@@ -495,10 +491,7 @@ function IncomeandExpenseTracking() {
                         placeholder="Search..." 
                         className="pl-10 w-full bg-white text-sm" 
                         value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            setCurrentPage(1);
-                        }}
+                        onChange={handleSearchChange}
                         />
                     </div>
                     <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]">
@@ -507,10 +500,7 @@ function IncomeandExpenseTracking() {
                         placeholder="Month"
                         value={selectedMonth} 
                         options={monthOptions}
-                        onChange={(value) => {
-                            setSelectedMonth(value);
-                            setCurrentPage(1);
-                        }}
+                        onChange={handleMonthChange}
                         />
                     </div>                            
                 </div>                
@@ -599,17 +589,31 @@ function IncomeandExpenseTracking() {
 
                     <TabsContent value="active">
                         <div className="border overflow-auto max-h-[400px]">
-                            <DataTable 
-                                columns={activeColumns} 
-                                data={paginatedData.filter(row => row.iet_is_archive === false)} 
-                            />
-                        </div>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                </div>
+                            ) : (
+                                <DataTable 
+                                    columns={activeColumns} 
+                                    data={paginatedData.filter(row => row.iet_is_archive === false)} 
+                                />
+                            )}  
+                        </div>                      
                     </TabsContent>
 
                     <TabsContent value="all">
                         <div className="border overflow-auto max-h-[400px]">
-                            <HistoryTable columns={archiveColumns} data={paginatedData.filter(row => row.iet_is_archive == true)} />
-                        </div>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                </div>
+                            ) : (
+                                <HistoryTable columns={archiveColumns} data={paginatedData.filter(row => row.iet_is_archive == true)} />
+                            )} 
+                        </div>                         
                     </TabsContent>
                 </Tabs>
 

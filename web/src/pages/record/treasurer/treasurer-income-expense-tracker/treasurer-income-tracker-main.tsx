@@ -1,3 +1,5 @@
+
+
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,6 @@ import IncomeCreateForm from "./treasurer-income-tracker-create";
 import IncomeEditForm from "./treasurer-income-tracker-edit";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -20,7 +21,9 @@ import { useDeleteIncome, useArchiveOrRestoreIncome } from "./queries/treasurerI
 import { Link } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { Spinner } from "@/components/ui/spinner";
+import { useDebounce } from "@/hooks/use-debounce"
 
 
 function IncomeTracking() {
@@ -30,21 +33,9 @@ function IncomeTracking() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-
-    // Fetch data from the backend
-    const location = useLocation();
-    const year = location.state?.budYear;
-
-
-    console.log("SA INCOME NIIII YEAR: ", year)
-
-    const { data: fetchedData = [], isLoading } = useIncomeData(year ? parseInt(year) : new Date().getFullYear());
-    const {  data: fetchIncData = [] } = useIncomeExpenseMainCard();  
-
-    const matchedYearData = fetchIncData.find(item => Number(item.ie_main_year) === Number(year));
-    const totInc = matchedYearData?.ie_main_inc ?? 0;
-
-    console.log("SA INCOMEE NI TOTINC: ", totInc)
+    
+    // Add debouncing for search
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     // Month filter options
     const monthOptions = [
@@ -64,29 +55,31 @@ function IncomeTracking() {
     ];
     const [selectedMonth, setSelectedMonth] = useState("All");
 
-    // Filter the data based on active tab, selected month and search query
+    // Fetch data from the backend with search and filter parameters
+    const location = useLocation();
+    const year = location.state?.budYear;
+
+    console.log("SA INCOME NIIII YEAR: ", year)
+
+    const { data: fetchedData = [], isLoading } = useIncomeData(
+        year ? parseInt(year) : new Date().getFullYear(),
+        debouncedSearchQuery,
+        selectedMonth
+    );
+    
+    const { data: fetchIncData = [] } = useIncomeExpenseMainCard();  
+
+    const matchedYearData = fetchIncData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+    const totInc = matchedYearData?.ie_main_inc ?? 0;
+
+    console.log("SA INCOMEE NI TOTINC: ", totInc)
+    
+    // Filter the data based only on archive status (search and month filtering now done in backend)
     const filteredData = React.useMemo(() => {
-        let result = fetchedData.filter(row => 
+        return fetchedData.filter(row => 
             activeTab === "active" ? row.inc_is_archive === false : row.inc_is_archive === true
         );
-      
-        if (selectedMonth !== "All") {
-            result = result.filter(item => {
-                const month = item.inc_datetime?.slice(5, 7);
-                return month === selectedMonth;
-            });
-        }
-      
-        if (searchQuery) {
-            result = result.filter(item =>
-                Object.values(item)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-            );
-        }
-        return result;
-    }, [fetchedData, activeTab, selectedMonth, searchQuery]);
+    }, [fetchedData, activeTab]);
 
     // Calculate total pages for pagination
     const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -96,6 +89,18 @@ function IncomeTracking() {
         (currentPage - 1) * pageSize,
         currentPage * pageSize
     );
+
+    // Handle search input change
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setCurrentPage(1);
+    };
+
+    // Handle month change
+    const handleMonthChange = (value: string) => {
+        setSelectedMonth(value);
+        setCurrentPage(1);
+    };
 
     // Mutation hooks
     const { mutate: deleteIncome } = useDeleteIncome();
@@ -141,7 +146,7 @@ function IncomeTracking() {
         console.log("RESTORE INC: ", allValues)
     };
 
-    // Common columns for both tabs
+    // Common columns for both tabs (rest of your columns remain the same)
     const commonColumns: ColumnDef<Income>[] = [
         { 
             accessorKey: "inc_datetime",
@@ -159,7 +164,7 @@ function IncomeTracking() {
                     {new Date(row.getValue("inc_datetime")).toLocaleString("en-US", {
                         timeZone: "UTC",
                         dateStyle: "medium",
-                        timeStyle: "short"
+                        timeStyle: "short"  
                     })}
                 </div>
             )
@@ -181,7 +186,7 @@ function IncomeTracking() {
         },        
     ];
 
-    // Active tab columns
+    // Active tab columns (rest of your columns remain the same)
     const activeColumns: ColumnDef<Income>[] = [
         ...commonColumns,
         { 
@@ -242,7 +247,7 @@ function IncomeTracking() {
         }
     ];
 
-    // Archive tab columns
+    // Archive tab columns (rest of your columns remain the same)
     const archiveColumns: ColumnDef<Income>[] = [
         ...commonColumns,
         { 
@@ -286,16 +291,6 @@ function IncomeTracking() {
         }
     ];
 
-    if (isLoading) {
-        return (
-            <div className="w-full h-full">
-              <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-              <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-              <Skeleton className="h-10 w-full mb-4 opacity-30" />
-              <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-            </div>
-          );
-    }
 
     return (
         <div className="w-full h-full">
@@ -361,8 +356,8 @@ function IncomeTracking() {
             </div>
 
             <div className="mb-[1rem] flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                    <div className="relative flex-1">
+                <div className="flex flex-col sm:flex-row gap-4 w-full"> {/* Changed from w-full md:w-auto to w-full */}
+                    <div className="relative flex-1 min-w-[200px]"> {/* Added min-width */}
                         <Search
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                             size={17}
@@ -371,44 +366,44 @@ function IncomeTracking() {
                             placeholder="Search..." 
                             className="pl-10 w-full bg-white text-sm" 
                             value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={handleSearchChange}
                         />
                     </div>
-                    <div className="flex flex-row gap-2 justify-center items-center">
+                    <div className="flex flex-row gap-2 justify-center items-center min-w-[180px]"> {/* Added min-width */}
                         <SelectLayout
-                            className="bg-white" 
+                            className="bg-white w-full" 
                             placeholder="Month"
                             value={selectedMonth} 
                             options={monthOptions}
-                            onChange={(value) => {
-                                setSelectedMonth(value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={handleMonthChange}
                         />
                     </div>                            
-                </div>
+                </div>                
                 <DialogLayout
-                    trigger={<div className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold px-4 py-2 rounded cursor-pointer"><Plus size={15} strokeWidth={3}></Plus>New Entry </div>}
+                    trigger={
+                    <div className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-[13px] font-semibold px-4 py-2 rounded cursor-pointer whitespace-nowrap shrink-0">
+                        <Plus size={15} strokeWidth={3} />
+                        New Entry
+                    </div>
+                    }
                     className="max-w-md max-h-[530px] overflow-auto p-10"
                     title="Add New Entry"
                     description="Fill in the details for your entry."
                     mainContent={
-                        <div className="w-full h-full">
-                            <IncomeCreateForm 
-                                year={year}
-                                totInc={totInc}
-                                onSuccess={() => setIsDialogOpen(false)}
-                            />
-                        </div>
+                    <div className="w-full h-full">
+                        <IncomeCreateForm 
+                        onSuccess={() => setIsDialogOpen(false)}
+                        year={year}
+                        totInc={totInc}
+                        />
+                    </div>
                     }
                     isOpen={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
                 />
             </div>
 
+            {/* Rest of your JSX remains the same */}
             <div className="bg-white">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
                     <div className="flex gap-x-2 items-center">
@@ -459,19 +454,33 @@ function IncomeTracking() {
 
                     <TabsContent value="active">
                         <div className="border overflow-auto max-h-[400px]">
-                            <DataTable 
-                                columns={activeColumns} 
-                                data={paginatedData.filter(row => row.inc_is_archive === false)} 
-                            />
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                </div>
+                            ) : (
+                                <DataTable 
+                                    columns={activeColumns} 
+                                    data={paginatedData.filter(row => row.inc_is_archive === false)} 
+                                />
+                            )}
                         </div>
                     </TabsContent>
 
                     <TabsContent value="archive">
                         <div className="border overflow-auto max-h-[400px]">
-                            <HistoryTable 
-                                columns={archiveColumns} 
-                                data={paginatedData.filter(row => row.inc_is_archive === true)} 
-                            />
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading archived entries...</span>
+                                </div>
+                            ) : (
+                                <HistoryTable 
+                                    columns={archiveColumns} 
+                                    data={paginatedData.filter(row => row.inc_is_archive === true)} 
+                                />
+                            )}
                         </div>
                     </TabsContent>
                 </Tabs>

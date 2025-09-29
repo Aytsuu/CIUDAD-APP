@@ -13,7 +13,7 @@ import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useBudgetItems } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useUpdateIncomeExpense } from "./queries/treasurerIncomeExpenseUpdateQueries";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -66,7 +66,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
     const { data: budgetItems = [] } = useBudgetItems(years);
     const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
 
-    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
+    const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;    
     

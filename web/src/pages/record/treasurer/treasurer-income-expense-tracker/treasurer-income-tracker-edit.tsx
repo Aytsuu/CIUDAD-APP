@@ -10,7 +10,7 @@ import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
@@ -73,7 +73,7 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
     const { mutate: updateIncome, isPending } = useUpdateIncome(inc_num, onSuccess);
 
 
-    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totInc = matchedYearData?.ie_main_inc ?? 0;
 
 

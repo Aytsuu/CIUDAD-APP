@@ -31,10 +31,10 @@ export type IncomeExpense = {
 };
   
 
-export const useIncomeExpense = (year?: number) => {
+export const useIncomeExpense = (year?: number, searchQuery?: string, selectedMonth?: string) => {
     return useQuery<IncomeExpense[]>({
-        queryKey: ["incomeExpense", year], // Year in queryKey for proper caching
-        queryFn: () => getIncomeExpense(year),
+        queryKey: ["incomeExpense", year, searchQuery, selectedMonth],
+        queryFn: () => getIncomeExpense(year, searchQuery, selectedMonth),
         staleTime: 1000 * 60 * 30,
     });
 };
@@ -115,10 +115,10 @@ export type Income = {
 
 
 
-export const useIncomeData = (year?: number) => {
+export const useIncomeData = (year?: number, searchQuery?: string, selectedMonth?: string) => {
     return useQuery<Income[]>({
-        queryKey: ["income", year],
-        queryFn: () => getIncomeData(year),
+        queryKey: ["income", year, searchQuery, selectedMonth],
+        queryFn: () => getIncomeData(year, searchQuery, selectedMonth),
         staleTime: 1000 * 60 * 30,
     });
 };
@@ -136,10 +136,10 @@ export type IncomeExpenseCard = {
 };
 
 
-export const useIncomeExpenseMainCard = () => {
-    return useQuery<IncomeExpenseCard[]>({
-        queryKey: ["income_expense_card"],
-        queryFn: getIncomeExpenseMainCard,
+export const useIncomeExpenseMainCard = (searchQuery?: string) => {
+    return useQuery({
+        queryKey: ["income_expense_card", searchQuery],
+        queryFn: () => getIncomeExpenseMainCard(searchQuery),
         staleTime: 1000 * 60 * 30, // 30 minutes stale time
     });
 };
@@ -160,10 +160,10 @@ export type ExpenseLog = {
 };
 
 
-export const useExpenseLog = (year?: number) => {
+export const useExpenseLog = (year?: number, searchQuery?: string, selectedMonth?: string) => {
     return useQuery<ExpenseLog[]>({
-        queryKey: ["expense_log", year],
-        queryFn: () => getExpenseLog(year),
+        queryKey: ["expense_log", year, searchQuery, selectedMonth],
+        queryFn: () => getExpenseLog(year, searchQuery, selectedMonth),
         staleTime: 1000 * 60 * 30, // 30 minutes stale time
     });
 };
