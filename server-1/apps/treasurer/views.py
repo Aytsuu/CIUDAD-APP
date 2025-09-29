@@ -16,11 +16,6 @@ import logging
 logger = logging.getLogger(__name__)
 from apps.pagination import StandardResultsPagination
 
-# class BudgetPlanView(ActivityLogMixin, generics.ListCreateAPIView):
-#     permission_classes = [AllowAny]
-#     serializer_class = BudgetPlanSerializer
-#     queryset = Budget_Plan.objects.all()
-
 class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer

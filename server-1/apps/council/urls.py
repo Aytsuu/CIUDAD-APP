@@ -33,7 +33,8 @@ urlpatterns = [
 
     # MINUTES OF MEETING
     # mobile and web
-    path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
+    path('minutes-of-meeting-active/', MinutesOfMeetingActiveView.as_view(), name="minutes-of-meeting-active"),
+    path('minutes-of-meeting-inactive/', MinutesOfMeetingInactiveView.as_view(), name="minutes-of-meeting-inactive"),
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),

@@ -14,11 +14,14 @@ import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import React from "react"
+import RatesFormPage4 from "./forms/rates-form-page4"
+import { Button } from "@/components/ui/button/button"
 
 
 function RatesPage4() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     const [searchQueryActive, setSearchQueryActive] = useState("")
     const [pageSizeActive, setPageSizeActive] = React.useState<number>(10)
@@ -155,10 +158,6 @@ function RatesPage4() {
         <div className='bg-snow w-full h-full'>
             <div className='bg-white drop-shadow rounded-lg'>
                 <div className='p-7 flex flex-col justify-end gap-7'>
-                    {/* <div className="flex flex-row items-center">
-                        <h2 className='font-bold w-3/4'>BARANGAY CLEARANCE FOR PERMITS:</h2>
-                    
-                    </div> */}
 
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                         <TabsList className="grid w-full grid-cols-2 max-w-xs">

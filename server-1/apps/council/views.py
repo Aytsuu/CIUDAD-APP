@@ -1,23 +1,21 @@
 # council/views.py (unchanged)
 from rest_framework import generics
 from .serializers import *
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Count
-from datetime import datetime
 from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
 import logging
 from apps.treasurer.models import Purpose_And_Rates
 # from apps.gad.models import ProjectProposalLog
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView
 from rest_framework.exceptions import NotFound
 from rest_framework import generics, status
 from rest_framework.response import Response
+from apps.pagination import StandardResultsPagination
+from django.db.models import Q
+
 
 logger = logging.getLogger(__name__)
 
@@ -513,9 +511,92 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     
 # =================== MINUTES OF MEETING VIEWS ======================
 
-class MinutesOfMeetingView(generics.ListCreateAPIView):
+# class MinutesOfMeetingView(generics.ListCreateAPIView):
+#     serializer_class = MinutesOfMeetingSerializer
+#     queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
+class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
-    queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
+    pagination_class = StandardResultsPagination
+    permission_classes = [AllowAny]  # Add appropriate permissions
+
+    def get_queryset(self):
+        # Filter out archived records and select related staff data
+        queryset = MinutesOfMeeting.objects.filter(
+            mom_is_archive=False
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'mom_id',
+            'mom_date',
+            'mom_title',
+            'mom_agenda',
+            'mom_area_of_focus',
+            'mom_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Get search query from request parameters
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query:
+            # Apply search filtering across multiple fields
+            queryset = queryset.filter(
+                Q(mom_id__icontains=search_query) |
+                Q(mom_title__icontains=search_query) |
+                Q(mom_agenda__icontains=search_query) |
+                Q(mom_area_of_focus__icontains=search_query) |
+                Q(mom_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        # Order by date descending (most recent first)
+        return queryset.order_by('-mom_date')
+    
+class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
+    serializer_class = MinutesOfMeetingSerializer
+    pagination_class = StandardResultsPagination
+    permission_classes = [AllowAny]  # Add appropriate permissions
+
+    def get_queryset(self):
+        # Filter out archived records and select related staff data
+        queryset = MinutesOfMeeting.objects.filter(
+            mom_is_archive=True
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'mom_id',
+            'mom_date',
+            'mom_title',
+            'mom_agenda',
+            'mom_area_of_focus',
+            'mom_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Get search query from request parameters
+        search_query = self.request.query_params.get('search', '').strip()
+        
+        if search_query:
+            # Apply search filtering across multiple fields
+            queryset = queryset.filter(
+                Q(mom_id__icontains=search_query) |
+                Q(mom_title__icontains=search_query) |
+                Q(mom_agenda__icontains=search_query) |
+                Q(mom_area_of_focus__icontains=search_query) |
+                Q(mom_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        # Order by date descending (most recent first)
+        return queryset.order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
     queryset = MinutesOfMeeting.objects.all()
