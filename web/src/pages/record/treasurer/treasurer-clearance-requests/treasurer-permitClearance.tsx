@@ -2,19 +2,18 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { ReceiptText, Search, FileInput } from 'lucide-react';
+import { ReceiptText, Search } from 'lucide-react';
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
 import { useQuery } from "@tanstack/react-query";
 import { useGetPurposeAndRate } from "../Rates/queries/RatesFetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 
 //table header
@@ -318,65 +317,11 @@ function PermitClearance(){
                                      </button>
                                  </div>
                              </div>
-
-                             <div>
-                                 <DropdownMenu>
-                                 <DropdownMenuTrigger asChild>
-                                     <Button variant="outline">
-                                     <FileInput />
-                                     Export
-                                     </Button>
-                                 </DropdownMenuTrigger>
-                                 <DropdownMenuContent>
-                                     <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                     <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                     <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                                 </DropdownMenuContent>
-                                 </DropdownMenu>                    
-                             </div>
                      </div>    
 
                     {isLoading ? (
-                        <div className="space-y-4">
-                            {/* Header skeleton */}
-                            <div className="flex flex-col gap-3 mb-3">
-                                <Skeleton className="h-8 w-1/4 opacity-30" />
-                                <Skeleton className="h-5 w-2/3 opacity-30" />
-                            </div>
-                            <Skeleton className="h-[1px] w-full mb-5 opacity-30" />
-                            
-                            {/* Controls skeleton */}
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                                    <Skeleton className="h-10 w-full sm:w-64 opacity-30" />
-                                    <div className="flex flex-row gap-2 justify-center items-center">
-                                        <Skeleton className="h-5 w-12 opacity-30" />
-                                        <Skeleton className="h-10 w-32 opacity-30" />
-                                    </div>
-                                </div>
-                                <Skeleton className="h-10 w-48 opacity-30" />
-                            </div>
-                            
-                            {/* Table skeleton */}
-                            <div className="bg-white rounded-lg shadow-sm">
-                                <div className="p-6">
-                                    <div className="space-y-4">
-                                        {[...Array(5)].map((_, index) => (
-                                            <div key={index} className="flex items-center space-x-4">
-                                                <Skeleton className="h-4 w-32 opacity-30" />
-                                                <Skeleton className="h-4 w-24 opacity-30" />
-                                                <Skeleton className="h-4 w-20 opacity-30" />
-                                                <Skeleton className="h-4 w-24 opacity-30" />
-                                                <Skeleton className="h-4 w-16 opacity-30" />
-                                                <div className="flex gap-2">
-                                                    <Skeleton className="h-8 w-20 rounded opacity-30" />
-                                                    <Skeleton className="h-8 w-20 rounded opacity-30" />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="flex items-center justify-center py-12">
+                            <Spinner size="lg" />
                         </div>
                     ) : error ? (
                         <div className="text-center py-4 text-red-500">Error loading data</div>
