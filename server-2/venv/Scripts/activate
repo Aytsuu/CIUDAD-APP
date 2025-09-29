@@ -37,29 +37,18 @@ deactivate () {
 deactivate nondestructive
 
 # on Windows, a path can contain colons and backslashes and has to be converted:
-<<<<<<< HEAD
 case "$(uname)" in
     CYGWIN*|MSYS*|MINGW*)
         # transform D:\path\to\venv to /d/path/to/venv on MSYS and MINGW
         # and to /cygdrive/d/path/to/venv on Cygwin
-        VIRTUAL_ENV=$(cygpath 'C:\CIUDAD-APP\server-2\venv')
+        VIRTUAL_ENV=$(cygpath 'C:\Users\DEAIRE\OneDrive\Desktop\CAPSTONE\CIUDAD-APP\server-2\venv')
         export VIRTUAL_ENV
         ;;
     *)
         # use the path as-is
-        export VIRTUAL_ENV='C:\CIUDAD-APP\server-2\venv'
+        export VIRTUAL_ENV='C:\Users\DEAIRE\OneDrive\Desktop\CAPSTONE\CIUDAD-APP\server-2\venv'
         ;;
 esac
-=======
-if [ "${OSTYPE:-}" = "cygwin" ] || [ "${OSTYPE:-}" = "msys" ] ; then
-    # transform D:\path\to\venv to /d/path/to/venv on MSYS
-    # and to /cygdrive/d/path/to/venv on Cygwin
-    export VIRTUAL_ENV=$(cygpath 'C:\Users\Ken\CIUDAD-APP\server-2\venv')
-else
-    # use the path as-is
-    export VIRTUAL_ENV='C:\Users\Ken\CIUDAD-APP\server-2\venv'
-fi
->>>>>>> new-famplanning
 
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/"Scripts":$PATH"

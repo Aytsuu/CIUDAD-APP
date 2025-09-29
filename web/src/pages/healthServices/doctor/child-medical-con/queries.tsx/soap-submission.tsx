@@ -63,6 +63,7 @@ export const useSubmitSoapForm = () => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
       
       navigate(-1);
     },

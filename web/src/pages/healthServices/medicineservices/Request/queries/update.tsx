@@ -15,13 +15,12 @@ export const useConfirmAllPendingItems = () => {
       queryClient.invalidateQueries({ queryKey: ["pendingItemsMedRequest", variables] });
       queryClient.invalidateQueries({ queryKey: ["medicineRequestItems"] });
       queryClient.invalidateQueries({ queryKey: ["medicinesWithStock"] });
-
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
       navigate(-1); // Navigate back to the previous page
       showSuccessToast("All pending items confirmed successfully");
     },
-    onError: (error) => {
-      console.error("Failed to confirm pending items:", error);
-      showErrorToast;
+    onError: () => {
+      showErrorToast("Failed to confirm pending items");
     }
   });
 };

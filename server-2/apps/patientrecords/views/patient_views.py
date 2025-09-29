@@ -10,43 +10,23 @@ from django.db.models import Count, Prefetch
 from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
-from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
-from ..serializers.patients_serializers import PatientSerializer, PatientRecordSerializer,TransientSerializer, TransientAddressSerializer
+from ..serializers.patients_serializers import *
+from ..serializers.followvisits_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
-from ...pagination import StandardResultsPagination 
+from ...pagination import StandardResultsPagination
 
-
-
-# Approach 1: Class-based API View
-class PatientByRPView(APIView):
-    """
-    Get patient ID by resident profile ID
-    URL: /api/patient/by-rp/<int:rp_id>/
-    """
-    def get(self, request, rp_id):
-        try:
-            patient = Patient.objects.get(rp_id=rp_id)
-            return Response({
-                'pat_id': patient.pat_id,
-                'pat_type': patient.pat_type, 
-                'pat_status': patient.pat_status
-            }, status=status.HTTP_200_OK)
-        except Patient.DoesNotExist:
-            return Response({
-                'error': 'Patient not found for the given rp_id'
-            }, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def get_resident_profile_list(request):
     residents = ResidentProfile.objects.filter(
         patients__isnull=True
-    ).select_related('per').prefetch_related('per__personal_addresses__add__sitio')
+    ).select_related(
+        'per'
+    ).prefetch_related(
+        'per__personal_addresses__add__sitio'
+    )
 
-    serializer = ResidentProfileListSerializer(residents, many=True)
+    serializer = ResidentProfileSerializer(residents, many=True)
     return Response(serializer.data)
 
 class TransientAddressView(generics.ListAPIView):
@@ -55,7 +35,7 @@ class TransientAddressView(generics.ListAPIView):
 
     def get_queryset(self):
         return TransientAddress.objects.all().order_by('-tradd_id')
-
+    
 # for displaying patients in comobox
 class PatientListView(generics.ListAPIView):
     serializer_class = PatientSerializer
@@ -71,7 +51,7 @@ class PatientListView(generics.ListAPIView):
             ),
             'rp_id__household_set',
         ).filter(pat_status='Active')
-        
+
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     pagination_class = StandardResultsPagination
@@ -474,7 +454,6 @@ class UpdateTransientView(generics.RetrieveUpdateAPIView):
             return Response({"error": "Transient patient not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-# --------------------------------------------------------------------------------------------------------------------------------------------------
 # MOBILE VIEWS KURT
 @api_view(['GET'])
 def get_patient_by_resident_id(request, rp_id):
