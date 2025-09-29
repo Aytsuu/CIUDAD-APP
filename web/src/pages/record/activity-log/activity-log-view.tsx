@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button/button';
 import { getActivityLogById } from './restful-api/activityLogAPI';
-import { Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ActivityLog {
   act_id: number;
@@ -32,7 +32,7 @@ const ActivityLogView = () => {
 
   if (loading) return (
     <div className="p-8 flex items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+      <Spinner size="lg" />
     </div>
   );
   if (error || !activity) return <div className="p-8 text-center text-red-500">{error || 'Activity log not found.'}</div>;

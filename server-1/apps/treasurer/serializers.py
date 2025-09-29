@@ -26,7 +26,8 @@ class BudgetPlanSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_details(self, obj):
-        return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
+        return Budget_Plan_DetailSerializer(obj.budget_detail.all().order_by('dtl_id'),  many=True).data
+
 
     def get_staff_name(self, obj):
         if obj.staff_id and obj.staff_id.rp and obj.staff_id.rp.per:

@@ -2,7 +2,8 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Plus, Search, Loader2, Eye, FileText, Brain, Folder } from 'lucide-react';
+import { Plus, Search, Eye, FileText, Brain, Folder } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
@@ -646,7 +647,7 @@ function OrdinancePage() {
             <div className="w-full mt-6">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                        <Spinner size="lg" />
                     </div>
                 ) : filteredItems.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
@@ -748,7 +749,7 @@ function OrdinancePage() {
                                                         className="h-8 px-3 text-xs hover:bg-purple-50 hover:border-purple-300"
                                                     >
                                                         {(individualAnalysisLoading === folder.baseOrdinance.ord_num || folderAmendmentLoading === folder.id) ? (
-                                                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                                            <Spinner size="sm" />
                                                         ) : folder.baseOrdinance.aiAnalysisResult ? (
                                                             <Eye className="h-4 w-4 mr-1" />
                                                         ) : (
@@ -1048,8 +1049,8 @@ function OrdinancePage() {
                                     >
                                         {isCreatingOrdinance ? (
                                             <>
-                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                                Creating...
+                                                <Spinner size="sm" />
+                                                <span className="ml-2">Creating...</span>
                                             </>
                                         ) : (
                                             'Create'
@@ -1143,7 +1144,7 @@ function OrdinancePage() {
                                                             className="text-xs px-3 py-1 h-7"
                                                         >
                                                             {(individualAnalysisLoading === selectedFolder.baseOrdinance.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
-                                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                <Spinner size="sm" />
                                                             ) : (
                                                                 <Brain className="h-3 w-3 mr-1" />
                                                             )}
@@ -1252,7 +1253,7 @@ function OrdinancePage() {
                                                             className="text-xs px-3 py-1 h-7"
                                                         >
                                                             {(individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
-                                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                <Spinner size="sm" />
                                                             ) : (
                                                                 <Brain className="h-3 w-3 mr-1" />
                                                             )}
@@ -1312,7 +1313,7 @@ function OrdinancePage() {
                                                                     className="text-xs px-3 py-1 h-7"
                                                                 >
                                                                     {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
-                                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                        <Spinner size="sm" />
                                                                     ) : (
                                                                         <Brain className="h-3 w-3 mr-1" />
                                                                     )}

@@ -48,7 +48,7 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             }
         },
         onSuccess: (planId) => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] });
 
             showSuccessToast('Budget Plan created successfully')
 

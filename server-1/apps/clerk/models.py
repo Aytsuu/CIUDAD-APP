@@ -73,7 +73,7 @@ class IssuedCertificate(models.Model):
 
 # Business Models
 class Business(models.Model):
-    bus_id = models.BigIntegerField(primary_key=True)
+    bus_id = models.CharField(primary_key=True, max_length=50)
     bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
     bus_location = models.CharField(max_length=255)

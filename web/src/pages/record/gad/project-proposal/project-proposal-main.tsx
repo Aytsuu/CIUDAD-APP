@@ -30,7 +30,7 @@ import {
   useArchiveSupportDocument,
   useRestoreSupportDocument,
 } from "./queries/projprop-delqueries";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import {
   Dialog,
@@ -45,9 +45,7 @@ import { ProjectProposal, SupportDoc } from "./projprop-types";
 import { DocumentCard } from "./projpropsupp-docs-modal";
 
 function GADProjectProposal() {
-  const filter = [
-    { id: "All", name: "All" },
-  ];
+  const filter = [{ id: "All", name: "All" }];
 
   const {
     data: projects = [],
@@ -96,10 +94,10 @@ function GADProjectProposal() {
     });
 
   useEffect(() => {
-  if (isSuppDocDialogOpen) {
-    setSelectedSuppDocs(supportDocs);
-  }
-}, [supportDocs, isSuppDocDialogOpen]);
+    if (isSuppDocDialogOpen) {
+      setSelectedSuppDocs(supportDocs);
+    }
+  }, [supportDocs, isSuppDocDialogOpen]);
 
   useEffect(() => {
     if (detailedProject && selectedProject?.gprId === detailedProject.gprId) {
@@ -243,46 +241,19 @@ function GADProjectProposal() {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-      const paxCount = typeof item.pax === 'string' 
-        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
-        : 1;
-      return projectSum + (paxCount * amount);
+      const amount =
+        typeof item.amount === "string"
+          ? parseFloat(item.amount) || 0
+          : item.amount || 0;
+      const paxCount =
+        typeof item.pax === "string"
+          ? parseInt(item.pax.replace(/\D/g, "")) || 1
+          : 1;
+      return projectSum + paxCount * amount;
     }, 0);
 
     return sum + projectTotal;
   }, 0);
-
-  if (isLoading) {
-    return (
-      <div className="bg-snow w-full h-full p-4">
-        <div className="flex flex-col gap-3 mb-4">
-          <Skeleton className="h-8 w-1/4 opacity-30" />
-          <Skeleton className="h-5 w-2/3 opacity-30" />
-        </div>
-        <Skeleton className="h-[1px] w-full mb-5 opacity-30" />
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <Skeleton className="h-10 w-full sm:w-64 opacity-30" />
-            <div className="flex flex-row gap-2 justify-center items-center">
-              <Skeleton className="h-5 w-12 opacity-30" />
-              <Skeleton className="h-10 w-32 opacity-30" />
-            </div>
-            <Skeleton className="h-10 w-24 opacity-30" />
-          </div>
-          <Skeleton className="h-10 w-48 opacity-30" />
-        </div>
-        <div className="flex flex-col mt-4 gap-4">
-          {[...Array(3)].map((_, index: number) => (
-            <Skeleton
-              key={index}
-              className="h-32 w-full opacity-30 rounded-lg"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   if (isError) {
     return (
@@ -365,161 +336,183 @@ function GADProjectProposal() {
       </div>
 
       {/* Dynamic Total Budget Display */}
-      <div className="flex justify-between mt-2 mb-2">
-        <div className="bg-white border px-4 py-2 rounded-lg">
-          <span className="font-medium text-black">
-            Grand Total:{" "}
-            <span className="font-bold text-green-700">
-              ₱{new Intl.NumberFormat('en-US', { 
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2 
-              }).format(totalBudget)}
+      {!isLoading && (
+        <div className="flex justify-between mt-2 mb-2">
+          <div className="bg-white border px-4 py-2 rounded-lg">
+            <span className="font-medium text-black">
+              Grand Total:{" "}
+              <span className="font-bold text-green-700">
+                ₱
+                {new Intl.NumberFormat("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(totalBudget)}
+              </span>
             </span>
-          </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col gap-4">
-        {paginatedProjects.length === 0 && (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Spinner size="lg" />
+          </div>
+        ) : paginatedProjects.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} project proposals
             found.
           </div>
-        )}
-        {paginatedProjects.map((project: ProjectProposal, index: number) => {
-          return (
-            <CardLayout
-              key={project.gprId || index}
-              title={
-                <div className="flex flex-row justify-between items-center">
-                  <div className="w-full">
-                    {project.projectTitle || "Untitled"}
-                  </div>
-                  <div className="flex gap-2">
-                    <Eye
-                      className="text-gray-500 hover:text-blue-600 cursor-pointer"
-                      size={20}
-                      onClick={() => handleViewProject(project)}
-                    />
-                    {viewMode === "active" ? (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <Archive
-                              className="text-gray-500 hover:text-red-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Archive Project Proposal"
-                          description="Are you sure you want to archive this project proposal?"
-                          actionLabel="Archive"
-                          onClick={() => handleArchive(project.gprId)}
-                          type="warning"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <ArchiveRestore
-                              className="text-gray-500 hover:text-green-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Restore Project Proposal"
-                          description="Are you sure you want to restore this project proposal?"
-                          actionLabel="Restore"
-                          onClick={() => handleRestore(project.gprId)}
-                          type="success"
-                        />
-                        <ConfirmationModal
-                          trigger={
-                            <Trash
-                              className="text-gray-500 hover:text-red-600 cursor-pointer"
-                              size={20}
-                            />
-                          }
-                          title="Permanently Delete Project Proposal"
-                          description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
-                          actionLabel={isDeleting ? "Deleting..." : "Delete"}
-                          onClick={() => handleDelete(project.gprId)}
-                          type="destructive"
-                        />
-                      </>
-                    )}
-                  </div>
-                </div>
-              }
-              description={
-                <div className="space-y-2">
-                  <div className="line-clamp-2 text-sm text-gray-600">
-                    {project.background || "No background provided"}
-                  </div>
-                  <div className="text-left mt-1">
-                    <span className="text-xs text-gray-500">
-                      Date: {project.date || "No date provided"}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 underline">
-                       Total Budget: ₱{
-                          project.budgetItems && project.budgetItems.length > 0
-                            ? new Intl.NumberFormat('en-US', { 
-                                style: 'decimal', 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
+        ) : (
+          <>
+            {paginatedProjects.map(
+              (project: ProjectProposal, index: number) => {
+                return (
+                  <CardLayout
+                    key={project.gprId || index}
+                    title={
+                      <div className="flex flex-row justify-between items-center">
+                        <div className="w-full">
+                          {project.projectTitle || "Untitled"}
+                        </div>
+                        <div className="flex gap-2">
+                          <Eye
+                            className="text-gray-500 hover:text-blue-600 cursor-pointer"
+                            size={20}
+                            onClick={() => handleViewProject(project)}
+                          />
+                          {viewMode === "active" ? (
+                            <>
+                              <ConfirmationModal
+                                trigger={
+                                  <Archive
+                                    className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                    size={20}
+                                  />
+                                }
+                                title="Archive Project Proposal"
+                                description="Are you sure you want to archive this project proposal?"
+                                actionLabel="Archive"
+                                onClick={() => handleArchive(project.gprId)}
+                                type="warning"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <ConfirmationModal
+                                trigger={
+                                  <ArchiveRestore
+                                    className="text-gray-500 hover:text-green-600 cursor-pointer"
+                                    size={20}
+                                  />
+                                }
+                                title="Restore Project Proposal"
+                                description="Are you sure you want to restore this project proposal?"
+                                actionLabel="Restore"
+                                onClick={() => handleRestore(project.gprId)}
+                                type="success"
+                              />
+                              <ConfirmationModal
+                                trigger={
+                                  <Trash
+                                    className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                    size={20}
+                                  />
+                                }
+                                title="Permanently Delete Project Proposal"
+                                description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
+                                actionLabel={
+                                  isDeleting ? "Deleting..." : "Delete"
+                                }
+                                onClick={() => handleDelete(project.gprId)}
+                                type="destructive"
+                              />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    }
+                    description={
+                      <div className="space-y-2">
+                        <div className="line-clamp-2 text-sm text-gray-600">
+                          {project.background || "No background provided"}
+                        </div>
+                        <div className="text-left mt-1">
+                          <span className="text-xs text-gray-500">
+                            Date: {project.date || "No date provided"}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500 underline">
+                          Total Budget: ₱
+                          {project.budgetItems && project.budgetItems.length > 0
+                            ? new Intl.NumberFormat("en-US", {
+                                style: "decimal",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               }).format(
-                                project.budgetItems.reduce((grandTotal, item) => {
-                                  const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
-                                  const paxCount = typeof item.pax === 'string' 
-                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
-                                    : 1;
-                                  return grandTotal + (paxCount * amount);
-                                }, 0)
+                                project.budgetItems.reduce(
+                                  (grandTotal, item) => {
+                                    const amount =
+                                      typeof item.amount === "string"
+                                        ? parseFloat(item.amount) || 0
+                                        : item.amount || 0;
+                                    const paxCount =
+                                      typeof item.pax === "string"
+                                        ? parseInt(item.pax) ||
+                                          (item.pax.includes("pax")
+                                            ? parseInt(item.pax) || 1
+                                            : 1)
+                                        : 1;
+                                    return grandTotal + paxCount * amount;
+                                  },
+                                  0
+                                )
                               )
-                            : "N/A"
-                        }
-                    </span>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex flex-col gap-1">
-                    </div>
-                    <div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewSupportingDocs(project)}
-                        className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
-                      >
-                        View Supporting Docs
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                            : "N/A"}
+                        </span>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex flex-col gap-1"></div>
+                          <div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewSupportingDocs(project)}
+                              className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
+                            >
+                              View Supporting Docs
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                    content={null}
+                    cardClassName="w-full border p-4"
+                    titleClassName="text-lg font-semibold text-darkBlue2"
+                    contentClassName="text-sm text-darkGray"
+                  />
+                );
               }
-              content={null}
-              cardClassName="w-full border p-4"
-              titleClassName="text-lg font-semibold text-darkBlue2"
-              contentClassName="text-sm text-darkGray"
-            />
-          );
-        })}
+            )}
 
-        {/* Pagination Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
-            {filteredProjects.length} rows
-          </p>
-          {filteredProjects.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => {
-                setCurrentPage(page);
-              }}
-            />
-          )}
-        </div>
+            {/* Pagination Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+              <p className="text-xs sm:text-sm text-darkGray">
+                Showing {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
+                {filteredProjects.length} rows
+              </p>
+              {filteredProjects.length > 0 && (
+                <PaginationLayout
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={(page) => {
+                    setCurrentPage(page);
+                  }}
+                />
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
@@ -534,8 +527,7 @@ function GADProjectProposal() {
                   variant="outline"
                   onClick={() => selectedProject && handleEdit(selectedProject)}
                   className="flex items-center gap-2"
-                  disabled={
-                    selectedProject?.gprIsArchive === true}
+                  disabled={selectedProject?.gprIsArchive === true}
                 >
                   <Edit size={16} /> Edit
                 </Button>
@@ -594,8 +586,7 @@ function GADProjectProposal() {
                       <DocumentCard
                         key={doc.psd_id}
                         doc={doc}
-                        showActions={
-                          selectedProject?.gprIsArchive === false }
+                        showActions={selectedProject?.gprIsArchive === false}
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onArchive={() => handleArchiveDoc(doc.psd_id)}
                         isDeleting={isDeletingDoc}
@@ -626,8 +617,7 @@ function GADProjectProposal() {
                       <DocumentCard
                         key={doc.psd_id}
                         doc={doc}
-                        showActions={
-                          selectedProject?.gprIsArchive === false }
+                        showActions={selectedProject?.gprIsArchive === false}
                         onDelete={() => handleDeleteDoc(doc.psd_id)}
                         onRestore={() => handleRestoreDoc(doc.psd_id)}
                         isDeleting={isDeletingDoc}

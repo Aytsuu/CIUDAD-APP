@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button/button';
 import { useNavigate } from 'react-router';
 import { getAllActivityLogs } from './restful-api/activityLogAPI';
-import { Loader2, Search, UserCircle } from 'lucide-react';
+import { Search, UserCircle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ActivityLog {
   act_id: number;
@@ -70,7 +71,7 @@ const ActivityLogMain = () => {
       </div>
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+          <Spinner size="lg" />
         </div>
       )}
       {error && <div className="text-center text-red-500 py-8">{error}</div>}

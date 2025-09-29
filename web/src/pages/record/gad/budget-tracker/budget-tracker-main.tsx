@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 function GADBudgetTrackerMain() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,23 +26,6 @@ function GADBudgetTrackerMain() {
   const handleCardClick = (gbudy_year: string) => {
     navigate(`/gad/gad-budget-tracker-table/${gbudy_year}/`);
   };
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full bg-snow">
-        <div className="flex flex-col gap-3 mb-4">
-          <Skeleton className="h-10 w-1/4 mb-3 opacity-30" />
-          <Skeleton className="h-6 w-1/3 opacity-30" />
-        </div>
-        <Skeleton className="h-6 w-full mb-6 opacity-30" />
-        <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-          {[1, 2].map((i) => (
-            <Skeleton key={i} className="h-64 w-full opacity-30" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   if (isError) {
     return (
@@ -84,60 +67,70 @@ function GADBudgetTrackerMain() {
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredYears.map((tracker) => { 
-          const budget = tracker.gbudy_budget || 0;
-          const expenses = tracker.gbudy_expenses || 0;
-          const remainingBal = budget - expenses;
-          const progress = budget > 0 
-            ? (expenses / budget) * 100 
-            : 0;
+        {isLoading ? (
+          <div className="col-span-2 flex items-center justify-center py-16">
+            <Spinner size="lg" />
+          </div>
+        ) : filteredYears.length > 0 ? (
+          filteredYears.map((tracker) => { 
+            const budget = tracker.gbudy_budget || 0;
+            const expenses = tracker.gbudy_expenses || 0;
+            const remainingBal = budget - expenses;
+            const progress = budget > 0 
+              ? (expenses / budget) * 100 
+              : 0;
 
-          return (
-            <div 
-              key={tracker.gbudy_year} 
-              onClick={() => handleCardClick(tracker.gbudy_year)}
-              className="cursor-pointer hover:opacity-90 transition-opacity"
-            >
-              <CardLayout
-                title={
-                    <div className="flex flex-row">
-                        <div className="flex justify-between items-center w-full">
-                            <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
-                                <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
-                                    <Calendar />
-                                </div>
-                                <div>{tracker.gbudy_year} Budget Overview</div>
-                            </h1>
+            return (
+              <div 
+                key={tracker.gbudy_year} 
+                onClick={() => handleCardClick(tracker.gbudy_year)}
+                className="cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                <CardLayout
+                  title={
+                      <div className="flex flex-row">
+                          <div className="flex justify-between items-center w-full">
+                              <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
+                                  <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
+                                      <Calendar />
+                                  </div>
+                                  <div>{tracker.gbudy_year} Budget Overview</div>
+                              </h1>
+                          </div>
+                      </div>
+                  }
+                  description=""
+                  content={
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col sm:flex-row">
+                        <Label className="w-[12rem]">Total Budget:</Label>
+                        <Label className="text-blue">Php {tracker.gbudy_budget}</Label>
+                      </div>
+                      <div className="flex flex-col sm:flex-row">
+                        <Label className="w-[12rem]">Total Expenses:</Label>
+                        <Label className="text-red-600">Php {expenses}</Label>
+                      </div>
+                      <div className="flex flex-col sm:flex-row">
+                        <Label className="w-[12rem]">Remaining Balance:</Label>
+                        <Label className="text-yellow-600">Php {remainingBal}</Label>
+                      </div>
+                      <div className="mt-4">
+                        <Progress value={progress} className="w-full h-4 bg-gray-300" />
+                        <div className="text-sm text-gray-600 text-center mt-2">
+                          {progress.toFixed(2)}% of budget spent
                         </div>
-                    </div>
-                }
-                description=""
-                content={
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col sm:flex-row">
-                      <Label className="w-[12rem]">Total Budget:</Label>
-                      <Label className="text-blue">Php {tracker.gbudy_budget}</Label>
-                    </div>
-                    <div className="flex flex-col sm:flex-row">
-                      <Label className="w-[12rem]">Total Expenses:</Label>
-                      <Label className="text-red-600">Php {expenses}</Label>
-                    </div>
-                    <div className="flex flex-col sm:flex-row">
-                      <Label className="w-[12rem]">Remaining Balance:</Label>
-                      <Label className="text-yellow-600">Php {remainingBal}</Label>
-                    </div>
-                    <div className="mt-4">
-                      <Progress value={progress} className="w-full h-4 bg-gray-300" />
-                      <div className="text-sm text-gray-600 text-center mt-2">
-                        {progress.toFixed(2)}% of budget spent
                       </div>
                     </div>
-                  </div>
-                } 
-              />
-            </div>
-          );
-        })}
+                  } 
+                />
+              </div>
+            );
+          })
+        ) : (
+          <div className="col-span-2 text-center py-8 text-gray-500">
+            No budget years found
+          </div>
+        )}
       </section>
     </div>
   );

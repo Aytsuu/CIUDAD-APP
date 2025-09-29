@@ -10,15 +10,15 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Donations } from "./donation-types";
 import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
+import { Spinner } from "@/components/ui/spinner";
 
 function DonationTracker() {
   const [_data] = useState<Donations[]>([]);
   // const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null); 
+  const [error] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -26,11 +26,7 @@ function DonationTracker() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { 
-    data: donations = [], 
-    isLoading, 
-    refetch 
-  } = useGetDonations();
+  const { data: donations = [], isLoading, refetch } = useGetDonations();
 
   // const { mutate: deleteEntry} = useDeleteDonation();
 
@@ -59,10 +55,13 @@ function DonationTracker() {
 
   // Filter data based on search query and category
   const filteredData = donations.filter((donation) => {
-    const searchString = `${donation.don_num} ${donation.don_donor} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_date}`.toLowerCase();
+    const searchString =
+      `${donation.don_num} ${donation.don_donor} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_date}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || donation.don_category === categoryFilter;
-    const matchesStatus = statusFilter === "all" || donation.don_status === statusFilter;
+    const matchesCategory =
+      categoryFilter === "all" || donation.don_category === categoryFilter;
+    const matchesStatus =
+      statusFilter === "all" || donation.don_status === statusFilter;
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -90,44 +89,44 @@ function DonationTracker() {
       ),
     },
     {
-      accessorKey: "don_donor", 
+      accessorKey: "don_donor",
       header: "Donor",
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_donor")}</div>
       ),
     },
     {
-      accessorKey: "don_item_name", 
+      accessorKey: "don_item_name",
       header: "Item Name",
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_item_name")}</div>
       ),
     },
     {
-      accessorKey: "don_category", 
+      accessorKey: "don_category",
       header: "Item Category",
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_category")}</div>
       ),
     },
     {
-      accessorKey: "don_qty", 
+      accessorKey: "don_qty",
       header: "Quantity/Amount",
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_qty")}</div>
       ),
     },
     {
-      accessorKey: "don_status", 
+      accessorKey: "don_status",
       header: "Condition",
       cell: ({ row }) => {
         const status = row.getValue("don_status") as string;
         return (
           <div className="text-center">
-            <span 
+            <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                status === "Stashed" 
-                  ? "bg-yellow-100 text-yellow-800" 
+                status === "Stashed"
+                  ? "bg-yellow-100 text-yellow-800"
                   : "bg-green-100 text-green-800"
               }`}
             >
@@ -138,7 +137,7 @@ function DonationTracker() {
       },
     },
     {
-      accessorKey: "don_date", 
+      accessorKey: "don_date",
       header: "Date",
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_date")}</div>
@@ -164,7 +163,7 @@ function DonationTracker() {
                   <div className="w-full h-full">
                     <ClerkDonateView
                       don_num={row.original.don_num}
-                      onSaveSuccess={refetch}            
+                      onSaveSuccess={refetch}
                     />
                   </div>
                 }
@@ -182,25 +181,14 @@ function DonationTracker() {
                   actionLabel="Confirm"
                   // onClick={() => handleDelete(row.original.don_num)} 
                 />                     */}
-              {/* </div>   
+          {/* </div>   
             } */}
-            {/* content="Delete"
+          {/* content="Delete"
           /> */}
         </div>
       ),
     },
   ];
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
@@ -219,58 +207,65 @@ function DonationTracker() {
       <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Search and Create Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-        <div className="relative w-full flex gap-2">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-            size={17}
-          />
-          <Input
-            placeholder="Search..."
-            className="pl-10 bg-white w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <SelectLayout
-            className="bg-white"
-            label=""
-            placeholder="Filter by Category"
-            options={categoryOptions}
-            value={categoryFilter}
-            onChange={(value) => setCategoryFilter(value)}
-          />
-          <SelectLayout
-            className="bg-white"
-            label=""
-            placeholder="Filter by Status"
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value)}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input
+              placeholder="Search..."
+              className="pl-10 bg-white w-full sm:w-64"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <SelectLayout
+              className="bg-white w-full sm:w-48"
+              label=""
+              placeholder="Filter by Category"
+              options={categoryOptions}
+              value={categoryFilter}
+              onChange={(value) => setCategoryFilter(value)}
+            />
+            <SelectLayout
+              className="bg-white w-full sm:w-48"
+              placeholder="Filter by Status"
+              options={statusOptions}
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
+            />
+          </div>
+        </div>
+
+        <div className="w-full sm:w-auto flex justify-end">
+          <DialogLayout
+            trigger={
+              <Button className="w-full sm:w-auto">
+                <Plus size={15} /> Create
+              </Button>
+            }
+            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+            title="Add Donation"
+            description="Fill out all necessary fields"
+            mainContent={
+              <div className="w-full h-full">
+                <ClerkDonateCreate
+                  onSuccess={() => {
+                    setIsDialogOpen(false);
+                    refetch();
+                  }}
+                />
+              </div>
+            }
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
           />
         </div>
-        <DialogLayout
-          trigger={
-            <Button>
-              <Plus size={15} /> Create
-            </Button>
-          }
-          className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-          title="Add Donation"
-          description="Fill out all necessary fields"
-          mainContent={
-            <div className="w-full h-full">
-              <ClerkDonateCreate onSuccess={() => {
-                setIsDialogOpen(false);
-                refetch();
-              }}/>
-            </div>
-          }
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-        />
       </div>
 
-      {/* Table Section */}
       <div className="bg-white rounded-md">
         <div className="flex justify-between p-3">
           <div className="flex items-center gap-2">
@@ -282,35 +277,59 @@ function DonationTracker() {
               onChange={(e) => {
                 const value = +e.target.value;
                 setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1); // Reset to first page when changing page size
+                setCurrentPage(1);
               }}
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
         </div>
-        
-        <div className="overflow-x-auto">
-          <DataTable columns={columns} data={paginatedData} />
-        </div>
 
-        {/* Pagination Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
-          </p>
-          {filteredData.length > 0 && (
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => {
-                setCurrentPage(page);
-              }}
-            />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <DataTable columns={columns} data={paginatedData} />
+            </div>
+
+            {/* Pagination Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+              <p className="text-xs sm:text-sm text-darkGray">
+                Showing {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                {filteredData.length} rows
+              </p>
+              {filteredData.length > 0 && (
+                <PaginationLayout
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={(page) => {
+                    setCurrentPage(page);
+                  }}
+                />
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Empty State */}
+      {!isLoading && filteredData.length === 0 && (
+        <div className="bg-white rounded-md p-8 text-center">
+          <p className="text-gray-500">No donations found</p>
+          {searchQuery || categoryFilter !== "all" || statusFilter !== "all" ? (
+            <p className="text-sm text-gray-400 mt-2">
+              Try adjusting your search or filters
+            </p>
+          ) : (
+            <p className="text-sm text-gray-400 mt-2">
+              No donation records available
+            </p>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
