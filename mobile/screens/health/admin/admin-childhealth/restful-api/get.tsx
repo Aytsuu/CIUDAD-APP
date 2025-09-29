@@ -1,5 +1,5 @@
 import { api2 } from "@/api/api";
-
+import { th } from "date-fns/locale";
 
 export const getChildHealthRecords = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
   try {
@@ -22,13 +22,11 @@ export const getChildHealthRecords = async (params?: { page?: number; page_size?
     console.error("Error fetching records:", error);
     throw error;
   }
-}
+};
 
 export const getNutrionalSummary = async (chrec_id: string) => {
   try {
-    const response = await api2.get(
-      `/child-health/nutritional-summary/${chrec_id}/`
-    );
+    const response = await api2.get(`/child-health/nutritional-summary/${chrec_id}/`);
     return response.data;
   } catch (error) {
     console.error("Error fetching records:", error);
@@ -43,10 +41,8 @@ export const getChildHealthHistory = async (chrec: string) => {
   } catch (err) {
     console.error(err);
     throw err;
-
   }
 };
-
 
 export const getNutritionalStatus = async (id: string) => {
   try {
@@ -55,7 +51,6 @@ export const getNutritionalStatus = async (id: string) => {
   } catch (err) {
     console.error(err);
     throw err;
-
   }
 };
 export const getNextufc = async () => {
@@ -68,8 +63,7 @@ export const getNextufc = async () => {
   }
 };
 
-
-export const getLatestVitals = async (id:any) => {
+export const getLatestVitals = async (id: any) => {
   try {
     const response = await api2.get(`/child-health/latest-vital-bm/${id}/`);
     return response.data;
@@ -79,7 +73,6 @@ export const getLatestVitals = async (id:any) => {
   }
 };
 
-
 export const getChildnotesfollowup = async (chrec_id: any) => {
   try {
     const response = await api2.get(`/child-health/patients/${chrec_id}/pending-followups-with-notes/`);
@@ -88,27 +81,23 @@ export const getChildnotesfollowup = async (chrec_id: any) => {
     console.error(err);
     throw err;
   }
-  }
+};
 
-
-
-  
-  export const getChildData = async (id: string, page: number = 1, pageSize: number = 10): Promise<any> => {
-    try {
-      const res = await api2.get(`/child-health/records/by-patient/${id}/`, {
-        params: {
-          page: page,
-          page_size: pageSize
-        }
-      });
-      if (res.status !== 200) {
-        throw new Error("Failed to fetch child data");
+export const getChildData = async (id: string, page?: number, pageSize?: number): Promise<any> => {
+  try {
+    const res = await api2.get(`/child-health/records/by-patient/${id}/`, {
+      params: {
+        page: page,
+        page_size: pageSize
       }
-      console.log(res);
-      return res.data; // Returns child data with paginated histories
-    } catch (error) {
-      console.error("Error fetching child data:", error);
-      return[]
-      throw error;
+    });
+    if (res.status !== 200) {
+      throw new Error("Failed to fetch child data");
     }
+    console.log(res);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching child data:", error);
+    throw error;
   }
+};
