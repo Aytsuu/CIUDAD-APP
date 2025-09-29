@@ -7,36 +7,24 @@ import { Plus, ArchiveRestore, Trash, Eye } from "lucide-react";
 import { useGetCouncilEvents } from "./queries/councilEventfetchqueries.tsx";
 import { format } from "date-fns";
 import EditEventForm from "./councilEventEdit.tsx";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/councilEventdelqueries.tsx";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries.tsx";
-import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries.tsx";
-import { hotspotColumns, wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
+import { wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Spinner } from "@/components/ui/spinner";
 
 function CalendarPage() {
-  const { data: councilEvents = [], isLoading } = useGetCouncilEvents();
+  const { data: councilEvents = [], isLoading: isCouncilEventsLoading } = useGetCouncilEvents();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "archive">("calendar");
   const [viewEvent, setViewEvent] = useState<any | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
-  const { data: hotspotData = [] } = useGetHotspotRecords();
-  const { data: wasteCollectionData = [], isLoading: _isWasteColLoading } = useGetWasteCollectionSchedFull();
+  const { data: wasteCollectionData = [],  isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
 
   const calendarSources = [
-    {
-      name: "Hotspot Assignment",
-      data: hotspotData,
-      columns: hotspotColumns,
-      titleAccessor: "watchman",
-      dateAccessor: "wh_date",
-      timeAccessor: "wh_start_time",
-      endTimeAccessor: "wh_end_time",
-      defaultColor: "#3b82f6", // blue
-    },
     {
       name: "Waste Collection",
       data: wasteCollectionData,
@@ -88,18 +76,7 @@ function CalendarPage() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
-          <Skeleton className="h-8 w-32 opacity-30" />
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-          <Skeleton className="h-[500px] w-full opacity-30" />
-        </div>
-      </div>
-    );
-  }
+const isLoading = isCouncilEventsLoading || isWasteColLoading;
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
@@ -134,18 +111,28 @@ function CalendarPage() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
           <TabsContent value="calendar">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Spinner size="lg" />
+              </div>
+            ) : (
             <EventCalendar
               sources={calendarSources}
               legendItems={[
-                { label: "Hotspot Assignments", color: "#3b82f6" },
                 { label: "Waste Collection", color: "#10b981" },
                 { label: "Council Events", color: "#191970" },
               ]}
               viewEditComponentSources={["Council Events"]}
             />
+            )}
           </TabsContent>
 
           <TabsContent value="archive">
+             {isCouncilEventsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Spinner size="lg" />
+              </div>
+            ) : (
             <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-custom">
               {filteredEvents.length > 0 ? (
                 filteredEvents.map((event) => (
@@ -243,6 +230,7 @@ function CalendarPage() {
                 </div>
               )}
             </div>
+             )}
           </TabsContent>
         </Tabs>
       </div>
