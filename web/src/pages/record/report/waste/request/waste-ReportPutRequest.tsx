@@ -1,6 +1,6 @@
 import { api } from "@/api/api";
 
-export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+export const updateWasteReport = async (rep_id: string, wasteReportInfo: Record<string, any>) => {
 
     try{
 
@@ -28,7 +28,7 @@ export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<
 
 
 export const uploadResolvedImage = async (data: {
-  rep_id: number;
+  rep_id: string;
   file_data: {
     name: string;
     type: string;

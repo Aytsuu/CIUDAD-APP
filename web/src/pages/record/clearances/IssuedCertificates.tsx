@@ -9,6 +9,10 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
+import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
+import { ArrowUpDown } from "lucide-react";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useAuth } from "@/context/AuthContext";
 import React from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -29,20 +33,21 @@ function IssuedCertificates() {
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
   const [filterValue, setFilterValue] = useState("All");
-  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits">("certificates");
+  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates");
   
-  // Business permit states
+  
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
   const [businessFilterValue, setBusinessFilterValue] = useState("All");
+  
+  const [serviceChargeSearchQuery, setServiceChargeSearchQuery] = useState("");
 
-  // Template/dialog states for issued certificates (match Certification UX)
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedIssuedCertificate | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [purposeInput, setPurposeInput] = useState("");
 
-  // Fetch staff for signatory selection
+  
   const { data: staffList = [] } = useGetStaffList();
   const staffOptions = useMemo(() => {
     return staffList.map((staff: any) => ({
@@ -61,6 +66,16 @@ function IssuedCertificates() {
     setSelectedStaffId("");
     setPurposeInput("");
     setIsDialogOpen(true);
+  };
+
+  const handleViewServiceChargeFile = (serviceCharge: ServiceCharge) => {
+    
+    const extended: ExtendedIssuedCertificate = {
+      ...serviceCharge as any,
+      AsignatoryStaff: "Default Signatory", 
+      SpecificPurpose: "File Action", 
+    };
+    setSelectedCertificate(extended);
   };
 
   const handleProceedToTemplate = () => {
@@ -237,6 +252,86 @@ function IssuedCertificates() {
     },
   ];
 
+  const serviceChargeColumns: ColumnDef<ServiceCharge>[] = [
+    {
+      accessorKey: "sr_code",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          SR No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="capitalize flex justify-center items-center gap-2">
+          {row.getValue("sr_code")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "complainant_names",
+      header: "Complainant",
+      cell: ({ row }) => {
+        const names = row.original.complainant_names || (row.original.complainant_name ? [row.original.complainant_name] : []);
+        if (!names.length) return <div>—</div>;
+        return <div className="text-sm">{names.join(', ')}</div>;
+      },
+    },
+    {
+      id: "complainant_addresses",
+      header: "Complainant Address",
+      cell: ({ row }) => {
+        const addrs = row.original.complainant_addresses || [];
+        if (!addrs.length) return <div>—</div>;
+        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+      },
+    },
+    {
+      accessorKey: "accused_names",
+      header: "Respondent",
+      cell: ({ row }) => {
+        const names = row.original.accused_names || [];
+        if (!names.length) return <div>—</div>;
+        return <div className="text-sm">{names.join(', ')}</div>;
+      },
+    },
+    {
+      id: "accused_addresses",
+      header: "Respondent Address",
+      cell: ({ row }) => {
+        const addrs = row.original.accused_addresses || [];
+        if (!addrs.length) return <div>—</div>;
+        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+      },
+    },
+    {
+      accessorKey: "sr_req_date",
+      header: "Date Requested",
+      cell: ({ row }) => <div>{localDateFormatter(row.getValue("sr_req_date"))}</div>,
+    },
+    {
+      id: "actions",
+      header: () => (
+        <div className="w-full h-full flex justify-center items-center">
+          Actions
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={() => row.original && handleViewServiceChargeFile(row.original)}
+            className="text-darkBlue2 hover:text-white hover:bg-darkBlue2"
+          >
+            View File
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   const { data: certificates, isLoading, error } = useQuery<IssuedCertificate[]>({
     queryKey: ["issuedCertificates"],
     queryFn: getIssuedCertificates,
@@ -245,6 +340,11 @@ function IssuedCertificates() {
   const { data: businessPermits, isLoading: businessPermitsLoading, error: businessPermitsError } = useQuery<IssuedBusinessPermit[]>({
     queryKey: ["issuedBusinessPermits"],
     queryFn: getIssuedBusinessPermits,
+  });
+
+  const { data: serviceCharges, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery<ServiceCharge[]>({
+    queryKey: ["issuedServiceCharges"],
+    queryFn: getPaidServiceCharges,
   });
 
   const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
@@ -274,6 +374,13 @@ function IssuedCertificates() {
                          (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
     const matchesFilter = businessFilterValue === "All" || permit.purpose === businessFilterValue;
     return matchesSearch && matchesFilter;
+  });
+
+  const filteredServiceCharges = serviceCharges?.filter((sc: ServiceCharge) => {
+    const matchesSearch = sc.sr_id?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase()) ||
+                         sc.sr_code?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase()) ||
+                         sc.complainant_name?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   return (
@@ -338,6 +445,22 @@ function IssuedCertificates() {
         </div>
       )}
 
+      {activeTab === "serviceCharges" && (
+        <div className="relative w-full flex justify-between items-center mb-4">
+          <div className="flex gap-x-2">
+            <div className="relative flex-1 bg-white">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+              <Input 
+                placeholder="Search..." 
+                className="pl-10 w-72" 
+                value={serviceChargeSearchQuery}
+                onChange={(e) => setServiceChargeSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full flex flex-col">
         <div className="w-full h-auto bg-white p-3">
           <div className="flex gap-x-4 items-center">
@@ -368,6 +491,16 @@ function IssuedCertificates() {
                 }`}
               >
                 Business Permits
+              </button>
+              <button
+                onClick={() => setActiveTab("serviceCharges")}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors border ${
+                  activeTab === "serviceCharges"
+                    ? "bg-[#eaf4ff] text-[#2563eb] border-[#b6d6f7] shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                }`}
+              >
+                Service Charges
               </button>
             </div>
           </div>
@@ -408,11 +541,33 @@ function IssuedCertificates() {
             )}
           </div>
         )}
+
+        {activeTab === "serviceCharges" && (
+          <div className="bg-white w-full overflow-x-auto">
+            {serviceChargesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+              </div>
+            ) : serviceChargesError ? (
+              <div className="text-center py-5 text-red-500">Error loading data</div>
+            ) : (
+              <DataTable 
+                columns={serviceChargeColumns} 
+                data={filteredServiceCharges || []} 
+                header={true} 
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {activeTab === "certificates" ? (filteredCertificates?.length || 0) : (filteredBusinessPermits?.length || 0)} rows
+          Showing 1-10 of {
+            activeTab === "certificates" ? (filteredCertificates?.length || 0) : 
+            activeTab === "businessPermits" ? (filteredBusinessPermits?.length || 0) :
+            (filteredServiceCharges?.length || 0)
+          } rows
         </p>
       </div>
 

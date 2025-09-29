@@ -3,7 +3,7 @@ import { View, Text } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, HeartPulse, Baby, User, Home,Milk,MapPin as Location, UserRound } from "lucide-react-native";
-import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
+// import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 
 interface ChildHealthRecord {
   pat_id: string;

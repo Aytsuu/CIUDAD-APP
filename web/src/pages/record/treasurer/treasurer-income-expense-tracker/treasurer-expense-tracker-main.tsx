@@ -323,6 +323,7 @@ function IncomeandExpenseTracking() {
                                         <IncomeandExpenseEditForm 
                                             iet_num={row.original.iet_num} 
                                             iet_serial_num={row.original.iet_serial_num}
+                                            iet_check_num={row.original.iet_check_num}
                                             iet_datetime={row.original.iet_datetime}
                                             iet_entryType={row.original.iet_entryType}
                                             iet_amount={String(row.original.iet_amount)}

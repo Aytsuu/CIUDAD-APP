@@ -14,7 +14,6 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 // import { FormTimeInput } from '@/components/ui/form/form-time-input';
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useCreateIncomeExpense } from './queries/income-expense-AddQueries';
@@ -51,6 +50,7 @@ function ExpenseCreateForm() {
     resolver: zodResolver(IncomeExpenseFormSchema),
     defaultValues: {
       iet_serial_num: '',
+      iet_check_num: '',
       iet_entryType: '',
       // iet_date: '',
       // iet_time: '',
@@ -90,6 +90,19 @@ function ExpenseCreateForm() {
       return;
     }
 
+    if(!values.iet_serial_num && !values.iet_check_num){
+        form.setError('iet_serial_num', {
+            type: 'manual',
+            message: "Please enter a data either on this field"
+        });
+
+        form.setError('iet_check_num', {
+            type: 'manual',
+            message: "Please enter a data either on this field"
+        });
+        return; 
+    }    
+
     if(!values.iet_additional_notes){
         values.iet_additional_notes = "None";
     }
@@ -113,6 +126,7 @@ function ExpenseCreateForm() {
       type: img.type,
       file: img.file
     }))
+
 
     if(amount && actualAmount){
         totalBudget = totBUDGET - actualAmount;
@@ -290,6 +304,13 @@ function ExpenseCreateForm() {
               name="iet_serial_num"
               label="Serial Number"
               placeholder="Enter serial number"
+            />
+
+            <FormInput
+              control={form.control}
+              name="iet_check_num"
+              label="Check Number"
+              placeholder="Enter check number"
             />
 
             <FormDateAndTimeInput

@@ -15,13 +15,13 @@ class emailOTPView(APIView):
     def post(self, request):
         email = request.data.get('email')
         auth_type = request.data.get('type')
-        print(request.data)
+
         if auth_type == 'signin':
             if not Account.objects.filter(email=email).exists():
-                raise serializers.ValidationError({"email" : "Email is not registered."})
+                raise serializers.ValidationError({"email" : "Email is not registered"})
         else:
             if Account.objects.filter(email=email).exists():
-                raise serializers.ValidationError({"email" : "Email is already in use."})
+                raise serializers.ValidationError({"email" : "Email is already in use"})
 
         otp = generate_otp()
         print(generate_otp)

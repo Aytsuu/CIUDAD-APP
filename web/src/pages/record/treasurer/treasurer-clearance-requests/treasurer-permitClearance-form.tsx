@@ -79,7 +79,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         
         console.log("Selected business:", selectedBusiness);
         
-        const address = selectedBusiness?.address || selectedBusiness?.bus_street || '';
+        const address = selectedBusiness?.bus_location || selectedBusiness?.address || '';
         console.log("Resolved address:", address);
         
         return address;
@@ -194,9 +194,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                             
                                             console.log("Found selected business:", selectedBusiness);
                                             if (selectedBusiness) {
-                                               
-                                                const address = selectedBusiness.address || selectedBusiness.bus_street || '';
-                                              
+                                                const address = selectedBusiness.bus_location || selectedBusiness.address || '';
                                                 form.setValue("address", address);
                                                 
                                                

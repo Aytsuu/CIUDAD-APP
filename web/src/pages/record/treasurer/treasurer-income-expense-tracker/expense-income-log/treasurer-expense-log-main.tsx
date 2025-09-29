@@ -422,14 +422,16 @@ function ExpenseLogMain() {
         },              
         { 
             accessorKey: "el_return_amount", 
-            header: "Return Amount",
+            header: "Return/Excess",
             cell: ({ row }) => (
                 <div className={
                     parseFloat(row.getValue("el_proposed_budget")) > parseFloat(row.getValue("el_actual_expense"))
                         ? "text-green-600 font-medium"
                         : "text-red-600 font-medium"
                 }>
-                    ₱{row.getValue("el_return_amount")}
+                    {parseFloat(row.getValue("el_proposed_budget")) > parseFloat(row.getValue("el_actual_expense"))
+                        ? `+ ₱${row.getValue("el_return_amount")}`
+                        : `- ₱${row.getValue("el_return_amount")}`}
                 </div>
             )
         },  

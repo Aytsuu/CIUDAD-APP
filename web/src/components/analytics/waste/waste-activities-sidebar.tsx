@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 
 type ActivityItem = {
   type: 'hotspot' | 'collection';
-  data: UpcomingHotspots | WasteCollectionSchedFull;
+  data: any;
   date: Date;
 };
 
@@ -57,7 +57,7 @@ export const WasteActivitySidebar = () => {
     
     // Add waste collections
     if (wasteCollections) {
-      wasteCollections.forEach((collection) => {
+      wasteCollections.forEach((collection: any) => {
         const collectionDate = new Date(collection.wc_date);
         collectionDate.setHours(0, 0, 0, 0);
         
@@ -264,7 +264,7 @@ const HotspotDetails = ({ hotspot }: { hotspot: UpcomingHotspots }) => (
 );
 
 // Helper component for collection details
-const CollectionDetails = ({ collection }: { collection: WasteCollectionSchedFull }) => (
+const CollectionDetails = ({ collection }: { collection: any }) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
       <div>

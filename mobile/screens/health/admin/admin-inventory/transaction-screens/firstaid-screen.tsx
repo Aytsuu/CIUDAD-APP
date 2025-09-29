@@ -4,7 +4,7 @@ import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native"
 
 import type { FirstAidRecords, ApiItemWithStaff } from "../types"; // Adjust path if needed
 import { SearchInput } from "@/components/ui/search-input";
-import { Skeleton } from "@/components/ui/skeleton";
+// import { Skeleton } from "@/components/ui/skeleton";
 import { useFirstAidTransactions } from "../restful-api/transaction/fetchqueries";
 
 export default function FirstAidListScreen() {
@@ -69,10 +69,10 @@ export default function FirstAidListScreen() {
   if (isLoadingFirstAid) {
     return (
       <View className="w-full h-full p-4">
-        <Skeleton className="h-10 w-1/2 mb-3" />
+        {/* <Skeleton className="h-10 w-1/2 mb-3" />
         <Skeleton className="h-7 w-3/4 mb-6" />
         <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" /> */}
       </View>
     );
   }

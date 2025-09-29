@@ -90,7 +90,7 @@ export default function WasteIllegalDumpingResDetails() {
   
   
   //UPDATE MUTATION
-  const { mutate: updateRep, isPending } = useUpdateWasteResReport(Number(rep_id), () => {
+  const { mutate: updateRep, isPending } = useUpdateWasteResReport(String(rep_id), () => {
       setTimeout(() => {
           router.back();
       }, 600);
