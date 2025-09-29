@@ -2,7 +2,8 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button } from "@/components/ui/button/button";
 import { Badge } from '@/components/ui/badge';
-import { Eye, Brain, Loader2 } from 'lucide-react';
+import { Eye, Brain } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { Ordinance, OrdinanceFolder } from './restful-api/OrdinanceGetAPI';
 // import { OrdinanceAIService, AIAnalysisResponse } from './queries/OrdinanceAIService.ts';
@@ -216,7 +217,7 @@ function ViewOrdinance({
                                             className="text-xs px-3 py-1 h-7"
                                         >
                                             {(individualAnalysisLoading === folder.baseOrdinance.ord_num || folderAmendmentLoading === folder.id) ? (
-                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                <Spinner size="sm" />
                                             ) : (
                                                 <Brain className="h-3 w-3 mr-1" />
                                             )}
@@ -322,7 +323,7 @@ function ViewOrdinance({
                                                         className="text-xs px-3 py-1 h-7"
                                                     >
                                                         {(individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === folder.id) ? (
-                                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                            <Spinner size="sm" />
                                                         ) : (
                                                             <Brain className="h-3 w-3 mr-1" />
                                                         )}
@@ -379,7 +380,7 @@ function ViewOrdinance({
                                                                 className="text-xs px-3 py-1 h-7"
                                                             >
                                                                 {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id) ? (
-                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                    <Spinner size="sm" />
                                                                 ) : (
                                                                     <Brain className="h-3 w-3 mr-1" />
                                                                 )}

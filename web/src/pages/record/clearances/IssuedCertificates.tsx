@@ -6,7 +6,8 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, Loader2 } from "lucide-react";
+import { Search } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
@@ -510,7 +511,7 @@ function IssuedCertificates() {
           <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                <Spinner size="lg" />
               </div>
             ) : error ? (
               <div className="text-center py-5 text-red-500">Error loading data</div>
@@ -528,7 +529,7 @@ function IssuedCertificates() {
           <div className="bg-white w-full overflow-x-auto">
             {businessPermitsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                <Spinner size="lg" />
               </div>
             ) : businessPermitsError ? (
               <div className="text-center py-5 text-red-500">Error loading data</div>
@@ -546,7 +547,7 @@ function IssuedCertificates() {
           <div className="bg-white w-full overflow-x-auto">
             {serviceChargesLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+                <Spinner size="lg" />
               </div>
             ) : serviceChargesError ? (
               <div className="text-center py-5 text-red-500">Error loading data</div>

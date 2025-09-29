@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import { Search,} from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router";
 
 import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
@@ -76,7 +77,7 @@ function AnnualDevelopmentPlan(){
                 <div className="bg-white border border-gray-300 rounded-[5px] p-5 min-h-[20rem] flex flex-col items-center justify-start">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
-                            <p>Loading years...</p>
+                            <Spinner size="lg" />
                         </div>
                     ) : years.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center px-6">
