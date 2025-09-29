@@ -42,7 +42,7 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
                        f"Time: {council_event.ce_time.strftime('%I:%M %p')}",
             ann_type="event",
             ann_event_start=event_start,
-            ann_event_end=event_start,  # You can adjust this if you have end time
+            ann_event_end=None,  # You can adjust this if you have end time
             ann_to_sms=True,
             ann_to_email=True,
             ann_status="Active",
