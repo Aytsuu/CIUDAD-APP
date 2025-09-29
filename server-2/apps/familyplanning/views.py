@@ -80,6 +80,7 @@ class PatientListForOverallTable(generics.ListAPIView):
             return self.get_paginated_response(response_data)
         # fallback if pagination is not applied
         return Response([])
+    
 @api_view(['GET'])
 def get_fp_patient_counts(request):
     try:

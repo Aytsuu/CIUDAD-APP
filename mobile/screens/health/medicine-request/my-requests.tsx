@@ -208,7 +208,7 @@ const MedicineRequestCard: React.FC<{
 }> = ({ item, onCancel, isCancelPending }) => {
   const medicineName = item.med_details?.med_name || 'Unknown Medicine';
   const canCancel = item.status.toLowerCase() === 'pending';
-
+  
   return (
     <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm">
       {/* Header */}
@@ -349,7 +349,9 @@ const MedicineRequestTracker: React.FC = () => {
   const isResident = !!user?.rp;
   const userId = user?.rp || null;
   const isUserReady = isAuthenticated && !!userId;
+  const userdata = user?.personal;
 
+  console.log("userdata: ",userdata)
   // Debug log
   // console.log('Auth State:', { isAuthenticated, userId, isUserReady, isResident });
  
