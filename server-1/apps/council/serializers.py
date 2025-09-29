@@ -7,12 +7,71 @@ from apps.gad.models import ProjectProposal
 from utils.supabase_client import upload_to_storage
 from apps.treasurer.serializers import FileInputSerializer
 from django.db import transaction
-
+from datetime import datetime
+from apps.announcement.models import Announcement, AnnouncementRecipient
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
     class Meta:
         model = CouncilScheduling
         fields = '__all__'
+
+    @transaction.atomic
+    def create(self, validated_data):
+        # Create the council event
+        council_event = CouncilScheduling.objects.create(**validated_data)
+        
+        # Automatically create announcement for all barangay staff
+        self._create_staff_announcement(council_event)
+        
+        return council_event
+
+    def _create_staff_announcement(self, council_event):
+        """
+        Creates an announcement targeted to all barangay staff
+        when a council event is created.
+        """
+        # Combine date and time for event start
+        event_start = datetime.combine(council_event.ce_date, council_event.ce_time)
+        
+        # Create the announcement
+        announcement = Announcement.objects.create(
+            ann_title=f"Council: {council_event.ce_title}",
+            ann_details=f"{council_event.ce_description}\n\n"
+                       f"Location: {council_event.ce_place}\n"
+                       f"Date: {council_event.ce_date.strftime('%B %d, %Y')}\n"
+                       f"Time: {council_event.ce_time.strftime('%I:%M %p')}",
+            ann_type="event",
+            ann_event_start=event_start,
+            ann_event_end=None,  # You can adjust this if you have end time
+            ann_to_sms=True,
+            ann_to_email=True,
+            ann_status="Active",
+            staff=council_event.staff
+        )
+        
+        # Create recipient record for all staff
+        AnnouncementRecipient.objects.create(
+            ann=announcement,
+            ar_category="staff",
+            ar_type=None  # None means all staff positions
+        )
+        
+        return announcement
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """
+        Optional: Update the related announcement when council event is updated
+        """
+        # Update the council event
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Optionally update the related announcement
+        # You can find and update the announcement here if needed
+        
+        return instance
 
 # class CouncilAttendeesSerializer(serializers.ModelSerializer):
 #     atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])

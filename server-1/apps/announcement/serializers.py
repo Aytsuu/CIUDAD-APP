@@ -1,110 +1,174 @@
+
 from rest_framework import serializers
-from .models import Announcement, AnnouncementFile, AnnouncementRecipient
-from apps.administration.models import Staff
-from apps.account.models import Account
+from django.db import transaction
+from django.utils.timezone import now
 from utils.email import send_email
-from django.utils.dateformat import format
-from apps.announcement.models import AnnouncementFile
+from apps.account.models import Account
+from apps.profiling.models import ResidentProfile
+from apps.administration.models import *
+from .models import Announcement, AnnouncementFile, AnnouncementRecipient
+from utils.supabase_client import upload_to_storage
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class AnnouncementFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementFile
-        fields = '__all__'
+        fields = ['af_id', 'af_name', 'af_type', 'af_path', 'af_url']  
 
 
-class AnnouncementBaseSerializer(serializers.ModelSerializer):
-    files = serializers.SerializerMethodField()
-    ann_start_at = serializers.DateTimeField(required=False, allow_null=True)
-    ann_end_at = serializers.DateTimeField(required=False, allow_null=True)
+class AnnouncementRecipientSerializer(serializers.ModelSerializer):
+    ar_type = serializers.CharField()  
+    class Meta:
+        model = AnnouncementRecipient
+        fields = ['ar_id', 'ann', 'ar_type', "ar_category"]
+        extra_kwargs = {
+            "ar_type": {'required': False, 'allow_null': True}
+        }
+
+
+
+class FileInputSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    type = serializers.CharField()
+    file = serializers.CharField()
+
+
+class AnnouncementCreateSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, many=True, required=False)
+    recipients = AnnouncementRecipientSerializer(many=True, required=False)
+
+    announcement_files = AnnouncementFileSerializer(
+        source="announcementfile_set", many=True, read_only=True
+    )
 
     class Meta:
         model = Announcement
         fields = '__all__'
+        extra_fields = ['announcement_files']
 
-    def get_files(self, obj):
-        files = AnnouncementFile.objects.filter(ann=obj)
-        return AnnouncementFileSerializer(files, many=True).data
+    @transaction.atomic
+    def create(self, validated_data):
+        files = validated_data.pop('files', [])
+        recipients_data = validated_data.pop('recipients', [])
+        print(recipients_data)
 
+        # Create the announcement
+        announcement = Announcement.objects.create(**validated_data)
 
-class AnnouncementRecipientSerializer(serializers.ModelSerializer):
-    position_title = serializers.SerializerMethodField()
-    email = serializers.SerializerMethodField()
+        # Save recipients
+        for recipient in recipients_data:
+            print(recipient)
+            AnnouncementRecipient.objects.create(ann=announcement, **recipient)
+
+        # Upload files
+        if files:
+            self._upload_files(announcement, files)
+
+        return announcement
+
+    def _upload_files(self, announcement_instance, files):
+        announcement_files = []
+        for file_data in files:
+            announcement_file = AnnouncementFile(
+                ann=announcement_instance,
+                af_name=file_data.get('name'),
+                af_type=file_data.get('type'),
+                af_path=file_data.get('name'),
+            )
+            url = upload_to_storage(file_data, 'announcement-bucket', "")
+            announcement_file.af_url = url
+            announcement_files.append(announcement_file)
+
+        if announcement_files:
+            AnnouncementFile.objects.bulk_create(announcement_files)
+    
+    def get_username(self, obj):
+        if obj.staff and hasattr(obj.staff, "account") and obj.staff.account:
+            return obj.staff.account.username
+        return None
+
+class RecipientInputSerializer(serializers.Serializer):
+    ann = serializers.PrimaryKeyRelatedField(queryset=Announcement.objects.all(),write_only=True)
+    ar_category = serializers.CharField(write_only=True)
+    ar_type = serializers.CharField(write_only=True, allow_null=True, required = False)
+
+class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
+    recipients = RecipientInputSerializer(many=True)
 
     class Meta:
         model = AnnouncementRecipient
-        fields = [
-            'ar_id', 'ar_mode', 'ann', 'position',
-            'ar_age', 'position_title', 'email'
-        ]
+        fields = ['recipients']
 
-    def get_position_title(self, obj):
-        return obj.position.pos_title if obj.position else ""
-
-    def get_email(self, obj):
-        try:
-            return obj.staff.rp.account.email
-        except Exception:
-            return None
-
-class BulkAnnouncementRecipientSerializer(serializers.Serializer):
-    recipients = AnnouncementRecipientSerializer(many=True)
-
+    @transaction.atomic
     def create(self, validated_data):
-        print("[DEBUG] BulkAnnouncementRecipientSerializer triggered")
-
-        created_recipients = []
         recipients_data = validated_data.get("recipients", [])
 
-        if not recipients_data:
-            print("[ERROR] No recipients provided.")
-            return []
+        # Bulk create the recipients
+        created_recipients = AnnouncementRecipient.objects.bulk_create(
+            [AnnouncementRecipient(**recipient) for recipient in recipients_data]
+        )
 
-        ann = recipients_data[0].get("ann")
-        ar_mode = recipients_data[0].get("ar_mode", "email")
-        ar_age = recipients_data[0].get("ar_age", None)
+        rec_list = []
 
-        if not ann:
-            print("[ERROR] Announcement missing in recipients.")
-            return []
+        # Collect recipients (staff or residents)
+        for recipient in created_recipients:
+            if recipient.ar_category == "staff":
+                pos = Position.objects.filter(pos_title__icontains=recipient.ar_type).first()
+                if pos:
+                    staff_members = Staff.objects.filter(pos=pos)
+                    rec_list.extend(staff_members)
+            else:
+                residents = ResidentProfile.objects.all()
+                rec_list.extend(residents)
 
-        try:
-            account = Account.objects.get(email="ganzoganzo188@gmail.com")
-            rp = account.rp
-            recipient = AnnouncementRecipient.objects.create(
-                ann=ann,
-                rp=rp,
-                ar_mode=ar_mode,
-                ar_age=ar_age,
-                position=recipients_data[0].get("position")
-            )
-            created_recipients.append(recipient)
+        # Send emails
+        for rec in rec_list:
+            acc = Account.objects.filter(rp=rec.pk).first()
+            if not acc or not acc.email:
+                continue
 
-            # Send email
-            if ar_mode == "email":
-                context = {
-                    "ann_title": ann.ann_title,
-                    "ann_details": ann.ann_details,
-                    "ann_start_at": format(ann.ann_start_at, 'N j, Y, P') if ann.ann_start_at else None,
-                    "ann_end_at": format(ann.ann_end_at, 'N j, Y, P') if ann.ann_end_at else None,
-                    "ann_type": ann.ann_type,
-                    "ar_mode": [ar_mode],
-                    "positions": [recipient.position.pos_title] if recipient.position else [],
-                    "ar_age": [ar_age] if ar_age else [],
-                    "staff_id": ann.staff.staff_id if ann.staff else "Unknown",
-                    "files": AnnouncementFileSerializer(AnnouncementFile.objects.filter(ann=ann), many=True).data,
-                }
-                print(f"[DEBUG] Sending email to: {account.email}")
-                send_email("New Announcement", context, account.email)
+            for recipient in created_recipients:
+                announcement = recipient.ann
+                if not getattr(announcement, 'ann_to_email', False):
+                    continue
 
-        except Account.DoesNotExist:
-            print("[ERROR] Account with email 'ganzoganzo188@gmail.com' not found.")
-        except Exception as e:
-            print(f"[ERROR] Failed to process account: {e}")
+                try:
+                    context = {
+                        'ann_title': announcement.ann_title,
+                        'ann_details': announcement.ann_details,
+                        'ann_start_at': announcement.ann_start_at,
+                        'ann_end_at': announcement.ann_end_at,
+                        'ann_event_start': announcement.ann_event_start,
+                        'ann_event_end': announcement.ann_event_end,
+                        'ann_type': getattr(announcement, 'ann_type', None),
+                        'staff_id': getattr(announcement.staff, 'id', 'N/A'),
+                        'current_date': now(),
+                        'files': list(
+                            announcement.announcementfile_set.values(
+                                'af_name', 'af_type', 'af_url'
+                            )
+                        ),
+                    }
+
+                    send_email(
+                        subject=f"New Announcement: {announcement.ann_title}",
+                        context=context,
+                        recipient_email=acc.email,
+                        from_email="ganzoganzo188@gmail.com",
+                    )
+                    logger.info(f"Email sent for announcement {announcement.pk} to {acc.email}")
+
+                except Exception as e:
+                    logger.error(f"Failed to send email for announcement {announcement.pk}: {e}")
 
         return created_recipients
-    
-    
+
+
+
 class AnnouncementRecipientFilteredSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementRecipient
-        fields = ['ar_mode', 'ann', 'rp']
+        fields = ['ar_id', 'ann', 'ar_type', 'ar_category']

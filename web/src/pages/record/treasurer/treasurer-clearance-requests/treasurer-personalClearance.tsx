@@ -10,7 +10,7 @@ import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
 import DeclineRequestForm from "./declineForm";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -97,7 +97,8 @@ function PersonalClearance() {
     // Non-Resident Columns
     const nonResidentColumns: ColumnDef<NonResidentReq>[] = [
         {
-            accessorKey: "nrc_requester",
+            id: "nrc_requester",
+            accessorFn: (row) => (row.nrc_requester ? row.nrc_requester.replace(/,/g, "") : ""),
             header: ({ column }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -173,7 +174,7 @@ function PersonalClearance() {
                                             id: row.original.nrc_id,
                                             purpose: row.original.purpose?.pr_purpose,
                                             rate: row.original.purpose?.pr_rate,
-                                            requester: row.original.nrc_requester,
+                                            requester: row.original.nrc_requester?.replace(/,/g, "") || "",
                                             pay_status: row.original.nrc_req_payment_status,
                                             nat_col: String(((row.original as any)?.pr_id) ?? (row.original as any)?.purpose?.pr_id ?? ''),
                                             is_resident: false
@@ -552,39 +553,8 @@ function PersonalClearance() {
                      </div>    
 
                     {isLoading ? (
-                        <div className="rounded-md border">
-                            <div className="p-6">
-                                {/* Table header skeleton */}
-                                <div className={`grid ${activeTab === "unpaid" ? "grid-cols-6" : activeTab === "paid" ? "grid-cols-5" : "grid-cols-5"} gap-4 mb-4 pb-4 border-b`}>
-                                    <Skeleton className="h-6 w-20 opacity-30" />
-                                    <Skeleton className="h-6 w-20 opacity-30" />
-                                    <Skeleton className="h-6 w-16 opacity-30" />
-                                    <Skeleton className="h-6 w-24 opacity-30" />
-                                    {activeTab !== "declined" && <Skeleton className="h-6 w-20 opacity-30" />}
-                                    {activeTab === "unpaid" && <Skeleton className="h-6 w-16 opacity-30" />}
-                                    {activeTab === "declined" && <Skeleton className="h-6 w-24 opacity-30" />}
-                                </div>
-                                
-                                {/* Table rows skeleton */}
-                                <div className="space-y-4">
-                                    {[...Array(5)].map((_, index) => (
-                                        <div key={index} className={`grid ${activeTab === "unpaid" ? "grid-cols-6" : activeTab === "paid" ? "grid-cols-5" : "grid-cols-5"} gap-4 items-center py-2`}>
-                                            <Skeleton className="h-4 w-20 opacity-30" />
-                                            <Skeleton className="h-4 w-20 opacity-30" />
-                                            <Skeleton className="h-4 w-16 opacity-30" />
-                                            <Skeleton className="h-4 w-20 opacity-30" />
-                                            {activeTab !== "declined" && <Skeleton className="h-6 w-16 rounded-full opacity-30" />}
-                                            {activeTab === "unpaid" && (
-                                                <div className="flex justify-center gap-1">
-                                                    <Skeleton className="h-8 w-8 rounded opacity-30" />
-                                                    <Skeleton className="h-8 w-8 rounded opacity-30" />
-                                                </div>
-                                            )}
-                                            {activeTab === "declined" && <Skeleton className="h-4 w-32 opacity-30" />}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        <div className="flex items-center justify-center py-12">
+                            <Spinner size="lg" />
                         </div>
                     ) : error ? (
                         <div className="text-center py-4 text-red-500">Error loading data</div>

@@ -486,11 +486,32 @@ class Income_Expense_TrackingView(generics.ListCreateAPIView):
     serializer_class = Income_Expense_TrackingSerializers
 
     def get_queryset(self):
-        # Get year from query params (default to current year if not provided)
+        # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
-        return Income_Expense_Tracking.objects.filter(
+        search_query = self.request.query_params.get('search', '')
+        month = self.request.query_params.get('month', 'All')
+        
+        queryset = Income_Expense_Tracking.objects.filter(
             Q(iet_datetime__year=year)
         ).select_related('exp_id').prefetch_related('files')
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(exp_id__exp_budget_item__icontains=search_query) |
+                Q(iet_serial_num__icontains=search_query) |
+                Q(iet_check_num__icontains=search_query) |
+                Q(iet_additional_notes__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply month filter
+        if month and month != "All":
+            queryset = queryset.filter(iet_datetime__month=month)
+        
+        return queryset
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):
@@ -572,11 +593,32 @@ class Expense_LogView(generics.ListCreateAPIView):
     serializer_class = Expense_LogSerializers
 
     def get_queryset(self):
-        # Get year from query params (default to current year if not provided)
+        # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
-        return Expense_Log.objects.filter(
+        search_query = self.request.query_params.get('search', '')
+        month = self.request.query_params.get('month', 'All')
+        
+        queryset = Expense_Log.objects.filter(
             Q(el_datetime__year=year)
         ).select_related('iet_num')
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(iet_num__exp_id__exp_budget_item__icontains=search_query) |
+                Q(el_proposed_budget__icontains=search_query) |
+                Q(el_actual_expense__icontains=search_query) |
+                Q(el_return_amount__icontains=search_query) |
+                Q(iet_num__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(iet_num__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(iet_num__staff_id__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply month filter
+        if month and month != "All":
+            queryset = queryset.filter(el_datetime__month=month)
+        
+        return queryset
 
 # ------------------------- INCOME --------------------------------------
 
@@ -590,12 +632,34 @@ class Expense_LogView(generics.ListCreateAPIView):
 class Income_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
+    
     def get_queryset(self):
-        # Get year from query params (default to current year if not provided)
+        # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
-        return Income_Tracking.objects.filter(
+        search_query = self.request.query_params.get('search', '')
+        month = self.request.query_params.get('month', 'All')
+        
+        queryset = Income_Tracking.objects.filter(
             Q(inc_datetime__year=year)
         ).select_related('incp_id')
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(incp_id__incp_item__icontains=search_query) |
+                Q(inc_serial_num__icontains=search_query) |
+                Q(inc_transac_num__icontains=search_query) |
+                Q(inc_additional_notes__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply month filter
+        if month and month != "All":
+            queryset = queryset.filter(inc_datetime__month=month)
+        
+        return queryset
 
 
 class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
@@ -646,8 +710,23 @@ class DeleteIncome_ParticularView(generics.DestroyAPIView):
 class Income_Expense_MainView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
-    # queryset = Income_Expense_Main.objects.all()
-    queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
+    
+    def get_queryset(self):
+        search_query = self.request.query_params.get('search', '')
+        
+        queryset = Income_Expense_Main.objects.filter(ie_is_archive=False)
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(ie_main_year__icontains=search_query) |
+                Q(ie_main_tot_budget__icontains=search_query) |
+                Q(ie_remaining_bal__icontains=search_query) |
+                Q(ie_main_inc__icontains=search_query) |
+                Q(ie_main_exp__icontains=search_query)
+            )
+        
+        return queryset
 
 
 class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):

@@ -49,6 +49,30 @@ class CouncilSchedulingView(ActivityLogMixin, generics.ListCreateAPIView):
     queryset = CouncilScheduling.objects.all()
     permission_classes = [AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        """Override to add logging for announcement creation"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            self.perform_create(serializer)
+            logger.info(
+                f"Council event created: {serializer.data.get('ce_title')} - "
+                f"Announcement sent to all barangay staff"
+            )
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data, 
+                status=status.HTTP_201_CREATED, 
+                headers=headers
+            )
+        except Exception as e:
+            logger.error(f"Error creating council event and announcement: {e}")
+            return Response(
+                {"error": "Failed to create council event and announcement"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class CouncilSchedulingDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
