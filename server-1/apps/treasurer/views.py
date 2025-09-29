@@ -14,11 +14,110 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 import logging
 logger = logging.getLogger(__name__)
+from apps.pagination import StandardResultsPagination
 
-class BudgetPlanView(ActivityLogMixin, generics.ListCreateAPIView):
+# class BudgetPlanView(ActivityLogMixin, generics.ListCreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = BudgetPlanSerializer
+#     queryset = Budget_Plan.objects.all()
+
+class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
-    queryset = Budget_Plan.objects.all()
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Budget_Plan.objects.filter(plan_is_archive=False).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_actual_income',
+            'plan_rpt_income',
+            'plan_balance',
+            'plan_tax_share',
+            'plan_tax_allotment',
+            'plan_cert_fees',
+            'plan_other_income',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'plan_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(plan_id__icontains=search_query) |
+                Q(plan_year__icontains=search_query) |
+                Q(plan_actual_income__icontains=search_query) |
+                Q(plan_rpt_income__icontains=search_query) |
+                Q(plan_balance__icontains=search_query) |
+                Q(plan_tax_share__icontains=search_query) |
+                Q(plan_tax_allotment__icontains=search_query) |
+                Q(plan_cert_fees__icontains=search_query) |
+                Q(plan_other_income__icontains=search_query) |
+                Q(plan_budgetaryObligations__icontains=search_query) |
+                Q(plan_balUnappropriated__icontains=search_query) |
+                Q(plan_issue_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('plan_id')
+    
+class BudgetPlanInactiveView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BudgetPlanSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Budget_Plan.objects.filter(plan_is_archive=True).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_actual_income',
+            'plan_rpt_income',
+            'plan_balance',
+            'plan_tax_share',
+            'plan_tax_allotment',
+            'plan_cert_fees',
+            'plan_other_income',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'plan_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(plan_id__icontains=search_query) |
+                Q(plan_year__icontains=search_query) |
+                Q(plan_actual_income__icontains=search_query) |
+                Q(plan_rpt_income__icontains=search_query) |
+                Q(plan_balance__icontains=search_query) |
+                Q(plan_tax_share__icontains=search_query) |
+                Q(plan_tax_allotment__icontains=search_query) |
+                Q(plan_cert_fees__icontains=search_query) |
+                Q(plan_other_income__icontains=search_query) |
+                Q(plan_budgetaryObligations__icontains=search_query) |
+                Q(plan_balUnappropriated__icontains=search_query) |
+                Q(plan_issue_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('plan_id')
 
 class BudgetPlanDetailView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]

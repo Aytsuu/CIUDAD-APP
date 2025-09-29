@@ -10,7 +10,7 @@ export const useDeleteBudgetPlan = () => {
     return useMutation({
         mutationFn: deleteBudgetPlan,
         onMutate: async () => {
-            await queryClient.cancelQueries({ queryKey: ['budgetPlan'] });
+            await queryClient.cancelQueries({ queryKey: ['inactiveBudgetPlan'] });
             toast.loading("Deleting budget plan...", { id: 'deleteBudgetplan' });
         },
         onSuccess: () => {
