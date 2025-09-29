@@ -74,5 +74,8 @@ urlpatterns = [
    
     # HEALTH STAFF
 
+    # Mobile url
+    path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
+    path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
 ]
 

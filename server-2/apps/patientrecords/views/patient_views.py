@@ -13,6 +13,7 @@ from apps.healthProfiling.models import ResidentProfile
 from ..serializers.patients_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 from ...pagination import StandardResultsPagination
+from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
 
 
 @api_view(['GET'])
@@ -451,3 +452,52 @@ class UpdateTransientView(generics.RetrieveUpdateAPIView):
             return super().get_object()
         except NotFound:
             return Response({"error": "Transient patient not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+@api_view(['GET'])
+def get_patient_by_resident_id(request, rp_id):
+    try:
+        patient = Patient.objects.get(rp_id=rp_id)
+        serializer = PatientSerializer(patient)
+        return Response(serializer.data)
+    except Patient.DoesNotExist:
+        return Response(
+            {"detail": "Patient not found for this resident ID."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+@api_view(['GET'])
+def get_appointments_by_resident_id(request, rp_id):
+    """
+    Retrieves all appointments (FollowUpVisit) for a specific resident based on their rp_id.
+    """
+    try:
+        # Step 1: Query FollowUpVisit directly using the correct lookup chain
+        # The chain is patrec -> pat_id -> rp_id
+        appointments = FollowUpVisit.objects.filter(patrec__pat_id__rp_id=rp_id).order_by('-followv_date', '-created_at')
+        
+        if not appointments.exists():
+            return Response(
+                {"detail": "No appointments found for this resident."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = FollowUpVisitSerializer(appointments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    except ResidentProfile.DoesNotExist:
+        return Response(
+            {"detail": "Resident not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
