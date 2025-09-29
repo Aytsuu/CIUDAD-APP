@@ -331,7 +331,7 @@ export default function OverallMaternalRecordsScreen() {
   const handleRecordPress = useCallback((record: maternalRecords) => {
     try {
       router.push({
-        pathname: "/admin/maternal/individual",
+        pathname: "/maternal/my-records",
         params: {
           pat_id: record.pat_id,
           patientData: JSON.stringify(record),
