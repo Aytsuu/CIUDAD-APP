@@ -74,7 +74,7 @@ export const useChildNotesFollowup = (id: string | undefined) => {
 };
 
 
-export const useChildData = (id: string, page: number = 1, pageSize: number = 10) => {
+export const useChildData = (id: string, page?: number, pageSize?: number ) => {
 	return useQuery({
 		queryKey: ['childData', id, page, pageSize],
 		queryFn: () => getChildData(id, page, pageSize),
