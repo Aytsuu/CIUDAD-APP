@@ -13,7 +13,7 @@ import {
   useRestoreAttendanceSheet,
 } from "../Calendar/queries/councilEventdelqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 // import Attendees from "./Attendees";
 import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/councilEventfetchqueries";
 import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
@@ -313,8 +313,9 @@ function AttendancePage() {
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   
-  const { data: councilEvents = [], isLoading, error } = useGetCouncilEvents();
-  const { data: attendanceSheets = [] } = useGetAttendanceSheets();
+  const { data: councilEvents = [], isLoading: isCouncilEventsLoading, error } = useGetCouncilEvents();
+  const { data: attendanceSheets = [], isLoading: isSheetsLoading } = useGetAttendanceSheets();
+  const isLoading = isCouncilEventsLoading || isSheetsLoading;
 
   const tableData = useMemo(() => {
     const eventMap = new Map<number, CouncilEvent>();
@@ -341,7 +342,6 @@ function AttendancePage() {
           });
         });
     } else {
-      // Group archived sheets by ce_id to avoid duplicate meetings
       const archivedSheetsByEvent = new Map<number, AttendanceSheet[]>();
       attendanceSheets
         .filter(sheet => sheet.att_is_archive)
@@ -404,49 +404,6 @@ function AttendancePage() {
     { id: "all", name: "All" },
     ...years.map((year) => ({ id: year, name: year })),
   ];
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full p-4">
-        <div className="flex-col items-center mb-4">
-          <Skeleton className="h-8 w-1/4 mb-2 opacity-30" />
-          <Skeleton className="h-4 w-1/3 opacity-30" />
-        </div>
-        <Skeleton className="h-[1px] w-full mb-6 sm:mb-10 opacity-30" />
-
-        <div className="w-full mb-4">
-          <div className="flex flex-col md:flex-row justify-start gap-3">
-            <Skeleton className="h-10 w-full md:w-[400px] opacity-30" />
-            <Skeleton className="h-10 w-[120px] opacity-30" />
-          </div>
-        </div>
-
-        <div className="w-full bg-white border border-none">
-          <div className="flex gap-x-2 items-center p-4">
-            <Skeleton className="h-4 w-10 opacity-30" />
-            <Skeleton className="h-8 w-14 opacity-30" />
-            <Skeleton className="h-4 w-16 opacity-30" />
-          </div>
-
-          <div className="space-y-2 p-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex gap-4">
-                <Skeleton className="h-6 w-24 opacity-30" />
-                <Skeleton className="h-6 w-48 opacity-30" />
-                <Skeleton className="h-6 w-72 opacity-30" />
-                <Skeleton className="h-6 w-24 opacity-30" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          <Skeleton className="h-4 w-48 opacity-30" />
-          <Skeleton className="h-8 w-64 opacity-30" />
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -519,37 +476,45 @@ function AttendancePage() {
           </Tabs>
         </div>
 
-        <Tabs value={activeTab}>
-          <TabsContent value="active">
-            <DataTable
-              columns={columns}
-              data={paginatedData}
-            />
-          </TabsContent>
-          <TabsContent value="archive">
-            <HistoryTable
-              columns={columns}
-              data={paginatedData}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {(currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-          {filteredData.length} rows
-        </p>
-
-        {filteredData.length > 0 && (
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => setCurrentPage(page)}
-            />
+         {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Spinner size="lg" />
           </div>
+        ) : (
+          <>
+            <Tabs value={activeTab}>
+              <TabsContent value="active">
+                <DataTable
+                  columns={columns}
+                  data={paginatedData}
+                />
+              </TabsContent>
+              <TabsContent value="archive">
+                <HistoryTable
+                  columns={columns}
+                  data={paginatedData}
+                />
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+              <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                Showing {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                {filteredData.length} rows
+              </p>
+
+              {filteredData.length > 0 && (
+                <div className="w-full sm:w-auto flex justify-center">
+                  <PaginationLayout
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => setCurrentPage(page)}
+                  />
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

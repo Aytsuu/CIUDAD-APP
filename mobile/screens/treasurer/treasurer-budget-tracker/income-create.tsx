@@ -18,7 +18,7 @@ import { useCreateIncome } from './queries/income-expense-AddQueries';
 import { useAddParticular } from './request/particular-PostRequest';
 import { useDeleteParticular } from './request/particular-DeleteRequest';
 import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 
 
@@ -56,7 +56,7 @@ function IncomeCreateForm() {
   const { data: IncomeParticularItems = [] } = useIncomeParticular();
   const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
 
-  const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
 
   console.log("TOT INC HERE: ", totInc)

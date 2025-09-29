@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Loader2,CheckCircle , Eye } from 'lucide-react';
+import { Search, CheckCircle , Eye } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -381,7 +382,7 @@ function CertificatePage() {
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+              <Spinner size="lg" />
             </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>

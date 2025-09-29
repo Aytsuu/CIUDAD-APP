@@ -4,6 +4,7 @@ import { ChevronLeft, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 import { useGetProjectProposals, useGetProjectProposal } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 import {
@@ -167,7 +168,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
-          <p>Loading data...</p>
+          <Spinner size="lg" />
         </div>
       ) : plans.length === 0 ? (
         <div className="flex items-center justify-center h-64">

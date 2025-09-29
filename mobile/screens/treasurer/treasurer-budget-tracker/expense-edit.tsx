@@ -13,7 +13,7 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import { useUpdateIncomeExpense } from './queries/income-expense-UpdateQueries';
 import { ChevronLeft, X, Loader2  } from 'lucide-react-native';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
@@ -67,7 +67,7 @@ function ExpenseEdit() {
 
   const { data: budgetItems = [] } = useBudgetItems(years);
 
-  const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === years);
+  const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 
