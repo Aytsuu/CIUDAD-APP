@@ -210,8 +210,6 @@ export default function CreatePatientRecord() {
     );
 
     if (selectedPatient && selectedPatient.personal_info) {
-      console.log("Selected Patient:", selectedPatient);
-      console.log("Selected Patient:", selectedPatient);
 
       const personalInfo = selectedPatient.personal_info;
 

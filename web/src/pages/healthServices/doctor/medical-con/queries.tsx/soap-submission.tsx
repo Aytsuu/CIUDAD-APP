@@ -53,6 +53,8 @@ export const useSubmitSoapForm = () => {
       queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
       queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
       queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+
 
       showSuccessToast("SOAP form submitted successfully");
     },

@@ -89,25 +89,37 @@ export default function MedicalConsultationForm() {
   const { setValue, control, watch } = form;
   const isPhilhealthRecord = watch("is_phrecord"); // Watch the checkbox value
 
-  useEffect(() => {
-    if (latestVitals) {
-      form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
-      form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
-      form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
-      form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
-      form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
-    }
-    if (previousMeasurements) {
-      form.setValue("height", previousMeasurements.height ?? 0);
-      form.setValue("weight", previousMeasurements.weight ?? 0);
-    }
-  }, [latestVitals, previousMeasurements, form]);
+ useEffect(() => {
+  if (latestVitals) {
+    form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
+    form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
+    form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
+    form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
+    form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
+  }
+  if (previousMeasurements) {
+    form.setValue("height", previousMeasurements.height ?? 0);
+    form.setValue("weight", previousMeasurements.weight ?? 0);
+  }
+  if (selectedPatientData) {
+    // Corrected line - removed the duplicate fallback that doesn't exist
+    form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
+    form.setValue("tt_status", selectedPatientData?.additional_info?.mother_tt_status || "");
+    console.log("Selected Patient Data:", selectedPatientData);
+    console.log("PhilHealth ID:", selectedPatientData?.additional_info?.philhealth_id); // Debug log
+  }
+}, [latestVitals, previousMeasurements, form, selectedPatientData]);
 
-  const handlePatientSelect = async (patient: any, patientId: string) => {
-    setSelectedPatientId(patientId);
-    setSelectedPatientData(patient);
-    form.setValue("pat_id", patient?.pat_id || "");
-  };
+const handlePatientSelect = async (patient: any, patientId: string) => {
+  setSelectedPatientId(patientId);
+  setSelectedPatientData(patient);
+  form.setValue("pat_id", patient?.pat_id || "");
+  
+  // Debug logs
+  console.log("Patient selected:", patient);
+  console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
+  console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
+};
 
   const onSubmit = async (data: nonPhilHealthType) => {
     if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData)) {
@@ -198,8 +210,7 @@ export default function MedicalConsultationForm() {
                           name="phil_pin" 
                           label="PhilHealth PIN" 
                           placeholder="Enter 12-digit PIN" 
-                          type="text"
-                          maxLength={12}
+                          // maxLength={12}
                           className="w-full" 
                         />
                       </div>

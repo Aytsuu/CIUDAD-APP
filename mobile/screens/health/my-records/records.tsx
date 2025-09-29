@@ -5,7 +5,7 @@ import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { router } from 'expo-router';
 import PageLayout from '@/screens/_PageLayout';
-import { useChildData } from './queries.tsx/fetch';
+// import { useChildData } from './queries.tsx/fetch';
 
 interface Service {
   id: number;
@@ -24,7 +24,7 @@ interface Service {
 export default function Records() {
 
 
-  const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
+  // const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
 
   const services: Service[] = [
     {
