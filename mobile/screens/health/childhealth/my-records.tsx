@@ -1,9 +1,9 @@
-// InvChildHealthRecords.js - UPDATED VERSION
-import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl } from "react-native";
+// InvChildHealthRecords.js - WITH HORIZONTALLY SCROLLABLE HEALTH RECORD CARDS
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, FlatList } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { ChevronLeft, FileText, Plus, Calendar, Weight, Ruler, Thermometer, Shield, Stethoscope, Heart, Droplets, Eye } from "lucide-react-native";
-
+import { ChevronLeft, FileText, Plus, Calendar, Weight, Ruler, Thermometer, Shield, Stethoscope, Heart, Droplets, Eye, ArrowRight } from "lucide-react-native";
+import { router } from "expo-router";
 // Custom hooks
 import { useNutriotionalStatus, useChildData } from "../admin/admin-childhealth/queries/fetchQueries";
 import { useUnvaccinatedVaccines } from "../admin/admin-vaccination/queries/fetch";
@@ -16,7 +16,10 @@ import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCa
 import { VaccinationStatusCards } from "../admin/components/vaccination-status-cards";
 import { FollowUpsCard } from "../admin/components/followup-cards";
 import { GrowthChart } from "./growth-chart";
-import HealthRecordCard from "./health-record-card";
+import PageLayout from "@/screens/_PageLayout";
+import { PaginationControls } from "../admin/components/pagination-layout";
+import NoRecordsCard from "../admin/components/no-records-card";
+
 export default function InvChildHealthRecords() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -28,7 +31,8 @@ export default function InvChildHealthRecords() {
   // State
   const [activeTab, setActiveTab] = useState("status");
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedCard, setExpandedCard] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(5); // Show 5 records per page
 
   // Use the useChildData hook
   const { data: childData, isLoading: isChildDataLoading, isError: isChildDataError, error: childDataError, refetch: refetchChildData } = useChildData(patId);
@@ -93,7 +97,7 @@ export default function InvChildHealthRecords() {
       lname: personalInfo?.per_lname || "",
       mname: personalInfo?.per_mname || "",
       sex: personalInfo?.per_sex || "",
-      age: personalInfo?.per_dob ? calculateAgeFromDOB(personalInfo.per_dob,chrecDetails?.created_at).years : "",
+      age: personalInfo?.per_dob ? calculateAgeFromDOB(personalInfo.per_dob, chrecDetails?.created_at).years : "",
       dob: personalInfo?.per_dob || "",
 
       // Mother info
@@ -101,7 +105,7 @@ export default function InvChildHealthRecords() {
       mother_lname: motherInfo?.per_lname || "",
       mother_mname: motherInfo?.per_mname || "",
       mother_occupation: chrecDetails?.mother_occupation || motherInfo?.per_occupation || "",
-      mother_age: motherInfo?.per_dob ? calculateAgeFromDOB(motherInfo.per_dob,chrecDetails?.created_at).years : "",
+      mother_age: motherInfo?.per_dob ? calculateAgeFromDOB(motherInfo.per_dob, chrecDetails?.created_at).years : "",
 
       // Father info
       father_fname: fatherInfo?.per_fname || "",
@@ -270,16 +274,214 @@ export default function InvChildHealthRecords() {
     });
   }, [childData, transformChildData, patientId]);
 
+  // NEW: Check if no records found
+  const noRecordsFound = useMemo(() => {
+    return !isChildDataLoading && processedHistoryData.length === 0;
+  }, [isChildDataLoading, processedHistoryData.length]);
+
+  // Paginate health records
+  const paginatedHealthRecords = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return processedHistoryData.slice(startIndex, endIndex);
+  }, [processedHistoryData, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(processedHistoryData.length / pageSize);
+  const startEntry = processedHistoryData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endEntry = Math.min(currentPage * pageSize, processedHistoryData.length);
+
   // Other hooks remain the same
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading, refetch: refetchUnvaccinated } = useUnvaccinatedVaccines(patId, transformChildData?.dob || "");
-  const { data: followUps = [], isLoading: followupLoading, refetch: refetchFollowups } = useFollowupChildHealthandVaccines(patId);
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading, refetch: refetchVaccinations } = usePatientVaccinationDetails(patId);
+  const { data: followUps = [], isLoading: followupLoading, refetch: refetchFollowups, isError: isUnVacError } = useFollowupChildHealthandVaccines(patId);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading, refetch: refetchVaccinations, isError: isVacError } = usePatientVaccinationDetails(patId);
   const { data: nutritionalStatusData = [], isLoading: isGrowthLoading, isError: isgrowthError, refetch: refetchNutritional } = useNutriotionalStatus(patId);
 
   const isLoading = isChildDataLoading || followupLoading || isUnvaccinatedLoading || isCompleteVaccineLoading || isGrowthLoading;
 
-  // Helper function for status colors
-  const getStatusColor = (status) => {
+  // NEW: Function to navigate to detailed record view
+  const navigateToRecordDetails = useCallback(
+    (record: any) => {
+      router.push({
+        pathname: "/childhealth/current-record",
+        params: {
+          record: JSON.stringify(record),
+          patientData: JSON.stringify(transformChildData),
+          childData: JSON.stringify(childData)
+        }
+      });
+    },
+    [navigation, transformChildData]
+  );
+
+  // UPDATED: Render health record card - COMPACT DESIGN WITH ALL DETAILS
+  const renderHealthRecordCard = (record: any) => {
+    console.log(`🎨 RENDERING CARD ${record.id}:`, {
+      temp: record.temp,
+      wt: record.wt,
+      ht: record.ht
+    });
+
+    return (
+      <View key={record.chhist_id} className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm  mr-4">
+        {/* Card Header */}
+        <View className="flex-row justify-between items-start mb-3">
+          <View className="">
+            <View className="flex-row items-center  justify-between mb-2">
+              <Text className="text-gray-900 text-lg font-bold mr-3">Record {processedHistoryData.length - record.id + 1}</Text>
+
+              <Text className="text-gray-500 text-sm">{record.updatedAt}</Text>
+            </View>
+
+            <View className="flex-row justify-end gap-4">
+              <View className={`${getStatusColor(record.status)} px-2 py-1 rounded-lg`}>
+                <Text className="text-white text-xs font-medium">{record.status === "recorded" ? "Completed" : record.status}</Text>
+              </View>
+              <Text className="text-gray-700 text-sm font-medium">Age: {record.age}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Vital Signs - ALWAYS VISIBLE */}
+        <View className="bg-gray-50 rounded-lg p-3 mb-3">
+          <Text className="text-gray-800 text-sm font-semibold mb-2">Vital Signs & Measurements</Text>
+
+          <View className="space-y-2">
+            {/* Temperature */}
+            <View className="flex-row items-center justify-between py-1">
+              <View className="flex-row items-center">
+                <Thermometer size={16} color="#ef4444" />
+                <Text className="text-gray-600 text-xs ml-2">Temperature:</Text>
+              </View>
+              <Text className="text-gray-900 text-sm font-medium">{record.temp ? `${record.temp}°C` : "Not recorded"}</Text>
+            </View>
+
+            {/* Weight */}
+            <View className="flex-row items-center justify-between py-1">
+              <View className="flex-row items-center">
+                <Weight size={16} color="#3b82f6" />
+                <Text className="text-gray-600 text-xs ml-2">Weight:</Text>
+              </View>
+              <Text className="text-gray-900 text-sm font-medium">{record.wt ? `${record.wt} kg` : "Not recorded"}</Text>
+            </View>
+
+            {/* Height */}
+            <View className="flex-row items-center justify-between py-1">
+              <View className="flex-row items-center">
+                <Ruler size={16} color="#10b981" />
+                <Text className="text-gray-600 text-xs ml-2">Height:</Text>
+              </View>
+              <Text className="text-gray-900 text-sm font-medium">{record.ht ? `${record.ht} cm` : "Not recorded"}</Text>
+            </View>
+
+            {/* BMI */}
+            <View className="flex-row items-center justify-between py-1">
+              <View className="flex-row items-center">
+                <Heart size={16} color="#8b5cf6" />
+                <Text className="text-gray-600 text-xs ml-2">BMI:</Text>
+              </View>
+              <Text className="text-gray-900 text-sm font-medium">{record.bmi !== "N/A" ? record.bmi : "Not calculated"}</Text>
+            </View>
+
+            {/* MUAC - only show if available */}
+            {record.muac && record.muac !== "None" && (
+              <View className="flex-row items-center justify-between py-1">
+                <View className="flex-row items-center">
+                  <Ruler size={16} color="#f59e0b" />
+                  <Text className="text-gray-600 text-xs ml-2">MUAC:</Text>
+                </View>
+                <Text className="text-gray-900 text-sm font-medium">{record.muac}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Detailed Measurements - ALWAYS VISIBLE */}
+        {(record.muac || record.edemaSeverity || record.wfa || record.lhfa || record.wfl) && (
+          <View className="bg-blue-50 rounded-lg p-3 mb-3">
+            <Text className="text-gray-800 text-sm font-semibold mb-2">Nutritional Status</Text>
+
+            <View className="space-y-1">
+              {record.muac && record.muac !== "None" && (
+                <Text className="text-gray-700 text-sm">
+                  <Text className="font-medium">MUAC:</Text> {record.muac}
+                </Text>
+              )}
+              {record.edemaSeverity && record.edemaSeverity !== "None" && (
+                <Text className="text-gray-700 text-sm">
+                  <Text className="font-medium">Edema:</Text> {record.edemaSeverity}
+                </Text>
+              )}
+              {record.wfa && (
+                <Text className="text-gray-700 text-sm">
+                  <Text className="font-medium">WFA:</Text> {record.wfa}
+                </Text>
+              )}
+              {record.lhfa && (
+                <Text className="text-gray-700 text-sm">
+                  <Text className="font-medium">LHFA:</Text> {record.lhfa}
+                </Text>
+              )}
+              {record.wfl && (
+                <Text className="text-gray-700 text-sm">
+                  <Text className="font-medium">WFL:</Text> {record.wfl}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Additional Information */}
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center">
+            <Shield size={16} color="#6b7280" />
+            <Text className="text-gray-700 text-sm font-medium ml-1">TT Status of mother: {record.vaccineStat}</Text>
+          </View>
+        </View>
+
+        {/* Notes Preview */}
+        {record.latestNote && (
+          <View className="mb-3">
+            <Text className="text-gray-600 text-xs font-medium mb-1">Latest Note:</Text>
+            <Text className="text-gray-700 text-sm" numberOfLines={2}>
+              {record.latestNote.length > 80 ? `${record.latestNote.substring(0, 80)}...` : record.latestNote}
+            </Text>
+          </View>
+        )}
+
+        {/* Follow-up Preview */}
+        {(record.followUpDescription || record.followUpDate) && (
+          <View className="mb-3">
+            <Text className="text-gray-600 text-xs font-medium mb-1">Follow-up:</Text>
+            {record.followUpDescription && (
+              <Text className="text-gray-700 text-sm" numberOfLines={2}>
+                {record.followUpDescription.length > 80 ? `${record.followUpDescription.substring(0, 80)}...` : record.followUpDescription}
+              </Text>
+            )}
+            {record.followUpDate && (
+              <View className="flex-row items-center mt-1">
+                <Calendar size={12} color="#6b7280" />
+                <Text className="text-gray-500 text-xs ml-1">{record.followUpDate}</Text>
+              </View>
+            )}
+            {record.followUpStatus && (
+              <View className="flex-row items-center mt-1">
+                <Stethoscope size={12} color="#6b7280" />
+                <Text className="text-gray-500 text-xs ml-1">{record.followUpStatus}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* View Details Button */}
+        <TouchableOpacity onPress={() => navigateToRecordDetails(record)} className="flex-row items-center justify-center bg-blue-50 border border-blue-200 rounded-lg py-2 mt-2" activeOpacity={0.7}>
+          <Text className="text-blue-600 text-sm font-medium mr-2">View Full Details</Text>
+          <ArrowRight size={16} color="#3b82f6" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const getStatusColor = (status: any) => {
     if (!status) return "bg-gray-500";
     const lowerStatus = status.toLowerCase();
     switch (lowerStatus) {
@@ -296,15 +498,11 @@ export default function InvChildHealthRecords() {
     }
   };
 
-  // Toggle card expand
-  const toggleCardExpand = (cardId) => {
-    setExpandedCard(expandedCard === cardId ? null : cardId);
-  };
-
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all([refetchChildData(), refetchUnvaccinated(), refetchFollowups(), refetchVaccinations(), refetchNutritional()]);
+      setCurrentPage(1); // Reset to first page on refresh
     } catch (error) {
       console.error("Error refreshing data:", error);
     } finally {
@@ -312,99 +510,166 @@ export default function InvChildHealthRecords() {
     }
   }, [refetchChildData, refetchUnvaccinated, refetchFollowups, refetchVaccinations, refetchNutritional]);
 
+  const handlePageChange = useCallback((page: any) => {
+    setCurrentPage(page);
+  }, []);
+
   if (isChildDataLoading) {
-    return <LoadingState />;
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <LoadingState />
+        </View>
+      </PageLayout>
+    );
   }
 
-  if (isChildDataError) {
+  // NEW: Handle case when no patient ID is provided
+  if (!patId) {
     return (
-      <View className="flex-1 items-center justify-center p-5">
-        <Text className="text-red-500 text-base text-center mb-4">Error loading data: {childDataError?.message || "Unknown error"}</Text>
-        <Button variant="outline" onPress={onRefresh}>
-          <Text>Refresh</Text>
-        </Button>
-      </View>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center p-5">
+          <View className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 items-center">
+            <FileText size={48} color="#f59e0b" />
+            <Text className="text-yellow-800 text-lg font-semibold mt-4 text-center">No Patient Selected</Text>
+            <Text className="text-yellow-600 text-base text-center mt-2">Please select a patient to view their health records.</Text>
+          </View>
+        </View>
+      </PageLayout>
+    );
+  }
+
+  if (isChildDataError && !patId && isgrowthError && isVacError && isUnVacError) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center p-5">
+          <Text className="text-red-500 text-base text-center mb-4">Error loading data: {childDataError?.message || "Unknown error"}</Text>
+          <Button variant="outline" onPress={onRefresh}>
+            <Text>Refresh</Text>
+          </Button>
+        </View>
+      </PageLayout>
     );
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-      {/* Header */}
-      <View className="flex-row items-center p-4 bg-white">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2 border border-gray-300 rounded-lg">
-          <ChevronLeft size={24} color="#000" />
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <View className="flex-1">
-          <Text className="font-semibold text-xl text-gray-800">Child Health History Records</Text>
-          <Text className="text-gray-500 text-sm mt-1">Manage and view child's health history</Text>
-        </View>
-      </View>
-
-      {/* Child Health Record Card */}
-      <View className=" mx-4 my-4 rounded-xl ">
-        {transformChildData ? (
-          <ChildHealthRecordCard child={transformChildData} />
+      }
+      headerTitle={<Text className="text-slate-900 text-[13px]">Child Health Records</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <ScrollView className="flex-1 b" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        {/* NEW: Show "No Records Found" message when no records exist */}
+        {noRecordsFound ? (
+          <NoRecordsCard onRefresh={onRefresh} />
         ) : (
-          <View className="items-center py-4">
-            <Text className="text-gray-500">No child data available</Text>
-          </View>
+          <>
+            <View className="mx-4 mb-2">
+              <ChildHealthRecordCard child={transformChildData} isLoading={isChildDataLoading} />
+            </View>
+            {/* Vaccination Status & Follow-ups Tabs */}
+            {!isLoading && (
+              <View className="bg-white mx-4 my-2 rounded-xl p-4 shadow-sm border border-gray-200">
+                <View className="flex-row border-b border-gray-200">
+                  <TouchableOpacity onPress={() => setActiveTab("status")} className={`flex-1 py-3 items-center ${activeTab === "status" ? "border-b-2 border-blue-500" : ""}`}>
+                    <Text className={`text-sm font-medium ${activeTab === "status" ? "text-blue-500" : "text-gray-500"}`}>Vaccination Status</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setActiveTab("followups")} className={`flex-1 py-3 items-center ${activeTab === "followups" ? "border-b-2 border-blue-500" : ""}`}>
+                    <Text className={`text-sm font-medium ${activeTab === "followups" ? "text-blue-500" : "text-gray-500"}`}>Follow-ups</Text>
+                  </TouchableOpacity>
+                </View>
+                <View className="mt-4">
+                  {activeTab === "status" && <VaccinationStatusCards unvaccinatedVaccines={unvaccinatedVaccines} vaccinations={vaccinations} />}
+                  {activeTab === "followups" && <FollowUpsCard childHealthFollowups={followUps} />}
+                </View>
+              </View>
+            )}
+
+            {/* Growth Chart */}
+            <View className="p-4">
+              <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
+            </View>
+
+            {/* Health Records Section */}
+            <View className="bg-white my-2  mb-4 border-gray-200 border-t ">
+              <View className="flex-row justify-between items-center mb-4 p-4">
+                <Text className="text-gray-800 text-lg font-semibold">Health Records</Text>
+                <View className="flex-row items-center space-x-2">
+                  <Text className="text-gray-700 text-sm font-medium mr-2">Records Found</Text>
+                  <View className="bg-blue-100 border border-blue-300 rounded-full px-3 py-1">
+                    <Text className="text-blue-600 text-xs font-semibold">{processedHistoryData.length}</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Entries Summary */}
+              {processedHistoryData.length > 0 && (
+                <View className="py-2 border-b border-gray-100 mb-3 p-4">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-sm text-gray-600">
+                      Showing {startEntry} to {endEntry} of {processedHistoryData.length} entries
+                    </Text>
+                    <Text className="text-sm font-medium text-gray-800">
+                      Page {currentPage} of {totalPages}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Health Records List - HORIZONTAL SCROLL */}
+              <View className="mb-4 p-4">
+                {isChildDataLoading ? (
+                  <View className="items-center py-8">
+                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <Text className="text-gray-500 text-base mt-3">Loading records...</Text>
+                  </View>
+                ) : paginatedHealthRecords.length === 0 ? (
+                  <View className="items-center py-8">
+                    <Text className="text-gray-500 text-base">No health records found</Text>
+                  </View>
+                ) : (
+                  <>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ paddingRight: 16 }}>
+                      <View className="flex-row">{paginatedHealthRecords.map((record) => renderHealthRecordCard(record))}</View>
+                    </ScrollView>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={processedHistoryData.length} pageSize={pageSize} onPageChange={handlePageChange} />}
+                  </>
+                )}
+              </View>
+            </View>
+          </>
         )}
-      </View>
-
-      {/* Vaccination Status & Follow-ups Tabs */}
-      {!isLoading && (
-        <View className="bg-white mx-4 my-2 rounded-xl p-4 shadow-sm">
-          <View className="flex-row border-b border-gray-200">
-            <TouchableOpacity onPress={() => setActiveTab("status")} className={`flex-1 py-3 items-center ${activeTab === "status" ? "border-b-2 border-blue-500" : ""}`}>
-              <Text className={`text-sm font-medium ${activeTab === "status" ? "text-blue-500" : "text-gray-500"}`}>Vaccination Status</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveTab("followups")} className={`flex-1 py-3 items-center ${activeTab === "followups" ? "border-b-2 border-blue-500" : ""}`}>
-              <Text className={`text-sm font-medium ${activeTab === "followups" ? "text-blue-500" : "text-gray-500"}`}>Follow-ups</Text>
-            </TouchableOpacity>
-          </View>
-          <View className="mt-4">
-            {activeTab === "status" && <VaccinationStatusCards unvaccinatedVaccines={unvaccinatedVaccines} vaccinations={vaccinations} />}
-            {activeTab === "followups" && <FollowUpsCard childHealthFollowups={followUps} />}
-          </View>
-        </View>
-      )}
-
-      {/* Growth Chart */}
-      <View className="bg-white mx-4 my-2 rounded-xl p-4 shadow-sm">
-        <GrowthChart data={nutritionalStatusData} isLoading={isGrowthLoading} error={isgrowthError} />
-      </View>
-
-      {/* Health Records Section */}
-      <View className="bg-white mx-4 my-2 rounded-xl p-4 shadow-sm mb-4">
-        <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-gray-800 text-lg font-semibold">Health Records</Text>
-          <Text className="text-gray-500 text-sm">{processedHistoryData.length} records found</Text>
-        </View>
-
-        {/* Health Records List - Using the separated component */}
-        <View className="mb-4">
-          {isChildDataLoading ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#3b82f6" />
-              <Text className="text-gray-500 text-base mt-3">Loading records...</Text>
-            </View>
-          ) : processedHistoryData.length === 0 ? (
-            <View className="items-center py-8">
-              <Text className="text-gray-500 text-base">No health records found</Text>
-            </View>
-          ) : (
-            processedHistoryData.map((record) => (
-              <HealthRecordCard
-                key={record.chhist_id}
-                record={record}
-                isExpanded={expandedCard === record.chhist_id}
-                onToggleExpand={toggleCardExpand}
-                getStatusColor={getStatusColor}
-              />
-            ))
-          )}
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </PageLayout>
   );
 }

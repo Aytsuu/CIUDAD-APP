@@ -41,6 +41,7 @@ export default () => {
                 <Stack.Screen name="medicine-request/request-page" options={{ headerShown: false }} />
 
                 <Stack.Screen name="childhealth/my-records" options={{ headerShown: false }} />
+                <Stack.Screen name="childhealth/current-record" options={{ headerShown: false }} />
 
 
 
