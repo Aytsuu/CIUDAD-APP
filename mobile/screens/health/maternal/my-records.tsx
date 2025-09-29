@@ -16,7 +16,7 @@ import { PregnancyAccordion } from "../admin/admin-maternal/prenatal/pregnancy-a
 import { usePregnancyDetails } from "../admin/admin-maternal/queries/maternalFETCH"
 import { useAuth } from "@/contexts/AuthContext"
 import { useQuery } from "@tanstack/react-query"
-import { getPatientByResidentId } from "../animalbites/api/get-api"
+import { usePatientByResidentId } from "../patientchecker/queries"
 
 interface Patient {
   pat_id: string
@@ -195,29 +195,21 @@ const FilterPicker = React.memo<{
 export default function MyMaternalRecordScreen() {
   const { user } = useAuth()
   const rp_id = user?.rp
+  const { pat_id } = useAuth()
+  const patId  = pat_id
+  console.log("Patient ID in My Records Screen:", patId)
 
   const [selectedFilter, setSelectedFilter] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
 
-  const {
-    data: patientData,
-    isLoading: isPatientLoading,
-    refetch: refetchPatientData,
-  } = useQuery({
-    queryKey: ["patientByResidentId", rp_id],
-    queryFn: () => {
-      if (!rp_id) throw new Error("Resident ID is undefined")
-      return getPatientByResidentId(rp_id)
-    },
-    enabled: !!rp_id,
-  })
+  const { data: patientData, isLoading: isPatientLoading } = usePatientByResidentId(rp_id || "")
 
   const {
     data: pregnancyData,
     isLoading: pregnancyDataLoading,
     refetch,
-  } = usePregnancyDetails(patientData?.pat_id || "")
+  } = usePregnancyDetails(patId || "")
 
   const getLatestFollowupVisit = () => {
     let followUpData = []
@@ -483,7 +475,7 @@ export default function MyMaternalRecordScreen() {
                     <Text className="text-lg font-semibold text-gray-900 mb-2">
                       {patientData.personal_info?.per_fname} {patientData.personal_info?.per_lname}
                     </Text>
-                    <Text className="text-gray-600 text-sm">ID: {patientData.pat_id}</Text>
+                    <Text className="text-gray-600 text-sm">ID: {patId}</Text>
                   </CardContent>
                 </Card>
               </View>
