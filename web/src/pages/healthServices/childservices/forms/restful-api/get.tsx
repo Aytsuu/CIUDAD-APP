@@ -1,5 +1,6 @@
 import { api2 } from "@/api/api";
 
+
 export const getChildHealthRecords = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
   try {
     const queryParams = new URLSearchParams();
@@ -77,3 +78,14 @@ export const getLatestVitals = async (id:any) => {
     throw err;
   }
 };
+
+
+export const getChildnotesfollowup = async (chrec_id: any) => {
+  try {
+    const response = await api2.get(`/child-health/patients/${chrec_id}/pending-followups-with-notes/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+  }

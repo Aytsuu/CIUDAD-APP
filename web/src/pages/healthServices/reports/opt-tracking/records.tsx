@@ -370,7 +370,7 @@ export default function OPTTrackingDetails() {
                         <td className="border p-1 "></td>
                         <td className="border p-1 "></td>
                         <td className="border p-1">{item.child_name || "N/A"}</td>
-                        <td className="border p-1 ">{item.sex === "Male" ? "M" : item.sex === "Female" ? "F" : "N/A"}</td>
+                        <td className="border p-1 ">{item.sex}</td>
                         <td className="border p-1 text-center">{formatDate(item.date_of_birth)}</td>
                         <td className="border p-1 text-center">{formatDate(item.date_of_weighing)}</td>
                         <td className="border p-1 text-center">{item.age_in_months?.toString() || "N/A"}</td>

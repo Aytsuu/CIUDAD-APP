@@ -14,8 +14,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
-import { useVaccineChart } from "@/pages/healthServices/reports/vaccination-report/queries/fetchQueries";
 import CardLayout from "@/components/ui/card/card-layout";
+import { useVaccineChart } from "./queries/chart";
 
 interface VaccineChartProps {
   initialMonth: string;
@@ -55,7 +55,7 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
   const allVaccines = data?.vaccine_counts
     ? Object.entries(data.vaccine_counts)
         .filter(([name]) => name !== "null")
-        .map(([name, count]) => ({ name, count }))
+        .map(([name, count]) => ({ name, count: count as number }))
         .sort((a, b) => b.count - a.count) // Sort by count descending
     : [];
 
