@@ -127,10 +127,10 @@ export type WasteCollectionSchedFull = {
     driver_name: string,
 };
 
-export const useGetWasteCollectionSchedFull = () => {
+export const useGetWasteCollectionSchedFull = (searchQuery?: string, selectedDay?: string) => {
     return useQuery<WasteCollectionSchedFull[]>({
-        queryKey: ["wasteCollectionSchedFull"],
-        queryFn: getWasteCollectionSchedFull,
+        queryKey: ["wasteCollectionSchedFull", searchQuery, selectedDay],
+        queryFn: () => getWasteCollectionSchedFull(searchQuery, selectedDay),
         staleTime: 1000 * 60 * 30,
     });
 };

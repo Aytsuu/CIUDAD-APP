@@ -1,6 +1,6 @@
 
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -24,6 +24,7 @@ import { useLocation } from "react-router-dom";
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext";
 
 
 function IncomeTracking() {
@@ -33,6 +34,7 @@ function IncomeTracking() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const { showLoading, hideLoading } = useLoading();
     
     // Add debouncing for search
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -66,6 +68,15 @@ function IncomeTracking() {
         debouncedSearchQuery,
         selectedMonth
     );
+
+
+    useEffect(() => {
+        if (isLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, showLoading, hideLoading]);   
     
     const { data: fetchIncData = [] } = useIncomeExpenseMainCard();  
 

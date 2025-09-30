@@ -13,16 +13,16 @@ import {
 } from "./event-columns/event-cols";
 import { useGetCouncilEvents } from "../council/Calendar/queries/councilEventfetchqueries";
 import { useQuery } from "@tanstack/react-query";
-import { getWasteEvents } from "./waste-event/queries/wasteEventQueries";
+// import { getWasteEvents } from "./waste-event/queries/wasteEventQueries";
 import WasteEventSched from "./waste-event/waste-event-sched";
 
 const WasteMainScheduling = () => {
   const { data: hotspotData = [], isLoading: isHotspotLoading } = useGetHotspotRecords();
   const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
-  const { data: wasteEventData = [], isLoading: isWasteEventLoading } = useQuery({
-    queryKey: ['wasteEvents'],
-    queryFn: getWasteEvents
-  });
+  // const { data: wasteEventData = [], isLoading: isWasteEventLoading } = useQuery({
+  //   queryKey: ['wasteEvents'],
+  //   queryFn: getWasteEvents
+  // });
   const [_activeTab, setActiveTab] = useState("calendar");
   const { data: councilEvents = [] } = useGetCouncilEvents();
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
@@ -48,23 +48,23 @@ const WasteMainScheduling = () => {
       timeAccessor: "wc_time",
       defaultColor: "#10b981", // emerald
     },
-    {
-      name: "Waste Events",
-      data: wasteEventData.filter((event: any) => !event.we_is_archive && event.we_date && event.we_time),
-      columns: [
-        { accessorKey: "we_name", header: "Event Name" },
-        { accessorKey: "we_location", header: "Location" },
-        { accessorKey: "we_date", header: "Date" },
-        { accessorKey: "we_time", header: "Time" },
-        { accessorKey: "we_description", header: "Event Description" },
-        { accessorKey: "we_organizer", header: "Organizer" },
-        { accessorKey: "we_invitees", header: "Invitees" },
-      ],
-      titleAccessor: "we_name",
-      dateAccessor: "we_date",
-      timeAccessor: "we_time",
-      defaultColor: "#f59e0b", // amber
-    },
+    // {
+    //   name: "Waste Events",
+    //   data: wasteEventData.filter((event: any) => !event.we_is_archive && event.we_date && event.we_time),
+    //   columns: [
+    //     { accessorKey: "we_name", header: "Event Name" },
+    //     { accessorKey: "we_location", header: "Location" },
+    //     { accessorKey: "we_date", header: "Date" },
+    //     { accessorKey: "we_time", header: "Time" },
+    //     { accessorKey: "we_description", header: "Event Description" },
+    //     { accessorKey: "we_organizer", header: "Organizer" },
+    //     { accessorKey: "we_invitees", header: "Invitees" },
+    //   ],
+    //   titleAccessor: "we_name",
+    //   dateAccessor: "we_date",
+    //   timeAccessor: "we_time",
+    //   defaultColor: "#f59e0b", // amber
+    // },
     {
       name: "Council Events",
       data: calendarEvents,
@@ -76,7 +76,7 @@ const WasteMainScheduling = () => {
     },
   ];
 
-  if (isHotspotLoading || isWasteColLoading || isWasteEventLoading) {
+  if (isHotspotLoading || isWasteColLoading ) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />

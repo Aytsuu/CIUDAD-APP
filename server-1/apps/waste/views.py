@@ -48,24 +48,36 @@ class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
 
-class WasteCollectorListView(generics.ListAPIView):
-    serializer_class = WasteCollectorSerializer
-    
-    def get_queryset(self):
-        queryset = WasteCollector.objects.all()
-        wc_num = self.request.query_params.get('wc_num')
-        wstp = self.request.query_params.get('wstp')
-        
-        if wc_num:
-            queryset = queryset.filter(wc_num=wc_num)
-        if wstp:
-            queryset = queryset.filter(wstp=wstp)
-            
-        return queryset
-
 class WasteCollectionSchedFullDataView(generics.ListAPIView):
     serializer_class = WasteCollectionSchedFullDataSerializer
-    queryset = WasteCollectionSched.objects.all()
+    
+    def get_queryset(self):
+        search_query = self.request.query_params.get('search', '')
+        day = self.request.query_params.get('day', '')
+        
+        queryset = WasteCollectionSched.objects.all()
+        
+        # Apply search filter if search query exists
+        if search_query:
+            queryset = queryset.filter(
+                Q(wc_add_info__icontains=search_query) |
+                Q(sitio__sitio_name__icontains=search_query) |
+                Q(wc_day__icontains=search_query) |
+                # Search driver name (wstp field)
+                Q(wstp__staff__rp__per__per_lname__icontains=search_query) |
+                Q(wstp__staff__rp__per__per_fname__icontains=search_query) |
+                Q(wstp__staff__rp__per__per_mname__icontains=search_query) |
+                # Search collectors names (through WasteCollector model)
+                Q(wastecollector__wstp__staff__rp__per__per_lname__icontains=search_query) |
+                Q(wastecollector__wstp__staff__rp__per__per_fname__icontains=search_query) |
+                Q(wastecollector__wstp__staff__rp__per__per_mname__icontains=search_query)
+            ).distinct()  # Important: use distinct() to avoid duplicate results from collector joins
+        
+        # Apply day filter
+        if day:
+            queryset = queryset.filter(wc_day=day)
+        
+        return queryset
 
 class WasteCollectorDeleteView(generics.DestroyAPIView):
     queryset = WasteCollector.objects.all()
@@ -93,9 +105,6 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
 #     serializer_class = WasteCollectionAssignmentSerializer
 #     queryset = WasteCollectionAssignment.objects.all()
 
-class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
-    serializer_class = WasteCollectorSerializer
-    queryset = WasteCollector.objects.all()
 
 class WasteCollectorListView(generics.ListAPIView):
     serializer_class = WasteCollectorSerializer
@@ -112,9 +121,6 @@ class WasteCollectorListView(generics.ListAPIView):
             
         return queryset
 
-class WasteCollectionSchedFullDataView(generics.ListAPIView):
-    serializer_class = WasteCollectionSchedFullDataSerializer
-    queryset = WasteCollectionSched.objects.all()
 
 # WASTE COLLECTION UPDATE
 class WasteCollectionSchedUpdateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
@@ -122,23 +128,6 @@ class WasteCollectionSchedUpdateView(ActivityLogMixin, generics.RetrieveUpdateAP
     serializer_class = WasteCollectionSchedSerializer
     lookup_field = 'wc_num'
     permission_classes = [AllowAny]
-
-class WasteCollectorDeleteView(generics.DestroyAPIView):
-    queryset = WasteCollector.objects.all()
-    serializer_class = WasteCollectorSerializer
-
-    def get_object(self):
-        wasc_id = self.kwargs.get('wasc_id')
-        return get_object_or_404(WasteCollector, wasc_id=wasc_id) 
-
-# WASTE COLLECTION DELETE
-class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
-    queryset = WasteCollectionSched.objects.all()
-    serializer_class = WasteCollectionSchedSerializer
-
-    def get_object(self):
-        wc_num = self.kwargs.get('wc_num')
-        return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
     
 
 #WASTE COLLECTION ANNOUNCEMENT
@@ -343,10 +332,6 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
         self.get_serializer()._upload_files(files, rep_id=rep_id)
         
         return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)    
-
-# class WasteReportView(generics.ListCreateAPIView):
-#     serializer_class = WasteReportSerializer
-#     queryset = WasteReport.objects.all()
 
 
 class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
@@ -578,10 +563,6 @@ class SitioListView(ActivityLogMixin, generics.ListCreateAPIView):
     # permission_classes = [AllowAny]
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
-
-class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
-    serializer_class = WasteCollectorSerializer
-    queryset = WasteCollector.objects.all()
 
 
 class WatchmanView(generics.GenericAPIView): 
