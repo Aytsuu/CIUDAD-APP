@@ -5,7 +5,7 @@ export const formatSitio = (sitio: any) => {
   return sitio.map(
     (item: { sitio_id: string; sitio_name: string }) => ({
       label: item.sitio_name,
-      value: item.sitio_id,
+      value: item.sitio_name,
     })
   );
 };

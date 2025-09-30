@@ -19,10 +19,12 @@ export default function EditGeneralDetails({
   familyData, 
   households, 
   setIsOpenDialog,
+  setSearchQuery
 } : {
   familyData: Record<string, any>
   households: any[];
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const defaultValues = React.useRef(
     generateDefaultValues(demographicInfoSchema)
@@ -115,6 +117,7 @@ export default function EditGeneralDetails({
             options={formattedHouseholds}
             value={form.watch("householdNo")}
             onChange={(value) => form.setValue("householdNo", value as string)}
+            onSearchChange={((value) => setSearchQuery(value))}
             placeholder="Select a household"
             triggerClassName="font-normal"
             variant="modal"

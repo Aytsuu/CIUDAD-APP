@@ -11,12 +11,13 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
     accessorKey: 'type',
     header: "",
     cell: ({ row }) => (
-      <Badge className={`${row.original.type == 'Business' ? 
-        "bg-purple-500 hover:bg-purple-400" :
+      <Badge className={`rounded-full ${row.original.type == 'Business' ? 
+        "bg-purple-50 border-purple-400 text-purple-700 hover:bg-purple-50" :
         ""}`}>
         {row.original.type}
       </Badge>
-    )
+    ),
+    size: 100
   },
   {
     accessorKey: 'id',
@@ -60,20 +61,22 @@ export const allRecordColumns: ColumnDef<AllRecordCombined>[] = [
   },
   {
     accessorKey: 'suffix',
-    header: "Suffix"
+    header: "Suffix",
+    size: 100
   },
   {
     accessorKey: 'sex',
     header: "Sex",
     cell: ({row}) => (
       row.original.sex[0]
-    )
+    ),
+    size: 100
   },
   {
     accessorKey: 'date_registered',
-    header: "Date Registered",
+    header: "Registered",
     cell: ({row}) => (
-      formatDate(row.original.date_registered, "long" as any)
+      formatDate(row.original.date_registered, "short" as any)
     )
   },
   {
