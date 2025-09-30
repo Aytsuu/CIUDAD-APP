@@ -7,6 +7,7 @@ from ..serializers.address_serializers import *
 from apps.account.serializers import UserAccountSerializer
 from apps.administration.models import Staff
 from datetime import datetime
+from ..utils import *
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -111,7 +112,7 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
 
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
-            rp_id = self.generate_resident_no(),
+            rp_id = generate_resident_no(),
             per = personal,
             staff = staff
         )
@@ -124,18 +125,6 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
             'per': PersonalWithHistorySerializer(instance.per).data,
             'staff': instance.staff_id,
         }
-
-    def generate_resident_no(self):
-        next_val = ResidentProfile.objects.count() + 1
-        date = datetime.now()
-        year = str(date.year - 2000)
-        month = str(date.month).zfill(2)
-        day = str(date.day).zfill(2)
-
-        formatted = f"{next_val:05d}"
-        resident_id = f"{formatted}{year}{month}{day}"
-        
-        return resident_id
 
 class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_id = serializers.IntegerField(source='per.per_id')
@@ -153,12 +142,13 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
+    fam_id = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
-        fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
+        fields = ['rp_id','per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
                   'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability',
-                    'per_addresses', 'per_age', 'rp_date_registered', 'registered_by']
+                    'per_addresses', 'per_age', 'rp_date_registered', 'fam_id', 'registered_by']
         read_only_fields = fields
 
     def get_per_age(self, obj):
@@ -187,6 +177,11 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
             staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
             return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+    
+    def get_fam_id(self, obj):
+        families = obj.family_compositions.all().first()
+        return families.fam.fam_id if families else None
+
 
 
 class ResidentProfileListSerializer(serializers.ModelSerializer):

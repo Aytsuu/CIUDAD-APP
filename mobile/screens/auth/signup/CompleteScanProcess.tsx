@@ -4,15 +4,12 @@ import { ScrollView, TouchableOpacity, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import { CheckCircle } from "@/lib/icons/CircleCheck";
 import { X } from "@/lib/icons/X";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
-import { Camera } from "@/lib/icons/Camera";
-import { CreditCard } from "@/lib/icons/CreditCard";
-import { Shield } from "@/lib/icons/Shield";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScanID from "./ScanID";
 import TakeAPhoto from "./TakeAPhoto";
+import { CheckCircle } from "@/lib/icons/CheckCircle";
 
 export default function CompleteScanProcess({params} : {params: Record<string, any>}) {
   // INITIALIZATION

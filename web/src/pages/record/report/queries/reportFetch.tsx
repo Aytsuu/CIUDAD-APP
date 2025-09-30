@@ -25,7 +25,7 @@ export const useGetIncidentReport = (page: number, pageSize: number, searchQuery
 
 export const useGetIRInfo = (ir_id: string) => {
   return useQuery({
-    queryKey: ['IRInfo'],
+    queryKey: ['IRInfo', ir_id],
     queryFn: async () => {
       try {
         const res = await api.get(`report/ir/${ir_id}/info/`);

@@ -34,6 +34,7 @@ type PersonalInfoFormProps = {
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
   onComboboxChange?: () => void;  
+  setSearchQuery?: React.Dispatch<React.SetStateAction<string>>
 };
 
 // ==================== CONSTANTS ====================
@@ -101,6 +102,7 @@ const PersonalInfoForm = ({
   setFormType,
   submit,
   onComboboxChange,
+  setSearchQuery
 }: PersonalInfoFormProps) => {
   // ============= INITIALIZING STATES =============
   const { control, setValue, watch } = form;
@@ -131,6 +133,7 @@ const PersonalInfoForm = ({
             setValue(`${prefix}per_id` as any, value);
             onComboboxChange && onComboboxChange();
           }}
+          onSearchChange={(value) => setSearchQuery && setSearchQuery(value)}
           placeholder="Select a resident"
           emptyMessage={
             <div className="flex gap-2 justify-center items-center">

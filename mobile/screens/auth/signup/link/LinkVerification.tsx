@@ -8,7 +8,7 @@ import PageLayout from "@/screens/_PageLayout"
 import { useRouter } from "expo-router"
 import { useState } from "react"
 import { ScrollView, Text, TouchableOpacity, View } from "react-native"
-import { useValidateResident, useVerifyBusinessRespondent } from "../../queries/authPostQueries"
+import { useValidateResident } from "../../queries/authPostQueries"
 import { FormDateInput } from "@/components/ui/form/form-date-input"
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { UserSearch } from "@/lib/icons/UserSearch"

@@ -14,7 +14,7 @@ class RequestTableSerializer(serializers.ModelSerializer):
   compositions = serializers.SerializerMethodField()
   class Meta:
     model = RequestRegistration
-    fields = ['req_id', 'req_date', 'compositions']
+    fields = ['req_id', 'req_created_at', 'compositions']
 
   def get_compositions(self, obj):
     compositions = obj.request_composition.all()

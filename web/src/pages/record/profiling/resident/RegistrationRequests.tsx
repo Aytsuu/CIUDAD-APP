@@ -71,7 +71,7 @@ export default function RegistrationRequests() {
         const personal = request.compositions[0] 
         return {
           req_id: request.req_id,
-          req_date: request.req_date,
+          req_created_at: request.req_created_at,
           acc: personal.acc,
           per_id: personal.per_id,
           per_lname: personal.per_lname,
