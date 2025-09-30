@@ -37,4 +37,5 @@ urlpatterns=[
     path('patient/<str:pat_id>/postpartum_count/', get_patient_postpartum_count, name='patient-postpartum-count'),
     path('postpartum/<str:pat_id>/latest/', get_latest_patient_postpartum_records, name='patient-postpartum-records'),   
     path('postpartum/<str:pat_id>/all/', PostpartumRecordsListView.as_view(), name='all-postpartum-records'),
+    path('postpartum/<str:ppr_id>/complete/', PostpartumPartumFormView.as_view(), name='postpartum-form-complete'),
 ]

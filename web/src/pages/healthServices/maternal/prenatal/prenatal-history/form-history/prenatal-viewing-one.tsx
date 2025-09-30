@@ -1,6 +1,5 @@
 "use client"
 
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
@@ -67,7 +66,8 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
     );
   }
 
-  // initiating data from api
+  // initiating data
+  const isResident = prenatalForm.patient_details.pat_type.toLowerCase() === "resident";
   const personalInfo = prenatalForm.patient_details?.personal_info;
   const address = prenatalForm.patient_details?.address;
   const family = prenatalForm.patient_details?.family;
@@ -83,7 +83,13 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const riskCodes = prenatalForm.obstetric_risk_codes;
   const birthPlan = prenatalForm.birth_plan_details;
   const ancVisit = prenatalForm?.anc_visit_guide;
+  const assessedBy = prenatalForm.staff_details?.staff_name
 
+  // spouse or father details
+  const isFatherFC = prenatalForm.patient_details?.family?.family_heads?.father?.role.toLowerCase() === "father";
+  const fatherFC = prenatalForm.patient_details?.family?.family_heads?.father?.personal_info
+  const fatherFormattedName = `${fatherFC?.per_lname || ""}, ${fatherFC?.per_fname || ""} ${fatherFC?.per_mname || ""}`.trim();
+  
   // age calculation
   const age = personalInfo?.per_dob ? 
     Math.floor((new Date().getTime() - new Date(personalInfo.per_dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)).toString() 
@@ -162,29 +168,32 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                   : ""} 
               />
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   name="ageTenToFourteen"
-                  className="ml-1 mr-1 mt-4" 
+                  className="ml-1 mr-1 mt-3" 
                   checked={ageTenToFourteen || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mt-4">10-14YO</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   name="ageFifteenToNineteen"
-                  className="ml-1 mr-1 mt-4" 
+                  className="ml-1 mr-1 mt-3" 
                   checked={ageFifteenToNineteen || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mt-4">15-19</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   name="ageTwentyToFortyNine"
-                  className="ml-1 mr-1 mt-4" 
+                  className="ml-1 mr-1 mt-3" 
                   checked={ageTwentyToFortyNine || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mt-4">20-49</Label>
               </div>
@@ -195,12 +204,17 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             <Label className="mt-4">DATE OF BIRTH:</Label>
             <InputLine className="w-[100px]" value={personalInfo?.per_dob || ""} />
             <Label className="mt-4">HUSBAND'S NAME:</Label>
-            <InputLine 
-              className="w-1/3" 
-              value={`${prenatalForm.spouse_details?.spouse_lname || ""}, ${prenatalForm.spouse_details?.spouse_fname || ""} ${prenatalForm.spouse_details?.spouse_mname || ""}`.trim()} 
-            />
+            {isResident && isFatherFC ? (
+              <InputLine className="w-1/3" value={fatherFormattedName}/>
+            ) : (
+              <InputLine 
+                className="w-1/3" 
+                value={`${prenatalForm.spouse_details?.spouse_lname || ""}, ${prenatalForm.spouse_details?.spouse_fname || ""} ${prenatalForm.spouse_details?.spouse_mname || ""}`.trim()} 
+              />
+            )}
+            
             <Label className="mt-4">OCCUPATION:</Label>
-            <InputLine className="w-1/6" value={prenatalForm.spouse_details?.spouse_occupation || ""} />
+            <InputLine className="w-1/6" value={prenatalForm.spouse_details?.spouse_occupation || prenatalForm?.pf_occupation} />
           </div>
 
           <div className="flex pb-2">
@@ -219,29 +233,32 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             <InputLine className="w-[90px]" value={String(bmi)} />
 
             <div className="flex">
-              <Checkbox 
+              <input 
+                type="checkbox"
                 name="bpLow"
-                className="ml-1 mr-1 mt-4" 
+                className="ml-1 mr-1 mt-3" 
                 checked={bpLowChecked || false} 
-                disabled
+                readOnly
               />
               <Label className="mt-4">LOW</Label>
             </div>
             <div className="flex">
-              <Checkbox 
+              <input 
+                type="checkbox"
                 name="bpHigh"
-                className="ml-1 mr-1 mt-4" 
+                className="ml-1 mr-1 mt-3" 
                 checked={bpHighChecked || false} 
-                disabled
+                readOnly
               />
               <Label className="mt-4">HIGH</Label>
             </div>
             <div className="flex">
-              <Checkbox 
+              <input 
+                type="checkbox"
                 name="bpNormal"
-                className="ml-1 mr-1 mt-4" 
+                className="ml-1 mr-1 mt-3" 
                 checked={bpNormalChecked || false} 
-                disabled
+                readOnly
               />
               <Label className="mt-4">NORMAL</Label>
             </div>
@@ -283,39 +300,34 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             <div className="flex flex-col">
               <h6 className="text-sm mt-3 underline"><b>MEDICAL HISTORY</b></h6>
                 <div className="flex flex-col">
+                  {/* Previous Illness */}
                   <div className="flex">
                     <Label className="mt-4">PREVIOUS ILLNESS:</Label>
-                    <InputLineLonger className="w-[30vh]" value="" />
                   </div>
                   <div>
-                    {medicalHistory.length > 0 ? (
-                      medicalHistory.map((pi:any) => (
-                        <InputLineLonger key={pi.ill_id} className="w-[43vh] text-sm" value={`(${pi.ill_date || "unknown date"}) ${pi.illness_name},`} />
-                      ))
-                    ) : (
-                      <InputLineLonger className="w-[43vh]" value="" />
-                    )}
-                    
+                    <InputLineLonger 
+                      className="w-[43vh] text-sm" 
+                      value={medicalHistory.length > 0 
+                        ? medicalHistory.map((pi: any) => `(${pi.ill_date || "unknown date"}) ${pi.illness_name}`).join(', ') 
+                        : ""
+                      } 
+                    />
                   </div>
 
+                  {/* Previous Hospitalization */}
                   <div className="flex">
                     <Label className="mt-4 mb-1">PREVIOUS HOSPITALIZATION:</Label>
                   </div>
                   <div>
-                    {previousHospitalizations.length > 0 ? (
-                      previousHospitalizations.map((hospitalizations: any) => (
-                        <InputLineLonger  
-                          key={hospitalizations.pfph_id} 
-                          className="w-[43vh] text-sm break-words resize-none overflow-y-auto min-h-[3.5rem] max-h-32" 
-                          value={`(${hospitalizations.prev_hospitalization_year}) ${hospitalizations.prev_hospitalization},`} 
-                        />
-                      ))
-                    ): 
-                    <InputLine className="w-[43vh]" value="" />
-                    }
-                    
+                    <InputLineLonger  
+                      className="w-[43vh] text-sm break-words resize-none overflow-y-auto min-h-[3.5rem] max-h-32" 
+                      value={previousHospitalizations.length > 0 
+                        ? previousHospitalizations.map((hospitalizations: any) => `(${hospitalizations.prev_hospitalization_year}) ${hospitalizations.prev_hospitalization}`).join(', ')
+                        : ""
+                      } 
+                    />
                   </div>
-
+                  {/* Previous Pregnancy Complications */}
                   <div className="flex">
                     <Label className="mt-4">PREVIOUS PREG. COMPLICATION: (SPECIFY) HISTORY OF</Label>
                   </div>
@@ -569,50 +581,56 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
           <div className="flex flex-row">
             <div className="flex flex-col">
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.increased_bp || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">INCREASED BP</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.epigastric_pain || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">EPIGASTRIC PAIN</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.nausea || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">NAUSEA/VOMITING</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.blurring_vision || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">BLURRING OF VISION</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.edema || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">EDEMA</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.severe_headache || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">SEVERE HEADACHE</Label>
               </div>
@@ -620,50 +638,56 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             
             <div className="flex flex-col">
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.abno_vaginal_disch || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">ABNORMAL VAGINAL DISCHARGES</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.vaginal_bleeding || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">VAGINAL BLEEDING</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.chills_fever || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">CHILLS & FEVER</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.diff_in_breathing || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">DIFF. IN BREATHING</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.varicosities || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">VARICOSITIES</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={checklist.abdominal_pain || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">ABDOMINAL PAIN</Label>
               </div>
@@ -677,13 +701,19 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
           <InputLine className="w-[300px]" value={birthPlan.place_of_delivery_plan || ""} />
           <Label className="mt-4">PLAN FOR NEWBORN SCREENING:</Label>
           <div className="flex">
-            <Checkbox 
+            <input 
+              type="checkbox"
               className="mt-4 mr-2 ml-4" 
               checked={birthPlan.newborn_screening_plan || false} 
-              disabled
+              readOnly
             />
             <p className="mt-3">YES</p>
-            <Checkbox className="mt-4 mr-2 ml-4" checked={!birthPlan.newborn_screening_plan} disabled />
+            <input 
+              type="checkbox" 
+              className="mt-4 mr-2 ml-4" 
+              checked={!birthPlan.newborn_screening_plan} 
+              readOnly 
+            />
             <p className="mt-3">NO</p>
           </div>
         </div>
@@ -715,26 +745,29 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             <div className="flex flex-col">
               <p className="text-sm mt-4">( ) HAS ONE OR MORE OF THE FF:</p>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_prev_c_section || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">PREVIOUS CAESARIAN</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_3_consecutive_miscarriages || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">3 consecutive miscarriages of still born baby</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_postpartum_hemorrhage || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">Postpartum hemorrhage</Label>
               </div>
@@ -743,42 +776,47 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             <div className="flex flex-col">
               <p className="text-sm mt-4">( ) HAVING ONE OR MORE 1 CONDITIONS:</p>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_postpartum_hemorrhage || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">Tuberculosis</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_postpartum_hemorrhage || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">Heart Disease</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_postpartum_hemorrhage || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">Diabetes</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_postpartum_hemorrhage || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">Bronchial Asthma</Label>
               </div>
               <div className="flex">
-                <Checkbox 
+                <input 
+                  type="checkbox"
                   className="ml-10 mr-2 mt-4" 
                   checked={riskCodes.pforc_postpartum_hemorrhage || false} 
-                  disabled
+                  readOnly
                 />
                 <Label className="mr-[8rem] mt-4">Goiter</Label>
               </div>
@@ -791,7 +829,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
           <Label className="mt-4">ASSESSED BY:</Label>
           <InputLine 
             className="w-1/6" 
-            value={`${prenatalForm.staff_details?.staff_fname || ""} ${prenatalForm.staff_details?.staff_lname || ""}`.trim()} 
+            value={assessedBy || ""} 
           />
         </div>
       </div>

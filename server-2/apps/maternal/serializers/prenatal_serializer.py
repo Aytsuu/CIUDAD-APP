@@ -432,10 +432,39 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                             ).select_related('fam').first()
 
                             if family_composition and family_composition.fam:
+                                # Get all family members to find MOTHER and FATHER roles
+                                family_members = FamilyComposition.objects.filter(
+                                    fam=family_composition.fam
+                                ).select_related('rp', 'rp__per')
+                                
+                                family_heads = {}
+                                for member in family_members:
+                                    role = member.fc_role.lower()
+                                    if role in ['father'] and member.rp and member.rp.per:
+                                        family_heads[role] = {
+                                            'rp_id': member.rp.rp_id,
+                                            'role': member.fc_role,
+                                            'composition_id': member.fc_id,
+                                            'personal_info': {
+                                                'per_lname': member.rp.per.per_lname,
+                                                'per_fname': member.rp.per.per_fname,
+                                                'per_mname': member.rp.per.per_mname,
+                                                'per_dob': member.rp.per.per_dob,
+                                                'per_sex': member.rp.per.per_sex,
+                                                # 'per_occupation': getattr(ember.rp.per, 'per_occupation', ''),
+                                            }
+                                        }
+                                
                                 patient_data['family'] = {
                                     'fam_id': family_composition.fam.fam_id,
                                     'fc_role': family_composition.fc_role,
                                     'fam_date_registered': family_composition.fam.fam_date_registered,
+                                    'family_heads': family_heads,  # Include MOTHER and FATHER details
+                                }
+                            else:
+                                patient_data['family'] = {
+                                    'fam': None,
+                                    'note': 'No family composition found for this resident'
                                 }
                         except Exception as e:
                             print(f"Error getting family info: {e}")

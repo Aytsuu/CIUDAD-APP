@@ -60,6 +60,7 @@ class PostpartumRecordCreateView(generics.CreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+
 # postpartum detail retrieve
 class PostpartumRecordDetailView(generics.RetrieveAPIView):
     queryset = PostpartumRecord.objects.all()
@@ -83,6 +84,7 @@ class PostpartumRecordDetailView(generics.RetrieveAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
+
 # postpartum count
 @api_view(['GET'])
 def get_patient_postpartum_count(request, pat_id):
@@ -114,6 +116,7 @@ def get_patient_postpartum_count(request, pat_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
+
 # postpartum latest record retrieve
 @api_view(['GET'])
 def get_latest_patient_postpartum_records(request, pat_id):
@@ -242,3 +245,9 @@ class PostpartumRecordsListView(generics.ListAPIView):
         return PostpartumRecord.objects.filter(
             patrec_id__pat_id__pat_id=pat_id
         ).order_by('-created_at')
+    
+
+class PostpartumPartumFormView(generics.RetrieveAPIView):
+    serializer_class = PostpartumCompleteSerializer
+    queryset = PostpartumRecord.objects.all()
+    lookup_field = 'ppr_id'

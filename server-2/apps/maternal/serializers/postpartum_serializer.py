@@ -7,6 +7,7 @@ from django.db.models import Max
 from apps.maternal.models import *
 
 from apps.maternal.utils import handle_spouse_logic
+from apps.healthProfiling.models import PersonalAddress, FamilyComposition
 
 
 class SpouseCreateSerializer(serializers.ModelSerializer):
@@ -31,8 +32,6 @@ class PostpartumDetailViewSerializer(serializers.ModelSerializer):
     def get_delivery_date(self, obj):
         delivery_record = obj.postpartum_delivery_record.first()
         return delivery_record.ppdr_date_of_delivery if delivery_record else None
-
-
 
 
 class PostpartumDeliveryRecordSerializer(serializers.ModelSerializer):
@@ -188,6 +187,167 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         return value
 
+    def get_patient_details(self, patient):
+        """Get comprehensive patient details for both Resident and Transient patients"""
+        if not patient:
+            return None
+            
+        # Initialize the response structure
+        patient_data = {
+            'pat_id': patient.pat_id,
+            'pat_type': patient.pat_type,
+            'personal_info': None,
+            'address': None,
+            'family': None
+        }
+        
+        # Handle Resident patients
+        if patient.pat_type == 'Resident' and patient.rp_id:
+            try:
+                # Get personal info from ResidentProfile -> Personal
+                if hasattr(patient.rp_id, 'per') and patient.rp_id.per:
+                    personal = patient.rp_id.per
+                    patient_data['personal_info'] = {
+                        'per_fname': personal.per_fname,
+                        'per_lname': personal.per_lname,
+                        'per_mname': personal.per_mname,
+                        'per_dob': personal.per_dob,
+                        'per_sex': personal.per_sex,
+                        'per_contact': personal.per_contact,
+                        'per_status': personal.per_status,
+                        'per_religion': personal.per_religion,
+                        'per_edAttainment': personal.per_edAttainment,
+                    }
+                    
+                    # Get address from Personal -> PersonalAddress -> Address
+                    try:
+                        personal_address = PersonalAddress.objects.filter(
+                            per=personal
+                        ).select_related('add', 'add__sitio').first()
+                        
+                        if personal_address and personal_address.add:
+                            address = personal_address.add
+                            patient_data['address'] = {
+                                'add_street': address.add_street,
+                                'add_sitio': address.sitio.sitio_name if hasattr(address, 'sitio') and address.sitio else None,
+                                'add_barangay': address.add_barangay,
+                                'add_city': address.add_city,
+                                'add_province': address.add_province,
+                            }
+                        else:
+                            patient_data['address'] = {
+                                'add_street': None,
+                                'add_sitio': None,
+                                'add_barangay': None,
+                                'add_city': None,
+                                'add_province': None,
+                            }
+                    except Exception as e:
+                        print(f"Error getting resident address: {e}")
+                        patient_data['address'] = {
+                            'add_street': None,
+                            'add_sitio': None,
+                            'add_barangay': None,
+                            'add_city': None,
+                            'add_province': None,
+                        }
+                    
+                    # Get family info from FamilyComposition
+                    try:
+                        family_composition = FamilyComposition.objects.filter(
+                            rp=patient.rp_id
+                        ).select_related('fam').first()
+
+                        if family_composition and family_composition.fam:
+                            # Get all family members to find MOTHER and FATHER roles
+                            family_members = FamilyComposition.objects.filter(
+                                fam=family_composition.fam
+                            ).select_related('rp', 'rp__per')
+                            
+                            family_heads = {}
+                            for member in family_members:
+                                role = member.fc_role.lower()
+                                if role in ['mother', 'father'] and member.rp and member.rp.per:
+                                    family_heads[role] = {
+                                        'rp_id': member.rp.rp_id,
+                                        'role': member.fc_role,
+                                        'composition_id': member.fc_id,
+                                        'personal_info': {
+                                            'per_lname': member.rp.per.per_lname,
+                                            'per_fname': member.rp.per.per_fname,
+                                            'per_mname': member.rp.per.per_mname,
+                                            'per_dob': member.rp.per.per_dob,
+                                            'per_sex': member.rp.per.per_sex,
+                                            # 'per_occupation': getattr(ember.rp.per, 'per_occupation', ''),
+                                        }
+                                    }
+                            
+                            patient_data['family'] = {
+                                'fam_id': family_composition.fam.fam_id,
+                                'fc_role': family_composition.fc_role,
+                                'fam_date_registered': family_composition.fam.fam_date_registered,
+                                'family_heads': family_heads,  # Include MOTHER and FATHER details
+                            }
+                        else:
+                            patient_data['family'] = {
+                                'fam': None,
+                                'note': 'No family composition found for this resident'
+                            }
+                    except Exception as e:
+                        print(f"Error getting family composition: {e}")
+                        patient_data['family'] = {
+                            'fam': None,
+                            'error': f'Error retrieving family composition: {str(e)}'
+                        }
+                        
+            except Exception as e:
+                print(f"Error processing resident patient: {e}")
+        
+        # Handle Transient patients
+        elif patient.pat_type == 'Transient' and patient.trans_id:
+            try:
+                transient = patient.trans_id
+                patient_data['personal_info'] = {
+                    'per_fname': transient.tran_fname,
+                    'per_lname': transient.tran_lname,
+                    'per_mname': transient.tran_mname,
+                    'per_dob': transient.tran_dob,
+                    'per_sex': transient.tran_sex,
+                    'per_contact': transient.tran_contact,
+                    'per_status': transient.tran_status,
+                    'per_religion': transient.tran_religion,
+                    'per_edAttainment': transient.tran_ed_attainment,
+                }
+                
+                # Get transient address
+                if transient.tradd_id:
+                    trans_address = transient.tradd_id  # This is the TransientAddress object
+                    patient_data['address'] = {
+                        'add_street': trans_address.tradd_street,
+                        'add_sitio': trans_address.tradd_sitio,
+                        'add_barangay': trans_address.tradd_barangay,
+                        'add_city': trans_address.tradd_city,
+                        'add_province': trans_address.tradd_province,
+                    }
+                else:
+                    patient_data['address'] = {
+                        'add_street': None,
+                        'add_sitio': None,
+                        'add_barangay': None,
+                        'add_city': None,
+                        'add_province': None,
+                    }
+                
+                # Transients don't have family compositions
+                patient_data['family'] = {
+                    'fam': None,
+                    'note': 'Transient patients do not have family compositions'
+                }
+                
+            except Exception as e:
+                print(f"Error processing transient patient: {e}")
+        
+        return patient_data
 
     def create(self, validated_data):
         print(f"Creating postpartum record with validated data: {validated_data}")
@@ -355,6 +515,15 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         # get the base representation but exclude the nested fields that don't exist on the instance
         representation = super().to_representation(instance)
+        
+        # Add the ppr_id to the representation
+        representation['ppr_id'] = instance.ppr_id
+        
+        # Add patient details
+        if instance.patrec_id and instance.patrec_id.pat_id:
+            representation['patient_details'] = self.get_patient_details(instance.patrec_id.pat_id)
+        else:
+            representation['patient_details'] = None
         
         # only include fields that actually exist on the PostpartumRecord instance
         for field_name, field in self.fields.items():
