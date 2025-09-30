@@ -141,6 +141,21 @@ class GAD_Budget_YearView(generics.ListCreateAPIView):
     queryset = GAD_Budget_Year.objects.all()
     serializer_class = GADBudgetYearSerializer
     permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        queryset = GAD_Budget_Year.objects.all()
+        
+        # Add search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(gbudy_year__icontains=search)
+            )
+        
+        # Filter out archived items
+        queryset = queryset.filter(gbudy_is_archive=False)
+        
+        return queryset.order_by('-gbudy_year')
 
 class GADBudgetFileView(generics.ListCreateAPIView):
     serializer_class = GADBudgetFileSerializer
@@ -174,15 +189,35 @@ class GADBudgetFileDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAP
     
 class GADBudgetLogListView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+    
     def get(self, request, year):
+        search = request.query_params.get('search', None)
+        page = request.query_params.get('page', 1)
+        page_size = request.query_params.get('page_size', 10)
+        
         logs = GADBudgetLog.objects.filter(
             gbudl_budget_entry__gbudy__gbudy_year=year,
-        ).select_related(
-            'gbudl_budget_entry'
-        ).order_by("-gbudl_created_at")
+        ).select_related('gbudl_budget_entry')
         
-        serializer = GADBudgetLogSerializer(logs, many=True)
-        return Response({"data": serializer.data})
+        # Add search functionality
+        if search:
+            logs = logs.filter(
+                Q(gbudl_budget_entry__dev__dev_project__icontains=search) |
+                Q(gbudl_budget_entry__gbud_exp_particulars__icontains=search) |
+                Q(gbudl_id__icontains=search)
+            )
+        
+        logs = logs.order_by("-gbudl_created_at")
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginator.page_size = page_size
+        result_page = paginator.paginate_queryset(logs, request)
+        
+        serializer = GADBudgetLogSerializer(result_page, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
 
 class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer

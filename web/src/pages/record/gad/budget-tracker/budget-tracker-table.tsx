@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Dialog,
@@ -40,6 +40,8 @@ import { useGADBudgets } from "./queries/BTFetchQueries";
 import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 import { GADBudgetEntry } from "./budget-tracker-types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext"; 
 
 function BudgetTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,13 +49,14 @@ function BudgetTracker() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState("All");
-  const [selectedFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("active");
   const { year: gbudy_year } = useParams<{ year: string }>();
   const { data: yearBudgets } = useGetGADYearBudgets();
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: permanentDeleteEntry } = usePermanentDeleteGADBudget();
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const { showLoading, hideLoading } = useLoading();
 
   const handleArchive = (gbud_num: number) => {
     archiveEntry(gbud_num, {
@@ -73,12 +76,23 @@ function BudgetTracker() {
     });
   };
 
-  const {
-    data: budgetEntries = [],
+ const {
+    data,
     isLoading,
     error,
     refetch,
-  } = useGADBudgets(gbudy_year || "");
+  } = useGADBudgets(
+    gbudy_year || "",
+    currentPage,
+    pageSize,
+    debouncedSearchQuery,
+    selectedMonth,
+    activeTab === "archive"
+  );
+
+  const budgetEntries = data?.results || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const currentYearBudget = yearBudgets?.find(
     (budget) => budget.gbudy_year === gbudy_year
@@ -112,23 +126,6 @@ function BudgetTracker() {
     { id: "11", name: "November" },
     { id: "12", name: "December" },
   ];
-
-  const filteredData = budgetEntries.filter((entry: GADBudgetEntry) => {
-    if (activeTab === "active" && entry.gbud_is_archive) return false;
-    if (activeTab === "archive" && !entry.gbud_is_archive) return false;
-
-    const month = entry.gbud_datetime?.slice(5, 7);
-    const matchesMonth = selectedMonth === "All" || month === selectedMonth;
-    const matchesFilter = selectedFilter === "All";
-
-    return matchesMonth && matchesFilter;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   const calculateTotalProposedWithoutActual = () => {
     if (!budgetEntries || budgetEntries.length === 0) return 0;
@@ -186,6 +183,29 @@ function BudgetTracker() {
     });
 
     return balance;
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle search change
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  // Handle month filter change
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value);
+    setCurrentPage(1); // Reset to first page on filter
+  };
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset to first page on tab change
   };
 
   const columns: ColumnDef<GADBudgetEntry>[] = [
@@ -399,8 +419,16 @@ function BudgetTracker() {
     return <div className="text-red-500">{error.message}</div>;
   }
 
+   useEffect(() => {
+      if (isLoading) {
+        showLoading();
+      } else {
+        hideLoading();
+      }
+    }, [isLoading, showLoading, hideLoading]);
+
   return (
-    <div className="bg-snow w-full h-full">
+    <div className="w-full h-full">
       <div className="flex flex-col gap-3 mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
           <Link to="/gad-budget-tracker-main">
@@ -449,10 +477,7 @@ function BudgetTracker() {
               placeholder="Search..."
               className="pl-10 w-full bg-white text-sm"
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
           <div className="flex flex-row gap-2 justify-center items-center">
@@ -463,10 +488,7 @@ function BudgetTracker() {
               placeholder="Month"
               value={selectedMonth}
               label="Month"
-              onChange={(value) => {
-                setSelectedMonth(value);
-                setCurrentPage(1);
-              }}
+              onChange={handleMonthChange}
             />
           </div>
           <Link to={`/gad-budget-log/${gbudy_year}`}>
@@ -519,7 +541,7 @@ function BudgetTracker() {
           </div>
 
           <div className="flex items-center">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-2 max-w-xs">
                 <TabsTrigger value="active">Active</TabsTrigger>
                 <TabsTrigger value="archive">
@@ -532,21 +554,15 @@ function BudgetTracker() {
           </div>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="overflow-x-auto min-h-[400px] relative">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <Spinner size="lg" />
             </div>
           ) : activeTab === "active" ? (
-            <DataTable
-              columns={columns}
-              data={paginatedData.filter((entry) => !entry.gbud_is_archive)}
-            />
+            <DataTable columns={columns} data={budgetEntries} />
           ) : (
-            <DataTable
-              columns={archiveColumns}
-              data={paginatedData.filter((entry) => entry.gbud_is_archive)}
-            />
+            <DataTable columns={archiveColumns} data={budgetEntries} />
           )}
         </div>
       </div>
@@ -554,15 +570,14 @@ function BudgetTracker() {
       {!isLoading && (
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
+            Showing {budgetEntries.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
           </p>
           <div className="w-full sm:w-auto flex justify-center">
             <PaginationLayout
               totalPages={totalPages}
               currentPage={currentPage}
-              onPageChange={(page) => setCurrentPage(page)}
+              onPageChange={handlePageChange}
             />
           </div>
         </div>

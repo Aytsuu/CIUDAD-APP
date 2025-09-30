@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -14,6 +14,7 @@ import { Donations } from "./donation-types";
 import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext"; 
 
 function DonationTracker() {
   const [_data] = useState<Donations[]>([]);
@@ -25,8 +26,17 @@ function DonationTracker() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const { showLoading, hideLoading } = useLoading();
 
   const { data: donations = [], isLoading, refetch } = useGetDonations();
+
+   useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   // const { mutate: deleteEntry} = useDeleteDonation();
 

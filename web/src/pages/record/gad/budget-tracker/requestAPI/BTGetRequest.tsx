@@ -1,9 +1,33 @@
 import { api } from "@/api/api";
 import { GADBudgetEntry, GADBudgetFile } from "../budget-tracker-types";
 
-export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
-    const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
-    return response.data || [];
+// export const fetchGADBudgets = async (year: string): Promise<GADBudgetEntry[]> => {
+//     const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`);
+//     return response.data || [];
+// };
+
+export const fetchGADBudgets = async (
+  year: string,
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  selectedMonth?: string,
+  isArchive?: boolean
+): Promise<{ results: GADBudgetEntry[]; count: number }> => {
+  const params: any = {
+    page,
+    page_size: pageSize,
+  };
+  
+  if (searchQuery) params.search = searchQuery;
+  if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
+  if (isArchive !== undefined) params.is_archive = isArchive;
+  
+  const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`, { params });
+  return {
+    results: response.data.results || response.data || [],
+    count: response.data.count || 0
+  };
 };
 
 export const fetchGADBudgetEntry = async (gbud_num: number): Promise<GADBudgetEntry> => {
@@ -31,7 +55,21 @@ export const fetchProjectProposalsAvailability = async (year: string) => {
   return response.data.data;
 };
 
-export const fetchBudgetLog = async (year: string) => {
-  const response = await api.get(`/gad/budget-logs/${year}/`);
-  return response.data.data;
+export const fetchBudgetLog = async (
+  year: string, 
+  page: number = 1, 
+  pageSize: number = 10, 
+  searchQuery?: string
+) => {
+  const params: any = {
+    page,
+    page_size: pageSize
+  };
+  
+  if (searchQuery) {
+    params.search = searchQuery;
+  }
+  
+  const response = await api.get(`/gad/budget-logs/${year}/`, { params });
+  return response.data;
 };

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Eye, Search, Trash2, Archive, ArchiveRestore } from "lucide-react";
@@ -19,6 +19,7 @@ import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/c
 import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HistoryTable } from "@/components/ui/table/history-table";
+import { useLoading } from "@/context/LoadingContext"; 
 
 const ArchiveTabActions = ({
   row,
@@ -312,6 +313,7 @@ function AttendancePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
+  const { showLoading, hideLoading } = useLoading();
   
   const { data: councilEvents = [], isLoading: isCouncilEventsLoading, error } = useGetCouncilEvents();
   const { data: attendanceSheets = [], isLoading: isSheetsLoading } = useGetAttendanceSheets();
@@ -412,6 +414,14 @@ function AttendancePage() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   return (
     <div className="w-full h-full p-4">
