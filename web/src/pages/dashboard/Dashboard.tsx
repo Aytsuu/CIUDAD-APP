@@ -99,7 +99,7 @@ export default function Dashboard() {
   return (
     <div className="pb-8 space-y-5">
       <div className="">
-        <p className="text-darkBlue1 font-semibold text-xl">DASHBOARD</p>
+        <p className="text-darkBlue1 font-semibold text-xl">Dashboard</p>
         <p className="text-gray-600 text-sm">
           Easy view of important updates and key information.
         </p>
