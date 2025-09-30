@@ -20,6 +20,7 @@ import { getPatients,
 			getCalculatedMissedVisits,
 			getLatestPatientPostpartumRecord,
 			getIllnessList,
+			getPatientPostpartumCompleteRecord,
 } from "../restful-api/maternalGetAPI";
 
 import { MaternalPatientFilters } from "../restful-api/maternalGetAPI";
@@ -237,5 +238,18 @@ export const useIllnessList = () => {
 		enabled: true,
 		staleTime: 30 * 1,
 		retry: 2,
+		refetchInterval: 2000,
+	})
+}
+
+// for getPatientPostpartumCompleteRecord
+export const usePatientPostpartumCompleteRecord = (pprId: string) => {
+	return useQuery({
+		queryKey: ['postpartumRecordComplete', pprId],
+		queryFn: () => getPatientPostpartumCompleteRecord(pprId),
+		enabled: !!pprId && pprId !== "undefined" && pprId !== "null",
+		staleTime: 30 * 1,
+		retry: 2,
+		refetchInterval: 2000,
 	})
 }

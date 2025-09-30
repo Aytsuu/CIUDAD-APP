@@ -41,7 +41,6 @@ export default function PostpartumIndivHistory() {
   // fetching
   const { data: prenatalCareData, isLoading, error } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "");
 
-  // Get records up to the selected visit number
   const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || [];
 
   // Transform API data to PrenatalVisit format
@@ -132,7 +131,7 @@ export default function PostpartumIndivHistory() {
 
             <div className="w-full">
                 <div className="flex items-center justify-center">
-                    <PostpartumViewing/>
+                    <PostpartumViewing pprId={recordId} />
                 </div>
                 <div>
                     <PostpartumCareHistory/>
