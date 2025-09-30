@@ -27,6 +27,8 @@ from dateutil.relativedelta import relativedelta
 from .mappings.mappings import *
 from rest_framework.pagination import PageNumberPagination
 from django.http import Http404
+from .mappings.mappings import get_pelvic_exam_display_values
+
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -34,9 +36,8 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
     
 class PatientListForOverallTable(generics.ListAPIView):
-    serializer_class = FPRecordSerializer # This serializer is not directly used for the final output, but for internal processing
-    pagination_class = StandardResultsSetPagination # Apply pagination
-    
+    serializer_class = FPRecordSerializer 
+    pagination_class = StandardResultsSetPagination  
     
     def get_queryset(self):
         # Start with all FP_Record objects
@@ -45,9 +46,9 @@ class PatientListForOverallTable(generics.ListAPIView):
             "pat__rp_id__per",
             "pat__trans_id",
         ).prefetch_related(
-            'fp_type_set' # Prefetch related FP_type instances
-        ).order_by("-created_at") # Order by creation date descending
-        # Apply search filter if 'search' query parameter is present
+            'fp_type_set'
+        ).order_by("-created_at") 
+        
         search_query = self.request.query_params.get('search', None)
         if search_query:
             queryset = queryset.filter(
@@ -73,12 +74,10 @@ class PatientListForOverallTable(generics.ListAPIView):
             for record in page:
                 patient_id = record.pat.pat_id
                 if patient_id not in patient_data_map:
-                    # build patient_entry as before
-                    # ...
                     patient_data_map[patient_id] = patient_entry
             response_data = list(patient_data_map.values())
             return self.get_paginated_response(response_data)
-        # fallback if pagination is not applied
+     
         return Response([])
     
 @api_view(['GET'])
@@ -124,17 +123,7 @@ def get_illness_list(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-# def map_subtype_display(subtype):
-#     """Map subtype IDs to human-readable labels"""
-#     subtype_map = {
-#         "changingmethod": "Changing Method",
-#         "changingclinic": "Changing Clinic", 
-#         "dropoutrestart": "Dropout/Restart",
-#         "medicalcondition": "Medical Condition",
-#         "sideeffects": "Side Effects",
-#         # Add more mappings as needed
-#     }
-#     return subtype_map.get(subtype)  # Fallback to title case
+
 
 def map_reason_display(reason):
     """Map reason IDs to human-readable labels"""
@@ -186,7 +175,6 @@ def get_body_measurements(request, pat_id):
         # Fetch the latest BodyMeasurement for the patient
         body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
         
-        # Prepare response in the same format as BodyMeasurementReadSerializer
         if body_measurement:
             body_measurement_data = BodyMeasurementSerializer(body_measurement).data
             data = {
@@ -256,273 +244,6 @@ def calculate_age_from_dob(dob_string):
     except:
         return 0
 
-# def map_client_type(client_type):
-#     """Map client type to readable labels"""
-#     if not client_type:
-#         return ""
-#     client_type = client_type.lower()
-#     if client_type == "newacceptor":
-#         return "New Acceptor"
-#     elif client_type == "currentuser":
-#         return "Current User"
-#     elif client_type == "restart":
-#         return "Restart"
-#     else:
-#         return client_type.title()  # Fallback to title case
-
-# def map_physical_exam_display_values(data):
-#     """Convert physical exam field values to human-readable labels"""
-#     display_map = {
-#         # Skin Examination
-#         "normal": "Normal",
-#         "pale": "Pale",
-#         "yellowish": "Yellowish",
-#         "hematoma": "Hematoma",
-#         "not_applicable": "Not Applicable",
-        
-#         # Conjunctiva Examination
-#         "normal": "Normal",
-#         "pale": "Pale",
-#         "yellowish": "Yellowish",
-        
-#         # Neck Examination
-#         "normal": "Normal",
-#         "neck_mass": "Neck Mass",
-#         "enlarged_lymph_nodes": "Enlarged Lymph Nodes",
-        
-#         # Breast Examination
-#         "normal": "Normal",
-#         "mass": "Mass",
-#         "nipple_discharge": "Nipple Discharge",
-        
-#         # Abdomen Examination
-#         "normal": "Normal",
-#         "abdominal_mass": "Abdominal Mass",
-#         "varicosities": "Varicosities",
-        
-#         # Extremities Examination
-#         "normal": "Normal",
-#         "edema": "Edema",
-#         "varicosities": "Varicosities",
-#     }
-    
-#     return {
-#         "skinExamination": display_map.get(data.get("skin_exam")),
-#         "conjunctivaExamination": display_map.get(data.get("conjunctiva_exam")),
-#         "neckExamination": display_map.get(data.get("neck_exam")),
-#         "breastExamination": display_map.get(data.get("breast_exam")),
-#         "abdomenExamination": display_map.get(data.get("abdomen_exam")),
-#         "extremitiesExamination": display_map.get(data.get("extremities_exam")),
-#     }
-        
-# @api_view(['GET'])
-# def get_illnesses_by_ids(request):
-#     """
-#     Fetches illnesses based on a list of provided IDs.
-#     """
-#     illness_ids_str = request.query_params.get('ids', '')
-#     if not illness_ids_str:
-#         return Response([], status=status.HTTP_200_OK)
-
-#     try:
-#         illness_ids = [int(id_str) for id_str in illness_ids_str.split(',') if id_str.strip()]
-#         illnesses = Illness.objects.filter(ill_id__in=illness_ids).order_by('illname')
-        
-#         illness_data = []
-#         for illness in illnesses:
-#             illness_data.append({
-#                 'ill_id': illness.ill_id,
-#                 'illname': illness.illname,
-#                 'ill_description': illness.ill_description,
-#                 'ill_code': illness.ill_code
-#             })
-#         return Response(illness_data, status=status.HTTP_200_OK)
-#     except ValueError:
-#         return Response({'error': 'Invalid illness IDs provided.'}, status=status.HTTP_400_BAD_REQUEST)
-#     except Exception as e:
-#         return Response({'error': f'Error fetching illnesses by IDs: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-   
-    
-def get_pelvic_exam_display_values(data):
-    """Convert pelvic exam field values to human-readable labels"""
-    display_map = {
-        "normal": "Normal",
-        "mass": "Mass",
-        "abnormal_discharge": "Abnormal Discharge",
-        "cervical_abnormalities": "Cervical Abnormalities",
-        "warts": "Warts",
-        "polyp_or_cyst": "Polyp or Cyst",
-        "inflammation_or_erosion": "Inflammation or Erosion",
-        "bloody_discharge": "Bloody Discharge",
-        "not_applicable": "Not Applicable",
-    }
-    
-    return {
-        "pelvicExamination": display_map.get(data.get("pelvic_exam"), data.get("pelvic_exam", "Not Applicable")),
-        "cervicalConsistency": data.get("cervical_consistency", "Not Applicable"),  # Assuming no mapping needed here
-        "cervicalTenderness": bool(data.get("cervical_tenderness", False)),  # Simplified boolean conversion
-        "cervicalAdnexal": bool(data.get("cervical_adnexal", False)),  # Simplified boolean conversion
-        "uterinePosition": data.get("uterine_position", "Not Applicable"),
-        "uterineDepth": data.get("uterine_depth", "Not Applicable"),  
-    }
-# @api_view(["GET"])
-# def get_last_previous_pregnancy(request, patient_id):
-#     try:
-#         patient = get_object_or_404(Patient, pat_id=patient_id)
-#         patient_records = PatientRecord.objects.filter(pat_id=patient)
-
-#         latest_prenatal_form = Prenatal_Form.objects.filter(
-#             patrec_id__in=patient_records
-#         ).order_by('-created_at').first()
-
-#         if latest_prenatal_form:
-#             last_previous_pregnancy = Previous_Pregnancy.objects.filter(
-#                 pf_id=latest_prenatal_form
-#             ).order_by('date_of_delivery', '-pfpp_id').first()
-
-#             if last_previous_pregnancy:
-#                 data = {
-#                     "last_delivery_date": last_previous_pregnancy.date_of_delivery.isoformat() if last_previous_pregnancy.date_of_delivery else None,
-#                     "last_delivery_type": last_previous_pregnancy.type_of_delivery,
-#                 }
-#                 return Response(data)
-#             else:
-#                 # No previous pregnancy records found for the latest prenatal form
-#                 return Response({}, status=status.HTTP_200_OK)
-#         else:
-#             # No prenatal forms found for this patient via PatientRecord
-#             return Response({}, status=status.HTTP_200_OK)
-
-#     except Patient.DoesNotExist:
-#         return Response({"error": "Patient not found"}, status=status.HTTP_404_NOT_FOUND)
-#     except Exception as e:
-#         import traceback
-#         traceback.print_exc()
-#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-@api_view(['GET'])
-def get_patient_health_and_nhts_data(request, patient_id):
-    try:
-        patient = get_object_or_404(Patient, pat_id=patient_id)
-        
-        philhealth_id = ""
-        nhts_status = ""
-
-        if patient.pat_type == "Resident" and patient.rp_id:
-            hrd = HealthRelatedDetails.objects.filter(rp=patient.rp_id).first()
-            if hrd:
-                philhealth_id = hrd.per_add_philhealth_id or ""
-            
-            household = Household.objects.filter(rp=patient.rp_id).first()
-            if household:
-                nhts_status = household.hh_nhts or "" # Assuming hh_nhts is the field name
-        
-        response_data = {
-            "philhealthNo": philhealth_id,
-            "nhts_status": nhts_status
-        }
-        
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    except Patient.DoesNotExist:
-        return Response({"detail": f"Patient with ID {patient_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response({"detail": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# @api_view(["GET"])
-# def get_patient_spouse(request, patient_id):
-#     try:
-#         print(f"\n=== DEBUG: Starting spouse lookup for patient {patient_id} ===")
-#         patient = get_object_or_404(Patient, pat_id=patient_id)
-        
-#         # Initialize default empty spouse data
-#         spouse_data = {
-#             "spouse_lname": "",
-#             "spouse_fname": "",
-#             "spouse_mname": "",
-#             "spouse_dob": "",
-#             "spouse_occupation": ""
-#         }
-
-#         # 1. First try to get spouse from FP records
-#         print("\nDEBUG: Checking FP Records for spouse...")
-#         fp_record = FP_Record.objects.filter(pat=patient).order_by('-created_at').first()
-        
-#         if fp_record:
-#             print(f"DEBUG: Found FP Record {fp_record.fprecord_id}")
-#             if fp_record.spouse:
-#                 spouse = fp_record.spouse
-#                 print(f"DEBUG: Found spouse in FP Record: {spouse.spouse_lname}, {spouse.spouse_fname}")
-#                 print(f"DEBUG: Spouse details - DOB: {spouse.spouse_dob}, Occupation: {spouse.spouse_occupation}")
-                
-#                 spouse_data = {
-#                     "spouse_lname": spouse.spouse_lname or "",
-#                     "spouse_fname": spouse.spouse_fname or "",
-#                     "spouse_mname": spouse.spouse_mname or "",
-#                     "spouse_dob": spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
-#                     "spouse_occupation": spouse.spouse_occupation or ""
-#                 }
-#             else:
-#                 print("DEBUG: No spouse associated with this FP Record")
-#         else:
-#             print("DEBUG: No FP Records found for this patient")
-
-#         # 2. For resident patients, if no spouse in FP records, check family composition
-#         if not any(spouse_data.values()) and patient.pat_type == "Resident" and patient.rp_id:
-#             print("\nDEBUG: Checking family composition for spouse...")
-#             try:
-#                 household = Household.objects.filter(rp=patient.rp_id).first()
-#                 if household:
-#                     print(f"DEBUG: Found household {household.hh_id}")
-                    
-#                     # Fixed: Using select_related('rp') instead of select_related('rp_id')
-#                     spouse_composition = FamilyComposition.objects.filter(
-#                         fam__hh=household,
-#                         fc_role='Spouse'
-#                     ).select_related('rp', 'rp__per').first()
-                    
-#                     if spouse_composition:
-#                         print(f"DEBUG: Found spouse in family composition: {spouse_composition.rp}")
-                        
-#                         if hasattr(spouse_composition.rp, 'per'):
-#                             personal_info = spouse_composition.rp.per
-#                             print(f"DEBUG: Spouse personal info - Name: {personal_info.per_lname}, {personal_info.per_fname}")
-                            
-#                             spouse_data = {
-#                                 "spouse_lname": personal_info.per_lname or "",
-#                                 "spouse_fname": personal_info.per_fname or "",
-#                                 "spouse_mname": personal_info.per_mname or "",
-#                                 "spouse_dob": personal_info.per_dob.isoformat() if personal_info.per_dob else "",
-#                                 "spouse_occupation": personal_info.per_occupation or ""
-#                             }
-#                         else:
-#                             print("DEBUG: No personal info for this family composition")
-#                     else:
-#                         print("DEBUG: No spouse found in family composition")
-#                 else:
-#                     print("DEBUG: No household found for this resident")
-#             except Exception as e:
-#                 print(f"DEBUG ERROR in family composition check: {str(e)}")
-
-#         print("\nDEBUG: Final spouse data to return:", spouse_data)
-#         print("=== DEBUG: End of spouse lookup ===")
-        
-#         return Response(spouse_data, status=status.HTTP_200_OK)
-
-#     except Patient.DoesNotExist:
-#         print(f"DEBUG ERROR: Patient {patient_id} not found")
-#         return Response(
-#             {"error": "Patient not found"}, 
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-#     except Exception as e:
-#         print(f"DEBUG ERROR: {str(e)}")
-#         return Response(
-#             {"error": str(e)}, 
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
     
 class PatientListForOverallTable(generics.ListAPIView):
     serializer_class = OverallFPRecordSerializer  # Use the appropriate serializer
@@ -620,63 +341,10 @@ class PatientListForOverallTable(generics.ListAPIView):
         
         return patient_entry
 
-@api_view(['GET'])
-def get_filtered_commodity_list(request):
-    client_type = request.query_params.get('client_type', None)
-    gender = request.query_params.get('gender', None)
-
-    commodities = CommodityList.objects.all()
-
-    if client_type:
-        # Filter by user_type: 'New acceptor', 'Current user', or 'Both'
-        commodities = commodities.filter(user_type__in=[client_type, 'Both'])
-
-    if gender:
-        # Filter by gender_type: 'Male', 'Female', or 'Both'
-        commodities = commodities.filter(gender_type__in=[gender, 'Both'])
-
-    formatted_commodities = [
-        {'id': com.com_name, 'name': com.com_name, 'user_type': com.user_type, 'gender_type': com.gender_type}
-        for com in commodities
-    ]
-    return Response(formatted_commodities, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def get_commodity_stock(request, commodity_name):
-    try:
-        # Find the commodity in CommodityList by its name
-        commodity = CommodityList.objects.get(com_name=commodity_name)
-
-        # Sum up available quantities from all CommodityInventory records for this commodity
-        total_available_stock = CommodityInventory.objects.filter(
-            com_id=commodity
-        ).aggregate(total_stock=Sum('cinv_qty_avail'))['total_stock']
-
-        # If no inventory records, total_stock will be None, treat as 0
-        total_available_stock = total_available_stock if total_available_stock is not None else 0
-
-        return Response(
-            {"commodity_name": commodity_name, "available_stock": total_available_stock},
-            status=status.HTTP_200_OK
-        )
-    except CommodityList.DoesNotExist:
-        return Response(
-            {"detail": f"Commodity '{commodity_name}' not found."},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return Response(
-            {"detail": f"Internal server error: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
 
 @api_view(["GET"])
 def get_fp_records_for_patient(request, patient_id):
     try:
-        _check_and_update_missed_and_dropouts_for_patient(patient_id)
         patient = get_object_or_404(
             Patient.objects.select_related('rp_id__per', 'trans_id'),
             pat_id=patient_id
@@ -778,106 +446,9 @@ def get_fp_records_for_patient(request, patient_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-# @api_view(["GET"])
-# def get_fp_records_for_patient(request, patient_id):
-#     try:
-#         patient = get_object_or_404(Patient, pat_id=patient_id)
-#         fp_records = FP_Record.objects.filter(pat=patient).order_by("-created_at")
-
-#         if not fp_records.exists():
-#             return Response(
-#                 {"detail": f"No Family Planning records found for patient ID: {patient_id}."},
-#                 status=status.HTTP_404_NOT_FOUND,
-#             )
-
-#         data = []
-#         for record in fp_records:
-#             # Get the assessment record to find follow-up date
-#             assessment = FP_Assessment_Record.objects.filter(fprecord=record).first()
-#             follow_up_date = assessment.followv.followv_date if assessment and hasattr(assessment, 'followv') else None
-#             follow_up_status = assessment.followv.followv_status if assessment and hasattr(assessment, 'followv') else None
-#             patient_name = ""
-#             patient_age = None
-#             patient_sex = ""
-#             fp_type_instance = record.fp_type_set.first()
-#             raw_subtype = fp_type_instance.fpt_subtype if fp_type_instance else "N/A"
-            
-#             # Handle Resident Patient
-#             if patient.pat_type == "Resident" and patient.rp_id and patient.rp_id.per:
-#                 personal = patient.rp_id.per
-#                 patient_name = f"{personal.per_lname}, {personal.per_fname} {personal.per_mname or ''}".strip()
-#                 patient_age = (
-#                     calculate_age_from_dob(personal.per_dob.isoformat())
-#                     if personal.per_dob
-#                     else None
-#                 )
-#                 patient_sex = personal.per_sex
-
-#             # Handle Transient Patient
-#             elif patient.pat_type == "Transient" and patient.trans_id:
-#                 transient = patient.trans_id
-#                 patient_name = f"{transient.tran_lname}, {transient.tran_fname} {transient.tran_mname or ''}".strip()
-#                 patient_age = (
-#                     calculate_age_from_dob(transient.tran_dob.isoformat())
-#                     if transient.tran_dob
-#                     else None
-#                 )
-#                 patient_sex = transient.tran_sex
-
-#             # Access FP_type via the reverse relationship
-#             fp_type_instance = record.fp_type_set.first()
-
-#             data.append(
-#                 {
-#                     "fprecord": record.fprecord_id,
-#                     "patrec_id": record.patrec.patrec_id,
-#                     "client_id": record.client_id or "N/A",
-#                     "patient_name": patient_name,
-#                     "patient_age": patient_age,
-#                     "sex": patient_sex,
-#                     "client_type": (
-#                         map_client_type(fp_type_instance.fpt_client_type) if fp_type_instance else "N/A"
-#                     ),
-#                     "method_used": (
-#                         fp_type_instance.fpt_method_used if fp_type_instance else "N/A"
-#                     ),
-#                     "subtype": map_subtype_display(raw_subtype),
-#                     "other_method": (
-#                         fp_type_instance.fpt_other_method if fp_type_instance else "N/A"
-#                     ),
-#                     "created_at": (
-#                         record.created_at.isoformat() if record.created_at else "N/A"
-#                     ),
-                   
-#                     "dateOfFollowUp": (
-#                         follow_up_date.isoformat() if follow_up_date else "N/A"
-#                     ),
-#                     "followv_status": (
-#                         follow_up_status if follow_up_status else "N/A"
-#                     ),
-#                     "avg_monthly_income": record.avg_monthly_income or "N/A",
-#                 }
-#             )
-
-#         return Response(data, status=status.HTTP_200_OK)
-
-#     except Patient.DoesNotExist:
-#         return Response(
-#             {"detail": f"Patient with ID {patient_id} not found."},
-#             status=status.HTTP_404_NOT_FOUND,
-#         )
-#     except Exception as e:
-#         import traceback
-#         traceback.print_exc()
-#         return Response(
-#             {"error": f"Error fetching FP records for patient: {str(e)}"},
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#         )
-        
 @api_view(["GET"])
 def get_obstetrical_history(request, pat_id):
     try:
-        # Validate patient_id format (e.g., P[RT]YYYYXXXX)
         if not pat_id or pat_id == "undefined":
             raise ValueError("Invalid patient ID provided")
 
@@ -940,7 +511,6 @@ def get_obstetrical_history(request, pat_id):
         return Response({"error": str(e)}, status=500)
     
     
-
 @api_view(["GET"])
 def get_patient_details_data(request, patient_id):
     try:
@@ -1060,25 +630,6 @@ def get_patient_details_data(request, patient_id):
             except Exception as e:
                 print(f"Error fetching Transient PhilHealth ID: {e}")
 
-        
-        # Fetch spouse information
-        # try:
-        #     if patient.pat_type == "Resident" and patient.rp_id:
-        #         spouse = Spouse.objects.filter(rp_id=patient.rp_id).first()
-        #         if spouse:
-        #             fp_form_data["spouse"] = {
-        #                 "s_lastName": spouse.spouse_lname or "",
-        #                 "s_givenName": spouse.spouse_fname or "",
-        #                 "s_middleInitial": spouse.spouse_mname[:1] if spouse.spouse_mname else "",
-        #                 "s_dateOfBirth": spouse.spouse_dob.isoformat() if spouse.spouse_dob else "",
-        #                 "s_age": calculate_age_from_dob(spouse.spouse_dob) if spouse.spouse_dob else 0,
-        #                 "s_occupation": spouse.spouse_occupation or None,
-        #             }
-        #             print(f"✓ Spouse: {fp_form_data['spouse']['s_lastName']}")
-        #     else:
-        #         print("No spouse data fetched: Patient is not a Resident or no rp_id")
-        # except Exception as e:
-        #     print(f"Error fetching spouse information: {e}")
         latest_fp_record = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at').first()
         try:
             if latest_fp_record.spouse:
@@ -1095,9 +646,6 @@ def get_patient_details_data(request, patient_id):
                 fp_form_data["spouse"] = {}
         except Exception as e:
             print(f"Error fetching spouse information: {e}")
-
-        # Fetch body measurements
-        
 
         # Fetch obstetrical history
         try:
@@ -1538,7 +1086,7 @@ def get_complete_fp_record(request, fprecord_id):
             fp_pelvic_exam = FP_Pelvic_Exam.objects.get(fprecord_id=fp_record)
             pelvic_exam_serialized_data = PelvicExamSerializer(fp_pelvic_exam).data
             display_values = get_pelvic_exam_display_values(pelvic_exam_serialized_data)
-            complete_data["fp_pelvic_exam"] = display_values  # Use display_values instead of raw data
+            complete_data["fp_pelvic_exam"] = display_values  
             print("Display values: ", display_values)
             print("Raw values: ", pelvic_exam_serialized_data)
             # complete_data.update({
@@ -2867,8 +2415,7 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
 
         last_follow_up_visit = FollowUpVisit.objects.filter(patrec=patient_record_instance).order_by('-created_at').first()
         if last_follow_up_visit:
-            # Only update if the status is not already 'completed' to avoid redundant updates
-            if last_follow_up_visit.followv_status != 'completed':
+            if last_follow_up_visit.followv_status == 'pending':
                 last_follow_up_visit.followv_status = 'completed'  # Update status to completed
                 last_follow_up_visit.completed_at = timezone.now().date()
                 last_follow_up_visit.save()  # Save the changes
@@ -2921,19 +2468,14 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
                 commodity_inventory_item.cinv_qty_avail -= method_quantity
                 commodity_inventory_item.save()
 
-                # --- START OF NEW LOGIC TO FIX THE comt_qty ---
-                # Get the unit from the inventory item
                 original_unit = commodity_inventory_item.cinv_qty_unit
                 transaction_unit = original_unit
 
-                # Check if the unit is 'boxes' and change it to 'pc/s'
                 if original_unit == "boxes":
                     transaction_unit = "pc/s"
 
-                # Construct the final quantity string to be saved in the transaction
                 final_comt_qty = f"{method_quantity} {transaction_unit}"
-                # --- END OF NEW LOGIC ---
-
+                
                 CommodityTransaction.objects.create(
                     cinv_id=commodity_inventory_item,
                     comt_qty=final_comt_qty, # Use the new formatted string here
@@ -2944,7 +2486,6 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
                 print(f"DEBUG: Stock deducted successfully for {method_accepted}. Transaction quantity logged as: {final_comt_qty}") # Debugging line
 
             except CommodityList.DoesNotExist:
-                # ... (your existing exception handling) ...
                 logger.warning(f"Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
                 print(f"DEBUG: Commodity '{method_accepted}' not found for stock deduction.") # Debugging line
                 raise # Re-raise to trigger rollback if commodity not found
@@ -3011,198 +2552,6 @@ def submit_full_family_planning_form(request):
             status=status.HTTP_400_BAD_REQUEST
         )
         
-@api_view(['GET'])
-def get_detailed_monthly_fp_report(request, year, month):
-    try:
-        # Define month range
-        month_start = date(int(year), int(month), 1)
-        next_month = month_start + relativedelta(months=1)
-        month_end = next_month - timedelta(days=1)
-        
-        # Previous month range
-        prev_month_start = month_start - relativedelta(months=1)
-        prev_month_end = month_start - timedelta(days=1)
-
-        # Check and update dropouts for patients with pending follow-ups in/near this month
-        cutoff_start = month_start - timedelta(days=3)  # Catch follow-ups just before
-        cutoff_end = month_end + timedelta(days=3)      # Catch follow-ups just after
-        pending_follow_ups = FollowUpVisit.objects.filter(
-            followv_status="Pending",
-            followv_date__range=(cutoff_start, cutoff_end)
-        ).select_related('patrec__pat_id')
-        
-        patient_ids = set(fu.patrec.pat_id.pat_id for fu in pending_follow_ups if fu.patrec and fu.patrec.pat_id)
-        for pat_id in patient_ids:
-            _check_and_update_dropouts_for_patient(pat_id)
-
-        # Define methods and age groups
-        methods = ["BTL", "NSV", "Condom", "POP", "COC", "DMPA", "Implant", "IUD-Interval", "IUD-Post Partum", "LAM", "BBT", "CMM", "STM", "SDM"]
-        age_groups = ['10-14', '15-19', '20-49', 'Total']
-
-        # Initialize count dictionaries
-        bom_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        new_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        other_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        drop_outs_counts = {method: {age: 0 for age in age_groups} for method in methods}
-        prev_month_new_counts = {method: {age: 0 for age in age_groups} for method in methods}
-
-        today = timezone.now().date()
-
-        for method in methods:
-            for age_group in age_groups:
-                # DOB annotation (handles Resident/Transient)
-                dob_annotation = Case(
-                    When(pat__pat_type='Resident', then=F('pat__rp_id__per__per_dob')),
-                    When(pat__pat_type='Transient', then=F('pat__trans_id__tran_dob')),
-                    default=None,
-                    output_field=DateField()
-                )
-
-                # Age filter
-                if age_group != 'Total':
-                    if age_group == '10-14':
-                        dob_gt = today - relativedelta(years=15)
-                        dob_lte = today - relativedelta(years=10)
-                    elif age_group == '15-19':
-                        dob_gt = today - relativedelta(years=20)
-                        dob_lte = today - relativedelta(years=15)
-                    elif age_group == '20-49':
-                        dob_gt = today - relativedelta(years=50)
-                        dob_lte = today - relativedelta(years=20)
-                    age_filter = Q(dob__gt=dob_gt, dob__lte=dob_lte)
-                else:
-                    age_filter = Q()
-
-                # 1. Get new acceptors from PREVIOUS month (for BOM)
-                prev_month_new_query = FP_Record.objects.annotate(
-                    dob=dob_annotation,
-                    first_record_date=Min('pat__fp_records__created_at'),
-                    has_current=Exists(
-                        FP_Record.objects.filter(
-                            pat__pat_id=OuterRef('pat__pat_id'),
-                            created_at__range=(prev_month_start, prev_month_end),
-                            fp_type__fpt_client_type__iexact='currentuser'
-                        )
-                    )
-                ).filter(
-                    created_at__range=(prev_month_start, prev_month_end),
-                    fp_type__fpt_client_type__iexact='newacceptor',
-                    fp_type__fpt_method_used__iexact=method,
-                    first_record_date=F('created_at'),
-                    has_current=False
-                ).filter(
-                    age_filter
-                ).values('pat__pat_id').distinct().count()
-                prev_month_new_counts[method][age_group] = prev_month_new_query
-
-                # 2. BOM: Previous month's active users + previous month's new acceptors
-                bom_carryover_subquery = Subquery(
-                    FP_Record.objects.filter(
-                        pat__pat_id=OuterRef('pat__pat_id'),
-                        created_at__lt=prev_month_start
-                    ).order_by('-created_at').values('fprecord_id')[:1]
-                )
-                
-                bom_carryover_query = FP_Record.objects.annotate(
-                    dob=dob_annotation,
-                    latest_fp_record_id=bom_carryover_subquery
-                ).filter(
-                    fprecord_id__isnull=False,
-                    fprecord_id=F('latest_fp_record_id'),
-                    fp_type__fpt_method_used__iexact=method
-                ).filter(
-                    age_filter
-                ).annotate(
-                    has_dropout=Exists(
-                        FP_Assessment_Record.objects.filter(
-                            fprecord_id=OuterRef('fprecord_id'),
-                            followv__followv_status__iexact='dropout',
-                            followv__followv_date__lt=prev_month_start
-                        )
-                    )
-                ).filter(
-                    has_dropout=False
-                ).values('pat__pat_id').distinct().count()
-
-                bom_counts[method][age_group] = bom_carryover_query + prev_month_new_query
-
-                # 3. NEW: Current month new acceptors
-                new_query = FP_Record.objects.annotate(
-                    dob=dob_annotation,
-                    first_record_date=Min('pat__fp_records__created_at'),
-                    has_current=Exists(
-                        FP_Record.objects.filter(
-                            pat__pat_id=OuterRef('pat__pat_id'),
-                            created_at__range=(month_start, month_end),
-                            fp_type__fpt_client_type__iexact='currentuser'
-                        )
-                    )
-                ).filter(
-                    created_at__range=(month_start, month_end),
-                    fp_type__fpt_client_type__iexact='newacceptor',
-                    fp_type__fpt_method_used__iexact=method,
-                    first_record_date=F('created_at'),
-                    has_current=False
-                ).filter(
-                    age_filter
-                ).values('pat__pat_id').distinct().count()
-                new_counts[method][age_group] = new_query
-
-                # 4. OTHER: Current users with previous records in current month
-                other_query = FP_Record.objects.annotate(
-                    dob=dob_annotation,
-                    first_record_date=Min('pat__fp_records__created_at')
-                ).filter(
-                    created_at__range=(month_start, month_end),
-                    fp_type__fpt_client_type__iexact='currentuser',
-                    fp_type__fpt_method_used__iexact=method,
-                    first_record_date__lt=F('created_at')
-                ).filter(
-                    age_filter
-                ).values('pat__pat_id').distinct().count()
-                other_counts[method][age_group] = other_query
-
-                # 5. DROP-OUTS: Dropouts in current month (include auto-detected)
-                dropout_query = FP_Assessment_Record.objects.annotate(
-                    dob=Case(
-                        When(fprecord__pat__pat_type='Resident', then=F('fprecord__pat__rp_id__per__per_dob')),
-                        When(fprecord__pat__pat_type='Transient', then=F('fprecord__pat__trans_id__tran_dob')),
-                        default=None,
-                        output_field=DateField()
-                    ),
-                    dropout_date=Case(
-                        When(followv__followv_status__iexact='Dropout', then=F('followv__followv_date')),
-                        When(
-                            Q(followv__followv_status__iexact='Pending') & 
-                            Q(followv__followv_date__lte=today - timedelta(days=3)),
-                            then=F('followv__followv_date') + timedelta(days=3)
-                        ),
-                        default=None,
-                        output_field=DateField()
-                    )
-                ).filter(
-                    Q(followv__followv_status__iexact='Dropout') |
-                    Q(followv__followv_status__iexact='Pending', followv__followv_date__lte=today - timedelta(days=3)),
-                    dropout_date__range=(month_start, month_end),
-                    fprecord__fp_type__fpt_method_used__iexact=method
-                ).filter(
-                    age_filter
-                ).values('fprecord__pat__pat_id').distinct().count()
-                drop_outs_counts[method][age_group] = dropout_query
-
-        response_data = {
-            'bom_counts': bom_counts,
-            'new_counts': new_counts,
-            'other_counts': other_counts,
-            'drop_outs_counts': drop_outs_counts,
-            'prev_month_new_counts': prev_month_new_counts,
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        traceback.print_exc()
-        return Response({"detail": f"Error generating report: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # @api_view(['GET'])
 # def get_monthly_fp_list(request):
@@ -3397,111 +2746,111 @@ class FP_PregnancyCheckDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "fp_pc_id"
 
 
-class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
-    def get(self, request, pat_id, format=None):
-        try:
-            # Get the patient first
-            patient = get_object_or_404(Patient, pat_id=pat_id)
+# class ObstetricalHistoryByPatientView(generics.RetrieveAPIView):
+#     def get(self, request, pat_id, format=None):
+#         try:
+#             # Get the patient first
+#             patient = get_object_or_404(Patient, pat_id=pat_id)
             
-            # Get all patient records for this patient
-            patient_records = PatientRecord.objects.filter(pat_id=patient)
+#             # Get all patient records for this patient
+#             patient_records = PatientRecord.objects.filter(pat_id=patient)
             
-            # Find obstetrical histories linked to these patient records
-            histories = Obstetrical_History.objects.filter(
-                patrec_id__in=patient_records
-            ).order_by('-patrec_id__created_at')
+#             # Find obstetrical histories linked to these patient records
+#             histories = Obstetrical_History.objects.filter(
+#                 patrec_id__in=patient_records
+#             ).order_by('-patrec_id__created_at')
             
-            if histories.exists():
-                # Return the most recent one or all of them based on your needs
-                latest_history = histories.first()
-                serializer = FP_ObstetricalHistorySerializer(latest_history)
+#             if histories.exists():
+#                 # Return the most recent one or all of them based on your needs
+#                 latest_history = histories.first()
+#                 serializer = FP_ObstetricalHistorySerializer(latest_history)
                 
-                response_data = {
-                    'obs_id': latest_history.obs_id,
-                    'patrec_id': latest_history.patrec_id.patrec_id if latest_history.patrec_id else None,
-                    'g_pregnancies': latest_history.obs_gravida or 0,
-                    'p_pregnancies': latest_history.obs_para or 0,
-                    'fullTerm': latest_history.obs_fullterm or 0,
-                    'premature': latest_history.obs_preterm or 0,
-                    'abortion': latest_history.obs_abortion or 0,
-                    'numOfLivingChildren': latest_history.obs_living_ch or 0,
-                    # Add other fields as needed
-                }
+#                 response_data = {
+#                     'obs_id': latest_history.obs_id,
+#                     'patrec_id': latest_history.patrec_id.patrec_id if latest_history.patrec_id else None,
+#                     'g_pregnancies': latest_history.obs_gravida or 0,
+#                     'p_pregnancies': latest_history.obs_para or 0,
+#                     'fullTerm': latest_history.obs_fullterm or 0,
+#                     'premature': latest_history.obs_preterm or 0,
+#                     'abortion': latest_history.obs_abortion or 0,
+#                     'numOfLivingChildren': latest_history.obs_living_ch or 0,
+#                     # Add other fields as needed
+#                 }
                 
-                return Response(response_data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    {"detail": "No obstetrical history found for this patient."}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
+#                 return Response(response_data, status=status.HTTP_200_OK)
+#             else:
+#                 return Response(
+#                     {"detail": "No obstetrical history found for this patient."}, 
+#                     status=status.HTTP_404_NOT_FOUND
+#                 )
                 
-        except Patient.DoesNotExist:
-            return Response(
-                {"detail": f"Patient with ID {pat_id} not found."}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            print(f"Error in ObstetricalHistoryByPatientView: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return Response(
-                {"detail": f"Internal server error: {str(e)}"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+#         except Patient.DoesNotExist:
+#             return Response(
+#                 {"detail": f"Patient with ID {pat_id} not found."}, 
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+#         except Exception as e:
+#             print(f"Error in ObstetricalHistoryByPatientView: {str(e)}")
+#             import traceback
+#             traceback.print_exc()
+#             return Response(
+#                 {"detail": f"Internal server error: {str(e)}"}, 
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
 
 
-def _check_and_update_missed_and_dropouts_for_patient(patient_id):
-    try:
-        # Get the latest FP_Record for the patient
-        latest_fp_record = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at').first()
-        if not latest_fp_record:
-            return  # No records, skip
+# def _check_and_update_missed_and_dropouts_for_patient(patient_id):
+#     try:
+#         # Get the latest FP_Record for the patient
+#         latest_fp_record = FP_Record.objects.filter(pat_id=patient_id).order_by('-created_at').first()
+#         if not latest_fp_record:
+#             return  # No records, skip
 
-        # Get its FP_type
-        fp_type = FP_type.objects.filter(fprecord=latest_fp_record).first()
-        if not fp_type:
-            return  # No type, skip
+#         # Get its FP_type
+#         fp_type = FP_type.objects.filter(fprecord=latest_fp_record).first()
+#         if not fp_type:
+#             return  # No type, skip
 
-        # Get the latest pending FollowUpVisit via PatientRecord
-        patient_record = latest_fp_record.patrec
-        if not patient_record:
-            return
+#         # Get the latest pending FollowUpVisit via PatientRecord
+#         patient_record = latest_fp_record.patrec
+#         if not patient_record:
+#             return
 
-        pending_follow_up = patient_record.follow_up_visits.filter(followv_status="Pending").order_by('-followv_date').first()
-        if not pending_follow_up:
-            return  # No pending follow-up, skip
+#         pending_follow_up = patient_record.follow_up_visits.filter(followv_status="Pending").order_by('-followv_date').first()
+#         if not pending_follow_up:
+#             return  # No pending follow-up, skip
 
-        today = timezone.now().date()
+#         today = timezone.now().date()
 
-        # Check if a new FP_Record (e.g., follow-up record) exists since followv_date
-        has_new_record = FP_Record.objects.filter(
-            pat_id=patient_id,
-            created_at__date__gte=pending_follow_up.followv_date
-        ).exists()
+#         # Check if a new FP_Record (e.g., follow-up record) exists since followv_date
+#         has_new_record = FP_Record.objects.filter(
+#             pat_id=patient_id,
+#             created_at__date__gte=pending_follow_up.followv_date
+#         ).exists()
 
-        if has_new_record:
-            return  # Has new record, don't change status
+#         if has_new_record:
+#             return  # Has new record, don't change status
 
-        # Calculate cutoff for dropout (followv_date + 3 days)
-        cutoff_date = pending_follow_up.followv_date + timedelta(days=3)
+#         # Calculate cutoff for dropout (followv_date + 3 days)
+#         cutoff_date = pending_follow_up.followv_date + timedelta(days=3)
 
-        with transaction.atomic():
-            if today > cutoff_date:
-                # Missed by more than 3 days -> Dropout
-                pending_follow_up.followv_status = "Dropout"
-                pending_follow_up.save()
-                fp_type.fpt_subtype = "dropout"  # Or "dropoutrestart" based on your mappings
-                fp_type.save()
-                logger.info(f"Updated patient {patient_id} follow-up {pending_follow_up.followv_id} to 'Dropout' (missed by >3 days on {pending_follow_up.followv_date})")
-            elif today > pending_follow_up.followv_date:
-                # Missed but within 3 days -> Missed
-                pending_follow_up.followv_status = "Missed"
-                pending_follow_up.save()
-                # Optional: Update fp_type.fpt_subtype if needed (e.g., to "missed"), but probably not required
-                logger.info(f"Updated patient {patient_id} follow-up {pending_follow_up.followv_id} to 'Missed' (missed on {pending_follow_up.followv_date})")
+#         with transaction.atomic():
+#             if today > cutoff_date:
+#                 # Missed by more than 3 days -> Dropout
+#                 pending_follow_up.followv_status = "Dropout"
+#                 pending_follow_up.save()
+#                 fp_type.fpt_subtype = "dropout"  # Or "dropoutrestart" based on your mappings
+#                 fp_type.save()
+#                 logger.info(f"Updated patient {patient_id} follow-up {pending_follow_up.followv_id} to 'Dropout' (missed by >3 days on {pending_follow_up.followv_date})")
+#             elif today > pending_follow_up.followv_date:
+#                 # Missed but within 3 days -> Missed
+#                 pending_follow_up.followv_status = "Missed"
+#                 pending_follow_up.save()
+#                 # Optional: Update fp_type.fpt_subtype if needed (e.g., to "missed"), but probably not required
+#                 logger.info(f"Updated patient {patient_id} follow-up {pending_follow_up.followv_id} to 'Missed' (missed on {pending_follow_up.followv_date})")
 
-    except Exception as e:
-        logger.error(f"Error updating missed/dropout for patient {patient_id}: {str(e)}")
+#     except Exception as e:
+#         logger.error(f"Error updating missed/dropout for patient {patient_id}: {str(e)}")
         
 # @api_view(['GET'])
 # def get_all_fp_records_for_patient(request, patient_id):

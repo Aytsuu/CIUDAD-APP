@@ -1,0 +1,64 @@
+
+import { AlertTriangle } from "lucide-react"
+
+interface ConfirmSameMethodModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onConfirm: () => void
+  previousMethod: string
+  newMethod: string
+}
+
+export function ConfirmSameMethodModal({
+  open,
+  onOpenChange,
+  onConfirm,
+  previousMethod,
+  newMethod
+}: ConfirmSameMethodModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Same Method Selected
+          </DialogTitle>
+          <DialogDescription>
+            You are selecting the same method ({previousMethod}) that was previously used. 
+            This is typically not recommended unless the patient is restarting after missed follow-ups.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+            <p className="text-sm text-amber-800">
+              <strong>Please confirm:</strong> The patient intends to continue with {previousMethod} 
+              despite previous missed follow-ups.
+            </p>
+          </div>
+          
+          <div className="text-sm text-gray-600">
+            <p><strong>Previous Method:</strong> {previousMethod}</p>
+            <p><strong>New Method:</strong> {newMethod}</p>
+          </div>
+        </div>
+
+        <DialogFooter className="flex gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            Continue with Same Method
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

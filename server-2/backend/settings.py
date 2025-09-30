@@ -617,6 +617,7 @@ INSTALLED_APPS = [
     'apps.reports',
 ]
 
+SCHEDULER_AUTOSTART = True
 
 
 MIDDLEWARE = [

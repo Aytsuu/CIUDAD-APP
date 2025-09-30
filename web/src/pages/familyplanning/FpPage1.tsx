@@ -118,34 +118,34 @@ export default function FamilyPlanningForm({
     }
   }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (!isPatientPreSelected) {
       const fetchPatients = async () => {
         setLoadingPatients(true)
         try {
           const response = await api2.get("patientrecords/patients/")
           const formattedPatients = response.data.map((patient: any) => {
-    const patientId = patient.pat_id?.toString() || "";
-    const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim();
-    
-    // CRITICAL CHANGE: Create a single searchable string for the ID
-    const searchableId = `${patientId} ${fullName}`; 
+            const patientId = patient.pat_id?.toString() || "";
+            const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim();
 
-    return {
-        // Use the searchable string as the 'id' which gets searched
-        id: searchableId, 
-        // The name can remain the JSX for display purposes
-        name: (
-            <>
-                <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
+            // CRITICAL CHANGE: Create a single searchable string for the ID
+            const searchableId = `${patientId} ${fullName}`;
+
+            return {
+              // Use the searchable string as the 'id' which gets searched
+              id: searchableId,
+              // The name can remain the JSX for display purposes
+              name: (
+                <>
+                  <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
                     {patientId}
-                </span>
-                {fullName}
-            </>
-        ),
-    };
-});
-setPatients(formattedPatients)
+                  </span>
+                  {fullName}
+                </>
+              ),
+            };
+          });
+          setPatients(formattedPatients)
 
         } catch (error) {
           console.error("Error fetching patients:", error)
@@ -179,7 +179,7 @@ setPatients(formattedPatients)
       toast.error("Please select a valid patient");
       return;
     }
-     const realPatId = id.split(' ')[0];
+    const realPatId = id.split(' ')[0];
     setSelectedPatientId(realPatId);
     try {
       // Fetch basic patient data
@@ -231,22 +231,22 @@ setPatients(formattedPatients)
         api2.get(`familyplanning/last-previous-pregnancy/${realPatId}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${realPatId}`).catch(() => ({ data: {} }))
       ];
-      const [bodyMeasurementsResponse,obsHistoryResponse,lastPrevPregResponse,personalResponse] = await Promise.all(requests);
-      console.log("Body measurement: " ,bodyMeasurementsResponse)
+      const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
+      console.log("Body measurement: ", bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 
-        if (spouseData) {
-          spouseInfo = {
-            s_lastName: spouseData.spouse_lname || "",
-            s_givenName: spouseData.spouse_fname || "",
-            s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
-            s_dateOfBirth: spouseData.spouse_dob || "",
-            s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
-            s_occupation: spouseData.spouse_occupation || "",
-          };
-        }
-      
+      if (spouseData) {
+        spouseInfo = {
+          s_lastName: spouseData.spouse_lname || "",
+          s_givenName: spouseData.spouse_fname || "",
+          s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
+          s_dateOfBirth: spouseData.spouse_dob || "",
+          s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
+          s_occupation: spouseData.spouse_occupation || "",
+        };
+      }
+
       // Build the form data with proper fallbacks
       const newFormData = {
         ...formData,
@@ -393,7 +393,7 @@ setPatients(formattedPatients)
             return comGender === "both" || comGender === genderLower;
           });
         }
-console.log("Gender type: ",effectiveGender)
+        console.log("Gender type: ", effectiveGender)
         // Format the commodities
         const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
           id: com.com_name,  // Use name as the value that gets stored
@@ -558,7 +558,7 @@ console.log("Gender type: ",effectiveGender)
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormInput control={form.control} name="client_id" label="CLIENT ID:" {...inputProps} />
-              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps}  readOnly={true} />
+              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps} readOnly={true} />
 
               <FormField
                 control={form.control}
@@ -1005,7 +1005,7 @@ console.log("Gender type: ",effectiveGender)
                     }
                     updateFormData(currentValues)
                     onNext2()
-                  } else if (isAgeInvalid){
+                  } else if (isAgeInvalid) {
                     toast.error("Age is outside the allowed range for family planning");
                   }
                 }}

@@ -43,6 +43,7 @@ const Homepage = () => {
   // Determine user role
   const isAdmin = !!user?.staff;
   const isResident = !!user?.rp;
+  
 
   // Wait for auth check to complete
   if (!hasCheckedAuth) {

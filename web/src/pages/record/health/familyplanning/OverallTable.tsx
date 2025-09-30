@@ -122,12 +122,7 @@ export default function FamPlanningTable() {
           return (
             <div className="flex flex-col min-w-[200px]">
               <div className="font-medium">
-                <Link
-                  to={`/familyplanning/patient/${record.patient_id}`}
-                  className="text-blue-600 hover:underline"
-                >
                   {record.patient_name || "No name available"}
-                </Link>
               </div>
               <div className="text-sm text-gray-600">
                 {record.patient_age ? `${record.patient_age} years` : "Age not available"}•

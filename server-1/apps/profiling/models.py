@@ -22,7 +22,7 @@ class Sitio(AbstractModels):
         db_table = 'sitio'
 
     def __str__(self):
-        return self.sitio_id
+        return self.sitio_name
 
 class Address(AbstractModels):
     add_id = models.BigAutoField(primary_key=True)  
@@ -84,6 +84,31 @@ class Personal(AbstractModels):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
+
+class PersonalModification(AbstractModels):
+    pm_id = models.BigAutoField(primary_key=True)
+    pm_lname = models.CharField(max_length=50, null=True)
+    pm_fname = models.CharField(max_length=50, null=True)
+    pm_mname = models.CharField(max_length=50, null=True)
+    pm_suffix = models.CharField(max_length=50, null=True)
+    pm_dob = models.DateField(null=True)
+    pm_sex = models.CharField(max_length=50, null=True)
+    pm_status = models.CharField(max_length=50, null=True)
+    pm_edAttainment = models.CharField(max_length=50, null=True)
+    pm_religion = models.CharField(max_length=50, null=True)
+    pm_contact = models.CharField(max_length=50, null=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
+
+    class Meta:
+        db_table = 'personal_modification'
+
+class PersonalAddressModification(models.Model):
+    pam_id = models.BigAutoField(primary_key=True)
+    pm = models.ForeignKey(PersonalModification, on_delete=models.CASCADE, related_name="modified_addresses")
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "personal_address_modification"
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
@@ -163,7 +188,7 @@ class FamilyComposition(AbstractModels):
     
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField(auto_now_add=True)
+    req_created_at = models.DateTimeField(auto_now_add=True)
     req_is_archive = models.BooleanField(default=False)
 
     class Meta: 
@@ -180,7 +205,7 @@ class RequestRegistrationComposition(AbstractModels):
         db_table = 'request_registration_composition'
 
 class BusinessRespondent(AbstractModels):
-    br_id = models.BigAutoField(primary_key=True)
+    br_id = models.CharField(max_length=100, primary_key=True)
     br_date_registered = models.DateField(default=date.today)
     br_lname = models.CharField(max_length=50)
     br_fname = models.CharField(max_length=50)
@@ -194,7 +219,7 @@ class BusinessRespondent(AbstractModels):
         db_table = 'business_respondent'
 
 class Business(AbstractModels):
-    bus_id = models.BigAutoField(primary_key=True)
+    bus_id = models.CharField(max_length=100,primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
     bus_location = models.TextField()
