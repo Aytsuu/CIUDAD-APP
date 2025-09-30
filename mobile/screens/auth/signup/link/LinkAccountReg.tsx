@@ -26,15 +26,7 @@ export default function LinkAccountReg() {
     const values = getValues('accountFormSchema')
 
     try {
-      console.log({
-        username: values.username,
-        ...(values.email !== "" && {email: values.email}),
-        phone: values.phone,
-        password: values.password,
-        resident_id: rp_id 
-      })
       await addAccount({
-        username: values.username,
         ...(values.email !== "" && {email: values.email}),
         phone: values.phone,
         password: values.password,

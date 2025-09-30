@@ -16,16 +16,12 @@ export const useGetCardAnalytics = () => {
   })
 }
 
-export const useGetSidebarAnalytics = (period: string = "today") => {
+export const useGetSidebarAnalytics = () => {
   return useQuery({
-    queryKey: ['profilingSidebar', period],
+    queryKey: ['profilingSidebar'],
     queryFn: async () => {
       try {
-        const res = await api.get("profiling/sidebar/analytics/data/", {
-          params: {
-            period
-          }
-        });
+        const res = await api.get("profiling/sidebar/analytics/data/");
         return res.data;
       } catch(err) {
         throw err;

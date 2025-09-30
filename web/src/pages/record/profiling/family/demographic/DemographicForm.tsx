@@ -14,13 +14,14 @@ export default function DemographicForm({
   form,
   households,
   onSubmit,
+  setSearchQuery
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   households: any[];
   onSubmit: () => void;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>
 }) {
-  const [invalidHousehold, setInvalidHousehold] =
-    React.useState<boolean>(false);
+  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
 
   const submit = async () => {
     const formIsValid = await form.trigger("demographicInfo");
@@ -61,6 +62,7 @@ export default function DemographicForm({
                 options={households}
                 value={form.watch(`demographicInfo.householdNo`)}
                 onChange={handleHouseholdChange}
+                onSearchChange={(value) => setSearchQuery(value)}
                 placeholder="Select a household"
                 contentClassName="w-[22rem]"
                 emptyMessage={

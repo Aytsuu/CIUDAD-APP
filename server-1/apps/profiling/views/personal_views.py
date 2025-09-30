@@ -44,10 +44,11 @@ class PersonalModificationCreateView(APIView):
   permission_classes = [AllowAny]
   def post(self, request):
     personal = request.data.get("personal", None)
+    per_addresses = personal.get('per_addresses', [])
     if not personal:
       return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    request = PersonalModification(
+    mod_request = PersonalModification.objects.create(
       pm_fname=personal.get('per_fname', None),
       pm_lname=personal.get('per_lname', None),
       pm_mname=personal.get('per_mname', None),
@@ -60,13 +61,37 @@ class PersonalModificationCreateView(APIView):
       pm_contact=personal.get('per_contact', None),
       per=Personal.objects.get(per_id=personal.get('per_id', None))
     )
-    request.save()
+
+    if len(per_addresses) > 0:
+      instances = [
+        PersonalAddressModification(
+          pm=mod_request,
+          add=Address.objects.get_or_create(
+            add_province=per_add['add_province'],
+            add_city=per_add['add_city'],
+            add_barangay=per_add['add_barangay'],
+            add_external_sitio=per_add['add_external_sitio'],
+            sitio=Sitio.objects.filter(sitio_name=per_add.get('sitio', None)).first(),
+            add_street=per_add['add_street'],
+          )[0]
+        ) 
+        for per_add in per_addresses
+      ]
+
+      PersonalAddressModification.objects.bulk_create(instances)
 
     return Response(status=status.HTTP_200_OK)
 
-class PersonalModificationRequestsView(generics.RetrieveAPIView):
+class PersonalModificationRequestsView(generics.ListAPIView):
   serializer_class = PersonalModificationBaseSerializer
-  queryset = PersonalModification.objects.all()
-  lookup_field = 'per'
+
+  def get_queryset(self):
+    per = self.request.query_params.get('per', None)
+    queryset = PersonalModification.objects.all()
+
+    if per:
+      queryset = queryset.filter(per=per)
+      
+    return queryset
   
 

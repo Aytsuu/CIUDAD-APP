@@ -16,7 +16,8 @@ export default function HouseholdProfileForm({
   isSubmitting,
   invalidHouseHead,
   form,
-  onSubmit
+  onSubmit,
+  setSearchQuery
 }: {
   addresses: any[];
   residents: any[];
@@ -24,6 +25,7 @@ export default function HouseholdProfileForm({
   invalidHouseHead: boolean;
   form: UseFormReturn<z.infer<typeof householdFormSchema>>;
   onSubmit: () => void;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>
 }) {
 
   React.useEffect(() => {
@@ -44,6 +46,7 @@ export default function HouseholdProfileForm({
           value={form.watch("householdHead")}
           onChange={(value) => form.setValue("householdHead", value as string)}
           placeholder="Select a household head"
+          onSearchChange={(value: string) => setSearchQuery(value)}
           emptyMessage={
             <div className="flex gap-2 justify-center items-center">
               <Label className="font-normal text-[13px]">No resident found.</Label>
@@ -60,8 +63,8 @@ export default function HouseholdProfileForm({
         </div>
       </div>
       <FormSelect control={form.control} name="nhts" label="NHTS Household"options={[
-          { id: "no", name: "No" },
-          { id: "yes", name: "Yes" },
+          { id: "NO", name: "NO" },
+          { id: "YES", name: "YES" },
         ]}
         readOnly={false}
       />

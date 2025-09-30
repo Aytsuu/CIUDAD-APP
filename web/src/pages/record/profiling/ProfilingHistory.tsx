@@ -1,7 +1,7 @@
-import { ActivityIndicator } from "@/components/ui/activity-indicator"
 import { Button } from "@/components/ui/button/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Label } from "@/components/ui/label"
+import { Spinner } from "@/components/ui/spinner"
 import { getDateTimeFormat } from "@/helpers/dateHelper"
 import { Calendar, Clock, User } from "lucide-react"
 
@@ -18,8 +18,9 @@ export const RenderHistory = ({
 }) => {
     if (isLoadingHistory) {
       return (
-        <div className="p-4">
-          <ActivityIndicator message="Loading history..." />
+        <div className="flex flex-col items-center justify-center py-12 space-y-4 p-4">
+          <Spinner size="lg" />
+          <p className="text-sm text-gray-500">Loading family members...</p>
         </div>
       )
     }

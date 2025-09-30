@@ -89,23 +89,15 @@ export default () => {
         </Text>
         
         <View className="flex gap-4">
-          <Button
+          <TouchableOpacity
             onPress={() => router.push('/(business)/add-business')}
-            className="bg-primaryBlue px-8 py-4 rounded-xl flex-row items-center"
+            className="bg-transparent border-2 border-primaryBlue px-8 py-4 rounded-full flex-row items-center justify-center"
           >
-            <Plus size={20} className="text-white mr-2" />
-            <Text className="text-white font-semibold text-sm">
+            <Plus size={20} className="text-primaryBlue mr-2" />
+            <Text className="text-primaryBlue font-semibold text-sm">
               Add Your First Business
             </Text>
-          </Button>
-          <Button
-            className="bg-primaryBlue px-8 py-4 rounded-xl flex-row items-center"
-          >
-            <FileText size={20} className="text-white mr-2" />
-            <Text className="text-white font-semibold text-sm">
-              Request for a Document
-            </Text>
-          </Button>
+          </TouchableOpacity>
         </View>
       </View>
     </PageLayout>

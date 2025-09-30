@@ -16,16 +16,12 @@ export const useGetCardAnalytics = () => {
   })
 }
 
-export const useGetSidebarAnalytics = (period: string = "today") => {
+export const useGetSidebarAnalytics = () => {
   return useQuery({
-    queryKey: ['reportSidebar', period],
+    queryKey: ['reportSidebar'],
     queryFn: async () => {
       try {
-        const res = await api.get("report/sidebar/analytics/data/", {
-          params: {
-            period
-          }
-        });
+        const res = await api.get("report/sidebar/analytics/data/");
         return res.data;
       } catch (err) {
         throw err;
