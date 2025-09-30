@@ -31,7 +31,7 @@ class Budget_Plan_Detail(models.Model):
     dtl_id = models.BigAutoField(primary_key = True)
     dtl_budget_item = models.CharField(max_length=200)
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    dtl_budget_category = models.CharField(max_length=200)
+    # dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
     class Meta: 
         db_table = 'budget_plan_detail'
@@ -97,6 +97,7 @@ class Disbursement_Voucher(models.Model):
     dis_or_num = models.CharField(max_length=255, null=True)  
     dis_paydate = models.DateField(default=date.today)
     dis_payacc = models.JSONField(default=list, null=True)
+    dis_signatories = models.JSONField(default=list, null=True)
     dis_is_archive = models.BooleanField(default=False)        
     
     staff = models.ForeignKey(
@@ -193,7 +194,8 @@ class Expense_Particular(models.Model):
 
 class Income_Expense_Tracking(models.Model):
     iet_num = models.BigAutoField(primary_key=True)
-    iet_serial_num = models.CharField(max_length=100, default='DEFAULT_SERIAL') 
+    iet_serial_num = models.CharField(max_length=100, null=True, blank=True) 
+    iet_check_num = models.CharField(max_length=100, null=True, blank=True) 
     iet_datetime = models.DateTimeField(null=True)
     iet_entryType = models.CharField(max_length=100)
     iet_amount = models.DecimalField(max_digits=10, decimal_places=2)

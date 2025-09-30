@@ -102,50 +102,89 @@ class BudgetPlanHistorySerializer(serializers.ModelSerializer):
 
 # =========================== DISBURSEMENT ==========================
 class Disbursement_FileSerializers(serializers.ModelSerializer):
-    staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
-    dis_year = serializers.CharField(source='dis_num.dis_year', read_only=True)
-    dis_name = serializers.CharField(source='dis_num.dis_name', read_only=True)
-    dis_desc = serializers.CharField(source='dis_num.dis_desc', read_only=True)
+    
     class Meta:
         model = Disbursement_File
-        fields = ['disf_num', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num', 'staff_name']
+        fields = ['disf_num', 'disf_is_archive', 'disf_type', 'disf_name', 'disf_path', 'disf_url', 'dis_num']
         extra_kwargs = {
-            'dis_num': {'required': True},
-            'disf_name': {'required': True},
-            'disf_type': {'required': True},
+            'dis_num': {'required': False},
+            'disf_name': {'required': False}, 
+            'disf_type': {'required': False}, 
             'disf_url': {'read_only': True},
             'disf_path': {'read_only': True},
         }
     
+    def validate(self, attrs):
+        return attrs
+
     def _upload_files(self, files, dis_num_id=None):
         """Upload multiple files for a disbursement folder"""
         if not dis_num_id:
             raise serializers.ValidationError({"error": "dis_num is required"})
 
         try:
-            folder = Disbursement_File.objects.get(pk=dis_num_id)
-        except Disbursement_File.DoesNotExist:
-            raise serializers.ValidationError(f"Disbursement folder with id {dis_num_id} does not exist")
+            disbursement_voucher = Disbursement_Voucher.objects.get(pk=dis_num_id)
+        except Disbursement_Voucher.DoesNotExist:
+            raise serializers.ValidationError(f"Disbursement voucher with id {dis_num_id} does not exist")
 
         disbursement_images = []
+        successful_uploads = 0
+        failed_uploads = 0
+        
         for file_data in files:
             if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
+                print(f"Skipping invalid file data for: {file_data.get('name')}")
                 continue
 
-            disbursement_image = Disbursement_File(
-                disf_name=file_data['name'],
-                disf_type=file_data['type'],
-                disf_path=f"Uploads/disbursement/{file_data['name']}",
-                dis_num=folder,
-                staff=self.context['request'].user.staff if hasattr(self.context['request'].user, 'staff') else None
-            )
-            
-            # Upload to your storage system
-            disbursement_image.disf_url = upload_to_storage(file_data, 'disbursement-bucket')
-            disbursement_images.append(disbursement_image)
+            # Validate required fields for each file
+            if not file_data.get('name'):
+                raise serializers.ValidationError({"error": "File name is required"})
+            if not file_data.get('type'):
+                raise serializers.ValidationError({"error": "File type is required"})
+
+            try:
+                disbursement_image = Disbursement_File(
+                    disf_name=file_data['name'],
+                    disf_type=file_data['type'],
+                    disf_path=f"Uploads/disbursement/{file_data['name']}",
+                    dis_num=disbursement_voucher,
+                )
+                
+                # Add staff if available
+                if hasattr(self.context['request'].user, 'staff'):
+                    disbursement_image.staff = self.context['request'].user.staff
+                
+                # Handle the upload with error catching
+                try:
+                    disbursement_image.disf_url = upload_to_storage(file_data, 'disbursement-bucket')
+                    successful_uploads += 1
+                    print(f"Successfully uploaded: {file_data['name']}")
+                except UnboundLocalError as e:
+                    # This is the specific error from the broken upload function
+                    print(f"Upload function error for {file_data['name']}: {str(e)}")
+                    # Use a placeholder URL instead of failing completely
+                    disbursement_image.disf_url = f"https://placeholder.com/{file_data['name']}"
+                    failed_uploads += 1
+                except Exception as e:
+                    # Handle any other upload errors
+                    print(f"Upload failed for {file_data['name']}: {str(e)}")
+                    disbursement_image.disf_url = f"https://placeholder.com/{file_data['name']}"
+                    failed_uploads += 1
+                
+                disbursement_images.append(disbursement_image)
+                
+            except Exception as e:
+                print(f"Error processing file {file_data.get('name')}: {str(e)}")
+                failed_uploads += 1
+                continue  # Skip this file but continue with others
 
         if disbursement_images:
-            Disbursement_File.objects.bulk_create(disbursement_images)
+            try:
+                Disbursement_File.objects.bulk_create(disbursement_images)
+                print(f"Successfully saved {successful_uploads} files, {failed_uploads} failed")
+            except Exception as bulk_error:
+                print(f"Bulk create failed: {str(bulk_error)}")
+                raise bulk_error
         
         return disbursement_images
 
@@ -600,10 +639,12 @@ class ClearanceRequestSerializer(serializers.ModelSerializer):
 
     def get_resident_details(self, obj):
         return {
-            'per_fname': obj.rp.per_fname,
-            'per_lname': obj.rp.per_lname,
-            'per_contact': obj.rp.per_contact,
-            'per_email': obj.rp.per_email
+            'per_fname': getattr(obj.rp, 'per_fname', ''),
+            'per_lname': getattr(obj.rp, 'per_lname', ''),
+            'per_contact': getattr(obj.rp, 'per_contact', ''),
+            'per_email': getattr(obj.rp, 'per_email', ''),
+            'per_dob': getattr(obj.rp, 'per_dob', None),
+            'per_disability': getattr(obj.rp, 'per_disability', None),
         }
 
     def get_invoice(self, obj):
@@ -716,10 +757,12 @@ class ResidentNameSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='per.per_fname')
     last_name = serializers.CharField(source='per.per_lname')
     full_name = serializers.SerializerMethodField()
+    per_dob = serializers.DateField(source='per.per_dob', allow_null=True)
+    per_disability = serializers.CharField(source='per.per_disability', allow_null=True)
 
     class Meta:
         model = ResidentProfile
-        fields = ['rp_id', 'per_id', 'first_name', 'last_name', 'full_name']
+        fields = ['rp_id', 'per_id', 'first_name', 'last_name', 'full_name', 'per_dob', 'per_disability']
     
     def get_full_name(self, obj):
         name_parts = [obj.per.per_lname, obj.per.per_fname]

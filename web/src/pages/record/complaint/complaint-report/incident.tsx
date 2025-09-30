@@ -1,4 +1,3 @@
-// incident-info.tsx
 import { useFormContext, useWatch } from "react-hook-form";
 import {
   FormControl,

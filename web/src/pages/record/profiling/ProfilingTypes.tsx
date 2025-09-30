@@ -51,8 +51,7 @@ export type ResidentBusinessRecord = {
   bus_name: string;
   bus_gross_sales: string;
   bus_date_verified: string;
-  sitio: string;
-  bus_street: string;
+  bus_location: string;
 }
 
 export type DependentRecord = {

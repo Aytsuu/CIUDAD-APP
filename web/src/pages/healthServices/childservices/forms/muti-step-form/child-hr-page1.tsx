@@ -4,7 +4,7 @@ import type React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import type { Patient } from "@/components/ui/patientSearch";

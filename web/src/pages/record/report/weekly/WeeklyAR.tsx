@@ -3,13 +3,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2 } from "lucide-react"
+import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2, Plus } from "lucide-react"
 import { useGetWeeklyAR } from "../queries/reportFetch"
 import { getAllWeeksInMonth, getMonthName, getMonths, getRangeOfDaysInWeek, getWeekNumber, hasWeekPassed } from "@/helpers/dateHelper"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import RecentWeeklyAR from "./RecentWeeklyAR"
-import MissedWeeklyAR from "./MissedWeeklyAR"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
+import { Button } from "@/components/ui/button/button"
 
 export default function WeeklyAR() {
   const navigate = useNavigate()
@@ -39,7 +39,6 @@ export default function WeeklyAR() {
   }
 
   const yearOptions = getYearOptions()
-
   const months = getMonths
 
   // Filter data by selected year
@@ -82,6 +81,7 @@ export default function WeeklyAR() {
           .sort((a, b) => a.weekNo - b.weekNo),
         missingWeeks: missingWeeks.sort((a, b) => a - b),
         missedWeeksPassed: missedWeeksPassed.length,
+        allWeeksInMonth: allWeeksInMonth,
         hasData: monthData.length > 0,
       }
     })
@@ -103,7 +103,7 @@ export default function WeeklyAR() {
           <div className="flex items-center justify-center h-64">
             <div className="text-muted-foreground">
               <Loader2 className="w-full text-center animate-spin mb-2"/>
-              Please wait while we load the your report records...
+              Please wait while we load your report records...
             </div>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function WeeklyAR() {
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
-                  {organizedData.map(({ month, weeks }) => (
+                  {organizedData.map(({ month, weeks, missedWeeksPassed, missingWeeks, allWeeksInMonth }) => (
                     <AccordionItem key={month} value={month} className="border-b last:border-b-0">
                       <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 hover:no-underline ">
                         <div className="flex items-center gap-3">
@@ -179,7 +179,7 @@ export default function WeeklyAR() {
                             {month} {selectedYear}
                           </span>
                           <Badge variant="outline" className="ml-2">
-                            {weeks.length} {weeks.length === 1 ? "Week" : "Weeks"}
+                            {weeks.length} / {allWeeksInMonth.length} Weeks
                           </Badge>
                         </div>
                       </AccordionTrigger>
@@ -378,7 +378,7 @@ export default function WeeklyAR() {
                                 </div>
                               </AccordionContent>
                             </AccordionItem>
-                          ))}
+                          ))} */}
                         </Accordion>
                       </AccordionContent>
                     </AccordionItem>
@@ -395,7 +395,7 @@ export default function WeeklyAR() {
           <RecentWeeklyAR recentReports={recentReports} />
 
           {/* Missed Weekly Reports */}
-          <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} />
+          {/* <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} /> */}
         </div>
       </div>
     </MainLayoutComponent>

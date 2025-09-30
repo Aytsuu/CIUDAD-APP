@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import React from "react";

@@ -7,8 +7,10 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # Local imports
 from apps.complaint.models import Complaint, Complainant, Accused, ComplaintComplainant, ComplaintAccused, Complaint_File
 from apps.complaint.serializers import ComplaintSerializer
+from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
+from apps.notification.create_notification import create_notification
 from ..serializers import ComplaintFileSerializer
 # from apps.complaint.serializers.create_complaint_serializer import ComplaintSerializer
 
@@ -191,18 +193,44 @@ class ComplaintCreateView(APIView):
                         
                     except Exception as file_error:
                         logger.error(f"File upload failed: {file_error}")
-                        # Rollback file operations but keep the complaint
                         transaction.savepoint_rollback(sid)
-                        # You can choose to continue without files or raise an error
-                        # For now, we'll continue without files
-                        logger.info("Continuing without file uploads due to error")
 
                 # Serialize response with related data
                 response_serializer = ComplaintSerializer(
                     complaint, context={"request": request}
                 )
-                logger.info(f"Successfully created complaint: {complaint.comp_id}")
 
+
+                # Create notification
+                try:
+                    recipients = []
+                    
+                    for complainant in complainant_instances:
+                        if not complainant.rp_id:
+                            continue
+                        recipients.append(complainant.rp_id)
+                            
+                    if recipients:
+                        create_notification(
+                            title="Complaint Filed Successfully",
+                            message=f"Your complaint regarding {complaint.comp_incident_type} has been successfully filed and is now under review. Complaint ID: {complaint.comp_id}",
+                            sender=request.user,
+                            recipients=recipients, 
+                            notif_type="Info",
+                            target_obj=complaint,
+                        )
+                        logger.info(f"Notifications sent to {len(recipients)} complainants with sender {request.user.acc_id}")
+                    else:
+                        if not sender_id:
+                            logger.warning("No complainant account found to use as sender")
+                        if not complainant_account_ids:
+                            logger.info("No complainant accounts found for notification")
+                        
+                except Exception as notif_error:
+                    logger.error(f"Failed to create/send notifications: {notif_error}")
+                    # Don't fail the entire request if notification fails
+                
+                logger.info(f"Complaint created with ID: {complaint.comp_id}")
                 return Response(
                     response_serializer.data, status=status.HTTP_201_CREATED
                 )
@@ -227,22 +255,3 @@ class ComplaintCreateView(APIView):
                 {"error": "An unexpected error occurred", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-# class ComplaintCreateView(APIView):
-    
-#     @transaction.atomic
-#     def post(self, request, *args, **kwargs):
-#         try: 
-#             logger.infO(f"Received comlaint creation request")
-            
-#             serializer = ComplaintSerializer(data=request.data)
-
-#             if serializer.is_valid():
-#                 complaint = serializer.save()
-#                 logger.info(f"Complaint created: {complaint.comp_id}")
-                
-#                 return Response({serializer.data}, status=status.HTTP_201_CREATED)
-#             return Response({"error": "Invalid data provided",  "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST )    
-#         except Exception as e:
-#             logger.error(f"Error creating complaint: {str(e)}")
-#             return Response({"error": "An unexpected error occurred", "detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -11,12 +11,9 @@ export interface ViewDisbursementVoucherProps {
   onClose?: () => void;
 }
 
-export const ViewDisbursementVoucher: React.FC<ViewDisbursementVoucherProps> = ({
-  disbursement,
-  onLoad,
-  onError,
-  onClose,
-}) => {
+export const ViewDisbursementVoucher: React.FC<
+  ViewDisbursementVoucherProps
+> = ({ disbursement, onLoad, onError, onClose }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(true);
   const [generationError, setGenerationError] = useState(false);
@@ -36,10 +33,20 @@ export const ViewDisbursementVoucher: React.FC<ViewDisbursementVoucherProps> = (
           dis_date: disbursement.dis_date || "",
           dis_fund: disbursement.dis_fund || 0,
           dis_particulars: Array.isArray(disbursement.dis_particulars)
-            ? disbursement.dis_particulars.map(p => ({
+            ? disbursement.dis_particulars.map((p) => ({
                 forPayment: p.forPayment || "",
-                tax: typeof p.tax === 'number' ? p.tax : parseFloat(p.tax) || 0,
-                amount: typeof p.amount === 'number' ? p.amount : parseFloat(p.amount) || 0
+                tax: typeof p.tax === "number" ? p.tax : parseFloat(p.tax) || 0,
+                amount:
+                  typeof p.amount === "number"
+                    ? p.amount
+                    : parseFloat(p.amount) || 0,
+              }))
+            : [],
+          dis_signatories: Array.isArray(disbursement.dis_signatories)
+            ? disbursement.dis_signatories.map((s) => ({
+                name: s.name || "",
+                position: s.position || "",
+                type: s.type || "certified_appropriation",
               }))
             : [],
           dis_checknum: disbursement.dis_checknum || "",
@@ -47,11 +54,17 @@ export const ViewDisbursementVoucher: React.FC<ViewDisbursementVoucherProps> = (
           dis_or_num: disbursement.dis_or_num || "",
           dis_paydate: disbursement.dis_paydate || "",
           dis_payacc: Array.isArray(disbursement.dis_payacc)
-            ? disbursement.dis_payacc.map(p => ({
+            ? disbursement.dis_payacc.map((p) => ({
                 account: p.account || "",
                 accCode: p.accCode || "",
-                debit: typeof p.debit === 'number' ? p.debit : parseFloat(p.debit) || 0,
-                credit: typeof p.credit === 'number' ? p.credit : parseFloat(p.credit) || 0
+                debit:
+                  typeof p.debit === "number"
+                    ? p.debit
+                    : parseFloat(p.debit) || 0,
+                credit:
+                  typeof p.credit === "number"
+                    ? p.credit
+                    : parseFloat(p.credit) || 0,
               }))
             : [],
           staff_name: disbursement.staff_name || "",
@@ -59,7 +72,7 @@ export const ViewDisbursementVoucher: React.FC<ViewDisbursementVoucherProps> = (
         };
 
         const pdfUrl = await generateDisbursementPdf(pdfData, true);
-        
+
         if (isMounted.current) {
           setPdfUrl(pdfUrl);
           setIsGenerating(false);

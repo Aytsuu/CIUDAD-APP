@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button/button";
 import {Form} from "@/components/ui/form/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import PhoneOTP from "./phoneOTP";
@@ -13,6 +12,8 @@ import EmailOTP from "./emailOTP";
 import PasswordEntry from "./passwordEntry";
 import { useSendOTP } from "../queries/authPostQueries";
 import { FormInput } from "@/components/ui/form/form-input";
+import axios from "axios";
+import { useSendEmailOTPMutation } from "@/redux/auth-redux/useAuthMutation";
 
 const PhoneSchema = z.object({
   phone: z
@@ -35,7 +36,7 @@ type SignInStep = "phone-login" | "email-login" | "otp" | "password";
 
 export default function SignIn() {
   const navigate = useNavigate();
-  const { sendEmailOTP } = useAuth();
+  // const { sendEmailOTP, error } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [signInMethod, setSignInMethod] = useState<SignInMethod>("phone");
@@ -48,6 +49,7 @@ export default function SignIn() {
   }>({});
 
   const sendOTPMutation = useSendOTP();
+  const sendEmailOTP = useSendEmailOTPMutation();
 
   const phoneForm = useForm<z.infer<typeof PhoneSchema>>({
     resolver: zodResolver(PhoneSchema),
@@ -67,6 +69,7 @@ export default function SignIn() {
     try {
       const response = await sendOTPMutation.mutateAsync({
         pv_phone_num: data.phone,
+        pv_type: "login"
       });
 
       setVerificationData({
@@ -75,13 +78,13 @@ export default function SignIn() {
       });
       setCurrentStep("otp");
       toast.success("OTP sent to your phone!");
-    } catch (error) {
-      console.error("Phone OTP error:", error);
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to send OTP. Please try again."
-      );
+    } catch (err) {
+      if(axios.isAxiosError(err) && err.response) {
+        phoneForm.setError("phone", {
+          type: "server",
+          message: err.response.data.phone
+        })
+      }
     } finally {
       setLoading(false);
     }
@@ -92,7 +95,7 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      await sendEmailOTP({
+      await sendEmailOTP.mutateAsync({
         email: data.email,
         type: "signin"
       });
@@ -100,13 +103,13 @@ export default function SignIn() {
       setVerificationData({ email: data.email });
       setCurrentStep("otp");
       toast.success("OTP sent to your email!");
-    } catch (error) {
-      console.error("Email OTP error:", error);
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to send OTP. Please try again."
-      );
+    } catch (err) {
+      if(axios.isAxiosError(err) && err.response) {
+        emailForm.setError("email", {
+          type: "server",
+          message: err.response.data.email
+        })
+      }
     } finally {
       setLoading(false);
     }
@@ -201,7 +204,7 @@ export default function SignIn() {
           <FormInput
             control={phoneForm.control}
             name="phone"
-            type="tel"
+            type="number"
             label="Phone Number"
             placeholder="09XXXXXXXXX"
           />

@@ -6,7 +6,7 @@ import { landing_router } from "./routers/landing-router";
 import { LoadingProvider } from "./context/LoadingContext";
 import { LinearLoader } from "./components/ui/linear-loader";
 import { NotFound } from "./not-found";
-import { NotificationProvider } from "./context/NotificationContext";
+// import { NotificationProvider } from "./context/NotificationContext";
 import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { queryClient } from "./lib/queryClient";
@@ -23,14 +23,14 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
-          <NotificationProvider>
+          {/* <NotificationProvider> */}
             <LoadingProvider>
               <LinearLoader />
               <AnimatePresence mode="wait">
                 <RouterProvider router={router} />
               </AnimatePresence>
             </LoadingProvider>
-          </NotificationProvider>
+          {/* </NotificationProvider> */}
         </QueryClientProvider>
       </PersistGate>
     </Provider>

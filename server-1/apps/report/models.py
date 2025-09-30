@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import date
+from abstract_classes import AbstractModels
 
 class ReportType(models.Model):
     rt_id = models.BigAutoField(primary_key=True)

@@ -73,7 +73,7 @@ INSTALLED_APPS = [
     'apps.familyplanning',
     'apps.animalbites',
     'apps.patientrecords',
-    'backend.firebase.notifications',
+    # 'apps.notification',
     'apps.medicalConsultation',
     'apps.medicineservices',
     'apps.firstaid',

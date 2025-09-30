@@ -273,23 +273,54 @@ class DisbursementFileRestoreView(DisbursementRestoreView):
     serializer_class = Disbursement_FileSerializers
     lookup_field = 'disf_num'
 
-
-# Bulk file upload for specific disbursement
 class DisbursementFileCreateView(generics.CreateAPIView):
     serializer_class = Disbursement_FileSerializers
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
-        dis_num_id = self.kwargs.get('dis_num') or request.data.get('dis_num')
-        files = request.data.get('files', [])
-        
-        if not dis_num_id or not files:
-            return Response({"error": "dis_num and files are required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer()
-        serializer._upload_files(files, dis_num_id=dis_num_id)
-        return Response({"status": "Files uploaded successfully"}, status=status.HTTP_201_CREATED)
+        try:
+            dis_num_id = self.kwargs.get('dis_num') or request.data.get('dis_num')
+            files = request.data.get('files', [])
             
+            print(f"Received file upload request for dis_num: {dis_num_id}")
+            print(f"Number of files: {len(files)}")
+            
+            if not dis_num_id:
+                return Response({"error": "dis_num is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not files:
+                return Response({"error": "No files provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                disbursement_voucher = Disbursement_Voucher.objects.get(pk=dis_num_id)
+            except Disbursement_Voucher.DoesNotExist:
+                return Response(
+                    {"error": f"Disbursement voucher with id {dis_num_id} does not exist"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Use the serializer's upload method
+            serializer = self.get_serializer()
+            serializer.context['request'] = request
+            
+            uploaded_files = serializer._upload_files(files, dis_num_id=dis_num_id)
+            
+            return Response({
+                "status": "Files processed successfully", 
+                "uploaded_count": len(uploaded_files),
+                "total_files": len(files),
+                "files": Disbursement_FileSerializers(uploaded_files, many=True).data
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"ERROR in DisbursementFileCreateView: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            
+            return Response(
+                {"error": f"Internal server error: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 
 class ExpenseParticulartView(generics.ListCreateAPIView):

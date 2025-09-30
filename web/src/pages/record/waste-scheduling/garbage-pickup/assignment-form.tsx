@@ -54,7 +54,7 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
         resolver: zodResolver(AcceptPickupRequestSchema),
         defaultValues: {
             driver: "",
-            collectors: [],
+            loaders: [],
             truck: "",
             date: pref_date,
             time: pref_time,
@@ -85,15 +85,15 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
 
                     <FormComboCheckbox
                         control={form.control}
-                        name="collectors"
-                        label="Collector(s)"
+                        name="loaders"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 

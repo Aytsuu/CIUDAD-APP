@@ -4,6 +4,8 @@ from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition
 from apps.account.models import Account
+from ..double_queries import PostQueries
+from django.db import transaction
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -65,6 +67,7 @@ class StaffCreateSerializer(serializers.ModelSerializer):
     model = Staff
     fields = '__all__'
   
+  @transaction.atomic
   def create(self, validated_data):
     pos = validated_data.get('pos', None)
     max_holders = pos.pos_max

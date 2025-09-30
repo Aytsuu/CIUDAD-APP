@@ -9,6 +9,8 @@ import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "..
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useLinkToVoter } from "../queries/profilingUpdateQueries";
 import { showErrorToast } from "@/components/ui/toast";
+import { formatCurrency } from "@/helpers/currencyFormat";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -337,19 +339,22 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     header: 'Name'
   },
   {
-    accessorKey: 'location',
-    header: 'Location',
-    cell: ({row}) => (
-      <p>{row.original.bus_street}, Sitio {row.original.sitio}</p>
-    )
+    accessorKey: 'bus_location',
+    header: 'Location'
   },
   {
     accessorKey: 'bus_gross_sales',
-    header: 'Gross Sales'
+    header: 'Gross Sales',
+    cell: ({ row }) => (
+      formatCurrency(+row.original.bus_gross_sales)
+    )
   },
   {
     accessorKey: 'bus_date_verified',
-    header: 'Date Registered'
+    header: 'Registered',
+    cell: ({ row }) => (
+      formatDate(row.original.bus_date_verified, "short")
+    )
   },
   {
     accessorKey: "action",

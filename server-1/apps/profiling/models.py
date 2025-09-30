@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from simple_history.models import HistoricalRecords
+from abstract_classes import AbstractModels
 
 class ProfilingAbstractModel(models.Model):
     class Meta:
@@ -39,7 +40,7 @@ class Sitio(AbstractModels):
         db_table = 'sitio'
 
     def __str__(self):
-        return self.sitio_id
+        return self.sitio_name
 
 class Address(ProfilingAbstractModel):
     add_id = models.BigAutoField(primary_key=True)  

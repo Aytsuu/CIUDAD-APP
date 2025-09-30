@@ -30,6 +30,7 @@ export const useIncomeExpenseMainCard = () => {
 export type IncomeExpense = {
     iet_num: number;
     iet_serial_num: string;
+    iet_check_num: string;
     iet_datetime: string;
     exp_budget_item: string;
     exp_id: number;

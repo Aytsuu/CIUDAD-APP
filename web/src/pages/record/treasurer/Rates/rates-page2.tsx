@@ -4,6 +4,8 @@ import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { Pen, History, Search, ArrowUpDown } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+// import RatesFormPage2 from "./forms/rates-form-page2";
+// import { Button } from "@/components/ui/button/button";
 import { useState } from "react"
 import { useGetPurposeAndRate, type PurposeAndRate } from "./queries/RatesFetchQueries"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -23,6 +25,7 @@ function RatesPage2() {
     const [searchQueryActive, setSearchQueryActive] = useState("")
     const [pageSizeActive, setPageSizeActive] = React.useState<number>(10)
     const [currentPageActive, setCurrentPageActive] = useState(1)
+    // const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     const [searchQueryHistory, setSearchQueryHistory] = useState("")
     const [pageSizeHistory, setPageSizeHistory] = React.useState<number>(10)

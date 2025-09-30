@@ -19,6 +19,12 @@ export interface FileMutationVariables {
   disfNum: string;
 }
 
+export interface Signatory {
+  name: string;
+  position: string;
+  type: "certified_appropriation" | "certified_availability" | "certified_validity";
+}
+
 export type DisbursementFile = {
   disf_num: any;
   disf_name: string;
@@ -35,6 +41,7 @@ export type DisbursementVoucher = {
   dis_date: string;
   dis_fund: number;
   dis_particulars: any[];
+  dis_signatories: Signatory[];
   dis_docs: any[];
   dis_checknum: string;
   dis_bank: string;
@@ -42,8 +49,8 @@ export type DisbursementVoucher = {
   dis_paydate: string;
   dis_payacc: any[];
   dis_is_archive: boolean;
-  staff_id?: number;
-  staff_name?: string;
+  staff_id?: any;
+  staff_name?: any;
   files?: DisbursementFile[];
 };
 
@@ -52,14 +59,15 @@ export type DisbursementInput = {
   dis_payee: string;
   dis_tin: string;
   dis_date: string;
-  dis_fund: number;
+  dis_fund: any;
   dis_particulars: any[];
+  dis_signatories: Signatory[];
   dis_checknum: string;
   dis_bank: string;
   dis_or_num: string;
   dis_paydate: string;
   dis_payacc: any[];
-  staff?: number;
+  staff?: any;
   dis_is_archive?: boolean;
 };
 
@@ -83,12 +91,13 @@ export interface DisbursementFormValues {
   dis_date: string;
   dis_fund: string;
   dis_particulars: ParticularItem[];
+  dis_signatories: Signatory[];
   dis_checknum: string;
   dis_bank: string;
   dis_or_num: string;
   dis_paydate: string;
   dis_payacc: PayAccItem[];
-  staff?: number;
+  staff?: any;
   files: MediaUploadType[];
 }
 
@@ -104,7 +113,7 @@ export type DisbursementFileInput = {
 };
 
 export type Staff = {
-  staff_id: number;
+  staff_id: any;
   full_name: string;
   position: string;
 };
@@ -128,6 +137,7 @@ export const prepareDisbursementPayload = (disbursementData: any) => {
     dis_date: disbursementData.dis_date,
     dis_fund: disbursementData.dis_fund,
     dis_particulars: disbursementData.dis_particulars,
+    dis_signatories: disbursementData.dis_signatories,
     dis_docs: disbursementData.dis_docs,
     dis_checknum: disbursementData.dis_checknum || "",
     dis_bank: disbursementData.dis_bank || "",
@@ -150,11 +160,13 @@ export const prepareDisbursementPayload = (disbursementData: any) => {
 
 export const prepareEditDisbursementPayload = (disbursementData: any) => {
   const payload = {
+    dis_num: disbursementData.dis_num,
     dis_payee: disbursementData.dis_payee,
     dis_tin: disbursementData.dis_tin || "",
     dis_date: disbursementData.dis_date,
     dis_fund: disbursementData.dis_fund,
     dis_particulars: disbursementData.dis_particulars,
+    dis_signatories: disbursementData.dis_signatories,
     dis_docs: disbursementData.dis_docs,
     dis_checknum: disbursementData.dis_checknum || "",
     dis_bank: disbursementData.dis_bank || "",

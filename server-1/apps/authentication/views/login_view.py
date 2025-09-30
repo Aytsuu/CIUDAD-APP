@@ -131,7 +131,6 @@ class MobileLoginView(APIView):
                 if auth_user:
                     # Get the full user object with related data
                     user = Account.objects.select_related('rp').get(pk=auth_user.pk)
-                
             else:
                 return Response(
                     {'error': 'Please provide either email or phone, not both'},

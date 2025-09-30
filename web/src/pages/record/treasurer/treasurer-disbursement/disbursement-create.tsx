@@ -3,16 +3,17 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, X } from "lucide-react";
 import { useAddDisbursementVoucher, useAddDisbursementFiles } from "./queries/incDisb-addqueries";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
-// import { useGetStaffList } from "./queries/incDisb-fetchqueries";
+import { useGetStaffList } from "./queries/incDisb-fetchqueries";
 import { useForm } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { DisbursementVoucherFormProps, DisbursementInput, FileInput, ParticularItem, PayAccItem, DisbursementFormValues } from "./incDisb-types";
-
-
+import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
+import { DisbursementVoucherFormProps, DisbursementInput, FileInput, ParticularItem, PayAccItem, DisbursementFormValues, Signatory } from "./incDisb-types";
+import { DisbursementSchema } from "@/form-schema/treasurer/disbursement-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   onSuccess,
@@ -21,19 +22,25 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
   const { user } = useAuth();
   const [files, setFiles] = useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [_errorMessage, setErrorMessage] = useState<string | null>(null);
-  // const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const addMutation = useAddDisbursementVoucher();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const addFilesMutation = useAddDisbursementFiles(); 
 
   const form = useForm<DisbursementFormValues>({
+    resolver: zodResolver(DisbursementSchema),
     defaultValues: {
       dis_payee: "",
       dis_tin: "",
       dis_date: new Date().toISOString().split('T')[0],
       dis_fund: "0",
       dis_particulars: [{ forPayment: "", tax: "0", amount: "0" }],
+      dis_signatories: [
+        { name: "", position: "", type: "certified_appropriation" },
+        { name: "", position: "", type: "certified_availability" },
+        { name: "", position: "", type: "certified_validity" }
+      ],
       dis_checknum: "",
       dis_bank: "",
       dis_or_num: "",
@@ -57,6 +64,13 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
               amount: p.amount?.toString() || "0",
             }))
           : [{ forPayment: "", tax: "0", amount: "0" }],
+        dis_signatories: existingVoucher.dis_signatories?.length
+          ? existingVoucher.dis_signatories
+          : [
+              { name: "", position: "", type: "certified_appropriation" },
+              { name: "", position: "", type: "certified_availability" },
+              { name: "", position: "", type: "certified_validity" }
+            ],
         dis_checknum: existingVoucher.dis_checknum || "",
         dis_bank: existingVoucher.dis_bank || "",
         dis_or_num: existingVoucher.dis_or_num || "",
@@ -82,11 +96,13 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
         })) || []
       );
     }
-  }, [existingVoucher, form]);
+  }, [existingVoucher, form, user]);
 
   const { control, setValue, watch } = form;
   const particulars = watch("dis_particulars");
   const payacc = watch("dis_payacc");
+  const signatories = watch("dis_signatories");
+
   const addParticular = () => {
     setValue("dis_particulars", [...particulars, { forPayment: "", tax: "0", amount: "0" }]);
   };
@@ -113,10 +129,22 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
     }
   };
 
+  const updateSignatory = (
+    index: number,
+    field: keyof Signatory,
+    value: string,
+    position?: string
+  ) => {
+    setValue(`dis_signatories.${index}.${field}`, value);
+    if (position && field === "name") {
+      setValue(`dis_signatories.${index}.position`, position);
+    }
+  };
+
   const onSubmit = async (data: DisbursementFormValues) => {
     try {
       setErrorMessage(null);
-
+      const staffId = user?.staff?.staff_id || null;
       const formattedParticulars = data.dis_particulars
         .filter(p => p.forPayment.trim() !== "")
         .map(p => ({
@@ -134,18 +162,22 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
           credit: parseFloat(p.credit) || 0
         }));
 
+      const formattedSignatories = data.dis_signatories
+        .filter(s => s.name.trim() !== "");
+
       const disbursementData: DisbursementInput = {
         dis_payee: data.dis_payee,
         dis_tin: data.dis_tin,
         dis_date: data.dis_date,
         dis_fund: parseFloat(data.dis_fund) || 0,
         dis_particulars: formattedParticulars,
+        dis_signatories: formattedSignatories,
         dis_checknum: data.dis_checknum,
         dis_bank: data.dis_bank,
         dis_or_num: data.dis_or_num,
         dis_paydate: data.dis_paydate,
         dis_payacc: formattedPayAcc,
-        staff: data.staff,
+        staff: staffId,
       };
 
       const newFiles: FileInput[] = files
@@ -156,17 +188,14 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
           file: file.file as string,
         }));
 
-      // Create the disbursement voucher
       const disbursementResponse = await addMutation.mutateAsync(disbursementData);
 
-      // Handle files using the returned ID
       if (newFiles.length > 0) {
         const disNum = disbursementResponse.dis_num || disbursementResponse.disNum;
         if (!disNum) {
           throw new Error('No disbursement voucher ID returned from server');
         }
         
-        // You would call your file upload mutation here
         await addFilesMutation.mutateAsync({
           dis_num: disNum,
           files: newFiles,
@@ -198,8 +227,20 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
     }
   };
 
+  const signatoryLabels = {
+    certified_appropriation: "A. Certified as to existence of appropriation for obligation",
+    certified_availability: "B. Certified as to availability of funds",
+    certified_validity: "C. Certified as to validity, propriety, and legality"
+  };
+
   return (
     <div className="container mx-auto px-4 sm:px-6 max-w-2xl md:max-w-3xl lg:max-w-4xl">
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {errorMessage}
+        </div>
+      )}
+      
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -294,6 +335,54 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
               </div>
             </div>
 
+            {/* Signatories Section */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Signatories
+              </label>
+              <div className="space-y-4">
+                {signatories.map((signatory: Signatory, index: number) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <h4 className="font-medium text-sm mb-3">
+                      {signatoryLabels[signatory.type]}
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                      <ComboboxInput
+                        value={signatory.name}
+                        options={staffList}
+                        isLoading={isStaffLoading}
+                        label=""
+                        placeholder="Select staff..."
+                        emptyText="No staff found. Enter name manually."
+                        onSelect={(value, item) =>
+                          updateSignatory(
+                            index,
+                            "name",
+                            value,
+                            item?.position
+                          )
+                        }
+                        onCustomInput={(value) =>
+                          updateSignatory(index, "name", value)
+                        }
+                        displayKey="full_name"
+                        valueKey="staff_id"
+                        additionalDataKey="position"
+                      />
+                      <FormInput
+                      className="h-10 mt-0.5"
+                        control={control}
+                        name={`dis_signatories.${index}.position`}
+                        label=""
+                        placeholder="Position"
+                        type="text"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <FormInput
                 control={control}
@@ -323,6 +412,7 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
                 type="date"
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium mb-2">
                 Payment Accounts
@@ -397,21 +487,13 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
               />
             </div>
 
-            {/* {errorMessage && (
-              <div className="p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-                {errorMessage}
-              </div>
-            )} */}
-
             <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
               <ConfirmationModal
                 trigger={
                   <Button
                     type="button"
                     className="w-full sm:w-auto items-center gap-2 mb-5"
-                    disabled={
-                      addMutation.isPending
-                    }
+                    disabled={addMutation.isPending}
                   >
                     {addMutation.isPending ? "Saving..." : "Save"}
                   </Button>

@@ -199,7 +199,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
           id: "view",
           name: (
             <Link
-              to={`/complaint/${complaint.comp_id}`}
+              to={`/complaint/${complaint.comp_id}/`}
               state={{ complaint }}
               className="w-full h-full flex items-center gap-2"
             >

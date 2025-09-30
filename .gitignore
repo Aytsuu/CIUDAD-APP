@@ -71,3 +71,6 @@ env/
 
 # Vite cache
 /web/.vite/
+
+# firebase
+server-1/firebase/firebase-key.json

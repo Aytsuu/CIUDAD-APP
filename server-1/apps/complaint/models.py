@@ -86,6 +86,9 @@ class Complaint(models.Model):
 
             self.comp_id = int(f"{date_str}{seq:03d}") 
         super().save(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        return f"/complaint/{self.comp_id}/"
         
 class ComplaintComplainant(models.Model):
     cc_id = models.BigAutoField(primary_key=True)

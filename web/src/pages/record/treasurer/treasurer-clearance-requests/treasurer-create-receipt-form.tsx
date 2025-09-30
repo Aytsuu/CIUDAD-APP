@@ -14,7 +14,7 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
 import { Loader2 } from "lucide-react";
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
-function ReceiptForm({
+   function ReceiptForm({
     id,
     purpose,
     rate,
@@ -23,7 +23,10 @@ function ReceiptForm({
     nat_col,
     is_resident,
     voter_id,
-    onSuccess,
+    isSeniorEligible,
+    hasDisabilityEligible,
+    onComplete,
+    onRequestDiscount,
     discountedAmount,
     discountReason,
     spay_id
@@ -36,14 +39,17 @@ function ReceiptForm({
     nat_col: string;
     is_resident: boolean;
     voter_id?: string | number | null;
-    onSuccess: () => void;
+    isSeniorEligible?: boolean;
+    hasDisabilityEligible?: boolean;
+    onComplete: () => void;
+    onRequestDiscount: () => void;
     discountedAmount?: string;
     discountReason?: string;
     spay_id?: number;
 }){
-    const { user } = useAuth();
+   const { user } = useAuth();
     const staffId = user?.staff?.staff_id;
-    const { mutate: receipt, isPending} = useAddPersonalReceipt(onSuccess)
+   const { mutate: receipt, isPending} = useAddPersonalReceipt(onComplete)
     const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
     const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
     const { data: scRate } = useServiceChargeRate();
@@ -55,7 +61,13 @@ function ReceiptForm({
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
    const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
    console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
-   const isFree = Boolean(effectiveIsResident && voter_id !== null && voter_id !== undefined);
+   const isFree = Boolean(
+     effectiveIsResident && (
+       voter_id !== null && voter_id !== undefined ||
+       isSeniorEligible ||
+       hasDisabilityEligible
+     )
+   );
     const ReceiptSchema = useMemo(() => {
         return createReceiptSchema(discountedAmount || rate);
     }, [discountedAmount, rate]);
@@ -154,8 +166,8 @@ function ReceiptForm({
 
             console.log('Receipt mutation called successfully');
             
-            // Call onSuccess callback to refresh data
-            onSuccess();
+            // Call onComplete callback to finish the flow
+            onComplete();
         } catch (error) {
             console.error('Error in onSubmit:', error);
         }
@@ -245,7 +257,7 @@ function ReceiptForm({
                                 ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
                                 : "text-green-600 hover:bg-green-50 hover:text-green-700"}
                             `}
-                            onClick={onSuccess}
+                            onClick={onRequestDiscount}
                             >
                             Apply Discount
                             </Button>

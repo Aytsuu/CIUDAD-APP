@@ -3,6 +3,7 @@ import z from "zod"
 const IncomeExpenseEditFormSchema = z.object({
 
     iet_serial_num: z.string().optional(),
+    iet_check_num: z.string().optional(),
     iet_entryType: z.string(z.string()).optional(),
     iet_datetime: z.string().nonempty("Date is required"),
     iet_particulars: z.string().min(1, "Particulars is required"),

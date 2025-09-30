@@ -17,7 +17,9 @@
     qrfFund: "",
     disasterTraining: "",
     disasterSupplies: "",
-
+    gadProg: "",
+    seniorProg: "",
+    disasterProg: "",
 };
 
 export const initialFormData2 = {
@@ -40,7 +42,6 @@ export const initialFormData2 = {
     nutritionProg: "",
     aidsProg: "",
     assemblyExpenses: "",
-    disasterProg: "",
     capitalOutlays: "",
 };
 

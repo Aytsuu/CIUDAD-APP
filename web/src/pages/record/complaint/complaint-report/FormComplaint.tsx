@@ -14,17 +14,15 @@ import { Button } from "@/components/ui/button/button";
 import {
   ChevronLeft,
   ChevronRight,
-  Send,
   FileText,
   AlertTriangle,
   User,
   Users,
   MapPin,
-  Eye,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { useNotifications } from "@/context/NotificationContext";
+// import { useNotifications } from "@/context/NotificationContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -35,7 +33,7 @@ export const ComplaintForm = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-  const { send } = useNotifications();
+  // const { send } = useNotifications();
   const navigate = useNavigate();
 
   const methods = useForm<ComplaintFormData>({
@@ -43,7 +41,7 @@ export const ComplaintForm = () => {
     defaultValues: {
       complainant: [
         {
-          type: "manual",
+          // type: "manual",
           rp_id: null,
           cpnt_name: "",
           cpnt_gender: "",
@@ -65,7 +63,7 @@ export const ComplaintForm = () => {
       ],
       incident: {
         comp_location: "",
-        comp_incident_type: "",
+        comp_incident_type: "Other",
         comp_allegation: "",
         comp_datetime: "",
       },
@@ -131,7 +129,7 @@ export const ComplaintForm = () => {
       const response = await postComplaint.mutateAsync(payload);
 
       if (response) {
-        await handleSendAlert();
+        // await handleSendAlert();
         const successMessage = response.comp_id
           ? `Complaint #${response.comp_id} submitted successfully`
           : "Complaint submitted successfully";
@@ -153,22 +151,22 @@ export const ComplaintForm = () => {
     }
   };
 
-  const handleSendAlert = async () => {
-    try {
-      await send({
-        title: "Complaint Report Filed",
-        message: "Your complaint has been submitted and is now being processed",
-        recipient_ids: [user?.acc_id || ""],
-        metadata: {
-          action_url: `complaint/${user?.acc_id}/`,
-          sender_name: "Barangay System",
-          sender_avatar: `${user?.profile_image}` || "",
-        },
-      });
-    } catch (error) {
-      console.error("Error sending notification:", error);
-    }
-  };
+  // const handleSendAlert = async () => {
+  //   try {
+  //     await send({
+  //       title: "Complaint Report Filed",
+  //       message: "Your complaint has been submitted and is now being processed",
+  //       recipient_ids: [user?.acc_id || ""],
+  //       metadata: {
+  //         action_url: `complaint/${user?.acc_id}/`,
+  //         sender_name: "Barangay System",
+  //         sender_avatar: `${user?.profile_image}` || "",
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error("Error sending notification:", error);
+  //   }
+  // };
 
   const confirmSubmit = () => {
     const formData = methods.getValues();

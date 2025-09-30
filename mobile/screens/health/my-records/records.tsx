@@ -7,35 +7,35 @@ import SelectLayout from '@/components/ui/select-layout';
 import { router } from 'expo-router';
 
 export default function Records() {
-  const services = [
-    { label: 'Medical Consultation', value: 'Medical Consultation' },
-    { label: 'Animal Bites', value: 'Animal Bites' },
-    { label: 'Family Planning', value: 'Family Planning' },
+  const services: Service[] = [
+    {
+      id: 1,
+      name: 'Family Planning',
+      description: 'View your family planning records and track status',
+      route: '/(health)/family-planning/fp-dashboard',
+      icon: Heart,
+      image: require('@/assets/images/Health/Home/Famplanning.jpg'),
+      color: '#059669'
+    },
+    {
+      id: 2,
+      name: 'Maternal Records',
+      description: 'Access your maternal health records',
+      route: '/maternal-records',
+      icon: Baby,
+      image: require('@/assets/images/Health/Home/Maternal1.jpg'),
+      color: '#DC2626'
+    },
+    {
+      id: 3,
+      name: 'Animal Bites',
+      description: 'View animal bite treatment records',
+      route: '/animalbite/my-records/',
+      icon: Dog,
+      image: require('@/assets/images/Health/Home/animalbites.jpg'),
+      color: '#1E40AF'
+    },
   ];
-
-  // State for selected service
-  const [selectedService, setSelectedService] = React.useState(services[0]);
-  const [records, setRecords] = React.useState<{ id: number; date: string; time: string; }[]>([]);
-
-  const mockDatabase: { [key: string]: { id: number; date: string; time: string; }[] } = {
-    "Medical Consultation": [
-      { id: 1, date: "January 4, 2025", time: "Morning" },
-      { id: 2, date: "February 10, 2025", time: "Afternoon" },
-      { id: 3, date: "March 3, 2025", time: "Morning" }
-    ],
-    "Animal Bites": [
-      { id: 4, date: "January 15, 2025", time: "Afternoon" }
-    ],
-    "Family Planning": [
-      { id: 5, date: "February 1, 2025", time: "Morning" },
-      { id: 6, date: "March 8, 2025", time: "Afternoon" }
-    ]
-  };
-
-  React.useEffect(() => {
-    const fetchedRecords = mockDatabase[selectedService.value] || [];
-    setRecords(fetchedRecords);
-  }, [selectedService]);
 
   return (
     <View className="flex-1 h-full bg-[#ECF8FF] p-4">

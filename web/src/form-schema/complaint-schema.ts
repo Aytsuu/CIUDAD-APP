@@ -9,7 +9,6 @@ const addressSchema = z.object({
 });
 
 const complainantSchema = z.object({
-  type: z.enum(["manual", "resident"]).default("manual"),
   rp_id: z.string().nullable().optional(),
   cpnt_name: z.string().min(1, "Full name is required"),
   cpnt_gender: z.string().min(1, "Gender is required"),
@@ -29,7 +28,6 @@ const complainantSchema = z.object({
 });
 
 const accusedSchema = z.object({
-  type: z.enum(["manual", "resident"]).default("manual"),
   rp_id: z.string().nullable().optional(),
   acsd_name: z.string().min(1, "Name/alias is required"), 
   acsd_age: z.string() // Changed from age

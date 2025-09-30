@@ -8,7 +8,7 @@ spay_due_date = models.DateField(default=default_due_date)
 
 
 class ClerkCertificate(models.Model):
-    cr_id = models.BigAutoField(primary_key=True)
+    cr_id = models.CharField(primary_key=True)
     cr_req_request_date = models.DateTimeField(default = datetime.now)
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
@@ -37,6 +37,7 @@ class ClerkCertificate(models.Model):
 
     class Meta:
         db_table = 'certification_request'
+        managed = False
 
 
 class NonResidentCertificateRequest(models.Model):
@@ -75,13 +76,13 @@ class Business(models.Model):
     bus_id = models.BigIntegerField(primary_key=True)
     bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
+    bus_location = models.CharField(max_length=255)
+    bus_status = models.CharField(max_length=50)
     bus_date_of_registration = models.DateField()
+    bus_date_verified = models.DateField()
     staff_id = models.CharField(max_length=50, null=True)
-    add_id = models.CharField(max_length=50)
     rp_id = models.CharField(max_length=50, null=True)
     br_id = models.CharField(max_length=50)
-    bus_date_verified = models.DateField()
-    bus_status = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'business'

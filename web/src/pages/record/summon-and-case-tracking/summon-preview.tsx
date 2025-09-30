@@ -719,7 +719,7 @@ interface SummonPreviewProps {
 
 function SummonPreview({
   sr_code,
-  incident_type,
+  // incident_type,
   complainant,
   complainant_address,
   accused,

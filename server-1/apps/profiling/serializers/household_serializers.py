@@ -32,13 +32,13 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
     
   def get_registered_by(self, obj):
     staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
-    fam_id = fam.fam.fam_id if fam else ""
-    personal = staff.rp.per
-    staff_name = f'{personal.per_lname}, {personal.per_fname}' \
-                  f' {personal.per_mname[0]}.' if personal.per_mname else ''
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
     return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
@@ -72,7 +72,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     read_only_fields = ['hh_id', 'hh_date_registered']
 
   def create(self, validated_data):
-    return Household.objects.create(
+    household = Household(
       hh_id = self.generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
@@ -80,6 +80,21 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
       rp = validated_data['rp'],
       staff = validated_data['staff']
     )
+
+    household.save()
+
+    # Perform double query
+    request = self.context.get("request")
+    double_queries = PostQueries()
+    response = double_queries.household(request.data)
+    if not response.ok:
+      try:
+          error_detail = response.json()
+      except ValueError:
+          error_detail = response.text
+      raise serializers.ValidationError({"error": error_detail})
+
+    return household
 
   def generate_hh_no(self):
     next_val = Household.objects.count() + 1

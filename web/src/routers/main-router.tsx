@@ -36,6 +36,7 @@ import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
 import { team_router } from "./team_router";
+import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
@@ -167,6 +168,14 @@ export const main_router: RouteObject[] = [
         ...route,
         element: (
           <ProtectedRoute requiredFeature="WASTE">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
+      ...activity_log_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute>
             {route.element}
           </ProtectedRoute>
         ),

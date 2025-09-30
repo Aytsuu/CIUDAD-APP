@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLocation } from "react-router-dom";
-import { Complaint } from "./complaint-type";
+import { useLocation, useParams } from "react-router-dom";
 import {
   AlertTriangle,
   FileText,
@@ -22,15 +21,14 @@ import {
   archiveComplaint,
   raiseIssue,
 } from "./api-operations/restful-api/complaint-api";
-import { useAuth } from "@/context/AuthContext";
-import { useNotifications } from "@/context/NotificationContext";
 import { Badge } from "@/components/ui/badge";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { getComplaintById } from "./api-operations/restful-api/complaint-api";
 
 export function ComplaintViewRecord() {
+  const {comp_id} = useParams();
   const { state } = useLocation();
-  const { user } = useAuth();
-  const complaintData = state?.complaint as Complaint;
+  const [complaintData, setComplaintData] = useState(state?.complaint || null);
   const [isRaiseIssueDialogOpen, setIsRaiseIssueDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
@@ -39,11 +37,16 @@ export function ComplaintViewRecord() {
     accused: true,
     documents: true,
   });
-  const { send } = useNotifications();
   const [complaintStatus, setComplaintStatus] = useState({
     isArchived: complaintData?.comp_is_archive || false,
     isRaised: complaintData?.comp_status === "Raised",
   });
+
+  useEffect(() => {
+    if (!complaintData && comp_id) {
+      getComplaintById(comp_id).then((data: any) => setComplaintData(data));
+    }
+  }, [comp_id]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -57,7 +60,6 @@ export function ComplaintViewRecord() {
     try {
       const response = await raiseIssue(complaintData.comp_id);
       if (response) {
-        await handleSendAlert(response.data.sr_id);
         await archiveComplaint(complaintData.comp_id.toString());
         setComplaintStatus((prev) => ({
           ...prev,
@@ -75,23 +77,6 @@ export function ComplaintViewRecord() {
     } finally {
       setIsSubmitting(false);
       setIsRaiseIssueDialogOpen(false);
-    }
-  };
-
-  const handleSendAlert = async (sr_id: string) => {
-    try {
-      await send({
-        title: "Service Request Created",
-        message: `Service Request ${sr_id} has been created for Complaint ${complaintData.comp_id}`,
-        recipient_ids: [user?.acc_id || ""],
-        metadata: {
-          action_url: "/service-requests",
-          sender_name: "Complaint System",
-          sender_avatar: user?.profile_image || "",
-        },
-      });
-    } catch (error) {
-      console.error("Error sending notification:", error);
     }
   };
 
@@ -344,7 +329,7 @@ export function ComplaintViewRecord() {
             {expandedSections.complainants && (
               <div className="p-6">
                 <div className="space-y-4">
-                  {complaintData.complainant.map((person, index) => (
+                  {complaintData.complainant.map((person: { cpnt_id: Key | null | undefined; cpnt_name: any; cpnt_age: any; cpnt_gender: any; cpnt_number: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined; cpnt_relation_to_respondent: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined; }, index: number) => (
                     <div key={person.cpnt_id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -424,7 +409,7 @@ export function ComplaintViewRecord() {
             {expandedSections.accused && (
               <div className="p-6">
                 <div className="space-y-4">
-                  {complaintData.accused.map((person, index) => (
+                  {complaintData.accused.map((person: { acsd_id: Key | null | undefined; acsd_name: any; acsd_age: any; acsd_gender: any; acsd_description: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined; }, index: number) => (
                     <div key={person.acsd_id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">

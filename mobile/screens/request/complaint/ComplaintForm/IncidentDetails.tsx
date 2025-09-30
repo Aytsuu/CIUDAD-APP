@@ -41,7 +41,6 @@ const LocationSection = memo(({ control }: { control: any }) => (
       control={control}
       name="incident.comp_location"
       placeholder="Where did the incident occur?"
-      rules={{ required: "Location is required" }}
     />
   </View>
 ));

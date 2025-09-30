@@ -6,6 +6,7 @@ from django.db.models import Prefetch
 from django.core.exceptions import FieldError
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
+from apps.act_log.utils import ActivityLogMixin
 import logging
 import traceback
 from .serializers import *
@@ -418,7 +419,7 @@ class CaseTrackingView(generics.RetrieveAPIView):
 
 # ===========================Certificate Views=====================
 
-class CertificateListView(generics.ListCreateAPIView):
+class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ClerkCertificateSerializer
 
@@ -524,14 +525,14 @@ class NonResidentsCertReqView(generics.ListCreateAPIView):
     queryset = NonResidentCertificateRequest.objects.all()
 
 
-class UpdateNonResidentCertReqView(generics.UpdateAPIView):
+class UpdateNonResidentCertReqView(ActivityLogMixin, generics.UpdateAPIView):
     permission_classes = [AllowAny]
     serializer_class = NonResidentCertReqUpdateSerializer
     queryset = NonResidentCertificateRequest.objects.all()
     lookup_field = 'nrc_id'
 
     
-class CertificateStatusUpdateView(generics.UpdateAPIView):
+class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
     permission_classes = [AllowAny]
     queryset = ClerkCertificate.objects.all()
     serializer_class = CertificateStatusUpdateSerializer
@@ -550,7 +551,7 @@ class CertificateStatusUpdateView(generics.UpdateAPIView):
         }, status=status.HTTP_200_OK)
     
 
-class CertificateDetailView(generics.RetrieveUpdateAPIView):  # Changed from RetrieveAPIView
+class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  # Changed from RetrieveAPIView
     permission_classes = [AllowAny]
     queryset = ClerkCertificate.objects.all()
     serializer_class = ClerkCertificateSerializer
@@ -613,7 +614,7 @@ class IssuedCertificateListView(generics.ListAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class MarkCertificateAsIssuedView(generics.CreateAPIView):
+class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = IssuedCertificateSerializer
     
@@ -729,7 +730,7 @@ class MarkCertificateAsIssuedView(generics.CreateAPIView):
             )
 
 # Business Permit Views
-class BusinessPermitListView(generics.ListCreateAPIView):
+class BusinessPermitListView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BusinessPermitSerializer
 
@@ -759,7 +760,7 @@ class BusinessPermitListView(generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class PermitClearanceView(generics.ListCreateAPIView):
+class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -903,7 +904,7 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class MarkBusinessPermitAsIssuedView(generics.CreateAPIView):
+class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
     serializer_class = IssuedBusinessPermitSerializer
     
     def create(self, request, *args, **kwargs):
@@ -1068,7 +1069,7 @@ class PaymentStatusView(APIView):
             logger.error(f"Error in webhook_payment_status: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class ClearanceRequestView(generics.CreateAPIView):
+class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BusinessPermitCreateSerializer
     

@@ -12,11 +12,11 @@ export const useGetComplaint = () => {
     })
 }
 
-export const useGetComplaintById = (id: string) => 
+export const useGetComplaintById = (comp_id: string) => 
     useQuery({
-        queryKey: ["complaint", id],
-        queryFn: () => getComplaintById(id).then(res => res.data),
-        enabled: !!id,
+        queryKey: ["complaint", comp_id],
+        queryFn: () => getComplaintById(comp_id).then(res => res.data),
+        enabled: !!comp_id,
     });
 
 export const useGetArchivedComplaints = () =>
@@ -67,7 +67,7 @@ export const useAllResidents = () => {
     queryKey: ["all-residents"],
     queryFn: async () => {
       try {
-        const response = await api.get(`/complaint/complainant/all/`);
+        const response = await api.get(`/complaint/residentLists/`);
         console.log('All residents response:', response.data);
         return response.data;
       } catch (error) {

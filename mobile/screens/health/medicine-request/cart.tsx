@@ -1,140 +1,361 @@
-"use client"
+// import { useState } from "react";
+// import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from "react-native";
+// import { router } from "expo-router";
+// import { ArrowLeft, Trash2, ShoppingBag, Pill, Upload, Camera, X, CheckCircle, AlertTriangle } from "lucide-react-native";
+// import { useGlobalCartState, removeFromCart, clearCart, addUploadedFile, removeUploadedFile, UploadedFile } from "./cart-state";
+// import { submitMedicineRequest } from "./queries/queries";
+// import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
+// import { useAuth } from "@/contexts/AuthContext";
 
-import { useState, useEffect } from "react"
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from "react-native"
-import { router } from "expo-router"
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react-native"
-import { globalCartState, clearCart, updateQuantity, removeFromCart } from "./cart-state"
+// export default function CartScreen() {
+//   const { cartItems, uploadedFiles } = useGlobalCartState();
+//   const [showUploadOptions, setShowUploadOptions] = useState(false);
+//   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+//   const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
+//   const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
-export default function CartScreen() {
-  const [cartItems, setCartItems] = useState([...globalCartState.items])
+//   const requiresPrescription = cartItems.some(item => item.med_type === "Prescription");
+// const { user } = useAuth();
+//   const userId = user?.resident?.rp_id;
+//   // console.log("Auth user:", JSON.stringify(user, null, 2));
 
-  // Update local cart state when global cart changes
-  useEffect(() => {
-    const updateCartState = () => {
-      setCartItems([...globalCartState.items])
-    }
 
-    const interval = setInterval(updateCartState, 500)
-    updateCartState() // Initial update
+//   if (!userId) {
+//     Alert.alert("Error", "Please log in to request medicines");
+//     router.back();
+//     return null;
+//   }
+//   const checkFileSize = (fileSize?: number, fileName?: string): boolean => {
+//     if (fileSize && fileSize > MAX_FILE_SIZE) {
+//       Alert.alert(
+//         "File Too Large",
+//         `The file "${fileName || "selected file"}" is too large. Please select a file smaller than 15MB.",
+//         [{ text: "OK" }],`
+//       );
+//       return false;
+//     }
+//     return true;
+//   };
 
-    return () => clearInterval(interval)
-  }, [])
+//   const handleMediaSelected = (mediaItems: MediaItem[] | ((prev: MediaItem[]) => MediaItem[])) => {
+//     if (typeof mediaItems === "function") {
+//       setSelectedMedia((prev) => {
+//         const newItems = mediaItems(prev);
+//         if (!Array.isArray(newItems)) {
+//           console.error("Functional update returned invalid mediaItems:", newItems);
+//           Alert.alert("Error", "No valid media items selected. Please try again.");
+//           return prev;
+//         }
+//         const newFiles: UploadedFile[] = newItems.map(item => ({
+//           id: item.id,
+//           name: item.name || `image_${Date.now()}.jpg`,
+//           type: item.type || "image/jpeg",
+//           uri: item.uri,
+//           size: item.file ? (item.file.length * 3) / 4 : undefined,
+//         }));
+//         const validFiles = newFiles.filter(file => checkFileSize(file.size, file.name));
+//         validFiles.forEach(file => addUploadedFile(file));
+//         setShowUploadOptions(false);
+//         return newItems;
+//       });
+//       return;
+//     }
 
-  const handleConfirm = () => {
-    if (cartItems.length === 0) {
-      Alert.alert("Empty Cart", "Please add medicines to your bag before confirming")
-      return
-    }
+//     if (!mediaItems || !Array.isArray(mediaItems)) {
+//       console.error("Invalid mediaItems:", mediaItems);
+//       Alert.alert("Error", "No valid media items selected. Please try again.");
+//       return;
+//     }
 
-    // Here you would typically send the order to your backend
-    Alert.alert("Order Confirmed", "Your medicine request has been submitted successfully!", [
-      {
-        text: "OK",
-        onPress: () => {
-          clearCart()
-          router.push("/medicine-request/confirmation")
-        },
-      },
-    ])
-  }
+//     // console.log("Processing mediaItems:", mediaItems);
+//     const newFiles: UploadedFile[] = mediaItems.map(item => ({
+//       id: item.id,
+//       name: item.name || `image_${Date.now()}.jpg`,
+//       type: item.type || "image/jpeg",
+//       uri: item.uri,
+//       size: item.file ? (item.file.length * 3) / 4 : undefined,
+//     }));
+//     // console.log("Converted to UploadedFile:", newFiles);
+//     const validFiles = newFiles.filter(file => checkFileSize(file.size, file.name));
+//     // console.log("Valid files after size check:", validFiles);
+//     validFiles.forEach(file => addUploadedFile(file));
+//     setShowUploadOptions(false);
+//   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-[#ECF8FF]">
-      <View className="flex-1 p-4">
-        {/* Header */}
-        <View className="flex-row items-center mb-6">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
-          <Text className="ml-4 text-lg font-medium">Back</Text>
-        </View>
+//   const removeFile = (fileId: string) => {
+//     removeUploadedFile(fileId);
+//   };
 
-        {/* Title */}
-        <View className="mb-6">
-          <Text className="text-3xl font-bold text-[#263D67]">Your bag</Text>
-          <Text className="text-sm text-gray-600">Get the medicines you need with ease.</Text>
-        </View>
+//   const getFileIcon = (type: string) => {
+//     return <Camera size={20} color="#4F46E5" />;
+//   };
 
-        {/* Cart Items */}
-        {cartItems.length > 0 ? (
-          <>
-            {/* Table Header */}
-            <View className="flex-row justify-between mb-2 px-2">
-              <Text className="text-[#263D67] font-semibold w-1/3">Medicine</Text>
-              <Text className="text-[#263D67] font-semibold w-1/3 text-center">Quantity</Text>
-              <Text className="text-[#263D67] font-semibold w-1/3 text-right">Unit</Text>
-            </View>
+//   const formatFileSize = (bytes?: number) => {
+//     if (!bytes) return "";
+//     const sizes = ["Bytes", "KB", "MB", "GB"];
+//     const i = Math.floor(Math.log(bytes) / Math.log(1024));
+//     return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+//   };
 
-            {/* Items List */}
-            <ScrollView className="flex-1">
-              {cartItems.map((item) => (
-                <View key={item.id} className="bg-white rounded-lg p-4 mb-3 shadow-sm">
-                  <View className="flex-row justify-between items-center">
-                    <Text className="text-[#263D67] font-medium w-1/3">{item.name}</Text>
+// const handleConfirm = async () => {
+//   if (cartItems.length === 0) {
+//     Alert.alert("Empty Cart", "Please add medicines to your bag before confirming.");
+//     return;
+//   }
 
-                    <View className="flex-row items-center justify-center w-1/3">
-                      <TouchableOpacity
-                        onPress={() => updateQuantity(item.id, Math.max(1, (item.quantity || 1) - 1))}
-                        className="bg-[#E2EEFF] w-8 h-8 rounded-md items-center justify-center"
-                      >
-                        <Minus size={16} color="#263D67" />
-                      </TouchableOpacity>
+//   // console.log("Cart items:", cartItems);
 
-                      <Text className="mx-2 text-[#263D67] font-medium">{item.quantity || 1}</Text>
+//   const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
+//   if (invalidItems.length > 0) {
+//     Alert.alert("Invalid Cart", "One or more items are missing a valid minv_id. Please reselect medicines.");
+//     return;
+//   }
 
-                      <TouchableOpacity
-                        onPress={() => updateQuantity(item.id, (item.quantity || 1) + 1)}
-                        className="bg-[#E2EEFF] w-8 h-8 rounded-md items-center justify-center"
-                      >
-                        <Plus size={16} color="#263D67" />
-                      </TouchableOpacity>
-                    </View>
+//   if (requiresPrescription && uploadedFiles.length === 0) {
+//     Alert.alert(
+//       "Prescription Required",
+//       "One or more medicines in your cart require a prescription. Please upload a doctor's prescription or consultation image.",
+//       [{ text: "OK" }]
+//     );
+//     return;
+//   }
 
-                    <Text className="text-[#263D67] w-1/3 text-right">pc/s</Text>
-                  </View>
+//   setIsSubmitting(true); // Start loading
 
-                  {item.reason && <Text className="text-gray-600 mt-2 italic">Reason: {item.reason}</Text>}
+//   try {
+    
+//     const formData = new FormData();
+//     const medicineData = cartItems.map(item => ({
+//       minv_id: item.minv_id,
+//       quantity: 0,
+//       reason: item.reason,
+//       med_type: item.med_type,
+//     }));
+//     formData.append("medicines", JSON.stringify(medicineData)); // Single string
 
-                  <TouchableOpacity
-                    onPress={() => removeFromCart(item.id)}
-                    className="self-end mt-2 flex-row items-center"
-                  >
-                    <Trash2 size={16} color="#FF4D4F" />
-                    <Text className="text-red-500 ml-1">Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
+//     const rpId = user?.resident?.rp_id;   // e.g., "RP12345"
+//     const patId = user?.resident?.patient?.pat_id;  // e.g., "PT20230001"
+//     console.log("rp id and pat_id: ", rpId, patId);
 
-            {/* Action Buttons */}
-            <View className="mt-4">
-              <TouchableOpacity className="bg-[#263D67] py-3 rounded-lg items-center mb-3" onPress={handleConfirm}>
-                <Text className="text-white font-bold">Confirm</Text>
-              </TouchableOpacity>
+//     if (!patId && !rpId) {
+//       throw new Error("User must have either a patient ID or resident ID.");
+//     }
+    
+//     if (patId) {
+//       // User is a patient: Use pat_id
+//       console.log("Submitting with pat_id:", patId);
+//       formData.append("pat_id", patId);
+//     } else {
+//       // User is a resident (no patient record): Use rp_id
+//       console.log("Submitting with rp_id:", rpId);
+//       formData.append("rp_id", rpId);
+//     }
+    
+//     uploadedFiles.forEach(file => {
+//       formData.append("files", {
+//         uri: file.uri,
+//         name: file.name,
+//         type: file.type,
+//       } as any);
+//     });
 
-              <TouchableOpacity
-                className="border border-[#263D67] py-3 rounded-lg items-center"
-                onPress={() => router.back()}
-              >
-                <Text className="text-[#263D67] font-medium">Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <View className="flex-1 justify-center items-center">
-            <ShoppingBag size={64} color="#263D67" className="mb-4 opacity-50" />
-            <Text className="text-[#263D67] font-medium text-lg mb-4">Your bag is empty</Text>
-            <TouchableOpacity
-              className="bg-[#263D67] px-6 py-3 rounded-lg"
-              onPress={() => router.back()}
-            >
-              <Text className="text-white font-medium">Browse Medicines</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
-  )
-}
+//     const response = await submitMedicineRequest(formData);
+//     if (response.success) {
+//       const orderItems = cartItems.map(item => ({
+//         id: item.minv_id,
+//         name: item.name, 
+//         unit: "pc/s",
+//         reason: item.reason,
+//         hasPrescription: item.med_type === "Prescription",
+//       }));
 
+//       Alert.alert("Request Submitted", "Your medicine request has been submitted successfully!", [
+//         {
+//           text: "OK",
+//           onPress: () => {
+//             clearCart();
+//             router.push({
+//               pathname: "/medicine-request/confirmation",
+//               params: {
+//                 orderItems: JSON.stringify(orderItems),
+//                 medreqId: response.medreq_id.toString(),
+//                 status: "submitted",
+//               },
+//             });
+//           },
+//         },
+//       ]);
+//     } else {
+//       Alert.alert("Error", response.error || "Failed to submit request");
+//     }
+//   } catch (error: any) {
+//     console.log("Submission error:", {
+//       message: error.message,
+//       status: error.response?.status,
+//       data: error.response?.data,
+//     });
+//     Alert.alert("Error", error.response?.data?.error || "Failed to submit your request. Please try again.");
+//   } finally {
+//     setIsSubmitting(false); // Stop loading regardless of success or error
+//   }
+// };
+
+//   return (
+//     <SafeAreaView className="flex-1 bg-gray-50">
+//       <View className="flex-1 p-4">
+//         <View className="flex-row items-center mb-6 mt-10 border-b border-gray-200 pb-4">
+//           <TouchableOpacity onPress={() => router.back()} className="p-2">
+//             <ArrowLeft size={24} color="#333" />
+//           </TouchableOpacity>
+//           <Text className="ml-4 text-xl font-semibold text-gray-800">Your Request Bag</Text>
+//         </View>
+        
+//         {cartItems.length > 0 ? (
+//           <View className="flex-1">
+//             <ScrollView 
+//               className="flex-1 bg-white" 
+//               showsVerticalScrollIndicator={false}
+//               contentContainerStyle={{ paddingBottom: 20 }}
+//             >
+//               {cartItems.map((item, index) => (
+//                 <View key={item.minv_id} className="bg-white rounded-lg p-6 mb-3 shadow-sm border border-gray-300">
+//                   <View className="flex-row items-center mb-3">
+//                     <Pill size={20} color="#3B82F6" />
+//                     <View className="flex-1 ml-3">
+//                       <Text className="text-lg font-semibold text-gray-900">{item.name}</Text>
+//                       <Text className="text-sm text-gray-600">{item.category} ({item.med_type})</Text>
+//                       {item.dosage && <Text className="text-xs text-gray-500">Dosage: {item.dosage}</Text>}
+//                     </View>
+//                   </View>
+//                   {item.reason && (
+//                     <View className="mt-2 p-2 bg-blue-50 rounded-md">
+//                       <Text className="text-gray-700 italic text-sm">Reason: {item.reason}</Text>
+//                     </View>
+//                   )}
+//                   {item.med_type === "Prescription" && (
+//                     <View className="mt-2 p-2 bg-amber-50 rounded-md">
+//                       <Text className="text-amber-800 text-sm">Prescription Required</Text>
+//                     </View>
+//                   )}
+//                   <TouchableOpacity
+//                     onPress={() => removeFromCart(item.minv_id)}
+//                     className="self-end mt-4 flex-row items-center px-3 py-1 bg-red-50 rounded-full"
+//                   >
+//                     <Trash2 size={16} color="#EF4444" />
+//                     <Text className="text-red-500 ml-1 font-medium">Remove</Text>
+//                   </TouchableOpacity>
+//                 </View>
+//               ))}
+
+//               {/* Medical Documentation Section */}
+//               <View className="bg-white rounded-2xl p-6 shadow-md mt-4">
+//                 <View className="flex-row items-center justify-between mb-3">
+//                   <Text className="text-gray-700 font-semibold">
+//                     Medical Documentation {requiresPrescription && <Text className="text-red-500">*</Text>}
+//                   </Text>
+//                   <TouchableOpacity
+//                     onPress={() => setShowUploadOptions(!showUploadOptions)}
+//                     className="bg-indigo-600 px-4 py-2 rounded-xl flex-row items-center"
+//                   >
+//                     <Upload size={16} color="#fff" />
+//                     <Text className="text-white font-medium ml-2">Upload Images</Text>
+//                   </TouchableOpacity>
+//                 </View>
+                
+//                 <Text className="text-gray-500 text-sm mb-4">
+//                   Upload prescription, doctor's note, or consultation image (JPG, PNG - Max 15MB)
+//                 </Text>
+
+//                 {/* Warning Message */}
+//                 <View className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 flex-row items-start">
+//                   <AlertTriangle size={20} color="#F59E0B" className="mt-0.5" />
+//                   <View className="ml-3 flex-1">
+//                     <Text className="text-amber-800 font-semibold text-sm mb-1">Important Notice</Text>
+//                     <Text className="text-amber-700 text-sm leading-5">
+// Upload only valid prescriptions or any medical records. All documents will be check. False or forged uploads are strictly prohibited.
+//                     </Text>
+//                   </View>
+//                 </View>
+
+//                 {showUploadOptions && (
+//                   <View className="mb-4">
+//                     <MediaPicker
+//                       selectedImages={selectedMedia}
+//                       setSelectedImages={handleMediaSelected}
+//                       multiple={true}
+//                       maxImages={5}
+//                     />
+//                   </View>
+//                 )}
+
+//                 {uploadedFiles.length > 0 && (
+//                   <View className="space-y-2">
+//                     {uploadedFiles.map((file) => (
+//                       <View
+//                         key={file.id}
+//                         className="bg-green-50 border border-green-200 rounded-xl p-4 flex-row items-center justify-between"
+//                       >
+//                         <View className="flex-row items-center flex-1">
+//                           {getFileIcon(file.type)}
+//                           <View className="ml-3 flex-1">
+//                             <Text className="text-gray-800 font-medium" numberOfLines={1}>
+//                               {file.name}
+//                             </Text>
+//                             <Text className="text-gray-500 text-sm">{formatFileSize(file.size)}</Text>
+//                           </View>
+//                           <CheckCircle size={20} color="#10B981" />
+//                         </View>
+//                         <TouchableOpacity onPress={() => removeFile(file.id)} className="ml-3 p-1">
+//                           <X size={18} color="#EF4444" />
+//                         </TouchableOpacity>
+//                       </View>
+//                     ))}
+//                   </View>
+//                 )}
+
+//                 {requiresPrescription && uploadedFiles.length === 0 && (
+//                   <Text className="text-red-500 text-sm text-center mt-2">
+//                     * Please upload prescription image to proceed
+//                   </Text>
+//                 )}
+//               </View>
+//             </ScrollView>
+
+//             {/* Fixed Action Buttons */}
+//             <View className="bg-gray-50 pt-4">
+//               <TouchableOpacity
+//                 className={`py-3 rounded-lg items-center justify-center shadow ${requiresPrescription && uploadedFiles.length === 0 ? "bg-gray-400" : "bg-blue-600"} ${isSubmitting ? "opacity-70" : ""}`}
+//                 onPress={handleConfirm}
+//                 disabled={requiresPrescription && uploadedFiles.length === 0 || isSubmitting}
+//               >
+//                 {isSubmitting ? (
+//                   <ActivityIndicator size="small" color="#ffffff" />
+//                 ) : (
+//                   <Text className="text-white font-bold text-base">Confirm Request</Text>
+//                 )}
+//               </TouchableOpacity>
+//               <TouchableOpacity
+//                 className="border border-blue-600 py-3 rounded-lg items-center mt-3"
+//                 onPress={() => router.back()}
+//                 disabled={isSubmitting}
+//               >
+//                 <Text className="text-blue-600 font-medium text-base">Continue Browsing</Text>
+//               </TouchableOpacity>
+//             </View>
+//           </View>
+//         ) : (
+//           <View className="flex-1 justify-center items-center">
+//             <ShoppingBag size={64} color="#9CA3AF" className="mb-4 opacity-50" />
+//             <Text className="text-gray-600 font-semibold text-lg mb-4">Your bag is empty</Text>
+//             <TouchableOpacity
+//               className="bg-blue-600 px-6 py-3 rounded-lg shadow"
+//               onPress={() => router.back()}
+//             >
+//               <Text className="text-white font-medium text-base">Browse Medicines</Text>
+//             </TouchableOpacity>
+//           </View>
+//         )}
+//       </View>
+//     </SafeAreaView>
+//   );
+// }

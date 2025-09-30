@@ -1,7 +1,6 @@
-"use client";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
 import ChildHRPage1 from "./child-hr-page1";
 import ChildHRPage2 from "./child-hr-page2";

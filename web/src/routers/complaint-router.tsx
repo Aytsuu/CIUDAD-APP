@@ -11,19 +11,19 @@ export const complaint_router = [
     element: <ComplaintRecord />,
   },
   {
-    path: "complaint/:id",
+    path: "complaint/:comp_id/",
     element: <ComplaintViewRecord />,
   },
   {
-    path: "complaint/report",
+    path: "complaint/report/",
     element: <ComplaintForm />,
   },
   {
-    path: "complaint/archive",
+    path: "complaint/archive/",
     element: <ArchiveComplaints />,
   },
   {
-    path: "complaint/request",
+    path: "complaint/request/",
     element: <ComplaintRequest />,
   },
   // {
