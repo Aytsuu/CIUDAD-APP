@@ -20,7 +20,7 @@ interface SelectProps{
   label?: string,
   className?: string,
   options: Option[],
-  value: string,
+  value?: string,
   onChange: (value: string) => void
   withRest?: boolean;
 }
@@ -28,7 +28,7 @@ interface SelectProps{
 export function SelectLayout({ placeholder, label, className, options, value, withRest=true, onChange }: SelectProps) {
 
   return (
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value && value.length > 0 ? value : undefined} onValueChange={onChange}>
           <SelectTrigger className={cn("w-full", className)}>
               <SelectValue placeholder={placeholder} />
           </SelectTrigger> 

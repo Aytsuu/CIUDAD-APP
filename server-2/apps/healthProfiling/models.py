@@ -47,7 +47,7 @@ class Personal(AbstractModels):
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=20)  
     per_disability = models.CharField(max_length=100, null=True, blank=True)
-
+ 
     history = HistoricalRecords(
         table_name='personal_history',
         user_model='administration.Staff',
@@ -203,7 +203,7 @@ class HealthRelatedDetails(AbstractModels):
         db_table = 'per_additional_details'
 
 class Dependents_Over_Five(models.Model):
-    dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
+    dep_ov_five_id = models.BigAutoField(primary_key=True)
     # dep = models.ForeignKey(Dependent, on_delete=models.CASCADE)
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
@@ -211,16 +211,17 @@ class Dependents_Over_Five(models.Model):
     class Meta:
         db_table = 'dep_over_five'
 
-class Dependents_Under_Five(models.Model):
-    duf_id = models.CharField(max_length=50, primary_key=True)
+class Dependents_Under_Five(AbstractModels):
+    duf_id = models.BigAutoField(primary_key=True)
     duf_fic= models.CharField(max_length=50 )
     duf_nutritional_status= models.CharField(max_length=50 )
     duf_exclusive_bf= models.CharField(max_length=50 )
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'dep_under_five'
-
+        
 class WaterSupply(AbstractModels):
     water_sup_id = models.BigAutoField(primary_key=True)
     water_sup_type = models.CharField(max_length=50)
@@ -231,9 +232,10 @@ class WaterSupply(AbstractModels):
     class Meta:
         db_table = 'water_supply'
 
-class SanitaryFacility(models.Model):
+class SanitaryFacility(AbstractModels):
     sf_id = models.BigAutoField(primary_key=True)
     sf_type = models.CharField(max_length=50)
+    sf_desc = models.CharField(max_length=200, null=True, blank=True)
     sf_toilet_type = models.CharField(max_length=50)
 
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
@@ -241,7 +243,7 @@ class SanitaryFacility(models.Model):
     class Meta:
         db_table = 'sanitary_facility'
 
-class FacilityDetails(models.Model):
+class FacilityDetails(AbstractModels):
     fd_id = models.CharField(max_length=50, primary_key=True)
     fd_description = models.CharField(max_length=200)
 
@@ -250,7 +252,7 @@ class FacilityDetails(models.Model):
     class Meta:
         db_table = 'facility_details'
 
-class SolidWasteMgmt(models.Model):
+class SolidWasteMgmt(AbstractModels):
     swm_id = models.BigAutoField(primary_key=True)
     swn_desposal_type = models.CharField(max_length=50)
     swm_desc = models.TextField(max_length=1000)
@@ -259,7 +261,7 @@ class SolidWasteMgmt(models.Model):
     class Meta:
         db_table = 'solid_waste_mgmt'
         
-class TBsurveilance(models.Model):
+class TBsurveilance(AbstractModels):
     tb_id = models.BigAutoField(primary_key=True)
     tb_meds_source = models.CharField(max_length=100, blank=True, null=True)
     tb_days_taking_meds = models.IntegerField(null=True, blank=True, default=0)
@@ -270,7 +272,7 @@ class TBsurveilance(models.Model):
     class Meta:
         db_table = 'tb_surveillance_records'
 
-class NonCommunicableDisease(models.Model):
+class NonCommunicableDisease(AbstractModels):
     ncd_id = models.BigAutoField(primary_key=True)
     ncd_riskclass_age = models.CharField(max_length=100, blank=True, null=True)
     ncd_comorbidities = models.CharField(max_length=100, blank=True, null=True)
@@ -283,12 +285,13 @@ class NonCommunicableDisease(models.Model):
         db_table = 'non_communicable_disease'
 
 
-class MotherHealthInfo(models.Model):
+class MotherHealthInfo(AbstractModels):
     mhi_id = models.BigAutoField(primary_key=True)
     mhi_healthRisk_class = models.CharField(max_length=50, null=True, blank=True)
     mhi_immun_status = models.CharField(max_length=50, null=True, blank=True)
     mhi_famPlan_method = models.CharField(max_length=100, null=True, blank=True)
     mhi_famPlan_source = models.CharField(max_length=100, null=True, blank=True)
+    mhi_lmp_date = models.DateField(null=True, blank=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='mother_health_infos')
     fam = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='mother_health_infos', null=True, blank=True)
 
@@ -313,7 +316,7 @@ class KYCRecord(models.Model):
     class Meta:
         db_table = 'kyc_record'
 
-class SurveyIdentification(models.Model):
+class SurveyIdentification(AbstractModels):
     si_id = models.CharField(max_length=50, primary_key=True)
     si_filled_by = models.CharField(max_length=100, blank=True, null=True)
     si_informant = models.CharField(max_length=100)

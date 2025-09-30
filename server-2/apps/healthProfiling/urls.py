@@ -17,6 +17,7 @@ from .views.family_health_profiling_views import *
 from .views.survey_views import *
 from .views.survey_form_views import *
 from .views.all_record_views import *
+from .views.dependents_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -76,6 +77,9 @@ urlpatterns = [
     path('per_additional_details/create/', HealthRelatedDetailsCreateView.as_view(), name='health-details-create'),
     path('mother-health-info/', MotherHealthInfoListView.as_view(), name='mother-health-info-list'),
     path('mother-health-info/<int:pk>/', MotherHealthInfoView.as_view(), name='mother-health-info-detail'),
+    # Dependents Under Five
+    path("dependent-under-five/create/", DependentsUnderFiveCreateView.as_view(), name="dependent-under-five-create"),
+    path("dependent-under-five/list/", DependentsUnderFiveListView.as_view(), name="dependent-under-five-list"),
 
     #   # Request Urls
     # path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),

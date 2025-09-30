@@ -37,18 +37,21 @@ export default function EnvironmentalForm({
   const selectedWasteManagement = form.watch("environmentalForm.wasteManagement");
 
   React.useEffect(() => {
-    // Clear the specific facility type when switching between sanitary/unsanitary
-    if (selectedFacilityType === "sanitary") {
+    // Normalize the watched value (backend/options use uppercase IDs)
+    const normalized = (selectedFacilityType || "").toUpperCase();
+    // Clear the specific facility type when switching between SANITARY/UNSANITARY
+    if (normalized === "SANITARY") {
       form.setValue("environmentalForm.unsanitaryFacilityType", "");
-    } else if (selectedFacilityType === "unsanitary") {
+    } else if (normalized === "UNSANITARY") {
       form.setValue("environmentalForm.sanitaryFacilityType", "");
     }
-    setFacilityType(selectedFacilityType);
+    setFacilityType(normalized);
   }, [selectedFacilityType, form]);
 
   // Clear others field when waste management is not "others"
   React.useEffect(() => {
-    if (selectedWasteManagement !== "others") {
+    const wm = (selectedWasteManagement || "").toUpperCase();
+    if (wm !== "OTHERS") {
       form.setValue("environmentalForm.wasteManagementOthers", "");
     }
   }, [selectedWasteManagement, form]);
@@ -134,13 +137,13 @@ export default function EnvironmentalForm({
               name={`${prefix}.facilityType`}
               label="Facility Type"
               options={[
-                { id: "sanitary", name: "Sanitary" },
-                { id: "unsanitary", name: "Unsanitary" },
+                { id: "SANITARY", name: "Sanitary" },
+                { id: "UNSANITARY", name: "Unsanitary" },
               ]}
             />
 
             {/* Conditionally render Sanitary Facility Type */}
-            {facilityType === "sanitary" && (
+            {facilityType === "SANITARY" && ( 
               <FormSelect
                 control={form.control}
                 name={`${prefix}.sanitaryFacilityType`}
@@ -157,7 +160,7 @@ export default function EnvironmentalForm({
             )}
 
             {/* Conditionally render Unsanitary Facility Type */}
-            {facilityType === "unsanitary" && (
+            {facilityType === "UNSANITARY" && (
               <FormSelect
                 control={form.control}
                 name={`${prefix}.unsanitaryFacilityType`}
@@ -180,8 +183,8 @@ export default function EnvironmentalForm({
               name={`${prefix}.toiletFacilityType`}
               label="Toilet Facility Type"
               options={[
-                { id: "shared", name: "SHARED with Other Household" },
-                { id: "notshared", name: "NOT SHARED with Other Household" },
+                { id: "SHARED", name: "SHARED with Other Household" },
+                { id: "NOT SHARED", name: "NOT SHARED with Other Household" },
               ]}
             />
           </div>
@@ -192,17 +195,17 @@ export default function EnvironmentalForm({
               name={`${prefix}.wasteManagement`}
               label="Waste Management Type"
               options={[
-                { id: "wastesegregation", name: "Waste Segregation" },
-                { id: "backyardcomposting", name: "Backyard Composting" },
-                { id: "recycling", name: "Recyling/Reuse" },
-                { id: "collectedbycity", name: "Collected by City Collection and Disposal System" },
-                { id: "burning", name: "Burning/Burying" },
-                { id: "others", name: "Others"}
+                { id: "WASTE SEGREGATION", name: "Waste Segregation" },
+                { id: "BACKYARD COMPOSTING", name: "Backyard Composting" },
+                { id: "RECYCLING", name: "Recyling/Reuse" },
+                { id: "COLLECTED BY CITY", name: "Collected by City Collection and Disposal System" },
+                { id: "BURNING/BURYING", name: "Burning/Burying" },
+                { id: "OTHERS", name: "Others"}
               ]}
             />
             
             {/* Show "Others" input field when "others" is selected */}
-            {selectedWasteManagement === "others" && (
+            {selectedWasteManagement === "OTHERS" && (
               <FormInput
                 control={form.control}
                 name={`${prefix}.wasteManagementOthers`}

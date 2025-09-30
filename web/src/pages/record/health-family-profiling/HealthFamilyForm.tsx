@@ -389,6 +389,13 @@ export default function HealthFamilyForm() {
           } : undefined,
           sanitary_facility: formData.environmentalForm.facilityType ? {
             facility_type: formData.environmentalForm.facilityType,
+            // pass the specific subtype based on facility type so backend can resolve sf_desc
+            ...(formData.environmentalForm.facilityType === 'SANITARY'
+              ? { sanitary_facility_type: formData.environmentalForm.sanitaryFacilityType || undefined }
+              : {}),
+            ...(formData.environmentalForm.facilityType === 'UNSANITARY'
+              ? { unsanitary_facility_type: formData.environmentalForm.unsanitaryFacilityType || undefined }
+              : {}),
             toilet_facility_type: formData.environmentalForm.toiletFacilityType || ''
           } : undefined,
           waste_management: formData.environmentalForm.wasteManagement ? {

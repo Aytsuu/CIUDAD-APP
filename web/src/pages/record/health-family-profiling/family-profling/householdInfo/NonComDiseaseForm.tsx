@@ -293,13 +293,13 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.riskClassAgeGroup`}
               label="Risk class by age/group"
               options={[
-                { id: "Newborn", name: "Newborn (0-28 days)" },
-                { id: "Infant", name: "Infant (20 days - 11 months)" },
-                { id: "Underfive", name: "Under five (1-4 years old)" },
-                { id: "Schoolaged", name: "School-aged (5-9 years old)" },
-                { id: "Adolecent", name: "Adolecent (10-19 years old)" },
-                { id: "Adult", name: "Adult (20-59 years old)" },
-                { id: "Seniorcitizen", name: "Senior Citizen (60+ years old)" },
+                { id: "NEWBORN", name: "Newborn (0-28 days)" },
+                { id: "INFANT", name: "Infant (20 days - 11 months)" },
+                { id: "UNDER FIVE", name: "Under five (1-4 years old)" },
+                { id: "SCHOOLAGED", name: "School-aged (5-9 years old)" },
+                { id: "ADOLESCENT", name: "Adolescent (10-19 years old)" },
+                { id: "ADULT", name: "Adult (20-59 years old)" },
+                { id: "SENIOR CITIZEN", name: "Senior Citizen (60+ years old)" },
               ]}
             />
             <FormSelect
@@ -307,20 +307,20 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.comorbidities`}
               label="Comorbidities/Sakit Balation"
               options={[
-                { id: "Hypertension", name: "HPN - Hypertension" },
-                { id: "Diabetes", name: "Diabetes" },
-                { id: "Asthma", name: "Bronchial Asthma" },
-                { id: "Dyslipidemia", name: "Dyslipedemia" },
+                { id: "HYPERTENSION", name: "HPN - Hypertension" },
+                { id: "DIABETES", name: "Diabetes" },
+                { id: "ASTHMA", name: "Bronchial Asthma" },
+                { id: "DYSLIPIDEMIA", name: "Dyslipedemia" },
                 { id: "CKD", name: "Chronic Kidney Disease" },
-                { id: "Cancer", name: "Cancer" },
+                { id: "CANCER", name: "Cancer" },
                 { id: "MHI", name: "Mental Health Illness" },
-                { id: "None", name: "None" },
-                { id: "Others", name: "Others" },
+                { id: "NONE", name: "None" },
+                { id: "OTHERS", name: "Others" },
               ]}
             />
             
             {/* Show "Others" input field when "Others" is selected for comorbidities */}
-            {selectedComorbidities === "Others" && (
+            {selectedComorbidities === "OTHERS" && (
               <FormInput
                 control={form.control}
                 name={`${prefix}.new.ncdFormSchema.comorbiditiesOthers`}
@@ -334,15 +334,15 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.lifestyleRisk`}
               label="Lifestyle Risk"
               options={[
-                { id: "Smoker", name: "Smoker" },
-                { id: "Alcoholic", name: "Alcoholic Beverage Drinking" },
-                { id: "None", name: "None" },
-                { id: "Others", name: "Others" },
+                { id: "SMOKER", name: "Smoker" },
+                { id: "ALCOHOLIC", name: "Alcoholic Beverage Drinking" },
+                { id: "NONE", name: "None" },
+                { id: "OTHERS", name: "Others" },
               ]}
             />
             
             {/* Show "Others" input field when "Others" is selected for lifestyle risk */}
-            {selectedLifestyleRisk === "Others" && (
+            {selectedLifestyleRisk === "OTHERS" && (
               <FormInput
                 control={form.control}
                 name={`${prefix}.new.ncdFormSchema.lifestyleRiskOthers`}
@@ -355,8 +355,8 @@ export default function NonComDiseaseForm({
               name={`${prefix}.new.ncdFormSchema.inMaintenance`}
               label="Naka Maintenance?"
               options={[
-                { id: "yes", name: "Yes" },
-                { id: "no", name: "No" },
+                { id: "YES", name: "Yes" },
+                { id: "NO", name: "No" },
               ]}
             />
            

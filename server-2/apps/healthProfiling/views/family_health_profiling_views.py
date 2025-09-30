@@ -36,21 +36,35 @@ class FamilyHealthProfilingDetailView(APIView):
             household_data = None
             if hasattr(family, 'hh') and family.hh:
                 household = family.hh
-                household_data = {
-                    'household_id': household.hh_id,
-                    'household_no': household.hh_id,  # Use hh_id as household_no
-                    'nhts_status': household.hh_nhts if hasattr(household, 'hh_nhts') else None,
-                    'date_registered': household.hh_date_registered if hasattr(household, 'hh_date_registered') else None,
-                    'address': {
-                        'sitio': household.add.sitio.sitio_name if household.add and household.add.sitio else None,
-                        'street': household.add.add_street if household.add else None,
-                        'barangay': household.add.add_barangay if household.add else None,
-                        'city': household.add.add_city if household.add else None,
-                        'province': household.add.add_province if household.add else None,
-                    } if hasattr(household, 'add') and household.add else None
-                }
-            
-            # Get family members
+            household_data = {
+                'household_id': household.hh_id,
+                'household_no': household.hh_id,  # Use hh_id as household_no
+                'nhts_status': household.hh_nhts if hasattr(household, 'hh_nhts') else None,
+                'date_registered': household.hh_date_registered if hasattr(household, 'hh_date_registered') else None,
+                'address': {
+                    'sitio': household.add.sitio.sitio_name if household.add and household.add.sitio else None,
+                    'street': household.add.add_street if household.add else None,
+                    'barangay': household.add.add_barangay if household.add else None,
+                    'city': household.add.add_city if household.add else None,
+                    'province': household.add.add_province if household.add else None,
+                } if hasattr(household, 'add') and household.add else None,
+                # Add household head information (the resident the household is registered to)
+                'head_resident': {
+                    'resident_id': household.rp.rp_id if household.rp else None,
+                    'personal_info': {
+                        'first_name': household.rp.per.per_fname if household.rp and household.rp.per else '',
+                        'middle_name': household.rp.per.per_mname if household.rp and household.rp.per else '',
+                        'last_name': household.rp.per.per_lname if household.rp and household.rp.per else '',
+                        'suffix': household.rp.per.per_suffix if household.rp and household.rp.per else '',
+                        'contact': household.rp.per.per_contact if household.rp and household.rp.per else '',
+                        'sex': household.rp.per.per_sex if household.rp and household.rp.per else '',
+                        'date_of_birth': household.rp.per.per_dob if household.rp and household.rp.per else None,
+                        'civil_status': household.rp.per.per_status if household.rp and household.rp.per else '',
+                        'education': household.rp.per.per_edAttainment if household.rp and household.rp.per else '',
+                        'religion': household.rp.per.per_religion if household.rp and household.rp.per else '',
+                    }
+                } if household.rp else None
+            }            # Get family members
             family_compositions = FamilyComposition.objects.filter(
                 fam=family
             ).select_related('rp__per').order_by('rp__per__per_fname')
@@ -76,7 +90,8 @@ class FamilyHealthProfilingDetailView(APIView):
                             'health_risk_class': mother_health_info_obj.mhi_healthRisk_class,
                             'immunization_status': mother_health_info_obj.mhi_immun_status,
                             'family_planning_method': mother_health_info_obj.mhi_famPlan_method,
-                            'family_planning_source': mother_health_info_obj.mhi_famPlan_source
+                            'family_planning_source': mother_health_info_obj.mhi_famPlan_source,
+                            'lmp_date': mother_health_info_obj.mhi_lmp_date
                         }
                 
                 member_data = {
@@ -96,9 +111,11 @@ class FamilyHealthProfilingDetailView(APIView):
                     },
                     'health_details': {
                         'blood_type': health_details.per_add_bloodType if health_details else '',
-                        'philhealth_id': health_details.per_add_philhealth_id if health_details else '',
-                        'covid_vax_status': health_details.per_add_covid_vax_status if health_details else '',
                         'relationship_to_hh_head': health_details.per_add_rel_to_hh_head if health_details else ''
+                    },
+                    'per_additional_details': {
+                        'per_add_philhealth_id': health_details.per_add_philhealth_id if health_details else '',
+                        'per_add_covid_vax_status': health_details.per_add_covid_vax_status if health_details else ''
                     },
                     'mother_health_info': mother_health_info
                 }
@@ -189,6 +206,7 @@ class FamilyHealthProfilingDetailView(APIView):
                     'survey_id': survey_serializer.data['si_id'],
                     'filled_by': survey_serializer.data['si_filled_by'],
                     'informant': survey_serializer.data['si_informant'],
+                    'informant_contact': '',  # Note: This field doesn't exist in the model, placeholder for now
                     'checked_by': survey_serializer.data['si_checked_by'],
                     'date': survey_serializer.data['si_date'],
                     'signature': survey_serializer.data['si_signature'],
