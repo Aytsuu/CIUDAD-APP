@@ -1,15 +1,11 @@
 import React from "react";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { LoadingModal } from "@/components/ui/loading-modal";
-import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { router } from "expo-router";
-import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
-import { View, Text } from "react-native";
-import { Button } from "@/components/ui/button";
 import { useDispatch } from "react-redux";
 import CompleteScanProcess from "@/screens/auth/signup/CompleteScanProcess";
-import { useAddPersonalModification } from "../../queries/accountPostQueries";
 import { useToastContext } from "@/components/ui/toast";
+import { useAddPersonalModification } from "../queries/accountPostQueries";
 
 export default function UpdateScan() {
   const dispatch = useDispatch()

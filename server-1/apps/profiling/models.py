@@ -188,7 +188,7 @@ class FamilyComposition(AbstractModels):
     
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField(auto_now_add=True)
+    req_created_at = models.DateTimeField(auto_now_add=True)
     req_is_archive = models.BooleanField(default=False)
 
     class Meta: 

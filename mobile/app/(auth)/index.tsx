@@ -1,14 +1,15 @@
+import Account from "@/screens/account";
 import App from "@/screens/auth/login";
+import HomeScreen from "@/screens/home";
 
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
-import Personal from "../(account)/settings/personal";
 
 if (__DEV__) {
   LogBox.ignoreAllLogs(true);
 }
 
 export default () => {
-    return <Personal/>
+    return <App/>
 }
  

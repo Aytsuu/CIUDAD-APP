@@ -34,7 +34,6 @@ const religionOptions: { label: string; value: string }[] = [
 ];
 
 const edAttainmentOptions: { label: string; value: string }[] = [
-  { label: "NO FORMAL EDUCATION", value: "NO FORMAL EDUCATION" },
   { label: "ELEMENTARY", value: "ELEMENTARY" },
   { label: "HIGH SCHOOL", value: "HIGH SCHOOL" },
   { label: "VOCATIONAL / TECHNICAL", value: "VOCATIONAL / TECHNICAL" },
@@ -59,7 +58,6 @@ const pwdOptions: { label: string; value: string }[] = [
 ];
 
 const PersonalInformation = React.memo(({ params } : {params: Record<string, any>}) => {
-  const router = useRouter();
   const { toast } = useToastContext()
   const { control, trigger, watch, getValues, setValue,  reset } = useRegistrationFormContext();
   const [showAddressDrawer, setShowAddressDrawer] = React.useState(false);

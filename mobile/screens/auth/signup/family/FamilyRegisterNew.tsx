@@ -121,9 +121,6 @@ export default function FamilyRegisterNew() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { toast } = useToastContext();
   const { getValues, reset } = useRegistrationFormContext();
-  const { mutateAsync: addPersonal } = useAddPersonal();
-  const { mutateAsync: addAddress } = useAddAddress();
-  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
   const { mutateAsync: addRequest } = useAddRequest();
   const { 
     currentStep, 
@@ -206,7 +203,7 @@ export default function FamilyRegisterNew() {
   const submit = async () => {
     if (!canSubmit) return;
     
-    // setIsSubmitting(true);
+    setIsSubmitting(true);
     setStatus('waiting');
     setShowFeedback(true);
 
@@ -251,35 +248,6 @@ export default function FamilyRegisterNew() {
 
       }).filter((info) => info.per.per_contact !== "")
 
-      // const request_info = [];
-    
-      // for (const item of data) {
-      //   const { per_addresses, ...per } = item.per;
-        
-      //   // Add personal info
-      //   const personal = await addPersonal(capitalizeAllFields(per));
-
-      //   // Add addresses
-      //   const addresses = await addAddress(per_addresses.list);
-
-      //   // Link addresses to personal
-      //   await addPersonalAddress({
-      //     data: addresses.map((address: any) => ({
-      //       add: address.add_id,
-      //       per: personal.per_id,
-      //     })),
-      //     history_id: personal.history
-      //   });
-
-      //   // Build the result object
-      //   const result = {
-      //     ...item,
-      //     per: personal.per_id
-      //   };
-
-      //   request_info.push(result);
-      // }
-
       addRequest({
         comp: data
       }, {
@@ -299,7 +267,7 @@ export default function FamilyRegisterNew() {
         setIsSubmitting(false);
       }, 0);
     } finally {
-      // setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -311,7 +279,7 @@ export default function FamilyRegisterNew() {
             setShowFeedback(false);  
             setTimeout(() => {
               setStatus('message')
-              setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features")
+              setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features.")
               setShowFeedback(true);
             }, 0);
           }}
@@ -354,7 +322,7 @@ export default function FamilyRegisterNew() {
         <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
           onPress={() => {
             reset()
-            router.replace('/(tabs)')
+            router.replace('/(auth)/loginscreen')
           }}
         >
           <Text className="text-white text-base font-semibold">

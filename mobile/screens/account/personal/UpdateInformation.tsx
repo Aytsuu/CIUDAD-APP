@@ -8,9 +8,9 @@ import PersonalInformation from "@/screens/auth/signup/PersonalInformation";
 import isEqual from "lodash.isequal";
 import { useToastContext } from "@/components/ui/toast";
 import { uppercaseAll } from "@/helpers/caseHelper";
-import { useGetPersonalModificationReq } from "../../queries/accountFetchQueries";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
+import { useGetPersonalModificationReq } from "../queries/accountFetchQueries";
 
 export default function UpdateInformation() {
   // ===================== STATE INITIALIZATION =====================

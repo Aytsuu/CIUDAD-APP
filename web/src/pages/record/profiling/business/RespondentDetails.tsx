@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/table/data-table";
 import { useLoading } from "@/context/LoadingContext";
-import { Loader2, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useLocation } from "react-router";
 import { Type } from "../ProfilingEnums";
 import {
@@ -13,11 +13,12 @@ import { businessDetailsColumns } from "../resident/ResidentColumns";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { formatDate } from "@/helpers/dateHelper";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { Spinner } from "@/components/ui/spinner";
 
 // Loading Component
 const ActivityIndicator = ({ message }: { message: string }) => (
   <div className="flex flex-col items-center justify-center py-12 space-y-4">
-    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+    <Spinner size="lg" />
     <p className="text-sm text-gray-500">{message}</p>
   </div>
 );

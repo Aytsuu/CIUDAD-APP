@@ -38,15 +38,18 @@ export const FormInput = ({
         // Handle maxInput logic
         const handleChange = (text: string) => {
           if (maxInput !== undefined && text.length > maxInput) {
-            return; // Don't update if exceeds max length
+            return;
           }
-          onChange(text);
+          
+          const processedText = upper ? text.toUpperCase() : text;
+          onChange(processedText);
         };
 
         return (
           <View className="mb-4">
             {label && <Text className="text-sm mb-2">{label}</Text>}
             <Input
+              autoCapitalize={upper ? 'characters' : 'none'}
               className={`
                 h-[45px]
                 bg-white
@@ -58,7 +61,7 @@ export const FormInput = ({
               `}
               placeholder={placeholder}
               placeholderTextColor="#888"
-              value={value != null ? upper ? String(value).toUpperCase() : String(value) : ''}
+              value={value != null ? String(value) : ''}
               onChangeText={handleChange} // Use the custom handler
               onBlur={onBlur}
               secureTextEntry={secureTextEntry}

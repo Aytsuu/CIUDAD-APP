@@ -24,12 +24,12 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router"
 import { RenderHistory } from "../../ProfilingHistory"
-import { ActivityIndicator } from "@/components/ui/activity-indicator"
 import { EmptyState } from "@/components/ui/empty-state"
 import { CardSidebar } from "@/components/ui/card-sidebar"
 import { Button } from "@/components/ui/button/button"
 import { Badge } from "@/components/ui/badge"
 import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
@@ -273,7 +273,12 @@ export default function ResidentViewForm({ params }: { params: any }) {
   // Render Family Card Content
   const renderFamilyContent = () => {
     if (isLoadingFam || isLoadingSitio) {
-      return <ActivityIndicator message="Loading family members..." />
+      return (
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <Spinner size="lg" />
+          <p className="text-sm text-gray-500">Loading family members...</p>
+        </div>
+      )
     }
     if (!family || family.length === 0) {
       return (
@@ -365,7 +370,10 @@ export default function ResidentViewForm({ params }: { params: any }) {
             </div>
           </div>
           {isLoadingPersonalInfo ? (
-            <ActivityIndicator message="Loading personal information..." />
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Spinner size="lg" />
+              <p className="text-sm text-gray-500">Loading personal information...</p>
+            </div>
           ) : (
             <>
               <Form {...form}>

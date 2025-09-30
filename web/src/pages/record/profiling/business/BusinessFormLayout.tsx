@@ -9,7 +9,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Loader2, Clock, History, Check, MoveRight } from "lucide-react"
+import { FileText, MapPin, User, Database, Store, Clock, History, Check, MoveRight } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
@@ -30,6 +30,7 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
 import _ from 'lodash'
+import { Spinner } from "@/components/ui/spinner"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -356,7 +357,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const BusinessInfoLoading = () => (
     <Card className="w-full">
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Spinner size="lg"/>
         <div className="text-center">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Business Information</h3>
           <p className="text-sm text-gray-600">Please wait while we fetch the business details...</p>
