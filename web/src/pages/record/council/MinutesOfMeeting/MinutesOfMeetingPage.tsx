@@ -2,9 +2,8 @@ import { useState } from "react"
 import { Archive } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
-import ArchiveMOM from "./archiveMOM"
 import ActiveMOM from "./activeMOM"
-
+import InactiveMOM from "./inactiveMOM"
 
 export const getAreaFocusDisplayName = (focus: string): string => {
   switch (focus) {
@@ -75,7 +74,7 @@ function MinutesOfMeetingPage() {
 
             {/* Archive Records Tab */}
             <TabsContent value="archive" className="m-0">
-              <ArchiveMOM />
+              <InactiveMOM />
             </TabsContent>
           </Tabs>
         </div>

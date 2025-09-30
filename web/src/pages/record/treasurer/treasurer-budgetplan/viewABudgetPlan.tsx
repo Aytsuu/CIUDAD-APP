@@ -2,7 +2,6 @@ import { ChevronLeft, Pen, ChevronRightIcon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { Skeleton } from "@/components/ui/skeleton";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import DisplayBreakdown from "./netBreakdownDisplay";
 import { Label } from "@/components/ui/label";
@@ -16,6 +15,9 @@ import BudgetHeaderEditForm from "./budgetPlanForm/budgetHeaderEditForm";
 import BudgetItemEditForm from "./budgetPlanForm/budgetItemEditForm";
 import { formatDate } from "@/helpers/dateHelper";
 import TableLayout from "@/components/ui/table/table-layout";
+import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext";
+import { useEffect } from "react";
 
 const styles = {
   header: "font-bold text-lg text-blue-600",
@@ -35,6 +37,7 @@ const headerProp = ["", "Per Proposed Budget"].map((text) => (
 ));
 
 function ViewBudgetPlan() {
+  const { showLoading, hideLoading } = useLoading();
   const location = useLocation();
   const [isEditingHeader, setIsEditingHeader] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
@@ -43,6 +46,15 @@ function ViewBudgetPlan() {
 
   const planId = location.state?.planId;
   const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
+
+  // ----------------- LOADING MGMT --------------------
+  useEffect(() => {
+    if (isLoading) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  }, [isLoading, showLoading, hideLoading])
 
   // calculating net available resources
   const availableResources =
@@ -66,11 +78,9 @@ function ViewBudgetPlan() {
 
   if (isLoading) {
     return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="lg" />
+        <span className="ml-2 text-gray-600">Loading budget plan details...</span>
       </div>
     );
   }

@@ -19,7 +19,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { getAreaFocusColor, getAreaFocusDisplayName } from "./MinutesOfMeetingPage";
 
-export default function ArchiveMOM() {
+export default function InactiveMOM() {
     const { showLoading, hideLoading } = useLoading();
     const [searchQuery, setSearchQuery] = useState("")
     const [pageSize, setPageSize] = useState<number>(10)

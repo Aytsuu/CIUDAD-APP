@@ -7,6 +7,7 @@ import { Link } from "react-router";
 import { useDeleteBudgetPlan } from "./queries/budgetPlanDeleteQueries";
 import { useArchiveBudgetPlan, useRestoreBudgetPlan } from "./queries/budgetPlanUpdateQueries";
 import { useState } from "react";
+import { formatDate } from "@/helpers/dateHelper";
 
 export const useBudgetPlanColumns = () => {
   const { mutate: deletePlan } = useDeleteBudgetPlan();
@@ -47,7 +48,7 @@ export const useBudgetPlanColumns = () => {
       accessorKey: "plan_issue_date",
       header: "Issued On",
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("plan_issue_date")}</div>
+        <div className="text-center">{formatDate(row.getValue("plan_issue_date"), "long")}</div>
       )
     },
     {
