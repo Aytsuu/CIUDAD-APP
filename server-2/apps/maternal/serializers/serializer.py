@@ -20,7 +20,7 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MedicalHistory
-        fields = ['medhist_id', 'ill_date', 'ill', 'illness_name', 'created_at'] 
+        fields = '__all__'
 
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:

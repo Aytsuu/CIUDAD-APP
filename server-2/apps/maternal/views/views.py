@@ -19,6 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # medical history GET
+# medical history GET
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
         patient = get_object_or_404(Patient, pat_id=pat_id)
@@ -28,7 +29,7 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
         
         try:
             all_patrec_w_medhis = PatientRecord.objects.filter(
-                pat_id=patient,
+                pat_id=patient
             )
             print("Found patient records w/ medical history for patient: ", patient.pat_id)
 
@@ -73,6 +74,7 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
+
 
 # obstetrical history GET
 class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):

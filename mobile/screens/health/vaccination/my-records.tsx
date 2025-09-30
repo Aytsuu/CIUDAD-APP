@@ -46,8 +46,7 @@ export default function IndividualVaccinationRecords() {
   }, [mode, params.patId, pat_id]);
 
   // Use vaccination queries
-  const { data: vaccinationRecords, isLoading: isVaccinationRecordsLoading, refetch: refetchVaccinationRecords, isFetching: isVaccinationFetching } = useIndivPatientVaccinationRecords(patId || "");
-  console.log("API Response:", vaccinationRecords);
+  const { data: vaccinationRecords, isLoading: isVaccinationRecordsLoading, refetch: refetchVaccinationRecords, isFetching: isVaccinationFetching, isError: isVacrecError } = useIndivPatientVaccinationRecords(patId || "");
 
   // Extract and serialize patient data from vaccination records
   const patientData = useMemo((): SerializedPatientData | null => {
@@ -65,7 +64,7 @@ export default function IndividualVaccinationRecords() {
       return null;
     }
 
-    const serialized = serializePatientData(firstRecord.patient);
+    const serialized = serializePatientData(firstRecord.patient) || null;
     console.log("Serialized patient data:", serialized);
     return serialized;
   }, [vaccinationRecords]);
@@ -96,11 +95,27 @@ export default function IndividualVaccinationRecords() {
   const endEntry = Math.min(currentPage * pageSize, totalCount);
 
   // Use hooks with safe data
-  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(patId, patientDOB);
-  const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } = useFollowupVaccines(patId);
-  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading } = usePatientVaccinationDetails(patId);
+  const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading, isError: isUnVacError } = useUnvaccinatedVaccines(patId, patientDOB);
+  const { data: followupVaccines = [], isLoading: isFollowVaccineLoading, isError: isVacError } = useFollowupVaccines(patId);
+  const { data: vaccinations = [], isLoading: isCompleteVaccineLoading, isError: isCompleteVacError } = usePatientVaccinationDetails(patId);
 
-  const isLoading = isCompleteVaccineLoading || isUnvaccinatedLoading || isFollowVaccineLoading || isVaccinationRecordsLoading;
+  const isLoading = isCompleteVaccineLoading || isUnvaccinatedLoading || isFollowVaccineLoading;
+  const isError = isVacError || isUnVacError || isCompleteVacError || isVacrecError;
+
+  // Search loading state - show when search query changes and records are being filtered
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (debouncedSearchQuery && vaccinationRecords) {
+      setIsSearching(true);
+      const timer = setTimeout(() => {
+        setIsSearching(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setIsSearching(false);
+    }
+  }, [debouncedSearchQuery, vaccinationRecords]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -143,11 +158,7 @@ export default function IndividualVaccinationRecords() {
     }
   }, [patientData, patientDOB, vaccinationRecords]);
 
-  if (isVaccinationRecordsLoading && isFollowVaccineLoading && isUnvaccinatedLoading && isCompleteVaccineLoading) {
-    return <LoadingState />;
-  }
-
-  if ((!patId)) {
+  if (isError) {
     return (
       <>
         <PageLayout
@@ -160,10 +171,24 @@ export default function IndividualVaccinationRecords() {
           rightAction={<View className="w-10 h-10" />}
         >
           {" "}
-          <NoRecordsCard onRefresh={onRefresh} />;
+          <NoRecordsCard />;
         </PageLayout>
       </>
     );
+  }
+
+  if (isLoading){
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <LoadingState />
+    </PageLayout>
   }
 
   return (
@@ -178,45 +203,77 @@ export default function IndividualVaccinationRecords() {
     >
       <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
         {/* Patient Info Card - Only show if we have patient data */}
-        {patientData ? (
+        {patientData && (
           <View className="px-4 pt-4 bg-white">
             <PatientInfoCard patient={patientData} />
-          </View>
-        ) : (
-          <View className="px-4 pt-4">
-            <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <Text className="text-yellow-800 text-center">Patient information not available</Text>
-            </View>
           </View>
         )}
 
         {/* Vaccination Status Cards */}
-        {!isLoading && (
-          <View className="px-4 mt-4">
-            <View className="flex-row border-b border-gray-200">
-              <TouchableOpacity onPress={() => handleSetActiveTab("status")} className={`flex-1 py-3 items-center ${activeTab === "status" ? "border-b-2 border-blue-600" : ""}`}>
-                <Text className={`text-sm font-medium ${activeTab === "status" ? "text-blue-600" : "text-gray-600"}`}>Vaccination Status</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleSetActiveTab("followups")} className={`flex-1 py-3 items-center ${activeTab === "followups" ? "border-b-2 border-blue-600" : ""}`}>
-                <Text className={`text-sm font-medium ${activeTab === "followups" ? "text-blue-600" : "text-gray-600"}`}>Follow-ups</Text>
-              </TouchableOpacity>
+      
+     =
+            <View className="px-4 mt-4">
+              <View className="flex-row border-b border-gray-200">
+                <TouchableOpacity
+                  onPress={() => handleSetActiveTab("status")}
+                  className={`flex-1 py-3 items-center ${
+                    activeTab === "status" ? "border-b-2 border-blue-600" : ""
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      activeTab === "status" ? "text-blue-600" : "text-gray-600"
+                    }`}
+                  >
+                    Vaccination Status
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleSetActiveTab("followups")}
+                  className={`flex-1 py-3 items-center ${
+                    activeTab === "followups" ? "border-b-2 border-blue-600" : ""
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      activeTab === "followups" ? "text-blue-600" : "text-gray-600"
+                    }`}
+                  >
+                    Follow-ups
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-col gap-4 mt-4">
+                {activeTab === "status" && (
+                  <VaccinationStatusCards
+                    unvaccinatedVaccines={unvaccinatedVaccines}
+                    vaccinations={vaccinations}
+                  />
+                )}
+                {activeTab === "followups" && (
+                  <FollowUpsCard followupVaccines={followupVaccines} />
+                )}
+              </View>
             </View>
-            <View className="flex-col gap-4 mt-4">
-              {activeTab === "status" && <VaccinationStatusCards unvaccinatedVaccines={unvaccinatedVaccines} vaccinations={vaccinations} />}
-              {activeTab === "followups" && <FollowUpsCard followupVaccines={followupVaccines} />}
-            </View>
-          </View>
-        )}
+        
 
-        {/* Search and Summary */}
         <View className="p-4 mt-4">
           <View className="flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
             <Search size={20} color="#6B7280" />
-            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by vaccine name, batch number..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+            <TextInput
+              className="flex-1 ml-3 text-gray-800 text-base"
+              placeholder="Search by vaccine name, batch number..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {isSearching && (
+              <View className="ml-2">
+                <RefreshCw size={16} color="#3B82F6" className="animate-spin" />
+              </View>
+            )}
           </View>
         </View>
-
-        {/* Entries Summary */}
         <View className="px-4 flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
             <Text className="text-sm text-gray-600">
@@ -230,34 +287,33 @@ export default function IndividualVaccinationRecords() {
           </View>
         </View>
 
-        {/* Records List */}
-        <View className="px-4 pb-4">
-          {filteredRecords.length === 0 ? (
-            <View className="bg-white rounded-xl p-8 items-center border border-gray-200">
-              <Syringe size={64} color="#9CA3AF" />
-              <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">{debouncedSearchQuery ? "No matching records found" : "No vaccination records found"}</Text>
-              <Text className="text-gray-600 text-center mt-2 mb-4">{debouncedSearchQuery ? "Try adjusting your search terms." : "This patient doesn't have any vaccination records yet."}</Text>
+        {isVaccinationRecordsLoading || isSearching ? (
+          <View className="flex-1 items-center justify-center py-8">
+            <View className="items-center justify-center">
+              <RefreshCw size={32} color="#3B82F6" className="animate-spin" />
+              <Text className="text-gray-600 mt-2">{isSearching ? "Searching records..." : "Loading vaccination records..."}</Text>
             </View>
-          ) : (
-            <>
-              <FlatList
-                data={paginatedRecords}
-                keyExtractor={(item) => `vaccination-record-${item.vachist_id}`}
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={false}
-                renderItem={({ item }) => <VaccinationRecordCard record={item} />}
-                ListFooterComponent={
-                  isVaccinationFetching ? (
-                    <View className="py-4 items-center">
-                      <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
-                    </View>
-                  ) : null
-                }
-              />
-              <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
-            </>
-          )}
-        </View>
+          </View>
+        ) : (
+          <>
+            <FlatList
+              data={paginatedRecords}
+              keyExtractor={(item) => `vaccination-record-${item.vachist_id}`}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+              renderItem={({ item }) => <VaccinationRecordCard record={item} />}
+              ListFooterComponent={
+                isVaccinationFetching ? (
+                  <View className="py-4 items-center">
+                    <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+                    <Text className="text-gray-600 text-sm mt-1">Loading more records...</Text>
+                  </View>
+                ) : null
+              }
+            />
+            <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
+          </>
+        )}
       </ScrollView>
     </PageLayout>
   );

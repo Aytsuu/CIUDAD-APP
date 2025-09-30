@@ -62,7 +62,9 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
     header: "Address",
     cell: ({ row }) => (
       <div className="flex justify-center w-full px-4">
-        <div className="w-[300px] ">{row.original.address?.full_address || "No address provided"}</div>
+        <div className="w-[300px]">
+          {row.original.address?.full_address || "No address provided"}
+        </div>
       </div>
     )
   },
@@ -115,21 +117,21 @@ export const medicineRequestColumns: ColumnDef<any>[] = [
                 patientData: {
                   pat_type: row.original.pat_type,
                   age: row.original.age,
-                  addressFull: row.original.address.full_address || "No address provided",
-                  address: {
+                  addressFull: row.original.address?.full_address || "No address provided",
+                  address: row.original.address ? {
                     add_street: row.original.address.add_street,
                     add_barangay: row.original.address.add_barangay,
                     add_city: row.original.address.add_city,
                     add_province: row.original.address.add_province,
                     add_sitio: row.original.address.add_sitio
-                  },
+                  } : {},
                   households: [{ hh_id: row.original.householdno }],
                   personal_info: {
-                    per_fname: row.original.personal_info.per_fname,
-                    per_mname: row.original.personal_info.per_mname,
-                    per_lname: row.original.personal_info.per_lname,
-                    per_dob: row.original.personal_info.per_dob,
-                    per_sex: row.original.personal_info.per_sex
+                    per_fname: row.original.personal_info?.per_fname,
+                    per_mname: row.original.personal_info?.per_mname,
+                    per_lname: row.original.personal_info?.per_lname,
+                    per_dob: row.original.personal_info?.per_dob,
+                    per_sex: row.original.personal_info?.per_sex
                   }
                 }
               }

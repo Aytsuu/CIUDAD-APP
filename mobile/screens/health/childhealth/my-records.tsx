@@ -584,7 +584,7 @@ export default function InvChildHealthRecords() {
       <ScrollView className="flex-1 b" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* NEW: Show "No Records Found" message when no records exist */}
         {noRecordsFound ? (
-          <NoRecordsCard onRefresh={onRefresh} />
+          <NoRecordsCard />
         ) : (
           <>
             <View className="mx-4 mb-2">

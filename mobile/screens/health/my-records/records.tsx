@@ -139,7 +139,7 @@ React.useEffect(() => {
       id: 5,
       name: "Medical Consultation",
       description: "View medical consultation records",
-      route: "/medical-consultation/records",
+      route: "/medconsultation/my-records",
       image: require("@/assets/images/Health/Home/medicalconsultation.jpg"),
       color: "#10B981"
     },

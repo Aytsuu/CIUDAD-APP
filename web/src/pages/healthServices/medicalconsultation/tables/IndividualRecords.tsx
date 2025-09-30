@@ -12,10 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Patient } from "../../restful-api-patient/type";
 import { useConsultationHistory, useFamHistory } from "../queries/fetchQueries";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
-import CardLayout from "@/components/ui/card/card-layout";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
-import { getServiceTypeColor } from "./servicetype-badge";
 import { MedicalHistoryTab } from "./medical-history-card";
 import { FamilyHistoryTab } from "./family-history-card";
 

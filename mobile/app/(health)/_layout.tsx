@@ -50,6 +50,10 @@ export default () => {
             <Stack.Screen name="first-aid/my-records" options={{ headerShown: false }} />
             <Stack.Screen name="medicine-records/my-records" options={{ headerShown: false }} />
             <Stack.Screen name="childhealth/my-records" options={{ headerShown: false }} />
+            <Stack.Screen name="medconsultation/my-records" options={{ headerShown: false }} />
+            <Stack.Screen name="medconsultation/current-history" options={{ headerShown: false }} />
+
+
 
 
 

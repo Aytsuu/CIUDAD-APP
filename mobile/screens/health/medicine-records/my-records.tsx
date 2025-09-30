@@ -122,7 +122,7 @@ export default function IndividualMedicineRecords() {
         }
         headerTitle={<Text>Medicine Records</Text>}
       >
-        <NoRecordsCard onRefresh={onRefresh} />
+        <NoRecordsCard />
       </PageLayout>
     );
   }
