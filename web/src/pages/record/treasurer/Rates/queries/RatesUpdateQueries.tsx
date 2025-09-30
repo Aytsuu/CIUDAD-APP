@@ -43,7 +43,10 @@ export const useEditPurposeAndRate = (onSuccess?: () => void) => {
                 staff_id: values.staff_id
             }),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['purposeRates'] });
+                queryClient.invalidateQueries({ queryKey: ['personalPurpose']});
+                queryClient.invalidateQueries({ queryKey: ['serviceChargePurpose']});
+                queryClient.invalidateQueries({ queryKey: ['businessPermitPurpose']});
+                
                 showSuccessToast("Record Updated!")
                 onSuccess?.()
             },

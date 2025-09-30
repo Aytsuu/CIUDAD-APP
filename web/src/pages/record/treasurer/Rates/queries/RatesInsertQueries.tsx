@@ -40,7 +40,9 @@ export const useAddPurposeAndRate = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof PurposeAndRatesSchema>) => 
                 addPurposeAndRate(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['purposeRates']});
+                queryClient.invalidateQueries({ queryKey: ['personalPurpose']});
+                queryClient.invalidateQueries({ queryKey: ['serviceChargePurpose']});
+                queryClient.invalidateQueries({ queryKey: ['businessPermitPurpose']});
 
                 toast.loading('Submitting Record...', {id: "addPurposeRate"});
         

@@ -799,12 +799,132 @@ class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 class Purpose_And_RatesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
-    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')
+    queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')   
+
+class Purpose_And_RatesPersonalView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Personal',
+            pr_is_archive=False  # Assuming you want active records
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_category',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_category__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+    
+
+class Purpose_And_RatesServiceChargeView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Service Charge',
+            pr_is_archive=False  # Assuming you want active records
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_category',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_category__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+    
+class Purpose_And_RatesBusinessPermitView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Business Permit',
+            pr_is_archive=False  # Assuming you want active records
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_category',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_category__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
 
 
 class DeleteUpdate_Purpose_And_RatesView(generics.UpdateAPIView):

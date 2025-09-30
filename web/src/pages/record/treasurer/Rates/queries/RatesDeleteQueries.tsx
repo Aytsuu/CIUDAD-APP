@@ -42,7 +42,9 @@ export const useDeletePurposeAndRate = (onSuccess?: () => void) => {
             duration: 2000
         });
 
-        queryClient.invalidateQueries({ queryKey: ['purposeRates'] });
+        queryClient.invalidateQueries({ queryKey: ['personalPurpose']});
+        queryClient.invalidateQueries({ queryKey: ['serviceChargePurpose']});
+        queryClient.invalidateQueries({ queryKey: ['businessPermitPurpose']});
         
         if (onSuccess) onSuccess();
     },
