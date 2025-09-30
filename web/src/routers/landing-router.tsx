@@ -11,6 +11,7 @@ import Home from '@/pages/landing/home';
 import Donation from '@/pages/landing/donation';
 import Announcements from '@/pages/landing/announcements';
 import ForgotPassword from '@/pages/landing/ForgotPass';
+import SignIn from '@/pages/landing/signin/signin';
 export const landing_router: RouteObject[] = [
   {
     path: "/",
