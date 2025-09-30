@@ -73,15 +73,15 @@ export const useCreateCollectionReminders = (onSuccess?: () => void) => {
       return await createCollectionReminders();
     },
     onSuccess: () => {
-      toast.loading("Creating collection announcement...", { id: "createReminders" });
+      // toast.loading("Creating collection announcement...", { id: "createReminders" });
       
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       
-      toast.success("Created announcement successfully", {
-        id: "createReminders",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 3000
-      });
+      // toast.success("Created announcement successfully", {
+      //   id: "createReminders",
+      //   icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      //   duration: 3000
+      // });
 
       if (onSuccess) onSuccess();
     },

@@ -49,10 +49,13 @@ export const getSitio = async () => {
 
 
 //Retrieve all Data in Waste Collection
-export const getWasteCollectionSchedFull = async () => {
+export const getWasteCollectionSchedFull = async (searchQuery?: string, selectedDay?: string) => {
     try {
-        const res = await api.get('waste/waste-collection-sched-full/');
-        console.log("Raw API response:", res.data); 
+        const params: any = {};
+        if (searchQuery) params.search = searchQuery;
+        if (selectedDay && selectedDay !== '0') params.day = selectedDay;
+        
+        const res = await api.get('waste/waste-collection-sched-full/', { params });
         return res.data;
     } catch (err) {
         console.error(err);

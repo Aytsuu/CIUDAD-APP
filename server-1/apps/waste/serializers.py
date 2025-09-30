@@ -145,11 +145,6 @@ class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
 #         fields = '__all__'
 
 
-class WasteCollectorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WasteCollector
-        fields = '__all__' 
-
 
 # class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
 #     collectors_wstp_ids = serializers.SerializerMethodField()
@@ -192,57 +187,6 @@ class WasteCollectorSerializer(serializers.ModelSerializer):
 #         return obj.sitio.sitio_name if obj.sitio else None
 
 
-
-class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
-    collectors_wstp_ids = serializers.SerializerMethodField()
-    collectors_names = serializers.SerializerMethodField()
-    driver_name = serializers.SerializerMethodField()
-    sitio_name = serializers.SerializerMethodField() 
-
-    class Meta:
-        model = WasteCollectionSched
-        fields = [
-            'wc_num',
-            'wc_day',
-            'wc_time',
-            'wc_add_info',
-            'wc_is_archive',
-            'staff',
-            'sitio',
-            'sitio_name',
-            'truck',
-            'wstp',
-            'collectors_wstp_ids',
-            'collectors_names',
-            'driver_name'
-        ]
-
-
-    def get_collectors_wstp_ids(self, obj):
-        collectors = WasteCollector.objects.filter(wc_num=obj)
-        return [
-            collector.wstp.wstp_id
-            for collector in collectors
-            if collector.wstp is not None
-        ]
-    
-
-    def get_collectors_names(self, obj):
-        collectors = WasteCollector.objects.filter(wc_num=obj)
-        names = [
-            collector.wstp.get_staff_name()
-            for collector in collectors
-            if collector.wstp is not None
-        ]
-        return ', '.join(names)
-    
-
-    def get_driver_name(self, obj):
-        return obj.wstp.get_staff_name() if obj.wstp else None
-    
-
-    def get_sitio_name(self, obj):
-        return obj.sitio.sitio_name if obj.sitio else None
     
 
 class WasteHotspotSerializer(serializers.ModelSerializer):
