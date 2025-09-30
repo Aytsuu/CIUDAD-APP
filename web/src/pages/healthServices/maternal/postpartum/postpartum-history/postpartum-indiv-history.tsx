@@ -9,6 +9,7 @@ import PostpartumViewing from "./form-history/postpartum-viewing";
 import PostpartumCareHistory from "./postpartum-care-history";
 
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
+import { Label } from "@/components/ui/label";
 
 
 interface PrenatalVisit {
@@ -124,20 +125,20 @@ export default function PostpartumIndivHistory() {
       title="Postpartum Visit Records"
       description="Complete record of prenatal visits and clinical notes"
     >
-        <div className="bg-white p-3 space-y-2">
-            <div className="flex justify-end pr-4 my-5">
-                <Button variant="outline"><Printer/> Print</Button>
-            </div>
+      <div className="bg-white p-3 space-y-2">
+        <div className="w-full">
+          <div className="flex m-5">
+              <Label className="text-xl">Form Section</Label>
+          </div>
+          <div className="flex items-center justify-center">
+              <PostpartumViewing pprId={recordId} />
+          </div>
 
-            <div className="w-full">
-                <div className="flex items-center justify-center">
-                    <PostpartumViewing pprId={recordId} />
-                </div>
-                <div>
-                    <PostpartumCareHistory/>
-                </div>
-            </div>
+          <div>
+              <PostpartumCareHistory/>
+          </div>
         </div>
+      </div>
     </LayoutWithBack>
   );
 }

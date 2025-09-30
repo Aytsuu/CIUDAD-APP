@@ -3,9 +3,10 @@
 // imports
 import React from "react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button/button"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, Printer } from "lucide-react"
 
 import { usePatientPostpartumCompleteRecord } from "../../../queries/maternalFetchQueries"
 
@@ -84,174 +85,180 @@ export default function PostpartumViewing({ pprId }: PostpartumViewingProps) {
     }));
 
     return(
-        <div className="flex max-w-7xl h-[80rem] mx-auto m-5 overflow-hidden border border-gray-500">
-            <div className="container ">
-                <div className="m-5 px-8">
-                    <div className="mt-[50px]">
-                        <h4 className="text-center text-2xl m-4 pb-3"> <b>POSTPARTUM RECORD</b> </h4>
-                    </div>
+        <div>
+            <div className="flex justify-end my-5 font-semibold">
+                <Button className="" variant="outline"><Printer/> Print</Button>
+            </div>
+        
+            <div className="flex max-w-7xl h-[100rem] mx-auto m-5 overflow-hidden border border-gray-500">
+                <div className="container">
+                    <div className="m-5 px-8">
+                        <div className="mt-[60px]">
+                            <h4 className="text-center text-2xl m-4 pb-3"> <b>POSTPARTUM RECORD</b> </h4>
+                        </div>
 
-                    {/* personal info */}
-                    <div className="flex w-full justify-end">
-                        <Label className="mt-4">FAMILY NO.</Label>
-                        <InputLine className="w-[150px]" value={family?.fam_id || ""}></InputLine>
-                    </div>
+                        {/* personal info */}
+                        <div className="flex w-full justify-end">
+                            <Label className="mt-4">FAMILY NO.</Label>
+                            <InputLine className="w-[150px]" value={family?.fam_id || ""}></InputLine>
+                        </div>
 
-                    <div className="flex flex-col w-full">
-                        {/* Name and Age */}
-                        <div className="flex">
-                            <div className="flex items-center">
-                                <Label className="mt-4">Name:</Label>
-                                <InputLine 
-                                    className="mr-8 w-[400px]" 
-                                    value={`${personalInfo?.per_lname || ""}, ${personalInfo?.per_fname || ""} ${personalInfo?.per_mname || ""}`.trim()}
-                                />
+                        <div className="flex flex-col w-full">
+                            {/* Name and Age */}
+                            <div className="flex">
+                                <div className="flex items-center">
+                                    <Label className="mt-4">Name:</Label>
+                                    <InputLine 
+                                        className="mr-8 w-[400px]" 
+                                        value={`${personalInfo?.per_lname || ""}, ${personalInfo?.per_fname || ""} ${personalInfo?.per_mname || ""}`.trim()}
+                                    />
+                                </div>
+                                <div className="flex items-center">
+                                    <Label className="mt-4">Age:</Label>
+                                    <InputLine className="w-32" value={age} />
+                                </div>
                             </div>
-                            <div className="flex items-center">
-                                <Label className="mt-4">Age:</Label>
-                                <InputLine className="w-32" value={age} />
+                            
+                            {/* Husband's Name and Address */}
+                            <div className="flex">
+                                <div className="flex items-center">
+                                    <Label className="mt-4">Husband's Name:</Label>
+                                    <InputLine 
+                                        className="mr-8 w-[330px]" 
+                                        value={isResident && fatherInfo ? 
+                                            `${fatherInfo.per_lname || ""}, ${fatherInfo.per_fname || ""} ${fatherInfo.per_mname || ""}`.trim() :
+                                            spouseInfo ? `${spouseInfo.spouse_lname || ""}, ${spouseInfo.spouse_fname || ""} ${spouseInfo.spouse_mname || ""}`.trim() : ""
+                                        }
+                                    />
+                                </div>
+                                <div className="flex items-center">
+                                    <Label className="mt-4">Address:</Label>
+                                    <InputLine 
+                                        className="w-[300px]" 
+                                        value={`${address?.add_street || ""} ${address?.add_sitio || ""} ${address?.add_barangay || ""} ${address?.add_city || ""} ${address?.add_province || ""}`.trim()}
+                                    />
+                                </div>
                             </div>
                         </div>
-                        
-                        {/* Husband's Name and Address */}
-                        <div className="flex">
-                            <div className="flex items-center">
-                                <Label className="mt-4">Husband's Name:</Label>
+
+                        {/* delivery info */}
+                        <div className="flex flex-col w-full">
+                            {/* Date & Time of Delivery and Place of Delivery */}
+                            <div className="flex">
+                                <Label className="mt-4">Date & Time of Delivery:</Label>
+                                <InputLine 
+                                    className="mr-8 w-[286px]" 
+                                    value={deliveryRecord ? 
+                                        `${deliveryRecord.ppdr_date_of_delivery || ""} ${deliveryRecord.ppdr_time_of_delivery || ""}`.trim() : ""
+                                    }
+                                />
+                                <Label className="mt-4">Place of Delivery:</Label>
+                                <InputLine 
+                                    className="w-[240px]" 
+                                    value={deliveryRecord?.ppdr_place_of_delivery || ""}
+                                />
+                            </div>
+                            
+                            {/* Attended by and Outcome */}
+                            <div className="flex">
+                                <Label className="mt-4">Attended by:</Label>
+                                <InputLine 
+                                    className="mr-8 w-[360px]" 
+                                    value={deliveryRecord?.ppdr_attended_by || ""}
+                                />
+                                <Label className="mt-4">Outcome:</Label>
+                                <InputLine 
+                                    className="w-[300px]" 
+                                    value={deliveryRecord?.ppdr_outcome || ""}
+                                />
+                            </div>
+                        </div>
+
+                        {/* postpartum care info */}
+                        <div className="flex flex-col w-full">
+                            {/* TT Status and Iron Supplementation */}
+                            <div className="flex">
+                                <Label className="mt-4">TT Status:</Label>
+                                <InputLine className="mr-8 w-[384px]" value="" />
+                                <Label className="mt-4">Iron Supplementation:</Label>
+                                <InputLine className="w-[230px]" value="" />
+                            </div>
+                            
+                            {/* Lochial Discharges and Vit A Supplementation */}
+                            <div className="flex">
+                                <Label className="mt-4">Lochial Discharges:</Label>
+                                <InputLine 
+                                    className="mr-8 w-[325px]" 
+                                    value={postpartumForm?.ppr_lochial_discharges || ""}
+                                />
+                                <Label className="mt-4">Vit A Supplementation:</Label>
+                                <InputLine 
+                                    className="w-[225px]" 
+                                    value={postpartumForm?.ppr_vit_a_date_given || ""}
+                                />
+                            </div>
+                            
+                            {/* No. of pad/day and Mebendazole */}
+                            <div className="flex">
+                                <Label className="mt-4">No. of pad / day:</Label>
                                 <InputLine 
                                     className="mr-8 w-[330px]" 
-                                    value={isResident && fatherInfo ? 
-                                        `${fatherInfo.per_lname || ""}, ${fatherInfo.per_fname || ""} ${fatherInfo.per_mname || ""}`.trim() :
-                                        spouseInfo ? `${spouseInfo.spouse_lname || ""}, ${spouseInfo.spouse_fname || ""} ${spouseInfo.spouse_mname || ""}`.trim() : ""
+                                    value={postpartumForm?.ppr_num_of_pads?.toString() || ""}
+                                />
+                                <Label className="mt-4">Mebendazole given (if not given during prenatal):</Label>
+                                <InputLine 
+                                    className="w-[130px]" 
+                                    value={postpartumForm?.ppr_mebendazole_date_given || ""}
+                                />
+                            </div>
+                            
+                            {/* Date & Time initiated BF */}
+                            <div className="flex">
+                                <Label className="mt-4">Date & Time initiated BF:</Label>
+                                <InputLine 
+                                    className="w-[288px]" 
+                                    value={postpartumForm ? 
+                                        `${postpartumForm.ppr_date_of_bf || ""} ${postpartumForm.ppr_time_of_bf || ""}`.trim() : ""
                                     }
                                 />
                             </div>
-                            <div className="flex items-center">
-                                <Label className="mt-4">Address:</Label>
-                                <InputLine 
-                                    className="w-[300px]" 
-                                    value={`${address?.add_street || ""} ${address?.add_sitio || ""} ${address?.add_barangay || ""} ${address?.add_city || ""} ${address?.add_province || ""}`.trim()}
-                                />
-                            </div>
                         </div>
                     </div>
+                    
 
-                    {/* delivery info */}
-                    <div className="flex flex-col w-full">
-                        {/* Date & Time of Delivery and Place of Delivery */}
-                        <div className="flex">
-                            <Label className="mt-4">Date & Time of Delivery:</Label>
-                            <InputLine 
-                                className="mr-8 w-[286px]" 
-                                value={deliveryRecord ? 
-                                    `${deliveryRecord.ppdr_date_of_delivery || ""} ${deliveryRecord.ppdr_time_of_delivery || ""}`.trim() : ""
-                                }
-                            />
-                            <Label className="mt-4">Place of Delivery:</Label>
-                            <InputLine 
-                                className="w-[240px]" 
-                                value={deliveryRecord?.ppdr_place_of_delivery || ""}
-                            />
-                        </div>
-                        
-                        {/* Attended by and Outcome */}
-                        <div className="flex">
-                            <Label className="mt-4">Attended by:</Label>
-                            <InputLine 
-                                className="mr-8 w-[360px]" 
-                                value={deliveryRecord?.ppdr_attended_by || ""}
-                            />
-                            <Label className="mt-4">Outcome:</Label>
-                            <InputLine 
-                                className="w-[300px]" 
-                                value={deliveryRecord?.ppdr_outcome || ""}
-                            />
-                        </div>
-                    </div>
-
-                    {/* postpartum care info */}
-                    <div className="flex flex-col w-full">
-                        {/* TT Status and Iron Supplementation */}
-                        <div className="flex">
-                            <Label className="mt-4">TT Status:</Label>
-                            <InputLine className="mr-8 w-[384px]" value="" />
-                            <Label className="mt-4">Iron Supplementation:</Label>
-                            <InputLine className="w-[230px]" value="" />
-                        </div>
-                        
-                        {/* Lochial Discharges and Vit A Supplementation */}
-                        <div className="flex">
-                            <Label className="mt-4">Lochial Discharges:</Label>
-                            <InputLine 
-                                className="mr-8 w-[325px]" 
-                                value={postpartumForm?.ppr_lochial_discharges || ""}
-                            />
-                            <Label className="mt-4">Vit A Supplementation:</Label>
-                            <InputLine 
-                                className="w-[225px]" 
-                                value={postpartumForm?.ppr_vit_a_date_given || ""}
-                            />
-                        </div>
-                        
-                        {/* No. of pad/day and Mebendazole */}
-                        <div className="flex">
-                            <Label className="mt-4">No. of pad / day:</Label>
-                            <InputLine 
-                                className="mr-8 w-[330px]" 
-                                value={postpartumForm?.ppr_num_of_pads?.toString() || ""}
-                            />
-                            <Label className="mt-4">Mebendazole given (if not given during prenatal):</Label>
-                            <InputLine 
-                                className="w-[130px]" 
-                                value={postpartumForm?.ppr_mebendazole_date_given || ""}
-                            />
-                        </div>
-                        
-                        {/* Date & Time initiated BF */}
-                        <div className="flex">
-                            <Label className="mt-4">Date & Time initiated BF:</Label>
-                            <InputLine 
-                                className="w-[288px]" 
-                                value={postpartumForm ? 
-                                    `${postpartumForm.ppr_date_of_bf || ""} ${postpartumForm.ppr_time_of_bf || ""}`.trim() : ""
-                                }
-                            />
-                        </div>
-                    </div>
-                </div>
-                
-
-                {/* postpartum table */}
-                <div className="flex mt-8 w-full">
-                    <table className="w-full mx-10 border border-black">
-                        <thead>
-                            <tr className="border border-black">
-                                <th className="w-[100px] border border-black">Date</th>
-                                <th className="p-2 w-[140px] border border-black">Lochial Discharges</th>
-                                <th className="w-[100px] border border-black">B/P</th>
-                                <th className="w-[150px] border border-black">Feeding</th>
-                                <th className="w-[280px] border border-black">Findings</th>
-                                <th className="w-[200px] border border-black">Nurses Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-center">
-                            {transformedAssessments.length > 0 ? (
-                                transformedAssessments.map((data, index) => (
-                                    <tr key={index} className="border border-black">
-                                        <td className={styles.tableBody}>{data.date}</td>
-                                        <td className={styles.tableBody}>{data.lochialDischarges}</td>
-                                        <td className={styles.tableBody}>{data.bp}</td>
-                                        <td className={styles.tableBody}>{data.feeding}</td>
-                                        <td className={styles.tableBody}>{data.findings}</td>
-                                        <td className={styles.tableBody}>{data.nursesNotes}</td>
-                                    </tr>
-                                ))
-                            ) : (
+                    {/* postpartum table */}
+                    <div className="flex mt-8 w-full">
+                        <table className="w-full mx-10 border border-black">
+                            <thead>
                                 <tr className="border border-black">
-                                    <td className={styles.tableBody} colSpan={6}>No postpartum assessments recorded</td>
+                                    <th className="w-[100px] border border-black">Date</th>
+                                    <th className="p-2 w-[140px] border border-black">Lochial Discharges</th>
+                                    <th className="w-[100px] border border-black">B/P</th>
+                                    <th className="w-[150px] border border-black">Feeding</th>
+                                    <th className="w-[280px] border border-black">Findings</th>
+                                    <th className="w-[200px] border border-black">Nurses Notes</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="text-center">
+                                {transformedAssessments.length > 0 ? (
+                                    transformedAssessments.map((data, index) => (
+                                        <tr key={index} className="border border-black">
+                                            <td className={styles.tableBody}>{data.date}</td>
+                                            <td className={styles.tableBody}>{data.lochialDischarges}</td>
+                                            <td className={styles.tableBody}>{data.bp}</td>
+                                            <td className={styles.tableBody}>{data.feeding}</td>
+                                            <td className={styles.tableBody}>{data.findings}</td>
+                                            <td className={styles.tableBody}>{data.nursesNotes}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr className="border border-black">
+                                        <td className={styles.tableBody} colSpan={6}>No postpartum assessments recorded</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
