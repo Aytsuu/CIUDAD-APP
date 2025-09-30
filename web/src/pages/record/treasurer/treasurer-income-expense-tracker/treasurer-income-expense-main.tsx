@@ -3,7 +3,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from 'react'; 
+import { useState, useEffect } from 'react'; 
 import { Link } from 'react-router';
 import CardLayout from "@/components/ui/card/card-layout";
 import { Calendar, Search } from 'lucide-react';
@@ -11,10 +11,12 @@ import { Progress } from "@/components/ui/progress";
 import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext";
 
 
 function IncomeExpenseMain() {
     const [searchTerm, setSearchTerm] = useState('');
+    const { showLoading, hideLoading } = useLoading();
     
     // Add debouncing for search
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -24,6 +26,14 @@ function IncomeExpenseMain() {
     const styles = {
         budgetLabel: "w-[12rem]",
     };
+
+    useEffect(() => {
+        if (isLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, showLoading, hideLoading]);   
 
 
     return (

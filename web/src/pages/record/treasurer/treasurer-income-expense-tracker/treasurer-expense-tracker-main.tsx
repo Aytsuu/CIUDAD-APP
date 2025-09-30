@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -25,6 +25,7 @@ import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext";
 
 
 
@@ -36,6 +37,8 @@ function IncomeandExpenseTracking() {
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const debouncedSearchQuery = useDebounce(searchQuery, 300)
+    const { showLoading, hideLoading } = useLoading();
+
 
     // Month filter options
     const monthOptions = [
@@ -67,6 +70,14 @@ function IncomeandExpenseTracking() {
         debouncedSearchQuery,
         selectedMonth
     );
+
+    useEffect(() => {
+        if (isLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, showLoading, hideLoading]);       
 
     const { data: budgetItems = [] } = useBudgetItems(year);
 

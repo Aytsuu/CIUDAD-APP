@@ -1,6 +1,6 @@
 
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -12,12 +12,15 @@ import { useLocation } from "react-router-dom";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
+
 
 function ExpenseLogMain() {
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMonth, setSelectedMonth] = useState("All");
+    const { showLoading, hideLoading } = useLoading();    
 
     // Add debouncing for search
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -47,6 +50,14 @@ function ExpenseLogMain() {
         debouncedSearchQuery,
         selectedMonth
     );
+
+    useEffect(() => {
+        if (isLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, showLoading, hideLoading]);   
 
     console.log("Fetched Expense log:", fetchedData);
     
