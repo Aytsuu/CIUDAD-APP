@@ -69,7 +69,7 @@ export const useCreateCollectionReminders = (onSuccess?: () => void) => {
       
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       
-      toast.success("Created announcement successfully");
+      // toast.success("Created announcement successfully");
 
       if (onSuccess) onSuccess();
     },
