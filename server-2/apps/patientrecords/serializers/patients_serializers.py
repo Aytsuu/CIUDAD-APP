@@ -7,6 +7,8 @@ from apps.healthProfiling.models import FamilyComposition,Household, ResidentPro
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
 from apps.healthProfiling.serializers.minimal import *
+from apps.healthProfiling.models import *
+from apps.healthProfiling.serializers.resident_profile_serializers import *
 from .spouse_serializers import SpouseSerializer
 
 
@@ -17,6 +19,29 @@ class PartialUpdateMixin:
                 if field not in data:
                     self.fields[field].required = False
         return super().to_internal_value(data)
+    
+class ResidentProfileSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    per_add_philhealth_id = serializers.SerializerMethodField()
+    mhi_immun_status = serializers.SerializerMethodField()
+    personal_info = ResidentPersonalInfoSerializer(source='*')
+
+    class Meta:
+        model = ResidentProfile
+        fields = ['rp_id', 'name', 'personal_info', 'per_add_philhealth_id', 'mhi_immun_status']
+
+    def get_name(self, obj):
+        info = obj.per
+        return f"{info.per_lname}, {info.per_fname}" + \
+            (f" {info.per_mname[0]}." if info.per_mname else "")
+    
+    def get_per_add_philhealth_id(self, obj):
+        detail = HealthRelatedDetails.objects.filter(rp=obj).first()
+        return detail.per_add_philhealth_id if detail else None
+
+    def get_mhi_immun_status(self, obj):
+        mhi = MotherHealthInfo.objects.filter(rp=obj).first()
+        return mhi.mhi_immun_status if mhi else None
     
 class TransientAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,8 +64,9 @@ class PatientSerializer(serializers.ModelSerializer):
     family = serializers.SerializerMethodField()
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
+    # family_planning_record = serializers.SerializerMethodField()
     additional_info = serializers.SerializerMethodField()
-    active_pregnancy_count = serializers.IntegerField(read_only=True)
+    completed_pregnancy_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Patient
@@ -557,10 +583,9 @@ class PatientSerializer(serializers.ModelSerializer):
                     additional_info['philhealth_id'] = None
                     additional_info['mother_tt_status'] = None
 
-                return additional_info
-                
+                # Only return if at least one value exists
+                return additional_info if additional_info else None
             return None
-
         except Exception as e:
             print(f"Error in get_additional_info: {str(e)}")
             return None

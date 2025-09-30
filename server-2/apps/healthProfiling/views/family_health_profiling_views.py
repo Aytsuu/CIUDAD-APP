@@ -34,13 +34,20 @@ class FamilyHealthProfilingDetailView(APIView):
             # Get household information
             household = None
             household_data = None
-            if hasattr(family, 'household') and family.household:
-                household = family.household
+            if hasattr(family, 'hh') and family.hh:
+                household = family.hh
                 household_data = {
                     'household_id': household.hh_id,
-                    'household_no': household.hh_no,
-                    'sitio': household.sitio.name if household.sitio else None,
-                    'barangay': household.sitio.barangay if household.sitio else None,
+                    'household_no': household.hh_id,  # Use hh_id as household_no
+                    'nhts_status': household.hh_nhts if hasattr(household, 'hh_nhts') else None,
+                    'date_registered': household.hh_date_registered if hasattr(household, 'hh_date_registered') else None,
+                    'address': {
+                        'sitio': household.add.sitio.sitio_name if household.add and household.add.sitio else None,
+                        'street': household.add.add_street if household.add else None,
+                        'barangay': household.add.add_barangay if household.add else None,
+                        'city': household.add.add_city if household.add else None,
+                        'province': household.add.add_province if household.add else None,
+                    } if hasattr(household, 'add') and household.add else None
                 }
             
             # Get family members
@@ -55,6 +62,23 @@ class FamilyHealthProfilingDetailView(APIView):
                 resident = composition.rp
                 resident_ids.append(resident.rp_id)
                 
+                # Get health-related details (per_additional_status)
+                from ..models import HealthRelatedDetails
+                health_details = HealthRelatedDetails.objects.filter(rp=resident).first()
+                
+                # Get mother health info if resident is MOTHER
+                mother_health_info = None
+                if composition.fc_role == 'MOTHER':
+                    from ..models import MotherHealthInfo
+                    mother_health_info_obj = MotherHealthInfo.objects.filter(rp=resident, fam=family).first()
+                    if mother_health_info_obj:
+                        mother_health_info = {
+                            'health_risk_class': mother_health_info_obj.mhi_healthRisk_class,
+                            'immunization_status': mother_health_info_obj.mhi_immun_status,
+                            'family_planning_method': mother_health_info_obj.mhi_famPlan_method,
+                            'family_planning_source': mother_health_info_obj.mhi_famPlan_source
+                        }
+                
                 member_data = {
                     'resident_id': resident.rp_id,
                     'role': composition.fc_role,
@@ -66,11 +90,17 @@ class FamilyHealthProfilingDetailView(APIView):
                         'sex': resident.per.per_sex if resident.per else '',
                         'date_of_birth': resident.per.per_dob if resident.per else None,
                         'contact': resident.per.per_contact if resident.per else '',
-                        'civil_status': resident.per.per_civil_status if resident.per else '',
-                        'citizenship': resident.per.per_citizenship if resident.per else '',
-                        'occupation': resident.per.per_occupation if resident.per else '',
-                        'education': resident.per.per_education if resident.per else '',
-                    }
+                        'civil_status': resident.per.per_status if resident.per else '',
+                        'education': resident.per.per_edAttainment if resident.per else '',
+                        'religion': resident.per.per_religion if resident.per else '',
+                    },
+                    'health_details': {
+                        'blood_type': health_details.per_add_bloodType if health_details else '',
+                        'philhealth_id': health_details.per_add_philhealth_id if health_details else '',
+                        'covid_vax_status': health_details.per_add_covid_vax_status if health_details else '',
+                        'relationship_to_hh_head': health_details.per_add_rel_to_hh_head if health_details else ''
+                    },
+                    'mother_health_info': mother_health_info
                 }
                 family_members.append(member_data)
             
@@ -90,16 +120,16 @@ class FamilyHealthProfilingDetailView(APIView):
                 sanitary_facility = SanitaryFacility.objects.filter(hh=household).first()
                 if sanitary_facility:
                     environmental_data['sanitary_facility'] = {
-                        'facility_type': sanitary_facility.sf_facility_type,
-                        'toilet_facility_type': sanitary_facility.sf_toilet_facility_type
+                        'facility_type': sanitary_facility.sf_type,  # Fixed: sf_type instead of sf_facility_type
+                        'toilet_facility_type': sanitary_facility.sf_toilet_type  # Fixed: sf_toilet_type instead of sf_toilet_facility_type
                     }
                 
                 # Solid waste management data
                 solid_waste = SolidWasteMgmt.objects.filter(hh=household).first()
                 if solid_waste:
                     environmental_data['waste_management'] = {
-                        'type': solid_waste.swm_type,
-                        'others': solid_waste.swm_others if hasattr(solid_waste, 'swm_others') else None
+                        'type': solid_waste.swn_desposal_type,  # Fixed: swn_desposal_type instead of swm_type
+                        'description': solid_waste.swm_desc  # Fixed: swm_desc instead of checking for swm_others
                     }
             
             # Get NCD records for family members
@@ -117,13 +147,13 @@ class FamilyHealthProfilingDetailView(APIView):
                         'ncd_id': ncd['ncd_id'],
                         'resident_info': member,
                         'health_data': {
-                            'risk_class_age_group': ncd['ncd_risk_class_age_group'],
+                            'risk_class_age_group': ncd['ncd_riskclass_age'],
                             'comorbidities': ncd['ncd_comorbidities'],
                             'comorbidities_others': ncd.get('ncd_comorbidities_others', ''),
                             'lifestyle_risk': ncd['ncd_lifestyle_risk'],
                             'lifestyle_risk_others': ncd.get('ncd_lifestyle_risk_others', ''),
-                            'in_maintenance': ncd['ncd_in_maintenance'],
-                            'date_created': ncd['ncd_date_created']
+                            'in_maintenance': ncd['ncd_maintenance_status'],
+                            'date_created': ncd.get('ncd_date_created', '')
                         }
                     })
             
@@ -142,11 +172,11 @@ class FamilyHealthProfilingDetailView(APIView):
                         'tb_id': tb['tb_id'],
                         'resident_info': member,
                         'health_data': {
-                            'src_anti_tb_meds': tb['tb_src_anti_tb_meds'],
-                            'src_anti_tb_meds_others': tb.get('tb_src_anti_tb_meds_others', ''),
-                            'no_of_days_taking_meds': tb['tb_no_of_days_taking_meds'],
+                            'src_anti_tb_meds': tb['tb_meds_source'],
+                            'src_anti_tb_meds_others': tb.get('tb_meds_source_others', ''),
+                            'no_of_days_taking_meds': tb['tb_days_taking_meds'],
                             'tb_status': tb['tb_status'],
-                            'date_created': tb['tb_date_created']
+                            'date_created': tb.get('tb_date_created', '')
                         }
                     })
             
@@ -162,15 +192,16 @@ class FamilyHealthProfilingDetailView(APIView):
                     'checked_by': survey_serializer.data['si_checked_by'],
                     'date': survey_serializer.data['si_date'],
                     'signature': survey_serializer.data['si_signature'],
-                    'date_created': survey_serializer.data['si_date_created']
+                    'date_created': survey_serializer.data['si_created_at']  # Fixed: si_created_at instead of si_date_created
                 }
             
             # Compile comprehensive response
             response_data = {
                 'family_info': {
                     'family_id': family.fam_id,
-                    'family_name': family.fam_name,
-                    'date_created': family.fam_date_created,
+                    'family_building': family.fam_building,  # Changed: family doesn't have fam_name
+                    'family_indigenous': family.fam_indigenous,  # Added: useful family info
+                    'date_created': family.fam_date_registered,  # Fixed: fam_date_registered instead of fam_date_created
                     'household': household_data
                 },
                 'family_members': family_members,

@@ -211,7 +211,7 @@ export default function NonComDiseaseForm({
           <div className="mb-6">
             <h3 className="font-medium text-base mb-3">Select Family Members</h3>
             {availableMembers.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {availableMembers.map((member: any) => {
                   const isSelected = selectedMember === member.displayId;
                   return (
@@ -238,7 +238,7 @@ export default function NonComDiseaseForm({
                             <p className="text-xs text-gray-500">ID: {member.displayId}</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-black">
                           {member.fc_role || 'Family Member'}
                         </div>
                       </div>
@@ -314,6 +314,7 @@ export default function NonComDiseaseForm({
                 { id: "CKD", name: "Chronic Kidney Disease" },
                 { id: "Cancer", name: "Cancer" },
                 { id: "MHI", name: "Mental Health Illness" },
+                { id: "None", name: "None" },
                 { id: "Others", name: "Others" },
               ]}
             />

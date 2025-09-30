@@ -17,6 +17,7 @@ import { PaginationControls } from "../admin/components/pagination-layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { serializePatientData, SerializedPatientData } from "./patientdata";
 import { VaccinationRecordCard } from "./vaxrecord-card";
+import NoRecordsCard from "../admin/components/no-records-card";
 
 export default function IndividualVaccinationRecords() {
   const params = useLocalSearchParams();
@@ -40,7 +41,7 @@ export default function IndividualVaccinationRecords() {
         setPatientId(adminPatId);
       }
     } else {
-      setPatientId(pat_id || "PR20030001");
+      setPatientId(pat_id || "");
     }
   }, [mode, params.patId, pat_id]);
 
@@ -142,8 +143,27 @@ export default function IndividualVaccinationRecords() {
     }
   }, [patientData, patientDOB, vaccinationRecords]);
 
-  if (isVaccinationRecordsLoading) {
+  if (isVaccinationRecordsLoading && isFollowVaccineLoading && isUnvaccinatedLoading && isCompleteVaccineLoading) {
     return <LoadingState />;
+  }
+
+  if ((!patId)) {
+    return (
+      <>
+        <PageLayout
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
+              <ChevronLeft size={24} color="#374151" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
+          {" "}
+          <NoRecordsCard onRefresh={onRefresh} />;
+        </PageLayout>
+      </>
+    );
   }
 
   return (

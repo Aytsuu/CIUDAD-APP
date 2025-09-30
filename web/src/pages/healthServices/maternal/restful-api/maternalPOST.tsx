@@ -10,6 +10,7 @@ export interface PrenatalRecord {
   pf_occupation: string
   pf_lmp: string | null
   pf_edc: string | null
+  staff_id: string
   previous_complications: string | null
   spouse_data?: {
     spouse_type: string

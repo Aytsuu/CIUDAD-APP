@@ -14,7 +14,49 @@ from apps.patientrecords.models import Patient, PatientRecord
 from django.db.models import F 
 
 
+class AnimalBiteInfographicView(APIView):
+    def get(self, request):
+        try:
+            # Fetch the single infographic record (assuming one record with id=1)
+            infographic = AnimalBiteInfographic.objects.first()
+            if not infographic:
+                return Response(
+                    {"error": "Infographic content not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            serializer = AnimalBiteInfographicSerializer(infographic)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error fetching infographic: {str(e)}")
+            return Response(
+                {"error": f"Failed to fetch infographic: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
+    def put(self, request):
+        # Restrict to admins
+        if not request.user.is_authenticated or not request.user.is_staff:
+            return Response(
+                {"error": "Only admins can update infographic content"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        try:
+            infographic = AnimalBiteInfographic.objects.first()
+            if not infographic:
+                # Create if it doesn't exist
+                infographic = AnimalBiteInfographic.objects.create(content=request.data.get('content', {}))
+            else:
+                infographic.content = request.data.get('content', infographic.content)
+                infographic.save()
+            serializer = AnimalBiteInfographicSerializer(infographic)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error updating infographic: {str(e)}")
+            return Response(
+                {"error": f"Failed to update infographic: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
 class AnimalBiteReferralCountView(APIView):
     def get(self, request, pat_id=None):
         try:

@@ -2,7 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "./sidebar";
 import { capitalize } from "@/helpers/capitalize";
 
 // Updated types to be more flexible
@@ -20,7 +28,12 @@ interface MenuItemComponentProps {
 }
 
 // Single recursive component that handles all nesting levels
-const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, activeItem, setActiveItem, level = 0 }) => {
+const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
+  item,
+  activeItem,
+  setActiveItem,
+  level = 0,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,7 +73,11 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, activeItem,
   const indentClass = level > 0 ? `pl-${level * 4}` : "";
 
   // Base styles
-  const baseStyles = `flex items-center px-4 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"}`;
+  const baseStyles = `flex items-center px-4 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${
+    isActive
+      ? "bg-[#1273B2]/10 text-[#1273B8]"
+      : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+  }`;
 
   if (hasSubItems) {
     return (
@@ -70,12 +87,24 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, activeItem,
             <React.Fragment>
               <div className={baseStyles} onClick={handleClick}>
                 <span className="flex-1">{item.title}</span>
-                <div onClick={toggleSubmenu}>{isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</div>
+                <div onClick={toggleSubmenu}>
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </div>
               </div>
               {isOpen && (
                 <div className="mt-1 space-y-1">
                   {item.items!.map((subItem, index) => (
-                    <MenuItemComponent key={`${subItem.title}-${index}`} item={subItem} activeItem={activeItem} setActiveItem={setActiveItem} level={level + 1} />
+                    <MenuItemComponent
+                      key={`${subItem.title}-${index}`}
+                      item={subItem}
+                      activeItem={activeItem}
+                      setActiveItem={setActiveItem}
+                      level={level + 1}
+                    />
                   ))}
                 </div>
               )}
@@ -100,7 +129,10 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, activeItem,
               <span>{item.title}</span>
             </Link>
           ) : (
-            <div className={baseStyles} onClick={() => setActiveItem(item.title)}>
+            <div
+              className={baseStyles}
+              onClick={() => setActiveItem(item.title)}
+            >
               <span>{item.title}</span>
             </div>
           )}
@@ -405,7 +437,12 @@ export function AppSidebar() {
             <div className="w-full h-14"></div>
             <SidebarMenu>
               {items.map((item, index) => (
-                <MenuItemComponent key={`${item.title}-${index}`} item={item} activeItem={activeItem} setActiveItem={setActiveItem} />
+                <MenuItemComponent
+                  key={`${item.title}-${index}`}
+                  item={item}
+                  activeItem={activeItem}
+                  setActiveItem={setActiveItem}
+                />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>

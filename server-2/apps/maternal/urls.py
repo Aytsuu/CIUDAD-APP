@@ -3,12 +3,13 @@ from django.urls import path
 from .views.views import *
 from apps.maternal.views import *
 from .views.postpartum_views import *
+from .views.prenatal_views import *
 
 urlpatterns=[
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),
 	path('counts/', MaternalCountView.as_view(), name='maternal-count'),
-    path('pregnancy/<str:pat_id>/details/', get_patient_pregnancy_records, name='pregnancy-records-details' ),
-
+    path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
+    path('prenatal/appointment/request/', PrenatalAppointmentRequestCreateListView.as_view(), name='prenatal-appointment-request'),
 
     path('patient/<str:pat_id>/medicalhistory/', PrenatalPatientMedHistoryView.as_view(), name='prenatal-patient-medical-history'),
     path('patient/<str:pat_id>/obstetricalhistory/', PrenatalPatientObsHistoryView.as_view(), name='prenatal-patient-obstetrical-history'),

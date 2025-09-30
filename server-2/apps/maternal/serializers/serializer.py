@@ -9,7 +9,6 @@ from apps.maternal.models import *
 from apps.maternal.serializers.postpartum_serializer import *
 from apps.patientrecords.serializers.patients_serializers import *
 from apps.administration.models import Staff 
-from apps.healthProfiling.models import PersonalAddress, FamilyComposition
 
 from utils.supabase_client import upload_to_storage
 
@@ -21,11 +20,12 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MedicalHistory
-        fields = '__all__'
+        fields = ['medhist_id', 'ill_date', 'ill', 'illness_name', 'created_at'] 
+
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalHistory
-        fields = ['year', 'ill']
+        fields = ['ill_date', 'ill']
     
     def create(self, validated_data):
         cleaned_data = {k: v for k, v in validated_data.items() if v is not None}

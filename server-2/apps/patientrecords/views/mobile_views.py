@@ -1,5 +1,9 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
+
+from apps.patientrecords.models import Patient
+from apps.healthProfiling.models import ResidentProfile as Resident
 
 class ResidentToPatientView(APIView):
     def get(self, request, rp_id):

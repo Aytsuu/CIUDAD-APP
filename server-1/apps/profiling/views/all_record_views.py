@@ -102,6 +102,7 @@ class CompleteRegistrationView(APIView):
     if account:
         self.create_account(account, rp)
 
+
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 

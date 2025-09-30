@@ -124,18 +124,29 @@ export default function FamilyPlanningForm({
         setLoadingPatients(true)
         try {
           const response = await api2.get("patientrecords/patients/")
-          const formattedPatients = response.data.map((patient: any) => ({
-            id: patient.pat_id?.toString() || "",
-            name: (
-              <>
+          const formattedPatients = response.data.map((patient: any) => {
+    const patientId = patient.pat_id?.toString() || "";
+    const fullName = `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim();
+    
+    // CRITICAL CHANGE: Create a single searchable string for the ID
+    const searchableId = `${patientId} ${fullName}`; 
+
+    return {
+        // Use the searchable string as the 'id' which gets searched
+        id: searchableId, 
+        // The name can remain the JSX for display purposes
+        name: (
+            <>
                 <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
-                  {patient.pat_id || ""}
+                    {patientId}
                 </span>
-                {`${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim()}
-              </>
-            ),
-          }))
-          setPatients(formattedPatients)
+                {fullName}
+            </>
+        ),
+    };
+});
+setPatients(formattedPatients)
+
         } catch (error) {
           console.error("Error fetching patients:", error)
           toast.error("Failed to load patient data")
@@ -168,11 +179,11 @@ export default function FamilyPlanningForm({
       toast.error("Please select a valid patient");
       return;
     }
-
-    setSelectedPatientId(id);
+     const realPatId = id.split(' ')[0];
+    setSelectedPatientId(realPatId);
     try {
       // Fetch basic patient data
-      const response = await api2.get(`patientrecords/patients/${id}/`);
+      const response = await api2.get(`patientrecords/patient/${realPatId}/`);
       const patientData = response.data;
 
       // Initialize default spouse info
@@ -215,10 +226,10 @@ export default function FamilyPlanningForm({
       };
 
       const requests = [
-        api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
+        api2.get(`familyplanning/body-measurements/${realPatId}`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/obstetrical-history/${realPatId}/`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/last-previous-pregnancy/${realPatId}/`).catch(() => ({ data: {} })),
+        api2.get(`familyplanning/patient-details/${realPatId}`).catch(() => ({ data: {} }))
       ];
       const [bodyMeasurementsResponse,obsHistoryResponse,lastPrevPregResponse,personalResponse] = await Promise.all(requests);
       console.log("Body measurement: " ,bodyMeasurementsResponse)

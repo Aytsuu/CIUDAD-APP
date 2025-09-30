@@ -28,6 +28,11 @@ const healthCards = [
       description: "Medical consultations",
       dataKey: "medicalconsultation_records_count",
     },
+    // {
+    //   title: "Consultations",
+    //   description: "Maternal Health Records",
+    //   queryHook: useGetMaternalTotalRecords,
+    // },
   ];
 
 export const ServicesHealthRecordsSectionCards = () => {

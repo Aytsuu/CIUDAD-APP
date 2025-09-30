@@ -453,7 +453,6 @@ class UpdateTransientView(generics.RetrieveUpdateAPIView):
         except NotFound:
             return Response({"error": "Transient patient not found."}, status=status.HTTP_404_NOT_FOUND)
 
-
 # MOBILE VIEWS KURT
 @api_view(['GET'])
 def get_patient_by_resident_id(request, rp_id):

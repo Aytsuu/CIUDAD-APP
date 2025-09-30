@@ -83,14 +83,14 @@ export const usePatientPrenatalCount = (patientId: string) => {
 }
 
 // for getPregnancyDetails
-export const usePregnancyDetails = (patientId: string) => {
+export const usePregnancyDetails = (patientId: string, filters: Partial<MaternalPatientFilters> = {}) => {
 	return useQuery({
-		queryKey: ["pregnancyDetails", patientId],
-		queryFn: () => getPregnancyDetails(patientId),
+		queryKey: ["pregnancyDetails", { patientId, ...filters }],
+		queryFn: () => getPregnancyDetails({ patientId, ...filters }),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
+		refetchInterval: 2000,
 		retry: 2,
-		// refetchOnWindowFocus: true,
 	})
 }
 

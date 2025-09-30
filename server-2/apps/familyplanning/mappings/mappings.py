@@ -1,9 +1,38 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import generics, status
+from django.utils import timezone
+from datetime import date, timedelta
+from ..models import *
 
 
 
+
+
+
+@api_view(['GET'])
+def get_fp_patient_counts(request):
+    try:
+        today = timezone.now().date()
+        eighteen_years_ago = today - timedelta(days=18*365.25) 
+        all_fp_patients = FP_Record.objects.select_related('pat').values('pat__pat_id', 'pat__pat_type').distinct()
+        total_fp_patients = all_fp_patients.count()
+        resident_fp_patients = all_fp_patients.filter(pat__pat_type='Resident').count()
+        transient_fp_patients = all_fp_patients.filter(pat__pat_type='Transient').count() # Count transients among FP patients
+
+        # Count minor residents (under 18) among FP patients
+        minor_resident_fp_patients = FP_Record.objects.filter(pat__pat_type='Resident',pat__rp_id__per__per_dob__gt=eighteen_years_ago).values('pat__pat_id').distinct().count()
+        minor_transient_fp_patients = FP_Record.objects.filter(pat__pat_type='Transient',pat__trans_id__tran_dob__gt=eighteen_years_ago).values('pat__pat_id').distinct().count()
+        minor_fp_patients = minor_resident_fp_patients + minor_transient_fp_patients
+        response_data = {"total_fp_patients": total_fp_patients,"resident_fp_patients": resident_fp_patients,"transient_fp_patients": transient_fp_patients,"minor_fp_patients": minor_fp_patients,}
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"detail": f"Error fetching FP patient counts: {str(e)}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
 def map_subtype_display(subtype):
     """Map subtype IDs to human-readable labels"""
     subtype_map = {

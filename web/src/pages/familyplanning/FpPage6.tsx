@@ -164,6 +164,7 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
   const onConfirmSubmit = form.handleSubmit(() => {
     updateFormData({ serviceProvisionRecords: records, pregnancyCheck: formData.pregnancyCheck })
     onSubmitFinal()
+    
   })
 
   return (

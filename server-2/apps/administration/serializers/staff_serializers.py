@@ -25,22 +25,24 @@ class StaffTableSerializer(serializers.ModelSerializer):
   lname = serializers.CharField(source='rp.per.per_lname')
   fname = serializers.CharField(source='rp.per.per_fname')
   mname = serializers.CharField(source='rp.per.per_mname')
+  sex = serializers.CharField(source='rp.per.per_sex')
   dob = serializers.CharField(source='rp.per.per_dob')
   contact = serializers.CharField(source='rp.per.per_contact')
   position = serializers.CharField(source='pos.pos_title')
+  group = serializers.CharField(source='pos.pos_group')
   fam = serializers.SerializerMethodField()
 
   class Meta:
     model = Staff
     fields = ['staff_id', 'lname', 'fname', 'mname', 'dob', 
-              'contact', 'position', 'staff_assign_date', 'fam']
+              'contact', 'position', 'group', 'staff_assign_date', 
+              'staff_type', 'fam', 'sex']
   
   def get_fam(self, obj):
-     family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam')
-
-     if family_comp:
-        return family_comp.fam.fam_id 
-     return None
+    family_comp = FamilyComposition.objects.filter(rp=obj.staff_id).select_related('fam').first()
+    if family_comp and family_comp.fam:
+      return family_comp.fam.fam_id
+    return None
   
 class StaffFullSerializer(serializers.ModelSerializer):
   pos = PositionBaseSerializer(read_only=True)
@@ -74,6 +76,24 @@ class StaffCreateSerializer(serializers.ModelSerializer):
       return register
     
     return None
+
+class HealthStaffComboboxSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source='staff_id')
+    name = serializers.SerializerMethodField()
+    position = serializers.CharField(source='pos.pos_title')
+
+    class Meta:
+        model = Staff
+        fields = ['id', 'name', 'position']
+
+    def get_name(self, obj):
+        per = obj.rp.per
+        full_name = f"{per.per_fname} {per.per_lname}"
+        if per.per_mname:
+            full_name = f"{per.per_fname} {per.per_mname} {per.per_lname}"
+        if per.per_suffix:
+            full_name += f" {per.per_suffix}"
+        return full_name
   
   
 

@@ -7,6 +7,7 @@ import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/ui/loading-state';
+import { formatDate } from '@/helpers/dateHelpers';
 
 // Types
 interface MedicineRequestItem {
@@ -78,6 +79,13 @@ const getStatusConfig = (status: string) => {
         borderColor: 'border-yellow-200', 
         label: 'Pending' 
       };
+       case 'rejected':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-red-200', 
+        label: 'Rejected' 
+      };
     case 'confirmed':
       return { 
         color: 'text-orange-700', 
@@ -124,21 +132,21 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return "N/A";
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch (e) {
-    return "Invalid Date";
-  }
-};
+// const formatDate = (dateString: string) => {
+//   if (!dateString) return "N/A";
+//   try {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString('en-US', {
+//       year: 'numeric',
+//       month: 'short',
+//       day: 'numeric',
+//       hour: '2-digit',
+//       minute: '2-digit',
+//     });
+//   } catch (e) {
+//     return "Invalid Date";
+//   }
+// };
 
 // Components
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
@@ -200,7 +208,7 @@ const MedicineRequestCard: React.FC<{
 }> = ({ item, onCancel, isCancelPending }) => {
   const medicineName = item.med_details?.med_name || 'Unknown Medicine';
   const canCancel = item.status.toLowerCase() === 'pending';
-
+  
   return (
     <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm">
       {/* Header */}
@@ -338,10 +346,12 @@ const MedicineRequestTracker: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Determine user type and ID
-  const isResident = !!user?.resident?.rp_id;
-  const userId = user?.resident?.rp_id || null;
+  const isResident = !!user?.rp;
+  const userId = user?.rp || null;
   const isUserReady = isAuthenticated && !!userId;
+  const userdata = user?.personal;
 
+  console.log("userdata: ",userdata)
   // Debug log
   // console.log('Auth State:', { isAuthenticated, userId, isUserReady, isResident });
  
@@ -511,6 +521,15 @@ const MedicineRequestTracker: React.FC = () => {
 
         {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {activeTab === 'ready_for_pickup' && (
+  <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+    <Text className="text-blue-800 text-sm font-medium">
+      Reminder: Medicines are available for pickup at the Barangay Health Center 
+      every weekdays, 8:00 AM - 5:00 PM only.
+    </Text>
+  </View>
+)}
 
         {/* Requests List */}
         {requests.length === 0 ? (

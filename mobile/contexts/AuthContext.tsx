@@ -10,7 +10,7 @@ export const useAuth = () => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated, isLoading, error, hasCheckedAuth, otpSent, email, phone, accessToken } = useAppSelector((state) => state.auth);
 
-  const [pat_id, setPatId] = useState<string | null>("PR20030001");
+  const [pat_id, setPatId] = useState<string | null>("");
   // Mutations
   const loginMutation = useLoginMutation();
   const signupMutation = useSignupMutation();
@@ -25,10 +25,10 @@ export const useAuth = () => {
       setPatId(patientData.pat_id);
     } else if (patientError || null) {
       console.error("Error fetching patient data:", patientError);
-      setPatId("PR20030001");
+      setPatId("");
     } else {
       console.log("No patient ID associated with user.");
-      setPatId("PR20030001");
+      setPatId("");
     }
   }, [user, patientData, patientError]);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +25,7 @@ export default function AllMedicalConsRecord() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
-  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   const { showLoading, hideLoading } = useLoading();
-
-  // Fetch sitio data
-  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
-  const sitios = sitioData || [];
 
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -58,14 +53,19 @@ export default function AllMedicalConsRecord() {
     () => ({
       page: currentPage,
       page_size: pageSize,
-      search: combinedSearchQuery,
+      search: debouncedSearchQuery || undefined,
       patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
     }),
-    [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
+    [currentPage, pageSize, debouncedSearchQuery, patientTypeFilter]
   );
 
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useMedicalRecord(queryParams);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientTypeFilter]);
 
   useEffect(() => {
     if (isLoading) {
@@ -106,7 +106,7 @@ export default function AllMedicalConsRecord() {
     }
   }, [apiResponse, pageSize]);
 
-  const formatMedicalData = React.useCallback((): any[] => {
+  const formatMedicalData = React.useCallback((): MedicalRecord[] => {
     if (!medicalRecords || !Array.isArray(medicalRecords)) {
       return [];
     }
@@ -142,8 +142,7 @@ export default function AllMedicalConsRecord() {
         province: address.add_province || "",
         pat_type: record.pat_type || details.pat_type || "",
         address: addressString,
-        medicalrec_count: record.medicalrec_count || 0,
-        contact: info.per_contact || ""
+        medicalrec_count: record.medicalrec_count || 0
       };
     });
   }, [medicalRecords]);
@@ -229,9 +228,9 @@ export default function AllMedicalConsRecord() {
             />
           </div>
         </div>
+        <hr className="border-gray mb-5 sm:mb-8" />
 
-        {/* Filters Section */}
-        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
@@ -290,24 +289,10 @@ export default function AllMedicalConsRecord() {
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                    <FileInput className="h-4 w-4" />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <ExportButton data={formattedData} filename="medical-consultation-records" columns={exportColumns} />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <ExportButton data={formattedData} filename="medical-consultation-records" columns={exportColumns} />
           </div>
 
-          <div className="bg-white w-full overflow-x-auto border">
+          <div className="bg-white w-full overflow-x-auto">
             {isLoading ? (
               <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -322,7 +307,7 @@ export default function AllMedicalConsRecord() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>
@@ -335,3 +320,4 @@ export default function AllMedicalConsRecord() {
     </MainLayoutComponent>
   );
 }
+

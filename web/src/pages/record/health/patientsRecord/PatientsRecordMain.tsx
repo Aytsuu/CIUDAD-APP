@@ -32,7 +32,8 @@ type Report = {
     ageUnit: string;
   };
   type: string;
-  noOfRecords?: number;
+  noOfRecords?: number; 
+  philhealthId?: string;
 };
 
 interface Patients {
@@ -44,19 +45,25 @@ interface Patients {
     per_lname: string;
     per_mname: string;
     per_dob: string;
+    philhealth_id?: string;
   };
+  philhealth_id?: string;
 
   address: {
     add_sitio?: string;
   };
+
+  additional_info?: {
+    per_add_philhealth_id?: string
+  }
 }
 
 const getPatType = (type: string) => {
   switch (type.toLowerCase()) {
     case "resident":
-      return "bg-blue-500 w-24 p-1 rounded-md font-semibold text-white";
+      return 'bg-blue-500 w-24 rounded-md font-semibold text-white'
     case "transient":
-      return "border border-black/40 w-24 p-1 rounded-md font-semibold text-black";
+      return 'border border-black/40 w-24 rounded-md font-semibold text-black'
     default:
       return "bg-gray-500 text-white";
   }
@@ -141,18 +148,19 @@ export const columns: ColumnDef<Report>[] = [
     cell: ({ row }) => (
       <Link
         to="/patientrecords/view"
-        state={{
-          patientId: row.getValue("id"),
-          patientData: {
-            id: row.original.id,
-            sitio: row.original.sitio,
-            lastName: row.original.lastName,
-            firstName: row.original.firstName,
-            mi: row.original.mi,
-            type: row.original.type,
-            noOfRecords: row.original.noOfRecords
-          }
-        }}
+        state={
+          { patientId: row.getValue("id"), 
+            patientData: {
+              id: row.original.id,
+              sitio: row.original.sitio,
+              lastName: row.original.lastName,
+              firstName: row.original.firstName,
+              mi: row.original.mi,
+              type: row.original.type,
+              noOfRecords: row.original.noOfRecords,
+              philhealthId: row.original.philhealthId 
+            }
+          }}
       >
         <Button variant="outline">View</Button>
       </Link>
@@ -223,14 +231,22 @@ export default function PatientsRecord() {
   const transformPatientsToReports = (patients: Patients[]): Report[] => {
     return patients.map((patient) => {
       const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patient.personal_info?.per_dob || "");
+      // Prefer personal_info.philhealth_id, fallback to additional_info.per_add_philhealth_id
+      let philhealthId = "N/A";
+      if (patient.personal_info && patient.personal_info.philhealth_id) {
+        philhealthId = patient.personal_info.philhealth_id;
+      } else if (patient.additional_info && patient.additional_info.per_add_philhealth_id) {
+        philhealthId = patient.additional_info.per_add_philhealth_id;
+      }
       return {
         id: patient.pat_id.toString(),
         sitio: patient.address?.add_sitio || "Unknown",
         lastName: patient.personal_info?.per_lname || "",
         firstName: patient.personal_info?.per_fname || "",
         mi: patient.personal_info?.per_mname || "",
-        age: { ageNumber: ageInfo, ageUnit: ageUnit },
-        type: patient.pat_type || "Resident"
+        age: { ageNumber: ageInfo, ageUnit: ageUnit},
+        type: patient.pat_type || "Resident",
+        philhealth_id: philhealthId,
       };
     });
   };
@@ -383,7 +399,15 @@ export default function PatientsRecord() {
               Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows
             </p>
 
-            <div className="w-full sm:w-auto flex justify-center">{totalPages > 1 && <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />}</div>
+            <div className="w-full sm:w-auto flex justify-center">
+              {totalPages > 0 && (
+                <PaginationLayout
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

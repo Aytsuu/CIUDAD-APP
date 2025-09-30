@@ -363,7 +363,7 @@ export default function PrenatalFormFourthPq({
 
                 <div className="grid grid-cols-3 gap-3 mb-7">
                   <Label className="text-black/70">Weight</Label>
-                  <Label className="text-black/70">AOG</Label>
+                  <Label className="text-black/70">Age of Gestation (AOG)</Label>
                   <Label className="text-black/70">BP</Label>
 
                   <FormInput

@@ -259,10 +259,10 @@ class FollowUpVisit(models.Model):
 class Spouse(models.Model):
     spouse_id = models.BigAutoField(primary_key=True)
     spouse_type = models.CharField(max_length=10)
-    spouse_lname = models.CharField(max_length=50, default="")
-    spouse_fname = models.CharField(max_length=50, default="")
-    spouse_mname = models.CharField(max_length=50, default="")
-    spouse_occupation = models.CharField(max_length=50)
+    spouse_lname = models.CharField(max_length=50, default="", null=True,blank=True)
+    spouse_fname = models.CharField(max_length=50, default="",null=True,blank=True)
+    spouse_mname = models.CharField(max_length=50, default="", null=True,blank=True)
+    spouse_occupation = models.CharField(max_length=50, null=True,blank=True)
     spouse_dob = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     # updated_at = models.DateTimeField(auto_now=True)
@@ -304,13 +304,13 @@ class Illness(models.Model):
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
     assessment_summary =models.TextField(default="",blank=True,null=True)
-    obj_summary = models.TextField(default="",blank=True,null=True)
-    subj_summary = models.TextField(default="",blank=True,null=True)
-    plantreatment_summary=models.TextField(default="",blank=True,null=True)
+    obj_summary = models.TextField(default="")
+    subj_summary = models.TextField(default="")
+    plantreatment_summary=models.TextField(default="")
     created_at= models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'finding'
- 
+
 
 
 class MedicalHistory(models.Model):
@@ -337,6 +337,7 @@ class PESection(models.Model):
 
     class Meta:
         db_table = 'physical_exam_section'
+
 
 # Option under a section (e.g., "Normal skin color and texture")
 class PEOption(models.Model):

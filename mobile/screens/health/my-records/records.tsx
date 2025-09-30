@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
 import { useGetChildren } from "./queries.tsx/fetch";
 import { useState, useMemo } from "react";
-
+import { useAuth } from "@/contexts/AuthContext";
 interface Service {
   id: number;
   name: string;
@@ -16,59 +16,7 @@ interface Service {
   color: string;
 }
 
-// Format children data similar to your web format
-const formatChildrenData = (childrenData: any) => {
-  if (!childrenData?.children) return [];
 
-  return childrenData.children.map((child: any) => {
-    const personalInfo = child.personal_info || {};
-    const addressInfo = child.address || {};
-    const childHealthInfo = child.child_health_info || {};
-
-    // Calculate age from DOB
-    const dob = personalInfo.per_dob || "";
-    const age = dob ? calculateAge(dob).toString() : "";
-
-    return {
-      chrec_id: child.chrec_id || 0,
-      pat_id: child.pat_id || "",
-      fname: personalInfo.per_fname || "",
-      lname: personalInfo.per_lname || "",
-      mname: personalInfo.per_mname || "",
-      sex: personalInfo.per_sex || "",
-      age: age,
-      dob: dob,
-      householdno: child.households?.[0]?.hh_id || "",
-      street: addressInfo.add_street || "",
-      sitio: addressInfo.add_sitio || "",
-      barangay: addressInfo.add_barangay || "",
-      city: addressInfo.add_city || "",
-      province: addressInfo.add_province || "",
-      landmarks: addressInfo.add_landmarks || "",
-      pat_type: "CHILD",
-      address: addressInfo.full_address || "",
-      mother_fname: child.parent_info?.parent_name?.split(" ")[0] || "",
-      mother_lname: child.parent_info?.parent_name?.split(" ").slice(1).join(" ") || "",
-      mother_mname: "",
-      mother_contact: "",
-      mother_occupation: childHealthInfo.mother_occupation || "",
-      father_fname: "",
-      father_lname: "",
-      father_mname: "",
-      father_contact: "",
-      father_occupation: childHealthInfo.father_occupation || "",
-      family_no: childHealthInfo.family_no || "",
-      birth_weight: 0,
-      birth_height: 0,
-      type_of_feeding: childHealthInfo.type_of_feeding || "Unknown",
-      delivery_type: childHealthInfo.place_of_delivery_type || "",
-      place_of_delivery_type: childHealthInfo.place_of_delivery_type || "",
-      pod_location: childHealthInfo.pod_location || "",
-      birth_order: childHealthInfo.birth_order || 0,
-      tt_status: ""
-    };
-  });
-};
 
 // Helper function to calculate age
 const calculateAge = (dob: string) => {
@@ -83,25 +31,88 @@ const calculateAge = (dob: string) => {
 
   return age;
 };
-
+9
 export default function Records() {
+  const{pat_id}=useAuth()
   // Get patient ID from route params with safe access
-  const [patientId, setPatientId] = useState("PR20030002");
-  const patId = patientId;
+  const [patId, setPatientId] = useState("");
 
+
+React.useEffect(() => {
+    if (pat_id) {
+      setPatientId(pat_id);
+    }
+  }
+, [pat_id]);
   const { data: childrenData, isLoading: childrenLoading } = useGetChildren(patId);
 
   // Format children data using useMemo for optimization
   const formattedChildren = useMemo(() => {
-    return childrenData ? formatChildrenData(childrenData) : [];
+    if (!childrenData?.children) return [];
+
+    return childrenData.children.map((child: any) => {
+      const personalInfo = child.personal_info || {};
+      const addressInfo = child.address || {};
+      const childHealthInfo = child.child_health_info || {};
+
+      // Calculate age from DOB
+      const dob = personalInfo.per_dob || "";
+      const age = dob ? calculateAge(dob).toString() : "";
+
+      return {
+        chrec_id: child.chrec_id || 0,
+        pat_id: child.pat_id || "",
+        fname: personalInfo.per_fname || "",
+        lname: personalInfo.per_lname || "",
+        mname: personalInfo.per_mname || "",
+        sex: personalInfo.per_sex || "",
+        age: age,
+        dob: dob,
+        householdno: child.households?.[0]?.hh_id || "",
+        street: addressInfo.add_street || "",
+        sitio: addressInfo.add_sitio || "",
+        barangay: addressInfo.add_barangay || "",
+        city: addressInfo.add_city || "",
+        province: addressInfo.add_province || "",
+        landmarks: addressInfo.add_landmarks || "",
+        pat_type: "CHILD",
+        address: addressInfo.full_address || "",
+        mother_fname: child.parent_info?.mother?.fname || "",
+        mother_lname: child.parent_info?.mother?.lname || "",
+        mother_mname: child.parent_info?.mother?.mname || "",
+        mother_contact: child.parent_info?.mother?.contact || "",
+        mother_occupation: childHealthInfo.mother_occupation || "",
+        father_fname: child.parent_info?.father?.fname || "",
+        father_lname: child.parent_info?.father?.lname || "",
+        father_contact: child.parent_info?.father?.contact || "",
+        father_occupation: childHealthInfo.father_occupation || "",
+        family_no: childHealthInfo.family_no || "",
+        birth_weight: childHealthInfo.birth_weight || 0,
+        birth_height: childHealthInfo.birth_height || 0,
+        type_of_feeding: childHealthInfo.type_of_feeding || "Unknown",
+        delivery_type: childHealthInfo.place_of_delivery_type || "",
+        place_of_delivery_type: childHealthInfo.place_of_delivery_type || "",
+        pod_location: childHealthInfo.pod_location || "",
+        birth_order: childHealthInfo.birth_order || 0,
+        tt_status: childHealthInfo.tt_status || ""
+      };
+    });
   }, [childrenData]);
 
   console.log("Children Data:", childrenData);
   console.log("Formatted Children:", formattedChildren);
 
   const services: Service[] = [
+   {
+       id: 1,
+      name: 'Animal Bites',
+      description: 'View animal bite referral records',
+      route: '/animalbite/my-records',
+      image: require('@/assets/images/Health/Home/animalbites.jpg'),
+      color: '#059669'
+    },
     {
-      id: 1,
+      id: 2,
       name: "Family Planning",
       description: "View your family planning records and track status",
       route: "/(health)/family-planning/fp-dashboard",
@@ -109,7 +120,7 @@ export default function Records() {
       color: "#059669"
     },
     {
-      id: 2,
+      id: 3,
       name: "Maternal Records",
       description: "Access your maternal health records",
       route: "/maternal-records",
@@ -117,7 +128,7 @@ export default function Records() {
       color: "#DC2626"
     },
     {
-      id: 3,
+      id: 4,
       name: "Animal Bite Records",
       description: "View animal bite treatment records",
       route: "/animalbite/my-records/",
@@ -125,7 +136,7 @@ export default function Records() {
       color: "#1E40AF"
     },
     {
-      id: 4,
+      id: 5,
       name: "Medical Consultation",
       description: "View medical consultation records",
       route: "/medical-consultation/records",
@@ -133,7 +144,7 @@ export default function Records() {
       color: "#10B981"
     },
     {
-      id: 5,
+      id: 6,
       name: "Vaccination Records",
       description: "View vaccination records",
       route: "/vaccination/my-records/",
@@ -141,7 +152,7 @@ export default function Records() {
       color: "#8B5CF6"
     },
     {
-      id: 6,
+      id: 7,
       name: "First Aid Records",
       description: "View first aid treatment records",
       route: "/first-aid/my-records",
@@ -149,7 +160,7 @@ export default function Records() {
       color: "#EF4444"
     },
     {
-      id: 7,
+      id: 8,
       name: "Child Health Records",
       description: "View Child Health records",
       route: "/childhealth/my-records/",
@@ -157,15 +168,15 @@ export default function Records() {
       color: "#EC4899"
     },
     {
-      id: 8,
+      id: 9,
       name: "Medicine Records",
       description: "View medicine treatment records",
-      route: "/medicine-records/my-records/",
+      route: "/medicine-records/my-records",
       image: require("@/assets/images/Health/Home/child-health.jpg"),
       color: "#F59E0B"
     }
   ];
-
+  
   return (
     <PageLayout
       leftAction={
@@ -239,21 +250,19 @@ export default function Records() {
                 {!childrenLoading && formattedChildren.length > 0 && (
                   <View className="space-y-3">
                     {formattedChildren.map((child: any) => (
-                      <TouchableOpacity
-                        key={child}
+                        <TouchableOpacity
+                        key={child.pat_id}
                         onPress={() => {
-                            router.push({
-                            pathname: "/childhealth/my-records",
-                            params: {
-                              patId: child.pat_id,
-                              mode: "parents"
-
-                            }
-                            });
+                          router.push({
+                          pathname: "/childhealth/my-records",
+                          params: {
+                            patId: child.pat_id,
+                            mode: "parents"
+                          }
+                          });
                         }}
-                        
                         className="bg-gray-50 rounded-lg p-3 border border-gray-200 active:bg-gray-100"
-                      >
+                        >
                         <View className="flex-row items-center justify-between">
                           <View className="flex-row items-center space-x-3 flex-1">
                             <View className="flex-1">

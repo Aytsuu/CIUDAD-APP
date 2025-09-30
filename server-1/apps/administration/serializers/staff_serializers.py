@@ -62,22 +62,6 @@ class StaffTableSerializer(serializers.ModelSerializer):
     if family_comp and family_comp.fam:
       return family_comp.fam.fam_id
     return None
-  
-class StaffFullSerializer(serializers.ModelSerializer):
-  pos = PositionBaseSerializer(read_only=True)
-  rp = serializers.SerializerMethodField()
-  rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
-  pos_id = serializers.PrimaryKeyRelatedField(queryset=Position.objects.all(), write_only=True, source="pos")
-  assignments = AssignmentMinimalSerializer(many=True, read_only=True)
-
-  class Meta:
-      model = Staff
-      fields = '__all__'
-
-  def get_rp(self, obj):
-      from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
-      return ResidentPersonalInfoSerializer(obj.rp).data
-  
 
 class StaffCreateSerializer(serializers.ModelSerializer):
   class Meta:
@@ -95,8 +79,9 @@ class StaffCreateSerializer(serializers.ModelSerializer):
       register.save()
 
       # Perform double query
+      request = self.context.get("request")
       double_queries = PostQueries()
-      response = double_queries.staff(validated_data)
+      response = double_queries.staff(request.data)
       if not response.ok:
         try:
             error_detail = response.json()

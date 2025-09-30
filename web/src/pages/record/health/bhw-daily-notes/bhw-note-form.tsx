@@ -25,11 +25,11 @@ export default function BHWNoteForm() {
       defaultValues,
    })
 
-   const handleSubmit = async () => {
-      let isValid = false
+   // const handleSubmit = async () => {
+   //    let isValid = false
 
-      isValid = await form.trigger(["staffId", "dateToday", "weight", "height", "surveillanceCasesCount"])
-   }
+   //    isValid = await form.trigger(["staffId", "dateToday", "weight", "height", "surveillanceCasesCount"])
+   // }
 
    return (
       <LayoutWithBack
@@ -97,18 +97,99 @@ export default function BHWNoteForm() {
                      <div className="mb-5">
                         <Label className=" text-md font-semibold">Disease Surveillance Cases</Label>
                         <Separator className="mt-2 mb-4"/>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-5 gap-2 border p-3">
                            <FormInput
                               control={form.control}
-                              label="Weight"
-                              placeholder="Enter weight"
-                              name="weight"
+                              label="Fever"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.feverCount"
+                              type="number"
                            />
                            <FormInput
                               control={form.control}
-                              label="Height"
-                              placeholder="Enter height"
-                              name="height"
+                              label="Dengue"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.dengueCount"
+                              type="number"
+                           />
+                            <FormInput
+                              control={form.control}
+                              label="Diarrhea"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.diarrheaCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Pneumonia"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.pneumoniaCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Measles"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.measlesCount"
+                              type="number"
+                           />
+
+                           <FormInput
+                              control={form.control}
+                              label="Typhoid Fever"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.typhoidFeverCount"
+                              type="number"
+                           />
+                            <FormInput
+                              control={form.control}
+                              label="Hepatitis"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.hepatitisCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Influenza"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.influenzaCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Hypertensive"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.hypertensiveCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Diabetes Mellitus"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.diabetesMellitusCount"
+                              type="number"
+                           />
+
+                            <FormInput
+                              control={form.control}
+                              label="Tuberculosis"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.tuberculosisCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Leprosy"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.leprosyCount"
+                              type="number"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Others"
+                              placeholder="Enter count"
+                              name="surveillanceCasesCount.othersCount"
+                              type="number"
                            />
                         </div>
                      </div>

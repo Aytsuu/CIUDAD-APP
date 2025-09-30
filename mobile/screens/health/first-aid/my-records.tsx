@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { User, FileText, AlertCircle, Package, Clock, Heart, Search, ChevronLeft, Calendar, Shield, MapPin, RefreshCw } from "lucide-react-native";
 
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { FirstAidRecord } from "../admin/admin-firstaid/types";
+import { getPatientById, getPatientByResidentId } from "../animalbites/api/get-api";
 
 // Reuse the FirstAidRecordCard component from individual.tsx
 const FirstAidRecordCard = ({ item }: { item: FirstAidRecord }) => (
@@ -93,47 +94,78 @@ const StatsCard = ({ count }: { count: number }) => (
 );
 
 export default function MyFirstAidRecordsScreen() {
+  const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params
+    const patIdFromParams = params.pat_id;
   const { user } = useAuth();
-  const rp_id = user?.resident?.rp_id;
+  const rp_id = user?.rp;
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   
-  // First, get the patient details using the resident ID
-  const { data: patientData } = useQuery({
-    queryKey: ["patientByResidentId", rp_id],
-    queryFn: async () => {
-      const response = await api2.get(`/patientrecords/patient/by-resident/${rp_id}/`);
-      return response.data;
-    },
-    enabled: !!rp_id,
-  });
+  console.log("[DEBUG] firstaid patIdFromParams:", patIdFromParams);
+  console.log("[DEBUG] rp_id from auth:", rp_id);
+
+
+   const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = useQuery({
+      queryKey: ["patientDetails", patIdFromParams || rp_id],
+      queryFn: async () => {
+        if (patIdFromParams) {
+          console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams);
+          return await getPatientById(patIdFromParams);
+        } else if (rp_id) {
+          console.log("[DEBUG] Fetching patient with rp_id:", rp_id);
+          return await getPatientByResidentId(rp_id);
+        }
+        return null;
+      },
+      enabled: !!(patIdFromParams || rp_id),
+    });
+    
+ 
 
   // Then, use the patient ID from the first query to fetch first aid records
-  const patient_id = patientData?.pat_id;
+ const patient_id = patientData?.pat_id;
 
-  const {
-    data: firstAidRecords = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery<FirstAidRecord[]>({
-    queryKey: ["myFirstAidRecords", patient_id],
-    queryFn: async () => {
-      if (!patient_id) return [];
+const {
+  data: firstAidRecords = [],
+  isLoading,
+  isError,
+  error,
+  refetch,
+} = useQuery<FirstAidRecord[]>({
+  queryKey: ["myFirstAidRecords", patient_id],
+  queryFn: async () => {
+    if (!patient_id) return [];
+    
+    try {
       const response = await api2.get(`/firstaid/indiv-firstaid-record/${patient_id}/`);
-      return response.data;
-    },
-    enabled: !!patient_id,
-  });
+      
+      // Handle different response structures
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data && Array.isArray(response.data.results)) {
+        return response.data.results;
+      } else if (response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else {
+        console.warn("Unexpected API response structure:", response.data);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching first aid records:", error);
+      return [];
+    }
+  },
+  enabled: !!patient_id,
+});
 
-  const filteredData = useMemo(() => {
-    if (!firstAidRecords) return [];
-    return firstAidRecords.filter((record: FirstAidRecord) => {
-      const searchText = `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-  }, [firstAidRecords, searchQuery]);
+const filteredData = useMemo(() => {
+  if (!firstAidRecords || !Array.isArray(firstAidRecords)) return [];
+  
+  return firstAidRecords.filter((record: FirstAidRecord) => {
+    const searchText = `${record.farec_id || ''} ${record.finv_details?.fa_detail?.fa_name || ''} ${record.finv_details?.fa_detail?.catlist || ''} ${record.reason || ''}`.toLowerCase();
+    return searchText.includes(searchQuery.toLowerCase());
+  });
+}, [firstAidRecords, searchQuery]);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);

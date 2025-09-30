@@ -55,7 +55,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
 
   const abnormalDischarge = form.watch("sexuallyTransmittedInfections.abnormalDischarge")
   const patientGender = formData.gender
-  console.log("Gender: ",patientGender)
+  console.log("Gender: ", patientGender)
   useEffect(() => {
     if (!abnormalDischarge) {
       form.setValue("sexuallyTransmittedInfections.dischargeFrom", undefined)
@@ -116,35 +116,6 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                     </FormItem>
                   )}
                 />
-
-                {/* {abnormalDischarge && (
-                  <FormField
-                    control={form.control}
-                    name="sexuallyTransmittedInfections.dischargeFrom"
-                    render={({ field }) => (
-                      <FormItem className="ml-4 mb-4">
-                        <p className="italic text-sm mb-2">If "YES" please indicate if from:</p>
-                        <FormControl>
-                          <div className="flex space-x-4">
-                            {["Vagina", "Penis"].map((location) => (
-                              <div key={location} className="flex items-center space-x-2">
-                                <input
-                                  type="radio"
-                                  id={`discharge-${location.toLowerCase()}`}
-                                  value={location}
-                                  checked={field.value === location}
-                                  onChange={(e) => field.onChange(e.target.value)}
-                                />
-                                <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
-                              </div>
-                            ))}
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                )} */}
-
 
                 {abnormalDischarge && (
                   <FormField

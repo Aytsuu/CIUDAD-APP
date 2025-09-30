@@ -66,7 +66,7 @@ export default function MaternalAllRecords() {
   });
   const { data: maternalCountsData } = useMaternalCounts();
 
-  const totalMaternalCount = maternalCountsData?.total_patients || 0;
+  const totalMaternalCount = maternalCountsData?.total_records || 0;
   const activePregnanciesCount = maternalCountsData?.active_pregnancies || 0;
   const totalPages = Math.ceil((maternalRecordsData?.count || 0) / pageSize);
 
