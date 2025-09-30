@@ -32,6 +32,9 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+        
+
+        
 class MedicineRecordCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord

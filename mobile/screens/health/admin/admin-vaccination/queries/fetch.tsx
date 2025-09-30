@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
 import { getUnvaccinatedVaccines, getUnvaccinatedVaccinesSummary, getUnvaccinatedResidentsDetailsForVaccine } from "../restful-api/get";
-import { VaccinationRecord } from "../tables/columns/types";
+// import { VaccinationRecord } from "../tables/columns/types";
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { getUnvaccinatedResidents, getVaccinationRecords, getVaccinationRecordById, getLatestVitals } from "../restful-api/get";
 import { showErrorToast } from "@/components/ui/toast";
@@ -74,7 +74,7 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
             }
           };
         })
-        .sort((a: VaccinationRecord, b: VaccinationRecord) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     },
 
     staleTime: 2 * 60 * 1000,

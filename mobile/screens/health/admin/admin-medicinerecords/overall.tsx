@@ -300,8 +300,10 @@ export default function OverAllMedicineRecords() {
       };
 
       router.push({
-        pathname: "/admin/medicinerecords/individual",
-        params: { patientData: JSON.stringify(patientData) }
+        pathname: "/medicine-records/my-records",
+        params: { patId:patientData.pat_id,
+          mode:"admin"
+         }
       });
     } catch (error) {
       console.log("Navigation error:", error);

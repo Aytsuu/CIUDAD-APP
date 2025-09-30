@@ -40,23 +40,8 @@ export default function InvChildHealthRecords() {
     }
   }, [params.patId]);
 
-  let ChildHealthRecord = null;
-  if (params && params.ChildHealthRecord) {
-    ChildHealthRecord = JSON.parse(params.ChildHealthRecord as string);
-    if (!ChildHealthRecord?.chrec_id || !ChildHealthRecord?.pat_id || !ChildHealthRecord?.dob) {
-      console.error("Parsed ChildHealthRecord is missing required fields", {
-        chrec_id: ChildHealthRecord?.chrec_id,
-        pat_id: ChildHealthRecord?.pat_id,
-        dob: ChildHealthRecord?.dob,
-        ChildHealthRecord
-      });
-    }
-  } else {
-    console.error("Params or ChildHealthRecord is missing", { params });
-  }
-
-  const [childDatafromAdmin] = useState(ChildHealthRecord);
   const mode = typeof params.mode === "string" ? params.mode : null;
+  let ChildHealthRecord = null;
 
   // Get patient ID from route params with safe access
   useEffect(() => {
@@ -65,18 +50,29 @@ export default function InvChildHealthRecords() {
     if (mode == "parents") {
       setPatientId(childrenID || "");
     } else if (mode == "admin") {
-      setPatientId(childDatafromAdmin?.pat_id);
-    } else {
+      if (params && params.ChildHealthRecord) {
+        ChildHealthRecord = JSON.parse(params.ChildHealthRecord as string);
+        if (!ChildHealthRecord?.chrec_id || !ChildHealthRecord?.pat_id || !ChildHealthRecord?.dob) {
+          console.error("Parsed ChildHealthRecord is missing required fields", {
+            chrec_id: ChildHealthRecord?.chrec_id,
+            pat_id: ChildHealthRecord?.pat_id
+          });
+          setPatientId(ChildHealthRecord?.pat_id);
+        }
+      } else {
+        console.error("Params or ChildHealthRecord is missing", { params });
+      }
+    } else if (pat_id) {
       setPatientId(pat_id || "");
     }
   }, [childrenID, mode]);
+  const [childDatafromAdmin] = useState(ChildHealthRecord);
 
   const { data: childData, isLoading: isChildDataLoading, isError: isChildDataError, error: childDataError, refetch: refetchChildData } = useChildData(patId || "");
   const [activeTab, setActiveTab] = useState("status");
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5); // Show 5 records per page
-
 
   useEffect(() => {
     console.log("-----RAW CHILD DATA:", childData);
@@ -367,13 +363,13 @@ export default function InvChildHealthRecords() {
         {/* Card Header */}
         <View className="flex-row justify-between items-start mb-3">
           <View className="">
-            <View className="flex-row items-center  justify-between mb-2">
+            <View className="flex-row items-center  gap-4 justify-between mb-2">
               <Text className="text-gray-900 text-lg font-bold mr-3">Record {processedHistoryData.length - record.id + 1}</Text>
 
               <Text className="text-gray-500 text-sm">{record.updatedAt}</Text>
             </View>
 
-            <View className="flex-row justify-end gap-4">
+            <View className="flex-row justify-between gap-4">
               <View className={`${getStatusColor(record.status)} px-2 py-1 rounded-lg`}>
                 <Text className="text-white text-xs font-medium">{record.status === "recorded" ? "Completed" : record.status}</Text>
               </View>

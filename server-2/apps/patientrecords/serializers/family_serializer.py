@@ -186,24 +186,65 @@ class ChildrenInfoSerializer(serializers.Serializer):
         }
 
     def get_parent_info(self, obj):
-        """Get parent information (the one who made the query)"""
+        """Get both mother and father information"""
         try:
-            # Get the parent from the context (passed from the view)
-            parent_pat_id = self.context.get('parent_pat_id')
-            if parent_pat_id:
-                parent_fc = FamilyComposition.objects.filter(
-                    rp__patients__pat_id=parent_pat_id,
-                    fc_role__in=['MOTHER', 'FATHER']
-                ).select_related('rp__per').first()
+            # Get the family composition for this child
+            if obj.patrec.pat_id.pat_type == 'Resident' and obj.patrec.pat_id.rp_id:
+                # Get the child's current family composition
+                child_fc = FamilyComposition.objects.filter(
+                    rp=obj.patrec.pat_id.rp_id
+                ).select_related('fam').order_by('-fam_id__fam_date_registered', '-fc_id').first()
                 
-                if parent_fc:
+                if child_fc and child_fc.fam:
+                    # Get both parents from the same family
+                    parents = FamilyComposition.objects.filter(
+                        fam=child_fc.fam,
+                        fc_role__in=['MOTHER', 'FATHER']
+                    ).select_related('rp__per')
+                    
+                    mother_info = None
+                    father_info = None
+                    
+                    for parent in parents:
+                        if parent.fc_role == 'MOTHER':
+                            mother_info = {
+                                'pat_id': parent.rp.patients.first().pat_id if hasattr(parent.rp, 'patients') else "",
+                                'role': parent.fc_role,
+                                'fname': parent.rp.per.per_fname or "",
+                                'mname': parent.rp.per.per_mname or "",
+                                'lname': parent.rp.per.per_lname or "",
+                                'dob': parent.rp.per.per_dob or "",
+                                'contact': parent.rp.per.per_contact or "",
+                                'occupation': getattr(obj, 'mother_occupation', "") or ""  # From child record
+                            }
+                        elif parent.fc_role == 'FATHER':
+                            father_info = {
+                                'pat_id': parent.rp.patients.first().pat_id if hasattr(parent.rp, 'patients') else "",
+                                'role': parent.fc_role,
+                                'fname': parent.rp.per.per_fname or "",
+                                'mname': parent.rp.per.per_mname or "",
+                                'lname': parent.rp.per.per_lname or "",
+                                'dob': parent.rp.per.per_dob or "",
+                                'contact': parent.rp.per.per_contact or "",
+                                'occupation': getattr(obj, 'father_occupation', "") or ""  # From child record
+                            }
+                    
                     return {
-                        'parent_pat_id': parent_pat_id,
-                        'parent_role': parent_fc.fc_role or "",
-                        'parent_name': f"{parent_fc.rp.per.per_fname} {parent_fc.rp.per.per_lname}" or "",
-                        'family_id': parent_fc.fam.fam_id or ""
+                        'mother': mother_info,
+                        'father': father_info,
+                        'family_id': child_fc.fam.fam_id or ""
                     }
-            return {}
+            
+            return {
+                'mother': None,
+                'father': None,
+                'family_id': ""
+            }
+            
         except Exception as e:
             print(f"Error getting parent info: {str(e)}")
-            return {}
+            return {
+                'mother': None,
+                'father': None,
+                'family_id': ""
+            }

@@ -96,6 +96,11 @@ class MedicineRecord(models.Model):
         return f"MedicineRecord #{self.medrec_id}"
     class Meta:
         db_table = 'medicine_record'
+        indexes = [
+            models.Index(fields=['patrec_id']),
+            models.Index(fields=['minv_id']),
+        ]
+        
 
 
         

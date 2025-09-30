@@ -173,7 +173,6 @@ export const getPatientRecordsByPatId = async (patId: string) => {
 export const getPatientRecordsByReferralId = async (referralId: string) => {
   try {
     const res = await api2.get(`animalbites/referral/${referralId}/`) // Assuming an endpoint exists for this.
-    console.log("✅ Patient records by referral ID fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, `Fetch Patient Records by Referral ID: ${referralId}`)
@@ -184,7 +183,6 @@ export const getPatientRecordsByReferralId = async (referralId: string) => {
 export const getPatientByResidentId = async (rpId: string) => {
   try {
     const res = await api2.get(`patientrecords/patient/by-resident/${rpId}/`);
-    console.log("✅ Patient by resident ID fetched successfully:", res.data);
     return res.data;
   } catch (error) {
     handleApiError(error, `Fetch Patient by Resident ID: ${rpId}`);

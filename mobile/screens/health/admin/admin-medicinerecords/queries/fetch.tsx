@@ -4,12 +4,14 @@ import { getIndividualMedicineRecords,getMedicineRecords} from "../restful-api/g
 
 export const useIndividualMedicineRecords = (pat_id: string, page: number, pageSize: number, search?: string) => {
   return useQuery({
-    queryKey: ["individualMedicineRecords", pat_id, page, pageSize, search],
+    queryKey: ["individualMedicineRecordssss", pat_id, page, pageSize, search],
     queryFn: () => getIndividualMedicineRecords(pat_id, page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 0,
+    retry: 1, // Reduce retries to fail faster
   });
 };
+
 
 export const useMedicineRecords = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
   return useQuery({

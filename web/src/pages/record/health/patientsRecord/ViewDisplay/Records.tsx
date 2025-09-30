@@ -63,15 +63,15 @@ const formatChildrenData = (childrenData: any) => {
       landmarks: addressInfo.add_landmarks || "",
       pat_type: "CHILD",
       address: addressInfo.full_address || "",
-      mother_fname: child.parent_info?.parent_name?.split(" ")[0] || "",
-      mother_lname: child.parent_info?.parent_name?.split(" ").slice(1).join(" ") || "",
-      mother_mname: "",
-      mother_contact: "",
+      mother_fname: child.parent_info?.mother?.fname|| "",
+      mother_lname: child.parent_info?.mother?.lname || "",
+      mother_mname: child.parent_info?.mother?.mname ||  "",
+      mother_contact: child.parent_info?.mother?.contact || "",
       mother_occupation: childHealthInfo.mother_occupation || "",
-      father_fname: "",
-      father_lname: "",
-      father_mname: "",
-      father_contact: "",
+      father_fname:child.parent_info?.father?.fname ||  "",
+      father_lname: child.parent_info?.father?.lname || "",
+      father_mname: child.parent_info?.father?.mname || "",
+      father_contact: child.parent_info?.father?.contact || "",
       father_occupation: childHealthInfo.father_occupation || "",
       family_no: childHealthInfo.family_no || "",
       birth_weight: 0,
@@ -110,7 +110,6 @@ export default function Records({ vaccinationCount, medicineCount, firstAidCount
 
   // Format children data
   const formattedChildren = childrenData ? formatChildrenData(childrenData) : [];
-  console.log("Formatted Children:", formattedChildren);
 
   const firstChildHealthRecord = childHealthRecords && childHealthRecords.length > 0 ? childHealthRecords[0] : null;
 

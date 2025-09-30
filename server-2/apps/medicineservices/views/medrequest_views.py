@@ -5,7 +5,7 @@ from rest_framework import status
 from ..serializers import *
 from pagination import *
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, Prefetch
 class UserMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
     pagination_class = StandardResultsPagination
@@ -148,8 +148,8 @@ class MedicineRequestItemsByRequestView(generics.ListAPIView):
             'medreq_id__pat_id__per',  # Add patient personal info
         ).prefetch_related(
             'minv_id__med_id',
-            'medreq_id__rp_id__per__personaladdress_set__add',  # Prefetch addresses
-            'medreq_id__pat_id__per__personaladdress_set__add',  # Prefetch patient addresses
+            'medreq_id__rp_id__per__ppersonal_addresses__add',  # Prefetch addresses
+            'medreq_id__pat_id__per__ppersonal_addresses__add',  # Prefetch patient addresses
         ).order_by('-medreq_id__requested_at')
         
 class SubmitMedicineRequestView(APIView):
