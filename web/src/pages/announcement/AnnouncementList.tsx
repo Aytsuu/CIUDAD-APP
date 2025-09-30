@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/context/AuthContext";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 function AnnouncementTracker() {
   const [error] = useState<string | null>(null)
@@ -293,155 +294,164 @@ function AnnouncementTracker() {
 
   return (
     <TooltipProvider>
-      <div className="w-full h-full p-6">
-        <div className="flex-col items-center mb-6">
-          <h1 className="font-bold text-2xl sm:text-3xl text-gray-900 mb-2">Announcement Records</h1>
-          <p className="text-sm sm:text-base">Manage and view announcement records</p>
-        </div>
-        <hr className="border-gray-200 mb-8" />
-
-        <div className="flex justify-between items-center mb-8 w-full">
-          <div className="flex items-center gap-4 w-full max-w-2xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                placeholder="Search announcements..."
-                className="pl-11 bg-white border-gray-200 shadow-sm h-11 w-full focus:ring-2 focus:ring-blue-500/20"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setCurrentPage(1)
-                }}
-              />
-            </div>
-
-            <Select
-              value={filter}
-              onValueChange={(val) => {
-                setFilter(val)
-                setCurrentPage(1)
-              }}
-            >
-              <SelectTrigger className="w-[200px] h-11 bg-white border-gray-200 shadow-sm">
-                <Filter className="mr-2 h-4 w-4 text-gray-500" />
-                <SelectValue placeholder="Filter by..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dateRecent">Date Created</SelectItem>
-                <SelectItem value="toSms">To SMS</SelectItem>
-                <SelectItem value="toEmail">To Email</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-                <SelectItem value="public">Public</SelectItem>
-                <SelectItem value="event">Event</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Link to="/announcement/create">
-            <Button className="h-11 px-6 bg-blue-600 hover:bg-blue-700 shadow-sm">
-              <Plus size={18} className="mr-2" /> Add Announcement
-            </Button>
-          </Link>
-        </div>
-
-        {totalCreated === 0 && totalReceived === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <FileText className="mx-auto h-16 w-16 text-gray-300 mb-6" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">No announcements found</h3>
-            <p className="text-gray-500 text-base">
-              {searchQuery ? "Try adjusting your search terms." : "Get started by creating your first announcement."}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
-              {/* Left Column - Created Announcements */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">My Announcements</h2>
-                  <Badge variant="outline" className="text-xs">
-                    {totalCreated}
-                  </Badge>
-                </div>
-
-                {createdPaginatedData.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                    <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No created announcements</h3>
-                    <p className="text-gray-500 text-sm">You haven't created any announcements yet.</p>
+      <MainLayoutComponent
+        title="Announcements "
+        description="Manage and view announcement records"
+      >
+        <div className="bg-gray-50/80 min-h-screen p-6 -mx-6 -mb-6">
+          {/* Wrapped search bar, filter, add announcement, and show per page together in white background */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
+            <div className="flex flex-col gap-6">
+              {/* Top row: Search bar, filter, and add announcement button */}
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-2/3">
+                  <div className="relative flex-1 min-w-[250px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Input
+                      placeholder="Search announcements..."
+                      className="pl-11 bg-white border-gray-200 shadow-sm h-11 w-full focus:ring-2 focus:ring-blue-500/20"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setCurrentPage(1)
+                      }}
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {createdPaginatedData.map((announcement) => (
-                      <AnnouncementCard key={announcement.ann_id} announcement={announcement} />
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {/* Right Column - Received Announcements */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Received Announcements</h2>
-                  <Badge variant="outline" className="text-xs">
-                    {totalReceived}
-                  </Badge>
-                </div>
-
-                {receivedPaginatedData.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                    <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No received announcements</h3>
-                    <p className="text-gray-500 text-sm">You haven't received any announcements yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {receivedPaginatedData.map((announcement) => (
-                      <AnnouncementCard key={announcement.ann_id} announcement={announcement} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-gray-200 bg-white rounded-lg p-6 shadow-sm">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600 font-medium">Show</span>
-                  <Input
-                    type="number"
-                    className="w-20 h-9 text-center border-gray-200 shadow-sm"
-                    value={pageSize}
-                    onChange={(e) => {
-                      const value = +e.target.value
-                      setPageSize(value >= 1 ? value : 1)
+                  <Select
+                    value={filter}
+                    onValueChange={(val) => {
+                      setFilter(val)
                       setCurrentPage(1)
                     }}
-                  />
-                  <span className="text-sm text-gray-600 font-medium">per page</span>
+                  >
+                    <SelectTrigger className="w-[200px] h-11 bg-white border-gray-200 shadow-sm">
+                      <Filter className="mr-2 h-4 w-4 text-gray-500" />
+                      <SelectValue placeholder="Filter by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dateRecent">Date Created</SelectItem>
+                      <SelectItem value="toSms">To SMS</SelectItem>
+                      <SelectItem value="toEmail">To Email</SelectItem>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Showing{" "}
-                  <span className="font-medium">
-                    {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, Math.max(totalCreated, totalReceived))}
-                  </span>{" "}
-                  of <span className="font-medium">{Math.max(totalCreated, totalReceived)}</span> announcements
-                </p>
+
+                <div className="w-full lg:w-1/3 flex justify-center lg:justify-end">
+                  <Link to="/announcement/create" className="w-full lg:w-auto">
+                    <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 shadow-sm w-full lg:w-auto text-base font-medium">
+                      <Plus size={18} className="mr-2" /> Add Announcement
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
-              {Math.max(totalCreated, totalReceived) > pageSize && (
-                <PaginationLayout
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page)
+              {/* Bottom row: Show per page */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 font-medium">Show</span>
+                <Input
+                  type="number"
+                  className="w-20 h-9 text-center border-gray-200 shadow-sm"
+                  value={pageSize}
+                  onChange={(e) => {
+                    const value = +e.target.value
+                    setPageSize(value >= 1 ? value : 1)
+                    setCurrentPage(1)
                   }}
                 />
-              )}
+                <span className="text-sm text-gray-600 font-medium">per page</span>
+              </div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+
+          {totalCreated === 0 && totalReceived === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <FileText className="mx-auto h-16 w-16 text-gray-300 mb-6" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">No announcements found</h3>
+              <p className="text-gray-500 text-base">
+                {searchQuery ? "Try adjusting your search terms." : "Get started by creating your first announcement."}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+                {/* Left Column - Created Announcements */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">My Announcements</h2>
+                    <Badge variant="outline" className="text-xs">
+                      {totalCreated}
+                    </Badge>
+                  </div>
+
+                  {createdPaginatedData.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
+                      <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No created announcements</h3>
+                      <p className="text-gray-500 text-sm">You haven't created any announcements yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {createdPaginatedData.map((announcement) => (
+                        <AnnouncementCard key={announcement.ann_id} announcement={announcement} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column - Received Announcements */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Received Announcements</h2>
+                    <Badge variant="outline" className="text-xs">
+                      {totalReceived}
+                    </Badge>
+                  </div>
+
+                  {receivedPaginatedData.length === 0 ? (
+                    <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
+                      <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No received announcements</h3>
+                      <p className="text-gray-500 text-sm">You haven't received any announcements yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {receivedPaginatedData.map((announcement) => (
+                        <AnnouncementCard key={announcement.ann_id} announcement={announcement} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-gray-200 bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center gap-6">
+                  <p className="text-sm text-gray-600">
+                    Showing{" "}
+                    <span className="font-medium">
+                      {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, Math.max(totalCreated, totalReceived))}
+                    </span>{" "}
+                    of <span className="font-medium">{Math.max(totalCreated, totalReceived)}</span> announcements
+                  </p>
+                </div>
+
+                {Math.max(totalCreated, totalReceived) > pageSize && (
+                  <PaginationLayout
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => {
+                      setCurrentPage(page)
+                    }}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </MainLayoutComponent>
     </TooltipProvider>
   )
 }
