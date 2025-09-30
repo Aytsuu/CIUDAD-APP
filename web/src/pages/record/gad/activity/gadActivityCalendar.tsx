@@ -239,7 +239,9 @@ function GADActivityPage() {
 
   // Create a set of dev_ids that have project proposals
   const devIdsWithProposals = useMemo(() => {
-    return createDevIdsWithProposals(projectProposals, resolutions);
+    const proposalsList = Array.isArray(projectProposals) ? projectProposals : (projectProposals as any)?.results || [];
+    const resolutionsList = Array.isArray(resolutions) ? resolutions : (resolutions as any)?.results || [];
+    return createDevIdsWithProposals(proposalsList, resolutionsList);
   }, [projectProposals, resolutions]);
 
   // Transform annual development plans for calendar display - only include those with project proposals

@@ -91,7 +91,6 @@ class Business(models.Model):
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(primary_key=True)
     req_request_date = models.DateField()
-    req_sales_proof = models.CharField(max_length=100)
     req_status = models.CharField(max_length=100, default='Pending')
     req_date_completed = models.DateField(null=True, blank=True) 
     req_payment_status = models.CharField(max_length=100, default='Unpaid')

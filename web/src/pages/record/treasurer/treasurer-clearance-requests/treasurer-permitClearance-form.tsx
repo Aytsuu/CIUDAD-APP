@@ -14,7 +14,6 @@ import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-sea
 import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/permitClearanceFetchQueries";
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
 import { useGetAnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
-import { FormSelect } from "@/components/ui/form/form-select";
 
 
 
@@ -43,23 +42,18 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         console.error("Purposes loading error:", purposesError);
     }
 
-    // fetches only records where the archive status is false
-    const annualGrossSalesOptions = grossSales
-    .filter(grossSales => grossSales.ags_is_archive === false)
-    .map(grossSales => ({
-        id: grossSales.ags_id.toString(),
-        name: `₱${grossSales.ags_minimum} - ₱${grossSales.ags_maximum}`
-    }));
     
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
         resolver: zodResolver(PermitClearanceFormSchema),
         defaultValues: {
             serialNo: "",
             businessName: "",
+            businessId: "",
             requestor: "",
             address: "",
             grossSales: "",
             purposes: "",
+            purposeId: "",
             rp_id: "",
         },
     })
@@ -85,25 +79,43 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         return address;
     }
 
-    // Function to get business requestor when business is selected
-    // const getBusinessRequestor = (businessValue: string) => {
-    //     console.log("getBusinessRequestor called with businessValue:", businessValue);
+    // Function to get matching annual gross sales rate based on business gross sales
+    const getMatchingGrossSalesRate = (businessValue: string) => {
+        console.log("getMatchingGrossSalesRate called with:", businessValue);
+        console.log("Available businesses:", businesses);
+        console.log("Available gross sales rates:", grossSales);
         
-    //     // Try to find by ID first
-    //     let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
+        const selectedBusiness = businesses.find((business: any) => 
+            business.bus_id === businessValue || business.bus_name === businessValue
+        );
         
-    //     // If not found by ID, try to find by name
-    //     if (!selectedBusiness) {
-    //         selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
-    //     }
+        console.log("Selected business for gross sales:", selectedBusiness);
         
-    //     console.log("Selected business for requestor:", selectedBusiness);
+        if (!selectedBusiness || !selectedBusiness.bus_gross_sales) {
+            console.log("No business found or no gross sales data");
+            return null;
+        }
         
-    //     const requestor = selectedBusiness?.requestor || '';
-    //     console.log("Resolved requestor:", requestor);
+        const businessGrossSales = Number(selectedBusiness.bus_gross_sales);
+        console.log("Business gross sales:", businessGrossSales);
         
-    //     return requestor;
-    // }
+        // Find matching annual gross sales range
+        const matchingRate = grossSales.find((rate: any) => 
+            rate.ags_is_archive === false &&
+            businessGrossSales >= rate.ags_minimum && 
+            businessGrossSales <= rate.ags_maximum
+        );
+        
+        console.log("Matching rate found:", matchingRate);
+        
+        return matchingRate ? {
+            id: matchingRate.ags_id.toString(),
+            name: `₱${matchingRate.ags_minimum} - ₱${matchingRate.ags_maximum}`,
+            rate: matchingRate.ags_rate
+        } : null;
+    }
+
+
 
     const onSubmit = async (values: z.infer<typeof PermitClearanceFormSchema>) => {
         try {
@@ -119,6 +131,11 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             };
             
             console.log("Permit Clearance Data:", payload);
+            console.log("Business ID from form:", payload.businessId);
+            console.log("Business Name from form:", payload.businessName);
+            console.log("Purposes from form:", payload.purposes);
+            console.log("Gross Sales from form:", payload.grossSales);
+            console.log("All form values:", form.getValues());
             
          
             await createPermitClearance(payload, staffId);
@@ -182,25 +199,45 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                         onSelect={(value: string, selectedOption: any) => {
                                             console.log("Business selected with value:", value);
                                             console.log("Selected option:", selectedOption);
-                                            field.onChange(value);
                                             
-                                           
-                                            let selectedBusiness = businesses.find((business: any) => business.bus_id === value);
+                                            // Get the actual business ID from selectedOption (like rp_id pattern)
+                                            const businessId = selectedOption?.bus_id || '';
+                                            const businessName = selectedOption?.bus_name || value;
                                             
-                                          
-                                            if (!selectedBusiness) {
-                                                selectedBusiness = businesses.find((business: any) => business.bus_name === value);
-                                            }
+                                            console.log("Business ID:", businessId);
+                                            console.log("Business Name:", businessName);
+                                            
+                                            // Store business name in the display field
+                                            field.onChange(businessName);
+                                            
+                                            // Store business ID separately
+                                            form.setValue("businessId", businessId);
+                                            console.log("Set businessId to:", businessId);
+                                            
+                                            // Find the selected business using the actual ID
+                                            const selectedBusiness = businesses.find((business: any) => business.bus_id === businessId);
                                             
                                             console.log("Found selected business:", selectedBusiness);
                                             if (selectedBusiness) {
                                                 const address = selectedBusiness.bus_location || selectedBusiness.address || '';
                                                 form.setValue("address", address);
                                                 
-                                               
                                                 const requestor = selectedBusiness.requestor || '';
-                                              
                                                 form.setValue("requestor", requestor);
+
+                                                // Store the business gross sales amount as string
+                                                const businessGrossSales = selectedBusiness.bus_gross_sales || '';
+                                                form.setValue("businessGrossSales", businessGrossSales.toString());
+                                                console.log("Set business gross sales to:", businessGrossSales.toString());
+
+                                                // Auto-match gross sales rate using business ID
+                                                const matchingRate = getMatchingGrossSalesRate(businessId);
+                                                if (matchingRate) {
+                                                    form.setValue("grossSales", matchingRate.id);
+                                                    console.log("Auto-matched gross sales rate:", matchingRate);
+                                                } else {
+                                                    console.log("No matching gross sales rate found for:", selectedBusiness.bus_gross_sales);
+                                                }
                                             }
                                         }}
                                         onCustomInput={(value: string) => {
@@ -215,13 +252,51 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                         )}>
                     </FormField>
 
+                    {/* Hidden field for businessId */}
+                    <FormField
+                        control={form.control}
+                        name="businessId"
+                        render={({field}) => (
+                            <FormItem className="hidden">
+                                <FormControl>
+                                    <Input {...field} type="hidden" />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Hidden field for purposeId */}
+                    <FormField
+                        control={form.control}
+                        name="purposeId"
+                        render={({field}) => (
+                            <FormItem className="hidden">
+                                <FormControl>
+                                    <input {...field} type="hidden" />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+
                     <div className="grid grid-cols-2 gap-5 w-full">
-                        <FormSelect
+                        <FormField
                             control={form.control}
                             name="grossSales"
-                            options={annualGrossSalesOptions}
-                            // isLoading={grossSalesLoading}
-                            label="Annual Gross Sales"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Annual Gross Sales Rate</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            {...field} 
+                                            value={getMatchingGrossSalesRate(form.watch("businessName"))?.name || ''}
+                                            placeholder="Select a business to auto-fill the rate" 
+                                            className="w-full bg-gray-50" 
+                                            readOnly
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
 
                         <FormField
@@ -292,7 +367,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                              <ComboboxInput
                                                   value={field.value || ''}
                                                   options={permitPurposes
-                                                      .filter((purpose: any) => purpose.pr_category === 'Permit Clearance')
+                                                      .filter((purpose: any) => purpose.pr_category === 'Business Permit')
                                                       .map((purpose: any) => ({
                                                           id: purpose.pr_id,
                                                           name: purpose.pr_purpose
@@ -301,8 +376,25 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                                   label=""
                                                   placeholder="Select purpose..."
                                                   emptyText="No purposes found"
-                                                  onSelect={(value: string, _: any) => {
-                                                      field.onChange(value);
+                                                  onSelect={(value: string, selectedOption: any) => {
+                                                      console.log("Purpose selection debug:");
+                                                      console.log("- value:", value);
+                                                      console.log("- selectedOption:", selectedOption);
+                                                      
+                                                      // Get the purpose ID from selectedOption (like business selection)
+                                                      const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
+                                                      const purposeName = selectedOption?.name || selectedOption?.pr_purpose || value;
+                                                      
+                                                      console.log("- purposeId:", purposeId);
+                                                      console.log("- purposeName:", purposeName);
+                                                      
+                                                      // Set the field value to the purpose name (what user sees)
+                                                      field.onChange(purposeName);
+                                                      
+                                                      // Store the purpose ID in the hidden field for backend submission
+                                                      form.setValue("purposeId", purposeId.toString());
+                                                      console.log("Set purposeId to:", purposeId.toString());
+                                                      console.log("Current form values:", form.getValues());
                                                   }}
                                                   onCustomInput={(value: string) => {
                                                       field.onChange(value);

@@ -2,7 +2,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { ReceiptText, Search } from 'lucide-react';
+import { ReceiptText, Search, Ban } from 'lucide-react';
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -11,13 +11,13 @@ import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
 import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
 import { useQuery } from "@tanstack/react-query";
-import { useGetPurposeAndRate } from "../Rates/queries/RatesFetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
+import { api } from "@/api/api";
 
 
 //table header
-const createColumns = ({}): ColumnDef<PermitClearance>[] => [
+const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
         header: ({ column }) => (
               <div
@@ -31,11 +31,39 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
             <div className="">{row.getValue("businessName")}</div>
         )},
   
-    { accessorKey: "grossSales", header: "Gross Sales"},
+    { 
+        accessorKey: "grossSales", 
+        header: "Gross Sales",
+        cell: ({ row }) => {
+            const agsId = row.original.ags_id;
+            const grossSalesData = row.original.grossSalesData;
+            
+            if (grossSalesData && agsId) {
+                return (
+                    <div className="text-center">
+                        ₱{parseFloat(grossSalesData.ags_minimum).toLocaleString()} - ₱{parseFloat(grossSalesData.ags_maximum).toLocaleString()}
+                    </div>
+                );
+            }
+            return <div className="text-center">Not Set</div>;
+        }
+    },
     {
         accessorKey: "purpose",
         header: "Purpose",
-        cell: ({ }) => "Business Permit" 
+        cell: ({ row }) => {
+            const prId = row.original.pr_id;
+            const purposeData = row.original.purposeData;
+            
+            if (purposeData && prId) {
+                return (
+                    <div className="text-center">
+                        {purposeData.pr_purpose}
+                    </div>
+                );
+            }
+            return <div className="text-center">Not Set</div>;
+        }
     },
     {
         accessorKey: "amount",
@@ -49,12 +77,13 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
             </div>
         ),
         cell: ({ row }) => {
-            // Use the req_amount field from the backend
-            const amount = row.original.req_amount || 0;
+            // Use the ags_rate from grossSalesData
+            const grossSalesData = row.original.grossSalesData;
+            const amount = grossSalesData ? parseFloat(grossSalesData.ags_rate) : 0;
             
             return (
                 <div className="text-center font-medium text-green-700">
-                    ₱{amount.toLocaleString()}
+                    ₱{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
             );
         },
@@ -117,54 +146,68 @@ const createColumns = ({}): ColumnDef<PermitClearance>[] => [
         );
       }
     },
-    { accessorKey: "action", 
-      header: "Action",
-      cell: ({row}) =>(
-        <div className="flex justify-center gap-0.5">
-            <TooltipLayout
-            trigger={
-                <DialogLayout
-                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
-                    className="flex flex-col"
-                    title="Create Receipt"
-                    description="Enter the serial number to generate a receipt."
-                    mainContent={
-                        <ReceiptForm 
-                            certificateRequest={{
-                                cr_id: row.original.bpr_id || "", // Use bpr_id instead of cr_id
-                                req_type: "Permit Clearance",
-                                req_purpose: "Business Permit", // Set fixed purpose for business clearance
-                                resident_details: {
-                                    per_fname: row.original.requestor || "",
-                                    per_lname: ""
-                                },
-                                req_payment_status: row.original.req_payment_status || "Pending",
-                                pr_id: row.original.pr_id,
-                                business_name: row.original.businessName || "",
-                                req_amount: row.original.req_amount || 0, // Pass the req_amount
-                                req_sales_proof: row.original.req_sales_proof || "" // Pass the gross sales range
-                            }}
-                            onSuccess={() => {}}
-                        />
-                    } 
-                />
-            } content="Create Receipt"/>
-            <ConfirmationModal
+    ...(activeTab === "unpaid" ? [
+        { accessorKey: "action", 
+          header: "Action",
+          cell: ({row}: {row: any}) =>(
+            <div className="flex justify-center gap-0.5">
+                <TooltipLayout
                 trigger={
-                    <Button variant="destructive" size="sm">
-                        Decline
-                    </Button>
-                }
-                title="Decline Request"
-                description={`Are you sure you want to decline the request for ${row.original.businessName}?`}
-                actionLabel="Decline"
-                onClick={() => {
-                    //decline
-                    console.log("Declining request:", row.original.cr_id);
-                }}
-            />
-        </div>
-      )},
+                    <DialogLayout
+                        trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
+                        className="flex flex-col"
+                        title="Create Receipt"
+                        description="Enter the serial number to generate a receipt."
+                        mainContent={
+                            <ReceiptForm 
+                                certificateRequest={{
+                                    cr_id: row.original.bpr_id || "", // Use bpr_id instead of cr_id
+                                    req_type: "Permit Clearance",
+                                    req_purpose: row.original.purposeData ? row.original.purposeData.pr_purpose : "Business Permit", // Use actual purpose name
+                                    resident_details: {
+                                        per_fname: row.original.requestor || "Unknown",
+                                        per_lname: ""
+                                    },
+                                    req_payment_status: row.original.req_payment_status || "Pending",
+                                    pr_id: row.original.pr_id,
+                                    business_name: row.original.businessName && row.original.businessName !== "No Business Linked" ? row.original.businessName : row.original.requestor || "Unknown Business",
+                                    req_amount: row.original.grossSalesData ? parseFloat(row.original.grossSalesData.ags_rate) : 0, // Pass the ags_rate
+                                    req_sales_proof: row.original.req_sales_proof || "" // Pass the gross sales range
+                                }}
+                                onSuccess={() => {}}
+                            />
+                        } 
+                    />
+                } content="Create Receipt"/>
+                <ConfirmationModal
+                    trigger={
+                        <Button variant="destructive" size="sm">
+                            Decline
+                        </Button>
+                    }
+                    title="Decline Request"
+                    description={`Are you sure you want to decline the request for ${row.original.businessName}?`}
+                    actionLabel="Decline"
+                    onClick={() => {
+                        //decline
+                        console.log("Declining request:", row.original.bpr_id);
+                    }}
+                />
+            </div>
+          )}
+        ]
+    : []),
+    ...(activeTab === "declined" ? [
+        {
+            accessorKey: "req_declined_reason",
+            header: "Reason for Decline",
+            cell: ({ row }: { row: any }) => (
+                <div className="text-center">
+                    {row.original.req_declined_reason || "No reason provided"}
+                </div>
+            ),
+        }
+    ] : []),
 ];
 
 
@@ -183,9 +226,12 @@ type PermitClearance = {
     bpr_id?: string, // Add bpr_id field
     req_payment_status?: string,
     pr_id?: number,
+    ags_id?: number,
     amount?: string, // Add amount field
     amount_to_pay?: number, // Add amount_to_pay field from backend
-    req_amount?: number // Add req_amount field from backend
+    req_amount?: number, // Add req_amount field from backend
+    grossSalesData?: any, // Add gross sales data
+    purposeData?: any // Add purpose data
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -205,7 +251,7 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 function PermitClearance(){
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<"paid" | "unpaid">("unpaid");
+    const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
     
     // Fetch data from backend
     const { data: permitClearances, isLoading, error } = useQuery<any[]>({
@@ -213,12 +259,48 @@ function PermitClearance(){
         queryFn: getPermitClearances
     });
 
-    // Fetch purpose and rates data for amount calculation
-    const { data: purposes = [] } = useGetPurposeAndRate();
+    // Fetch annual gross sales data
+    const { data: annualGrossSales = [] } = useQuery<any[]>({
+        queryKey: ["annualGrossSales"],
+        queryFn: async () => {
+            const response = await api.get('treasurer/annual-gross-sales/');
+            return response.data;
+        },
+    });
 
-    const filteredData = (permitClearances || []).filter((item: any) => 
-        activeTab === "paid" ? item.req_payment_status === "Paid" : item.req_payment_status !== "Paid"
-    );
+    // Fetch purpose and rates data
+    const { data: purposes = [] } = useQuery<any[]>({
+        queryKey: ["purposes"],
+        queryFn: async () => {
+            const response = await api.get('treasurer/purpose-and-rate/');
+            return response.data;
+        },
+    });
+
+    // Debug: Log the raw API response
+    console.log("Raw permit clearances data:", permitClearances);
+    console.log("Annual gross sales data:", annualGrossSales);
+    console.log("Purposes data:", purposes);
+
+    // Fetch purpose and rates data for amount calculation
+    // const { data: purposes = [] } = useGetPurposeAndRate();
+
+    const filteredData = (permitClearances || []).filter((item: any) => {
+        if (activeTab === "declined") {
+            // Show only declined requests
+            return item.req_status === "Declined";
+        } else {
+            // Filter out declined requests for paid/unpaid tabs
+            if (item.req_status === "Declined") {
+                return false;
+            }
+            
+            // Then filter by payment status
+            return activeTab === "paid" 
+                ? item.req_payment_status === "Paid" 
+                : item.req_payment_status !== "Paid";
+        }
+    });
 
     // Map backend data to frontend columns
     const mappedData = (filteredData || []).map((item: any) => {
@@ -227,19 +309,28 @@ function PermitClearance(){
         const claimDate = new Date(requestDate);
         claimDate.setDate(requestDate.getDate() + 7);
         
+        // Find related data
+        const grossSalesData = annualGrossSales.find((ags: any) => ags.ags_id === item.ags_id);
+        const purposeData = purposes.find((purpose: any) => purpose.pr_id === item.pr_id);
+        
         return {
-            businessName: item.business_name || "",
-            address: item.business_address || "",
-            grossSales: item.req_sales_proof || "", // Use req_sales_proof instead of business_gross_sales
+            businessName: item.business_name || item.bus_permit_name || "No Business Linked",
+            address: item.business_address || item.bus_permit_address || "No Address",
+            grossSales: item.business_gross_sales || "Not Set", 
             purposes: item.purposes || [],
-            requestor: item.requestor || "",
+            requestor: item.requestor || "Unknown",
             reqDate: item.req_request_date,
             claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
             paymentStat: item.req_payment_status,
-            req_sales_proof: item.req_sales_proof,
+            req_sales_proof: item.business_gross_sales || "Not Set",
             amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
             req_amount: item.req_amount || 0, // Include req_amount field
             bpr_id: item.bpr_id || "", // Include bpr_id field
+            req_declined_reason: item.req_declined_reason || "", // Include declined reason
+            ags_id: item.ags_id, // Include ags_id
+            pr_id: item.pr_id, // Include pr_id
+            grossSalesData: grossSalesData, // Include gross sales data
+            purposeData: purposeData, // Include purpose data
             ...item
         };
     });
@@ -315,6 +406,17 @@ function PermitClearance(){
                                      >
                                          Paid
                                      </button>
+                                     <button
+                                     onClick={() => setActiveTab("declined")}
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-1 ${
+                                         activeTab === "declined"
+                                             ? "bg-[#f3f3f3] text-[#6b7280] border-[#e5e7eb] shadow-sm"
+                                             : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
+                                     }`}
+                                 >
+                                     <Ban size={14} />
+                                     Declined
+                                 </button>
                                  </div>
                              </div>
                      </div>    
@@ -326,7 +428,7 @@ function PermitClearance(){
                     ) : error ? (
                         <div className="text-center py-4 text-red-500">Error loading data</div>
                     ) : (
-                        <DataTable columns={createColumns(purposes)} data={mappedData} header={true}></DataTable>
+                        <DataTable columns={createColumns(activeTab)} data={mappedData} header={true}></DataTable>
                     )}
                 </div>
 
