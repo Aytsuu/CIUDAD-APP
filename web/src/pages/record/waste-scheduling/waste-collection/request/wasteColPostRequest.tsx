@@ -78,3 +78,16 @@ export const addAssCollector = async (wc_num: number, wstp_id: string) => {
         throw err;
     }
 }
+
+
+
+//WASTE COLLECTION ANNOUNCEMENT
+export const createCollectionReminders = async () => {
+  try {
+    const res = await api.post('waste/create-collection-reminders/');
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};

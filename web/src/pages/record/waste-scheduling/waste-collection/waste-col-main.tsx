@@ -556,7 +556,7 @@
 
 
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Trash, Search, Plus, Eye, Archive, ArchiveRestore  } from "lucide-react";
@@ -573,6 +573,8 @@ import WasteColSched from "./waste-col-sched";
 import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from "./queries/wasteColDeleteQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { sortWasteCollectionData } from "@/helpers/wasteCollectionHelper";
+import { useCreateCollectionReminders } from "./queries/wasteColAddQueries";
+
 
 
 const dayOptions = [
@@ -597,6 +599,51 @@ function WasteCollectionMain() {
 
     // FETCH MUTATIONS
     const { data: wasteCollectionData = [], isLoading } = useGetWasteCollectionSchedFull();
+
+    //POST MUTATIONs (announcement)
+    const { mutate: createReminders } = useCreateCollectionReminders();
+
+    // useEffect(() => {
+    //     if (isLoading || wasteCollectionData.length === 0) return;
+
+    //     const today = new Date().toDateString();
+    //     const lastChecked = localStorage.getItem('lastReminderCheck');
+
+    //     // Only run once per day
+    //     if (lastChecked === today) return;
+
+    //     const tomorrow = new Date();
+    //     tomorrow.setDate(tomorrow.getDate() + 1);
+    //     const tomorrowDayName = tomorrow.toLocaleDateString('en-US', { weekday: 'long' });
+
+    //     const hasTomorrowCollection = wasteCollectionData.some(
+    //         schedule => schedule.wc_day?.toLowerCase() === tomorrowDayName.toLowerCase() && !schedule.wc_is_archive
+    //     );
+
+    //     if (hasTomorrowCollection) {
+    //         createReminders();
+    //         localStorage.setItem('lastReminderCheck', today);
+    //     }
+    // }, [wasteCollectionData, isLoading, createReminders]);    
+
+    useEffect(() => {
+        if (isLoading || wasteCollectionData.length === 0) return;
+
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowDayName = tomorrow.toLocaleDateString('en-US', { weekday: 'long' });
+
+        // Check if any schedule is for tomorrow
+        const hasTomorrowCollection = wasteCollectionData.some(
+            schedule => schedule.wc_day?.toLowerCase() === tomorrowDayName.toLowerCase() && !schedule.wc_is_archive
+        );
+
+        if (hasTomorrowCollection) {
+            createReminders();
+        }
+    }, [wasteCollectionData, isLoading, createReminders]);
+
 
     // ARCHIVE / RESTORE / DELETE MUTATIONS
     const { mutate: archiveWasteSchedCol } = useArchiveWasteCol();
