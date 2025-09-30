@@ -69,7 +69,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   // Build quick lookup maps
   const proposalByDevId = useMemo(() => {
     const map = new Map<number, any>();
-    (proposals || []).forEach((p: any) => {
+    const proposalsList = Array.isArray(proposals) ? proposals : proposals?.results || [];
+    proposalsList.forEach((p: any) => {
       if (p && typeof p.devId === 'number') {
         map.set(p.devId, p);
       }
@@ -80,7 +81,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   // Only allow resolutions that belong to an existing proposal
   const validGprIds = useMemo(() => {
     const set = new Set<number>();
-    (proposals || []).forEach((p: any) => {
+    const proposalsList = Array.isArray(proposals) ? proposals : proposals?.results || [];
+    proposalsList.forEach((p: any) => {
       if (p && typeof p.gprId === 'number') {
         set.add(p.gprId);
       }

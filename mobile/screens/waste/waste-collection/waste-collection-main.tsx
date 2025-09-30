@@ -1045,7 +1045,7 @@
 
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -1063,6 +1063,7 @@ import { SelectLayout } from '@/components/ui/select-layout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { sortWasteCollectionData } from '@/helpers/wasteCollectionHelper';
 import PageLayout from '@/screens/_PageLayout';
+import { useCreateCollectionReminders } from './queries/waste-col-add-queries';
 
 
 // Day options for filtering
@@ -1085,6 +1086,28 @@ const WasteCollectionMain = () => {
 
   // Fetch data
   const { data: wasteCollectionData = [], isLoading } = useGetWasteCollectionSchedFull();
+
+  //POST MUTATIONs (announcement)
+  const { mutate: createReminders } = useCreateCollectionReminders(); 
+
+  
+  useEffect(() => {
+      if (isLoading || wasteCollectionData.length === 0) return;
+
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDayName = tomorrow.toLocaleDateString('en-US', { weekday: 'long' });
+
+      // Check if any schedule is for tomorrow
+      const hasTomorrowCollection = wasteCollectionData.some(
+          schedule => schedule.wc_day?.toLowerCase() === tomorrowDayName.toLowerCase() && !schedule.wc_is_archive
+      );
+
+      if (hasTomorrowCollection) {
+          createReminders();
+      }
+  }, [wasteCollectionData, isLoading, createReminders]);  
 
 
   // Mutation hooks

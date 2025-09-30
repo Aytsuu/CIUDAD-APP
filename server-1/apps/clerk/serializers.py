@@ -293,7 +293,6 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
         fields = [
             'bpr_id',
             'req_request_date',
-            'req_sales_proof',
             'req_status',
             'req_payment_status',
             'ags_id',
@@ -376,7 +375,6 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
         fields = [
             'bpr_id',
             'req_request_date',
-            'req_sales_proof',
             'req_status',
             'req_payment_status',
             'ags_id',
@@ -407,46 +405,6 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             # Generate a numeric ID using timestamp
             validated_data['bpr_id'] = int(time.time() * 1000) % 100000000  # 8-digit number
         
-        # Fetch ags_id from annual gross sales table based on gross_sales
-        if 'req_sales_proof' in validated_data and validated_data['req_sales_proof']:
-            try:
-                from apps.treasurer.models import Annual_Gross_Sales
-                gross_sales_range = validated_data['req_sales_proof']
-                print(f"Processing gross_sales_range: {gross_sales_range}")
-                
-                # Parse the range (e.g., "1000.00 - 2000.00")
-                if ' - ' in gross_sales_range:
-                    min_val, max_val = gross_sales_range.split(' - ')
-                    min_val = float(min_val.replace('₱', '').replace(',', ''))
-                    max_val = float(max_val.replace('₱', '').replace(',', ''))
-                    print(f"Parsed values - min: {min_val}, max: {max_val}")
-                    
-                    # Find matching annual gross sales record
-                    ags_record = Annual_Gross_Sales.objects.filter(
-                        ags_minimum=min_val,
-                        ags_maximum=max_val,
-                        ags_is_archive=False
-                    ).first()
-                    
-                    print(f"Query result: {ags_record}")
-                    
-                    if ags_record:
-                        validated_data['ags_id'] = ags_record  # Assign the instance, not the ID
-                        # Store the amount to be paid in req_amount field
-                        validated_data['req_amount'] = float(ags_record.ags_rate) if ags_record.ags_rate else 0.0
-                        print(f"Found ags_id: {ags_record.ags_id} for range {gross_sales_range}, amount: {validated_data['req_amount']}")
-                    else:
-                        print(f"No ags_id found for range {gross_sales_range}")
-                        # Let's also check what records exist in the table
-                        all_records = Annual_Gross_Sales.objects.filter(ags_is_archive=False)[:5]
-                        print(f"Sample records in table: {[(r.ags_minimum, r.ags_maximum, r.ags_id) for r in all_records]}")
-                else:
-                    print(f"Invalid gross sales format: {gross_sales_range}")
-            except Exception as e:
-                print(f"Error fetching ags_id: {str(e)}")
-                import traceback
-                print(f"Traceback: {traceback.format_exc()}")
-                # Continue without ags_id if there's an error
         
         # Create the BusinessPermitRequest
         permit_request = BusinessPermitRequest.objects.create(**validated_data)

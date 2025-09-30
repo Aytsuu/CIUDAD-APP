@@ -23,6 +23,9 @@ urlpatterns = [
     # Waste COLLECTION DELETE
     path('waste-collection-sched-delete/<int:wc_num>/', WasteCollectionSchedDeleteView.as_view(), name='waste-ass-schedule-delete'),
 
+    # Waste COLLECTION ANNOUNCMENT
+    path('create-collection-reminders/', CreateCollectionRemindersView.as_view(), name='create-collection-reminders'),
+
     # Waste Hotspot URLs
     path("waste-hotspot/", WasteHotspotView.as_view(), name="waste-hotspot-list"),
     path('upcoming-hotspots/', UpcomingHotspotView.as_view(), name='upcoming-hotspots'),

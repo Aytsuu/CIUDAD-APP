@@ -20,6 +20,7 @@ urlpatterns = [
     path('support-docs/<int:psd_id>/',ProposalSuppDocDetailView.as_view(),name='support-doc-detail'),
     path('project-proposals/<int:gpr_id>/archive/', ProjectProposalArchiveView.as_view(), name='project-proposal-archive'),
     path('project-proposals/<int:gpr_id>/restore/', ProjectProposalRestoreView.as_view(), name='project-proposal-restore'),
+    path('project-proposal-years/', ProjectProposalYearsView.as_view(), name='project-proposal-years'),
     
     path('gad-annual-development-plan/', GADDevelopmentPlanListCreate.as_view()),
     path('gad-annual-development-plan/years/', GADDevelopmentPlanYears.as_view()),

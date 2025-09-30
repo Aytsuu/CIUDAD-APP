@@ -11,22 +11,68 @@ import logging
 from rest_framework.views import APIView
 from django.db import transaction
 from apps.act_log.utils import ActivityLogMixin
+from apps.pagination import StandardResultsPagination
+from django.db.models import Q
+from utils.supabase_client import remove_from_storage
 
 logger = logging.getLogger(__name__)
 
 class GAD_Budget_TrackerView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
+    # def get_queryset(self):
+    #     year = self.kwargs.get('year')
+    #     if not year:
+    #         raise NotFound("Year parameter is required")
+        
+    #     return GAD_Budget_Tracker.objects.filter(
+    #         gbudy__gbudy_year=year,
+    #         # gbud_is_archive=False
+    #     ).select_related('gbudy', 'dev', 'staff').prefetch_related('files')
+    
     def get_queryset(self):
         year = self.kwargs.get('year')
         if not year:
             raise NotFound("Year parameter is required")
         
-        return GAD_Budget_Tracker.objects.filter(
+        queryset = GAD_Budget_Tracker.objects.filter(
             gbudy__gbudy_year=year,
-            # gbud_is_archive=False
         ).select_related('gbudy', 'dev', 'staff').prefetch_related('files')
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(gbud_reference_num__icontains=search) |
+                Q(gbud_exp_particulars__icontains=search) |
+                Q(staff__rp__per__per_fname__icontains=search) |
+                Q(staff__rp__per__per_lname__icontains=search)
+            )
+        
+        # Month filter
+        month = self.request.query_params.get('month', None)
+        if month:
+            queryset = queryset.filter(gbud_datetime__month=month)
+        
+        # Archive filter
+        is_archive = self.request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            queryset = queryset.filter(gbud_is_archive=is_archive.lower() == 'true')
+        
+        return queryset.order_by('-gbud_datetime')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):      
         try:
@@ -141,22 +187,75 @@ class GADBudgetLogListView(generics.ListCreateAPIView):
 class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ProjectProposalSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
+    # def get_queryset(self):
+    #     queryset = ProjectProposal.objects.all().select_related('staff', 'dev')
+
+    #     # Order by a field in ProjectProposal (example: created date or ID)
+    #     queryset = queryset.order_by('-gpr_id')  
+
+    #     # Get archive status from query params
+    #     archive_status = self.request.query_params.get('archive', None)
+    #     if archive_status == 'true':
+    #         queryset = queryset.filter(gpr_is_archive=True)
+    #     elif archive_status == 'false':
+    #         queryset = queryset.filter(gpr_is_archive=False)
+
+    #     return queryset
+    
     def get_queryset(self):
         queryset = ProjectProposal.objects.all().select_related('staff', 'dev')
+        queryset = queryset.order_by('-gpr_id')
 
-        # Order by a field in ProjectProposal (example: created date or ID)
-        queryset = queryset.order_by('-gpr_id')  
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(gpr_background__icontains=search) |
+                Q(gpr_venue__icontains=search) |
+                Q(gpr_monitoring__icontains=search) |
+                Q(dev__dev_project__icontains=search)
+            )
 
-        # Get archive status from query params
-        archive_status = self.request.query_params.get('archive', None)
-        if archive_status == 'true':
-            queryset = queryset.filter(gpr_is_archive=True)
-        elif archive_status == 'false':
-            queryset = queryset.filter(gpr_is_archive=False)
+        # Archive status filter - check both 'archive' and 'is_archive' params
+        archive_status = self.request.query_params.get('archive', None) or self.request.query_params.get('is_archive', None)
+        if archive_status:
+            if archive_status.lower() == 'true':
+                queryset = queryset.filter(gpr_is_archive=True)
+            elif archive_status.lower() == 'false':
+                queryset = queryset.filter(gpr_is_archive=False)
+                
+        year = self.request.query_params.get('year', None)
+        if year:
+            try:
+                year_int = int(year)
+                queryset = queryset.filter(
+                    dev__dev_date__year=year_int
+                )
+            except (ValueError, TypeError):
+                # If year is not a valid integer, ignore the filter
+                pass
 
         return queryset
-
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in ProjectProposalView list: {str(e)}", exc_info=True)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
@@ -232,13 +331,35 @@ class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
                 {"error": f"Internal server error: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+class ProjectProposalYearsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            # Get distinct years from dev_date field
+            years_query = ProjectProposal.objects.filter(
+                dev__dev_date__isnull=False
+            )
+            
+            years = years_query.annotate(
+                year=ExtractYear('dev__dev_date')
+            ).values_list('year', flat=True).distinct().order_by('-year')
+            
+            years_list = list(years)
+            
+            return Response(years_list)
+            
+        except Exception as e:
+            logger.error(f"Error fetching proposal years: {str(e)}", exc_info=True)
+            return Response([], status=status.HTTP_200_OK)
 
 class ProjectProposalDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = ProjectProposal.objects.all().select_related('staff')
     serializer_class = ProjectProposalSerializer
     lookup_field = 'gpr_id'
     permission_classes = [AllowAny]
-
+    
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -259,25 +380,46 @@ class ProjectProposalDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroy
         serializer = self.get_serializer(instance, data=request_data, partial=partial)
         serializer.is_valid(raise_exception=True)
         
+        # UPLOAD HEADER IMAGE FIRST (OUTSIDE ANY TRANSACTION)
+        header_img_url = None
+        if header_img_data:
+            try:
+                logger.info("Starting header image upload to Supabase")
+                header_img_url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
+                logger.info(f"Header image uploaded successfully: {header_img_url}")
+            except Exception as e:
+                logger.error(f"Header image upload failed: {str(e)}")
+                # Return error immediately if image upload fails
+                return Response(
+                    {"error": f"Header image upload failed: {str(e)}"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         try:
-            with transaction.atomic():
-                # First, save the main proposal data
-                self.perform_update(serializer)
-                
-                # THEN, handle the image upload after successful save
-                if header_img_data:
-                    try:
-                        url = upload_to_storage(header_img_data, 'project-proposal-bucket', 'header_images')
-                        instance.gpr_header_img = url
-                        instance.save(update_fields=['gpr_header_img'])
-                    except Exception as e:
-                        # Log the error but don't fail the entire request
-                        print(f"Header image upload failed but proposal was saved: {str(e)}")
-                
-                return Response(serializer.data)
-                
+            # Use a simpler approach without transaction.atomic()
+            # Let the serializer handle the update
+            updated_instance = serializer.save()
+            
+            # Update header image URL if upload was successful
+            if header_img_url:
+                updated_instance.gpr_header_img = header_img_url
+                updated_instance.save(update_fields=['gpr_header_img'])
+                logger.info(f"Header image URL saved to database: {header_img_url}")
+            
+            return Response(serializer.data)
+            
         except Exception as e:
-            # If anything fails, the transaction will roll back
+            logger.error(f"Failed to update proposal: {str(e)}")
+            
+            # If database update failed but image was uploaded, you might want to delete the image
+            if header_img_url:
+                try:
+                    # You would need to implement delete_from_storage
+                    remove_from_storage('project-proposal-bucket', header_img_url)
+                    logger.warning(f"Image was uploaded but proposal update failed: {header_img_url}")
+                except Exception as cleanup_error:
+                    logger.error(f"Failed to cleanup uploaded image: {str(cleanup_error)}")
+            
             return Response(
                 {"error": f"Failed to update proposal: {str(e)}"}, 
                 status=status.HTTP_400_BAD_REQUEST

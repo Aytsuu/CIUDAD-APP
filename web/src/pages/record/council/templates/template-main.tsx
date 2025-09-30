@@ -3199,11 +3199,11 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "TO WHOM IT MAY CONCERN:\n\n" +
-      "This is to certify that [NAME] of legal age, [GENDER], is a resident of [ADDRESS], Barangay San Roque Ciudad, Cebu City.\n\n" +
-      "This is to certify that [his/her] [Number in words] [(No.)] grandchild listed below are minors and are under her care and custody and supported them financially, morally and spiritually.\n\n" +
-      "[No.] [Name]\n\n" +
-      "This certification is being issued upon the request of the above mentioned name to support the application for /*PSA PURPOSES ONLY*/. Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City, Cebu Philippines."
+      `This is to certify that /*${lname}, ${fname}*/ of legal age, is a resident of ${address}, Barangay San Roque Ciudad, Cebu City.\n\n` +
+      "This is to certify that his/her grandchild/grandchildren listed below is/are minor(s) and is/are under her care and custody and supported them financially, morally and spiritually.\n\n" +
+      "\t[No.] [Name]\n\n" +
+      `This certification is being issued upon the request of the above mentioned name to support the application for /*${specificPurpose?.toUpperCase()} PURPOSES ONLY.*/.  Affixed below is the name and signature of the above-mentioned name.\n\n` +
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },       
     {
       temp_id: "PWD Financial Assistance",

@@ -21,6 +21,7 @@ import {
   useGetProjectProposals,
   useGetProjectProposal,
   useGetSupportDocs,
+  useGetProjectProposalYears
 } from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
@@ -43,36 +44,25 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
 import { DocumentCard } from "./projpropsupp-docs-modal";
+import { useDebounce } from "@/hooks/use-debounce";
 
 function GADProjectProposal() {
-  const filter = [{ id: "All", name: "All" }];
-
-  const {
-    data: projects = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useGetProjectProposals();
   const { mutate: deleteProject } = usePermanentDeleteProjectProposal();
   const { mutate: deleteSupportDoc } = useDeleteSupportDocument();
   const { mutate: archiveProject } = useArchiveProjectProposal();
   const { mutate: restoreProject } = useRestoreProjectProposal();
   const { mutate: archiveSupportDoc } = useArchiveSupportDocument();
   const { mutate: restoreSupportDoc } = useRestoreSupportDocument();
-
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedYear, setSelectedYear] = useState("All");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [_isPdfLoading, setIsPdfLoading] = useState(true);
-  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(
-    null
-  );
+  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedProject, setSelectedProject] =
-    useState<ProjectProposal | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectProposal | null>(null);
   const [selectedSuppDocs, setSelectedSuppDocs] = useState<SupportDoc[]>([]);
   const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
@@ -80,6 +70,22 @@ function GADProjectProposal() {
   const [suppDocTab, setSuppDocTab] = useState<"active" | "archived">("active");
   const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
+  const { data: availableYears = [] } = useGetProjectProposalYears();
+  const yearFilterOptions = [
+    { id: "All", name: "All" },
+    ...availableYears.map(year => ({ id: year.toString(), name: year.toString() }))
+  ];
+  const { data, isLoading, isError, error, refetch } = useGetProjectProposals(
+  currentPage,
+  pageSize,
+  debouncedSearchTerm,
+  viewMode === "archived",
+  selectedYear !== "All" ? selectedYear : undefined
+);
+
+  const projects = data?.results || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const { data: detailedProject } = useGetProjectProposal(
     selectedProject?.gprId || 0,
@@ -105,29 +111,24 @@ function GADProjectProposal() {
     }
   }, [detailedProject, selectedProject]);
 
-  const filteredProjects = (projects as ProjectProposal[])
-    .filter((_project: ProjectProposal) => {
-      if (selectedFilter === "All") return true;
-      return false;
-    })
-    .filter((project: ProjectProposal) => {
-      return viewMode === "active"
-        ? project.gprIsArchive === false
-        : project.gprIsArchive === true;
-    })
-    .filter((project: ProjectProposal) => {
-      const title = project.projectTitle?.toLowerCase() || "";
-      const background = project.background?.toLowerCase() || "";
-      const search = searchTerm.toLowerCase();
-      return title.includes(search) || background.includes(search);
-    });
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
-  // Calculate pagination values
-  const totalPages = Math.ceil(filteredProjects.length / pageSize);
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); 
+  };
+
+  const handleYearChange = (value: string) => {
+  setSelectedYear(value);
+  setCurrentPage(1); 
+};
+
+  const handleViewModeChange = (value: string) => {
+    setViewMode(value as "active" | "archived");
+    setCurrentPage(1); 
+  };
 
   const handleDelete = (gprId: number) => {
     setIsDeleting(true);
@@ -237,7 +238,7 @@ function GADProjectProposal() {
   };
 
   // Calculate total budget of all displayed projects
-  const totalBudget = filteredProjects.reduce((sum, project) => {
+  const totalBudget = projects.reduce((sum, project) => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
@@ -287,17 +288,17 @@ function GADProjectProposal() {
               placeholder="Search..."
               className="pl-10 w-full bg-white text-sm"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
           <div className="flex flex-row gap-2 justify-center items-center">
             <Label>Filter: </Label>
             <SelectLayout
               className="bg-white"
-              options={filter}
-              placeholder="Filter"
-              value={selectedFilter}
-              onChange={(value: string) => setSelectedFilter(value)}
+              options={yearFilterOptions}
+              placeholder="Year"
+              value={selectedYear}
+              onChange={handleYearChange}
             />
           </div>
           {viewMode === "active" && (
@@ -325,7 +326,7 @@ function GADProjectProposal() {
 
         <Tabs
           value={viewMode}
-          onValueChange={(value) => setViewMode(value as "active" | "archived")}
+          onValueChange={handleViewModeChange}
           className="w-auto"
         >
           <TabsList>
@@ -358,156 +359,150 @@ function GADProjectProposal() {
           <div className="flex items-center justify-center py-16">
             <Spinner size="lg" />
           </div>
-        ) : paginatedProjects.length === 0 ? (
+        ) : projects.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} project proposals
             found.
           </div>
         ) : (
           <>
-            {paginatedProjects.map(
-              (project: ProjectProposal, index: number) => {
-                return (
-                  <CardLayout
-                    key={project.gprId || index}
-                    title={
-                      <div className="flex flex-row justify-between items-center">
-                        <div className="w-full">
-                          {project.projectTitle || "Untitled"}
-                        </div>
-                        <div className="flex gap-2">
-                          <Eye
-                            className="text-gray-500 hover:text-blue-600 cursor-pointer"
-                            size={20}
-                            onClick={() => handleViewProject(project)}
-                          />
-                          {viewMode === "active" ? (
-                            <>
-                              <ConfirmationModal
-                                trigger={
-                                  <Archive
-                                    className="text-gray-500 hover:text-red-600 cursor-pointer"
-                                    size={20}
-                                  />
-                                }
-                                title="Archive Project Proposal"
-                                description="Are you sure you want to archive this project proposal?"
-                                actionLabel="Archive"
-                                onClick={() => handleArchive(project.gprId)}
-                                type="warning"
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <ConfirmationModal
-                                trigger={
-                                  <ArchiveRestore
-                                    className="text-gray-500 hover:text-green-600 cursor-pointer"
-                                    size={20}
-                                  />
-                                }
-                                title="Restore Project Proposal"
-                                description="Are you sure you want to restore this project proposal?"
-                                actionLabel="Restore"
-                                onClick={() => handleRestore(project.gprId)}
-                                type="success"
-                              />
-                              <ConfirmationModal
-                                trigger={
-                                  <Trash
-                                    className="text-gray-500 hover:text-red-600 cursor-pointer"
-                                    size={20}
-                                  />
-                                }
-                                title="Permanently Delete Project Proposal"
-                                description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
-                                actionLabel={
-                                  isDeleting ? "Deleting..." : "Delete"
-                                }
-                                onClick={() => handleDelete(project.gprId)}
-                                type="destructive"
-                              />
-                            </>
-                          )}
-                        </div>
+            {projects.map((project: ProjectProposal, index: number) => {
+              return (
+                <CardLayout
+                  key={project.gprId || index}
+                  title={
+                    <div className="flex flex-row justify-between items-center">
+                      <div className="w-full">
+                        {project.projectTitle || "Untitled"}
                       </div>
-                    }
-                    description={
-                      <div className="space-y-2">
-                        <div className="line-clamp-2 text-sm text-gray-600">
-                          {project.background || "No background provided"}
-                        </div>
-                        <div className="text-left mt-1">
-                          <span className="text-xs text-gray-500">
-                            Date: {project.date || "No date provided"}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500 underline">
-                          Total Budget: ₱
-                          {project.budgetItems && project.budgetItems.length > 0
-                            ? new Intl.NumberFormat("en-US", {
-                                style: "decimal",
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }).format(
-                                project.budgetItems.reduce(
-                                  (grandTotal, item) => {
-                                    const amount =
-                                      typeof item.amount === "string"
-                                        ? parseFloat(item.amount) || 0
-                                        : item.amount || 0;
-                                    const paxCount =
-                                      typeof item.pax === "string"
-                                        ? parseInt(item.pax) ||
-                                          (item.pax.includes("pax")
-                                            ? parseInt(item.pax) || 1
-                                            : 1)
-                                        : 1;
-                                    return grandTotal + paxCount * amount;
-                                  },
-                                  0
-                                )
-                              )
-                            : "N/A"}
+                      <div className="flex gap-2">
+                        <Eye
+                          className="text-gray-500 hover:text-blue-600 cursor-pointer"
+                          size={20}
+                          onClick={() => handleViewProject(project)}
+                        />
+                        {viewMode === "active" ? (
+                          <>
+                            <ConfirmationModal
+                              trigger={
+                                <Archive
+                                  className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                  size={20}
+                                />
+                              }
+                              title="Archive Project Proposal"
+                              description="Are you sure you want to archive this project proposal?"
+                              actionLabel="Archive"
+                              onClick={() => handleArchive(project.gprId)}
+                              type="warning"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <ConfirmationModal
+                              trigger={
+                                <ArchiveRestore
+                                  className="text-gray-500 hover:text-green-600 cursor-pointer"
+                                  size={20}
+                                />
+                              }
+                              title="Restore Project Proposal"
+                              description="Are you sure you want to restore this project proposal?"
+                              actionLabel="Restore"
+                              onClick={() => handleRestore(project.gprId)}
+                              type="success"
+                            />
+                            <ConfirmationModal
+                              trigger={
+                                <Trash
+                                  className="text-gray-500 hover:text-red-600 cursor-pointer"
+                                  size={20}
+                                />
+                              }
+                              title="Permanently Delete Project Proposal"
+                              description="Are you sure you want to permanently delete this project proposal? This action cannot be undone."
+                              actionLabel={
+                                isDeleting ? "Deleting..." : "Delete"
+                              }
+                              onClick={() => handleDelete(project.gprId)}
+                              type="destructive"
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  }
+                  description={
+                    <div className="space-y-2">
+                      <div className="line-clamp-2 text-sm text-gray-600">
+                        {project.background || "No background provided"}
+                      </div>
+                      <div className="text-left mt-1">
+                        <span className="text-xs text-gray-500">
+                          Date: {project.date || "No date provided"}
                         </span>
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex flex-col gap-1"></div>
-                          <div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewSupportingDocs(project)}
-                              className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
-                            >
-                              View Supporting Docs
-                            </Button>
-                          </div>
+                      </div>
+                      <span className="text-xs text-gray-500 underline">
+                        Total Budget: ₱
+                        {project.budgetItems && project.budgetItems.length > 0
+                          ? new Intl.NumberFormat("en-US", {
+                              style: "decimal",
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(
+                              project.budgetItems.reduce((grandTotal, item) => {
+                                const amount =
+                                  typeof item.amount === "string"
+                                    ? parseFloat(item.amount) || 0
+                                    : item.amount || 0;
+                                const paxCount =
+                                  typeof item.pax === "string"
+                                    ? parseInt(item.pax) ||
+                                      (item.pax.includes("pax")
+                                        ? parseInt(item.pax) || 1
+                                        : 1)
+                                    : 1;
+                                return grandTotal + paxCount * amount;
+                              }, 0)
+                            )
+                          : "N/A"}
+                      </span>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex flex-col gap-1"></div>
+                        <div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewSupportingDocs(project)}
+                            className="text-sky-600 hover:text-blue-800 flex items-center gap-1"
+                          >
+                            View Supporting Docs
+                          </Button>
                         </div>
                       </div>
-                    }
-                    content={null}
-                    cardClassName="w-full border p-4"
-                    titleClassName="text-lg font-semibold text-darkBlue2"
-                    contentClassName="text-sm text-darkGray"
-                  />
-                );
-              }
-            )}
+                    </div>
+                  }
+                  content={null}
+                  cardClassName="w-full border p-4"
+                  titleClassName="text-lg font-semibold text-darkBlue2"
+                  contentClassName="text-sm text-darkGray"
+                />
+              );
+            })}
 
             {/* Pagination Section */}
             <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
               <p className="text-xs sm:text-sm text-darkGray">
-                Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, filteredProjects.length)} of{" "}
-                {filteredProjects.length} rows
+                Showing{" "}
+                {projects.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
+                rows
               </p>
-              {filteredProjects.length > 0 && (
+              {totalPages > 1 && (
                 <PaginationLayout
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page);
-                  }}
+                  onPageChange={handlePageChange}
                 />
               )}
             </div>

@@ -14,6 +14,11 @@ from apps.act_log.utils import ActivityLogMixin
 from django.db.models import OuterRef, Subquery
 from django.db.models import Q
 from datetime import date, timedelta
+from rest_framework.views import APIView
+from django.utils import timezone
+from apps.announcement.models import Announcement, AnnouncementRecipient
+
+
 
 # Create your views here.
 #KANI 3RD
@@ -134,6 +139,74 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
     def get_object(self):
         wc_num = self.kwargs.get('wc_num')
         return get_object_or_404(WasteCollectionSched, wc_num=wc_num) 
+    
+
+#WASTE COLLECTION ANNOUNCEMENT
+class CreateCollectionRemindersView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        today = timezone.now().date()
+        tomorrow = today + timedelta(days=1)
+        tomorrow_day = tomorrow.strftime('%A')
+
+        schedules = WasteCollectionSched.objects.filter(
+            wc_day__iexact=tomorrow_day,
+            wc_is_archive=False
+        ).select_related('sitio', 'staff')
+
+        created_announcements = []
+        
+        for schedule in schedules:
+            sitio_name = schedule.sitio.sitio_name if schedule.sitio else "Unknown Location"
+            time_str = schedule.wc_time.strftime('%I:%M %p') if schedule.wc_time else "TBD"
+            
+            # Check if announcement already exists for today
+            existing_announcement = Announcement.objects.filter(
+                ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
+                ann_created_at__date=today,
+                ann_type="general"
+            ).first()
+            
+            if existing_announcement:
+                continue  # Skip if already created today
+            
+            # Create announcement
+            announcement = Announcement.objects.create(
+                ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
+                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
+                ann_created_at=timezone.now(),
+                ann_type="general",
+                ann_to_email=True,
+                ann_to_sms=True,
+                ann_status="Active",
+                staff=schedule.staff
+            )
+
+            # Create recipients
+            AnnouncementRecipient.objects.create(
+                ann=announcement,
+                ar_category="staff",
+                ar_type="LOADER"
+            )
+
+            AnnouncementRecipient.objects.create(
+                ann=announcement,
+                ar_category="staff",
+                ar_type="DRIVER LOADER"
+            )
+
+            created_announcements.append({
+                'ann_id': announcement.ann_id,
+                'sitio': sitio_name,
+                'day': schedule.wc_day,
+                'time': time_str
+            })
+
+        return Response({
+            'message': f'Created {len(created_announcements)} announcements',
+            'announcements': created_announcements
+        }, status=status.HTTP_201_CREATED)
 
 
 #============================= WASTE HOTSPOT ================================
