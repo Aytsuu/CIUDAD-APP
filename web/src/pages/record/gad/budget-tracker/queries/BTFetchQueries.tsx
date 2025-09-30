@@ -22,14 +22,34 @@ const transformBudgetEntry = (entry: GADBudgetEntry): GADBudgetEntryUI => {
   };
 };
 
-export const useGADBudgets = (year?: string) => {
-    return useQuery({
-        queryKey: ['gad-budgets', year],
-        queryFn: () => fetchGADBudgets(year || ''),
-        enabled: !!year,
-        select: (data) => data.map(transformBudgetEntry),
-        staleTime: 1000 * 60 * 5,
-    });
+// export const useGADBudgets = (year?: string) => {
+//     return useQuery({
+//         queryKey: ['gad-budgets', year],
+//         queryFn: () => fetchGADBudgets(year || ''),
+//         enabled: !!year,
+//         select: (data) => data.map(transformBudgetEntry),
+//         staleTime: 1000 * 60 * 5,
+//     });
+// };
+
+export const useGADBudgets = (
+  year?: string,
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  selectedMonth?: string,
+  isArchive?: boolean
+) => {
+  return useQuery({
+    queryKey: ['gad-budgets', year, page, pageSize, searchQuery, selectedMonth, isArchive],
+    queryFn: () => fetchGADBudgets(year || '', page, pageSize, searchQuery, selectedMonth, isArchive),
+    enabled: !!year,
+    select: (data) => ({
+      results: data.results.map(transformBudgetEntry),
+      count: data.count
+    }),
+    staleTime: 1000 * 60 * 5,
+  });
 };
 
 export const useGADBudgetEntry = (gbud_num?: number) => {
@@ -68,10 +88,20 @@ export const useProjectProposalsAvailability = (year?: string) => {
   });
 };
 
-export const useGADBudgetLogs = (year: string) => {
-  return useQuery<BudgetLogTable[], Error>({
-    queryKey: ["gadBudgetLogs", year],
-    queryFn: () => fetchBudgetLog(year),
+export const useGADBudgetLogs = (
+  year: string, 
+  page: number = 1, 
+  pageSize: number = 10, 
+  searchQuery?: string
+) => {
+  return useQuery<{
+    results: BudgetLogTable[];
+    count: number;
+    next: string | null;
+    previous: string | null;
+  }, Error>({
+    queryKey: ["gadBudgetLogs", year, page, pageSize, searchQuery],
+    queryFn: () => fetchBudgetLog(year, page, pageSize, searchQuery),
     enabled: !!year,
     staleTime: 1000 * 60 * 5,
   });

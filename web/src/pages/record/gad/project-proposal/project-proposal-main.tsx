@@ -21,7 +21,7 @@ import {
   useGetProjectProposals,
   useGetProjectProposal,
   useGetSupportDocs,
-  useGetProjectProposalYears
+  useGetProjectProposalYears,
 } from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
@@ -45,6 +45,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProjectProposal, SupportDoc } from "./projprop-types";
 import { DocumentCard } from "./projpropsupp-docs-modal";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
 
 function GADProjectProposal() {
   const { mutate: deleteProject } = usePermanentDeleteProjectProposal();
@@ -58,11 +59,14 @@ function GADProjectProposal() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [_isPdfLoading, setIsPdfLoading] = useState(true);
-  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<ProjectProposal | null>(null);
+  const [selectedProject, setSelectedProject] =
+    useState<ProjectProposal | null>(null);
   const [selectedSuppDocs, setSelectedSuppDocs] = useState<SupportDoc[]>([]);
   const [isSuppDocDialogOpen, setIsSuppDocDialogOpen] = useState(false);
   const [isDeletingDoc, setIsDeletingDoc] = useState(false);
@@ -71,17 +75,21 @@ function GADProjectProposal() {
   const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
   const { data: availableYears = [] } = useGetProjectProposalYears();
+  const { showLoading, hideLoading } = useLoading();
   const yearFilterOptions = [
     { id: "All", name: "All" },
-    ...availableYears.map(year => ({ id: year.toString(), name: year.toString() }))
+    ...availableYears.map((year) => ({
+      id: year.toString(),
+      name: year.toString(),
+    })),
   ];
   const { data, isLoading, isError, error, refetch } = useGetProjectProposals(
-  currentPage,
-  pageSize,
-  debouncedSearchTerm,
-  viewMode === "archived",
-  selectedYear !== "All" ? selectedYear : undefined
-);
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    viewMode === "archived",
+    selectedYear !== "All" ? selectedYear : undefined
+  );
 
   const projects = data?.results || [];
   const totalCount = data?.count || 0;
@@ -117,17 +125,17 @@ function GADProjectProposal() {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleYearChange = (value: string) => {
-  setSelectedYear(value);
-  setCurrentPage(1); 
-};
+    setSelectedYear(value);
+    setCurrentPage(1);
+  };
 
   const handleViewModeChange = (value: string) => {
     setViewMode(value as "active" | "archived");
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleDelete = (gprId: number) => {
@@ -264,8 +272,16 @@ function GADProjectProposal() {
     );
   }
 
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
   return (
-    <div className="bg-snow w-full h-full p-4">
+    <div className="w-full h-full">
       <div className="flex flex-col gap-3 mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
           <div>GAD Project Proposal</div>
