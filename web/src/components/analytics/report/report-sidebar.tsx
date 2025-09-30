@@ -7,20 +7,21 @@ import { Link, useNavigate } from "react-router";
 
 const SEVERITY: any = {
   LOW: {
-    bg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
     label: 'Low Priority',
-    textColor: 'text-emerald-50'
+    textColor: 'text-emerald-600',
   },
   MEDIUM: {
-    bg: 'bg-gradient-to-br from-amber-500 to-amber-600',
+    icon: AlertTriangle,
     label: 'Medium Priority',
-    textColor: 'text-amber-50'
+    textColor: 'text-amber-600',
+    iconColor: 'text-amber-600'
   },
   HIGH: {
-    bg: 'bg-gradient-to-br from-red-600 to-red-700',
     icon: AlertTriangle,
     label: 'High Priority',
-    textColor: 'text-red-50'
+    textColor: 'text-red-600',
+    bgColor: 'bg-red-100',
+    iconColor: 'text-red-600'
   },
 };
 
@@ -54,43 +55,43 @@ export const ReportSidebar = () => {
             ))}
           </div>
         ) : reportSidebar?.length > 0 ? (
-          <div className="p-4 space-y-3">
+          <div>
             {reportSidebar.map((data: Record<string, any>, index: number) => {
               const severityConfig = SEVERITY[data.ir_severity];
               const SeverityIcon = severityConfig.icon;
               
               return (
-                <Card 
+                <div 
                   key={index}
-                  className={`p-4 hover:shadow-lg shadow-sm rounded-xl transition-all duration-200 cursor-pointer border-none ${severityConfig.bg} ${severityConfig.textColor} relative overflow-hidden`}
+                  className={`${severityConfig.bgColor} p-4 transition-all duration-200 cursor-pointer border-b border-gray-200 ${index === 0 ? 'border-t' : ''}`}
                   onClick={() => handleClick(data.ir_id)}
                 >
                   {/* Content */}
                   <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between">
                       <div className="flex items-center gap-10 flex-1 min-w-0">
-                        <div className="min-w-0">
-                          <h3 className="font-semibold truncate text-sm">
+                        <div className="min-w-0 space-y-2">
+                          <h3 className="font-semibold truncate text-sm text-gray-700">
                             {data.ir_reported_by}
                           </h3>
 
-                         <div className="flex gap-2 opacity-90 text-xs font-medium">
+                         <div className="flex gap-2 text-xs font-medium text-gray-600">
                            <span>{formatTimeAgo(data.ir_created_at)}</span>
                            <span>-</span>
-                            <span>{severityConfig.label}</span>
+                            <span className={severityConfig.textColor}>{severityConfig.label}</span>
                          </div>
                         </div>
                         {SeverityIcon && (
-                          <div className="w-8 h-8 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
-                            <SeverityIcon size={20} className="fill-red-600 " />
+                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                            <SeverityIcon size={20} className={severityConfig.iconColor} />
                           </div>
                         )}
                       </div>
                       
-                      <ChevronRight className="w-5 h-5 flex-shrink-0 mt-1 opacity-80" />
+                      <ChevronRight className="w-5 h-5 flex-shrink-0 mt-1 text-gray-400" />
                     </div>
                   </div>
-                </Card>
+                </div>
               );
             })}
           </div>

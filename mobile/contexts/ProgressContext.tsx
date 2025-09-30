@@ -41,6 +41,8 @@ export const ProgressProvider = ({ children } : {
     try {
       setCurrentStep(1);
       setCompletedSteps([]);
+      setIsRespondentLinked(false);
+      setLinkedTo(0)
     } catch (error) {
       console.error('Error resetting progress:', error);
     }
