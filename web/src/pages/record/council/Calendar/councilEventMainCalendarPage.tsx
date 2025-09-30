@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Button } from "@/components/ui/button/button.tsx";
@@ -14,6 +14,7 @@ import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-col
 import { wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext"; 
 
 function CalendarPage() {
   const { data: councilEvents = [], isLoading: isCouncilEventsLoading } = useGetCouncilEvents();
@@ -23,7 +24,7 @@ function CalendarPage() {
   const [_actionInProgress, setActionInProgress] = useState(false);
   const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
   const { data: wasteCollectionData = [],  isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
-
+  const { showLoading, hideLoading } = useLoading();
   const calendarSources = [
     {
       name: "Waste Collection",
@@ -77,6 +78,13 @@ function CalendarPage() {
   };
 
 const isLoading = isCouncilEventsLoading || isWasteColLoading;
+ useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">

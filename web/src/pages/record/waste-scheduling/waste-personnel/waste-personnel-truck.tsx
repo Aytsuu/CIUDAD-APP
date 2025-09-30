@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Truck, User, Trash2 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
 import { PersonnelCategory, PersonnelData } from "./waste-personnel-types";
 import TruckManagement from "./waste-truck-form";
+import { useLoading } from "@/context/LoadingContext"; 
 
 const WastePersonnelDashboard = () => {
   const [activeTab, setActiveTab] = useState<PersonnelCategory>("Driver Loader");
+  const { showLoading, hideLoading } = useLoading();
   const categoryDisplayNames: Record<PersonnelCategory, string> = {
     "Driver Loader": "Driver Loader",
     "Loader": "Waste Loader",
@@ -34,6 +36,22 @@ const WastePersonnelDashboard = () => {
       return "Loader";
     return title;
   };
+
+   useEffect(() => {
+    if (isPersonnelLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isPersonnelLoading, showLoading, hideLoading]);
+
+   useEffect(() => {
+    if (isTrucksLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isTrucksLoading, showLoading, hideLoading]);
 
   const personnelData: PersonnelData = {
     "Driver Loader": personnel

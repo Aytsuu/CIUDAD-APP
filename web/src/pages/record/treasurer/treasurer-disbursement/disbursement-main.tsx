@@ -41,6 +41,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DisbursementVoucher, DisbursementFile } from "./incDisb-types";
 import { DocumentCard } from "./disbursement-suppdocs-modal";
+import { useLoading } from "@/context/LoadingContext"; 
 
 function TreasurerDisbursementVouchers() {
   const {
@@ -74,6 +75,7 @@ function TreasurerDisbursementVouchers() {
   const [filesTab, setFilesTab] = useState<"active" | "archived">("active");
   const [pageSize, _setPageSize] = useState(3);
   const [currentPage, setCurrentPage] = useState(1);
+  const { showLoading, hideLoading } = useLoading();
 
   const { data: detailedDisbursement } = useGetDisbursementVoucher(
     selectedDisbursement?.dis_num?.toString() || "",
@@ -252,6 +254,14 @@ function TreasurerDisbursementVouchers() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   return (
     <div className="bg-snow w-full h-full p-4">
