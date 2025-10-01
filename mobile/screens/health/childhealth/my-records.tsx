@@ -657,7 +657,7 @@ export default function InvChildHealthRecords() {
                     </ScrollView>
 
                     {/* Pagination Controls */}
-                    {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={processedHistoryData.length} pageSize={pageSize} onPageChange={handlePageChange} />}
+                    {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages}  onPageChange={handlePageChange} />}
                   </>
                 )}
               </View>

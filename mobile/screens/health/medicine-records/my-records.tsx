@@ -197,11 +197,12 @@ export default function IndividualMedicineRecords() {
             <PatientInfoCard patient={patientData} />
           </View>
         ) : (
-          <View className="px-4 pt-4">
-            <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <Text className="text-yellow-800 text-center">{hasRecords ? "Patient information not available" : "No patient records found"}</Text>
+            <View className="px-4 pt-4">
+            <View className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+              <View className="h-4 bg-gray-300 rounded w-3/4 self-center mb-2" />
+              <View className="h-4 bg-gray-300 rounded w-1/2 self-center" />
             </View>
-          </View>
+            </View>
         )}
 
         <View className="p-4 border-b border-gray-200 mb-2">
@@ -244,8 +245,7 @@ export default function IndividualMedicineRecords() {
           ) : (
             <>
               <FlatList data={medicineRecords} keyExtractor={(item) => `medicine-record-${item.medrec_id}`} showsVerticalScrollIndicator={false} scrollEnabled={false} renderItem={({ item }) => <MedicineRecordCard record={item} />} ListFooterComponent={<View className="h-4" />} />
-
-              {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />}
+              {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
             </>
           )}
         </View>

@@ -374,13 +374,13 @@ export default function ConsultationDetailsScreen() {
       <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
         {/* Patient Info Card */}
         {serializedPatientData && (
-          <View className="px-4 pt-4">
+          <View className="mx-4 ">
             <PatientInfoCard patient={serializedPatientData} />
           </View>
         )}
 
         {/* Consultation Records Header */}
-        <View className="mx-4 mt-6 mb-4">
+        <View className="mx-6 mt-6 mb-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
               <Calendar size={20} color="#6B7280" />

@@ -1,8 +1,9 @@
 // components/followup-cards.tsx
 import React, { useState } from "react";
-import { View, TouchableOpacity, ScrollView } from "react-native";
-import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react-native";
+import { View, TouchableOpacity, ScrollView, Modal, FlatList } from "react-native";
+import { Calendar, CheckCircle, Clock, AlertCircle, X, ChevronRight } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface FollowUps {
   followupVaccines?: any[];
@@ -15,7 +16,12 @@ export function FollowUpsCard({
 }: FollowUps) {
   const [activeTab, setActiveTab] = useState<"pending" | "completed" | "missed">("pending");
   const [activeChildHealthTab, setActiveChildHealthTab] = useState<"pending" | "completed" | "missed">("pending");
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<"vaccine" | "health">("vaccine");
+  
+  // Separate state for modal tabs to prevent re-renders
+  const [modalActiveTab, setModalActiveTab] = useState<"pending" | "completed" | "missed">("pending");
+  const [modalActiveChildHealthTab, setModalActiveChildHealthTab] = useState<"pending" | "completed" | "missed">("pending");
 
   // Helper function to determine if an item is missed
   const isMissedItem = (item: any) => {
@@ -44,8 +50,6 @@ export function FollowUpsCard({
   if (!showFollowupSection && !showChildHealthSection) {
     return null;
   }
-
-
 
   // Compact tab button component
   const TabButton = ({
@@ -169,134 +173,250 @@ export function FollowUpsCard({
     );
   };
 
-  // Section header component
-  const SectionHeader = ({
+  // Full Follow-ups Modal
+  const FollowUpsModal = ({
+    visible,
+    onClose,
+    type,
+  }: {
+    visible: boolean;
+    onClose: () => void;
+    type: "vaccine" | "health";
+  }) => {
+    const isVaccine = type === "vaccine";
+    const currentData = isVaccine ? categorizedFollowups : categorizedChildHealths;
+    const currentActiveTab = isVaccine ? modalActiveTab : modalActiveChildHealthTab;
+    const setCurrentActiveTab = isVaccine ? setModalActiveTab : setModalActiveChildHealthTab;
+    const title = isVaccine ? "Follow-up Vaccines" : "Health Check-ups";
+    const iconColor = isVaccine ? "#3b82f6" : "#10b981";
+
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={onClose}
+      >
+        <View className="flex-1 bg-white pt-4">
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-4 pb-4 border-b border-gray-200">
+            <View className="flex-row items-center">
+              <Calendar size={20} color={iconColor} />
+              <Text className="text-lg font-semibold text-gray-800 ml-2">
+                {title}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} className="p-2">
+              <X size={24} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View className="flex-1 p-4">
+            {/* Compact tabs */}
+            <View className="flex flex-row mb-4 bg-gray-50 rounded-lg p-1">
+              <TabButton
+                active={currentActiveTab === "pending"}
+                type="pending"
+                count={currentData.pending.length}
+                onClick={() => setCurrentActiveTab("pending")}
+              />
+              <TabButton
+                active={currentActiveTab === "completed"}
+                type="completed"
+                count={currentData.completed.length}
+                onClick={() => setCurrentActiveTab("completed")}
+              />
+              <TabButton
+                active={currentActiveTab === "missed"}
+                type="missed"
+                count={currentData.missed.length}
+                onClick={() => setCurrentActiveTab("missed")}
+              />
+            </View>
+
+            {/* Follow-up list */}
+            <View className="flex-1">
+              {currentData[currentActiveTab].length === 0 ? (
+                <EmptyState type={currentActiveTab} />
+              ) : (
+                <FlatList
+                  data={currentData[currentActiveTab]}
+                  keyExtractor={(item, index) => 
+                    item.id || 
+                    item.followup_id || 
+                    `followup-${type}-${index}`
+                  }
+                  renderItem={({ item }) => (
+                    <FollowUpItem
+                      item={item}
+                      type={currentActiveTab}
+                      isVaccine={isVaccine}
+                    />
+                  )}
+                  contentContainerStyle={{ paddingBottom: 16 }}
+                  showsVerticalScrollIndicator={true}
+                />
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  // Preview section component
+  const PreviewSection = ({
     title,
     icon: Icon,
     iconColor,
+    data,
+    activeTab,
+    setActiveTab,
+    type,
   }: {
     title: string;
     icon: any;
     iconColor: string;
-  }) => (
-    <View className="flex flex-row items-center gap-2 py-2 px-1">
-      <Icon size={18} color={iconColor} />
-      <Text className="font-semibold text-gray-800">{title}</Text>
-     
-    </View>
-  );
+    data: any;
+    activeTab: "pending" | "completed" | "missed";
+    setActiveTab: (tab: "pending" | "completed" | "missed") => void;
+    type: "vaccine" | "health";
+  }) => {
+    const previewItems = data[activeTab].slice(0, 3);
+    const hasMoreItems = data[activeTab].length > 3;
+    const totalCount = data[activeTab].length;
+
+    const handleTabClick = (tab: "pending" | "completed" | "missed") => {
+      setActiveTab(tab);
+      // Also update the modal tab state when clicking preview tabs
+      if (type === "vaccine") {
+        setModalActiveTab(tab);
+      } else {
+        setModalActiveChildHealthTab(tab);
+      }
+    };
+
+    const handleSectionClick = () => {
+      setModalType(type);
+      setModalVisible(true);
+    };
+
+    return (
+      <TouchableOpacity 
+        onPress={handleSectionClick}
+        className="border border-gray-200 rounded-lg bg-white overflow-hidden"
+      >
+        <View className="flex-1">
+          {/* Header */}
+          <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
+            <View className="flex-row items-center">
+              <Icon size={18} color={iconColor} />
+              <Text className="font-semibold text-gray-800 ml-2">
+                {title}
+              </Text>
+            </View>
+            {totalCount > 0 && (
+              <Text className="text-xs text-gray-500">
+                {totalCount} total
+              </Text>
+            )}
+          </View>
+
+          {/* Content */}
+          <View className="p-3">
+            {/* Tabs */}
+            <View 
+              className="flex flex-row mb-3 bg-gray-50 rounded-lg p-1"
+              // Stop propagation to prevent modal from opening when clicking tabs
+              onStartShouldSetResponder={() => true}
+              onTouchEnd={(e) => e.stopPropagation()}
+            >
+              <TabButton
+                active={activeTab === "pending"}
+                type="pending"
+                count={data.pending.length}
+                onClick={() => handleTabClick("pending")}
+              />
+              <TabButton
+                active={activeTab === "completed"}
+                type="completed"
+                count={data.completed.length}
+                onClick={() => handleTabClick("completed")}
+              />
+              <TabButton
+                active={activeTab === "missed"}
+                type="missed"
+                count={data.missed.length}
+                onClick={() => handleTabClick("missed")}
+              />
+            </View>
+
+            {/* Preview Items */}
+            {previewItems.length === 0 ? (
+              <EmptyState type={activeTab} />
+            ) : (
+              <>
+                {previewItems.map((item: any, index: number) => (
+                  <FollowUpItem
+                    key={index}
+                    item={item}
+                    type={activeTab}
+                    isVaccine={type === "vaccine"}
+                  />
+                ))}
+                
+                {/* Show More Footer */}
+                {hasMoreItems && (
+                  <View className="border-t border-gray-100 bg-gray-50 -mx-3 -mb-3 px-4 py-3 flex-row items-center justify-between">
+                    <Text className="text-sm text-blue-600 font-medium">
+                      Show all {totalCount} items
+                    </Text>
+                    <ChevronRight size={16} color="#0EA5E9" />
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <ScrollView className="flex-1">
-      <View className="space-y-4">
-        {/* Follow-up Vaccines Section */}
-        {showFollowupSection && (
-          <View className="bg-white rounded-xl border border-gray-200">
-            <View className="p-4 border-b border-gray-100">
-              <SectionHeader
-                title="Follow-ups"
-                icon={Calendar}
-                iconColor="#3b82f6"
-                // count={followupVaccines.length}
-              />
-            </View>
+    <View className="flex-1 space-y-4">
+      {/* Follow-up Vaccines Section */}
+      {showFollowupSection && (
+        <PreviewSection
+          title="Follow-up Vaccines"
+          icon={Calendar}
+          iconColor="#3b82f6"
+          data={categorizedFollowups}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          type="vaccine"
+        />
+      )}
 
-            {/* Always show content */}
-            <View className="p-4">
-                {/* Compact tabs */}
-                <View className="flex flex-row mb-4 bg-gray-50 rounded-lg p-1">
-                  <TabButton
-                    active={activeTab === "pending"}
-                    type="pending"
-                    count={categorizedFollowups.pending.length}
-                    onClick={() => setActiveTab("pending")}
-                  />
-                  <TabButton
-                    active={activeTab === "completed"}
-                    type="completed"
-                    count={categorizedFollowups.completed.length}
-                    onClick={() => setActiveTab("completed")}
-                  />
-                  <TabButton
-                    active={activeTab === "missed"}
-                    type="missed"
-                    count={categorizedFollowups.missed.length}
-                    onClick={() => setActiveTab("missed")}
-                  />
-                </View>
+      {/* Child Health Follow-ups Section */}
+      {showChildHealthSection && (
+        <PreviewSection
+          title="Health Check-ups"
+          icon={Calendar}
+          iconColor="#10b981"
+          data={categorizedChildHealths}
+          activeTab={activeChildHealthTab}
+          setActiveTab={setActiveChildHealthTab}
+          type="health"
+        />
+      )}
 
-                {/* Content */}
-                <View className="max-h-80">
-                  <ScrollView nestedScrollEnabled>
-                    {categorizedFollowups[activeTab].length > 0 ? (
-                      categorizedFollowups[activeTab].map((item, index) => (
-                        <FollowUpItem key={index} item={item} type={activeTab} />
-                      ))
-                    ) : (
-                      <EmptyState type={activeTab} />
-                    )}
-                  </ScrollView>
-                </View>
-              </View>
-            </View>
-        )}
-
-        {/* Child Health Follow-ups Section */}
-        {showChildHealthSection && (
-          <View className="bg-white rounded-xl border border-gray-200">
-            <View className="p-4 border-b border-gray-100">
-              <SectionHeader
-                title="Health Check-ups"
-                icon={Calendar}
-                iconColor="#10b981"
-              />
-            </View>
-
-            {/* Always show content */}
-            <View className="p-4">
-                {/* Compact tabs */}
-                <View className="flex flex-row mb-4 bg-gray-50 rounded-lg p-1">
-                  <TabButton
-                    active={activeChildHealthTab === "pending"}
-                    type="pending"
-                    count={categorizedChildHealths.pending.length}
-                    onClick={() => setActiveChildHealthTab("pending")}
-                  />
-                  <TabButton
-                    active={activeChildHealthTab === "completed"}
-                    type="completed"
-                    count={categorizedChildHealths.completed.length}
-                    onClick={() => setActiveChildHealthTab("completed")}
-                  />
-                  <TabButton
-                    active={activeChildHealthTab === "missed"}
-                    type="missed"
-                    count={categorizedChildHealths.missed.length}
-                    onClick={() => setActiveChildHealthTab("missed")}
-                  />
-                </View>
-
-                {/* Content */}
-                <View className="max-h-80">
-                  <ScrollView nestedScrollEnabled>
-                    {categorizedChildHealths[activeChildHealthTab].length > 0 ? (
-                      categorizedChildHealths[activeChildHealthTab].map((item, index) => (
-                        <FollowUpItem
-                          key={index}
-                          item={item}
-                          type={activeChildHealthTab}
-                          isVaccine={false}
-                        />
-                      ))
-                    ) : (
-                      <EmptyState type={activeChildHealthTab} />
-                    )}
-                  </ScrollView>
-                </View>
-              </View>
-            </View>
-        )}
-      </View>
-    </ScrollView>
+      {/* Full Follow-ups Modal */}
+      <FollowUpsModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        type={modalType}
+      />
+    </View>
   );
 }

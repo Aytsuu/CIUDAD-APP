@@ -300,7 +300,7 @@ export default function AllVaccinationRecords() {
               }
             />
             {/* Pagination Controls */}
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
+            <PaginationControls currentPage={currentPage} totalPages={totalPages}  onPageChange={handlePageChange} />
           </>
         )}
       </View>

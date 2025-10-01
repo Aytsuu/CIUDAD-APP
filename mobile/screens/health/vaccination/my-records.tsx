@@ -28,9 +28,8 @@ export default function IndividualVaccinationRecords() {
   const [activeTab, setActiveTab] = useState("status");
   const { pat_id } = useAuth();
   const [patId, setPatientId] = useState("");
-
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
+  const [isSearching, setIsSearching] = useState(false);
   const mode = typeof params.mode === "string" ? params.mode : null;
 
   useEffect(() => {
@@ -54,7 +53,6 @@ export default function IndividualVaccinationRecords() {
       console.log("No vaccination records found");
       return null;
     }
-
     // Get patient data from the first record (all records should have the same patient)
     const firstRecord = vaccinationRecords[0];
     console.log("First record patient data:", firstRecord?.patient);
@@ -98,12 +96,10 @@ export default function IndividualVaccinationRecords() {
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading, isError: isUnVacError } = useUnvaccinatedVaccines(patId, patientDOB);
   const { data: followupVaccines = [], isLoading: isFollowVaccineLoading, isError: isVacError } = useFollowupVaccines(patId);
   const { data: vaccinations = [], isLoading: isCompleteVaccineLoading, isError: isCompleteVacError } = usePatientVaccinationDetails(patId);
-
   const isLoading = isCompleteVaccineLoading || isUnvaccinatedLoading || isFollowVaccineLoading;
   const isError = isVacError || isUnVacError || isCompleteVacError || isVacrecError;
 
   // Search loading state - show when search query changes and records are being filtered
-  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (debouncedSearchQuery && vaccinationRecords) {
@@ -143,21 +139,6 @@ export default function IndividualVaccinationRecords() {
     setCurrentPage(1);
   }, [debouncedSearchQuery]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Patient Data:", patientData);
-    console.log("Patient DOB:", patientDOB);
-    console.log("Vaccination Records Count:", vaccinationRecords?.length);
-
-    // Additional debug: log the structure of the first record
-    if (vaccinationRecords && vaccinationRecords.length > 0) {
-      console.log("First record structure:", {
-        hasPatient: !!vaccinationRecords[0].patient,
-        patientKeys: vaccinationRecords[0].patient ? Object.keys(vaccinationRecords[0].patient) : "No patient"
-      });
-    }
-  }, [patientData, patientDOB, vaccinationRecords]);
-
   if (isError) {
     return (
       <>
@@ -177,18 +158,12 @@ export default function IndividualVaccinationRecords() {
     );
   }
 
-  if (isLoading){
-    <PageLayout
-      leftAction={
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
-          <ChevronLeft size={24} color="#374151" />
-        </TouchableOpacity>
-      }
-      headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
-      rightAction={<View className="w-10 h-10" />}
-    >
-      <LoadingState />
-    </PageLayout>
+  if (isLoading) {
+    return (
+      <>
+        <LoadingState />
+      </>
+    );
   }
 
   return (
@@ -201,120 +176,83 @@ export default function IndividualVaccinationRecords() {
       headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
-        {/* Patient Info Card - Only show if we have patient data */}
-        {patientData && (
-          <View className="px-4 pt-4 bg-white">
-            <PatientInfoCard patient={patientData} />
-          </View>
-        )}
-
-        {/* Vaccination Status Cards */}
-      
-     =
-            <View className="px-4 mt-4">
-              <View className="flex-row border-b border-gray-200">
-                <TouchableOpacity
-                  onPress={() => handleSetActiveTab("status")}
-                  className={`flex-1 py-3 items-center ${
-                    activeTab === "status" ? "border-b-2 border-blue-600" : ""
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium ${
-                      activeTab === "status" ? "text-blue-600" : "text-gray-600"
-                    }`}
-                  >
-                    Vaccination Status
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleSetActiveTab("followups")}
-                  className={`flex-1 py-3 items-center ${
-                    activeTab === "followups" ? "border-b-2 border-blue-600" : ""
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium ${
-                      activeTab === "followups" ? "text-blue-600" : "text-gray-600"
-                    }`}
-                  >
-                    Follow-ups
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View className="flex-col gap-4 mt-4">
-                {activeTab === "status" && (
-                  <VaccinationStatusCards
-                    unvaccinatedVaccines={unvaccinatedVaccines}
-                    vaccinations={vaccinations}
-                  />
-                )}
-                {activeTab === "followups" && (
-                  <FollowUpsCard followupVaccines={followupVaccines} />
-                )}
-              </View>
+      {isLoading ? (
+        <LoadingState />
+      ) : (
+        <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
+          {/* Patient Info Card - Only show if we have patient data */}
+          {patientData && (
+            <View className="mx-4 bg-white">
+              <PatientInfoCard patient={patientData} />
             </View>
-        
-
-        <View className="p-4 mt-4">
-          <View className="flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
-            <Search size={20} color="#6B7280" />
-            <TextInput
-              className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search by vaccine name, batch number..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {isSearching && (
-              <View className="ml-2">
-                <RefreshCw size={16} color="#3B82F6" className="animate-spin" />
-              </View>
-            )}
-          </View>
-        </View>
-        <View className="px-4 flex-row items-center justify-between mb-2">
-          <View className="flex-row items-center">
-            <Text className="text-sm text-gray-600">
-              Showing {startEntry} to {endEntry} of {totalCount} records
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            <Text className="text-sm font-medium text-gray-800">
-              Page {currentPage} of {totalPages}
-            </Text>
-          </View>
-        </View>
-
-        {isVaccinationRecordsLoading || isSearching ? (
-          <View className="flex-1 items-center justify-center py-8">
-            <View className="items-center justify-center">
-              <RefreshCw size={32} color="#3B82F6" className="animate-spin" />
-              <Text className="text-gray-600 mt-2">{isSearching ? "Searching records..." : "Loading vaccination records..."}</Text>
+          )}
+          {/* Vaccination Status Cards */}=
+          <View className="px-4 mt-4">
+            <View className="flex-row border-b border-gray-200">
+              <TouchableOpacity onPress={() => handleSetActiveTab("status")} className={`flex-1 py-3 items-center ${activeTab === "status" ? "border-b-2 border-blue-600" : ""}`}>
+                <Text className={`text-sm font-medium ${activeTab === "status" ? "text-blue-600" : "text-gray-600"}`}>Vaccination Status</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleSetActiveTab("followups")} className={`flex-1 py-3 items-center ${activeTab === "followups" ? "border-b-2 border-blue-600" : ""}`}>
+                <Text className={`text-sm font-medium ${activeTab === "followups" ? "text-blue-600" : "text-gray-600"}`}>Follow-ups</Text>
+              </TouchableOpacity>
+            </View>
+            <View className="flex-col gap-4 mt-4">
+              {activeTab === "status" && <VaccinationStatusCards unvaccinatedVaccines={unvaccinatedVaccines} vaccinations={vaccinations} />}
+              {activeTab === "followups" && <FollowUpsCard followupVaccines={followupVaccines} />}
             </View>
           </View>
-        ) : (
-          <>
-            <FlatList
-              data={paginatedRecords}
-              keyExtractor={(item) => `vaccination-record-${item.vachist_id}`}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-              renderItem={({ item }) => <VaccinationRecordCard record={item} />}
-              ListFooterComponent={
-                isVaccinationFetching ? (
-                  <View className="py-4 items-center">
-                    <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
-                    <Text className="text-gray-600 text-sm mt-1">Loading more records...</Text>
-                  </View>
-                ) : null
-              }
-            />
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
-          </>
-        )}
-      </ScrollView>
+          <View className="p-4 mt-4">
+            <View className="flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+              <Search size={20} color="#6B7280" />
+              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by vaccine name, batch number..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+              {isSearching && (
+                <View className="ml-2">
+                  <RefreshCw size={16} color="#3B82F6" className="animate-spin" />
+                </View>
+              )}
+            </View>
+          </View>
+          <View className="px-4 flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center">
+              <Text className="text-sm text-gray-600">
+                Showing {startEntry} to {endEntry} of {totalCount} records
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              <Text className="text-sm font-medium text-gray-800">
+                Page {currentPage} of {totalPages}
+              </Text>
+            </View>
+          </View>
+          {isVaccinationRecordsLoading || isSearching ? (
+            <View className="flex-1 items-center justify-center py-8">
+              <View className="items-center justify-center">
+                <RefreshCw size={32} color="#3B82F6" className="animate-spin" />
+                <Text className="text-gray-600 mt-2">{isSearching ? "Searching records..." : "Loading vaccination records..."}</Text>
+              </View>
+            </View>
+          ) : (
+            <>
+              <FlatList
+                data={paginatedRecords}
+                keyExtractor={(item) => `vaccination-record-${item.vachist_id}`}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={false}
+                renderItem={({ item }) => <VaccinationRecordCard record={item} />}
+                ListFooterComponent={
+                  isVaccinationFetching ? (
+                    <View className="py-4 items-center">
+                      <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
+                      <Text className="text-gray-600 text-sm mt-1">Loading more records...</Text>
+                    </View>
+                  ) : null
+                }
+              />
+              <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </>
+          )}
+        </ScrollView>
+      )}
     </PageLayout>
   );
 }

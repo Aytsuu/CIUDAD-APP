@@ -3,10 +3,9 @@ import { View, TouchableOpacity } from "react-native";
 import { Syringe, Calendar, FileText, CheckCircle, Clock, XCircle } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { format, parseISO, isValid } from "date-fns";
-import { VaccinationRecord } from "./queries/fetch";
 
 interface VaccinationRecordCardProps {
-  record: VaccinationRecord;
+  record: any;
   onPress?: () => void;
 }
 
@@ -57,7 +56,7 @@ export const VaccinationRecordCard: React.FC<VaccinationRecordCardProps> = ({ re
   const StatusIcon = statusConfig.icon;
 
   const CardContent = () => (
-    <View className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-3">
+    <View className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb- mx-4">
       {/* Header with Vaccine Name and Status */}
       <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
         <View className="flex-row items-center flex-1">
@@ -84,10 +83,13 @@ export const VaccinationRecordCard: React.FC<VaccinationRecordCardProps> = ({ re
       {/* Details */}
       <View className="p-4">
         <View className="flex-row justify-between items-start mb-3">
-          <View className="flex-1">
-            <Text className="text-xs text-gray-500 mb-1">Batch Number</Text>
-            <Text className="text-sm font-medium text-gray-900">{record.batch_number || "N/A"}</Text>
-          </View>
+
+            <View className="flex-1">
+            <Text className="text-xs text-gray-500 mb-1">Administered from </Text>
+            <Text className="text-sm font-medium text-gray-900">
+              {record.vac_id ? "Barangay" : ""}
+            </Text>
+            </View>
           <View className="flex-1 items-end">
             <Text className="text-xs text-gray-500 mb-1">Date Administered</Text>
             <Text className="text-sm font-medium text-gray-900">
@@ -101,24 +103,46 @@ export const VaccinationRecordCard: React.FC<VaccinationRecordCardProps> = ({ re
           <View className="mt-3 pt-3 border-t border-gray-100">
             <Text className="text-xs text-gray-500 mb-2">Vital Signs</Text>
             <View className="flex-row justify-between">
-              <View>
-                <Text className="text-xs text-gray-600">BP</Text>
-                <Text className="text-sm font-medium text-gray-900">
-                  {record.vital_signs.vital_bp_systolic || "N/A"} / {record.vital_signs.vital_bp_diastolic || "N/A"}
-                </Text>
-              </View>
-              <View>
-                <Text className="text-xs text-gray-600">Temp</Text>
-                <Text className="text-sm font-medium text-gray-900">
-                  {record.vital_signs.vital_temp || "N/A"}°C
-                </Text>
-              </View>
-              <View>
-                <Text className="text-xs text-gray-600">O2</Text>
-                <Text className="text-sm font-medium text-gray-900">
-                  {record.vital_signs.vital_o2 || "N/A"}%
-                </Text>
-              </View>
+                {record.vital_signs.vital_bp_systolic && record.vital_signs.vital_bp_diastolic && (
+                <View>
+                  <Text className="text-xs text-gray-600">BP</Text>
+                  <Text className="text-sm font-medium text-gray-900">
+                  {record.vital_signs.vital_bp_systolic} / {record.vital_signs.vital_bp_diastolic}
+                  </Text>
+                </View>
+                )}
+                {record.vital_signs.vital_temp && (
+                <View>
+                  <Text className="text-xs text-gray-600">Temp</Text>
+                  <Text className="text-sm font-medium text-gray-900">
+                  {record.vital_signs.vital_temp}°C
+                  </Text>
+                </View>
+                )}
+                {record.vital_signs.vital_o2 && (
+                <View>
+                  <Text className="text-xs text-gray-600">O2</Text>
+                  <Text className="text-sm font-medium text-gray-900">
+                  {record.vital_signs.vital_o2}%
+                  </Text>
+                </View>
+                )}
+                {record.vital_signs.vital_pulse && (
+                <View>
+                  <Text className="text-xs text-gray-600">PR</Text>
+                  <Text className="text-sm font-medium text-gray-900">
+                  {record.vital_signs.vital_pulse} bpm
+                  </Text>
+                </View>
+                )}
+                {record.vital_signs.vital_RR && (
+                <View>
+                  <Text className="text-xs text-gray-600">RR</Text>
+                  <Text className="text-sm font-medium text-gray-900">
+                  {record.vital_signs.vital_RR} cpm
+                  </Text>
+                </View>
+                )}
             </View>
           </View>
         )}

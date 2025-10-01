@@ -297,8 +297,7 @@ export default function AllMedicineRecords() {
             <PaginationControls 
               currentPage={currentPage} 
               totalPages={totalPages} 
-              totalItems={totalCount} 
-              pageSize={pageSize} 
+            
               onPageChange={handlePageChange} 
             />
           </>

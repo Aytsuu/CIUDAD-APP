@@ -58,6 +58,7 @@ export default () => {
 
 
 
+
           
       
 
@@ -90,6 +91,8 @@ export default () => {
             {/* <Stack.Screen name="admin/vaccination/individual" options={{ headerShown: false }} /> */}
             <Stack.Screen name="admin/maternal/overall" options={{ headerShown: false }} />
             <Stack.Screen name="admin/maternal/individual" options={{ headerShown: false }} />
+            <Stack.Screen name="admin/medconsultation/overall" options={{ headerShown: false }} />
+
           </>
 
 

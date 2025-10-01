@@ -5,7 +5,6 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView
 import { Search, ChevronLeft, AlertCircle, HeartPulse, Users, Calendar, Syringe, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
@@ -31,7 +30,7 @@ export default function InvMedicalConRecords() {
   const [famHistorySearch, setFamHistorySearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(2);
   const [activeTab, setActiveTab] = useState<"medical" | "family">("medical");
   const [patId, setPatientId] = useState("");
 
@@ -50,15 +49,14 @@ export default function InvMedicalConRecords() {
     if (mode === "admin") {
       // Admin mode - get patient data from params
       const adminPatId = params.patId as string;
-      const adminPatientData = params.patientData ? JSON.parse(params.patientData as string) : null;
 
       console.log("Admin mode - Setting patId to:", adminPatId);
       setPatientId(adminPatId || "");
 
       // Store admin patient data in state if needed
-      if (adminPatientData) {
+      if (patId) {
         // adminPatientData is available for use if needed
-        console.log("Admin patient data available:", adminPatientData);
+        console.log("Admin patient data available:", patId);
       }
     } else {
       // Regular mode - use authenticated user's data
@@ -200,13 +198,13 @@ export default function InvMedicalConRecords() {
         }
         headerTitle={<Text>Medical Consultation</Text>}
       >
-        <NoRecordsCard  />
+        <NoRecordsCard />
       </PageLayout>
     );
   }
 
   // Initial loading state - only check for medical records loading
-  if (isMedicalRecordsLoading && !medicalRecordsResponse) {
+  if ( !medicalRecordsResponse && isFamHistoryLoading && isMedHistoryLoading) {
     return <LoadingState />;
   }
 
@@ -269,18 +267,12 @@ export default function InvMedicalConRecords() {
       rightAction={<View className="w-10 h-10" />}
     >
       <ScrollView className="flex-1" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />}>
-        {/* Patient Info Card - Only show if we have patient data */}
-        {patientData ? (
+        {/* Patient Info Card - Only show if we have patient data and records */}
+        {patientData && hasRecords ? (
           <View className="px-4 pt-4 bg-white">
             <PatientInfoCard patient={patientData} />
           </View>
-        ) : (
-          <View className="px-4 pt-4">
-            <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <Text className="text-yellow-800 text-center">{hasRecords ? "Patient information not available" : "No patient records found"}</Text>
-            </View>
-          </View>
-        )}
+        ) : null}
 
         {/* History Section with Tabs */}
         <View className="mx-4 my-4 bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -368,37 +360,25 @@ export default function InvMedicalConRecords() {
           ) : (
             <>
               {/* Horizontal Scroll Container */}
-              <ScrollView 
-                horizontal 
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={true}
-                contentContainerStyle={{ 
+                contentContainerStyle={{
                   paddingBottom: 16
                 }}
                 className="mb-4"
               >
                 <View className="flex-row">
-                  {medicalRecords.map((item:any, index:any) => (
-                    <View 
-                      key={`consultation-${item.medrec_id}-${index}`} 
-                      className="mr-4"
-                    >
-                      <MedicalConsultationCard 
-                        record={item} 
-                        onPress={() => handleRecordPress(item)} 
-                      />
+                  {medicalRecords.map((item: any, index: any) => (
+                    <View key={`consultation-${item.medrec_id}-${index}`} className="mr-4 w-[300px]">
+                      <MedicalConsultationCard record={item} onPress={() => handleRecordPress(item)} />
                     </View>
                   ))}
                 </View>
               </ScrollView>
 
               {/* Pagination Controls */}
-              <PaginationControls 
-                currentPage={currentPage} 
-                totalPages={totalPages} 
-                totalItems={totalCount} 
-                pageSize={pageSize} 
-                onPageChange={handlePageChange} 
-              />
+              <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             </>
           )}
         </View>
