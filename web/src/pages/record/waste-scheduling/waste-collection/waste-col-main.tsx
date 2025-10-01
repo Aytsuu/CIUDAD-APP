@@ -678,7 +678,7 @@ function WasteCollectionMain() {
                             {isLoading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
-                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                    <span className="ml-2 text-gray-600">Loading...</span>
                                 </div>
                             ) : (
                                 <DataTable
@@ -694,7 +694,7 @@ function WasteCollectionMain() {
                             {isLoading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
-                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                    <span className="ml-2 text-gray-600">Loading...</span>
                                 </div>
                             ) : (
                                 <DataTable
