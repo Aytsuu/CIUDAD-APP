@@ -28,8 +28,23 @@ import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetc
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
   SpecificPurpose?: string;
-  custodyChildren?: string[]
-
+  custodyChildren?: string[];
+  // BURIAL props
+  deceasedName?: string;
+  deceasedAge?: string;
+  deceasedBirthdate?: string;
+  deceasedAddress?: string;
+  // FIRE VICTIM props
+  dateOfConflagration?: string;
+  // DWUP props
+  dateDemolished?: string;
+  // COHABITATION/MARRIAGE props
+  partnerName?: string;
+  liveInYears?: number;
+  // Indigency (for minors) props
+  childName?: string;
+  childAge?: string;
+  childBirtdate?: string;
 }
 
 function CertificatePage() {
@@ -473,7 +488,18 @@ function CertificatePage() {
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
-          showAddDetails={false}
+          deceasedName={selectedCertificate.deceasedName}
+          deceasedAge={selectedCertificate.deceasedAge}
+          deceasedBirthdate={selectedCertificate.deceasedBirthdate}
+          deceasedAddress={selectedCertificate.deceasedAddress}
+          dateOfConflagration={selectedCertificate.dateOfConflagration}
+          dateDemolished={selectedCertificate.dateDemolished}
+          partnerName={selectedCertificate.partnerName}
+          liveInYears={selectedCertificate.liveInYears}
+          childName={selectedCertificate.childName}
+          childAge={selectedCertificate.childAge}
+          childBirtdate={selectedCertificate.childBirtdate}
+          showAddDetails={false} 
         />
       )}
 

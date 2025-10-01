@@ -86,8 +86,8 @@ import { Loader2 } from "lucide-react";
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: effectiveIsResident ? "N/A" : "", 
-            inv_amount: effectiveIsResident ? (isFree ? "0" : (rate || "0")) : "",
+            inv_serial_num: (effectiveIsResident && isEligibleForFreeService) ? "N/A" : "", 
+            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "0" : (rate || ""),
             inv_nat_of_collection: nat_col,
             id: id.toString(), 
             cr_id: effectiveIsResident ? id.toString() : undefined,
@@ -274,8 +274,8 @@ import { Loader2 } from "lucide-react";
                     )}
                 </div>
 
-                {/* Only show these fields if NOT resident */}
-                {!is_resident && (
+                {/* Show these fields if NOT resident OR if resident but not eligible for free service */}
+                {(!is_resident || (is_resident && !isEligibleForFreeService)) && (
                 <>
                     <FormField
                     control={form.control}
@@ -350,7 +350,7 @@ import { Loader2 } from "lucide-react";
                 <div className="flex justify-end gap-3 mt-6">
                 <Button 
                     type="submit" 
-                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
+                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || ((!is_resident || (is_resident && !isEligibleForFreeService)) && isAmountInsufficient())}
                     className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
                 >
                     {isPending || isAcceptPending || isAcceptNonResPending ? (
@@ -360,7 +360,7 @@ import { Loader2 } from "lucide-react";
                         </div>
                     ) : isAlreadyPaid ? (
                         "Cannot Proceed"
-                    ) : is_resident ? (
+                    ) : (is_resident && isEligibleForFreeService) ? (
                         "Accept"
                     ) : (
                         "Create Receipt"

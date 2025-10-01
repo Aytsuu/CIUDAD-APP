@@ -148,6 +148,27 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
     invoice = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
     staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    
+    # BURIAL fields
+    # deceased_name = serializers.SerializerMethodField()
+    # deceased_age = serializers.SerializerMethodField()
+    # deceased_birthdate = serializers.SerializerMethodField()
+    # deceased_address = serializers.SerializerMethodField()
+    
+    # # FIRE VICTIM fields
+    # date_of_conflagration = serializers.SerializerMethodField()
+    
+    # # DWUP fields
+    # date_demolished = serializers.SerializerMethodField()
+    
+    # # COHABITATION/MARRIAGE fields
+    # partner_name = serializers.SerializerMethodField()
+    # live_in_years = serializers.SerializerMethodField()
+    
+    # # Indigency (for minors) fields
+    # child_name = serializers.SerializerMethodField()
+    # child_age = serializers.SerializerMethodField()
+    # child_birthdate = serializers.SerializerMethodField()
 
     def get_resident_details(self, obj):
         try:
@@ -203,6 +224,55 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.error(f"Error getting purpose and rate: {str(e)}")
             return None
+
+    # BURIAL getter methods
+    def get_deceased_name(self, obj):
+        """Get deceased name from context or return None"""
+        return getattr(obj, 'deceased_name', None)
+    
+    def get_deceased_age(self, obj):
+        """Get deceased age from context or return None"""
+        return getattr(obj, 'deceased_age', None)
+    
+    def get_deceased_birthdate(self, obj):
+        """Get deceased birthdate from context or return None"""
+        return getattr(obj, 'deceased_birthdate', None)
+    
+    def get_deceased_address(self, obj):
+        """Get deceased address from context or return None"""
+        return getattr(obj, 'deceased_address', None)
+    
+    # FIRE VICTIM getter methods
+    def get_date_of_conflagration(self, obj):
+        """Get date of conflagration from context or return None"""
+        return getattr(obj, 'date_of_conflagration', None)
+    
+    # DWUP getter methods
+    def get_date_demolished(self, obj):
+        """Get date demolished from context or return None"""
+        return getattr(obj, 'date_demolished', None)
+    
+    # COHABITATION/MARRIAGE getter methods
+    def get_partner_name(self, obj):
+        """Get partner name from context or return None"""
+        return getattr(obj, 'partner_name', None)
+    
+    def get_live_in_years(self, obj):
+        """Get live in years from context or return None"""
+        return getattr(obj, 'live_in_years', None)
+    
+    # Indigency (for minors) getter methods
+    def get_child_name(self, obj):
+        """Get child name from context or return None"""
+        return getattr(obj, 'child_name', None)
+    
+    def get_child_age(self, obj):
+        """Get child age from context or return None"""
+        return getattr(obj, 'child_age', None)
+    
+    def get_child_birthdate(self, obj):
+        """Get child birthdate from context or return None"""
+        return getattr(obj, 'child_birthdate', None)
 
     def validate_staff_id(self, value):
         """Validate and format staff_id properly"""
@@ -291,7 +361,23 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'pr_id',
             'cr_req_status',
             'invoice',
-            'staff_id'
+            'staff_id',
+            # BURIAL fields
+            'deceased_name',
+            'deceased_age',
+            'deceased_birthdate',
+            'deceased_address',
+            # FIRE VICTIM fields
+            'date_of_conflagration',
+            # DWUP fields
+            'date_demolished',
+            # COHABITATION/MARRIAGE fields
+            'partner_name',
+            'live_in_years',
+            # Indigency (for minors) fields
+            'child_name',
+            'child_age',
+            'child_birthdate'
         ]
         extra_kwargs = {
             'cr_id': {'read_only': True}
