@@ -24,6 +24,7 @@ import { useResolution } from './queries/resolution-fetch-queries';
 import { useDeleteResolution } from './queries/resolution-delete-queries';
 import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queries';
 import PageLayout from '@/screens/_PageLayout';
+import { useDebounce } from '@/hooks/use-debounce'; // You'll need to create this hook
 
 function ResolutionPage() {
   const router = useRouter();
@@ -36,7 +37,16 @@ function ResolutionPage() {
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const { data: resolutionData = [], isLoading, isError, refetch } = useResolution();
+  // Use debounce for search to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Fetch data with backend filtering
+  const { data: resolutionData = [], isLoading, isError, refetch } = useResolution(
+    debouncedSearchQuery, 
+    filter, 
+    yearFilter
+  );
+
   const { mutate: deleteRes, isPending: isDeletePending } = useDeleteResolution();
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreResolution();
 
@@ -48,11 +58,10 @@ function ResolutionPage() {
     { id: "finance", name: "Finance" }
   ];
 
-  // Extract unique years from resolution data
+  // Extract unique years from resolution data for the dropdown
   const yearOptions = useMemo(() => {
     const years = new Set<number>();
     
-    // Add years from res_date_approved
     resolutionData.forEach(record => {
       if (record.res_date_approved) {
         try {
@@ -66,13 +75,10 @@ function ResolutionPage() {
       }
     });
 
-    // Convert to array and sort descending (most recent first)
     const sortedYears = Array.from(years).sort((a, b) => b - a);
     
-    // Create options array with "All Years" first
     const options = [{ id: "all", name: "All Years" }];
     
-    // Add each year as an option
     sortedYears.forEach(year => {
       options.push({ id: year.toString(), name: year.toString() });
     });
@@ -80,44 +86,28 @@ function ResolutionPage() {
     return options;
   }, [resolutionData]);
 
+  // Only filter by active/archive tab (other filtering is done in backend)
   const filteredData = useMemo(() => {
-    let result = resolutionData.filter(row => 
+    return resolutionData.filter(row => 
       activeTab === "active" ? !row.res_is_archive : row.res_is_archive
     );
-
-    // Apply area of focus filter
-    if (filter !== "all") {
-      result = result.filter(record => record.res_area_of_focus.includes(filter));
-    }
-
-    // Apply year filter
-    if (yearFilter !== "all") {
-      result = result.filter(record => {
-        try {
-          const date = new Date(record.res_date_approved);
-          const year = date.getFullYear();
-          return year === parseInt(yearFilter);
-        } catch (error) {
-          return false;
-        }
-      });
-    }
-
-    if (searchQuery) {
-      result = result.filter(item =>
-        Object.values(item)
-          .join(" ")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      );
-    }
-
-    return result;
-  }, [resolutionData, activeTab, filter, yearFilter, searchQuery]);
+  }, [resolutionData, activeTab]);
 
   const handleDelete = (res_num: number) => deleteRes(String(res_num));
   const handleArchive = (res_num: number) => archiveRestore({ res_num: String(res_num), res_is_archive: true });
   const handleRestore = (res_num: number) => archiveRestore({ res_num: String(res_num), res_is_archive: false });
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+  };
+
+  const handleYearFilterChange = (value: string) => {
+    setYearFilter(value);
+  };
 
   const handleViewPdf = (pdfUrl: string) => {
     if (!pdfUrl) {
@@ -286,86 +276,86 @@ function ResolutionPage() {
       }
       wrapScroll={false}
     >
-      {isLoading || isArchivePending || isDeletePending ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-          <Text className="text-sm text-gray-500 mt-2">
-            {isArchivePending ? "Updating resolution records..." : 
-             isDeletePending ? "Deleting resolution record..." : 
-             "Loading resolutions..."}
-          </Text>
-        </View>
-      ) : (
-        <View className="flex-1 px-4">
-          {/* Search and Filters */}
-          <View className="mb-4">
-            <View className="flex-row items-center gap-2 pb-3">
-              <View className="relative flex-1">
-                <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-                <TextInput
-                  placeholder="Search..."
-                  className="pl-10 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
-
-              <View className="w-[120px] pb-5">
-                <SelectLayout
-                  options={filterOptions.map(f => ({ label: f.name, value: f.id }))}
-                  className="h-8"
-                  selectedValue={filter}
-                  onSelect={(option) => setFilter(option.value)}
-                  placeholder="Area Filter"
-                  isInModal={false}
-                />
-              </View>
+      <View className="flex-1 px-4">
+        {/* Search and Filters */}
+        <View className="mb-4">
+          <View className="flex-row items-center gap-2 pb-3">
+            <View className="relative flex-1">
+              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
+              <TextInput
+                placeholder="Search..."
+                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+              />
             </View>
 
-              {/* Year Filter - Added here */}
-            <View className="pb-5">
+            <View className="w-[120px] pb-5">
               <SelectLayout
-                options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
+                options={filterOptions.map(f => ({ label: f.name, value: f.id }))}
                 className="h-8"
-                selectedValue={yearFilter}
-                onSelect={(option) => setYearFilter(option.value)}
-                placeholder="Year Filter"
+                selectedValue={filter}
+                onSelect={(option) => handleFilterChange(option.value)}
+                placeholder="Area Filter"
                 isInModal={false}
               />
-            </View>            
-
-            <Button 
-              onPress={() => router.push('/(council)/resolution/res-create')} 
-              className="bg-primaryBlue mt-3"
-            >
-              <Text className="text-white text-[17px]">Create</Text>
-            </Button>
+            </View>
           </View>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
-              <TabsTrigger 
-                value="active" 
-                className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-              >
-                <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                  Active
-                </Text>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="archive"
-                className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-              >
-                <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                  Archive
-                </Text>
-              </TabsTrigger>
-            </TabsList>
+          {/* Year Filter */}
+          <View className="pb-5">
+            <SelectLayout
+              options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
+              className="h-8"
+              selectedValue={yearFilter}
+              onSelect={(option) => handleYearFilterChange(option.value)}
+              placeholder="Year Filter"
+              isInModal={false}
+            />
+          </View>            
 
-            <TabsContent value="active">
+          <Button 
+            onPress={() => router.push('/(council)/resolution/res-create')} 
+            className="bg-primaryBlue mt-3 rounded-xl"
+          >
+            <Text className="text-white text-[17px]">Create</Text>
+          </Button>
+        </View>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
+            <TabsTrigger 
+              value="active" 
+              className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="archive"
+              className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Archive
+              </Text>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active">
+            {isLoading || isArchivePending || isDeletePending ? (
+              <View className="h-64 justify-center items-center">
+                <ActivityIndicator size="large" color="#2a3a61" />
+                <Text className="text-sm text-gray-500 mt-2">
+                  {isArchivePending ? "Updating resolution records..." : 
+                  isDeletePending ? "Deleting resolution record..." : 
+                  "Loading resolutions..."}
+                </Text>
+              </View>
+            ) : (
               <FlatList
-                data={filteredData.filter(row => !row.res_is_archive)}
+                data={filteredData}
                 renderItem={renderItem}
                 keyExtractor={item => item.res_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
@@ -376,11 +366,22 @@ function ResolutionPage() {
                   </Text>
                 }
               />
-            </TabsContent>
+            )}            
+          </TabsContent>
 
-            <TabsContent value="archive">
+          <TabsContent value="archive">
+            {isLoading || isArchivePending || isDeletePending ? (
+              <View className="h-64 justify-center items-center">
+                <ActivityIndicator size="large" color="#2a3a61" />
+                <Text className="text-sm text-gray-500 mt-2">
+                  {isArchivePending ? "Updating resolution records..." : 
+                  isDeletePending ? "Deleting resolution record..." : 
+                  "Loading resolutions..."}
+                </Text>
+              </View>
+            ) : (
               <FlatList
-                data={filteredData.filter(row => row.res_is_archive)}
+                data={filteredData}
                 renderItem={renderItem}
                 keyExtractor={item => item.res_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
@@ -390,104 +391,104 @@ function ResolutionPage() {
                     No archived resolutions found
                   </Text>
                 }
-              />
-            </TabsContent>
-          </Tabs>
+              />              
+            )}              
+          </TabsContent>
+        </Tabs>
 
-          {/* View Images Modal */}
-          <Modal
-            visible={viewImagesModalVisible}
-            transparent={true}
-            onRequestClose={() => {
-              setViewImagesModalVisible(false);
-              setCurrentZoomScale(1);
-            }}
-          >
-            <View className="flex-1 bg-black/90">
-              {/* Header with close button and file name */}
-              <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
-                <Text className="text-white text-lg font-medium w-[90%]">
-                  {selectedImages[currentIndex]?.rsd_name || 'Document'}
-                </Text>
-                <TouchableOpacity 
-                  onPress={() => {
-                    setViewImagesModalVisible(false);
-                    setCurrentZoomScale(1);
-                  }}
-                >
-                  <X size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Image with zoom capability */}
-              <ScrollView
-                className="flex-1"
-                maximumZoomScale={3}
-                minimumZoomScale={1}
-                zoomScale={currentZoomScale}
-                onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
-                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        {/* View Images Modal - keep this part the same */}
+        <Modal
+          visible={viewImagesModalVisible}
+          transparent={true}
+          onRequestClose={() => {
+            setViewImagesModalVisible(false);
+            setCurrentZoomScale(1);
+          }}
+        >
+          <View className="flex-1 bg-black/90">
+            {/* Header with close button and file name */}
+            <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
+              <Text className="text-white text-lg font-medium w-[90%]">
+                {selectedImages[currentIndex]?.rsd_name || 'Document'}
+              </Text>
+              <TouchableOpacity 
+                onPress={() => {
+                  setViewImagesModalVisible(false);
+                  setCurrentZoomScale(1);
+                }}
               >
-                <Image
-                  source={{ uri: selectedImages[currentIndex]?.rsd_url }}
-                  style={{ width: '100%', height: 400 }}
-                  resizeMode="contain"
-                />
-              </ScrollView>
-
-              {/* Pagination indicators at the bottom */}
-              {selectedImages.length > 1 && (
-                <View className="absolute bottom-4 left-0 right-0 items-center">
-                  <View className="flex-row bg-black/50 rounded-full px-3 py-1">
-                    {selectedImages.map((_, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => {
-                          setCurrentIndex(index);
-                          setCurrentZoomScale(1);
-                        }}
-                        className="p-1"
-                      >
-                        <View 
-                          className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-500'}`}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Navigation arrows for multiple files */}
-              {selectedImages.length > 1 && (
-                <>
-                  {currentIndex > 0 && (
-                    <TouchableOpacity
-                      className="absolute left-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
-                      onPress={() => {
-                        setCurrentIndex(prev => prev - 1);
-                        setCurrentZoomScale(1);
-                      }}
-                    >
-                      <ChevronLeft size={24} color="white" />
-                    </TouchableOpacity>
-                  )}
-                  {currentIndex < selectedImages.length - 1 && (
-                    <TouchableOpacity
-                      className="absolute right-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
-                      onPress={() => {
-                        setCurrentIndex(prev => prev + 1);
-                        setCurrentZoomScale(1);
-                      }}
-                    >
-                      <ChevronRight size={24} color="white" />
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
+                <X size={24} color="white" />
+              </TouchableOpacity>
             </View>
-          </Modal>
-        </View>
-      )}
+
+            {/* Image with zoom capability */}
+            <ScrollView
+              className="flex-1"
+              maximumZoomScale={3}
+              minimumZoomScale={1}
+              zoomScale={currentZoomScale}
+              onScrollEndDrag={(e) => setCurrentZoomScale(e.nativeEvent.zoomScale)}
+              contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+            >
+              <Image
+                source={{ uri: selectedImages[currentIndex]?.rsd_url }}
+                style={{ width: '100%', height: 400 }}
+                resizeMode="contain"
+              />
+            </ScrollView>
+
+            {/* Pagination indicators at the bottom */}
+            {selectedImages.length > 1 && (
+              <View className="absolute bottom-4 left-0 right-0 items-center">
+                <View className="flex-row bg-black/50 rounded-full px-3 py-1">
+                  {selectedImages.map((_, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => {
+                        setCurrentIndex(index);
+                        setCurrentZoomScale(1);
+                      }}
+                      className="p-1"
+                    >
+                      <View 
+                        className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-500'}`}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Navigation arrows for multiple files */}
+            {selectedImages.length > 1 && (
+              <>
+                {currentIndex > 0 && (
+                  <TouchableOpacity
+                    className="absolute left-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
+                    onPress={() => {
+                      setCurrentIndex(prev => prev - 1);
+                      setCurrentZoomScale(1);
+                    }}
+                  >
+                    <ChevronLeft size={24} color="white" />
+                  </TouchableOpacity>
+                )}
+                {currentIndex < selectedImages.length - 1 && (
+                  <TouchableOpacity
+                    className="absolute right-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
+                    onPress={() => {
+                      setCurrentIndex(prev => prev + 1);
+                      setCurrentZoomScale(1);
+                    }}
+                  >
+                    <ChevronRight size={24} color="white" />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+          </View>
+        </Modal>
+      </View>
     </PageLayout>
   );
 }
