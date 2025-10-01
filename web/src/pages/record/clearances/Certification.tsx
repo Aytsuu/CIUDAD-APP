@@ -24,8 +24,6 @@ import { Combobox } from "@/components/ui/combobox";
 import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
 import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
-import { formatResidents } from "@/pages/record/profiling/ProfilingFormats";
-
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
@@ -98,11 +96,6 @@ function CertificatePage() {
     }));
   }, [residentsList]);
 
-  console.log("STAFF OPTIONS: ", staffOptions)
-  console.log("CHILDREN OPTIONS: ", residentOptions)
-  console.log("RAW RESIDENTS LIST: ", residentsList)
-  console.log("IS LOADING RESIDENTS: ", isLoadingResidents)
-  console.log("RESIDENTS ERROR: ", residentsError)
 
   const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
     queryKey: ["certificates"],
