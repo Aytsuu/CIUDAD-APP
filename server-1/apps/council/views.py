@@ -15,6 +15,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from apps.pagination import StandardResultsPagination
 from django.db.models import Q
+from django.db.models.functions import ExtractYear
 
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,49 @@ class CouncilSchedulingView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
     queryset = CouncilScheduling.objects.all()
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = CouncilScheduling.objects.all().order_by('-ce_date')
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(ce_title__icontains=search) |
+                Q(ce_description__icontains=search) |
+                Q(ce_date__icontains=search)
+            )
+        
+        # Year filter
+        year = self.request.query_params.get('year', None)
+        if year and year != 'all':
+            queryset = queryset.filter(ce_date__year=year)
+        
+        # Archive filter
+        is_archive = self.request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            queryset = queryset.filter(ce_is_archive=is_archive.lower() == 'true')
+        
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in CouncilSchedulingView list: {str(e)}", exc_info=True)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def create(self, request, *args, **kwargs):
         """Override to add logging for announcement creation"""
@@ -121,6 +165,22 @@ class CouncilSchedulingRestoreView(generics.UpdateAPIView):
         instance.ce_is_archive = False
         instance.save()
         return Response(status=status.HTTP_200_OK)
+    
+class CouncilEventYearsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            years = CouncilScheduling.objects.filter(
+                ce_date__isnull=False
+            ).annotate(
+                year=ExtractYear('ce_date')
+            ).values_list('year', flat=True).distinct().order_by('-year')
+            
+            return Response(list(years))
+        except Exception as e:
+            logger.error(f"Error fetching council event years: {str(e)}")
+            return Response([], status=status.HTTP_200_OK)
 
 # class AttendeesView(generics.ListCreateAPIView):
 #     serializer_class = CouncilAttendeesSerializer

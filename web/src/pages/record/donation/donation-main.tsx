@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext"; 
 import { useDebounce } from "@/hooks/use-debounce";
+import { formatTableDate } from "@/helpers/dateHelper";
 
 function DonationTracker() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -138,7 +139,7 @@ function DonationTracker() {
       accessorKey: "don_date",
       header: "Date",
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("don_date")}</div>
+        <div className="text-center">{formatTableDate(row.getValue("don_date"))}</div>
       ),
     },
     {

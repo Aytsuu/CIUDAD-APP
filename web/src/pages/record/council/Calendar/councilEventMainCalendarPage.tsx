@@ -14,17 +14,27 @@ import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-col
 import { wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
-import { useLoading } from "@/context/LoadingContext"; 
+import { useLoading } from "@/context/LoadingContext";
+import { CouncilEvent } from "./councilEventTypes";
 
 function CalendarPage() {
-  const { data: councilEvents = [], isLoading: isCouncilEventsLoading } = useGetCouncilEvents();
+  const { data: councilEventsData, isLoading: isCouncilEventsLoading } = useGetCouncilEvents(
+    1, 
+    1000, 
+    undefined, 
+    "all", 
+    false 
+  );
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "archive">("calendar");
-  const [viewEvent, setViewEvent] = useState<any | null>(null);
+  const [viewEvent, setViewEvent] = useState<CouncilEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
-  const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
-  const { data: wasteCollectionData = [],  isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
+  const councilEvents = councilEventsData?.results || [];
+  const calendarEvents = councilEvents.filter((event: CouncilEvent) => !event.ce_is_archive);
+  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
   const { showLoading, hideLoading } = useLoading();
+  
   const calendarSources = [
     {
       name: "Waste Collection",
@@ -47,7 +57,7 @@ function CalendarPage() {
     }
   ];
 
-  const filteredEvents = councilEvents.filter((event) => {
+  const filteredEvents = councilEvents.filter((event: CouncilEvent) => {
     if (activeTab === "archive") {
       return event.ce_is_archive;
     } else {
@@ -61,6 +71,7 @@ function CalendarPage() {
 
   const { mutate: deleteCouncilEvent } = useDeleteCouncilEvent();
   const { mutate: restoreCouncilEvent } = useRestoreCouncilEvent();
+  
   const handleRestore = (ce_id: number) => {
     setActionInProgress(true);
     restoreCouncilEvent(ce_id, {
@@ -77,8 +88,9 @@ function CalendarPage() {
     });
   };
 
-const isLoading = isCouncilEventsLoading || isWasteColLoading;
- useEffect(() => {
+  const isLoading = isCouncilEventsLoading || isWasteColLoading;
+  
+  useEffect(() => {
     if (isLoading) {
       showLoading();
     } else {
@@ -92,9 +104,11 @@ const isLoading = isCouncilEventsLoading || isWasteColLoading;
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
-            <TabsTrigger value="archive"> <div className="flex items-center gap-2">
-                  <Archive size={16} /> Archive
-                </div></TabsTrigger>
+            <TabsTrigger value="archive">
+              <div className="flex items-center gap-2">
+                <Archive size={16} /> Archive
+              </div>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         {activeTab === "calendar" && (
@@ -126,121 +140,121 @@ const isLoading = isCouncilEventsLoading || isWasteColLoading;
                 <Spinner size="lg" />
               </div>
             ) : (
-            <EventCalendar
-              sources={calendarSources}
-              legendItems={[
-                { label: "Waste Collection", color: "#10b981" },
-                { label: "Council Events", color: "#191970" },
-              ]}
-              viewEditComponentSources={["Council Events"]}
-            />
+              <EventCalendar
+                sources={calendarSources}
+                legendItems={[
+                  { label: "Waste Collection", color: "#10b981" },
+                  { label: "Council Events", color: "#191970" },
+                ]}
+                viewEditComponentSources={["Council Events"]}
+              />
             )}
           </TabsContent>
 
           <TabsContent value="archive">
-             {isCouncilEventsLoading ? (
+            {isCouncilEventsLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Spinner size="lg" />
               </div>
             ) : (
-            <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-custom">
-              {filteredEvents.length > 0 ? (
-                filteredEvents.map((event) => (
-                  <div
-                    key={event.ce_id}
-                    className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <div className="flex items-center justify-end gap-2">
-                      <TooltipLayout
-                        trigger={
-                          <DialogLayout
-                            isOpen={viewEvent?.ce_id === event.ce_id}
-                            onOpenChange={(open) => !open && setViewEvent(null)}
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setViewEvent(event);
-                                }}
-                              >
-                                <Eye className="h-4 w-4 text-blue-500" />
-                              </Button>
-                            }
-                            className="max-w-[90%] sm:max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                            title="View Event"
-                            description="View event details"
-                            mainContent={
-                              <div className="w-full h-full">
-                                {viewEvent && (
-                                  <EditEventForm
-                                    initialValues={viewEvent}
-                                    onClose={() => setViewEvent(null)}
-                                  />
-                                )}
-                              </div>
-                            }
-                          />
-                        }
-                        content="View"
-                      />
-                      <TooltipLayout
-                        trigger={
-                          <ConfirmationModal
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <ArchiveRestore className="h-4 w-4 text-green-500" />
-                              </Button>
-                            }
-                            title="Confirm Restore"
-                            description={`Are you sure you want to restore the event "${event.ce_title}"?`}
-                            actionLabel="Restore"
-                            onClick={() => handleRestore(event.ce_id)}
-                          />
-                        }
-                        content="Restore"
-                      />
-                      <TooltipLayout
-                        trigger={
-                          <ConfirmationModal
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Trash className="h-4 w-4 text-red-500" />
-                              </Button>
-                            }
-                            title="Confirm Permanent Delete"
-                            description={`This will permanently delete the event "${event.ce_title}".`}
-                            actionLabel="Delete"
-                            onClick={() => handlePermanentDelete(event.ce_id)}
-                          />
-                        }
-                        content="Delete"
-                      />
+              <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-custom">
+                {filteredEvents.length > 0 ? (
+                  filteredEvents.map((event: CouncilEvent) => (
+                    <div
+                      key={event.ce_id}
+                      className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        <TooltipLayout
+                          trigger={
+                            <DialogLayout
+                              isOpen={viewEvent?.ce_id === event.ce_id}
+                              onOpenChange={(open) => !open && setViewEvent(null)}
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewEvent(event);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 text-blue-500" />
+                                </Button>
+                              }
+                              className="max-w-[90%] sm:max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                              title="View Event"
+                              description="View event details"
+                              mainContent={
+                                <div className="w-full h-full">
+                                  {viewEvent && (
+                                    <EditEventForm
+                                      initialValues={viewEvent}
+                                      onClose={() => setViewEvent(null)}
+                                    />
+                                  )}
+                                </div>
+                              }
+                            />
+                          }
+                          content="View"
+                        />
+                        <TooltipLayout
+                          trigger={
+                            <ConfirmationModal
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ArchiveRestore className="h-4 w-4 text-green-500" />
+                                </Button>
+                              }
+                              title="Confirm Restore"
+                              description={`Are you sure you want to restore the event "${event.ce_title}"?`}
+                              actionLabel="Restore"
+                              onClick={() => handleRestore(event.ce_id)}
+                            />
+                          }
+                          content="Restore"
+                        />
+                        <TooltipLayout
+                          trigger={
+                            <ConfirmationModal
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash className="h-4 w-4 text-red-500" />
+                                </Button>
+                              }
+                              title="Confirm Permanent Delete"
+                              description={`This will permanently delete the event "${event.ce_title}".`}
+                              actionLabel="Delete"
+                              onClick={() => handlePermanentDelete(event.ce_id)}
+                            />
+                          }
+                          content="Delete"
+                        />
+                      </div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200 mb-1">
+                        {event.ce_title}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {format(new Date(`${event.ce_date}T${event.ce_time}`), "MMM d, yyyy 'at' h:mm a")} - {event.ce_place}
+                      </div>
                     </div>
-                    <div className="font-medium text-gray-800 dark:text-gray-200 mb-1">
-                      {event.ce_title}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {format(new Date(`${event.ce_date}T${event.ce_time}`), "MMM d, yyyy 'at' h:mm a")} - {event.ce_place}
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    No archived events found.
                   </div>
-                ))
-              ) : (
-                <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                  No archived events found.
-                </div>
-              )}
-            </div>
-             )}
+                )}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
