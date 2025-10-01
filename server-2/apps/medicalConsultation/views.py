@@ -25,6 +25,11 @@ from apps.childhealthservices.serializers import ChildHealthHistoryFullSerialize
 from apps.inventory.models import MedicineInventory
 from pagination import *
 from apps.healthProfiling.models import *
+from apps.servicescheduler.models import *
+from django.http import Http404
+from datetime import date, timedelta
+from dateutil import parser
+
 
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
@@ -825,3 +830,365 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
+            
+# FOR MOBILE APP /////////////////////////////////////////////////////////////////////////////////////////
+
+# class AvailableSlotsView(APIView):
+#     def get(self, request):
+#         today = date.today()
+#         available = []
+#         try:
+#             service = Service.objects.get(service_name='Medical Consultation')
+#         except Service.DoesNotExist:
+#             raise Http404("Medical Consultation service not found")
+
+#         for i in range(30):
+#             d = today + timedelta(days=i)
+#             if d.weekday() >= 5:  # Skip weekends (5=Sat, 6=Sun)
+#                 continue
+#             day_name = d.strftime('%A')
+#             try:
+#                 day_obj = Day.objects.get(day=day_name)
+#             except Day.DoesNotExist:
+#                 continue
+
+#             am_scheduled = ServiceScheduler.objects.filter(service_id=service, day_id=day_obj, meridiem='AM').exists()
+#             pm_scheduled = ServiceScheduler.objects.filter(service_id=service, day_id=day_obj, meridiem='PM').exists()
+
+#             if not am_scheduled and not pm_scheduled:
+#                 continue
+
+#             try:
+#                 date_slot, created = DateSlot.objects.get_or_create(
+#                     date=d,
+#                     defaults={
+#                         'am_max_slots': 10 if am_scheduled else 0,
+#                         'pm_max_slots': 10 if pm_scheduled else 0,
+#                         'am_current_bookings': 0,
+#                         'pm_current_bookings': 0
+#                     }
+#                 )
+#             except Exception as e:
+#                 return Response(
+#                     {'error': f'Failed to create/get DateSlot: {str(e)}'},
+#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#                 )
+
+#             am_available = date_slot.am_available_slots > 0 and am_scheduled
+#             pm_available = date_slot.pm_available_slots > 0 and pm_scheduled
+
+#             if am_available or pm_available:
+#                 available.append({
+#                     'date': d.isoformat(),
+#                     'am_available': am_available,
+#                     'pm_available': pm_available,
+#                     'am_remaining': date_slot.am_available_slots if am_scheduled else 0,
+#                     'pm_remaining': date_slot.pm_available_slots if pm_scheduled else 0,
+#                 })
+
+#         return Response(available)
+
+# class BookAppointmentView(APIView):
+#     @transaction.atomic
+#     def post(self, request):
+#         data = request.data
+#         patient_id = data.get('patient_id')
+#         scheduled_date_str = data.get('scheduled_date')
+#         meridiem = data.get('meridiem')
+#         chief_complaint = data.get('chief_complaint')
+#         is_pregnant = data.get('is_pregnant', False)
+
+#         if not all([patient_id, scheduled_date_str, meridiem, chief_complaint]):
+#             return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             d = date.fromisoformat(scheduled_date_str)
+#         except ValueError:
+#             return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if d.weekday() >= 5:
+#             return Response({'error': 'Appointments not available on weekends'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         day_name = d.strftime('%A')
+#         try:
+#             day_obj = Day.objects.get(day=day_name)
+#             service = Service.objects.get(service_name='Medical Consultation')
+#         except (Day.DoesNotExist, Service.DoesNotExist):
+#             return Response({'error': 'Service or day configuration missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if not ServiceScheduler.objects.filter(service_id=service, day_id=day_obj, meridiem=meridiem).exists():
+#             return Response({'error': 'Service not scheduled for this day/time'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             date_slot, created = DateSlot.objects.get_or_create(
+#                 date=d,
+#                 defaults={
+#                     'am_max_slots': 10 if meridiem == 'AM' else 0,
+#                     'pm_max_slots': 10 if meridiem == 'PM' else 0,
+#                     'am_current_bookings': 0,
+#                     'pm_current_bookings': 0
+#                 }
+#             )
+#         except Exception as e:
+#             return Response(
+#                 {'error': f'Failed to create/get DateSlot: {str(e)}'},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+
+#         if meridiem == 'AM' and date_slot.am_available_slots <= 0:
+#             return Response({'error': 'No available AM slots'}, status=status.HTTP_400_BAD_REQUEST)
+#         elif meridiem == 'PM' and date_slot.pm_available_slots <= 0:
+#             return Response({'error': 'No available PM slots'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             patient = Patient.objects.get(pat_id=patient_id)
+#         except Patient.DoesNotExist:
+#             return Response({'error': 'Patient not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         patrec, _ = PatientRecord.objects.get_or_create(pat_id=patient)
+#         vital = VitalSigns.objects.create()
+#         bm = BodyMeasurement.objects.create()
+
+#         medrec_data = {
+#             'medrec_status': 'pending',
+#             'medrec_chief_complaint': chief_complaint,
+#             'patrec': patrec,
+#             'vital': vital,
+#             'bm': bm,
+#             'scheduled_date': d,
+#             'meridiem': meridiem,
+#         }
+#         if is_pregnant:
+#             medrec_data['lmp'] = data.get('lmp')
+
+#         medrec = MedicalConsultation_Record.objects.create(**medrec_data)
+
+#         if meridiem == 'AM':
+#             date_slot.am_current_bookings += 1
+#         else:
+#             date_slot.pm_current_bookings += 1
+#         date_slot.save()
+
+#         return Response({'success': True, 'medrec_id': medrec.medrec_id}, status=status.HTTP_201_CREATED)
+    
+class AvailableMedicalConsultationSlotsView(APIView):
+    def get(self, request):
+        try:
+            consultation_service = Service.objects.get(service_name='Medical Consultation')
+            
+            # Generate slots for the next 90 days
+            today = date.today()
+            future_date_limit = today + timedelta(days=90)
+            response_data = []
+            
+            current_date = today
+            while current_date <= future_date_limit:
+                day_of_week_name = current_date.strftime('%A')
+                is_weekend = current_date.weekday() in [5, 6]  # Saturday=5, Sunday=6
+
+                # Check scheduler for AM and PM
+                is_scheduled_am = ServiceScheduler.objects.filter(
+                    service_id=consultation_service,
+                    day_id__day=day_of_week_name,
+                    meridiem='AM'
+                ).exists()
+                is_scheduled_pm = ServiceScheduler.objects.filter(
+                    service_id=consultation_service,
+                    day_id__day=day_of_week_name,
+                    meridiem='PM'
+                ).exists()
+
+                # Rule: Available if scheduled OR weekend
+                am_allowed = is_scheduled_am or is_weekend
+                pm_allowed = is_scheduled_pm or is_weekend
+
+                # FIX: Use DateSlots (with 's') instead of DateSlot
+                date_slot = DateSlots.objects.filter(date=current_date).first()
+                am_max_slots = date_slot.am_max_slots if date_slot else 20
+                pm_max_slots = date_slot.pm_max_slots if date_slot else 20
+                am_current_bookings = date_slot.am_current_bookings if date_slot else 0
+                pm_current_bookings = date_slot.pm_current_bookings if date_slot else 0
+                am_available_slots = am_max_slots - am_current_bookings
+                pm_available_slots = pm_max_slots - pm_current_bookings
+
+                # Only include dates with available slots
+                if (am_allowed and am_available_slots > 0) or (pm_allowed and pm_available_slots > 0):
+                    response_data.append({
+                        'date': current_date.isoformat(),
+                        'day_name': day_of_week_name,
+                        'am_available': am_allowed and am_available_slots > 0,
+                        'pm_available': pm_allowed and pm_available_slots > 0,
+                        'am_available_count': am_available_slots,
+                        'pm_available_count': pm_available_slots,
+                    })
+
+                current_date += timedelta(days=1)
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        except Service.DoesNotExist:
+            return Response({'error': 'Service "Medical Consultation" not configured in the database.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'An unexpected error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class MedicalConsultationBookingView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        data = request.data
+
+        # 1. Get and validate required data
+        rp_id = data.get('rp_id')
+        scheduled_date_str = data.get('scheduled_date')
+        meridiem = data.get('meridiem')
+        chief_complaint = data.get('chief_complaint')
+
+        if not all([rp_id, scheduled_date_str, meridiem, chief_complaint]):
+            return Response(
+                {'error': 'Missing required fields.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from datetime import datetime
+            scheduled_date = datetime.strptime(scheduled_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if scheduled_date < date.today():
+            return Response(
+                {'error': 'Scheduled date cannot be in the past.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get scheduler if exists
+        try:
+            consultation_service = Service.objects.get(service_name='Medical Consultation')
+            scheduler = ServiceScheduler.objects.filter(
+                service_id=consultation_service,
+                day_id__day=scheduled_date.strftime('%A'),
+                meridiem=meridiem
+            ).first()
+        except Service.DoesNotExist:
+            scheduler = None
+
+        # Check if scheduled or weekend
+        is_weekend = scheduled_date.weekday() in [5, 6]
+        if not (scheduler or is_weekend):
+            return Response(
+                {'error': 'No available schedule for this date/time.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create or get date slot - REMOVE service_scheduler field
+        date_slot, created = DateSlots.objects.get_or_create(
+            date=scheduled_date,
+            defaults={
+                'am_max_slots': 20,
+                'pm_max_slots': 20,
+                # Remove this line: 'service_scheduler': scheduler
+            }
+        )
+
+        # Check availability and book
+        if meridiem == 'AM':
+            if date_slot.am_available_slots <= 0:
+                return Response({'error': 'No AM slots available.'}, status=400)
+            date_slot.am_current_bookings += 1
+        else:
+            if date_slot.pm_available_slots <= 0:
+                return Response({'error': 'No PM slots available.'}, status=400)
+            date_slot.pm_current_bookings += 1
+
+        date_slot.save()
+
+        # Create appointment
+        try:
+            resident_profile = ResidentProfile.objects.get(rp_id=rp_id)
+            appointment = MedConsultAppointment.objects.create(
+                rp=resident_profile,
+                chief_complaint=chief_complaint,
+                scheduled_date=scheduled_date,
+                meridiem=meridiem,
+                status='pending'
+            )
+            
+            return Response({
+                'success': True,
+                'appointment_id': appointment.id,
+                'scheduled_date': scheduled_date.isoformat(),
+                'meridiem': meridiem
+            }, status=201)
+            
+        except ResidentProfile.DoesNotExist:
+            # Rollback
+            if meridiem == 'AM':
+                date_slot.am_current_bookings -= 1
+            else:
+                date_slot.pm_current_bookings -= 1
+            date_slot.save()
+            return Response({'error': 'Resident not found.'}, status=400)
+        
+class UserAppointmentsView(generics.ListAPIView):
+    serializer_class = MedConsultAppointmentSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        rp_id = self.request.query_params.get('rp_id')
+        include_archived = self.request.query_params.get('include_archived', 'false').lower() == 'true'
+
+        if not rp_id:
+            raise ValidationError({'error': 'rp_id is required.'})
+
+        queryset = MedConsultAppointment.objects.filter(rp__rp_id=rp_id).select_related('rp')
+
+        if not include_archived:
+            queryset = queryset.exclude(status='cancelled')
+
+        return queryset.order_by('-created_at')
+
+
+class CancelAppointmentView(APIView):
+    def patch(self, request, appointment_id):
+        try:
+            appointment = MedConsultAppointment.objects.get(id=appointment_id)
+        except MedConsultAppointment.DoesNotExist:
+            return Response({'error': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if appointment.status != 'pending':
+            return Response({'error': 'Only pending appointments can be cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        archive_reason = request.data.get('archive_reason')
+        if not archive_reason:
+            return Response({'error': 'Cancellation reason is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                # Update appointment status
+                appointment.status = 'cancelled'
+                appointment.archive_reason = archive_reason
+                appointment.save()
+
+                # Decrease slot booking count
+                date_slot = DateSlots.objects.get(date=appointment.scheduled_date)
+                if appointment.meridiem == 'AM':
+                    date_slot.am_current_bookings = max(0, date_slot.am_current_bookings - 1)
+                else:
+                    date_slot.pm_current_bookings = max(0, date_slot.pm_current_bookings - 1)
+                date_slot.save()
+
+            return Response({'success': True, 'detail': 'Appointment cancelled successfully.'}, status=status.HTTP_200_OK)
+
+        except DateSlots.DoesNotExist:
+            # If date slot is missing, still allow cancellation but log the issue
+            appointment.status = 'cancelled'
+            appointment.archive_reason = archive_reason
+            appointment.save()
+            return Response({'success': True, 'detail': 'Appointment cancelled, but slot update failed.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

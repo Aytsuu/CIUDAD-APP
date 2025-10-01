@@ -2,6 +2,8 @@ from .models import *
 from django.db.models import Q
 from apps.healthProfiling.models import FamilyComposition, PersonalAddress
 from apps.patientrecords.models import Transient
+from datetime import date, timedelta
+from django.db import IntegrityError
 
 
 def get_medcon_record_count(pat_id):
@@ -121,6 +123,7 @@ def apply_patient_search_filter(queryset, search_query):
     
     return queryset.filter(combined_query).distinct()
     return queryset.filter(combined_query).distinct()
+
 def apply_patient_type_filter(queryset, patient_type):
     """Reusable patient type filter"""
     search_terms = [term.strip().lower() for term in patient_type.split(',') if term.strip()]
@@ -132,3 +135,25 @@ def apply_patient_type_filter(queryset, patient_type):
             type_query |= Q(pat_type__iexact=term)
     
     return queryset.filter(type_query) if type_query else queryset
+
+
+
+def create_future_date_slots(days_in_advance=60):
+    today = date.today() 
+    slots_created = 0
+    
+    for i in range(days_in_advance):
+        target_date = today + timedelta(days=i)
+        
+        try:
+            # Only create if it doesn't exist (get_or_create)
+            _, created = DateSlot.objects.get_or_create(
+                date=target_date,
+                defaults={'am_max_slots': 10, 'pm_max_slots': 10}
+            )
+            if created:
+                slots_created += 1
+        except IntegrityError:
+            pass 
+        except Exception as e:
+            pass

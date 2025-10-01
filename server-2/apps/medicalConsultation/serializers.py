@@ -49,3 +49,11 @@ class MedicalConsultationCreateSerializer(serializers.Serializer):
 
     def validate_weight(self, value):
         return value or 0
+
+
+# /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class MedConsultAppointmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedConsultAppointment
+        fields = ['id', 'chief_complaint', 'scheduled_date', 'meridiem', 'status', 'created_at', 'archive_reason']

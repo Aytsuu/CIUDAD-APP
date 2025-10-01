@@ -25,6 +25,10 @@ const MedConsultationLanding = () => {
           <Text className='color-white font-PoppinsSemiBold text-lg'>BOOK APPOINTMENT</Text>
         </TouchableOpacity>
 
+         <TouchableOpacity onPress={() => router.push("/medconsultation/my-medappointments")} className='justify-center p-3 rounded-2xl bg-blue-900 items-center flex mt-4'>
+          <Text className='color-white font-PoppinsSemiBold text-lg'>MY APPOINTMENTS</Text>
+        </TouchableOpacity>
+
 
       </View>
     </ScrollView>

@@ -24,6 +24,11 @@ export default () => {
      route: ""
   },
   {
+    title: "Medicine Request",
+     description: "",
+     route: "/(health)/medicine-request/med-request"
+  },
+  {
     title: "Medical Consultation Appointment",
      description: "",
      route: ""

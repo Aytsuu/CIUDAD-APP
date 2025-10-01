@@ -17,7 +17,10 @@ urlpatterns=[
     path ('create-soap-form/', SoapFormSubmissionView.as_view(), name='create-medical-consultation-record-step2'),
     path('create-soap-form/childhealth/', ChildHealthSoapFormSubmissionView.as_view(), name='create-medical-consultation-record-step3'),
     
+    path('combined-health-records/<str:assigned_to>/', CombinedHealthRecordsView.as_view(), name='combined-health-records-assigned'),
     
-    
-path('combined-health-records/<str:assigned_to>/', CombinedHealthRecordsView.as_view(), name='combined-health-records-assigned'),
+    path('available-slots/', AvailableMedicalConsultationSlotsView.as_view(), name='available-slots'),
+    path('book-appointment/', MedicalConsultationBookingView.as_view(), name='book-appointment'),
+    path('user-appointments/', UserAppointmentsView.as_view(), name='user-appointments'),
+    path('cancel-appointment/<int:appointment_id>/', CancelAppointmentView.as_view(), name='cancel-appointment'),
 ]
