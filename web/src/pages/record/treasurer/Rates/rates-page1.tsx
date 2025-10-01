@@ -212,7 +212,7 @@ function RatesPage1() {
             <div className="flex items-center justify-center py-12">
                 <Spinner size="md" />
                 <span className="ml-2 text-gray-600">
-                    {activeTab === "active" ? "Loading active annual gross sales..." : "Loading history..."}
+                    {activeTab === "active" ? "Loading..." : "Loading history..."}
                 </span>
             </div>
         )

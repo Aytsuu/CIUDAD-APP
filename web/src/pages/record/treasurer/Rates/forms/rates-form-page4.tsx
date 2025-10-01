@@ -15,7 +15,7 @@ function RatesFormPage4({onSuccess}: {onSuccess?: () => void}){
         defaultValues: {
             purpose: "",
             amount: "",
-            category: "Business Permit",
+            category: "Barangay Permit",
             staff_id: user?.staff?.staff_id
         }
     })

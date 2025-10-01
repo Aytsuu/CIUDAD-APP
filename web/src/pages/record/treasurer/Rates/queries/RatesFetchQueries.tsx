@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAnnualGrossSalesActive, getAllAnnualGrossSales, getPurposeAndRatePersonalActive, getPurposeAndRateAllPersonal, 
     getPurposeAndRateServiceChargeActive, getPurposeAndRateAllServiceCharge
-    , getPurposeAndRateBusinessPermitActive, getPurposeAndRateAllBusinessPermit, getPurposeAndRate } from "../restful-API/RatesGetAPI";
+    , getPurposeAndRateBarangayPermitActive, getPurposeAndRateAllBarangayPermit, getPurposeAndRate } from "../restful-API/RatesGetAPI";
 
 export type AnnualGrossSales = {
     ags_id: string;
@@ -79,18 +79,18 @@ export const useGetPurposeAndRateAllServiceCharge = (page: number, pageSize: num
     });
 };
 
-export const useGetPurposeAndRateBusinessPermitActive = (page: number, pageSize: number, searchQuery: string) => {
+export const useGetPurposeAndRateBarangayPermitActive = (page: number, pageSize: number, searchQuery: string) => {
     return useQuery<{results: PurposeAndRate[], count: number}>({
-        queryKey: ["businessPermitActive", page, pageSize, searchQuery],  
-        queryFn:() => getPurposeAndRateBusinessPermitActive(page, pageSize, searchQuery),
+        queryKey: ["barangayPermitActive", page, pageSize, searchQuery],  
+        queryFn:() => getPurposeAndRateBarangayPermitActive(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
     });
 };
 
-export const useGetPurposeAndRateAllBusinessPermit = (page: number, pageSize: number, searchQuery: string) => {
+export const useGetPurposeAndRateAllBarangayPermit = (page: number, pageSize: number, searchQuery: string) => {
     return useQuery<{results: PurposeAndRate[], count: number}>({
-        queryKey: ["allBusinessPermit", page, pageSize, searchQuery],  
-        queryFn:() => getPurposeAndRateAllBusinessPermit(page, pageSize, searchQuery),
+        queryKey: ["allBarangayPermit", page, pageSize, searchQuery],  
+        queryFn:() => getPurposeAndRateAllBarangayPermit(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
     });
 };

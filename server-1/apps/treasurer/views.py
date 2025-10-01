@@ -1069,7 +1069,7 @@ class Purpose_And_RatesAllServiceChargeView(generics.ListCreateAPIView):
 
         return queryset.order_by('-pr_date')
     
-class Purpose_And_RatesBusinessPermitActiveView(generics.ListCreateAPIView):
+class Purpose_And_RatesBarangayPermitActiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     pagination_class = StandardResultsPagination
@@ -1077,7 +1077,7 @@ class Purpose_And_RatesBusinessPermitActiveView(generics.ListCreateAPIView):
     def get_queryset(self):
         # Base queryset with category filter and related data
         queryset = Purpose_And_Rates.objects.filter(
-            pr_category='Business Permit',
+            pr_category='Barangay Permit',
             pr_is_archive=False  # Assuming you want active records
         ).select_related(
             'staff_id__rp__per'
@@ -1107,7 +1107,7 @@ class Purpose_And_RatesBusinessPermitActiveView(generics.ListCreateAPIView):
 
         return queryset.order_by('-pr_date')
 
-class Purpose_And_RatesAllBusinessPermitView(generics.ListCreateAPIView):
+class Purpose_And_RatesAllBarangayPermitView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     pagination_class = StandardResultsPagination
@@ -1115,7 +1115,7 @@ class Purpose_And_RatesAllBusinessPermitView(generics.ListCreateAPIView):
     def get_queryset(self):
         # Base queryset with category filter and related data
         queryset = Purpose_And_Rates.objects.filter(
-            pr_category='Business Permit',
+            pr_category='Barangay Permit',
         ).select_related(
             'staff_id__rp__per'
         ).only(
