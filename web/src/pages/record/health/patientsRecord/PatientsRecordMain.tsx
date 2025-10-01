@@ -37,12 +37,15 @@ import { usePatients } from "./queries/fetch";
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
+
 type Report = {
   id: string;
   sitio: string;
-  lastName: string;
-  firstName: string;
-  mi: string;
+  fullName?: {
+    lastName: string;
+    firstName: string;
+    mi: string;
+  }
   age: {
     ageNumber: number;
     ageUnit: string;
@@ -63,7 +66,6 @@ interface Patients {
     per_dob: string;
     philhealth_id?: string;
   };
-  philhealth_id?: string;
 
   address: {
     add_sitio?: string;
@@ -119,12 +121,12 @@ export const columns: ColumnDef<Report>[] = [
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("sitio")}
+        {capitalize(row.getValue("sitio"))}
       </div>
     ),
   },
   {
-    accessorKey: "lastName",
+    accessorKey: "fullName",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -134,35 +136,14 @@ export const columns: ColumnDef<Report>[] = [
         <ArrowUpDown size={14} />
       </div>
     ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {capitalize(row.getValue("lastName"))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "firstName",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        First Name
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {capitalize(row.getValue("firstName"))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "mi",
-    header: "Middle Name",
-    cell: ({ row }) => (
-      <div className="hidden xl:block">{capitalize(row.getValue("mi"))}</div>
-    ),
+    cell: ({ row }) => {
+      const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
+      return (
+        <div className="hidden lg:block max-w-xs truncate">
+          {fullNameObj ? `${capitalize(fullNameObj.lastName)}, ${capitalize(fullNameObj.firstName)} ${fullNameObj.mi ? fullNameObj.mi.charAt(0).toUpperCase() + "." : ""}` : "-"}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "age",
@@ -203,9 +184,7 @@ export const columns: ColumnDef<Report>[] = [
             patientData: {
               id: row.original.id,
               sitio: row.original.sitio,
-              lastName: row.original.lastName,
-              firstName: row.original.firstName,
-              mi: row.original.mi,
+              fullName: row.original.fullName,
               type: row.original.type,
               noOfRecords: row.original.noOfRecords,
               philhealthId: row.original.philhealthId 
@@ -290,13 +269,15 @@ export default function PatientsRecord() {
       }
       return {
         id: patient.pat_id.toString(),
-        sitio: patient.address?.add_sitio || "Unknown",
-        lastName: patient.personal_info?.per_lname || "",
-        firstName: patient.personal_info?.per_fname || "",
-        mi: patient.personal_info?.per_mname || "",
+        sitio: patient.address?.add_sitio || "",
+        fullName: {
+          lastName: patient.personal_info?.per_lname || "",
+          firstName: patient.personal_info?.per_fname || "",
+          mi: patient.personal_info?.per_mname || "",
+        },
         age: { ageNumber: ageInfo, ageUnit: ageUnit},
         type: patient.pat_type || "Resident",
-        philhealth_id: philhealthId,
+        philhealthId: philhealthId,
       };
     });
   };
@@ -324,7 +305,7 @@ export default function PatientsRecord() {
 
   return (
     <LayoutWithBack
-      title="Patients Records"
+      title="Patient Records"
       description="Manage and view patients information"
     >
       <div className="w-full ">

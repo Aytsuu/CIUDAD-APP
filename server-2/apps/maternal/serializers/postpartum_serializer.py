@@ -546,7 +546,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 'updated_at': instance.pregnancy_id.updated_at,
                 'prenatal_end_date': instance.pregnancy_id.prenatal_end_date,
                 'postpartum_end_date': instance.pregnancy_id.postpartum_end_date,
-                'pat_id': instance.pregnancy_id.pat_id.pat_id
+                # 'pat_id': instance.pregnancy_id.pat_id.pat_id
             }
         else:
             representation['pregnancy'] = None
@@ -562,7 +562,6 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             print(f"Error getting delivery records: {e}")
             representation['delivery_records'] = []
         
-        # Add assessments - you'll need to provide the correct related name for PostpartumAssessment
         try:
             assessments = instance.postpartum_assessment.all()
             representation['assessments'] = PostpartumAssessmentSerializer(

@@ -241,9 +241,9 @@ class PostpartumRecordsListView(generics.ListAPIView):
     serializer_class = PostpartumCompleteSerializer
 
     def get_queryset(self):
-        pat_id = self.kwargs.get('pat_id')
+        pregnancy_id = self.kwargs.get('pregnancy_id')
         return PostpartumRecord.objects.filter(
-            patrec_id__pat_id__pat_id=pat_id
+            pregnancy_id=pregnancy_id
         ).order_by('-created_at')
     
 

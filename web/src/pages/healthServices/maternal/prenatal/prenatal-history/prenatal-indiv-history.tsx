@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Loader2, Printer } from "lucide-react";
 
-import { PrenatalCareHistoryTable } from "../../maternal-components/prenatalcare-history";
+import { PrenatalCareHistoryTable } from "../../prenatal/prenatal-history/prenatalcare-history";
 import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
 import PrenatalFormTableHistory from "./prenatal-form-history";
 import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";

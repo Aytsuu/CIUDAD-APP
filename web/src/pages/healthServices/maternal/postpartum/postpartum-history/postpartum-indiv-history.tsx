@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Loader2, Printer } from "lucide-react";
 
-import PostpartumViewing from "./form-history/postpartum-viewing";
+import PostpartumViewing from "./form-history/postpartum-care-viewing";
 import PostpartumCareHistory from "./postpartum-care-history";
 
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
@@ -127,15 +127,24 @@ export default function PostpartumIndivHistory() {
     >
       <div className="bg-white p-3 space-y-2">
         <div className="w-full">
-          <div className="flex m-5">
-              <Label className="text-xl">Form Section</Label>
-          </div>
-          <div className="flex items-center justify-center">
-              <PostpartumViewing pprId={recordId} />
+          {/* form section */}
+          <div>
+            <div className="flex m-5 p-2 border-b-2 border-black/50">
+                <Label className="text-xl">Form Section</Label>
+            </div>
+            <div className="flex items-center justify-center">
+                <PostpartumViewing pprId={recordId} />
+            </div>
           </div>
 
+          {/* table comparison section */}
           <div>
-              <PostpartumCareHistory/>
+            <div className="flex m-5 p-2 border-b-2 border-black/50">
+                <Label className="text-xl">Table Comparison Section</Label>
+            </div>
+            <div className="px-5">
+                <PostpartumCareHistory pregnancyId={pregnancyId} />
+            </div>
           </div>
         </div>
       </div>

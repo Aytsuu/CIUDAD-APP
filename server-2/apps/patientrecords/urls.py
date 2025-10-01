@@ -20,6 +20,7 @@ urlpatterns = [
     path('patients/', PatientListView.as_view(), name='patient-list'),
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
