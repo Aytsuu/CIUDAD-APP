@@ -135,7 +135,6 @@ export default function PendingCards() {
                   <div className="flex flex-col h-full overflow-y-hidden">
                     <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
                       <ViewGarbageRequestDetails
-                        garb_id={row.original.garb_id}
                         garb_requester={row.original.garb_requester}
                         garb_location={row.original.garb_location}
                         garb_created_at={row.original.garb_created_at}

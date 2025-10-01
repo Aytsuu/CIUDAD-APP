@@ -110,49 +110,51 @@ export default function AcceptedTable() {
       header: "   ",
       cell: ({ row }) => {
         return (
-          <DialogLayout
-            className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
-            trigger={
-              <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
-                <span className="text-sm font-medium group-hover:text-primary">View</span>
-                <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+          <div className="flex items-center justify-center">
+            <DialogLayout
+              className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
+              trigger={
+                <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
+                  <span className="text-sm font-medium group-hover:text-primary">View</span>
+                  <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+                    <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+                  </div>
+                </Button>
+              }
+              title={`Garbage Pickup Request No. ${row.original.garb_id}`}
+              description="Full details of the request filed."
+              mainContent={
+                <div className="flex flex-col h-full overflow-y-hidden">
+                  <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
+                    <ViewGarbageRequestDetails
+                      garb_requester={row.original.garb_requester}
+                      garb_location={row.original.garb_location}
+                      garb_created_at={row.original.garb_created_at}
+                      garb_pref_date={row.original.garb_pref_date}
+                      garb_pref_time={row.original.garb_pref_time}
+                      garb_additional_notes={row.original.garb_additional_notes}
+                      file_url={row.original.file_url}
+                      sitio_name={row.original.sitio_name}
+                      garb_waste_type={row.original.garb_waste_type}
+                      enableAssignmentEditing={true}
+                      pickup_assignment_id={row.original.pickup_assignment_id || ""}
+                      assignment_collector_ids={row.original.assignment_collector_ids || []}
+                      driver_id={row.original.driver_id || ''}
+                      truck_id={row.original.truck_id || ''}
+                      collector_ids={row.original.collector_ids || []}
+                      assignment_info={row.original.assignment_info || {}}
+                      onEditSuccess={handleEditSuccess}
+                      staff_name={row.original.staff_name}
+                      dec_date={row.original.dec_date}
+                      isAccepted={true}
+                    />
+                  </div>
                 </div>
-              </Button>
-            }
-            title={`Garbage Pickup Request No. ${row.original.garb_id}`}
-            description="Full details of the request filed."
-            mainContent={
-              <div className="flex flex-col h-full overflow-y-hidden">
-                <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
-                  <ViewGarbageRequestDetails
-                    garb_id={row.original.garb_id}
-                    garb_requester={row.original.garb_requester}
-                    garb_location={row.original.garb_location}
-                    garb_created_at={row.original.garb_created_at}
-                    garb_pref_date={row.original.garb_pref_date}
-                    garb_pref_time={row.original.garb_pref_time}
-                    garb_additional_notes={row.original.garb_additional_notes}
-                    file_url={row.original.file_url}
-                    sitio_name={row.original.sitio_name}
-                    garb_waste_type={row.original.garb_waste_type}
-                    enableAssignmentEditing={true}
-                    pickup_assignment_id={row.original.pickup_assignment_id || ""}
-                    assignment_collector_ids={row.original.assignment_collector_ids || []}
-                    driver_id={row.original.driver_id || ''}
-                    truck_id={row.original.truck_id || ''}
-                    collector_ids={row.original.collector_ids || []}
-                    assignment_info={row.original.assignment_info || {}}
-                    onEditSuccess={handleEditSuccess}
-                    staff_name={row.original.staff_name}
-                    dec_date={row.original.dec_date}
-                  />
-                </div>
-              </div>
-            }
-            isOpen={viewDetailsRowId === row.original.garb_id}
-            onOpenChange={(open) => setViewDetailsRowId(open ? row.original.garb_id : null)}
-          />
+              }
+              isOpen={viewDetailsRowId === row.original.garb_id}
+              onOpenChange={(open) => setViewDetailsRowId(open ? row.original.garb_id : null)}
+            />
+          </div>
         );
       },
     }

@@ -13,7 +13,7 @@ export const getDrivers = async () => {
 
 export const getTrucks = async () => {
     try {
-        const res = await api.get('waste/waste-trucks/');
+        const res = await api.get('waste/all-trucks/');
         return res.data;
     } catch (err) {
         console.error(err);
@@ -168,10 +168,14 @@ export const getGarbageCompletedRequest = async (page: number, pageSize: number,
                 garb_location: item.garb_location ?? '',
                 garb_waste_type: item.garb_waste_type ?? '',
                 garb_created_at: item.garb_created_at ?? '',
+                garb_pref_time: item.garb_pref_time || '',
+                garb_pref_date: item.garb_pref_date || '',
+                garb_additional_notes: item.garb_additional_notes,
                 conf_resident_conf_date: item.confirmation_info?.conf_resident_conf_date ?? null,
                 conf_staff_conf_date: item.confirmation_info?.conf_staff_conf_date ?? null,
                 conf_resident_conf: item.confirmation_info?.conf_resident_conf ?? null,
                 conf_staff_conf: item.confirmation_info?.conf_staff_conf ?? null,
+                dec_date: item.dec_date || null,
                 assignment_info: item.assignment_info ? {
                     driver: item.assignment_info.driver || '',
                     pick_time: item.assignment_info.pick_time || '',

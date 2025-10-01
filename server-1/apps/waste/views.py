@@ -507,6 +507,22 @@ class WasteTruckView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class WasteAllTruckView(APIView):
+    serializer_class = WasteTruckSerializer
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        is_archive = request.query_params.get('is_archive', None)
+        if is_archive is not None:
+            is_archive = is_archive.lower() == 'true'
+            trucks = WasteTruck.objects.filter(truck_is_archive=is_archive)
+        else:
+            trucks = WasteTruck.objects.all()  # Fetch all trucks
+        serializer = WasteTruckSerializer(trucks, many=True)
+        return Response(serializer.data)
+    
 
 class WasteTruckDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WasteTruckSerializer
@@ -813,7 +829,6 @@ class GarbagePickupRequestsByDriverView(generics.ListAPIView):
             garb_req_status__iexact='accepted'  # Filter only accepted requests
         )
 
-
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
     pagination_class = StandardResultsPagination
@@ -829,8 +844,8 @@ class GarbagePickupRequestCompletedView(generics.ListAPIView):
         ).prefetch_related(
             'pickup_request_decision_set__staff_id__rp__per',
             'pickup_assignment_set__truck_id',
-            'pickup_assignment_set__wstp_id__rp__per',
-            'pickup_assignment_set__assignment_collector_set__wstp_id__rp__per'
+            'pickup_assignment_set__wstp_id__staff_id__rp__per',  # CORRECTED: wstp_id__staff_id__rp__per
+            'pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per'  # CORRECTED: wstp_id__staff_id__rp__per
         ).only(
             'garb_id',
             'garb_location',
@@ -865,16 +880,16 @@ class GarbagePickupRequestCompletedView(generics.ListAPIView):
                 Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
                 Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query) |
                 Q(pickup_assignment_set__truck_id__truck_plate_number__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__rp__per__per_mname__icontains=search_query) |
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_mname__icontains=search_query)
+                Q(pickup_assignment_set__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |  # CORRECTED
+                Q(pickup_assignment_set__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |  # CORRECTED
+                Q(pickup_assignment_set__wstp_id__staff_id__rp__per__per_mname__icontains=search_query) |  # CORRECTED
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |  # CORRECTED
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |  # CORRECTED
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per__per_mname__icontains=search_query)  # CORRECTED
             ).distinct()
 
         return queryset.order_by('-garb_created_at')
-    
+
 class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
     queryset = Garbage_Pickup_Request.objects.all()

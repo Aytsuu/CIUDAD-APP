@@ -122,7 +122,6 @@ export default function RejectedTable() {
                 <div className="flex flex-col h-full overflow-y-hidden">
                   <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
                     <ViewGarbageRequestDetails
-                      garb_id={row.original.garb_id}
                       garb_requester={row.original.garb_requester}
                       garb_location={row.original.garb_location}
                       garb_created_at={row.original.garb_created_at}
@@ -135,6 +134,7 @@ export default function RejectedTable() {
                       rejection_reason={row.original.dec_reason}
                       dec_date={row.original.dec_date || ''}
                       staff_name={row.original.staff_name}
+                      isRejected = {true}
                     />
                   </div>
                 </div>

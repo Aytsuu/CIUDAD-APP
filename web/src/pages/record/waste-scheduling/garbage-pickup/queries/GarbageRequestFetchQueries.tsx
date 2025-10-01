@@ -167,10 +167,14 @@ export type GarbageRequestComplete = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
+  garb_pref_time: string;
+  garb_pref_date: string;
+  garb_additional_notes: string; 
   conf_resident_conf_date: string | null;  
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
   conf_staff_conf: boolean | null; 
+  dec_date: string;
   assignment_info?: {
     driver?: string;
     collectors?: string[];

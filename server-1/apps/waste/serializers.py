@@ -664,6 +664,9 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             'garb_waste_type',
             'dec_date',
             'garb_created_at',
+            'garb_additional_notes',
+            'garb_pref_time',
+            'garb_pref_date',
             'garb_requester',
             'confirmation_info',
             'assignment_info',
@@ -769,8 +772,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
         except Pickup_Request_Decision.DoesNotExist:
             pass
         
-        return None_name
-        return None      
+        return None
 
 class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()

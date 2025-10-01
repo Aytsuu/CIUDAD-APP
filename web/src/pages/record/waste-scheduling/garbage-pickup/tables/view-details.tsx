@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarDays, Clock, MapPin, User, FileText, Trash2, Pen, CheckCircle, XCircle } from "lucide-react"
+import { CalendarDays, MapPin, User, FileText, Trash2, Pen, CheckCircle, XCircle } from "lucide-react"
 import { formatTime } from "@/helpers/timeFormatter"
 import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
@@ -11,7 +11,6 @@ import { useState } from "react"
 import { formatDate } from "@/helpers/dateHelper"
 
 export default function ViewGarbageRequestDetails({
-  garb_id,
   garb_requester,
   garb_location,
   sitio_name,
@@ -31,9 +30,14 @@ export default function ViewGarbageRequestDetails({
   assignment_info,
   onEditSuccess,
   truck_id,
-  staff_name
+  staff_name,
+  conf_resident_conf_date = null,
+  conf_staff_conf_date = null,
+  conf_resident_conf = null,
+  conf_staff_conf = null,
+  isRejected,
+  isAccepted,
 }: {
-   garb_id: string
   garb_requester: string
   garb_location: string
   sitio_name: string
@@ -60,6 +64,12 @@ export default function ViewGarbageRequestDetails({
   onEditSuccess?: () => void;
   truck_id?: string;
   staff_name?: string;
+  conf_resident_conf_date?: string | null;
+  conf_staff_conf_date?: string | null;
+  conf_resident_conf?: boolean | null;
+  conf_staff_conf?: boolean | null;
+  isRejected?: boolean;
+  isAccepted?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null)
@@ -76,16 +86,12 @@ export default function ViewGarbageRequestDetails({
     setIsEditing(true)
   }
 
-  console.log('col_ids', collector_ids)
   const handleEditSuccess = () => {
     setIsEditing(false)
     setSelectedAssignment(null)
     onEditSuccess?.()
   }
 
-  // Determine if this request was accepted or rejected
-  const isAccepted = assignment_info?.driver || assignment_info?.truck || assignment_info?.pick_date
-  const isRejected = !!rejection_reason
 
   return (
     <>
@@ -223,6 +229,78 @@ export default function ViewGarbageRequestDetails({
                     <Label className="text-sm font-medium text-slate-600">Reason for Rejection</Label>
                     <div className="bg-red-50 border border-red-200 p-2 rounded-lg">
                       <p className="text-sm text-slate-700 leading-relaxed">{rejection_reason}</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Confirmation Status Card - Shows for completed requests */}
+          {(conf_resident_conf_date || conf_staff_conf_date || conf_resident_conf !== null || conf_staff_conf !== null) && (
+            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                <CardTitle className="flex items-center gap-2 text-indigo-900 pb-4">
+                  <CheckCircle className="w-5 h-5 text-indigo-600" />
+                  Pickup Confirmation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Resident Confirmation */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600">Resident Confirmation</Label>
+                    <div className={`p-3 rounded-lg ${
+                      conf_resident_conf ? "bg-green-50 border border-green-200" : "bg-slate-50 border border-slate-200"
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          conf_resident_conf ? "bg-green-500" : "bg-slate-400"
+                        }`} />
+                        <span className="font-semibold text-slate-900">
+                          {conf_resident_conf ? "Confirmed" : "Not Confirmed"}
+                        </span>
+                      </div>
+                      {conf_resident_conf_date && (
+                        <p className="text-sm text-slate-600 mt-1">
+                          {formatTimestamp(conf_resident_conf_date)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Staff Confirmation */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600">Staff Confirmation</Label>
+                    <div className={`p-3 rounded-lg ${
+                      conf_staff_conf ? "bg-green-50 border border-green-200" : "bg-slate-50 border border-slate-200"
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          conf_staff_conf ? "bg-green-500" : "bg-slate-400"
+                        }`} />
+                        <span className="font-semibold text-slate-900">
+                          {conf_staff_conf ? "Confirmed" : "Not Confirmed"}
+                        </span>
+                      </div>
+                      {conf_staff_conf_date && (
+                        <p className="text-sm text-slate-600 mt-1">
+                          {formatTimestamp(conf_staff_conf_date)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Overall Status */}
+                {(conf_resident_conf && conf_staff_conf) && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600">Overall Status</Label>
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="font-semibold text-green-800">Pickup Completed Successfully</span>
+                      </div>
                     </div>
                   </div>
                 )}
