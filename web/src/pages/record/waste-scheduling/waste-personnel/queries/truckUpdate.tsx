@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { putWasteTruck } from "../request/truckPutReq";
-import { WasteTruck, Truck } from "../waste-personnel-types";
+import { WasteTruck, Trucks } from "../waste-personnel-types";
 
 export const useUpdateWasteTruck = () => {
   const queryClient = useQueryClient();
@@ -21,8 +21,8 @@ export const useUpdateWasteTruck = () => {
         "wasteTrucks",
       ]);
 
-      queryClient.setQueryData<Truck[]>(["trucks"], (old = []) =>
-        old.map((t: Truck) =>
+      queryClient.setQueryData<Trucks[]>(["trucks"], (old = []) =>
+        old.map((t: Trucks) =>
           t.truck_id === variables.truck_id
             ? { ...t, ...variables.truckData }
             : t
