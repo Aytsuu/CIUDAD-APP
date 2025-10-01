@@ -82,10 +82,19 @@ export default () => {
           </View>
           <View>
               <Text className="text-lg text-gray-700 font-PoppinsMedium mb-2">
-                Hi, {user?.rp ? user?.personal?.per_fname : user?.personal?.br_fname}
+                Hi, {user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname}
               </Text>
               <Text className="text-sm text-gray-500">{user?.phone}</Text>
-              <Text className="text-sm text-gray-500" >{user?.email}</Text>
+              {user?.email ? (
+                <Text className="text-sm text-gray-500" >{user?.email}</Text>
+              ) : (
+                <TouchableOpacity 
+                  onPress={() => router.push("/(account)/settings/change-email")}
+                >
+                  <Text className="text-primaryBlue text-sm">Add email</Text>
+                </TouchableOpacity>
+              )}
+              <Text className="text-sm text-primaryBlue font-medium">ID: {user?.rp}</Text>
           </View>
         </View>
         <View className="flex-1 gap-3 mt-5">
