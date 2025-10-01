@@ -47,7 +47,7 @@ function CertificatePage() {
   const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
-  const { data: residentsList = []} = useResidentsList();
+  const { data: residentsList = [], isLoading: isLoadingResidents, error: residentsError } = useResidentsList();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
@@ -64,10 +64,45 @@ function CertificatePage() {
   }, [staffList]);
 
   const residentOptions = useMemo(() => {
-    return formatResidents(residentsList);
+    if (!residentsList || residentsList.length === 0) return [];
+    
+    
+    const filteredResidents = residentsList.filter((resident: any) => {
+      if (!resident.personal_info?.per_dob) return false;
+      
+      const birthdate = new Date(resident.personal_info.per_dob);
+      const today = new Date();
+      const age = today.getFullYear() - birthdate.getFullYear();
+      const monthDiff = today.getMonth() - birthdate.getMonth();
+      
+      
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate()) 
+        ? age - 1 
+        : age;
+      
+      return actualAge < 18;
+    });
+    
+    
+    return filteredResidents.map((resident: any) => ({
+      id: `${resident.rp_id} ${resident.name}`,
+      name: (
+        <div className="flex gap-4 items-center">
+          <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+            #{resident.rp_id}
+          </span>
+          {resident.name}
+        </div>
+      ),
+      per_id: resident.personal_info.per_id
+    }));
   }, [residentsList]);
 
   console.log("STAFF OPTIONS: ", staffOptions)
+  console.log("CHILDREN OPTIONS: ", residentOptions)
+  console.log("RAW RESIDENTS LIST: ", residentsList)
+  console.log("IS LOADING RESIDENTS: ", isLoadingResidents)
+  console.log("RESIDENTS ERROR: ", residentsError)
 
   const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
     queryKey: ["certificates"],
