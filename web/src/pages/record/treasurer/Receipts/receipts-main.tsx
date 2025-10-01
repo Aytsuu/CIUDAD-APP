@@ -1,18 +1,41 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useInvoiceQuery, type Receipt } from "./queries/receipt-getQueries";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext";
+
 
 function ReceiptPage() {
-  const { data: fetchedData = [], isLoading } = useInvoiceQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedFilterId, setSelectedFilterId] = useState("all");
+
+  // Use debounce for search to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const { showLoading, hideLoading } = useLoading();
+
+  // Fetch data with backend filtering
+  const { data: fetchedData = [], isLoading } = useInvoiceQuery(
+    debouncedSearchQuery, 
+    selectedFilterId
+  );
+
+
+  useEffect(() => {
+      if (isLoading) {
+      showLoading();
+      } else {
+      hideLoading();
+      }
+  }, [isLoading, showLoading, hideLoading]);    
+
 
   const columns: ColumnDef<Receipt>[] = [
     {
@@ -75,7 +98,7 @@ function ReceiptPage() {
     {
       accessorKey: "inv_change",
       header: "Change",
-      cell: ({ row }) => `₱${(Number(row.getValue("inv_change")) || 0).toFixed(2)}`
+      cell: ({ row }) => `₱ ${(Number(row.getValue("inv_change")) || 0).toFixed(2)}`
     },
     {
       accessorKey: "inv_discount_reason",
@@ -99,20 +122,8 @@ function ReceiptPage() {
     ];
   }, [fetchedData]);
 
-  const [selectedFilterId, setSelectedFilterId] = useState("all");
-
-  // Filter data based on selected filter and search query
-  const filteredData = fetchedData.filter(item => {
-    const matchesFilter = selectedFilterId === "all" || 
-      item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
-    
-    const matchesSearch = !searchQuery || 
-      Object.values(item).some(val => 
-        String(val).toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    
-    return matchesFilter && matchesSearch;
-  });
+  // No need for frontend filtering anymore since it's done in backend
+  const filteredData = fetchedData;
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -121,16 +132,16 @@ function ReceiptPage() {
     currentPage * pageSize
   );
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (id: string) => {
+    setSelectedFilterId(id);
+    setCurrentPage(1);
+  };
+
 
   return (
     <div className="w-full h-full p-4">
@@ -155,10 +166,7 @@ function ReceiptPage() {
               placeholder="Search..." 
               className="pl-10 w-full bg-white" 
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1); // Reset to first page when searching
-              }}
+              onChange={handleSearchChange}
             />
           </div>
           <SelectLayout
@@ -166,10 +174,7 @@ function ReceiptPage() {
             placeholder="Filter"
             options={filterOptions}
             value={selectedFilterId}
-            onChange={(id) => {
-              setSelectedFilterId(id);
-              setCurrentPage(1); // Reset to first page when changing filter
-            }}
+            onChange={handleFilterChange}
           />
         </div>
       </div>
@@ -193,7 +198,14 @@ function ReceiptPage() {
           </div>
         </div>
 
-        <DataTable columns={columns} data={paginatedData} header={true} />
+        {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+                <Spinner size="lg" />
+                <span className="ml-2 text-gray-600">Loading receipts record...</span>
+            </div>
+        ) : (
+          <DataTable columns={columns} data={paginatedData} header={true} />
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
