@@ -38,7 +38,7 @@ export const useDeleteWasteTruck = () => {
       });
     },
     onSuccess: (_, { permanent }) => {
-      toast.success(`Waste truck ${permanent ? "deleted" : "marked as disposed"} successfully`, {
+      toast.success(`Truck ${permanent ? "deleted" : "marked as disposed"} successfully`, {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
       });
