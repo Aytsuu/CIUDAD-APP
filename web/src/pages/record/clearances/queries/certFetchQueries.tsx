@@ -8,6 +8,8 @@ export type Certificate = {
   resident_details: {
     per_fname: string;
     per_lname: string;
+    per_dob?: string;
+    per_address?: string;
   } | null;
   req_pay_method: string;
   req_request_date: string;
@@ -110,7 +112,12 @@ export const getCertificates = async (): Promise<Certificate[]> => {
     const residentCertificates: Certificate[] = (residentRaw || []).map((item: any) => {
       return {
         cr_id: item.cr_id,
-        resident_details: item.resident_details || null,
+        resident_details: item.resident_details ? {
+          per_fname: item.resident_details.per_fname,
+          per_lname: item.resident_details.per_lname,
+          per_dob: item.resident_details.per_dob,
+          per_address: item.resident_details.per_address,
+        } : null,
         req_pay_method: item.req_pay_method || 'Walk-in',
         req_request_date: item.cr_req_request_date,
         req_type: item.purpose?.pr_purpose || item.req_type || '',

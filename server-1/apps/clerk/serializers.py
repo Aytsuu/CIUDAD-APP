@@ -152,9 +152,28 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
     def get_resident_details(self, obj):
         try:
             if obj.rp_id and getattr(obj.rp_id, "per", None):
+                # Get the primary address for this person
+                address_str = None
+                try:
+                    personal_address = obj.rp_id.per.personal_addresses.first()
+                    if personal_address and personal_address.add:
+                        addr = personal_address.add
+                        address_parts = [
+                            addr.add_street,
+                            addr.add_external_sitio,
+                            addr.add_barangay,
+                            addr.add_city,
+                            addr.add_province
+                        ]
+                        address_str = ", ".join(filter(None, address_parts))
+                except Exception as addr_e:
+                    logger.error(f"Error getting address: {str(addr_e)}")
+                
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
                     'per_lname': obj.rp_id.per.per_lname,
+                    'per_dob': obj.rp_id.per.per_dob,
+                    'per_address': address_str,
                     'voter_id': getattr(obj.rp_id, 'voter_id', None)
                 }
             return None

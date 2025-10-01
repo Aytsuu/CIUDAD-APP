@@ -464,9 +464,9 @@ function CertificatePage() {
           key={selectedCertificate.cr_id + Date.now()}
           fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
-          age={calculateAge(selectedCertificate.nrc_birthdate || "2003-09-04")}
-          birthdate={selectedCertificate.nrc_birthdate || "2003-09-04"}
-          address={selectedCertificate.nrc_address || "Sitio Palma"}
+          age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
+          birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
+          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
           Custodies={selectedCertificate.custodyChildren}

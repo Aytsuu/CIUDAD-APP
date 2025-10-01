@@ -435,6 +435,9 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                 'rp_id__per'
             )
             .prefetch_related(
+                'rp_id__per__personal_addresses__add'
+            )
+            .prefetch_related(
                 Prefetch(
                     'issuedcertificate_set',
                     queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
@@ -445,7 +448,8 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                 'cr_req_request_date',
                 'cr_req_status',
                 'rp_id__per__per_fname',
-                'rp_id__per__per_lname'
+                'rp_id__per__per_lname',
+                'rp_id__per__per_dob'
             )
         )
 
