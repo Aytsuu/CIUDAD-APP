@@ -441,7 +441,36 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 
 class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ResolutionSerializer
-    queryset = Resolution.objects.all()
+    # Remove the fixed queryset and use get_queryset method instead
+    
+    def get_queryset(self):
+        queryset = Resolution.objects.all().prefetch_related('resolution_files', 'resolution_supp')
+        
+        # Get filter parameters from request
+        search_query = self.request.query_params.get('search', '')
+        area_filter = self.request.query_params.get('area', '')
+        year_filter = self.request.query_params.get('year', '')
+        
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(res_num__icontains=search_query) |
+                Q(res_title__icontains=search_query) |
+                Q(res_area_of_focus__icontains=search_query) |
+                Q(staff__rp__per__per_lname__icontains=search_query) |
+                Q(staff__rp__per__per_fname__icontains=search_query) |
+                Q(staff__rp__per__per_mname__icontains=search_query)
+            )
+        
+        # Apply area of focus filter
+        if area_filter and area_filter != "all":
+            queryset = queryset.filter(res_area_of_focus__contains=[area_filter])
+        
+        # Apply year filter
+        if year_filter and year_filter != "all":
+            queryset = queryset.filter(res_date_approved__year=year_filter)
+        
+        return queryset
     
     def create(self, request, *args, **kwargs):
         # Check if we need to generate a resolution number

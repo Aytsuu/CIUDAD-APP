@@ -1,8 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import React from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, CircleAlert } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
@@ -17,6 +16,11 @@ import EditResolution from './editResolution';
 import { useResolution, type ResolutionData } from './queries/resolution-fetch-queries';
 import { useDeleteResolution } from './queries/resolution-delete-queries';
 import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queries';
+import { useDebounce } from "@/hooks/use-debounce";
+import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext";
+
+
 
 function ResolutionPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false); 
@@ -27,15 +31,30 @@ function ResolutionPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [filter, setFilter] = useState<string>("all");
     const [yearFilter, setYearFilter] = useState<string>("all");
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const { showLoading, hideLoading } = useLoading();
+  
 
     // Fetch mutation
-    const { data: resolutionData = [], isLoading, isError } = useResolution();
+    const { data: resolutionData = [], isLoading, isError } = useResolution(
+        debouncedSearchQuery, 
+        filter, 
+        yearFilter
+    );
 
     // Delete mutation
     const { mutate: deleteRes } = useDeleteResolution();
 
     // Archive / Restore mutation
     const { mutate: archiveRestore } = useArchiveOrRestoreResolution();
+
+    useEffect(() => {
+        if (isLoading) {
+        showLoading();
+        } else {
+        hideLoading();
+        }
+    }, [isLoading, showLoading, hideLoading]);      
 
     const filterOptions = [
         { id: "all", name: "All" },
@@ -49,7 +68,6 @@ function ResolutionPage() {
     const yearOptions = useMemo(() => {
         const years = new Set<number>();
         
-        // Add years from res_date_approved
         resolutionData.forEach(record => {
             if (record.res_date_approved) {
                 try {
@@ -63,13 +81,10 @@ function ResolutionPage() {
             }
         });
 
-        // Convert to array and sort descending (most recent first)
         const sortedYears = Array.from(years).sort((a, b) => b - a);
         
-        // Create options array with "All Years" first
         const options = [{ id: "all", name: "All Years" }];
         
-        // Add each year as an option
         sortedYears.forEach(year => {
             options.push({ id: year.toString(), name: year.toString() });
         });
@@ -79,46 +94,32 @@ function ResolutionPage() {
 
     // Filter data based on active/archive tab, search query, filter, and year
     const filteredData = React.useMemo(() => {
-        let result = resolutionData.filter(row => 
+        return resolutionData.filter(row => 
             activeTab === "active" ? row.res_is_archive === false : row.res_is_archive === true
         );
-
-        // Apply area of focus filter
-        if (filter !== "all") {
-            result = result.filter(record => record.res_area_of_focus.includes(filter));
-        }
-
-        // Apply year filter
-        if (yearFilter !== "all") {
-            result = result.filter(record => {
-                try {
-                    const date = new Date(record.res_date_approved);
-                    const year = date.getFullYear();
-                    return year === parseInt(yearFilter);
-                } catch (error) {
-                    return false;
-                }
-            });
-        }
-
-        // Apply search query
-        if (searchQuery) {
-            result = result.filter(item =>
-                Object.values(item)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-            );
-        }
-
-        return result;
-    }, [resolutionData, activeTab, filter, yearFilter, searchQuery]);
+    }, [resolutionData, activeTab]);
 
     const totalPages = Math.ceil(filteredData.length / pageSize);
     const paginatedData = filteredData.slice(
         (currentPage - 1) * pageSize,
         currentPage * pageSize
     );
+
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setCurrentPage(1);
+    };
+
+    const handleFilterChange = (value: string) => {
+        setFilter(value);
+        setCurrentPage(1);
+    };
+
+    const handleYearFilterChange = (value: string) => {
+        setYearFilter(value);
+        setCurrentPage(1);
+    };    
 
     const handleDelete = (res_num: number) => {
         deleteRes(String(res_num));
@@ -351,17 +352,6 @@ function ResolutionPage() {
         }
     ];
 
-    if (isLoading) {
-        return (
-            <div className="w-full h-full">
-              <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-              <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-              <Skeleton className="h-10 w-full mb-4 opacity-30" />
-              <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-            </div>
-          );
-    }
-
     if (isError) {
         return <div>Error loading resolutions</div>;
     }
@@ -386,10 +376,7 @@ function ResolutionPage() {
                             placeholder="Search..." 
                             className="pl-10 w-full bg-white" 
                             value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={handleSearchChange}
                         />
                     </div>
 
@@ -399,10 +386,7 @@ function ResolutionPage() {
                         placeholder="Area Filter"
                         options={filterOptions}
                         value={filter}
-                        onChange={(value) => {
-                            setFilter(value);
-                            setCurrentPage(1);
-                        }}
+                        onChange={handleFilterChange}
                     />
 
                     <SelectLayout
@@ -411,11 +395,8 @@ function ResolutionPage() {
                         placeholder="Year Filter"
                         options={yearOptions}
                         value={yearFilter}
-                        onChange={(value) => {
-                            setYearFilter(value);
-                            setCurrentPage(1);
-                        }}
-                    />                             
+                        onChange={handleYearFilterChange}
+                    />                              
                 </div>
                 <div className="flex-shrink-0">
                     <DialogLayout
@@ -470,19 +451,33 @@ function ResolutionPage() {
 
                     <TabsContent value="active">
                         <div className="border overflow-auto max-h-[400px]">
-                            <DataTable 
-                                columns={activeColumns} 
-                                data={paginatedData.filter(row => row.res_is_archive === false)} 
-                            />
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                </div>
+                            ) : (
+                                <DataTable 
+                                    columns={activeColumns} 
+                                    data={paginatedData.filter(row => row.res_is_archive === false)} 
+                                />
+                            )}                            
                         </div>
                     </TabsContent>
 
                     <TabsContent value="archive">
                         <div className="border overflow-auto max-h-[400px]">
-                            <DataTable 
-                                columns={archiveColumns} 
-                                data={paginatedData.filter(row => row.res_is_archive === true)} 
-                            />
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Spinner size="lg" />
+                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                </div>
+                            ) : (
+                                <DataTable 
+                                    columns={archiveColumns} 
+                                    data={paginatedData.filter(row => row.res_is_archive === true)} 
+                                />                                
+                            )}                               
                         </div>
                     </TabsContent>
                 </Tabs>

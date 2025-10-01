@@ -20,10 +20,10 @@ export interface ResolutionData{
     gpr_id: number;
 }
 
-export const useResolution = () => {
+export const useResolution = (searchQuery?: string, areaFilter?: string, yearFilter?: string) => {
     return useQuery<ResolutionData[]>({
-        queryKey: ["resData"], 
-        queryFn: () => getResolution(),
+        queryKey: ["resData", searchQuery, areaFilter, yearFilter], 
+        queryFn: () => getResolution(searchQuery, areaFilter, yearFilter),
         staleTime: 1000 * 60 * 30,
     });
 };
