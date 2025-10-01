@@ -21,12 +21,15 @@ import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
+import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
 
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
   SpecificPurpose?: string;
+  custodyChildren?: string[]
+
 }
 
 function CertificatePage() {
@@ -47,6 +50,7 @@ function CertificatePage() {
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState(""); 
+  const [custody, setCustody] = useState<string[]>([]);
   const [purposeInput, setPurposeInput] = useState("");
 
   const staffOptions = useMemo(() => {
@@ -154,14 +158,23 @@ function CertificatePage() {
       // Find the selected staff details
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
       
-      //with both certificate and staff data
+      // Get custody names from custody state
+      const custodies = custody
+        .map(id => staffOptions.find(staff => staff.id === id)?.name)
+        .filter(Boolean) as string[];
+      
+      // Create certificate details with both certificate and staff data
       const certDetails: ExtendedCertificate = {
         ...viewingCertificate,
         AsignatoryStaff: selectedStaff?.name,
-        SpecificPurpose: purposeInput
+        SpecificPurpose: purposeInput,
+        custodyChildren: custodies,
       };
       
-      setSelectedCertificate(certDetails);// Close the dialog
+      setSelectedCertificate(certDetails);
+      
+      // Reset for next use
+      setCustody([]);
     }
   }
 
@@ -421,6 +434,7 @@ function CertificatePage() {
           address={selectedCertificate.nrc_address || "Sitio Palma"}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
+          Custodies={selectedCertificate.custodyChildren}
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
@@ -433,8 +447,11 @@ function CertificatePage() {
         isOpen={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
+          if (!open) {
+            setCustody([]);
+          }
         }}
-        className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
+        className="max-w-[30%] h-[400px] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"
         description={`Please provide the needed details for the certificate.`}
         mainContent={
@@ -463,10 +480,27 @@ function CertificatePage() {
                   />
                 </div>
 
+                {/* ComboCheckboxStandalone Section */}
+                <div className="w-full pb-3">
+                  <ComboCheckboxStandalone
+                    value={custody}
+                    onChange={setCustody}
+                    label="Custodies"
+                    options={staffOptions}
+                    placeholder="Select child/children"
+                    showBadges={true}
+                    maxDisplayValues={2}
+                  />
+                </div>                
+
                 <div className="flex justify-end">
-                    <Button type="button" onClick={handleViewFile2} disabled={!selectedStaffId || !purposeInput} >
-                        Proceed
-                    </Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleViewFile2} 
+                    disabled={!selectedStaffId || !purposeInput} 
+                  >
+                    Proceed
+                  </Button>
                 </div>                       
               </div>
             ) : (

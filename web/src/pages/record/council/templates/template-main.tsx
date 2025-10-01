@@ -2326,6 +2326,7 @@ interface RequestProps {
   isNonResident?: boolean;
   businessName?: string;
   Signatory?: string | null;
+  Custodies?: string[];
   showAddDetails?: boolean; // ako gi add kay makita ang add details nga button sa cert
 }
 
@@ -2352,7 +2353,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, specificPurpose, showAddDetails = true} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, Custodies, specificPurpose, showAddDetails = true} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([]);
 
@@ -3191,6 +3192,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_cityLogo: cityLogo,
       temp_email: templates[0]?.temp_email,  
       temp_telNum: templates[0]?.temp_contact_num,
+      temp_applicantName: `${fname} ${lname}`,      
       temp_paperSize: "letter",
       temp_margin: "normal",
       temp_filename: "Proof of Custody",
@@ -3201,10 +3203,14 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_body: "TO WHOM IT MAY CONCERN:\n\n" +
       `This is to certify that /*${lname}, ${fname}*/ of legal age, is a resident of ${address}, Barangay San Roque Ciudad, Cebu City.\n\n` +
       "This is to certify that his/her grandchild/grandchildren listed below is/are minor(s) and is/are under her care and custody and supported them financially, morally and spiritually.\n\n" +
-      "\t[No.] [Name]\n\n" +
+      // Use Custodies here - display as numbered list
+      (Custodies && Custodies.length > 0 
+        ? Custodies.map((name, index) => `\t${index + 1}. ${name}\n`).join('')
+        : "\t[No custody information provided]\n"
+      ) + "\n" +
       `This certification is being issued upon the request of the above mentioned name to support the application for /*${specificPurpose?.toUpperCase()} PURPOSES ONLY.*/.  Affixed below is the name and signature of the above-mentioned name.\n\n` +
       `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
-    },       
+    },   
     {
       temp_id: "PWD Financial Assistance",
       temp_title: "CERTIFICATION",
