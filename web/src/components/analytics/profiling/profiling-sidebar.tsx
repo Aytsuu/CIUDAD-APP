@@ -160,7 +160,7 @@ export const ProfilingSidebar = () => {
       {profilingSidebar?.length > 0 && (
         <div className="p-4 border-t border-gray-100">
           <Link to="/profiling/request/pending/individual">
-            <Button variant={"link"}>View All Requests</Button>
+            <Button variant={"link"}>View All Requests ({formatRequestList()?.length > 100 ? "100+" : formatRequestList().length})</Button>
           </Link>
         </div>
       )}

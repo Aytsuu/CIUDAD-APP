@@ -115,7 +115,7 @@ export const ReportSidebar = () => {
         <div className="p-4 border-t border-gray-100">
           <Link to="/report/incident">
             <Button variant={"link"}>
-              View All Reports
+              View All Reports ({reportSidebar?.length > 100 ? "100+": reportSidebar.length})
             </Button>
           </Link>
         </div>

@@ -21,7 +21,7 @@ const ReportCard = React.memo(({
     onClick={onClick}
   >
     <CardHeader>
-      <CardDescription>{title}</CardDescription>
+      <CardDescription className="truncate">{title}</CardDescription>
       <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
         {!isLoading && value ? value : "0"}
       </CardTitle>
