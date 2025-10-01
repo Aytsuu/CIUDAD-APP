@@ -23,6 +23,8 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
 import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
+import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { formatResidents } from "@/pages/record/profiling/ProfilingFormats";
 
 
 interface ExtendedCertificate extends Certificate {
@@ -45,6 +47,7 @@ function CertificatePage() {
   const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
+  const { data: residentsList = []} = useResidentsList();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
@@ -59,6 +62,10 @@ function CertificatePage() {
       name: staff.full_name,
     }));
   }, [staffList]);
+
+  const residentOptions = useMemo(() => {
+    return formatResidents(residentsList);
+  }, [residentsList]);
 
   console.log("STAFF OPTIONS: ", staffOptions)
 
@@ -160,7 +167,7 @@ function CertificatePage() {
       
       // Get custody names from custody state
       const custodies = custody
-        .map(id => staffOptions.find(staff => staff.id === id)?.name)
+        .map(id => residentOptions.find((resident: any) => resident.id === id)?.name)
         .filter(Boolean) as string[];
       
       // Create certificate details with both certificate and staff data
@@ -451,7 +458,11 @@ function CertificatePage() {
             setCustody([]);
           }
         }}
-        className="max-w-[30%] h-[400px] flex flex-col overflow-auto scrollbar-custom"
+        className={`max-w-[30%] flex flex-col overflow-auto scrollbar-custom ${
+          viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" 
+            ? "h-[420px]" 
+            : "h-[330px]"
+        }`}
         title="Additional Details"
         description={`Please provide the needed details for the certificate.`}
         mainContent={
@@ -480,18 +491,20 @@ function CertificatePage() {
                   />
                 </div>
 
-                {/* ComboCheckboxStandalone Section */}
-                <div className="w-full pb-3">
-                  <ComboCheckboxStandalone
-                    value={custody}
-                    onChange={setCustody}
-                    label="Custodies"
-                    options={staffOptions}
-                    placeholder="Select child/children"
-                    showBadges={true}
-                    maxDisplayValues={2}
-                  />
-                </div>                
+               
+                {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
+                  <div className="w-full pb-3">
+                    <ComboCheckboxStandalone
+                      value={custody}
+                      onChange={setCustody}
+                      label="Custodies"
+                      options={residentOptions}
+                      placeholder="Select child/children"
+                      showBadges={true}
+                      maxDisplayValues={2}
+                    />
+                  </div>
+                )}                
 
                 <div className="flex justify-end">
                   <Button 
