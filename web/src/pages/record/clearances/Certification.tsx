@@ -21,12 +21,30 @@ import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
+import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
-
+import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
   SpecificPurpose?: string;
+  custodyChildren?: string[];
+  // BURIAL props
+  deceasedName?: string;
+  deceasedAge?: string;
+  deceasedBirthdate?: string;
+  deceasedAddress?: string;
+  // FIRE VICTIM props
+  dateOfConflagration?: string;
+  // DWUP props
+  dateDemolished?: string;
+  // COHABITATION/MARRIAGE props
+  partnerName?: string;
+  liveInYears?: number;
+  // Indigency (for minors) props
+  childName?: string;
+  childAge?: string;
+  childBirtdate?: string;
 }
 
 function CertificatePage() {
@@ -42,11 +60,13 @@ function CertificatePage() {
   const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
+  const { data: residentsList = [], isLoading: isLoadingResidents, error: residentsError } = useResidentsList();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedCertificate | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState(""); 
+  const [custody, setCustody] = useState<string[]>([]);
   const [purposeInput, setPurposeInput] = useState("");
 
   const staffOptions = useMemo(() => {
@@ -56,7 +76,41 @@ function CertificatePage() {
     }));
   }, [staffList]);
 
-  console.log("STAFF OPTIONS: ", staffOptions)
+  const residentOptions = useMemo(() => {
+    if (!residentsList || residentsList.length === 0) return [];
+    
+    
+    const filteredResidents = residentsList.filter((resident: any) => {
+      if (!resident.personal_info?.per_dob) return false;
+      
+      const birthdate = new Date(resident.personal_info.per_dob);
+      const today = new Date();
+      const age = today.getFullYear() - birthdate.getFullYear();
+      const monthDiff = today.getMonth() - birthdate.getMonth();
+      
+      
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate()) 
+        ? age - 1 
+        : age;
+      
+      return actualAge < 18;
+    });
+    
+    
+    return filteredResidents.map((resident: any) => ({
+      id: `${resident.rp_id} ${resident.name}`,
+      name: (
+        <div className="flex gap-4 items-center">
+          <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+            #{resident.rp_id}
+          </span>
+          {resident.name}
+        </div>
+      ),
+      per_id: resident.personal_info.per_id
+    }));
+  }, [residentsList]);
+
 
   const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
     queryKey: ["certificates"],
@@ -154,14 +208,23 @@ function CertificatePage() {
       // Find the selected staff details
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
       
-      //with both certificate and staff data
+      // Get custody names from custody state
+      const custodies = custody
+        .map(id => residentOptions.find((resident: any) => resident.id === id)?.name)
+        .filter(Boolean) as string[];
+      
+      // Create certificate details with both certificate and staff data
       const certDetails: ExtendedCertificate = {
         ...viewingCertificate,
         AsignatoryStaff: selectedStaff?.name,
-        SpecificPurpose: purposeInput
+        SpecificPurpose: purposeInput,
+        custodyChildren: custodies,
       };
       
-      setSelectedCertificate(certDetails);// Close the dialog
+      setSelectedCertificate(certDetails);
+      
+      // Reset for next use
+      setCustody([]);
     }
   }
 
@@ -416,15 +479,27 @@ function CertificatePage() {
           key={selectedCertificate.cr_id + Date.now()}
           fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
-          age={calculateAge(selectedCertificate.nrc_birthdate || "2003-09-04")}
-          birthdate={selectedCertificate.nrc_birthdate || "2003-09-04"}
-          address={selectedCertificate.nrc_address || "Sitio Palma"}
+          age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
+          birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
+          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
+          Custodies={selectedCertificate.custodyChildren}
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
-          showAddDetails={false}
+          deceasedName={selectedCertificate.deceasedName}
+          deceasedAge={selectedCertificate.deceasedAge}
+          deceasedBirthdate={selectedCertificate.deceasedBirthdate}
+          deceasedAddress={selectedCertificate.deceasedAddress}
+          dateOfConflagration={selectedCertificate.dateOfConflagration}
+          dateDemolished={selectedCertificate.dateDemolished}
+          partnerName={selectedCertificate.partnerName}
+          liveInYears={selectedCertificate.liveInYears}
+          childName={selectedCertificate.childName}
+          childAge={selectedCertificate.childAge}
+          childBirtdate={selectedCertificate.childBirtdate}
+          showAddDetails={false} 
         />
       )}
 
@@ -433,8 +508,15 @@ function CertificatePage() {
         isOpen={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
+          if (!open) {
+            setCustody([]);
+          }
         }}
-        className="max-w-[30%] h-[330px] flex flex-col overflow-auto scrollbar-custom"
+        className={`max-w-[30%] flex flex-col overflow-auto scrollbar-custom ${
+          viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" 
+            ? "h-[420px]" 
+            : "h-[330px]"
+        }`}
         title="Additional Details"
         description={`Please provide the needed details for the certificate.`}
         mainContent={
@@ -463,10 +545,29 @@ function CertificatePage() {
                   />
                 </div>
 
+               
+                {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
+                  <div className="w-full pb-3">
+                    <ComboCheckboxStandalone
+                      value={custody}
+                      onChange={setCustody}
+                      label="Custodies"
+                      options={residentOptions}
+                      placeholder="Select child/children"
+                      showBadges={true}
+                      maxDisplayValues={2}
+                    />
+                  </div>
+                )}                
+
                 <div className="flex justify-end">
-                    <Button type="button" onClick={handleViewFile2} disabled={!selectedStaffId || !purposeInput} >
-                        Proceed
-                    </Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleViewFile2} 
+                    disabled={!selectedStaffId || !purposeInput} 
+                  >
+                    Proceed
+                  </Button>
                 </div>                       
               </div>
             ) : (

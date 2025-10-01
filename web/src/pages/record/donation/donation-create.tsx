@@ -59,7 +59,7 @@ function ClerkDonateCreate({ onSuccess }: ClerkDonateCreateFormProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+    <div className="flex flex-col min-h-0 h-auto p-2 rounded-lg overflow-auto">
       <div className="grid gap-4">
         <Form {...form}>
           <form

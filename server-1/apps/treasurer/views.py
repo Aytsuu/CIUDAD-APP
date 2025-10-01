@@ -13,8 +13,10 @@ from .models import Budget_Plan_Detail, Budget_Plan
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 import logging
-logger = logging.getLogger(__name__)
 from apps.pagination import StandardResultsPagination
+from django.db.models.functions import ExtractYear
+
+logger = logging.getLogger(__name__)
 
 class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -289,19 +291,49 @@ class DisbursementRestoreView(generics.UpdateAPIView):
 class DisbursementVoucherView(generics.ListCreateAPIView):
     serializer_class = Disbursement_VoucherSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         queryset = Disbursement_Voucher.objects.select_related('staff').order_by('-dis_num')
         
-        archive = self.request.query_params.get('archive')
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(dis_payee__icontains=search) |
+                Q(dis_particulars__icontains=search) |
+                Q(dis_num__icontains=search)
+            )
+        
+        # Year filter
+        year = self.request.query_params.get('year', None)
+        if year and year != 'all':
+            queryset = queryset.filter(dis_date__year=year)
+        
+        # Archive filter
+        archive = self.request.query_params.get('archive', None)
         if archive in ['true', 'false']:
             queryset = queryset.filter(dis_is_archive=archive == 'true')
-        
-        year = self.request.query_params.get('year')
-        if year:
-            queryset = queryset.filter(dis_date__year=year)
             
         return queryset
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in DisbursementVoucherView list: {str(e)}", exc_info=True)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class DisbursementVoucherDetailView(DisbursementArchiveMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Disbursement_Voucher.objects.select_related('staff')
@@ -320,8 +352,23 @@ class DisbursementVoucherRestoreView(DisbursementRestoreView):
     queryset = Disbursement_Voucher.objects.filter(dis_is_archive=True)
     serializer_class = Disbursement_VoucherSerializer
     lookup_field = 'dis_num'
-
-# Disbursement File Views
+    
+class DisbursementVoucherYearsView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            years = Disbursement_Voucher.objects.filter(
+                dis_date__isnull=False
+            ).annotate(
+                year=ExtractYear('dis_date')
+            ).values_list('year', flat=True).distinct().order_by('-year')
+            
+            return Response(list(years))
+        except Exception as e:
+            logger.error(f"Error fetching disbursement years: {str(e)}")
+            return Response([], status=status.HTTP_200_OK)
+        
 class DisbursementFileView(generics.ListCreateAPIView):
     serializer_class = Disbursement_FileSerializers
     permission_classes = [AllowAny]

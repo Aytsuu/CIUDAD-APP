@@ -387,56 +387,72 @@ export const EditDisbursementVoucher: React.FC<
               <label className="block text-sm font-medium mb-2">
                 Particulars
               </label>
-              <div className="space-y-2">
-                {particulars.map(
-                  (_particular: ParticularItem, index: number) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center p-3 border rounded-lg"
-                    >
-                      <FormInput
-                        control={control}
-                        name={`dis_particulars.${index}.forPayment`}
-                        label="For Payment"
-                        placeholder="Description"
-                        type="text"
-                      />
-                      <FormInput
-                        control={control}
-                        name={`dis_particulars.${index}.tax`}
-                        label="Withholding Tax %"
-                        placeholder="0"
-                        type="number"
-                      />
-                      <FormInput
-                        control={control}
-                        name={`dis_particulars.${index}.amount`}
-                        label="Amount"
-                        placeholder="0.00"
-                        type="number"
-                      />
-                      <Button
-                        className="mt-8"
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeParticular(index)}
-                        disabled={particulars.length <= 1}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="grid grid-cols-12 gap-2 p-3 font-medium text-sm border-b">
+                  <div className="col-span-6">For Payment</div>
+                  <div className="col-span-3">Withholding Tax %</div>
+                  <div className="col-span-2">Amount</div>
+                  <div className="col-span-1">Action</div>
+                </div>
+
+                <div className="space-y-2 p-2">
+                  {particulars.map(
+                    (_particular: ParticularItem, index: number) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-12 gap-2 items-center rounded"
                       >
-                        <X size={16} />
-                      </Button>
-                    </div>
-                  )
-                )}
-                <Button
-                  type="button"
-                  onClick={addParticular}
-                  variant="outline"
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  <Plus size={16} />
-                  Add Particular
-                </Button>
+                        <div className="col-span-6">
+                          <FormInput
+                            control={control}
+                            name={`dis_particulars.${index}.forPayment`}
+                            placeholder="Name/Description"
+                            type="text"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <FormInput
+                            control={control}
+                            name={`dis_particulars.${index}.tax`}
+                            placeholder="0"
+                            type="number"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <FormInput
+                            control={control}
+                            name={`dis_particulars.${index}.amount`}
+                            placeholder="0.00"
+                            type="number"
+                          />
+                        </div>
+                        <div className="col-span-1 flex justify-center">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeParticular(index)}
+                            disabled={particulars.length <= 1}
+                          >
+                            <X size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+                {/* Add Button */}
+                <div className="p-3 border-t">
+                  <Button
+                    type="button"
+                    onClick={addParticular}
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto"
+                  >
+                    <Plus size={16} />
+                    Add Particular
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -516,61 +532,81 @@ export const EditDisbursementVoucher: React.FC<
               <label className="block text-sm font-medium mb-2">
                 Payment Accounts
               </label>
-              <div className="space-y-2">
-                {payacc.map((_payacc: PayAccItem, index: number) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center p-3 border rounded-lg"
-                  >
-                    <FormInput
-                      control={control}
-                      name={`dis_payacc.${index}.account`}
-                      label="Account"
-                      placeholder="Account name"
-                      type="text"
-                    />
-                    <FormInput
-                      control={control}
-                      name={`dis_payacc.${index}.accCode`}
-                      label="Account Code"
-                      placeholder="Code"
-                      type="text"
-                    />
-                    <FormInput
-                      control={control}
-                      name={`dis_payacc.${index}.debit`}
-                      label="Debit"
-                      placeholder="0.00"
-                      type="number"
-                    />
-                    <FormInput
-                      control={control}
-                      name={`dis_payacc.${index}.credit`}
-                      label="Credit"
-                      placeholder="0.00"
-                      type="number"
-                    />
-                    <Button
-                      className="mt-8"
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removePayAcc(index)}
-                      disabled={payacc.length <= 1}
+              <div className="border rounded-lg overflow-hidden">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-2 p-3 font-medium text-sm border-b">
+                  <div className="col-span-4">Account</div>
+                  <div className="col-span-3">Account Code</div>
+                  <div className="col-span-2">Debit</div>
+                  <div className="col-span-2">Credit</div>
+                  <div className="col-span-1">Action</div>
+                </div>
+
+                <div className="space-y-2 p-2">
+                  {payacc.map((_payacc: PayAccItem, index: number) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-12 gap-2 items-center"
                     >
-                      <X size={16} />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  onClick={addPayAcc}
-                  variant="outline"
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  <Plus size={16} />
-                  Add Account
-                </Button>
+                      <div className="col-span-4">
+                        <FormInput
+                          control={control}
+                          name={`dis_payacc.${index}.account`}
+                          placeholder="Account name"
+                          type="text"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <FormInput
+                          control={control}
+                          name={`dis_payacc.${index}.accCode`}
+                          placeholder="Code"
+                          type="text"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <FormInput
+                          control={control}
+                          name={`dis_payacc.${index}.debit`}
+                          placeholder="0.00"
+                          type="number"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <FormInput
+                          control={control}
+                          name={`dis_payacc.${index}.credit`}
+                          placeholder="0.00"
+                          type="number"
+                        />
+                      </div>
+                      <div className="col-span-1 flex justify-center">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removePayAcc(index)}
+                          disabled={payacc.length <= 1}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Button */}
+                <div className="p-3 border-">
+                  <Button
+                    type="button"
+                    onClick={addPayAcc}
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto"
+                  >
+                    <Plus size={16} />
+                    Add Account
+                  </Button>
+                </div>
               </div>
             </div>
 

@@ -17,11 +17,7 @@ from datetime import date, timedelta
 from rest_framework.views import APIView
 from django.utils import timezone
 from apps.announcement.models import Announcement, AnnouncementRecipient
-
-
-
-# Create your views here.
-#KANI 3RD
+from apps.pagination import StandardResultsPagination
 
 class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteEventSerializer
@@ -372,59 +368,47 @@ class DeleteWasteReportView(generics.DestroyAPIView):
 class WastePersonnelView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = WastePersonnelSerializer
-    queryset = WastePersonnel.objects.all()
-    filter_backends = [filters.SearchFilter]  
-    filterset_fields = {
-        'staff__pos__pos_title': ['exact', 'icontains'],  
-        'staff__rp__per__per_lname': ['icontains'],  
-        'staff__rp__per__per_fname': ['icontains'],  
-    }
-    search_fields = [
-        'staff__rp__per__per_lname',
-        'staff__rp__per__per_fname',
-        'staff__pos__pos_title',
-    ]
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        print("get_queryset called")
-        queryset = super().get_queryset()
+        queryset = WastePersonnel.objects.all()
         queryset = queryset.select_related(
             'staff__pos',
             'staff__rp__per',
             'staff__manager__rp__per'
         )
-        position = self.request.query_params.get('staff__pos__pos_title')
+        
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(staff__rp__per__per_lname__icontains=search) |
+                Q(staff__rp__per__per_fname__icontains=search) |
+                Q(staff__pos__pos_title__icontains=search) |
+                Q(staff__rp__per__per_contact__icontains=search)
+            )
+        
+        position = self.request.query_params.get('position', None)
         if position:
-            print("Filtering by position:", position)
             queryset = queryset.filter(staff__pos__pos_title=position)
+            
         return queryset
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        minimal = request.query_params.get('minimal', '').lower() == 'true'
-        if minimal:
-            data = [{
-                'wstp_id': p.wstp_id,
-                'staff_id': p.staff.staff_id,
-                'name': f"{p.staff.rp.per.per_lname}, {p.staff.rp.per.per_fname}",
-                'position': p.staff.pos.pos_title
-            } for p in queryset]
-        else:
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
             data = [{
                 'wstp_id': p.wstp_id,
                 'staff': {
                     'staff_id': p.staff.staff_id,
                     'assign_date': p.staff.staff_assign_date.isoformat(),
-                    'position': {
-                        'pos_id': p.staff.pos.pos_id,
-                        'title': p.staff.pos.pos_title,
-                        'max': p.staff.pos.pos_max
-                    },
-                    'profile': {
+                    'profile': {  # Changed from 'rp' to 'profile'
                         'rp_id': p.staff.rp.rp_id,
-                        'personal': {
+                        'rp_date_registered': p.staff.rp.rp_date_registered.isoformat(),
+                        'personal': {  # Changed from 'per' to 'personal'
                             'per_id': p.staff.rp.per.per_id,
-                            'lname': p.staff.rp.per.per_lname,
+                            'lname': p.staff.rp.per.per_lname,  # Remove 'per_' prefix
                             'fname': p.staff.rp.per.per_fname,
                             'mname': p.staff.rp.per.per_mname,
                             'suffix': p.staff.rp.per.per_suffix,
@@ -433,31 +417,89 @@ class WastePersonnelView(generics.ListAPIView):
                             'status': p.staff.rp.per.per_status,
                             'education': p.staff.rp.per.per_edAttainment,
                             'religion': p.staff.rp.per.per_religion,
-                            'contact': p.staff.rp.per.per_contact
+                            'contact': p.staff.rp.per.per_contact  # Remove 'per_' prefix
                         }
+                    },
+                    'position': {  # Changed from 'pos' to 'position'
+                        'pos_id': p.staff.pos.pos_id,
+                        'title': p.staff.pos.pos_title,  # Changed from 'pos_title'
+                        'max': p.staff.pos.pos_max
                     },
                     'manager': {
                         'staff_id': p.staff.manager.staff_id,
                         'name': f"{p.staff.manager.rp.per.per_lname}, {p.staff.manager.rp.per.per_fname}"
                     } if p.staff.manager else None
                 }
-            } for p in queryset]
+            } for p in page]
+            return self.get_paginated_response(data)
+        
+        # Handle non-paginated response
+        data = [{
+            'wstp_id': p.wstp_id,
+            'staff': {
+                'staff_id': p.staff.staff_id,
+                'assign_date': p.staff.staff_assign_date.isoformat(),
+                'profile': {
+                    'rp_id': p.staff.rp.rp_id,
+                    'rp_date_registered': p.staff.rp.rp_date_registered.isoformat(),
+                    'personal': {
+                        'per_id': p.staff.rp.per.per_id,
+                        'lname': p.staff.rp.per.per_lname,
+                        'fname': p.staff.rp.per.per_fname,
+                        'mname': p.staff.rp.per.per_mname,
+                        'suffix': p.staff.rp.per.per_suffix,
+                        'dob': p.staff.rp.per.per_dob.isoformat(),
+                        'sex': p.staff.rp.per.per_sex,
+                        'status': p.staff.rp.per.per_status,
+                        'education': p.staff.rp.per.per_edAttainment,
+                        'religion': p.staff.rp.per.per_religion,
+                        'contact': p.staff.rp.per.per_contact
+                    }
+                },
+                'position': {
+                    'pos_id': p.staff.pos.pos_id,
+                    'title': p.staff.pos.pos_title,
+                    'max': p.staff.pos.pos_max
+                },
+                'manager': {
+                    'staff_id': p.staff.manager.staff_id,
+                    'name': f"{p.staff.manager.rp.per.per_lname}, {p.staff.manager.rp.per.per_fname}"
+                } if p.staff.manager else None
+            }
+        } for p in queryset]
         return Response(data)
-
 
 class WasteTruckView(APIView):
     serializer_class = WasteTruckSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
     def get(self, request):
         is_archive = request.query_params.get('is_archive', None)
+        search = request.query_params.get('search', None)
+        
+        # Base queryset
         if is_archive is not None:
             is_archive = is_archive.lower() == 'true'
             trucks = WasteTruck.objects.filter(truck_is_archive=is_archive)
         else:
-            trucks = WasteTruck.objects.all()  # Fetch all trucks
-        serializer = WasteTruckSerializer(trucks, many=True)
-        return Response(serializer.data)
+            trucks = WasteTruck.objects.all()
+        
+        # Apply search filter
+        if search:
+            trucks = trucks.filter(
+                Q(truck_plate_num__icontains=search) |
+                Q(truck_model__icontains=search) |
+                Q(truck_status__icontains=search)
+            )
+        
+        # Apply pagination
+        paginator = StandardResultsPagination()
+        paginator.page_size = request.query_params.get('page_size', 10)
+        result_page = paginator.paginate_queryset(trucks, request)
+        
+        serializer = WasteTruckSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = WasteTruckSerializer(data=request.data)

@@ -162,3 +162,20 @@ export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
 
   return currentDate > weekEndDate
 }
+
+export const formatTableDate = (dateString: string | null | undefined): string => {
+  if (!dateString || dateString === "N/A") return "N/A";
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "Invalid Date";
+  }
+};
+
+

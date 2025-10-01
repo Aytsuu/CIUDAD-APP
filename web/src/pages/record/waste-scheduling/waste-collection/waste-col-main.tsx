@@ -350,7 +350,6 @@ import { Trash, Search, Plus, Eye, Archive, ArchiveRestore  } from "lucide-react
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { formatTime } from "@/helpers/timeFormatter";

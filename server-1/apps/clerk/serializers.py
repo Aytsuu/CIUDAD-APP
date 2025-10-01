@@ -6,7 +6,7 @@ from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccu
 from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition, Address
 from apps.administration.models import Staff
-from apps.treasurer.models import Invoice
+from apps.treasurer.models import Invoice, Purpose_And_Rates
 from datetime import datetime
 import logging
 from apps.profiling.serializers.business_serializers import FileInputSerializer
@@ -144,17 +144,46 @@ class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
 
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
+
+    pr_id = serializers.PrimaryKeyRelatedField(
+        queryset=Purpose_And_Rates.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(
+        queryset=ResidentProfile.objects.all()
+    )
+
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
-    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
-
+    
     def get_resident_details(self, obj):
         try:
             if obj.rp_id and getattr(obj.rp_id, "per", None):
+                # Get the primary address for this person
+                address_str = None
+                try:
+                    personal_address = obj.rp_id.per.personal_addresses.first()
+                    if personal_address and personal_address.add:
+                        addr = personal_address.add
+                        address_parts = [
+                            addr.add_street,
+                            addr.add_external_sitio,
+                            addr.add_barangay,
+                            addr.add_city,
+                            addr.add_province
+                        ]
+                        address_str = ", ".join(filter(None, address_parts))
+                except Exception as addr_e:
+                    logger.error(f"Error getting address: {str(addr_e)}")
+                
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
                     'per_lname': obj.rp_id.per.per_lname,
+                    'per_dob': obj.rp_id.per.per_dob,
+                    'per_address': address_str,
                     'voter_id': getattr(obj.rp_id, 'voter_id', None)
                 }
             return None
@@ -180,10 +209,16 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     "pr_purpose": obj.pr_id.pr_purpose,
                     "pr_rate": obj.pr_id.pr_rate
                 }
-            return None
+            return {
+                "pr_purpose": "Unknown Purpose",
+                "pr_rate": 0.0
+            }
         except Exception as e:
             logger.error(f"Error getting purpose and rate: {str(e)}")
-            return None
+            return {
+                "pr_purpose": "Unknown Purpose",
+                "pr_rate": 0.0
+            }
 
     def validate_staff_id(self, value):
         """Validate and format staff_id properly"""
@@ -208,6 +243,27 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             # This shouldn't happen with primary key, but handle it
             staff = Staff.objects.filter(staff_id=staff_id_str).first()
             return staff
+
+    def validate_pr_id(self, value):
+        if not value:
+            raise serializers.ValidationError("Purpose request ID (pr_id) is required")
+
+        # Debug logging
+        logger.info(f"validate_pr_id received value: {value} (type: {type(value)})")
+
+        # Handle case where a Purpose_And_Rates object is passed instead of ID
+        if hasattr(value, 'pr_id'):
+            logger.info(f"Object already provided, returning as-is: {value}")
+            return value  # Return the object as-is
+
+        # If we have an ID, get the object
+        from apps.treasurer.models import Purpose_And_Rates
+        try:
+            purpose_obj = Purpose_And_Rates.objects.get(pk=value)
+            logger.info(f"Found Purpose_And_Rates object: {purpose_obj}")
+            return purpose_obj
+        except Purpose_And_Rates.DoesNotExist:
+            raise serializers.ValidationError(f"Purpose request with ID {value} does not exist")
 
     def validate_rp_id(self, value):
         """Validate and format rp_id properly"""
@@ -272,7 +328,7 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'pr_id',
             'cr_req_status',
             'invoice',
-            'staff_id'
+            'staff_id',
         ]
         extra_kwargs = {
             'cr_id': {'read_only': True}
@@ -306,15 +362,15 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'requestor',
             'purpose',
             'amount_to_pay',
-            'req_amount',  # Add req_amount field
+            'req_amount',  
         ]
 
     def get_business_name(self, obj):
         try:
-            # First try to get from the new bus_permit_name field
+            
             if obj.bus_permit_name:
                 return obj.bus_permit_name
-            # Fallback to bus_id if available
+            
             return obj.bus_id.bus_name if obj.bus_id and hasattr(obj.bus_id, 'bus_name') else ""
         except Exception:
             return ""

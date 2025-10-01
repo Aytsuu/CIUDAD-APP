@@ -12,6 +12,9 @@ import { useGetProjectProposals } from "../project-proposal/queries/projprop-fet
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 
 const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set<number>) => {
+  if (!Array.isArray(annualDevPlans)) {
+    return [];
+  }
   return annualDevPlans
     .filter((plan: any) => Boolean(plan?.dev_mandated) || devIdsWithProposals.has(plan.dev_id))
     .map((plan: any) => ({
@@ -32,19 +35,28 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
 };
 
 const createDevIdsWithProposals = (projectProposals: any[], resolutions: any[]) => {
-  const resolutionGprIds = new Set((resolutions || []).map((r: any) => r.gpr_id).filter(Boolean));
+  const resolutionsList = Array.isArray(resolutions) ? resolutions : [];
+  const projectProposalsList = Array.isArray(projectProposals) ? projectProposals : [];
+  
+  const resolutionGprIds = new Set(resolutionsList.map((r: any) => r.gpr_id).filter(Boolean));
   return new Set(
-    (projectProposals || [])
+    projectProposalsList
       .filter((p: any) => p?.devId && p?.gprId && resolutionGprIds.has(p.gprId))
       .map((p: any) => p.devId)
   );
 };
 
 const filterCalendarEvents = (councilEvents: any[]) => {
+  if (!Array.isArray(councilEvents)) {
+    return [];
+  }
   return councilEvents.filter((event) => !event.ce_is_archive);
 };
 
 const filterWasteEvents = (wasteEventData: any[]) => {
+  if (!Array.isArray(wasteEventData)) {
+    return [];
+  }
   return wasteEventData.filter((event: any) => 
     !event.we_is_archive && event.we_date && event.we_time
   );
@@ -66,6 +78,35 @@ const parsePerformanceIndicator = (raw: any) => {
         return trimmed;
       }
       
+      // Handle comma-separated JSON objects like "{'count': 10, 'category': 'PWD'}, {'count': 11, 'category': 'LGBTQIA+'}"
+      if (trimmed.includes("'count'") && trimmed.includes("'category'")) {
+        // Split by '}, {' and clean up the format
+        const objects = trimmed.split(/},\s*{/).map(obj => {
+          // Clean up the object string
+          let cleanObj = obj.replace(/^\{/, '').replace(/\}$/, '');
+          // Convert single quotes to double quotes for JSON parsing
+          cleanObj = cleanObj.replace(/'/g, '"');
+          return `{${cleanObj}}`;
+        });
+        
+        const parsedObjects = objects.map(objStr => {
+          try {
+            return JSON.parse(objStr);
+          } catch {
+            return null;
+          }
+        }).filter(Boolean);
+        
+        if (parsedObjects.length > 0) {
+          return parsedObjects.map((item: any) => {
+            if (typeof item === 'object' && item.count && item.category) {
+              return `${item.category}: ${item.count}`;
+            }
+            return String(item);
+          }).join(', ');
+        }
+      }
+      
       // Try to parse JSON string
       if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
         const parsed = JSON.parse(trimmed);
@@ -77,6 +118,10 @@ const parsePerformanceIndicator = (raw: any) => {
             return String(item);
           }).join(', ');
         }
+        // Handle single object
+        if (typeof parsed === 'object' && parsed.count && parsed.category) {
+          return `${parsed.category}: ${parsed.count}`;
+        }
       }
       return trimmed;
     } else if (Array.isArray(raw)) {
@@ -86,6 +131,9 @@ const parsePerformanceIndicator = (raw: any) => {
         }
         return String(item);
       }).join(', ');
+    } else if (typeof raw === 'object' && raw.count && raw.category) {
+      // Handle single object directly
+      return `${raw.category}: ${raw.count}`;
     }
     return String(raw);
   } catch (error) {
@@ -156,10 +204,18 @@ const getCalendarSources = (
   calendarEvents: any[],
   hotspotData: any[],
   wasteCollectionData: any[]
-) => [
+) => {
+  // Ensure all data arrays are properly initialized
+  const safeTransformedAnnualDevPlans = Array.isArray(transformedAnnualDevPlans) ? transformedAnnualDevPlans : [];
+  const safeWasteEventData = Array.isArray(wasteEventData) ? wasteEventData : [];
+  const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
+  const safeHotspotData = Array.isArray(hotspotData) ? hotspotData : [];
+  const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
+
+  return [
   {
     name: "Annual Development Plans",
-    data: transformedAnnualDevPlans,
+    data: safeTransformedAnnualDevPlans,
     columns: annualDevPlanColumns,
     titleAccessor: "title",
     dateAccessor: "date",
@@ -168,7 +224,7 @@ const getCalendarSources = (
   },
   {
     name: "Waste Events",
-    data: wasteEventData,
+    data: safeWasteEventData,
     columns: wasteEventColumns,
     titleAccessor: "we_name",
     dateAccessor: "we_date",
@@ -177,7 +233,7 @@ const getCalendarSources = (
   },
   {
     name: "Council Events",
-    data: calendarEvents,
+    data: safeCalendarEvents,
     columns: councilEventColumns,
     titleAccessor: "ce_title",
     dateAccessor: "ce_date",
@@ -186,7 +242,7 @@ const getCalendarSources = (
   },
   {
     name: "Hotspot Assignment",
-    data: hotspotData,
+    data: safeHotspotData,
     columns: hotspotColumns,
     titleAccessor: "watchman",
     dateAccessor: "wh_date",
@@ -196,7 +252,7 @@ const getCalendarSources = (
   },
   {
     name: "Waste Collection",
-    data: wasteCollectionData,
+    data: safeWasteCollectionData,
     columns: wasteColColumns,
     titleAccessor: "sitio_name",
     dateAccessor: "wc_day",
@@ -204,6 +260,7 @@ const getCalendarSources = (
     defaultColor: "#10b981", // emerald
   }
 ];
+};
 
 const legendItems = [
   { label: "GAD Annual Development Plans", color: "#8b5cf6" },
@@ -231,7 +288,7 @@ function GADActivityPage() {
     queryFn: getWasteEvents
   });
   const { data: councilEvents = [] } = useGetCouncilEvents();
-  const calendarEvents = filterCalendarEvents(councilEvents);
+  const calendarEvents = filterCalendarEvents(Array.isArray(councilEvents) ? councilEvents : (councilEvents as any)?.results || []);
   
   // Fetch hotspot and waste collection data
   const { data: hotspotData = [], isLoading: isHotspotLoading } = useGetHotspotRecords();

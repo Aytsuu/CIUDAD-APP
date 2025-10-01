@@ -5,8 +5,8 @@ import {
   Plus,
   Search,
   Eye,
-  Edit,
   Trash,
+  Edit,
   Archive,
   ArchiveRestore,
   X,
@@ -19,6 +19,7 @@ import {
   useGetDisbursementVouchers,
   useGetDisbursementVoucher,
   useGetDisbursementFiles,
+  useGetDisbursementVoucherYears
 } from "./queries/incDisb-fetchqueries";
 import {
   usePermanentDeleteDisbursementVoucher,
@@ -42,40 +43,53 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DisbursementVoucher, DisbursementFile } from "./incDisb-types";
 import { DocumentCard } from "./disbursement-suppdocs-modal";
 import { useLoading } from "@/context/LoadingContext"; 
+import { useDebounce } from "@/hooks/use-debounce";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 function TreasurerDisbursementVouchers() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
+  const [pageSize, _setPageSize] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [_isPdfLoading, setIsPdfLoading] = useState(true);
+  const [editingDisbursement, setEditingDisbursement] = useState<DisbursementVoucher | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedDisbursement, setSelectedDisbursement] = useState<DisbursementVoucher | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<DisbursementFile[]>([]);
+  const [isFilesDialogOpen, setIsFilesDialogOpen] = useState(false);
+  const [isDeletingFile, setIsDeletingFile] = useState(false);
+  const [filesTab, setFilesTab] = useState<"active" | "archived">("active");
+  const { showLoading, hideLoading } = useLoading();
+  const { data: availableYears = [] } = useGetDisbursementVoucherYears();
   const {
-    data: disbursements = [],
+    data,
     isLoading,
     isError,
     error,
     refetch,
-  } = useGetDisbursementVouchers();
-  const { mutate: deleteDisbursement } =
-    usePermanentDeleteDisbursementVoucher();
+  } = useGetDisbursementVouchers(
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    selectedYear,
+    viewMode === "archived"
+  );
+
+  const disbursements = data?.results || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const { mutate: deleteDisbursement } = usePermanentDeleteDisbursementVoucher();
   const { mutate: deleteDisbursementFile } = useDeleteDisbursementFile();
   const { mutate: archiveDisbursement } = useArchiveDisbursementVoucher();
   const { mutate: restoreDisbursement } = useRestoreDisbursementVoucher();
   const { mutate: archiveDisbursementFile } = useArchiveDisbursementFile();
   const { mutate: restoreDisbursementFile } = useRestoreDisbursementFile();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [_isPdfLoading, setIsPdfLoading] = useState(true);
-  const [editingDisbursement, setEditingDisbursement] =
-    useState<DisbursementVoucher | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedDisbursement, setSelectedDisbursement] =
-    useState<DisbursementVoucher | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<DisbursementFile[]>([]);
-  const [isFilesDialogOpen, setIsFilesDialogOpen] = useState(false);
-  const [isDeletingFile, setIsDeletingFile] = useState(false);
-  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
-  const [filesTab, setFilesTab] = useState<"active" | "archived">("active");
-  const [pageSize, _setPageSize] = useState(3);
-  const [currentPage, setCurrentPage] = useState(1);
-  const { showLoading, hideLoading } = useLoading();
 
   const { data: detailedDisbursement } = useGetDisbursementVoucher(
     selectedDisbursement?.dis_num?.toString() || "",
@@ -84,10 +98,13 @@ function TreasurerDisbursementVouchers() {
     }
   );
 
-  const { data: disbursementFiles = [], isLoading: isFilesLoading } =
-    useGetDisbursementFiles(selectedDisbursement?.dis_num?.toString() || "", {
+  const { data: disbursementFiles = [], isLoading: isFilesLoading } = useGetDisbursementFiles(
+    selectedDisbursement?.dis_num?.toString() || "",
+    undefined,
+    {
       enabled: !!selectedDisbursement?.dis_num,
-    });
+    }
+  );
 
   const disbursementWithFiles = detailedDisbursement
     ? { ...detailedDisbursement, files: disbursementFiles }
@@ -102,35 +119,39 @@ function TreasurerDisbursementVouchers() {
   }, [disbursementFiles, isFilesDialogOpen]);
 
   useEffect(() => {
-    if (
-      detailedDisbursement &&
-      selectedDisbursement?.dis_num === detailedDisbursement.dis_num
-    ) {
+    if (detailedDisbursement && selectedDisbursement?.dis_num === detailedDisbursement.dis_num) {
       setEditingDisbursement(detailedDisbursement);
     }
   }, [detailedDisbursement, selectedDisbursement]);
 
-  const filteredDisbursements = (disbursements as DisbursementVoucher[])
-    .filter((disbursement: DisbursementVoucher) => {
-      return viewMode === "active"
-        ? disbursement.dis_is_archive === false
-        : disbursement.dis_is_archive === true;
-    })
-    .filter((disbursement: DisbursementVoucher) => {
-      const payee = disbursement.dis_payee?.toLowerCase() || "";
-      const particulars =
-        disbursement.dis_particulars
-          ?.map((p) => p.description?.toLowerCase() || "")
-          .join(" ") || "";
-      const search = searchTerm.toLowerCase();
-      return payee.includes(search) || particulars.includes(search);
-    });
+  // Create year filter options
+  const yearFilterOptions = [
+    { id: "all", name: "All" },
+    ...availableYears.map(year => ({ id: year.toString(), name: year.toString() }))
+  ];
 
-  const totalPages = Math.ceil(filteredDisbursements.length / pageSize);
-  const paginatedDisbursements = filteredDisbursements.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle search change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  // Handle year filter change
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value);
+    setCurrentPage(1);
+  };
+
+  // Handle view mode change
+  const handleViewModeChange = (value: string) => {
+    setViewMode(value as "active" | "archived");
+    setCurrentPage(1);
+  };
 
   const handleDelete = (disNum: any) => {
     setIsDeleting(true);
@@ -156,11 +177,7 @@ function TreasurerDisbursementVouchers() {
   };
 
   const handleViewDisbursement = (disbursement: DisbursementVoucher) => {
-    if (
-      selectedDisbursement?.dis_num === disbursement.dis_num &&
-      isViewDialogOpen
-    )
-      return;
+    if (selectedDisbursement?.dis_num === disbursement.dis_num && isViewDialogOpen) return;
 
     setIsViewDialogOpen(false);
     setSelectedDisbursement(null);
@@ -196,9 +213,7 @@ function TreasurerDisbursementVouchers() {
       { disNum: selectedDisbursement.dis_num, disfNum },
       {
         onSuccess: () => {
-          setSelectedFiles((prev) =>
-            prev.filter((file) => file.disf_num !== disfNum)
-          );
+          setSelectedFiles((prev) => prev.filter((file) => file.disf_num !== disfNum));
         },
         onSettled: () => setIsDeletingFile(false),
       }
@@ -215,9 +230,7 @@ function TreasurerDisbursementVouchers() {
         onSuccess: () => {
           setSelectedFiles((prev) =>
             prev.map((file) =>
-              file.disf_num === disfNum
-                ? { ...file, disf_is_archive: true }
-                : file
+              file.disf_num === disfNum ? { ...file, disf_is_archive: true } : file
             )
           );
         },
@@ -236,9 +249,7 @@ function TreasurerDisbursementVouchers() {
         onSuccess: () => {
           setSelectedFiles((prev) =>
             prev.map((file) =>
-              file.disf_num === disfNum
-                ? { ...file, disf_is_archive: false }
-                : file
+              file.disf_num === disfNum ? { ...file, disf_is_archive: false } : file
             )
           );
         },
@@ -270,8 +281,8 @@ function TreasurerDisbursementVouchers() {
           <div>Disbursement Vouchers</div>
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Create, track, and manage disbursement vouchers with ease, ensuring
-          proper documentation and approval processes.
+          Create, track, and manage disbursement vouchers with ease, ensuring proper documentation
+          and approval processes.
         </p>
       </div>
       <hr className="border-gray mb-5 sm:mb-4" />
@@ -287,7 +298,16 @@ function TreasurerDisbursementVouchers() {
               placeholder="Search..."
               className="pl-10 w-full bg-white text-sm"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-row gap-2 justify-center items-center">
+            <SelectLayout
+              className="bg-white"
+              options={yearFilterOptions}
+              placeholder="Year"
+              value={selectedYear}
+              onChange={handleYearChange}
             />
           </div>
           {viewMode === "active" && (
@@ -302,9 +322,7 @@ function TreasurerDisbursementVouchers() {
               description=""
               mainContent={
                 <div className="w-full h-full">
-                  <DisbursementCreate
-                    onSuccess={() => setIsCreateDialogOpen(false)}
-                  />
+                  <DisbursementCreate onSuccess={() => setIsCreateDialogOpen(false)} />
                 </div>
               }
               isOpen={isCreateDialogOpen}
@@ -315,12 +333,16 @@ function TreasurerDisbursementVouchers() {
 
         <Tabs
           value={viewMode}
-          onValueChange={(value) => setViewMode(value as "active" | "archived")}
+          onValueChange={handleViewModeChange}
           className="w-auto"
         >
-          <TabsList>
+          <TabsList className="grid grid-cols-2">
             <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
+            <TabsTrigger value="archived"> {/* FIXED: changed from "archive" to "archived" */}
+              <div className="flex items-center gap-2">
+                <Archive size={16} /> Archive
+              </div>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -330,14 +352,14 @@ function TreasurerDisbursementVouchers() {
           <div className="flex items-center justify-center py-16">
             <Spinner size="lg" />
           </div>
-        ) : paginatedDisbursements.length === 0 ? (
+        ) : disbursements.length === 0 ? ( // FIXED: changed from paginatedDisbursements to disbursements
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} disbursement
             vouchers found.
           </div>
         ) : (
           <>
-            {paginatedDisbursements.map(
+            {disbursements.map( // FIXED: changed from paginatedDisbursements to disbursements
               (disbursement: DisbursementVoucher, index: number) => {
                 return (
                   <CardLayout
@@ -445,16 +467,13 @@ function TreasurerDisbursementVouchers() {
             <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
               <p className="text-xs sm:text-sm text-darkGray">
                 Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, filteredDisbursements.length)}{" "}
-                of {filteredDisbursements.length} rows
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows {/* FIXED: changed from filteredDisbursements.length to totalCount */}
               </p>
-              {filteredDisbursements.length > 0 && (
+              {disbursements.length > 0 && ( // FIXED: changed from filteredDisbursements to disbursements
                 <PaginationLayout
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page);
-                  }}
+                  onPageChange={handlePageChange}
                 />
               )}
             </div>
@@ -603,6 +622,7 @@ function TreasurerDisbursementVouchers() {
                   setIsEditDialogOpen(false);
                   setSelectedDisbursement(null);
                   setEditingDisbursement(null);
+                  refetch();
                 }}
                 existingVoucher={disbursementWithFiles}
               />

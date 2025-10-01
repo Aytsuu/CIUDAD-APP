@@ -15,11 +15,13 @@ import {
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
 // import Attendees from "./Attendees";
-import {useGetCouncilEvents, useGetAttendanceSheets} from "../Calendar/queries/councilEventfetchqueries";
+import {useGetCouncilEvents, useGetAttendanceSheets, useGetCouncilEventYears} from "../Calendar/queries/councilEventfetchqueries";
 import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { useLoading } from "@/context/LoadingContext"; 
+import { useDebounce } from "@/hooks/use-debounce";
+import { formatTableDate } from "@/helpers/dateHelper";
 
 const ArchiveTabActions = ({
   row,
@@ -134,7 +136,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
     header: "Date",
     cell: ({ row }) => (
       <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-        {row.getValue("attMeetingDate")}
+         <div>{formatTableDate(row.getValue("attMeetingDate"))}</div>
       </div>
     ),
     size: 120,
@@ -311,14 +313,35 @@ function AttendancePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   const { showLoading, hideLoading } = useLoading();
   
-  const { data: councilEvents = [], isLoading: isCouncilEventsLoading, error } = useGetCouncilEvents();
+  // Fetch available years
+  const { data: availableYears = [] } = useGetCouncilEventYears();
+  
+  // Updated query with pagination
+  const {
+    data: councilEventsData,
+    isLoading: isCouncilEventsLoading,
+    error,
+  } = useGetCouncilEvents(
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    filter,
+    activeTab === "archive"
+  );
+  
   const { data: attendanceSheets = [], isLoading: isSheetsLoading } = useGetAttendanceSheets();
   const isLoading = isCouncilEventsLoading || isSheetsLoading;
 
+  const councilEvents = councilEventsData?.results || [];
+  const totalCount = councilEventsData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Build table data from paginated results
   const tableData = useMemo(() => {
     const eventMap = new Map<number, CouncilEvent>();
     councilEvents.forEach(event => {
@@ -328,21 +351,19 @@ function AttendancePage() {
     const data: AttendanceRecord[] = [];
 
     if (activeTab === "active") {
-      councilEvents
-        .filter(event => !event.ce_is_archive)
-        .forEach(event => {
-          const nonArchivedSheets = attendanceSheets.filter(
-            sheet => sheet.ce_id === event.ce_id && !sheet.att_is_archive
-          );
-          data.push({
-            ceId: event.ce_id,
-            attMettingTitle: event.ce_title || "Untitled Meeting",
-            attMeetingDate: event.ce_date || "N/A",
-            attMeetingDescription: event.ce_description || "No description",
-            isArchived: false,
-            sheets: nonArchivedSheets
-          });
+      councilEvents.forEach(event => {
+        const nonArchivedSheets = attendanceSheets.filter(
+          sheet => sheet.ce_id === event.ce_id && !sheet.att_is_archive
+        );
+        data.push({
+          ceId: event.ce_id,
+          attMettingTitle: event.ce_title || "Untitled Meeting",
+          attMeetingDate: event.ce_date || "N/A",
+          attMeetingDescription: event.ce_description || "No description",
+          isArchived: false,
+          sheets: nonArchivedSheets
         });
+      });
     } else {
       const archivedSheetsByEvent = new Map<number, AttendanceSheet[]>();
       attendanceSheets
@@ -371,40 +392,35 @@ function AttendancePage() {
     return data;
   }, [councilEvents, attendanceSheets, activeTab]);
 
-  const filteredData = tableData.filter(record => {
-    const matchesSearch = searchTerm === "" || 
-      [record.attMeetingDate, record.attMettingTitle, record.attMeetingDescription]
-        .some(field => field.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesYear = filter === "all" || 
-      record.attMeetingDate === "N/A" ||
-      new Date(record.attMeetingDate).getFullYear().toString() === filter;
-      
-    return matchesSearch && matchesYear;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(e.target.value) || 10;
     setPageSize(newSize);
     setCurrentPage(1);
   };
 
-  const years = [
-    ...new Set(
-      tableData.map((record) =>
-        record.attMeetingDate !== "N/A" ? new Date(record.attMeetingDate).getFullYear().toString() : null
-      ).filter((year): year is string => year !== null)
-    ),
-  ].sort((a, b) => parseInt(b) - parseInt(a));
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as "active" | "archive");
+    setCurrentPage(1);
+  };
+
+  // Create filter options
   const filterOptions = [
     { id: "all", name: "All" },
-    ...years.map((year) => ({ id: year, name: year })),
+    ...availableYears.map(year => ({ id: year.toString(), name: year.toString() }))
   ];
 
   if (error) {
@@ -446,7 +462,7 @@ function AttendancePage() {
               placeholder="Search"
               className="pl-10 bg-white w-full"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
 
@@ -456,7 +472,7 @@ function AttendancePage() {
             placeholder="Filter"
             options={filterOptions}
             value={filter}
-            onChange={(value) => setFilter(value)}
+            onChange={handleFilterChange}
           />
         </div>
       </div>
@@ -468,13 +484,13 @@ function AttendancePage() {
             <Input
               type="number"
               className="w-14 h-8"
-              defaultValue="10"
+              value={pageSize}
               onChange={handlePageSizeChange}
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "archive")}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="active">Active</TabsTrigger>
               <TabsTrigger value="archive">
@@ -486,7 +502,7 @@ function AttendancePage() {
           </Tabs>
         </div>
 
-         {isLoading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Spinner size="lg" />
           </div>
@@ -496,30 +512,29 @@ function AttendancePage() {
               <TabsContent value="active">
                 <DataTable
                   columns={columns}
-                  data={paginatedData}
+                  data={tableData}
                 />
               </TabsContent>
               <TabsContent value="archive">
                 <HistoryTable
                   columns={columns}
-                  data={paginatedData}
+                  data={tableData}
                 />
               </TabsContent>
             </Tabs>
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
               <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                {filteredData.length} rows
+                Showing {tableData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
               </p>
 
-              {filteredData.length > 0 && (
+              {totalPages > 1 && (
                 <div className="w-full sm:w-auto flex justify-center">
                   <PaginationLayout
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={(page) => setCurrentPage(page)}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               )}
@@ -530,5 +545,4 @@ function AttendancePage() {
     </div>
   );
 }
-
 export default AttendancePage;

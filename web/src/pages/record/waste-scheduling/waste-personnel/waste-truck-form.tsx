@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { Eye, Ban, ArchiveRestore, Trash, Loader2, Plus} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, Ban, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 import { useUpdateWasteTruck } from "./queries/truckUpdate";
 import { useGetTrucks } from "./queries/truckFetchQueries";
-import { useDeleteWasteTruck, useRestoreWasteTruck } from "./queries/truckDelQueries";
+import {
+  useDeleteWasteTruck,
+  useRestoreWasteTruck,
+} from "./queries/truckDelQueries";
 import { useAddWasteTruck } from "./queries/truckAddQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
@@ -17,18 +20,41 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { TruckStatus, TruckData } from "./waste-personnel-types";
+import {
+  TruckStatus,
+  TruckData,
+  TruckManagementProps,
+} from "./waste-personnel-types";
 import { useAuth } from "@/context/AuthContext";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Spinner } from "@/components/ui/spinner";
+import { useLoading } from "@/context/LoadingContext";
 
-const TruckManagement = () => {
+const TruckManagement = ({
+  searchTerm,
+  currentPage,
+  pageSize,
+}: TruckManagementProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
-
-  const { data: trucks = [], isLoading: isTrucksLoading } = useGetTrucks();
+  const { showLoading, hideLoading } = useLoading();
+  const {
+    data: trucksData = { results: [], count: 0 },
+    isLoading: isTrucksLoading,
+  } = useGetTrucks(currentPage, pageSize, searchTerm, activeTab === "archive");
+  useEffect(() => {
+    if (isTrucksLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isTrucksLoading, showLoading, hideLoading]);
   const addTruck = useAddWasteTruck();
   const updateTruck = useUpdateWasteTruck();
   const deleteTruck = useDeleteWasteTruck();
@@ -46,17 +72,196 @@ const TruckManagement = () => {
     },
   });
 
-  const filteredTrucks = trucks
-    .map((truck) => ({
-      truck_id: truck.truck_id.toString(),
-      truck_plate_num: truck.truck_plate_num,
-      truck_model: truck.truck_model,
-      truck_capacity: String(truck.truck_capacity),
-      truck_status: truck.truck_status as TruckStatus,
-      truck_last_maint: truck.truck_last_maint,
-      truck_is_archive: truck.truck_is_archive,
-    }))
-    .filter((truck) => truckViewMode === "active" ? !truck.truck_is_archive : truck.truck_is_archive);
+  const truckColumns: ColumnDef<any>[] = [
+    {
+      accessorKey: "truck_id",
+      header: "Truck ID",
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("truck_id")}</div>
+      ),
+      size: 100,
+    },
+    {
+      accessorKey: "truck_plate_num",
+      header: "Plate Number",
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {row.getValue("truck_plate_num")}
+        </div>
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: "truck_model",
+      header: "Model",
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("truck_model")}</div>
+      ),
+      size: 150,
+    },
+    {
+      accessorKey: "truck_capacity",
+      header: "Capacity (tons)",
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("truck_capacity")}</div>
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: "truck_status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("truck_status") as string;
+        const statusColors = {
+          Operational: "bg-green-100 text-green-800",
+          Maintenance: "bg-yellow-100 text-yellow-800",
+          "Out of Service": "bg-red-100 text-red-800",
+        };
+        return (
+          <div className="text-center">
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                statusColors[status as keyof typeof statusColors] ||
+                "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {status}
+            </span>
+          </div>
+        );
+      },
+      size: 120,
+    },
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const truck = row.original;
+        const isArchived = truck.truck_is_archive;
+
+        return (
+          <div className="flex justify-center items-center gap-1">
+            <TooltipLayout
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openDialog(truck, true)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              }
+              content="View"
+            />
+
+            {isArchived ? (
+              <TooltipLayout
+                trigger={
+                  <div className="flex items-center h-8">
+                    <ConfirmationModal
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={restoreTruck.isPending}
+                        >
+                          {restoreTruck.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArchiveRestore className="h-4 w-4 text-green-500" />
+                          )}
+                        </Button>
+                      }
+                      title="Confirm Restore"
+                      description={`Are you sure you want to restore truck ${truck.truck_plate_num}? It will be moved back to active trucks.`}
+                      actionLabel="Restore"
+                      onClick={() =>
+                        handleDeleteTruck(truck.truck_id, false, true)
+                      }
+                    />
+                  </div>
+                }
+                content="Restore"
+              />
+            ) : (
+              <TooltipLayout
+                trigger={
+                  <div className="flex items-center h-8">
+                    <ConfirmationModal
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteTruck.isPending}
+                        >
+                          {deleteTruck.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash className="h-4 w-4" />
+                          )}
+                        </Button>
+                      }
+                      title="Confirm Dispose"
+                      description={`Are you sure you want to record truck ${truck.truck_plate_num} as disposed? It will be moved to the disposed trucks list.`}
+                      actionLabel="Confirm"
+                      onClick={() =>
+                        handleDeleteTruck(truck.truck_id, false, false)
+                      }
+                    />
+                  </div>
+                }
+                content="Dispose"
+              />
+            )}
+
+            {activeTab === "archive" && (
+              <TooltipLayout
+                trigger={
+                  <div className="flex items-center h-8">
+                    <ConfirmationModal
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteTruck.isPending}
+                        >
+                          {deleteTruck.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Ban className="h-4 w-4 text-red-500" />
+                          )}
+                        </Button>
+                      }
+                      title="Confirm Permanent Delete"
+                      description={`This will permanently delete truck ${truck.truck_plate_num}. This action cannot be undone.`}
+                      actionLabel="Delete"
+                      onClick={() =>
+                        handleDeleteTruck(truck.truck_id, true, false)
+                      }
+                    />
+                  </div>
+                }
+                content="Delete"
+              />
+            )}
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+      size: 150,
+    },
+  ];
+
+  const truckTableData = trucksData.results.map((truck: TruckData) => ({
+    truck_id: truck.truck_id.toString(),
+    truck_plate_num: truck.truck_plate_num,
+    truck_model: truck.truck_model,
+    truck_capacity: String(truck.truck_capacity),
+    truck_status: truck.truck_status as TruckStatus,
+    truck_last_maint: truck.truck_last_maint,
+    truck_is_archive: truck.truck_is_archive,
+  }));
 
   const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
     const parsedValues = {
@@ -89,23 +294,27 @@ const TruckManagement = () => {
     }
   };
 
-  const handleDeleteTruck = (id: string, permanent: boolean = false) => {
-    deleteTruck.mutate(
-      { truck_id: parseInt(id), permanent },
-      {
+  const handleDeleteTruck = (
+    id: string,
+    permanent: boolean = false,
+    isRestore: boolean = false
+  ) => {
+    if (isRestore) {
+      restoreTruck.mutate(parseInt(id), {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["trucks"] });
         },
-      }
-    );
-  };
-
-  const handleRestoreTruck = (id: string) => {
-    restoreTruck.mutate(parseInt(id), {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["trucks"] });
-      },
-    });
+      });
+    } else {
+      deleteTruck.mutate(
+        { truck_id: parseInt(id), permanent },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["trucks"] });
+          },
+        }
+      );
+    }
   };
 
   const openDialog = (truck: TruckData | null, readOnly: boolean) => {
@@ -129,36 +338,27 @@ const TruckManagement = () => {
   };
 
   if (isTrucksLoading) {
-    return <div className="text-center p-4">Loading trucks...</div>;
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   return (
-    <div className="w-full h-full p-4">
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex border rounded-lg p-1 bg-gray-100">
-          <button
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              truckViewMode === "active"
-                ? "bg-white shadow text-primary"
-                : "text-gray-600 hover:bg-gray-200"
-            }`}
-            onClick={() => setTruckViewMode("active")}
-          >
-            Active Trucks
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              truckViewMode === "archive"
-                ? "bg-white shadow text-primary"
-                : "text-gray-600 hover:bg-gray-200"
-            }`}
-            onClick={() => setTruckViewMode("archive")}
-          >
-            Disposed Trucks
-          </button>
-        </div>
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as "active" | "archive")}
+        >
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="active">Active Trucks</TabsTrigger>
+            <TabsTrigger value="archive">Disposed Trucks</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        {truckViewMode === "active" && (
+        {activeTab === "active" && (
           <Button
             size="sm"
             className="gap-1"
@@ -177,144 +377,17 @@ const TruckManagement = () => {
         )}
       </div>
 
-      <div className={`bg-white rounded-lg shadow-sm border p-4 ${truckViewMode === "archive" ? "bg-gray-50" : ""}`}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2 text-center">Truck ID</th>
-                <th className="p-2 text-center">Plate Number</th>
-                <th className="p-2 text-center">Model</th>
-                <th className="p-2 text-center">Capacity (tons)</th>
-                <th className="p-2 text-center">Status</th>
-                <th className="p-2 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTrucks.map((truck) => (
-                <tr key={truck.truck_id} className="border-b hover:bg-gray-50">
-                  <td className="p-2 text-center">{truck.truck_id}</td>
-                  <td className="p-2 text-center">{truck.truck_plate_num}</td>
-                  <td className="p-2 text-center">{truck.truck_model}</td>
-                  <td className="p-2 text-center">{truck.truck_capacity}</td>
-                  <td className="p-2 text-center">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        truck.truck_status === "Operational"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {truck.truck_status}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <div className="flex justify-center items-center gap-1">
-                      <TooltipLayout
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDialog(truck, true)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        }
-                        content="View"
-                      />
+      <Tabs value={activeTab} className="w-full">
+        <TabsContent value="active" className="m-0">
+          <DataTable columns={truckColumns} data={truckTableData} />
+        </TabsContent>
 
-                      {truck.truck_is_archive ? (
-                        <TooltipLayout
-                          trigger={
-                            <div className="flex items-center h-8">
-                              <ConfirmationModal
-                                trigger={
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={restoreTruck.isPending}
-                                  >
-                                    {restoreTruck.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <ArchiveRestore className="h-4 w-4 text-green-500" />
-                                    )}
-                                  </Button>
-                                }
-                                title="Confirm Restore"
-                                description={`Are you sure you want to restore truck ${truck.truck_plate_num}? It will be moved back to active trucks.`}
-                                actionLabel="Restore"
-                                onClick={() => handleRestoreTruck(truck.truck_id)}
-                              />
-                            </div>
-                          }
-                          content="Restore"
-                        />
-                      ) : (
-                        <TooltipLayout
-                          trigger={
-                            <div className="flex items-center h-8">
-                              <ConfirmationModal
-                                trigger={
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={deleteTruck.isPending}
-                                  >
-                                    {deleteTruck.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                }
-                                title="Confirm Dispose"
-                                description={`Are you sure you want to record truck ${truck.truck_plate_num} as disposed? It will be moved to the disposed trucks list.`}
-                                actionLabel="Confirm"
-                                onClick={() => handleDeleteTruck(truck.truck_id, false)}
-                              />
-                            </div>
-                          }
-                          content="Dispose"
-                        />
-                      )}
-
-                      {truckViewMode === "archive" && (
-                        <TooltipLayout
-                          trigger={
-                            <div className="flex items-center h-8">
-                              <ConfirmationModal
-                                trigger={
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={deleteTruck.isPending}
-                                  >
-                                    {deleteTruck.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Ban className="h-4 w-4 text-red-500" />
-                                    )}
-                                  </Button>
-                                }
-                                title="Confirm Permanent Delete"
-                                description={`This will permanently delete truck ${truck.truck_plate_num}. This action cannot be undone.`}
-                                actionLabel="Delete"
-                                onClick={() => handleDeleteTruck(truck.truck_id, true)}
-                              />
-                            </div>
-                          }
-                          content="Delete"
-                        />
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <TabsContent value="archive" className="m-0">
+          <div className="bg-gray-50 rounded-lg">
+            <DataTable columns={truckColumns} data={truckTableData} />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <DialogLayout
         isOpen={isDialogOpen}
@@ -406,7 +479,11 @@ const TruckManagement = () => {
                             Edit
                           </Button>
                         }
-                        content={currentTruck.truck_is_archive ? "Cannot edit archived truck" : "Edit truck details"}
+                        content={
+                          currentTruck.truck_is_archive
+                            ? "Cannot edit archived truck"
+                            : "Edit truck details"
+                        }
                       />
                     )}
 
@@ -443,7 +520,9 @@ const TruckManagement = () => {
                               )}
                             </Button>
                           }
-                          title={`Confirm ${currentTruck ? "Update" : "Add"} Truck`}
+                          title={`Confirm ${
+                            currentTruck ? "Update" : "Add"
+                          } Truck`}
                           description={
                             currentTruck
                               ? `Are you sure you want to update truck ${currentTruck.truck_plate_num}?`

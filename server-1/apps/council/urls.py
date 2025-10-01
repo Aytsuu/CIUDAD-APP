@@ -13,6 +13,7 @@ urlpatterns = [
     path("attendance-sheets/<int:att_id>/", AttendanceSheetDetailView.as_view(), name="attendance-sheet-detail"),
     path("attendance-sheets/<int:att_id>/restore/", RestoreAttendanceView.as_view(), name="attendance-sheet-restore"),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
+    path("event-meeting/years/", CouncilEventYearsView.as_view(), name="council-event-years"),
     # path('staff-attendance-ranking/', StaffAttendanceRankingView.as_view(), name='staff-attendance-ranking'),
 
     # TEMPLATE
