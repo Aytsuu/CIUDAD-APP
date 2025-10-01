@@ -30,7 +30,8 @@ urlpatterns=[
     path('disbursement-files/<int:disf_num>/archive/', DisbursementFileArchiveView.as_view(), name='disbursement-file-archive'),
     path('disbursement-files/<int:disf_num>/restore/', DisbursementFileRestoreView.as_view(), name='disbursement-file-restore'),
     path('disbursement-vouchers/<int:dis_num>/files/', DisbursementFileCreateView.as_view(), name='disbursement-voucher-files'),
-
+    path('disbursement-vouchers/years/', DisbursementVoucherYearsView.as_view(), name='disbursement-voucher-years'),
+    
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
     path('update-income-expense-tracking/<int:iet_num>/', UpdateIncomeExpenseView.as_view(), name='treasurer-income-expense-tracking-update'),
