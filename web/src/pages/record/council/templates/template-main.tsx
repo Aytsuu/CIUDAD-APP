@@ -2950,11 +2950,11 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_applicantName: `${fname} ${lname}`,      
       temp_w_sign_applicant: false,
       temp_w_seal: false,
-      temp_body: "/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that [ NAME OF BUILDING ], located at [ LOCATION ] , Barangay San Roque Ciudad Cebu City.\n\n" +
+      temp_body: `/*TO WHOM IT MAY CONCERN:*/\n\nThis is to certify that ${businessName}, located at ${address} , Barangay San Roque Ciudad Cebu City.\n\n` +
       "That upon inspection and verification we found such application to be in order. Therefore, I grant the issuance of this /*BUILDING PERMIT*/ in " +
       "compliance of the government requirements for whatever purpose this may serve.\n\nBarangay Certification is hereby issued upon the requirements " +
       "of the above mentioned-name. However this clearance may be cancelled or revoked anytime the public safety and interest so required.\n\n" +
-      "Given this [ DAY [st/nd/rd/th] ] day of [ AUGUST ] [2025] at Barangay San Roque (Ciudad) Cebu City."
+      `Given this /*${FormattedIssuanceDate}*/ at Barangay San Roque (Ciudad) Cebu City.`
     },   
     {
       temp_id: "Cohabitation",
@@ -3158,13 +3158,13 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
-      "NAME                     :           [ NAME ]\n" +
-      "AGE                        :            [ AGE ]\n" +
-      "BIRTHDATE\t  :           [ BIRTHDATE ]\n" +
-      "ADDRESS              :            [ ADDRESS ]\n\n" +
-      "This certification is being issued upon the request of the above mentioned name to support the application for the /*[PURPOSE] PURPOSES ONLY.*/   " +
-      "Affixed below is the name and signature of the above-mentioned name. They are one of those who belong to an indigent family, no income/low income.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `NAME                     :           /*${lname}, ${fname}*/\n` +
+      `AGE                        :            /*${age}*/\n` +
+      `BIRTHDATE\t  :                  /*${FormattedBirthdate}*/\n` +
+      `ADDRESS              :            /*${address}, Brgy. San Roque Ciudad Cebu City*/\n\n` +
+      `This certification is being issued upon the request of the above mentioned name to support the application for the /*${specificPurpose?.toUpperCase()} PURPOSES ONLY.*/   ` +
+      `Affixed below is the name and signature of the above-mentioned name.\n\n` +
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },             
     {
       temp_id: "Barangay Clearance",
@@ -3181,9 +3181,9 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_w_sign_applicant: false,
       temp_w_seal: false,
       temp_body: "\n/*TO WHOM IT MAY CONCERN:*/\n\n" +
-      "This is to certify that [NAME] with business located at [ADRESS], after complying with the requirements prescribed by this office, is hereby issues a Barangay Clearnce for the purpose of " +
+      `This is to certify that ${lname}, ${fname} with business located at ${address}, after complying with the requirements prescribed by this office, is hereby issues a Barangay Clearnce for the purpose of ` +
       "securing/obtaining /*WORK PERMIT*/ and be able to work within the barangay jusrisdiction. However, this Barangay Clearance may be cancelled or revoked anytime the public safety and interest so required.\n\n" +
-      "Issued this [ DAY [st/nd/rd/th] ] day of [MONTH] [YEAR] at Barangay San Roque (Ciudad), Cebu City"
+      `Issued this /*${FormattedIssuanceDate}*/ at Barangay San Roque (Ciudad), Cebu City`
     },      
     {
       temp_id: "Proof of Custody",
