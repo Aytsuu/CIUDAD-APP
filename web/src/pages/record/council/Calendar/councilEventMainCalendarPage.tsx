@@ -3,7 +3,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Button } from "@/components/ui/button/button.tsx";
 import SchedEventForm from "./councilEventCreate.tsx";
-import { Plus, ArchiveRestore, Trash, Eye } from "lucide-react";
+import { Plus, ArchiveRestore, Trash, Eye, Archive } from "lucide-react";
 import { useGetCouncilEvents } from "./queries/councilEventfetchqueries.tsx";
 import { format } from "date-fns";
 import EditEventForm from "./councilEventEdit.tsx";
@@ -90,9 +90,11 @@ const isLoading = isCouncilEventsLoading || isWasteColLoading;
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4 flex items-center justify-between">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
-          <TabsList className="grid w-full grid-cols-2 max-w-xs">
+          <TabsList className="grid grid-cols-2">
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
-            <TabsTrigger value="archive">Archive</TabsTrigger>
+            <TabsTrigger value="archive"> <div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div></TabsTrigger>
           </TabsList>
         </Tabs>
         {activeTab === "calendar" && (

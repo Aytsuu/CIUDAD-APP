@@ -345,10 +345,14 @@ function GADProjectProposal() {
           onValueChange={handleViewModeChange}
           className="w-auto"
         >
-          <TabsList>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
-          </TabsList>
+          <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="archive">
+                <div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div>
+              </TabsTrigger>
+            </TabsList>
         </Tabs>
       </div>
 

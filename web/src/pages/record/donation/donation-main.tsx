@@ -48,7 +48,7 @@ function DonationTracker() {
   }, [isLoading, showLoading, hideLoading]);
 
   const categoryOptions = [
-    { id: "all", name: "All Category" },
+    { id: "all", name: "All Categories" },
     { id: "Monetary Donations", name: "Monetary Donations" },
     { id: "Essential Goods", name: "Essential Goods" },
     { id: "Medical Supplies", name: "Medical Supplies" },
