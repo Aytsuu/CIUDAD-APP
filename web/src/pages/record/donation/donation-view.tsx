@@ -12,34 +12,58 @@ import ClerkDonateViewSchema from "@/form-schema/donate-view-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useUpdateDonation } from "./queries/donationUpdateQueries";
 import {
-  useGetDonations,
   useGetPersonalList,
+  useGetDonationById,
 } from "./queries/donationFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { ClerkDonateViewProps } from "./donation-types";
+import { Spinner } from "@/components/ui/spinner";
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
-  const { data: donations } = useGetDonations();
-  const { data: personalList = [], isLoading: isPersonalLoading } =
-    useGetPersonalList();
+  const {
+    data: donation,
+    isLoading: isDonationLoading,
+    isFetching: isDonationFetching,
+  } = useGetDonationById(don_num);
+  const {
+    data: personalList = [],
+    isLoading: isPersonalLoading,
+    isFetching: isPersonalFetching,
+  } = useGetPersonalList();
   const { mutate: updateDonation, isPending } = useUpdateDonation();
 
-  const donation = donations?.find((d) => d.don_num === don_num);
   const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
     resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
-      don_donor: donation?.don_donor || "",
-      per_id: donation?.per_id || null,
-      don_item_name: donation?.don_item_name || "",
-      don_qty: donation?.don_qty || "",
-      don_description: donation?.don_description || "",
-      don_category: donation?.don_category || "",
-      don_date: donation?.don_date || new Date().toISOString().split("T")[0],
+      don_donor: "",
+      per_id: null,
+      don_item_name: "",
+      don_qty: "",
+      don_description: "",
+      don_category: "",
+      don_date: new Date().toISOString().split("T")[0],
       don_status: "Stashed",
     },
   });
+
+  // Reset form when donation data is loaded
+  useEffect(() => {
+    if (donation) {
+      form.reset({
+        don_donor: donation.don_donor || "",
+        per_id: donation.per_id || null,
+        don_item_name: donation.don_item_name || "",
+        don_qty: donation.don_qty || "",
+        don_description: donation.don_description || "",
+        don_category: donation.don_category || "",
+        don_date: donation.don_date || new Date().toISOString().split("T")[0],
+        don_status:
+          (donation.don_status as "Stashed" | "Allotted") || "Stashed",
+      });
+    }
+  }, [donation, form]);
 
   const categoryWatch = form.watch("don_category");
   useEffect(() => {
@@ -62,14 +86,53 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     );
   };
 
+  // Show loading spinner while data is being fetched
+  if (isDonationLoading || isPersonalLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 min-h-[400px]">
+        <Spinner size="lg" />
+        <p className="mt-4 text-gray-600">Loading donation details...</p>
+      </div>
+    );
+  }
+
+  // Show loading spinner while data is refetching/updating
+  if (isDonationFetching || isPersonalFetching) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 min-h-[400px]">
+        <Spinner size="lg" />
+        <p className="mt-4 text-gray-600">Updating donation information...</p>
+      </div>
+    );
+  }
+
   if (!donation) {
-    return <div className="text-center py-8">Loading donation details...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-16 min-h-[400px]">
+        <div className="text-center">
+          <p className="text-gray-600 mb-2">Donation not found</p>
+          <p className="text-sm text-gray-400">
+            The donation record you're looking for doesn't exist.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+    <div className="flex flex-col min-h-0 h-auto p-2 rounded-lg overflow-auto">
       <Form {...form}>
         <form className="flex flex-col gap-4">
+          {/* Show loading overlay when saving */}
+          {isPending && (
+            <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+              <div className="flex flex-col items-center gap-2">
+                <Spinner size="lg" />
+                <p className="text-gray-600">Saving changes...</p>
+              </div>
+            </div>
+          )}
+
           <FormSelect
             control={form.control}
             name="don_status"
@@ -80,6 +143,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             ]}
             readOnly={!isEditing}
           />
+
           {/* Donor Name */}
           <FormField
             control={form.control}
@@ -192,13 +256,21 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                     setIsEditing(false);
                   }}
                   variant="outline"
+                  disabled={isPending}
                 >
                   Cancel
                 </Button>
                 <ConfirmationModal
                   trigger={
                     <Button type="button" className="" disabled={isPending}>
-                      {isPending ? "Saving..." : "Save Changes"}
+                      {isPending ? (
+                        <>
+                          <Spinner size="sm" className="mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
                     </Button>
                   }
                   title="Confirm Save"

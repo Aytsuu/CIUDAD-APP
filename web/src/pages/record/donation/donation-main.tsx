@@ -15,22 +15,31 @@ import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext"; 
+import { useDebounce } from "@/hooks/use-debounce";
 
 function DonationTracker() {
-  const [_data] = useState<Donations[]>([]);
-  // const [loading, setLoading] = useState(true);
-  const [error] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { showLoading, hideLoading } = useLoading();
 
-  const { data: donations = [], isLoading, refetch } = useGetDonations();
+  const { 
+    data: donationsData = { results: [], count: 0 }, 
+    isLoading, 
+    refetch,
+  } = useGetDonations(
+    currentPage,
+    pageSize,
+    debouncedSearchQuery,
+    categoryFilter,
+    statusFilter
+  );
 
-   useEffect(() => {
+  useEffect(() => {
     if (isLoading) {
       showLoading();
     } else {
@@ -38,14 +47,8 @@ function DonationTracker() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
-  // const { mutate: deleteEntry} = useDeleteDonation();
-
-  // const handleDelete = async (don_num: number) => {
-  //   deleteEntry(don_num);
-  // };
-
   const categoryOptions = [
-    { id: "all", name: "All" },
+    { id: "all", name: "All Category" },
     { id: "Monetary Donations", name: "Monetary Donations" },
     { id: "Essential Goods", name: "Essential Goods" },
     { id: "Medical Supplies", name: "Medical Supplies" },
@@ -63,24 +66,9 @@ function DonationTracker() {
     { id: "Allotted", name: "Allotted" },
   ];
 
-  // Filter data based on search query and category
-  const filteredData = donations.filter((donation) => {
-    const searchString =
-      `${donation.don_num} ${donation.don_donor} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_date}`.toLowerCase();
-    const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "all" || donation.don_category === categoryFilter;
-    const matchesStatus =
-      statusFilter === "all" || donation.don_status === statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
-
-  // Calculate pagination values
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const donations = donationsData.results || [];
+  const totalCount = donationsData.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const columns: ColumnDef<Donations>[] = [
     {
@@ -181,28 +169,25 @@ function DonationTracker() {
             }
             content="View"
           />
-          {/* <TooltipLayout
-            trigger={
-              <div className="flex items-center h-8">
-                <ConfirmationModal
-                  trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Trash size={16} /></div>}
-                  title="Confirm Delete"
-                  description="Are you sure you want to delete this entry?"
-                  actionLabel="Confirm"
-                  // onClick={() => handleDelete(row.original.don_num)} 
-                />                     */}
-          {/* </div>   
-            } */}
-          {/* content="Delete"
-          /> */}
         </div>
       ),
     },
   ];
 
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = +e.target.value;
+    setPageSize(value >= 1 ? value : 1);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'category') {
+      setCategoryFilter(value);
+    } else if (filterType === 'status') {
+      setStatusFilter(value);
+    }
+    setCurrentPage(1);
+  };
 
   return (
     <div className="w-full h-full">
@@ -225,10 +210,13 @@ function DonationTracker() {
               size={17}
             />
             <Input
-              placeholder="Search..."
+              placeholder="Search donations..."
               className="pl-10 bg-white w-full sm:w-64"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
           <div className="flex gap-2">
@@ -238,14 +226,14 @@ function DonationTracker() {
               placeholder="Filter by Category"
               options={categoryOptions}
               value={categoryFilter}
-              onChange={(value) => setCategoryFilter(value)}
+              onChange={(value) => handleFilterChange('category', value)}
             />
             <SelectLayout
               className="bg-white w-full sm:w-48"
               placeholder="Filter by Status"
               options={statusOptions}
               value={statusFilter}
-              onChange={(value) => setStatusFilter(value)}
+              onChange={(value) => handleFilterChange('status', value)}
             />
           </div>
         </div>
@@ -284,11 +272,7 @@ function DonationTracker() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1);
-              }}
+              onChange={handlePageSizeChange}
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
@@ -301,17 +285,17 @@ function DonationTracker() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <DataTable columns={columns} data={paginatedData} />
+              <DataTable columns={columns} data={donations} />
             </div>
 
             {/* Pagination Section */}
             <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
               <p className="text-xs sm:text-sm text-darkGray">
                 Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                {filteredData.length} rows
+                {Math.min(currentPage * pageSize, totalCount)} of{" "}
+                {totalCount} rows
               </p>
-              {filteredData.length > 0 && (
+              {totalCount > 0 && totalPages > 1 && (
                 <PaginationLayout
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -324,22 +308,6 @@ function DonationTracker() {
           </>
         )}
       </div>
-
-      {/* Empty State */}
-      {!isLoading && filteredData.length === 0 && (
-        <div className="bg-white rounded-md p-8 text-center">
-          <p className="text-gray-500">No donations found</p>
-          {searchQuery || categoryFilter !== "all" || statusFilter !== "all" ? (
-            <p className="text-sm text-gray-400 mt-2">
-              Try adjusting your search or filters
-            </p>
-          ) : (
-            <p className="text-sm text-gray-400 mt-2">
-              No donation records available
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }
