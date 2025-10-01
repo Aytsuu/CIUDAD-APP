@@ -24,7 +24,6 @@ import { useChildLatestVitals } from "../queries/fetchQueries";
 import { VitalSignFormCard, VitalSignsCardView } from "./vitalsisgns-card";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Combobox } from "@/components/ui/combobox";
-import { useChildNotesFollowup } from "../queries/fetchQueries";
 import { useUpdateFollowupStatus } from "../queries/update";
 import { LastPageProps } from "./types";
 import { PendingFollowupsSection } from "./followupPending";
@@ -60,8 +59,9 @@ export default function LastPage({
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
   const { data: staffOptions, isLoading } = fetchStaffWithPositions();
-  const updateFollowupMutation = useUpdateFollowupStatus();
 
+
+  
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
@@ -70,6 +70,8 @@ export default function LastPage({
 
   const medicineStocksOptions = medicineData?.medicines || [];
   const medicinePagination = medicineData?.pagination;
+
+
 
   const handleMedicineSearch = (searchTerm: string) => {
     setMedicineSearchParams((prev: any) => ({
@@ -128,9 +130,9 @@ export default function LastPage({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
-      wt: latestVitalsData?.data?.weight || undefined,
-      ht: latestVitalsData?.data?.height || undefined,
-      temp: latestVitalsData?.data?.vital_temp,
+      wt: latestVitalsData.weight || undefined,
+      ht: latestVitalsData.height || undefined,
+      temp: latestVitalsData.vital_temp,
       follov_description: "",
       followUpVisit: "",
       followv_status: "pending",
@@ -140,14 +142,15 @@ export default function LastPage({
     }
   });
 
+
   const editVitalSignForm = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
       date: "",
       age: "",
-      wt: undefined,
-      ht: undefined,
-      temp: undefined,
+      wt: latestVitalsData.weight || undefined,
+      ht: latestVitalsData.height || undefined,
+      temp: latestVitalsData.vital_temp,
       follov_description: "",
       followUpVisit: "",
       notes: "",
@@ -381,8 +384,8 @@ export default function LastPage({
     vitalSignForm.reset({
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
-      wt: undefined,
-      ht: undefined,
+      wt: vitalSignWithAge.wt,
+      ht: vitalSignWithAge.ht,
       temp: undefined,
       follov_description: "",
       followUpVisit: "",
