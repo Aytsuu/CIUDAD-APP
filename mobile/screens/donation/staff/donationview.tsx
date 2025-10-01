@@ -18,15 +18,19 @@ import { FormDateInput } from "@/components/ui/form/form-date-input";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 const DonationView = () => {
   const router = useRouter();
   const { don_num } = useLocalSearchParams();
-  const { data: donations = [] } = useGetDonations();
+  const { data: donationsData = { results: [], count: 0 }, isLoading } = useGetDonations();
   const { data: personalList = [] } = useGetPersonalList();
   const updateDonationMutation = useUpdateDonation();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Extract the donations array from the data structure
+  const donations = donationsData.results || [];
   const donation = donations.find((d: Donation) => d.don_num === don_num);
 
   const { control, handleSubmit, watch, setValue, reset } = useForm({
@@ -117,20 +121,24 @@ const DonationView = () => {
     setIsEditing(false);
   };
 
-  const moneyType = watch("don_item_name");
-
-  if (!donation) {
+  if (isLoading) {
     return (
-      <ScreenLayout
-        header="Donation Not Found"
-        description={`Donation with ID ${don_num} not found`}
-        showBackButton
-        onBackPress={() => router.back()}
-      >
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-lg text-gray-600">Donation not found</Text>
-        </View>
-      </ScreenLayout>
+      <>
+        <PageLayout
+          leftAction={
+            <TouchableOpacity onPress={() => router.back()}>
+              <ChevronLeft size={30} color="black" className="text-black" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text>View Donation</Text>}
+          rightAction={<View></View>}
+        >
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-lg text-gray-600">Loading donation details...</Text>
+          </View>
+        </PageLayout>
+        <LoadingModal visible={true} />
+      </>
     );
   }
 

@@ -1184,12 +1184,45 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
     
-    # Use the correct field names that exist in your Invoice model
-    queryset = Invoice.objects.select_related(
-        'bpr_id__rp_id__per',  # For business permit requests
-        'nrc_id',              # For non-resident certificate requests
-        'cr_id__rp_id__per'       # For resident certificates
-    ).all()
+    def get_queryset(self):
+        queryset = Invoice.objects.select_related(
+            'bpr_id__rp_id__per',  # For business permit requests
+            'nrc_id',              # For non-resident certificate requests
+            'cr_id__rp_id__per',   # For resident certificates
+            'spay_id__sr_id__comp_id'  # For service charge payments
+        ).prefetch_related(
+            'spay_id__sr_id__comp_id__complainant'  # For complainants in service charges
+        ).all()
+        
+        # Get filter parameters from request
+        search_query = self.request.query_params.get('search', '')
+        nature_filter = self.request.query_params.get('nature', '')
+        
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(inv_serial_num__icontains=search_query) |
+                Q(inv_nat_of_collection__icontains=search_query) |
+                Q(inv_discount_reason__icontains=search_query) |
+                # Search in business permit related fields
+                Q(bpr_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(bpr_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(bpr_id__rp_id__per__per_mname__icontains=search_query) |
+                # Search in resident certificate related fields
+                Q(cr_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(cr_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(cr_id__rp_id__per__per_mname__icontains=search_query) |
+                # Search in non-resident certificate fields
+                Q(nrc_id__nrc_requester__icontains=search_query) |
+                # Search in service charge complainant names
+                Q(spay_id__sr_id__comp_id__complainant__cpnt_name__icontains=search_query)
+            ).distinct()  # Add distinct to avoid duplicates
+        
+        # Apply nature of collection filter
+        if nature_filter and nature_filter != "all":
+            queryset = queryset.filter(inv_nat_of_collection=nature_filter)
+        
+        return queryset
 
 
 # Clearance Request Views
