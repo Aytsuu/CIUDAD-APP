@@ -6,7 +6,7 @@ from apps.complaint.models import Complaint, ComplaintComplainant, ComplaintAccu
 from apps.complaint.serializers import ComplaintSerializer
 from apps.profiling.models import ResidentProfile, FamilyComposition, Address
 from apps.administration.models import Staff
-from apps.treasurer.models import Invoice
+from apps.treasurer.models import Invoice, Purpose_And_Rates
 from datetime import datetime
 import logging
 from apps.profiling.serializers.business_serializers import FileInputSerializer
@@ -144,32 +144,21 @@ class NonResidentCertReqUpdateSerializer(serializers.ModelSerializer):
 
 
 class ClerkCertificateSerializer(serializers.ModelSerializer):
+
+    pr_id = serializers.PrimaryKeyRelatedField(
+        queryset=Purpose_And_Rates.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(
+        queryset=ResidentProfile.objects.all()
+    )
+
     resident_details = serializers.SerializerMethodField()
     invoice = serializers.SerializerMethodField()
     purpose = serializers.SerializerMethodField()
-    staff_id = serializers.CharField(required=False, allow_null=True, write_only=True)
     
-    # BURIAL fields
-    # deceased_name = serializers.SerializerMethodField()
-    # deceased_age = serializers.SerializerMethodField()
-    # deceased_birthdate = serializers.SerializerMethodField()
-    # deceased_address = serializers.SerializerMethodField()
-    
-    # # FIRE VICTIM fields
-    # date_of_conflagration = serializers.SerializerMethodField()
-    
-    # # DWUP fields
-    # date_demolished = serializers.SerializerMethodField()
-    
-    # # COHABITATION/MARRIAGE fields
-    # partner_name = serializers.SerializerMethodField()
-    # live_in_years = serializers.SerializerMethodField()
-    
-    # # Indigency (for minors) fields
-    # child_name = serializers.SerializerMethodField()
-    # child_age = serializers.SerializerMethodField()
-    # child_birthdate = serializers.SerializerMethodField()
-
     def get_resident_details(self, obj):
         try:
             if obj.rp_id and getattr(obj.rp_id, "per", None):
@@ -220,59 +209,16 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                     "pr_purpose": obj.pr_id.pr_purpose,
                     "pr_rate": obj.pr_id.pr_rate
                 }
-            return None
+            return {
+                "pr_purpose": "Unknown Purpose",
+                "pr_rate": 0.0
+            }
         except Exception as e:
             logger.error(f"Error getting purpose and rate: {str(e)}")
-            return None
-
-    # BURIAL getter methods
-    def get_deceased_name(self, obj):
-        """Get deceased name from context or return None"""
-        return getattr(obj, 'deceased_name', None)
-    
-    def get_deceased_age(self, obj):
-        """Get deceased age from context or return None"""
-        return getattr(obj, 'deceased_age', None)
-    
-    def get_deceased_birthdate(self, obj):
-        """Get deceased birthdate from context or return None"""
-        return getattr(obj, 'deceased_birthdate', None)
-    
-    def get_deceased_address(self, obj):
-        """Get deceased address from context or return None"""
-        return getattr(obj, 'deceased_address', None)
-    
-    # FIRE VICTIM getter methods
-    def get_date_of_conflagration(self, obj):
-        """Get date of conflagration from context or return None"""
-        return getattr(obj, 'date_of_conflagration', None)
-    
-    # DWUP getter methods
-    def get_date_demolished(self, obj):
-        """Get date demolished from context or return None"""
-        return getattr(obj, 'date_demolished', None)
-    
-    # COHABITATION/MARRIAGE getter methods
-    def get_partner_name(self, obj):
-        """Get partner name from context or return None"""
-        return getattr(obj, 'partner_name', None)
-    
-    def get_live_in_years(self, obj):
-        """Get live in years from context or return None"""
-        return getattr(obj, 'live_in_years', None)
-    
-    # Indigency (for minors) getter methods
-    def get_child_name(self, obj):
-        """Get child name from context or return None"""
-        return getattr(obj, 'child_name', None)
-    
-    def get_child_age(self, obj):
-        """Get child age from context or return None"""
-        return getattr(obj, 'child_age', None)
-    
-    def get_child_birthdate(self, obj):
-        """Get child birthdate from context or return None"""
-        return getattr(obj, 'child_birthdate', None)
+            return {
+                "pr_purpose": "Unknown Purpose",
+                "pr_rate": 0.0
+            }
 
     def validate_staff_id(self, value):
         """Validate and format staff_id properly"""
@@ -297,6 +243,27 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             # This shouldn't happen with primary key, but handle it
             staff = Staff.objects.filter(staff_id=staff_id_str).first()
             return staff
+
+    def validate_pr_id(self, value):
+        if not value:
+            raise serializers.ValidationError("Purpose request ID (pr_id) is required")
+
+        # Debug logging
+        logger.info(f"validate_pr_id received value: {value} (type: {type(value)})")
+
+        # Handle case where a Purpose_And_Rates object is passed instead of ID
+        if hasattr(value, 'pr_id'):
+            logger.info(f"Object already provided, returning as-is: {value}")
+            return value  # Return the object as-is
+
+        # If we have an ID, get the object
+        from apps.treasurer.models import Purpose_And_Rates
+        try:
+            purpose_obj = Purpose_And_Rates.objects.get(pk=value)
+            logger.info(f"Found Purpose_And_Rates object: {purpose_obj}")
+            return purpose_obj
+        except Purpose_And_Rates.DoesNotExist:
+            raise serializers.ValidationError(f"Purpose request with ID {value} does not exist")
 
     def validate_rp_id(self, value):
         """Validate and format rp_id properly"""
@@ -362,22 +329,6 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
             'cr_req_status',
             'invoice',
             'staff_id',
-            # BURIAL fields
-            'deceased_name',
-            'deceased_age',
-            'deceased_birthdate',
-            'deceased_address',
-            # FIRE VICTIM fields
-            'date_of_conflagration',
-            # DWUP fields
-            'date_demolished',
-            # COHABITATION/MARRIAGE fields
-            'partner_name',
-            'live_in_years',
-            # Indigency (for minors) fields
-            'child_name',
-            'child_age',
-            'child_birthdate'
         ]
         extra_kwargs = {
             'cr_id': {'read_only': True}
@@ -411,15 +362,15 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'requestor',
             'purpose',
             'amount_to_pay',
-            'req_amount',  # Add req_amount field
+            'req_amount',  
         ]
 
     def get_business_name(self, obj):
         try:
-            # First try to get from the new bus_permit_name field
+            
             if obj.bus_permit_name:
                 return obj.bus_permit_name
-            # Fallback to bus_id if available
+            
             return obj.bus_id.bus_name if obj.bus_id and hasattr(obj.bus_id, 'bus_name') else ""
         except Exception:
             return ""
