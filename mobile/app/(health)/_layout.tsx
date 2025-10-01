@@ -15,8 +15,8 @@ export default () => {
   }
 
   // Determine user roles
-  const isAdmin = !!user?.staff; // Admin if staff object exists
-  const isResident = !!user?.rp; // Resident if resident or rp exists
+  const isAdmin = !!user?.staff; 
+  const isResident = !!user?.rp; 
 
   return (
     <QueryClientProvider client={queryClient}>

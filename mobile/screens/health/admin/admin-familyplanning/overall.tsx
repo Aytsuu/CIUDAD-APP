@@ -155,18 +155,18 @@ const FPRecordCard: React.FC<{
             Client Type: <Text className="font-medium text-gray-900">{record.client_type}</Text>
           </Text>
         </View>
-        <View className="flex-row items-center mb-3">
+        {/* <View className="flex-row items-center mb-3">
           <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Method: <Text className="font-medium text-gray-900">{record.method_used}</Text>
           </Text>
-        </View>
-        <View className="flex-row items-center mb-3">
+        </View> */}
+        {/* <View className="flex-row items-center mb-3">
           <Users size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Age: <Text className="font-medium text-gray-900">{record.patient_age}</Text> • {record.sex}
           </Text>
-        </View>
+        </View> */}
         <View className="flex-row items-center">
           <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
