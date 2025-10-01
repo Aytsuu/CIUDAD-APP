@@ -12,7 +12,8 @@ export const useAddAnnualGrossSales = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof AnnualGrossSalesSchema>) => 
             addAnnualGrossSales(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['grossSales'] });
+                queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+                queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
 
                 toast.loading('Submitting Record...', {id: "addGrossSales"});
         
@@ -40,9 +41,12 @@ export const useAddPurposeAndRate = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof PurposeAndRatesSchema>) => 
                 addPurposeAndRate(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['personalPurpose']});
-                queryClient.invalidateQueries({ queryKey: ['serviceChargePurpose']});
-                queryClient.invalidateQueries({ queryKey: ['businessPermitPurpose']});
+                queryClient.invalidateQueries({ queryKey: ['personalActive']});
+                queryClient.invalidateQueries({ queryKey: ['allPersonal']});
+                queryClient.invalidateQueries({ queryKey: ['serviceChargeActive']});
+                queryClient.invalidateQueries({ queryKey: ['allServiceCharge']});
+                queryClient.invalidateQueries({ queryKey: ['businessPermitActive']});
+                queryClient.invalidateQueries({ queryKey: ['allBusinessPermit']});
 
                 toast.loading('Submitting Record...', {id: "addPurposeRate"});
         

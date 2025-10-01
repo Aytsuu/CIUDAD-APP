@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-search";
 import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/permitClearanceFetchQueries";
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
-import { useGetAnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
+import { useGetAnnualGrossSalesActive, type AnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
 
 
 
@@ -32,7 +32,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const { data: businesses = [], isLoading: businessLoading, error: businessError } = useGetBusinesses();
     const { data: permitPurposes = [], isLoading: purposesLoading, error: purposesError } = useGetPermitPurposes();
     const { data: residents = [], isLoading: residentLoading} = useGetResidents();
-    const { data: grossSales = [], isLoading: _grossSalesLoading } = useGetAnnualGrossSales();
+    const { data: grossSales = { results: [], count: 0 }, isLoading: _grossSalesLoading } = useGetAnnualGrossSalesActive();
     
     // Log any errors
     if (businessError) {
@@ -100,8 +100,12 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         console.log("Business gross sales:", businessGrossSales);
         
         // Find matching annual gross sales range
-        const matchingRate = grossSales.find((rate: any) => 
-            rate.ags_is_archive === false &&
+        // const matchingRate = grossSales.find((rate: any) => 
+        //     businessGrossSales >= rate.ags_minimum && 
+        //     businessGrossSales <= rate.ags_maximum
+        // );
+
+        const matchingRate = grossSales?.results.find((rate: AnnualGrossSales) => 
             businessGrossSales >= rate.ags_minimum && 
             businessGrossSales <= rate.ags_maximum
         );

@@ -18,7 +18,9 @@ export const useEditAnnualGrossSales = (onSuccess?: () => void) => {
                 staff_id: values.staff_id
             }),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['grossSales'] });
+                queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+                queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
+                
                 showSuccessToast("Record Updated!")
                 onSuccess?.()
             },
@@ -43,9 +45,12 @@ export const useEditPurposeAndRate = (onSuccess?: () => void) => {
                 staff_id: values.staff_id
             }),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['personalPurpose']});
-                queryClient.invalidateQueries({ queryKey: ['serviceChargePurpose']});
-                queryClient.invalidateQueries({ queryKey: ['businessPermitPurpose']});
+                queryClient.invalidateQueries({ queryKey: ['personalActive']});
+                queryClient.invalidateQueries({ queryKey: ['allPersonal']});
+                queryClient.invalidateQueries({ queryKey: ['serviceChargeActive']});
+                queryClient.invalidateQueries({ queryKey: ['allServiceCharge']});
+                queryClient.invalidateQueries({ queryKey: ['businessPermitActive']});
+                queryClient.invalidateQueries({ queryKey: ['allBusinessPermit']});
                 
                 showSuccessToast("Record Updated!")
                 onSuccess?.()

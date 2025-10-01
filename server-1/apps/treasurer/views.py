@@ -781,10 +781,79 @@ class IncomeExpenseFileDetailView(generics.RetrieveDestroyAPIView):
 
 #---------------RATES
 
-class Annual_Gross_SalesView(generics.ListCreateAPIView):
+class Annual_Gross_SalesActiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Annual_Gross_SalesSerializers
-    queryset = Annual_Gross_Sales.objects.all().order_by('-ags_date')
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Annual_Gross_Sales.objects.filter(
+            ags_is_archive=False  
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'ags_id',
+            'ags_minimum',
+            'ags_maximum',
+            'ags_rate',
+            'ags_date',
+            'ags_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(ags_id__icontains=search_query) |
+                Q(ags_minimum__icontains=search_query) |
+                Q(ags_maximum__icontains=search_query) |
+                Q(ags_rate__icontains=search_query) |
+                Q(ags_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-ags_date')
+
+class All_Annual_Gross_SalesView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Annual_Gross_SalesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Annual_Gross_Sales.objects.filter(
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'ags_id',
+            'ags_minimum',
+            'ags_maximum',
+            'ags_rate',
+            'ags_date',
+            'ags_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(ags_id__icontains=search_query) |
+                Q(ags_minimum__icontains=search_query) |
+                Q(ags_maximum__icontains=search_query) |
+                Q(ags_rate__icontains=search_query) |
+                Q(ags_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-ags_date')
+
 
 class DeleteUpdate_Annual_Gross_SalesView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
@@ -805,16 +874,15 @@ class Purpose_And_RatesView(generics.ListCreateAPIView):
     serializer_class = Purpose_And_RatesSerializers
     queryset = Purpose_And_Rates.objects.all().order_by('-pr_date')   
 
-class Purpose_And_RatesPersonalView(generics.ListCreateAPIView):
+class Purpose_And_RatesPersonalActiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Base queryset with category filter and related data
         queryset = Purpose_And_Rates.objects.filter(
             pr_category='Personal',
-            pr_is_archive=False  # Assuming you want active records
+            pr_is_archive=False  
         ).select_related(
             'staff_id__rp__per'
         ).only(
@@ -829,14 +897,47 @@ class Purpose_And_RatesPersonalView(generics.ListCreateAPIView):
             'staff_id__rp__per__per_mname',
         )
 
-        # Search functionality
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
                 Q(pr_id__icontains=search_query) |
                 Q(pr_purpose__icontains=search_query) |
                 Q(pr_rate__icontains=search_query) |
-                Q(pr_category__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+
+class Purpose_And_RatesAllPersonalView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Personal',
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
                 Q(pr_date__icontains=search_query) |
                 Q(staff_id__rp__per__per_lname__icontains=search_query) |
                 Q(staff_id__rp__per__per_fname__icontains=search_query) |
@@ -846,7 +947,7 @@ class Purpose_And_RatesPersonalView(generics.ListCreateAPIView):
         return queryset.order_by('-pr_date')
     
 
-class Purpose_And_RatesServiceChargeView(generics.ListCreateAPIView):
+class Purpose_And_RatesServiceChargeActiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     pagination_class = StandardResultsPagination
@@ -862,7 +963,6 @@ class Purpose_And_RatesServiceChargeView(generics.ListCreateAPIView):
             'pr_id',
             'pr_purpose',
             'pr_rate',
-            'pr_category',
             'pr_date',
             'pr_is_archive',
             'staff_id__rp__per__per_lname',
@@ -877,7 +977,6 @@ class Purpose_And_RatesServiceChargeView(generics.ListCreateAPIView):
                 Q(pr_id__icontains=search_query) |
                 Q(pr_purpose__icontains=search_query) |
                 Q(pr_rate__icontains=search_query) |
-                Q(pr_category__icontains=search_query) |
                 Q(pr_date__icontains=search_query) |
                 Q(staff_id__rp__per__per_lname__icontains=search_query) |
                 Q(staff_id__rp__per__per_fname__icontains=search_query) |
@@ -886,7 +985,44 @@ class Purpose_And_RatesServiceChargeView(generics.ListCreateAPIView):
 
         return queryset.order_by('-pr_date')
     
-class Purpose_And_RatesBusinessPermitView(generics.ListCreateAPIView):
+class Purpose_And_RatesAllServiceChargeView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Service Charge',
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+    
+class Purpose_And_RatesBusinessPermitActiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Purpose_And_RatesSerializers
     pagination_class = StandardResultsPagination
@@ -902,7 +1038,6 @@ class Purpose_And_RatesBusinessPermitView(generics.ListCreateAPIView):
             'pr_id',
             'pr_purpose',
             'pr_rate',
-            'pr_category',
             'pr_date',
             'pr_is_archive',
             'staff_id__rp__per__per_lname',
@@ -917,7 +1052,43 @@ class Purpose_And_RatesBusinessPermitView(generics.ListCreateAPIView):
                 Q(pr_id__icontains=search_query) |
                 Q(pr_purpose__icontains=search_query) |
                 Q(pr_rate__icontains=search_query) |
-                Q(pr_category__icontains=search_query) |
+                Q(pr_date__icontains=search_query) |
+                Q(staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pr_date')
+
+class Purpose_And_RatesAllBusinessPermitView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Base queryset with category filter and related data
+        queryset = Purpose_And_Rates.objects.filter(
+            pr_category='Business Permit',
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'pr_id',
+            'pr_purpose',
+            'pr_rate',
+            'pr_date',
+            'pr_is_archive',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(pr_id__icontains=search_query) |
+                Q(pr_purpose__icontains=search_query) |
+                Q(pr_rate__icontains=search_query) |
                 Q(pr_date__icontains=search_query) |
                 Q(staff_id__rp__per__per_lname__icontains=search_query) |
                 Q(staff_id__rp__per__per_fname__icontains=search_query) |

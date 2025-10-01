@@ -6,15 +6,17 @@ import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
 import { useAddPurposeAndRate } from "../queries/RatesInsertQueries"
+import { useAuth } from "@/context/AuthContext"
 
 function RatesFormPage4({onSuccess}: {onSuccess?: () => void}){
-
+    const {user} = useAuth()
     const form = useForm<z.infer<typeof PurposeAndRatesSchema>>({
         resolver: zodResolver(PurposeAndRatesSchema),
         defaultValues: {
             purpose: "",
             amount: "",
             category: "Business Permit",
+            staff_id: user?.staff?.staff_id
         }
     })
 
