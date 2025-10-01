@@ -5,7 +5,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Pen, History, Search, ArrowUpDown, Archive } from 'lucide-react'
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState, useEffect } from "react"
-import { useGetPurposeAndRateBusinessPermitActive, useGetPurposeAndRateAllBusinessPermit, type PurposeAndRate } from "./queries/RatesFetchQueries"
+import { useGetPurposeAndRateBarangayPermitActive, useGetPurposeAndRateAllBarangayPermit, type PurposeAndRate } from "./queries/RatesFetchQueries"
 import RatesEditFormPage4 from "./edit-forms/rates-edit-form-4"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -37,9 +37,9 @@ function RatesPage4() {
     const debouncedSearchQueryHistory = useDebounce(searchQueryHistory, 300)
 
     // Fetch data for active tab
-    const { data: activeData = { results: [], count: 0 },  isLoading: isLoadingActive } = useGetPurposeAndRateBusinessPermitActive(currentPageActive, pageSizeActive, debouncedSearchQueryActive)
+    const { data: activeData = { results: [], count: 0 },  isLoading: isLoadingActive } = useGetPurposeAndRateBarangayPermitActive(currentPageActive, pageSizeActive, debouncedSearchQueryActive)
     // Fetch data for history tab
-    const { data: historyData = { results: [], count: 0 }, isLoading: isLoadingHistory } = useGetPurposeAndRateAllBusinessPermit(currentPageHistory, pageSizeHistory, debouncedSearchQueryHistory)
+    const { data: historyData = { results: [], count: 0 }, isLoading: isLoadingHistory } = useGetPurposeAndRateAllBarangayPermit(currentPageHistory, pageSizeHistory, debouncedSearchQueryHistory)
 
     const activePlans = activeData.results || []
     const activeTotalCount = activeData.count || 0
@@ -107,8 +107,8 @@ function RatesPage4() {
                                 <div>
                                     <DialogLayout
                                         trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16} /></div>}
-                                        title="Edit Business Permit Purpose and Rate"
-                                        description="Update business permit purpose and rates to keep records accurate."
+                                        title="Edit Barangay Permit Purpose and Rate"
+                                        description="Update barangay permit purpose and rates to keep records accurate."
                                         mainContent={<RatesEditFormPage4
                                             pr_id={row.original.pr_id}
                                             pr_purpose={row.original.pr_purpose}
@@ -166,7 +166,7 @@ function RatesPage4() {
             <div className="flex items-center justify-center py-12">
                 <Spinner size="md" />
                 <span className="ml-2 text-gray-600">
-                    {activeTab === "active" ? "Loading active business permits..." : "Loading history..."}
+                    {activeTab === "active" ? "Loading..." : "Loading history..."}
                 </span>
             </div>
         )
@@ -195,7 +195,7 @@ function RatesPage4() {
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
                                         <Input
-                                            placeholder="Search active business permits..."
+                                            placeholder="Search active barangay permits..."
                                             className="pl-10 bg-white"
                                             value={searchQueryActive}
                                             onChange={(e) => setSearchQueryActive(e.target.value)}
@@ -245,12 +245,12 @@ function RatesPage4() {
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {searchQueryActive ? "No active business permits found" : "No active business permits yet"}
+                                            {searchQueryActive ? "No active barangay permits found" : "No active barangay permits yet"}
                                         </h3>
                                         <p className="text-gray-500 mb-4">
                                             {searchQueryActive
-                                                ? `No active business permits match "${searchQueryActive}". Try adjusting your search.`
-                                                : "Active business permits will appear here once created."}
+                                                ? `No active barangay permits match "${searchQueryActive}". Try adjusting your search.`
+                                                : "Active barangay permits will appear here once created."}
                                         </p>
                                     </div>
                                 ) : (
@@ -270,7 +270,7 @@ function RatesPage4() {
                                                     <span className="font-medium">
                                                         {Math.min(currentPageActive * pageSizeActive, activeTotalCount)}
                                                     </span>{" "}
-                                                    of <span className="font-medium">{activeTotalCount}</span> active business permits
+                                                    of <span className="font-medium">{activeTotalCount}</span> active barangay permits
                                                 </p>
 
                                                 {activeTotalPages > 0 && (
@@ -296,7 +296,7 @@ function RatesPage4() {
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
                                         <Input
-                                            placeholder="Search business permit history..."
+                                            placeholder="Search barangay permit history..."
                                             className="pl-10 bg-white"
                                             value={searchQueryHistory}
                                             onChange={(e) => setSearchQueryHistory(e.target.value)}
@@ -332,12 +332,12 @@ function RatesPage4() {
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {searchQueryHistory ? "No business permit history found" : "No business permit history yet"}
+                                            {searchQueryHistory ? "No barangay permit history found" : "No barangay permit history yet"}
                                         </h3>
                                         <p className="text-gray-500 mb-4">
                                             {searchQueryHistory
-                                                ? `No business permit history matches "${searchQueryHistory}". Try adjusting your search.`
-                                                : "Business permit history will appear here once records are created or archived."}
+                                                ? `No barangay permit history matches "${searchQueryHistory}". Try adjusting your search.`
+                                                : "Baeangay permit history will appear here once records are created or archived."}
                                         </p>
                                     </div>
                                 ) : (
@@ -357,7 +357,7 @@ function RatesPage4() {
                                                     <span className="font-medium">
                                                         {Math.min(currentPageHistory * pageSizeHistory, historyTotalCount)}
                                                     </span>{" "}
-                                                    of <span className="font-medium">{historyTotalCount}</span> business permit records
+                                                    of <span className="font-medium">{historyTotalCount}</span> barangay permit records
                                                 </p>
 
                                                 {historyTotalPages > 0 && (

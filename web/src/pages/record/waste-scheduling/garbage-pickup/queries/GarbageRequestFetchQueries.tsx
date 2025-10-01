@@ -90,10 +90,10 @@ export type GarbageRequestPending = {
     sitio_name: string;
 }  
 
-export const useGetGarbagePendingRequest = () => {
-    return useQuery<GarbageRequestPending[]>({
-        queryKey: ["garbageRequest"],
-        queryFn: getGarbagePendingRequest,
+export const useGetGarbagePendingRequest = (page: number, pageSize: number, searchQuery: string) => {
+    return useQuery<{results:GarbageRequestPending[], count: number}>({
+        queryKey: ["garbageRequest", page, pageSize, searchQuery],
+        queryFn:() =>  getGarbagePendingRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
     });
 }
@@ -117,10 +117,10 @@ export type GarbageRequestReject = {
 };
 
 
-export const useGetGarbageRejectRequest = () => {
-    return useQuery<GarbageRequestReject[]>({
-        queryKey: ["garbageRejectedRequest"], 
-        queryFn: getGarbageRejectedRequest,
+export const useGetGarbageRejectRequest = (page: number, pageSize: number, searchQuery: string) => {
+return useQuery<{results: GarbageRequestReject[], count: number}>({
+        queryKey: ["garbageRejectedRequest", page, pageSize, searchQuery], 
+        queryFn:() => getGarbageRejectedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -153,10 +153,10 @@ export type GarbageRequestAccept = {
 };
 
 
-export const useGetGarbageAcceptRequest = () => {
-    return useQuery<GarbageRequestAccept[]>({
-        queryKey: ["garbageAcceptedRequest"], 
-        queryFn: getGarbageAcceptedRequest,
+export const useGetGarbageAcceptRequest = (page: number, pageSize: number, searchQuery: string) => {
+    return useQuery<{results:GarbageRequestAccept[], count: number}>({
+        queryKey: ["garbageAcceptedRequest", page, pageSize, searchQuery], 
+        queryFn:() => getGarbageAcceptedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -183,10 +183,10 @@ export type GarbageRequestComplete = {
   staff_name: string;
 }
 
-export const useGetGarbageCompleteRequest = () => {
-    return useQuery<GarbageRequestComplete[]>({
-        queryKey: ["garbageCompletedRequest"], 
-        queryFn: getGarbageCompletedRequest,
+export const useGetGarbageCompleteRequest = (page: number, pageSize: number, searchQuery: string) => {
+    return useQuery<{results:GarbageRequestComplete[], count: number}>({
+        queryKey: ["garbageCompletedRequest", page, pageSize, searchQuery], 
+        queryFn:() => getGarbageCompletedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
     });
 }

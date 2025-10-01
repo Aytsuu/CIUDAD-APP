@@ -30,137 +30,163 @@ export const getCollectors = async () => {
         throw err;
     }
 }
-export const getGarbagePendingRequest = async () => {
+
+export const getGarbagePendingRequest = async (page: number, pageSize: number, searchQuery: string) => {
     try {
         const { data } = await api.get('waste/garbage-pickup-request-pending/', {
             params: {
-                status: "pending"
+                page,
+                page_size: pageSize,
+                search: searchQuery
             }
         });
 
-        return data.map((item: any) => ({   
-            garb_id: item.garb_id,
-            garb_requester: item.garb_requester || '',
-            garb_location: item.garb_location,
-            garb_waste_type: item.garb_waste_type,
-            garb_pref_date: item.garb_pref_date,
-            garb_pref_time: item.garb_pref_time,
-            garb_created_at: item.garb_created_at,
-            garb_additional_notes: item.garb_additional_notes,
-            file_url: item.file_url || '',
-            sitio_name: item.sitio_name || ''
-
-        }));
+        const items = data.results || [];
+        
+        return {
+            results: items.map((item: any) => ({   
+                garb_id: item.garb_id,
+                garb_requester: item.garb_requester || '',
+                garb_location: item.garb_location,
+                garb_waste_type: item.garb_waste_type,
+                garb_pref_date: item.garb_pref_date,
+                garb_pref_time: item.garb_pref_time,
+                garb_created_at: item.garb_created_at,
+                garb_additional_notes: item.garb_additional_notes,
+                file_url: item.file_url || '',
+                sitio_name: item.sitio_name || ''
+            })),
+            count: data.count || 0
+        };
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
-        return [];
+        return { results: [], count: 0 };
     }
 }
 
-export const getGarbageRejectedRequest = async () => {
+export const getGarbageRejectedRequest = async (page: number, pageSize: number, searchQuery: string) => {
     try {
         const { data } = await api.get('waste/garbage-pickup-request-rejected/', {
             params: {
-                status: "rejected"
+                page,
+                page_size: pageSize,
+                search: searchQuery
             }
         });
 
-        return data.map((item: any) => ({
-            garb_id: item.garb_id || '', 
-            garb_requester: item.garb_requester || '',
-            garb_location: item.garb_location || '',
-            garb_waste_type: item.garb_waste_type || '',
-            garb_created_at: item.garb_created_at || '',
-            garb_pref_date: item.garb_pref_date || '',
-            garb_pref_time: item.garb_pref_time || '',
-            garb_additional_notes: item.garb_additional_notes || '',
-            dec_id: item.dec_id || null, 
-            dec_date: item.dec_date || null,
-            dec_reason: item.dec_reason || '',
-            file_url: item.file_url || '',
-            sitio_name: item.sitio_name || '',
-            staff_name: item.staff_name || ''
-        }));
+        const items = data.results || [];
+
+        return {
+            results: items.map((item: any) => ({
+                garb_id: item.garb_id || '', 
+                garb_requester: item.garb_requester || '',
+                garb_location: item.garb_location || '',
+                garb_waste_type: item.garb_waste_type || '',
+                garb_created_at: item.garb_created_at || '',
+                garb_pref_date: item.garb_pref_date || '',
+                garb_pref_time: item.garb_pref_time || '',
+                garb_additional_notes: item.garb_additional_notes || '',
+                dec_id: item.dec_id || null, 
+                dec_date: item.dec_date || null,
+                dec_reason: item.dec_reason || '',
+                file_url: item.file_url || '',
+                sitio_name: item.sitio_name || '',
+                staff_name: item.staff_name || ''
+            })),
+            count: data.count || 0
+        };
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
-        return [];
+        return { results: [], count: 0 };
     }
 }
 
-export const getGarbageAcceptedRequest = async () => {
+export const getGarbageAcceptedRequest = async (page: number, pageSize: number, searchQuery: string) => {
     try {
         const { data } = await api.get('waste/garbage-pickup-request-accepted/', {
             params: {
-                status: "accepted"
+                page,
+                page_size: pageSize,
+                search: searchQuery
             }
         });
 
-        return data.map((item: any) => ({
-            garb_id: item.garb_id || '',
-            garb_requester: item.garb_requester || '',
-            garb_location: item.garb_location || '',
-            garb_waste_type: item.garb_waste_type || '',
-            garb_created_at: item.garb_created_at || '',
-            garb_pref_time: item.garb_pref_time || '',
-            garb_pref_date: item.garb_pref_date || '',
-            garb_additional_notes: item.garb_additional_notes,
-            dec_date: item.dec_date || null,
-            truck_id: item.truck_id || null,
-            driver_id: item.driver_id || null,
-            collector_ids: item.collector_ids || [],
-            pickup_assignment_id: item.pickup_assignment_id || null,
-            assignment_collector_ids: item.assignment_collector_ids || [],
-            assignment_info: item.assignment_info ? {
-                driver: item.assignment_info.driver || '',
-                pick_time: item.assignment_info.pick_time || '',
-                pick_date: item.assignment_info.pick_date || '',
-                collectors: item.assignment_info.collectors || [],
-                truck: item.assignment_info.truck || '',
-            } : null,
-            file_url: item.file_url || '',
-            sitio_name: item.sitio_name || '',
-            staff_name: item.staff_name || ''
-        }));
+        const items = data.results || [];
+
+        return {
+            results: items.map((item: any) => ({
+                garb_id: item.garb_id || '',
+                garb_requester: item.garb_requester || '',
+                garb_location: item.garb_location || '',
+                garb_waste_type: item.garb_waste_type || '',
+                garb_created_at: item.garb_created_at || '',
+                garb_pref_time: item.garb_pref_time || '',
+                garb_pref_date: item.garb_pref_date || '',
+                garb_additional_notes: item.garb_additional_notes,
+                dec_date: item.dec_date || null,
+                truck_id: item.truck_id || null,
+                driver_id: item.driver_id || null,
+                collector_ids: item.collector_ids || [],
+                pickup_assignment_id: item.pickup_assignment_id || null,
+                assignment_collector_ids: item.assignment_collector_ids || [],
+                assignment_info: item.assignment_info ? {
+                    driver: item.assignment_info.driver || '',
+                    pick_time: item.assignment_info.pick_time || '',
+                    pick_date: item.assignment_info.pick_date || '',
+                    collectors: item.assignment_info.collectors || [],
+                    truck: item.assignment_info.truck || '',
+                } : null,
+                file_url: item.file_url || '',
+                sitio_name: item.sitio_name || '',
+                staff_name: item.staff_name || ''
+            })),
+            count: data.count || 0
+        };
 
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
-        return [];
+        return { results: [], count: 0 };
     }
 }
 
-
-
-export const getGarbageCompletedRequest = async () => {
+export const getGarbageCompletedRequest = async (page: number, pageSize: number, searchQuery: string) => {
     try {
         const { data } = await api.get('waste/garbage-pickup-request-completed/', {
             params: {
-                status: "completed"
+                page,
+                page_size: pageSize,
+                search: searchQuery
             }
         });
 
-        return data.map((item: any) => ({
-            garb_id: item.garb_id ?? 0,
-            garb_requester: item.garb_requester ?? 'Unknown',
-            garb_location: item.garb_location ?? '',
-            garb_waste_type: item.garb_waste_type ?? '',
-            garb_created_at: item.garb_created_at ?? '',
-            conf_resident_conf_date: item.confirmation_info?.conf_resident_conf_date ?? null,
-            conf_staff_conf_date: item.confirmation_info?.conf_staff_conf_date ?? null,
-            conf_resident_conf: item.confirmation_info?.conf_resident_conf ?? null,
-            conf_staff_conf: item.confirmation_info?.conf_staff_conf ?? null,
-            assignment_info: item.assignment_info ? {
-                driver: item.assignment_info.driver || '',
-                pick_time: item.assignment_info.pick_time || '',
-                pick_date: item.assignment_info.pick_date || '',
-                collectors: item.assignment_info.collectors || [],
-                truck: item.assignment_info.truck || '',
-            } : null,
-            file_url: item.file_url || '',
-            sitio_name: item.sitio_name || '',
-            staff_name: item.staff_name || ''
-        }));
+        const items = data.results || [];
+
+        return {
+            results: items.map((item: any) => ({
+                garb_id: item.garb_id ?? 0,
+                garb_requester: item.garb_requester ?? 'Unknown',
+                garb_location: item.garb_location ?? '',
+                garb_waste_type: item.garb_waste_type ?? '',
+                garb_created_at: item.garb_created_at ?? '',
+                conf_resident_conf_date: item.confirmation_info?.conf_resident_conf_date ?? null,
+                conf_staff_conf_date: item.confirmation_info?.conf_staff_conf_date ?? null,
+                conf_resident_conf: item.confirmation_info?.conf_resident_conf ?? null,
+                conf_staff_conf: item.confirmation_info?.conf_staff_conf ?? null,
+                assignment_info: item.assignment_info ? {
+                    driver: item.assignment_info.driver || '',
+                    pick_time: item.assignment_info.pick_time || '',
+                    pick_date: item.assignment_info.pick_date || '',
+                    collectors: item.assignment_info.collectors || [],
+                    truck: item.assignment_info.truck || '',
+                } : null,
+                file_url: item.file_url || '',
+                sitio_name: item.sitio_name || '',
+                staff_name: item.staff_name || ''
+            })),
+            count: data.count || 0
+        };
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
-        return [];
+        return { results: [], count: 0 };
     }
 }

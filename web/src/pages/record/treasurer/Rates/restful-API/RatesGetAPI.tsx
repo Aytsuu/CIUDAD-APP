@@ -107,9 +107,9 @@ export const getPurposeAndRateAllServiceCharge = async (page: number, pageSize: 
     }
 };
 
-export const getPurposeAndRateBusinessPermitActive = async (page: number, pageSize: number, searchQuery: string) => {
+export const getPurposeAndRateBarangayPermitActive = async (page: number, pageSize: number, searchQuery: string) => {
     try {
-        const res = await api.get('treasurer/purpose-and-rate-business-permit-active/', {
+        const res = await api.get('treasurer/purpose-and-rate-barangay-permit-active/', {
             params: {
                 page,
                 page_size: pageSize,
@@ -123,9 +123,9 @@ export const getPurposeAndRateBusinessPermitActive = async (page: number, pageSi
     }
 };
 
-export const getPurposeAndRateAllBusinessPermit = async (page: number, pageSize: number, searchQuery: string) => {
+export const getPurposeAndRateAllBarangayPermit = async (page: number, pageSize: number, searchQuery: string) => {
     try {
-        const res = await api.get('treasurer/purpose-and-rate-all-business-permit/', {
+        const res = await api.get('treasurer/purpose-and-rate-all-barangay-permit/', {
             params: {
                 page,
                 page_size: pageSize,

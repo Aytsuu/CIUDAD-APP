@@ -45,8 +45,8 @@ export const useAddPurposeAndRate = (onSuccess?: () => void) => {
                 queryClient.invalidateQueries({ queryKey: ['allPersonal']});
                 queryClient.invalidateQueries({ queryKey: ['serviceChargeActive']});
                 queryClient.invalidateQueries({ queryKey: ['allServiceCharge']});
-                queryClient.invalidateQueries({ queryKey: ['businessPermitActive']});
-                queryClient.invalidateQueries({ queryKey: ['allBusinessPermit']});
+                queryClient.invalidateQueries({ queryKey: ['barangayPermitActive']});
+                queryClient.invalidateQueries({ queryKey: ['allBarangayPermit']});
 
                 toast.loading('Submitting Record...', {id: "addPurposeRate"});
         

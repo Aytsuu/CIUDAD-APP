@@ -640,31 +640,110 @@ class GarbagePickupFileView(generics.ListCreateAPIView):
      
 class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
+    pagination_class = StandardResultsPagination
+
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.all()
-        status = self.request.query_params.get('status', None)
-        
-        if status:
-            queryset = queryset.filter(garb_req_status__iexact=status.lower())
-        
-        return queryset
+        queryset = Garbage_Pickup_Request.objects.filter(
+            garb_req_status='pending'  
+        ).select_related(
+            'rp__per',
+            'sitio_id',
+            'gprf'
+        ).only(
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_pref_date',
+            'garb_pref_time',
+            'garb_req_status',
+            'garb_additional_notes',
+            'garb_created_at',
+            'rp__per__per_lname',
+            'rp__per__per_fname',
+            'rp__per__per_mname',
+            'sitio_id__sitio_name',
+            'gprf__gprf_url'
+        )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(garb_id__icontains=search_query) |
+                Q(garb_location__icontains=search_query) |
+                Q(garb_waste_type__icontains=search_query) |
+                Q(garb_additional_notes__icontains=search_query) |
+                Q(garb_pref_date__icontains=search_query) |
+                Q(garb_pref_time__icontains=search_query) |
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(sitio_id__sitio_name__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-garb_created_at')
     
+
 class GarbagePickupRequestRejectedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestRejectedSerializer
+    pagination_class = StandardResultsPagination
+
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.all()
-        status = self.request.query_params.get('status', None)
-        
-        if status:
-            queryset = queryset.filter(garb_req_status__iexact=status.lower())
-        
-        return queryset
+        queryset = Garbage_Pickup_Request.objects.filter(
+            garb_req_status='rejected'
+        ).select_related(
+            'rp__per',
+            'sitio_id',
+            'gprf'
+        ).prefetch_related(
+            'pickup_request_decision_set__staff_id__rp__per'
+        ).only(
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_pref_date',
+            'garb_pref_time',
+            'garb_req_status',
+            'garb_additional_notes',
+            'garb_created_at',
+            'rp__per__per_lname',
+            'rp__per__per_fname',
+            'rp__per__per_mname',
+            'sitio_id__sitio_name',
+            'gprf__gprf_url'
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(garb_id__icontains=search_query) |
+                Q(garb_location__icontains=search_query) |
+                Q(garb_waste_type__icontains=search_query) |
+                Q(garb_additional_notes__icontains=search_query) |
+                Q(garb_pref_date__icontains=search_query) |
+                Q(garb_pref_time__icontains=search_query) |
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(sitio_id__sitio_name__icontains=search_query) |
+                Q(pickup_request_decision_set__dec_reason__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-garb_created_at')
     
+
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestAcceptedSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.select_related(
+        # Base queryset with status filter and related data
+        queryset = Garbage_Pickup_Request.objects.filter(
+            garb_req_status='accepted'  # Filter for accepted status
+        ).select_related(
             'rp', 'rp__per', 'gprf', 'sitio_id'
         ).prefetch_related(
             'pickup_request_decision_set',
@@ -678,17 +757,38 @@ class GarbagePickupRequestAcceptedView(generics.ListAPIView):
             'pickup_assignment_set__assignment_collector_set__wstp_id',
         )
         
-        status = self.request.query_params.get('status', None)
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(garb_id__icontains=search_query) |
+                Q(garb_location__icontains=search_query) |
+                Q(garb_waste_type__icontains=search_query) |
+                Q(garb_additional_notes__icontains=search_query) |
+                Q(garb_pref_date__icontains=search_query) |
+                Q(garb_pref_time__icontains=search_query) |
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(sitio_id__sitio_name__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignment_set__truck_id__truck_plate_number__icontains=search_query) |
+                Q(pickup_assignment_set__wstp_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignment_set__wstp_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignment_set__wstp_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
         
-        if status:
-            queryset = queryset.filter(garb_req_status__iexact=status.lower())
-        
-        return queryset
+        return queryset.order_by('-garb_created_at')
     
 class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
     serializer_class = GarbagePickupRequestAcceptedSerializer
     queryset = Garbage_Pickup_Request.objects.all()
-    lookup_field = 'garb_id'  # or 'id' depending on your model
+    lookup_field = 'garb_id'  
 
     def get_object(self):
         obj = super().get_object()
@@ -713,17 +813,67 @@ class GarbagePickupRequestsByDriverView(generics.ListAPIView):
             garb_req_status__iexact='accepted'  # Filter only accepted requests
         )
 
-    
+
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
+    pagination_class = StandardResultsPagination
+    
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.all()
-        status = self.request.query_params.get('status', None)
-        
-        if status:
-            queryset = queryset.filter(garb_req_status__iexact=status.lower())
-        
-        return queryset 
+        # Base queryset with status filter and related data
+        queryset = Garbage_Pickup_Request.objects.filter(
+            garb_req_status='completed'  # Filter for completed status
+        ).select_related(
+            'rp__per',
+            'sitio_id',
+            'gprf'
+        ).prefetch_related(
+            'pickup_request_decision_set__staff_id__rp__per',
+            'pickup_assignment_set__truck_id',
+            'pickup_assignment_set__wstp_id__rp__per',
+            'pickup_assignment_set__assignment_collector_set__wstp_id__rp__per'
+        ).only(
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_pref_date',
+            'garb_pref_time',
+            'garb_req_status',
+            'garb_additional_notes',
+            'garb_created_at',
+            'rp__per__per_lname',
+            'rp__per__per_fname',
+            'rp__per__per_mname',
+            'sitio_id__sitio_name',
+            'gprf__gprf_url'
+        )
+
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(garb_id__icontains=search_query) |
+                Q(garb_location__icontains=search_query) |
+                Q(garb_waste_type__icontains=search_query) |
+                Q(garb_additional_notes__icontains=search_query) |
+                Q(garb_pref_date__icontains=search_query) |
+                Q(garb_pref_time__icontains=search_query) |
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(sitio_id__sitio_name__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignment_set__truck_id__truck_plate_number__icontains=search_query) |
+                Q(pickup_assignment_set__wstp_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignment_set__wstp_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignment_set__wstp_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-garb_created_at')
     
 class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
