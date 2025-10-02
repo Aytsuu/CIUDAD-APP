@@ -14,10 +14,15 @@ interface User {
 }
 
 interface PrenatalAppointmentData {
-  userId: string;
-  reqDate: string;
-  time: string;
-  appointmentType: 'prenatal';
+  requested_at: string;
+  approved_at: string | null;
+  cancelled_at: string | null;
+  completed_at: string | null;
+  rejected_at: string | null;
+  reason: string | null;
+  status: string;
+  rp_id: string;
+  pat_id: string;
 }
 
 const PrenatalBookingPage: React.FC = () => {
@@ -28,10 +33,11 @@ const PrenatalBookingPage: React.FC = () => {
   const addPrenatalAppointmentMutation = useAddPrenatalAppointment();
 
   const { user } = useAuth();
+  const { pat_id } = useAuth();
   const rp_id = user?.rp;
 
   const currentUser:User = {
-    name: `${user?.personal?.per_fname} ${user?.personal?.per_mname}${user?.personal?.per_lname}`,
+    name: `${user?.personal?.per_lname}, ${user?.personal?.per_fname} ${user?.personal?.per_mname}`,
     id: rp_id || "",
   };
 
@@ -57,7 +63,7 @@ const PrenatalBookingPage: React.FC = () => {
     setShowDatePicker(false);
     if (selected) {
       if (isDateDisabled(selected)) {
-        Alert.alert('Unavailable Date', 'Prenatal appointments are only available on Thursdays that are not marked as unavailable.');
+        Alert.alert('Unavailable Date', 'Prenatal appointments are only available on Thursdays. Please select another date.');
         return; 
       }
       setSelectedDate(selected);
@@ -72,10 +78,14 @@ const PrenatalBookingPage: React.FC = () => {
 
     const payload = {
       requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`, 
-      confirmed_at: null,
+      approved_at: null,
+      cancelled_at: null,
+      completed_at: null,
+      rejected_at: null,
+      reason: null,
       status: 'pending',
       rp_id: rp_id || '',
-      pat_id: ''
+      pat_id: pat_id || '',
     };
 
     addPrenatalAppointmentMutation.mutateAsync(payload)

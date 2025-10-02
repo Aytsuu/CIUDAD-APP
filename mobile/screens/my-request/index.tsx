@@ -24,9 +24,9 @@ export default () => {
      route: "/(health)/medicine-request/my-requests"
   },
   {
-    title: "Maternal Appointment",
-     description: "",
-     route: ""
+    title: "Prenatal Appointment",
+     description: "Monitor your prenatal appointments.",
+     route: "/(health)/maternal/my-appointments"
   },
   {
     title: "Medical Consultation Appointment",

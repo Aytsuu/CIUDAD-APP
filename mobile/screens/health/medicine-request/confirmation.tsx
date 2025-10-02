@@ -61,8 +61,7 @@ export default function Confirmation() {
       <View className="flex-row items-center justify-between px-4 pt-12 pb-4 mt-4">
         <TouchableWithoutFeedback onPress={() => router.back()}>
           <View className="flex-row items-center">
-            <ArrowLeft size={20} color="#263D67" strokeWidth={2} />
-            <Text className="text-[#263D67] text-[16px] font-medium ml-2">Back</Text>
+            <ArrowLeft size={24} color="#263D67" strokeWidth={2} />
           </View>
         </TouchableWithoutFeedback>
       </View>
@@ -74,7 +73,7 @@ export default function Confirmation() {
           className="items-center justify-center pt-4 pb-8"
           style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}
         >
-          <View className="bg-green-500 mb-20 w-36 h-36 rounded-full flex items-center justify-center shadow-lg">
+          <View className="bg-green-500 mb-12 w-36 h-36 rounded-full flex items-center justify-center shadow-lg">
             <Check size={70} color="white" strokeWidth={3}/>
           </View>
           <Text className="text-3xl font-bold text-[#263D67] text-center mb-3">
@@ -96,7 +95,7 @@ export default function Confirmation() {
           )} */}
         </Animated.View>
 
-        {/* Request Summary */}
+        {/* mmary */}
         {orderItems && orderItems.length > 0 && (
           <Animated.View
             className="mb-6"
@@ -161,14 +160,22 @@ export default function Confirmation() {
           </Animated.View>
         )}
 
-        <Button
-          className="bg-[#263D67] w-full mb-4 py-4 rounded-xl shadow-sm"
-          onPress={() => router.push("/home")}
-        >
-          <Text className="text-white font-semibold text-[16px]">
-            Back to Home
-          </Text>
-        </Button>
+        {/* Action Buttons - Now in a single row */}
+        <View className="flex-row gap-3 mb-6">
+          <Button 
+            className="bg-white border-2 border-[#263D67] flex-1 py-4 rounded-xl shadow-sm" 
+            onPress={() => router.push("/(health)/medicine-request/my-requests")}
+          > 
+            <Text className="text-[#263D67] font-semibold text-[16px]">My Requests</Text>
+          </Button>
+          
+          <Button 
+            className="bg-[#263D67] flex-1 py-4 rounded-xl shadow-sm" 
+            onPress={() => router.push("/home")}
+          > 
+            <Text className="text-white font-semibold text-[16px]">Home</Text>
+          </Button>
+        </View>
       </ScrollView>
     </View>
   )
