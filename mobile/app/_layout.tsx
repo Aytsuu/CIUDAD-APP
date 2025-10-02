@@ -55,6 +55,7 @@ export default function RootLayout() {
             <StatusBar backgroundColor="transparent" style='dark'/>
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
