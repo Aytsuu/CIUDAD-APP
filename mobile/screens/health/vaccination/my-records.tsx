@@ -35,8 +35,9 @@ export default function IndividualVaccinationRecords() {
   useEffect(() => {
     console.log("MODE:", mode);
     if (mode == "admin") {
-      const adminPatId = params.patId as string;
+      const adminPatId = params.pat_id as string;
       if (adminPatId) {
+        console.log("Admin viewing patient ID:", adminPatId);
         setPatientId(adminPatId);
       }
     } else {
@@ -186,7 +187,7 @@ export default function IndividualVaccinationRecords() {
               <PatientInfoCard patient={patientData} />
             </View>
           )}
-          {/* Vaccination Status Cards */}=
+          {/* Vaccination Status Cards */}
           <View className="px-4 mt-4">
             <View className="flex-row border-b border-gray-200">
               <TouchableOpacity onPress={() => handleSetActiveTab("status")} className={`flex-1 py-3 items-center ${activeTab === "status" ? "border-b-2 border-blue-600" : ""}`}>

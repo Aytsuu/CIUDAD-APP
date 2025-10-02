@@ -1,13 +1,7 @@
 // components/columns.ts
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RejectModal } from "../../reject-modal";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useActionAppointment } from "../../queries/update";
 import ViewButton from "@/components/ui/view-button";
 
 // Safe date formatting function
@@ -160,7 +154,7 @@ export const medicalAppointmentConfirmedColumns: ColumnDef<any>[] = [
     cell: ({ row }) => (
       <div className="flex justify-center py-2">
         <Badge className="bg-green-100 text-green-800 hover:bg-green-100 capitalize text-xs px-3 py-1">
-          {row.original.status || "confirmed"}
+          {row.original.status }
         </Badge>
       </div>
     )

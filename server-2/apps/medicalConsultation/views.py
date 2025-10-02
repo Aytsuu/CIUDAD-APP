@@ -1358,7 +1358,7 @@ class PendingMedicalUserAppointmentsView(generics.ListAPIView):
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
                 response = self.get_paginated_response(serializer.data)
-                response.data['total_pending_appointments'] = queryset.count()
+                response.data['total_confirmed_appointments'] = queryset.count()
                 return response
             
             serializer = self.get_serializer(queryset, many=True)
@@ -1366,7 +1366,7 @@ class PendingMedicalUserAppointmentsView(generics.ListAPIView):
                 'success': True,
                 'results': serializer.data,
                 'count': len(serializer.data),
-                'total_pending_appointments': queryset.count()
+                'total_confirmed_appointments': queryset.count()
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -1466,7 +1466,7 @@ class ConfirmedMedicalUserAppointmentsView(generics.ListAPIView):
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
                 response = self.get_paginated_response(serializer.data)
-                response.data['total_pending_appointments'] = queryset.count()
+                response.data['total_confirmed_appointments'] = queryset.count()
                 return response
             
             serializer = self.get_serializer(queryset, many=True)
@@ -1474,7 +1474,7 @@ class ConfirmedMedicalUserAppointmentsView(generics.ListAPIView):
                 'success': True,
                 'results': serializer.data,
                 'count': len(serializer.data),
-                'total_pending_appointments': queryset.count()
+                'total_confirmed_appointments': queryset.count()
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

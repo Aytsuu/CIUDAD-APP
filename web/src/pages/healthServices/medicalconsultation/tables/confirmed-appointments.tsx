@@ -1,15 +1,13 @@
-// components/medical-appointment-pending-table.tsx
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, FileInput, Loader2, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentConfirmedColumns } from "./columns/confirmed-appointments"; // You'll need to create these columns
-import { useConfimedAppointments } from "../queries/fetch"; // Adjust import path
+import { medicalAppointmentConfirmedColumns } from "./columns/confirmed-appointments";
+import { useConfimedAppointments } from "../queries/fetch";
 
 export default function ConfirmedMedicalAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,7 +20,7 @@ export default function ConfirmedMedicalAppointments() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setCurrentPage(1); // Reset to first page when search changes
+      setCurrentPage(1);
     }, 500);
 
     return () => {
@@ -47,33 +45,29 @@ export default function ConfirmedMedicalAppointments() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  // Calculate stats
+  const todayCount = appointments.filter((apt: any) => {
+    const today = new Date().toDateString();
+    return new Date(apt.created_at).toDateString() === today;
+  }).length;
+
+  const thisWeekCount = appointments.filter((apt: any) => {
+    const today = new Date();
+    const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+    return new Date(apt.created_at) >= startOfWeek;
+  }).length;
+
   if (error) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-8">
-        <div className="text-red-500 text-lg mb-4">Failed to load pending appointments</div>
-        <div className="flex gap-4">
-          <Button onClick={() => refetch()}>Retry</Button>
-        </div>
+        <div className="text-red-500 text-lg mb-4">Failed to load confirmed appointments</div>
+        <Button onClick={() => refetch()}>Retry</Button>
       </div>
     );
   }
 
   return (
     <div>
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Medical Appointments</h1>
-          <p className="text-gray-600 mt-1">Manage and review  consultation requests</p>
-        </div>
-        <Button className="flex items-center gap-2" asChild>
-          <Link to="/services/medical/appointment/form">
-            <Calendar size={16} />
-            New Appointment
-          </Link>
-        </Button>
-      </div>
-
       {/* Filters Section */}
       <div className="w-full flex flex-col sm:flex-row gap-3 mb-6">
         <div className="w-full flex flex-col sm:flex-row gap-3">
@@ -114,7 +108,7 @@ export default function ConfirmedMedicalAppointments() {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Pending</p>
+              <p className="text-sm font-medium text-gray-600">Total Confirmed</p>
               <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
             </div>
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -126,13 +120,7 @@ export default function ConfirmedMedicalAppointments() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">This Week</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {appointments.filter((apt :any)=> {
-                  const today = new Date();
-                  const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-                  return new Date(apt.created_at) >= startOfWeek;
-                }).length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{thisWeekCount}</p>
             </div>
             <div className="p-2 bg-green-100 rounded-lg">
               <Calendar className="h-6 w-6 text-green-600" />
@@ -143,12 +131,7 @@ export default function ConfirmedMedicalAppointments() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Today</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {appointments.filter((apt:any) => {
-                  const today = new Date().toDateString();
-                  return new Date(apt.created_at).toDateString() === today;
-                }).length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{todayCount}</p>
             </div>
             <div className="p-2 bg-orange-100 rounded-lg">
               <Calendar className="h-6 w-6 text-orange-600" />
@@ -198,16 +181,16 @@ export default function ConfirmedMedicalAppointments() {
           {isLoading ? (
             <div className="w-full h-32 flex flex-col items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <span className="text-gray-600">Loading appointments...</span>
+              <span className="text-gray-600">Loading confirmed appointments...</span>
             </div>
           ) : appointments.length === 0 ? (
             <div className="w-full h-32 flex flex-col items-center justify-center text-gray-500">
               <Calendar className="h-12 w-12 mb-2 text-gray-300" />
-              <p className="text-lg font-medium mb-1">No appointments found</p>
+              <p className="text-lg font-medium mb-1">No confirmed appointments found</p>
               <p className="text-sm">
                 {debouncedSearch || dateFilter !== "all" 
-                  ? "No appointments match your search criteria" 
-                  : "No pending appointments at the moment"}
+                  ? "No confirmed appointments match your search criteria" 
+                  : "No confirmed appointments at the moment"}
               </p>
             </div>
           ) : (
