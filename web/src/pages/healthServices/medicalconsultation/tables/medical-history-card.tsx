@@ -1,6 +1,6 @@
 // components/MedicalHistoryTab.tsx
-import React, { useMemo, useCallback } from "react";
-import { Loader2, AlertCircle, HeartPulse, Calendar, Search, X } from "lucide-react";
+import React, { useCallback } from "react";
+import { Loader2, HeartPulse, Calendar, Search, X } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { getServiceTypeColor } from "./servicetype-badge";
 import { Input } from "@/components/ui/input";

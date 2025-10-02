@@ -16,7 +16,6 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLoading } from "@/context/LoadingContext";
 import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
-import { useAuth } from "@/context/AuthContext";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function MaternalAllRecords() {

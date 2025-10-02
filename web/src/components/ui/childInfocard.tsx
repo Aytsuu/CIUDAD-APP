@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Heart, Baby, Cross, Hospital, HospitalIcon } from "lucide-react";
+import { Calendar, MapPin, Heart, Baby, Cross, HospitalIcon } from "lucide-react";
 import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
 import { BsPerson, BsPersonFill } from "react-icons/bs";
 

@@ -1,6 +1,6 @@
 // components/FamilyHistoryTab.tsx
-import React, { useMemo, useCallback } from "react";
-import { Loader2, AlertCircle, Users, Calendar, Search, X } from "lucide-react";
+import React, { useCallback } from "react";
+import { Loader2, Users, Calendar, Search, X } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Input } from "@/components/ui/input";
 

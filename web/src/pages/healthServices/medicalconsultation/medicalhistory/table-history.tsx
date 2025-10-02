@@ -16,7 +16,7 @@ export function ConsultationHistoryTable({
   currentConsultationId: number | undefined;
 }) {
 
-  let   pageSize = 3;
+  const   pageSize = 3;
   const [currentPage, setCurrentPage] = useState(1);
 
   // Call the hook directly here

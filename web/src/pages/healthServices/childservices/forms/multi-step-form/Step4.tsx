@@ -24,7 +24,6 @@ import { useChildLatestVitals } from "../queries/fetchQueries";
 import { VitalSignFormCard, VitalSignsCardView } from "./vitalsisgns-card";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Combobox } from "@/components/ui/combobox";
-import { useUpdateFollowupStatus } from "../queries/update";
 import { LastPageProps } from "./types";
 import { PendingFollowupsSection } from "./followupPending";
 

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAnimalBitePatientDetails } from "./api/get-api";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
+import { Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

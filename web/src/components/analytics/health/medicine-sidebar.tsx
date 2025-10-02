@@ -42,10 +42,10 @@ export function MedicineDistributionSidebar() {
     return (
       <Card className="rounded-lg shadow-sm border-0">
         <CardHeader className="border-b border-gray-100 pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          {/* <CardTitle className="flex items-center gap-2 text-lg font-semibold">
             <BarChart3 className="h-5 w-5 text-muted-foreground" />
             Medicine Distribution
-          </CardTitle>
+          </CardTitle> */}
           <CardDescription>Error loading data</CardDescription>
         </CardHeader>
         <CardContent className="pt-4">

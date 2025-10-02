@@ -21,7 +21,7 @@ class ReportsCount(APIView):
             vaccine_count = VaccineList.objects.count()
             immunization_count = ImmunizationSupplies.objects.count()
             child_count =ChildHealthrecord.objects.count()
-            medicine_records_count = MedicineRecord.objects.count()
+            medicine_records_count = MedicineRecord.objects.distinct('patrec_id__pat_id').count()
             firstaidrecord_count = FirstAidRecord.objects.count()
             medicalcon_count = MedicalConsultation_Record.objects.count()
             vaccnerecord_count = VaccinationRecord.objects.count()
