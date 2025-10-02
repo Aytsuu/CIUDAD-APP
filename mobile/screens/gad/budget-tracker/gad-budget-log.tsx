@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,72 +6,54 @@ import {
   FlatList,
   ScrollView,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
-import { Search, ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import PageLayout from "@/screens/_PageLayout";
 import { useGADBudgetLogs } from "./queries/btracker-fetch";
 import { BudgetLogTable } from "./gad-btracker-types";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const GADBudgetLogTable = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
+  
   if (!year) {
     return <Text className="text-red-500 text-center">Year is required</Text>;
   }
 
-  const { data: logs = [], refetch } = useGADBudgetLogs(year);
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize] = useState(5);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
-  const [projectFilter, setProjectFilter] = useState("all");
+  const { 
+    data: logsData, 
+    isLoading, 
+    error, 
+    refetch,
+    isFetching 
+  } = useGADBudgetLogs(
+    year, 
+    currentPage, 
+    pageSize, 
+    debouncedSearchQuery
+  );
 
-  const projectOptions = useMemo(() => {
-    const projects = Array.from(
-      new Set(logs.map((log) => log.gbud_exp_project || "N/A"))
-    )
-      .filter((project) => project !== "N/A")
-      .map((project) => ({ label: project, value: project }));
-    return [{ label: "All", value: "all" }, ...projects];
-  }, [logs]);
+  // Extract data from paginated response
+  const logs = logsData?.results || [];
+  const totalCount = logsData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   };
-
-  const sortedData = useMemo(() => {
-    return [...logs].sort((a, b) => {
-      return (
-        new Date(b.gbudl_created_at).getTime() -
-        new Date(a.gbudl_created_at).getTime()
-      );
-    });
-  }, [logs]);
-
-  const filteredData = sortedData.filter((log) => {
-    const matchesYear =
-      !year || new Date(log.gbudl_created_at).getFullYear().toString() === year;
-    const searchString = `${log.gbudl_id} ${log.gbud_exp_project || ""} ${
-      log.gbud_exp_particulars?.map((item) => item.name).join(" ") || ""
-    }`.toLowerCase();
-    const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    const matchesProject =
-      projectFilter === "all" || log.gbud_exp_project === projectFilter;
-    return matchesSearch && matchesProject && matchesYear;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   const renderItem = ({ item }: { item: BudgetLogTable }) => (
     <Card className="mb-4 border border-gray-200">
@@ -145,6 +127,32 @@ const GADBudgetLogTable = () => {
     </Card>
   );
 
+  if (error) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={24} color="#2a3a61" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text>{year} Budget Logs</Text>}
+        rightAction={<View />}
+      >
+        <View className="flex-1 justify-center items-center p-4">
+          <Text className="text-red-500 text-center text-lg">
+            Error loading budget logs: {error.message}
+          </Text>
+          <TouchableOpacity 
+            className="mt-4 bg-primaryBlue px-4 py-2 rounded"
+            onPress={() => refetch()}
+          >
+            <Text className="text-white">Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       leftAction={
@@ -162,69 +170,91 @@ const GADBudgetLogTable = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View className="p-2">
-          <View className="mb-4 flex-row gap-2">
-            <View className="relative flex-1">
-              <Search
-                className="absolute left-3 top-3 text-gray-500"
-                size={17}
-              />
+          {/* Search Section */}
+          <View className="mb-4">
+            <View className="relative">
               <Input
-                placeholder="Search..."
+                placeholder="Search by project or particulars..."
                 className="flex-row items-center justify-between px-6 py-3 min-h-[44px] border-b border-gray-300"
                 value={searchQuery}
-                onChangeText={setSearchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
               />
             </View>
-            <SelectLayout
-              options={projectOptions}
-              selectedValue={projectFilter}
-              onSelect={(option) => setProjectFilter(option.value)}
-              placeholder="Project"
-              className="flex-1 bg-white"
-            />
           </View>
 
-          <FlatList
-            data={paginatedData}
-            renderItem={renderItem}
-            keyExtractor={(item) =>
-              item.gbudl_id?.toString() || Math.random().toString()
-            }
-            scrollEnabled={false}
-            ListEmptyComponent={
-              <Text className="text-center text-gray-500 py-4">
-                No budget logs found
+          {/* Loading State */}
+          {isLoading ? (
+            <View className="py-8">
+              <ActivityIndicator size="large" color="#2a3a61" />
+              <Text className="text-center text-gray-500 mt-2">
+                Loading budget logs...
               </Text>
-            }
-          />
+            </View>
+          ) : (
+            <>
+              {/* Data List */}
+              <FlatList
+                data={logs}
+                renderItem={renderItem}
+                keyExtractor={(item) =>
+                  item.gbudl_id?.toString() || Math.random().toString()
+                }
+                scrollEnabled={false}
+                ListEmptyComponent={
+                  <View className="py-8">
+                    <Text className="text-center text-gray-500">
+                      {searchQuery
+                        ? "No budget logs found matching your search" 
+                        : "No budget logs found"
+                      }
+                    </Text>
+                  </View>
+                }
+              />
 
-          <View className="flex-row justify-between items-center mt-4 px-2">
-            <TouchableOpacity
-              onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-            >
-              <Text className="text-primaryBlue font-bold">← Previous</Text>
-            </TouchableOpacity>
+              {/* Pagination */}
+              <View className="flex-row justify-between items-center mt-4 px-2">
+                <TouchableOpacity
+                  onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+                >
+                  <Text className="text-primaryBlue font-bold">← Previous</Text>
+                </TouchableOpacity>
 
-            <Text className="text-gray-500">
-              Page {currentPage} of {totalPages}
-            </Text>
+                <View className="flex-row items-center">
+                  {isFetching && (
+                    <ActivityIndicator size="small" color="#2a3a61" className="mr-2" />
+                  )}
+                  <Text className="text-gray-500">
+                    Page {currentPage} of {totalPages}
+                  </Text>
+                </View>
 
-            <TouchableOpacity
-              onPress={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={
-                currentPage === totalPages || filteredData.length <= pageSize
-              }
-              className={`p-2 ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
-            >
-              <Text className="text-primaryBlue font-bold">Next →</Text>
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages || totalCount === 0}
+                  className={`p-2 ${
+                    currentPage === totalPages || totalCount === 0 ? "opacity-50" : ""
+                  }`}
+                >
+                  <Text className="text-primaryBlue font-bold">Next →</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Results Count */}
+              <View className="mt-2 px-2">
+                <Text className="text-gray-500 text-sm text-center">
+                  Showing {logs.length} of {totalCount} logs
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
     </PageLayout>

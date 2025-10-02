@@ -52,7 +52,8 @@ function GADAddEntryForm() {
     isLoading: yearBudgetsLoading,
     refetch: refetchYearBudgets,
   } = useGetGADYearBudgets();
-  const { data: budgetEntries = [] } = useGADBudgets(year || "");
+  const { data: budgetEntriesData } = useGADBudgets(year || "");
+  const budgetEntries = budgetEntriesData?.results || [];
   const { data: projectProposals, isLoading: projectProposalsLoading } =
     useProjectProposalsAvailability(year);
   const { mutate: createBudget } = useCreateGADBudget(
