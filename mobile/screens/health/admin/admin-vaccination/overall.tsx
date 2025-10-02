@@ -199,7 +199,7 @@ export default function AllVaccinationRecords() {
 
       router.push({
         pathname: "/(health)/vaccination/my-records",
-        params: { patId: patientData.pat_id, mode: "admin" }
+        params: { pat_id: patientData.pat_id, mode: "admin" }
       });
     } catch (error) {
       console.log("Navigation error:", error);

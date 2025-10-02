@@ -10,7 +10,7 @@ export interface PatientFilters {
 
 // fetch patients
 export const getPatients = async (filters: PatientFilters = {}) => {
-    try {
+	try {
 		const params = new URLSearchParams();
 
 		if(filters.page) params.append('page', filters.page.toString());
@@ -19,12 +19,12 @@ export const getPatients = async (filters: PatientFilters = {}) => {
 		if(filters.search) params.append('search', filters.search);
 
 		const queryString = params.toString();
-		const url = queryString ? `/patientrecords/patient/view/create/?${queryString}` : "/patientrecords/patient/view/create/"
+		const url = queryString ? `/patientrecords/patient/view/create/?${queryString}` : "/patientrecords/patient/view/create/";
 
-        const res = await api2.get(url);
-        return res.data || {count: 0, next: null, previous: null, results: []}; 
-    } catch (error) {
-        console.error("Network Error:", error);
-        return {count: 0, next: null, previous: null, results: []}; 
-    }
+		const res = await api2.get(url, { timeout: 30000 }); // Set timeout to 30 seconds
+		return res.data || {count: 0, next: null, previous: null, results: []}; 
+	} catch (error) {
+		console.error("Network Error:", error);
+		return {count: 0, next: null, previous: null, results: []}; 
+	}
 };

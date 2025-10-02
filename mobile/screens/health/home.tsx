@@ -254,7 +254,7 @@ const Homepage = () => {
         </View>
 
         {/* Manage Section (Admin Only) */}
-        {isAdmin && (
+        {/* {isAdmin && ( */}
           <View className="px-5 mt-4 mb-6">
             <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Manage</Text>
             <View className="flex-row flex-wrap justify-between">
@@ -275,7 +275,7 @@ const Homepage = () => {
               })}
             </View>
           </View>
-        )}
+        {/* )} */}
       </ScrollView>
     </SafeAreaView>
   );
