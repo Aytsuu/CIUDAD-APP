@@ -9,7 +9,6 @@ class ActivityLog(models.Model):
     act_module = models.CharField(max_length=50, help_text="Module/App name (e.g., 'treasurer', 'clerk', 'council')")
     act_action = models.CharField(max_length=50, help_text="Action performed (e.g., 'create', 'update', 'delete')")
     act_record_id = models.CharField(max_length=100, null=True, blank=True, help_text="ID of the affected record")
-    feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
 
     class Meta:

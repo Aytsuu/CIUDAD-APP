@@ -12,7 +12,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatAreaOfFocus } from "@/helpers/wordFormatter";
 import { LoadingState } from "@/components/ui/loading-state";
-import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function MinutesOfMeetingView() {
     const router = useRouter();
@@ -26,18 +25,10 @@ export default function MinutesOfMeetingView() {
     const [selectedImages, setSelectedImages] = useState<{momsp_url: string, momsp_name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    if(isLoading){
+    if(isLoading || archivePending || deletePending || restorePending){
         return(
             <View className="flex-1 justify-center items-center">
                 <LoadingState/>
-            </View>
-        )
-    }
-
-    if(archivePending || deletePending || restorePending){
-        return(
-            <View className="flex-1 justify-center items-center">
-                <LoadingModal visible={archivePending || deletePending || restorePending}/>
             </View>
         )
     }
@@ -99,7 +90,7 @@ export default function MinutesOfMeetingView() {
         >
             {momDetails && (
                 <>
-                    <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+                    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
                         {/* Meeting Date Section */}
 
                          <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
