@@ -9,9 +9,9 @@ import Services from '@/pages/landing/services';
 import About from '@/pages/landing/about';
 import Home from '@/pages/landing/home';
 import Donation from '@/pages/landing/donation';
-// import AuthLayout from '@/layout/AuthLayout';
-
-
+import Announcements from '@/pages/landing/announcements';
+import ForgotPassword from '@/pages/landing/ForgotPass';
+import SignIn from '@/pages/landing/signin/signin';
 export const landing_router: RouteObject[] = [
   {
     path: "/",
@@ -49,6 +49,18 @@ export const landing_router: RouteObject[] = [
         path: "mobile-app",
         element: <MobileApp />
       },
+      {
+        path: "sign-in",
+        element: <SignIn />
+      },
+      {
+        path: "forgot-password",
+        element: <ForgotPassword />
+      },
+      {
+        path: "announcements",
+        element: <Announcements />
+      }
     ]
-  },
+  }
 ];

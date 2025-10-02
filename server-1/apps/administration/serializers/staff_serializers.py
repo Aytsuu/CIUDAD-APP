@@ -101,10 +101,15 @@ class StaffLandingPageSerializer(serializers.ModelSerializer):
     model = Staff
     fields = ['photo_url', 'name', 'position', 'assignments']
 
+  # def get_name(self, obj):
+  #   info = obj.rp.per
+  #   return f'{info.per_lname.upper()}, {info.per_fname.upper()}' \
+  #           f' {info.per_mname.upper() if info.per_mname else ''}'
+
   def get_name(self, obj):
     info = obj.rp.per
-    return f'{info.per_lname.upper()}, {info.per_fname.upper()}' \
-            f' {info.per_mname.upper() if info.per_mname else ""}'
+    return f"{info.per_lname.upper()}, {info.per_fname.upper()} {info.per_mname.upper() if info.per_mname else ''}"
+
 
   def get_photo_url(self, obj):
     rp = obj.rp

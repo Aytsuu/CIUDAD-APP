@@ -55,7 +55,7 @@ export default function RootLayout() {
             <StatusBar backgroundColor="transparent" style='dark'/>
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
-              <Stack.Screen name="(account)" options={{ headerShown: false, animation: 'slide_from_right' }} />
+              <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
@@ -67,7 +67,7 @@ export default function RootLayout() {
               <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
-              <Stack.Screen name="(request)" options = {{headerShown: false}}/>
+              <Stack.Screen name="(request)" options = {{headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />

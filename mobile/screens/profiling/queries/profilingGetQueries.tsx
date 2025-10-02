@@ -172,7 +172,7 @@ export const useBusinessTable = (page: number, pageSize: number, searchQuery: st
     queryKey: ["businessesTableData", page, pageSize, searchQuery],
     queryFn: async () => {
       try {
-        const res = await api.get("profiling/business/list/table/", {
+        const res = await api.get("profiling/business/active/list/table/", {
           params: {
             page,
             page_size: pageSize,

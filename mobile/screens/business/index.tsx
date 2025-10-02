@@ -1,5 +1,5 @@
 import React from "react"
-import { TouchableOpacity, View, Text, FlatList, RefreshControl } from "react-native"
+import { TouchableOpacity, View, Text, FlatList, RefreshControl, InteractionManager } from "react-native"
 import PageLayout from "../_PageLayout"
 import { router } from "expo-router"
 import { Building } from "@/lib/icons/Building"
@@ -14,10 +14,12 @@ import { SearchInput } from "@/components/ui/search-input"
 import { LoadingState } from "@/components/ui/loading-state"
 import BusinessDetails from "./BusinessDetails"
 import { useDebounce } from "@/hooks/use-debounce"
+import { NoAccessScreen } from "@/components/ui/feedback-screen"
 
 export default () => {
   // =================== STATE INITIALIZATION ===================
   const { user } = useAuth();
+  const [isReady, setIsReady] = React.useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [searchInputVal, setSearchInputVal] = React.useState<string>('');
   const [searchQuery, setSearchQuery] = React.useState<string>('');
@@ -37,6 +39,14 @@ export default () => {
   const hasBusinesses = (ownedBusinesses?.count || 0) > 0
 
   // =================== SIDE EFFECTS ===================  
+  React.useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    })
+
+    return () => task.cancel();
+  }, [user])
+
   React.useEffect(() => {
     if(searchQuery != searchInputVal && searchInputVal == "") {
       setSearchQuery(searchInputVal)
@@ -61,6 +71,7 @@ export default () => {
 
 
   // =================== RENDER HELPER ===================
+  
   const EmptyState = () => (
     <PageLayout
       leftAction={
@@ -142,6 +153,14 @@ export default () => {
   }
 
   // =================== MAIN RENDER ===================
+  if(!user?.rp) {
+    return (isReady && <NoAccessScreen
+        title="Resident Access Required"
+        description="The business feature is only available to registered residents and business respondents."
+      />
+    )
+  }
+  
   if ((isLoadingBusinesses || isLoadingRequests) && searchQuery == "") {
     return <LoadingState />
   }

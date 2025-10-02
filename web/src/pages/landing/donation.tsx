@@ -368,7 +368,6 @@ export default function Donation() {
           </div>
         </div>
       </section>
-
       <Footer />
     </main>
   )

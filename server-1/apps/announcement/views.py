@@ -40,16 +40,40 @@ class AnnouncementCreatedReceivedView(APIView):
         if staff_pos_title:
             staff_pos_title = staff_pos_title.upper().strip()
 
-        # Announcements created
-        created = Announcement.objects.filter(staff__staff_id=staff_id)
+        now = timezone.now()
 
-        # Announcements received
+        # Announcements created (ONLY active + valid date)
+        created = Announcement.objects.filter(
+            staff__staff_id=staff_id,
+            ann_status="Active"
+        ).filter(
+            Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
+            Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
+        )
+
+        # Announcements received (ONLY active + valid date)
         received_ids = AnnouncementRecipient.objects.filter(
             Q(ar_category=staff_id) | Q(ar_type__iexact=staff_pos_title)
         ).values_list("ann_id", flat=True).distinct()
 
-        received = Announcement.objects.filter(ann_id__in=received_ids)
-        public_announcements = Announcement.objects.filter(ann_type="public")
+        received = Announcement.objects.filter(
+            ann_id__in=received_ids,
+            ann_status="Active"
+        ).filter(
+            Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
+            Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
+        )
+
+        # Public announcements (ONLY active + valid date)
+        public_announcements = Announcement.objects.filter(
+            ann_type="public",
+            ann_status="Active"
+        ).filter(
+            Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
+            Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
+        )
+
+        # Union with public
         received = received.union(public_announcements)
 
         # Apply filters (backend side)
@@ -83,6 +107,7 @@ class AnnouncementCreatedReceivedView(APIView):
             "received": received_data,
             "staff_pos_title": staff_pos_title,
         })
+
 
 
 
