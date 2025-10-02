@@ -5,6 +5,8 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
+  ScrollView
 } from "react-native";
 import {
   Archive,
@@ -216,12 +218,18 @@ const DisbursementVoucherList: React.FC = () => {
         </TouchableOpacity>
       }
       headerTitle={<Text >Disbursement Vouchers</Text>}
-      wrapScroll={true}
-      showScrollIndicator={true}
+      wrapScroll={false}
+      showScrollIndicator={false}
+    >
+      <ScrollView
+      showsVerticalScrollIndicator={true}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       {/* Search and Filter Section */}
       <View className="p-4">
-        <View className="mb-4">
+        <View className="mb-2">
           <Input
             placeholder="Search by payee or particulars..."
             className="rounded-xl flex-row items-center justify-between px-4 py-3 min-h-[44px] border border-gray-300"
@@ -259,18 +267,6 @@ const DisbursementVoucherList: React.FC = () => {
           </View>
         </View>
       </View>
-
-      {/* Content Area */}
-      <View className="flex-1">
-        {/* Content Loading State */}
-        {isFetching && !isLoading && (
-          <View className="py-4 items-center">
-            <ActivityIndicator size="small" color="#3b82f6" />
-            <Text className="text-gray-500 text-sm mt-2">
-              Loading disbursements...
-            </Text>
-          </View>
-        )}
 
         {/* Initial Loading State */}
         {isLoading ? (
@@ -425,7 +421,7 @@ const DisbursementVoucherList: React.FC = () => {
             )}
           </View>
         )}
-      </View>
+      </ScrollView>
     </PageLayout>
   );
 };

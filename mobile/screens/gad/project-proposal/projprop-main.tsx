@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  ScrollView
 } from "react-native";
 import {
   Archive,
@@ -223,8 +224,14 @@ const ProjectProposalList: React.FC = () => {
         </TouchableOpacity>
       }
       headerTitle={<Text>GAD Project Proposal</Text>}
-      wrapScroll={true}
-      showScrollIndicator={true}
+      wrapScroll={false}
+      showScrollIndicator={false}
+    >
+      <ScrollView
+      showsVerticalScrollIndicator={true}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       {/* Search and Filter Section */}
       <View className="p-4">
@@ -280,18 +287,6 @@ const ProjectProposalList: React.FC = () => {
           </View>
         </View>
       </View>
-
-      {/* Content Area with Refresh Control */}
-      <View className="flex-1">
-        {/* Content Loading State */}
-        {isFetching && !isLoading && (
-          <View className="py-4 items-center">
-            <ActivityIndicator size="small" color="#3b82f6" />
-            <Text className="text-gray-500 text-sm mt-2">
-              Loading projects...
-            </Text>
-          </View>
-        )}
 
         {/* Initial Loading State */}
         {isLoading ? (
@@ -442,7 +437,7 @@ const ProjectProposalList: React.FC = () => {
             )}
           </View>
         )}
-      </View>
+      </ScrollView>
     </PageLayout>
   );
 };
