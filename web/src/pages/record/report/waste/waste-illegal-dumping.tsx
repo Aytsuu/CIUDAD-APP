@@ -7,7 +7,6 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
 import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueries";
