@@ -8,10 +8,9 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
         const randomPart = Math.random().toString(36).substring(2, 3).toUpperCase();
         const bpr_id = `BPR${timestamp.slice(-6)}${randomPart}`;
         
-        // Handle business ID - if it's still a name, we need to find the actual ID
-        let businessId = payload.businessId;
+        // Handle business ID - now stored in businessName field
+        let businessId = payload.businessName; // businessName now contains the business ID
         if (businessId && !businessId.startsWith('BUS-')) {
-            
             console.warn("Business ID appears to be a name instead of ID:", businessId);
             businessId = null;
         }
@@ -26,7 +25,7 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
             req_status: 'Pending',
             req_payment_status: 'Unpaid',
             ags_id: payload.grossSales ? parseInt(payload.grossSales) : null, // Convert to integer
-            pr_id: payload.purposeId ? parseInt(payload.purposeId) : null, // Convert to integer
+            pr_id: payload.purposes ? parseInt(payload.purposes) : null, // purposes now contains the purpose ID
             staff_id: staffId, // Staff ID (who is processing the request)
             bus_id: businessId, // Business ID from form
             rp_id: payload.rp_id || null, // Resident profile ID from form
@@ -35,9 +34,8 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
 
         console.log("Creating permit clearance with payload:", clearancePayload);
         console.log("Original payload received:", payload);
-        console.log("Business ID from payload:", payload.businessId);
-        console.log("Business Name from payload:", payload.businessName);
-        console.log("Purpose ID from payload:", payload.purposeId);
+        console.log("Business ID from payload.businessName:", payload.businessName);
+        console.log("Purpose ID from payload.purposes:", payload.purposes);
         console.log("Gross Sales from payload:", payload.grossSales);
         console.log("Payload keys:", Object.keys(payload));
         console.log("Payload values:", Object.values(payload));

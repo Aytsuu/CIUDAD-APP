@@ -9,14 +9,11 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
-import { getPermitClearances } from "./restful-api/permitClearanceGetAPI";
-import { useQuery } from "@tanstack/react-query";
+import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAndRates } from "./queries/permitClearanceFetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/api/api";
 
 
-//table header
 const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
         header: ({ column }) => (
@@ -253,29 +250,10 @@ function PermitClearance(){
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
     
-    // Fetch data from backend
-    const { data: permitClearances, isLoading, error } = useQuery<any[]>({
-        queryKey: ["permitClearances"],
-        queryFn: getPermitClearances
-    });
-
-    // Fetch annual gross sales data
-    const { data: annualGrossSales = [] } = useQuery<any[]>({
-        queryKey: ["annualGrossSales"],
-        queryFn: async () => {
-            const response = await api.get('treasurer/annual-gross-sales/');
-            return response.data;
-        },
-    });
-
-    // Fetch purpose and rates data
-    const { data: purposes = [] } = useQuery<any[]>({
-        queryKey: ["purposes"],
-        queryFn: async () => {
-            const response = await api.get('treasurer/purpose-and-rate/');
-            return response.data;
-        },
-    });
+    // Fetch data from backend using custom hooks
+    const { data: permitClearances, isLoading, error } = useGetPermitClearances();
+    const { data: annualGrossSales = [] } = useGetAnnualGrossSalesForPermit();
+    const { data: purposes = [] } = useGetPurposesAndRates();
 
     // Debug: Log the raw API response
     console.log("Raw permit clearances data:", permitClearances);
