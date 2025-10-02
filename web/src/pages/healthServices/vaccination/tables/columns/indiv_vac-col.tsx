@@ -204,7 +204,7 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
 
       return (
         <div className="flex justify-center gap-2">
-          <Link to="/vaccinationView" state={{ params: { Vaccination: currentRecord, patientData } }}>
+          <Link to="/services/vaccination/records/history" state={{ params: { Vaccination: currentRecord, patientData } }}>
             <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View
             </Button>

@@ -164,11 +164,12 @@ export const getHouseholdTable = async (page: number, pageSize: number, searchQu
   }
 }
 
-export const getHouseholdList = async (search: string) => {
+export const getHouseholdList = async (search?: string) => {
   try {
     const res = await api.get("profiling/household/list/", {
       params: {
-        search
+        search,
+        is_search: search != undefined
       }
     });
     return res.data;

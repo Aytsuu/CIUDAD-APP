@@ -7,7 +7,6 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { Link } from "react-router-dom";
 import { History } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-
 interface Medicine {
   minv_id: string;
   medrec_qty: number;
@@ -36,6 +35,7 @@ export default function MedicalConsultationFlow() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const { patientData, MedicalConsultation } = location.state || {};
+  console.log("HEYY", MedicalConsultation);
 
   // Initialize form data with proper default values
   const [formData, setFormData] = useState<FormData>(() => {
@@ -144,7 +144,7 @@ export default function MedicalConsultationFlow() {
     <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
       <>
         <div className="flex justify-end mb-4">
-          <Link to="/invMedicalRecord" state={{ params: { patientData, mode: "doctor" } }}>
+          <Link to="/services/medical-consultation/records" state={{ params: { patientData, mode: "doctor" } }}>
             <Button className="flex gap-2 items-center text-white">
               <History className="w-4 h-4" /> View History
             </Button>

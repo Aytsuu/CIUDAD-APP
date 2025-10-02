@@ -138,16 +138,20 @@ export const getLatestPatientPrenatalRecord = async (patientId: string) => {
 }
 
 // medical history for prenatal form
-export const getPrenatalPatientMedHistory = async (patientId: string) => {
+export const getPrenatalPatientMedHistory = async (patientId: string, search?: string) => {
   try { 
-    const res = await api2.get(`maternal/patient/${patientId}/medicalhistory/`)
+    const params: any = {};
+    if (search) {
+      params.search = search;
+    }
+    
+    const res = await api2.get(`maternal/patient/${patientId}/medicalhistory/`, { params })
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal patient medical history: ", error);
     throw error;
   }
 }
-
 // obstetric history for prenatal form
 export const getPrenatalPatientObsHistory = async (patientId: string) => {
   try {

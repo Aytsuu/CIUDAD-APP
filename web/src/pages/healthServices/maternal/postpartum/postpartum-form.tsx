@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, type UseFormReturn } from "react-hook-form"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 import type { z } from "zod"
 
@@ -30,11 +30,11 @@ import {
 import { showErrorToast } from "@/components/ui/toast" 
 
 import { useLatestPatientPostpartumRecord } from "../queries/maternalFetchQueries"
-// import { fetchMedicinesWithStock } from "../../medicineservices/restful-api/fetchAPI"
+import { fetchMedicinesWithStock } from "../../medicineservices/restful-api/fetchAPI"
 
 import type { Patient } from "@/components/ui/patientSearch"
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import MedicineDisplay from "@/components/ui/medicine-display"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import MedicineDisplay from "@/components/ui/medicine-display"
 
 type PostpartumTableType = {
   date: string;
@@ -79,9 +79,9 @@ export default function PostpartumFormFirstPg({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
-  // const [currentPage, setCurrentPage] = useState(1)
-  // const itemsPerPage = 5
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
   const navigate = useNavigate()
 
@@ -90,7 +90,7 @@ export default function PostpartumFormFirstPg({
 
   // fetch hooks
   const { data: latestPostpartumRecord, isLoading: latestPostpartumLoading } = useLatestPatientPostpartumRecord(selectedPatientId)
-  // const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
 
   // useEffect to preselect patient if coming from individual record page
   useEffect(() => {
@@ -113,19 +113,10 @@ export default function PostpartumFormFirstPg({
     if (isFromIndividualRecord && !latestRecord) {
       const spouse = latestPostpartumRecord?.spouse_info
 
-      if(spouse?.spouse_info) {
-        const residentSpouse = spouse.spouse_info
-        setValue("mothersPersonalInfo.husbandLName", residentSpouse?.per_lname)
-        setValue("mothersPersonalInfo.husbandFName", residentSpouse?.per_fname)
-        setValue("mothersPersonalInfo.husbandMName", residentSpouse?.per_mname || "None")
-        setValue("mothersPersonalInfo.husbandDob", residentSpouse?.per_dob)
-      } else {
-        setValue("mothersPersonalInfo.husbandLName", spouse?.spouse_lname)
-        setValue("mothersPersonalInfo.husbandFName", spouse?.spouse_fname)
-        setValue("mothersPersonalInfo.husbandMName", spouse?.spouse_mname || "None")
-        setValue("mothersPersonalInfo.husbandDob", spouse?.spouse_dob)
-      }
-      
+      setValue("mothersPersonalInfo.husbandLName", spouse?.spouse_lname)
+      setValue("mothersPersonalInfo.husbandFName", spouse?.spouse_fname)
+      setValue("mothersPersonalInfo.husbandMName", spouse?.spouse_mname)
+      setValue("mothersPersonalInfo.husbandDob", spouse?.spouse_dob)
     }
 
     if (isFromIndividualRecord && latestPostpartumRecord && latestPostpartumRecord && !latestPostpartumLoading) {
@@ -184,7 +175,7 @@ export default function PostpartumFormFirstPg({
           motherAge: "",
           husbandLName: "",
           husbandFName: "",
-          husbandMName: "None",
+          husbandMName: "",
           husbandDob: "",
           address: {
             street: "",
@@ -252,7 +243,7 @@ export default function PostpartumFormFirstPg({
         if(spouse){
           form.setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
           form.setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
-          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "None")
+          form.setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
           form.setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "") 
         } else if (familyHeadFather){
           form.setValue("mothersPersonalInfo.husbandLName", familyHeadFather?.per_lname || "")
@@ -291,22 +282,22 @@ export default function PostpartumFormFirstPg({
   // end of patient selection handler
 
   // medicine selection handlers
-  // const handleSelectedMedicinesChange = useCallback(
-  //   (
-  //     updatedMedicines: {
-  //       minv_id: string
-  //       medrec_qty: number
-  //       reason: string
-  //     }[],
-  //   ) => {
-  //     setSelectedMedicines(updatedMedicines)
-  //   },
-  //   [],
-  // )
+  const handleSelectedMedicinesChange = useCallback(
+    (
+      updatedMedicines: {
+        minv_id: string
+        medrec_qty: number
+        reason: string
+      }[],
+    ) => {
+      setSelectedMedicines(updatedMedicines)
+    },
+    [],
+  )
 
-  // const handlePageChange = useCallback((page: number) => {
-  //   setCurrentPage(page)
-  // }, [])
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page)
+  }, [])
   // end of medicine selection handlers
 
   // conversion helpers
@@ -438,7 +429,7 @@ export default function PostpartumFormFirstPg({
     const formData = form.getValues()
 
     // Validate form data
-    const errors = validatePostpartumFormData(formData, selectedPatientId);
+    const errors = validatePostpartumFormData(formData, selectedPatientId, postpartumCareData);
 
     if (errors.length > 0) {
       setFormErrors(errors)
@@ -589,7 +580,7 @@ export default function PostpartumFormFirstPg({
                   { id: "fim", name: "FIM" }
                 ]}
               />
-              <FormDateTimeInput
+              {/* <FormDateTimeInput
                 control={form.control}
                 label="Iron Supplement"
                 name="postpartumInfo.ironSupplement"
@@ -600,7 +591,8 @@ export default function PostpartumFormFirstPg({
                 label="Vitamin A Supplement"
                 name="postpartumInfo.vitASupplement"
                 type="date"
-              />
+              /> */}
+
               <FormInput
                 control={form.control}
                 label="Number of Pads per Day"
@@ -608,12 +600,12 @@ export default function PostpartumFormFirstPg({
                 placeholder="Number of Pads per Day"
                 type="number"
               />
-              <FormDateTimeInput
+              {/* <FormDateTimeInput
                 control={form.control}
                 label="Mebendazole"
                 name="postpartumInfo.mebendazole"
                 type="date"
-              />
+              /> */}
               <FormDateTimeInput
                 control={form.control}
                 label="Date Breastfeeding Initiated"
@@ -628,7 +620,7 @@ export default function PostpartumFormFirstPg({
               />
             </div>
 
-            {/* <Card className="border rounded-lg shadow-md p-3 mt-5 mb-5">
+            <Card className="border rounded-lg shadow-md p-3 mt-5 mb-5">
                 <CardHeader>
                   <span className="flex flex-row items-center">
                     <CardTitle className="text-md font-semibold mt-2 mb-3 mr-2">
@@ -653,24 +645,24 @@ export default function PostpartumFormFirstPg({
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
                     />
-                  )} */}
+                  )}
                   
-                  {/* <div className="flex px-3 mt-4">
+                  <div className="flex px-3 mt-4">
                     <div className="border rounded-lg p-3 w-full">
                       <Label className="font-semibold">Given Medicines</Label>
                       <div className="flex justify-center items-center p-3">
-                        {selectedMedicines.map((medicine) => (
+                        {/* {selectedMedicines.map((medicine) => (
                           <div key={medicine.id} className="flex justify-between">
                             <span>{medicine.name}</span>
                             <span>{medicine.dosage}</span>
                           </div>
-                        ))}
+                        ))} */}
                         <Label className="text-black/70">No history of given medicines yet.</Label>
                       </div>
                     </div>
                   </div>
                 </CardContent>
-              </Card> */}
+              </Card>
 
             <div className="mt-10 mb-3">
               <Label className="text-lg">Schedule</Label>
@@ -749,7 +741,7 @@ export default function PostpartumFormFirstPg({
 
             <div className="mt-8 sm:mt-auto flex justify-end">
               <Button type="submit" className="mt-4 mr-4 sm-w-32" disabled={addPostpartumMutation.isPending || !selectedPatient}>
-                {addPostpartumMutation.isPending && isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {addPostpartumMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit
               </Button>
             </div>

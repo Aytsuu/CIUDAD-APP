@@ -1,19 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { addSchedule, addSummonDate, addSummonTimeSlots, addSuppDoc } from "../requestAPI/summonPostAPI";
+import { addCaseActivity, addSummonDate, addSummonTimeSlots } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
-import { showSuccessToast } from "@/components/ui/toast";
-import { showErrorToast } from "@/components/ui/toast";
 
-export const useAddSummonSchedule = (onSuccess?: () => void) => {
+export const useAddCaseActivity = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
      return useMutation({
-            mutationFn: (values: z.infer<typeof SummonSchema>) => addSchedule(values),
+            mutationFn: (values: z.infer<typeof SummonSchema>) => addCaseActivity(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
+                queryClient.invalidateQueries({ queryKey: ['caseDetails'] });
 
                 toast.loading('Submitting Record...', {id: "createCase"});
         
@@ -34,29 +32,32 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
         })
 }
 
-export const useAddSuppDoc = (onSuccess?: () => void) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (data: {
-            ss_id: string;
-            sr_id: string;
-            file: { name: string; type: string; file: string | undefined}[];
-            reason: string;
-        }) => {
-            return addSuppDoc(data.ss_id, data.sr_id,  data.file, data.reason);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
+// export const useAddSuppDoc = (onSuccess?: () => void) => {
+//     const queryClient = useQueryClient();
 
-            showSuccessToast('Documents uploaded successfully!')
-            onSuccess?.();
-        },
-        onError: (err: Error) => {
-            console.error("Upload error:", err);
-            showErrorToast( "Failed to upload documents. Please try again.")
-        }
-    });
-}
+//     return useMutation({
+//         mutationFn: (values: { 
+//             ca_id: string; 
+//             description: string;
+//             media: MediaUploadType[number];
+//         }) => addSuppDoc(values.ca_id, values.media, values.description),
+//         onSuccess: () => {
+//             queryClient.invalidateQueries({ queryKey: ['suppDocs'] });
+//             toast.success('Document added successfully!', {
+//                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//                 duration: 2000
+//             });
+//             onSuccess?.();
+//         },
+//         onError: (err) => {
+//             console.error("Error adding document:", err);
+//             toast.error(
+//                 "Failed to add document. Please try again.",
+//                 { duration: 2000 }
+//             );
+//         }
+//     });
+// }
 
 export const useAddSummonDates = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -87,6 +88,7 @@ export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
         mutationFn: (timeSlots: Array<{
             sd_id: number;
             st_start_time: string;
+            st_end_time: string;
             st_is_booked?: boolean;
         }>) => addSummonTimeSlots(timeSlots),
         onSuccess: () => {

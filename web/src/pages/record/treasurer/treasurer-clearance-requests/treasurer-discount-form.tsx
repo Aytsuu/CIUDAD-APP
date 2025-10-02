@@ -39,8 +39,8 @@ function DiscountAuthorizationForm({ originalAmount, onAuthorize }: DiscountAuth
         const authCode = form.getValues("authCode");
         if (authCode === CAPTAIN_AUTH_CODE) {
             setIsAuthorized(true);
-            setAmountError(""); 
-         
+            setAmountError(""); // Clear any previous errors
+            // Set initial discounted amount to the full rate
             form.setValue("discountedAmount", originalAmount || "0");
         } else {
             alert("Invalid authorization code");

@@ -43,7 +43,7 @@ export default function AdministrationPositions({
 
     return filtered.reduce((acc: Record<string, any[]>, position: any) => {
       // Use 'Other' category for positions without a group
-      const category = position.pos_group || 'NO GROUP'
+      const category = position.pos_group || 'No Group'
       if (!acc[category]) {
         acc[category] = []
       }

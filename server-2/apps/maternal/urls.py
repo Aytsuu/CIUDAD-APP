@@ -33,6 +33,12 @@ urlpatterns=[
     path('prenatal/illnesses/', get_illness_list, name='illness-list'),
     path('prenatal/illness/create/', IllnessCreateView.as_view(), name='illness-create'),
 
+    path('prenatal/<str:pat_id>/latest/', get_latest_patient_prenatal_record, name='latest-prenatal-record'),
+    path('prenatal/<str:pf_id>/complete/', get_prenatal_form_complete, name='prenatal-form-complete'),
+    path('prenatal/missed-visits/<str:pregnancy_id>/', views.calculate_missed_visits_by_pregnancy, name='calculated-missed-visits'),
+    path('prenatal/illnesses/', get_illness_list, name='illness-list'),
+    path('prenatal/illness/create/', IllnessCreateView.as_view(), name='illness-create'),
+
     path('postpartum_record/', PostpartumRecordCreateView.as_view(), name='postpartum-record-create'),
     path('patient/<str:pat_id>/postpartum_count/', get_patient_postpartum_count, name='patient-postpartum-count'),
     path('postpartum/<str:pat_id>/latest/', get_latest_patient_postpartum_records, name='patient-postpartum-records'),   

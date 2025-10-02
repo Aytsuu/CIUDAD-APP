@@ -65,6 +65,7 @@ class PatientSerializer(serializers.ModelSerializer):
     family = serializers.SerializerMethodField()
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
+    # family_planning_record = serializers.SerializerMethodField()
     additional_info = serializers.SerializerMethodField()
     completed_pregnancy_count = serializers.IntegerField(read_only=True)
 
@@ -146,8 +147,8 @@ class PatientSerializer(serializers.ModelSerializer):
                 # try to find mother role first (existing logic)
                 mother_composition = all_compositions.filter(fc_role__iexact='Mother').first()
                 if mother_composition:
-                    print(f'Found mother role for resident {obj.rp_id.rp_id}, using fam_id: {mother_composition.fam_id}')
-                    print(f'Mother Info: {mother_composition}')
+                    # print(f'Found mother role for resident {obj.rp_id.rp_id}, using fam_id: {mother_composition.fam_id}')
+                    # print(f'Mother Info: {mother_composition}')
                     return {
                         'fam_id': str(mother_composition.fam_id),
                         'fc_role': 'Mother',
@@ -157,8 +158,8 @@ class PatientSerializer(serializers.ModelSerializer):
                 # try to find father role
                 father_composition = all_compositions.filter(fc_role__iexact='Father').first()
                 if father_composition:
-                    print(f'Found father role for resident {obj.rp_id.rp_id}, using fam_id: {father_composition.fam_id}')
-                    print(f'Father Info: {father_composition}')
+                    # print(f'Found father role for resident {obj.rp_id.rp_id}, using fam_id: {father_composition.fam_id}')
+                    # print(f'Father Info: {father_composition}')
                     return {
                         'fam_id': str(father_composition.fam_id),
                         'fc_role': 'Father',
@@ -173,7 +174,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 ).first()
 
                 if other_composition:
-                    print(f'Using other role ({other_composition.fc_role}) for resident {obj.rp_id.rp_id}')
+                    # print(f'Using other role ({other_composition.fc_role}) for resident {obj.rp_id.rp_id}')
                     return {
                         'fam_id': str(other_composition.fam_id),
                         'fc_role': other_composition.fc_role,
@@ -273,7 +274,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             'per_dob': trans.mother_dob,
                         }
                     }
-                    print(f"Transient Mother Info: {family_heads['mother']}")
+                    # print(f"Transient Mother Info: {family_heads['mother']}")
 
                 if trans.father_fname or trans.father_lname:
                     family_heads['father'] = {
@@ -285,7 +286,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             'per_dob': trans.father_dob,
                         }
                     }
-                    print(f"Transient Father Info: {family_heads['father']}")
+                    # print(f"Transient Father Info: {family_heads['father']}")
                 
                 return {
                     'fam_id': None,  # Transient has no `fam_id` because no FamilyComposition
@@ -557,14 +558,17 @@ class PatientSerializer(serializers.ModelSerializer):
     def get_additional_info(self, obj):
         try:
             additional_info = {}
-            if obj.pat_type == 'Resident' and obj.rp_id:
-                per_ph_obj = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
-                mother_tt_obj = MotherHealthInfo.objects.filter(rp=obj.rp_id).order_by('-mhi_id').first()
+            if obj.pat_id and obj.rp_id:
+                # Use first() to get a single object instead of checking exists()
+                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
+                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id).first()
 
-                if per_ph_obj:
-                    additional_info['per_add_philhealth_id'] = per_ph_obj.per_add_philhealth_id
-                if mother_tt_obj:
-                    additional_info['mhi_immun_status'] = mother_tt_obj.mhi_immun_status
+                if per_ph_id and mother_tt:
+                    additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
+                    additional_info['mother_tt_status'] = mother_tt.mhi_immun_status
+                else:
+                    additional_info['philhealth_id'] = None
+                    additional_info['mother_tt_status'] = None
 
                 # Only return if at least one value exists
                 return additional_info if additional_info else None

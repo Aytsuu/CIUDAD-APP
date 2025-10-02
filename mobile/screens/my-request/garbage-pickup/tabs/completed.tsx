@@ -12,7 +12,7 @@ export default function ResidentCompleted() {
   const router = useRouter(); 
   const [searchQuery, setSearchQuery] = useState("");
   const {user} = useAuth()  
-  const {data: completedRequests = [], isLoading: isDataLoading} = useGetGarbageCompleteResident(user?.rp || '')
+  const {data: completedRequests = [], isLoading: isDataLoading} = useGetGarbageCompleteResident(user?.resident?.rp_id)
 
   const filteredData = completedRequests.filter((request) => {
     const searchString = `

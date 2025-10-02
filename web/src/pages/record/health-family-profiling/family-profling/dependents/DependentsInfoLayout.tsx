@@ -16,12 +16,13 @@ import {
   useAddFamily, 
   useAddFamilyComposition,
 } from "../../../profiling/queries/profilingAddQueries";
-// import {
-//   useAddFamilyHealth,
-//   useAddFamilyCompositionHealth 
-// } from "../../../health-family-profiling/family-profling/queries/profilingAddQueries";
+import {
+  addRespondentHealth, 
+  addPerAdditionalDetailsHealth, 
+  addMotherHealthInfo 
+} from "../restful-api/profiingPostAPI";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoadButton } from "@/components/ui/button/load-button";
-// import { useAddRespondentHealth, useAddPerAdditionalDetailsHealth, useAddMotherHealthInfo } from "../queries/profilingAddQueries";
 
 export default function DependentsInfoLayout({
   form,
@@ -50,15 +51,102 @@ export default function DependentsInfoLayout({
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   
-  // // Health database hooks
-  // const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
-  // const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
-  // // Add hooks for respondent and health details
-  // const { mutateAsync: addRespondent } = useAddRespondentHealth();
-  // const { mutateAsync: addPerAdditionalDetails } = useAddPerAdditionalDetailsHealth();
-  // const { mutateAsync: addMotherHealthInfo } = useAddMotherHealthInfo();
+  // Health database hooks for parent data (without automatic toasts)
+  const queryClient = useQueryClient();
+  
+  const { mutateAsync: addRespondent } = useMutation({
+    mutationFn: (data: Record<string, any>) => addRespondentHealth(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["respondentsHealth"] });
+      // No toast here - we'll show one combined toast
+    },
+  });
+  
+  const { mutateAsync: addPerAdditionalDetails } = useMutation({
+    mutationFn: (data: Record<string, any>) => addPerAdditionalDetailsHealth(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["perAdditionalDetailsHealth"] });
+      // No toast here - we'll show one combined toast
+    },
+  });
+  
+  const { mutateAsync: addMotherHealthInfoMutation } = useMutation({
+    mutationFn: (data: Record<string, any>) => addMotherHealthInfo(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["motherHealthInfo"] });
+      // No toast here - we'll show one combined toast
+    },
+  });
 
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+
+  // Function to submit parent health-related data and respondents info
+  const submitParentHealthData = React.useCallback(async (formData: any, famId: string) => {
+    const parents = [
+      { type: 'respondentInfo', data: formData.respondentInfo, isRespondent: true },
+      { type: 'motherInfo', data: formData.motherInfo, isRespondent: false },
+      { type: 'fatherInfo', data: formData.fatherInfo, isRespondent: false }
+    ];
+    
+    for (const parent of parents) {
+      const parentData = parent.data;
+      
+      if (parentData && parentData.id) {
+        const residentId = parentData.id.split(' ')[0]; // Extract resident ID
+        
+        // Submit RespondentsInfo if it's the respondent
+        if (parent.isRespondent) {
+          const respondentPayload = {
+            rp: residentId,
+            fam: famId
+          };
+          
+          console.log(`Submitting respondent info:`, respondentPayload);
+          await addRespondent(respondentPayload);
+        }
+        
+        // Submit HealthRelatedDetails if perAddDetails exists
+        if (parentData.perAddDetails && (
+          parentData.perAddDetails.bloodType || 
+          parentData.perAddDetails.philHealthId || 
+          parentData.perAddDetails.covidVaxStatus
+        )) {
+          const healthDetailsPayload = {
+            per_add_bloodType: parentData.perAddDetails.bloodType || null,
+            per_add_philhealth_id: parentData.perAddDetails.philHealthId || null,
+            per_add_covid_vax_status: parentData.perAddDetails.covidVaxStatus || null,
+            rp: residentId
+          };
+          
+          console.log(`Submitting health details for ${parent.type}:`, healthDetailsPayload);
+          await addPerAdditionalDetails(healthDetailsPayload);
+        }
+        
+        // Submit Mother Health Info if it's mother and motherHealthInfo exists
+        if (parent.type === 'motherInfo' && parentData.motherHealthInfo && (
+          parentData.motherHealthInfo.healthRiskClass ||
+          parentData.motherHealthInfo.immunizationStatus ||
+          parentData.motherHealthInfo.method?.length > 0 ||
+          parentData.motherHealthInfo.source
+        )) {
+          const motherHealthPayload = {
+            mhi_healthRisk_class: parentData.motherHealthInfo.healthRiskClass || null,
+            mhi_immun_status: parentData.motherHealthInfo.immunizationStatus || null,
+            mhi_famPlan_method: parentData.motherHealthInfo.method ? 
+              parentData.motherHealthInfo.method.join(', ') : null,
+            mhi_famPlan_source: parentData.motherHealthInfo.source || null,
+            rp: residentId,
+            fam: famId
+          };
+          
+          console.log('Submitting mother health info:', motherHealthPayload);
+          await addMotherHealthInfoMutation(motherHealthPayload);
+        }
+      }
+    }
+    
+    console.log("Parent health information and respondent data submitted successfully!");
+  }, [addRespondent, addPerAdditionalDetails, addMotherHealthInfoMutation]);
 
   React.useEffect(() => {
     const dependents = form.getValues("dependentsInfo.list");
@@ -180,6 +268,10 @@ export default function DependentsInfoLayout({
       
       await addFamilyComposition(allCompositions);
 
+      // Submit parent health data and respondents info
+      const formData = form.getValues();
+      await submitParentHealthData(formData, newFamily.fam_id);
+
       toast("Record added successfully", {
         icon: <CircleAlert size={24} className="fill-green-500 stroke-white" />,
         style: {
@@ -190,6 +282,7 @@ export default function DependentsInfoLayout({
         },
       });
 
+      setIsSubmitting(false);
       // Proceed to next step
       nextStep();
     } catch (error) {

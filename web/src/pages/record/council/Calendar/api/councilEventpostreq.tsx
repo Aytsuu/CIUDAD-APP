@@ -10,7 +10,6 @@ export const postCouncilEvent = async (eventInfo: Record<string, any>) => {
       ce_time: eventInfo.ce_time,
       ce_description: eventInfo.ce_description,
       ce_is_archive: eventInfo.ce_is_archive || false,
-      ce_rows: eventInfo.ce_rows,
       staff: eventInfo.staff,
     });
 
@@ -20,21 +19,21 @@ export const postCouncilEvent = async (eventInfo: Record<string, any>) => {
   }
 };
 
-// export const postAttendee = async (attendeeInfo: Record<string, any>) => {
-//   try {
-//     const res = await api.post("council/attendees/", {
-//       atn_name: attendeeInfo.atn_name,
-//       atn_designation: attendeeInfo.atn_designation,
-//       atn_present_or_absent: attendeeInfo.atn_present_or_absent,
-//       ce_id: attendeeInfo.ce_id,
-//       staff_id: attendeeInfo.staff_id,
-//     });
+export const postAttendee = async (attendeeInfo: Record<string, any>) => {
+  try {
+    const res = await api.post("council/attendees/", {
+      atn_name: attendeeInfo.atn_name,
+      atn_designation: attendeeInfo.atn_designation,
+      atn_present_or_absent: attendeeInfo.atn_present_or_absent,
+      ce_id: attendeeInfo.ce_id,
+      staff_id: attendeeInfo.staff_id,
+    });
 
-//     return res.data.atn_id;
-//   } catch (err) {
-//     throw err;
-//   }
-// };
+    return res.data.atn_id;
+  } catch (err) {
+    throw err;
+  }
+};
 
 export const postAttendanceSheet = async (
   attendanceInfo: Record<string, any>

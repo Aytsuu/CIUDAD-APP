@@ -607,3 +607,4 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             representation['follow_up_visit'] = None
         
         return representation
+    

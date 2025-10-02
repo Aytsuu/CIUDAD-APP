@@ -2,9 +2,9 @@ import { api } from "@/api/api";
 
 export const resolveCase = async (sr_id: string) => {
     try{
-        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
-            sr_case_status: "Resolved",
-            sr_date_marked: new Date().toISOString(),
+        const res = await api.put(`clerk/update-service-charge-request/${sr_id}/`, {
+            status: "Resolved",
+            decision_date: new Date().toISOString(),
         })
         return res.data
     }catch(err){
@@ -12,23 +12,22 @@ export const resolveCase = async (sr_id: string) => {
     }
 }
 
-export const escalateCase = async (sr_id: string) => {
+export const escalateCase = async (sr_id: string, comp_id: string) => {
     try{
-        //  const res2 = await api.post('clerk/file-action-request/', {
-        //     comp: comp_id,
-        //     sr_type: 'File Action',
-        //     sr_request_date: new Date().toISOString(),
-        //     sr_payment_status: "Unpaid",
-        //     parent_summon: sr_id
-        // })
-
-        console.log('sr_id', sr_id)
-        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
-            sr_case_status: "Escalated",
-            sr_date_marked: new Date().toISOString(),
+         const res2 = await api.post('clerk/file-action-request/', {
+            comp: comp_id,
+            sr_type: 'File Action',
+            sr_request_date: new Date().toISOString(),
+            sr_payment_status: "Unpaid",
+            parent_summon: sr_id
         })
 
-        return res.data
+        const res = await api.put(`clerk/update-service-charge-request/${sr_id}/`, {
+            status: "Escalated",
+            decision_date: new Date().toISOString(),
+        })
+
+        return res.data, res2.data
     }catch(err){
         console.error(err)
     }
@@ -67,33 +66,32 @@ export const escalateCase = async (sr_id: string) => {
 
 export const acceptSummonRequest = async(sr_id: string) => {
     try{
-        let res;
-        const purpose = await api.get(`treasurer/purpose-rates/`, {
+
+        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
+            sr_req_status: "Accepted"
+        })
+
+         const response = await api.get('/treasurer/get-pr-id/', {
                 params: {
-                    pr_purpose: "Summons"
+                    pr_purpose: "Summons",
+                    pr_category: "Service Charge", 
+                    pr_is_archive: false
                 }
-            }
-        )
-        
-        if(purpose){
+        })
+
+        if(res){
             await api.post('clerk/service-charge-decision/',{
                 scd_decision_date: new Date().toISOString(),
                 sr_id: sr_id
             })
 
             await api.post('clerk/service-charge-payment-request/', {
-                pr_id: purpose.data.pr_id,
+                spay_amount: 150.00,
                 spay_status: "Unpaid",
-                sr_id: sr_id
+                sr_id: response.data.pr_id
             })
-
-            res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
-                sr_req_status: "Accepted"
-            })
-
         }
-        
-        return res?.data
+        return res.data
         
     }catch(err){
         console.error(err)

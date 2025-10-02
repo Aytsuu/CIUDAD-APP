@@ -2,7 +2,7 @@ import { api2 } from "@/api/api";
 
 export const handleDeleteAntigen = async (id: number, category: string) => {
   try {
-    const endpoint = category === "Vaccine" ? `inventory/vac_list/${id}/` : `inventory/imz_supplies/${id}/`;
+    const endpoint = category === "vaccine" ? `inventory/vac_list/${id}/` : `inventory/imz_supplies/${id}/`;
 
     const res = await api2.delete(endpoint);
     return res.data;

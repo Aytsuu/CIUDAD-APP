@@ -114,8 +114,11 @@ export interface NonCommunicableDiseaseFormData {
 
 export interface SurveyFormData {
   filledBy: string
+  filledByName?: string // Optional field to store full name for display
   informant: string
+  informantName?: string // Optional field to store full name for display
   checkedBy: string
+  checkedByName?: string // Optional field to store full name for display
   date: Date | undefined
   signature: string
 }

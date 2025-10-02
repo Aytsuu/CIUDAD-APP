@@ -1,6 +1,5 @@
 // In prenatal-indiv-history.tsx - remove mock data and use real API data
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Loader2, Printer } from "lucide-react";

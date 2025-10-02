@@ -69,6 +69,23 @@ class Personal(AbstractModels):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
+    
+class PersonalModification(AbstractModels):
+    pm_id = models.BigAutoField(primary_key=True)
+    pm_lname = models.CharField(max_length=50, null=True)
+    pm_fname = models.CharField(max_length=50, null=True)
+    pm_mname = models.CharField(max_length=50, null=True)
+    pm_suffix = models.CharField(max_length=50, null=True)
+    pm_dob = models.DateField(null=True)
+    pm_sex = models.CharField(max_length=50, null=True)
+    pm_status = models.CharField(max_length=50, null=True)
+    pm_edAttainment = models.CharField(max_length=50, null=True)
+    pm_religion = models.CharField(max_length=50, null=True)
+    pm_contact = models.CharField(max_length=50, null=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
+
+    class Meta:
+        db_table = 'personal_modification'
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
@@ -173,7 +190,7 @@ class FamilyComposition(AbstractModels):
 #     class Meta:
 #         db_table = 'request_registration_composition'
 
-class HealthRelatedDetails(models.Model):
+class HealthRelatedDetails(AbstractModels):
     per_add_id = models.BigAutoField(primary_key=True)
     per_add_bloodType = models.CharField(max_length=5, null=True, blank=True)
     per_add_philhealth_id = models.CharField(max_length=50, null=True, blank=True)
@@ -203,7 +220,7 @@ class Dependents_Under_Five(models.Model):
     class Meta:
         db_table = 'dep_under_five'
 
-class WaterSupply(models.Model):
+class WaterSupply(AbstractModels):
     water_sup_id = models.BigAutoField(primary_key=True)
     water_sup_type = models.CharField(max_length=50)
     water_conn_type = models.CharField(max_length=50, null=True, blank=True)

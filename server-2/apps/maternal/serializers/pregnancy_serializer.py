@@ -118,3 +118,30 @@ class PregnancyPregLossStatusSerializer(serializers.ModelSerializer):
         instance.prenatal_end_date = date.today()
         instance.save()
         return instance
+    
+
+# for pregnancy postpartum completion
+class PregnancyPostpartumCompleteStatusSerializer(serializers.ModelSerializer):
+    pat_id = serializers.CharField(write_only=True, required=True)
+
+    class Meta: 
+        model = Pregnancy
+        fields = ['pat_id', 'pregnancy_id', 'status', 'postpartum_end_date']
+
+    def validate_pat_id(self, value):
+        if not value or value.lower() == 'nan' or value.strip() == '':
+            raise serializers.ValidationError("Patient ID is required")
+        try:
+            Patient.objects.get(pat_id=value.strip())
+            return value.strip()
+        
+        except Patient.DoesNotExist:
+            raise serializers.ValidationError(f'Patient with ID {value} does not exist.')
+        except Exception as e:
+            raise serializers.ValidationError(f'Error validating patient ID {value}: {str(e)}')
+
+    def update(self, instance, validated_data):
+        # Only update status and postpartum_end_date
+        instance.postpartum_end_date = date.today()
+        instance.save()
+        return instance 

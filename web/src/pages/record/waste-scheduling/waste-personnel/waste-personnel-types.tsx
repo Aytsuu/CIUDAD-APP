@@ -8,7 +8,7 @@ export type WasteTruck = {
   truck_is_archive: boolean;
 };
 
-export type PersonnelCategory = "Waste Driver" | "Waste Collector" | "Trucks";
+export type PersonnelCategory = "Watchman" | "Waste Driver" | "Waste Collector" | "Trucks";
 
 export interface PersonnelItem {
   id: string;
@@ -18,6 +18,7 @@ export interface PersonnelItem {
 }
 
 export interface PersonnelData {
+  Watchman: PersonnelItem[];
   "Waste Driver": PersonnelItem[];
   "Waste Collector": PersonnelItem[];
   Trucks?: TruckData[];

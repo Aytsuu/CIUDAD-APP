@@ -10,6 +10,7 @@ import PageLayout from "@/screens/_PageLayout"
 import { router } from "expo-router"
 import { ChevronLeft } from "lucide-react-native"
 import { LoadingState } from "@/components/ui/loading-state"
+import { useAuth } from "@/contexts/AuthContext"
 
 const LayoutWithBack: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => {
   return (
@@ -26,7 +27,14 @@ const LayoutWithBack: React.FC<{ title: string; description: string; children: R
 
 
 export default function SchedulerMain() {
-  const { data: servicesData = [], isLoading: isLoadingServices, error: servicesError } = useGetServices()
+  
+  const { user, hasCheckedAuth } = useAuth(); // Access user and auth status
+  
+    // Determine user role
+    const isAdmin = !!user?.staff; // Admin if staff object exists
+    const isResident = !!user?.resident || !!user?.rp; // Resident if resident or rp exists
+
+    const { data: servicesData = [], isLoading: isLoadingServices, error: servicesError } = useGetServices()
   const { data: schedulersData = [], isLoading: isLoadingSchedulers, error: schedulersError } = useGetScheduler()
   const { data: daysData = [], isLoading: isLoadingDays, error: daysError } = useGetDays()
 
@@ -185,9 +193,11 @@ export default function SchedulerMain() {
         >
       <ScrollView className="flex-1 bg-gray-50 p-4">
         {/* Services Overview */}
+          {isAdmin && (
         <View className="mb-4 p-2">
           {/* Card */}
-          <View className="flex-row bg-white rounded-lg shadow-md overflow-hidden">
+
+  <View className="flex-row bg-white rounded-lg shadow-md overflow-hidden">
             <View className="flex-1 p-4">
               {/* CardHeader */}
               <View className="pb-2">
@@ -226,6 +236,8 @@ export default function SchedulerMain() {
             </View>
           </View>
         </View>
+)}
+
 
         {/* schedule cards grid */}
         <View className="flex-row flex-wrap justify-between"> {/* Use flex-wrap for grid-like layout */}

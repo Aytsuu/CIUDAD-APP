@@ -15,6 +15,8 @@ import { useIndivPatientVaccinationRecords, useFollowupVaccines, useUnvaccinated
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCardsSkeleton } from "@/pages/healthServices/skeleton/vaccinationstatus-skeleton";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
@@ -84,7 +86,7 @@ export default function IndivVaccinationRecords() {
               <AlertCircle className="h-4 w-4 text-yellow-500" />
               <Label className="text-base font-semibold text-yellow-500">No patient selected</Label>
             </div>
-            <p className="text-sm text-gray-700">Please select a patient from the medicine records page first.</p>
+            <p className="text-sm text-gray-700">Please select a patient from the vacciantion records page first.</p>
           </div>
         )}
 
@@ -138,17 +140,20 @@ export default function IndivVaccinationRecords() {
                     onChange={(value) => setfilter(value as filter)}
                   />
                 </div> */}
-            <Button className="w-full sm:w-auto">
-              <Link
-                to="/vaccination-record-form"
-                state={{
-                  mode: "addnewvaccination_record",
-                  params: { patientData }
-                }}
-              >
-                New Vaccination Record
-              </Link>
-            </Button>
+
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+              <Button className="w-full sm:w-auto">
+                <Link
+                  to="/services/vaccination/form"
+                  state={{
+                    mode: "addnewvaccination_record",
+                    params: { patientData }
+                  }}
+                >
+                  New Vaccination Record
+                </Link>
+              </Button>
+            </ProtectedComponentButton>
           </div>
         </div>
 

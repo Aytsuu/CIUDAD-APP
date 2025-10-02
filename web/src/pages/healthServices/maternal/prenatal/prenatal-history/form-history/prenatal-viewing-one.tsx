@@ -74,9 +74,9 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const bodyMeasurement = prenatalForm.body_measurement_details;
   // const vitalSigns = prenatalForm.vital_signs_details;
   const obstetricHistory = prenatalForm.obstetric_history;
-  const medicalHistory = prenatalForm.medical_history || [];
+  // const medicalHistory = prenatalForm.medical_histories || [];
   const previousHospitalizations = prenatalForm.previous_hospitalizations || [];
-  const ttStatus = prenatalForm.tt_statuses || [];
+  console.log(previousHospitalizations)
   const previousPregnancies = prenatalForm.previous_pregnancy;
   const labResults = prenatalForm.laboratory_results || [];
   const checklist = prenatalForm.checklist_data;
@@ -139,7 +139,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
 
   return (
-    <div className="flex max-w-7xl mx-auto m-5 overflow-hidden border border-gray-500">
+    <div className="flex max-w-6xl mx-auto m-5 overflow-hidden border border-gray-500">
       <div className="mx-10 my-5">
         {/* Header */}
         <div>
@@ -198,6 +198,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                 <Label className="mt-4">20-49</Label>
               </div>
             </div>
+            
           </div>
 
           <div className="flex pb-2">
@@ -316,7 +317,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
                   {/* Previous Hospitalization */}
                   <div className="flex">
-                    <Label className="mt-4 mb-1">PREVIOUS HOSPITALIZATION:</Label>
+                    <Label className="mt-4">PREVIOUS HOSPITALIZATION:</Label>
                   </div>
                   <div>
                     <InputLineLonger  
@@ -433,19 +434,24 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
               </div>
             </div>
 
-            {/* tetanus values - mapped for each TT dose */}
-            {["TT1", "TT2", "TT3", "TT4", "TT5"].map((tt) => {
-              const status = ttStatus.find((item: any) => item.tts_status === tt);
-              return (
-                <div key={tt} className="p-2 border border-black">
-                  <p className="text-sm text-center">{status ? status.tts_date_given : ""}</p>
-                </div>
-              );
-            })}
+            {/* tetanus values */}
+            <div className="p-5 border border-black">
+              <p className="text-sm"></p>
+            </div>
             <div className="p-2 border border-black">
-              <p className="text-sm">
-                {ttStatus.some((item: any) => item.tts_status === "TT5") ? "Fully Immunized" : ""}
-              </p>
+              <p className="text-sm"></p>
+            </div>
+            <div className="p-2 border border-black">
+              <p className="text-sm"></p>
+            </div>
+            <div className="p-2 border border-black">
+              <p className="text-sm"></p>
+            </div>
+            <div className="p-2 border border-black">
+              <p className="text-sm"></p>
+            </div>
+            <div className="p-2 border border-black">
+              <p className="text-sm"></p>
             </div>
           </div>
         </div>
@@ -488,17 +494,17 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
               {/* 4anc visits values */}
               <div className="flex text-center items-center justify-center p-3 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_1st_tri || ''}<br /></p>
+                  <p className="text-xs font-semibold">{ancVisit.pfav_1st_tri}<br /></p>
               </div>
               <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_2nd_tri || ''}</p>
+                  <p className="text-xs font-semibold">{ancVisit.pfav_2nd_tri}</p>
               </div>
               <div className="grid grid-cols-2">
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_one || ''}</p>
+                  <p className="text-xs font-semibold">{ancVisit.pfav_3rd_tri_one}</p>
                 </div>
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_two || ''}</p>
+                  <p className="text-xs font-semibold">{ancVisit.pfav_3rd_tri_two}</p>
                 </div>
               </div>
             </div>

@@ -361,7 +361,7 @@ export const useModificationRequests = () => {
 
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
-export const useHouseholdsList = (search: string) => {
+export const useHouseholdsList = (search?: string) => {
   return useQuery({
     queryKey: ["householdsList", search],
     queryFn: () => getHouseholdList(search),

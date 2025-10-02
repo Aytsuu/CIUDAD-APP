@@ -1,6 +1,6 @@
 import BusinessDocumentPage from "@/pages/record/clearances/BusinessPermits";
 import CertificatePage from "@/pages/record/clearances/Certification";
-import ServiceChargePage from "@/pages/record/clearances/ServiceCharge";
+import ViewDocument from "@/pages/record/clearances/viewDocumentation";
 import IssuedCertificates from "@/pages/record/clearances/IssuedCertificates";
 import BusinessPermitDocumentation from "@/pages/record/clearances/BusinessPermitDocumentation";
 
@@ -17,12 +17,12 @@ export const clearances_router = [
         element: <BusinessPermitDocumentation />,
       },
       {
-        path: "certification", 
-        element: <CertificatePage />,
+        path: "ViewDocument/:requestNo",
+        element: <ViewDocument />,
       },
       {
-        path: "servicecharge",
-        element: <ServiceChargePage />,
+        path: "certification", 
+        element: <CertificatePage />,
       },
       {
         path: "issuedcertificates",

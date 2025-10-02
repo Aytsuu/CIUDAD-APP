@@ -381,8 +381,8 @@ export default function LastPage({
     vitalSignForm.reset({
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
-      wt: vitalSignWithAge.wt,
-      ht: vitalSignWithAge.ht,
+      wt: undefined,
+      ht: undefined,
       temp: undefined,
       follov_description: "",
       followUpVisit: "",
@@ -529,7 +529,6 @@ export default function LastPage({
             </div>
           )}
 
-          {shouldShowGeneralHealthSections && (
             <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
               <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
                 <h3 className="text-lg font-semibold text-gray-900">Anemic and Birth Weight Status</h3>
@@ -579,7 +578,7 @@ export default function LastPage({
                 )}
               </div>
             </div>
-          )}
+          
 
           {/* FIXED: Nutritional Status Calculator - now shows when data is available */}
           {shouldShowNutritionalStatusCalculator && (

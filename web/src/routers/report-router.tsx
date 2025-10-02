@@ -1,6 +1,6 @@
 import WeeklyAR from '@/pages/record/report/weekly/WeeklyAR';
 import IRRecords from '@/pages/record/report/incident/IRRecords';
-import IRViewDetails from '@/pages/record/report/incident/IRViewDetails';
+import IRFormLayout from '@/pages/record/report/incident/IRFormLayout';
 import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
 import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
 import ReportDocument from '@/pages/record/report/ReportDocument';
@@ -26,8 +26,8 @@ export const report_router = [
     element: <WeeklyAR/>
   },
   {
-    path: '/report/incident/view',
-    element: <IRViewDetails/>
+    path: '/report/incident/form',
+    element: <IRFormLayout/>
   },
   {
     path: '/report/acknowledgement/form',

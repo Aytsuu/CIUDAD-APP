@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function ResidentAccepted() {
   const [searchQuery, setSearchQuery] = useState("");
   const {user} = useAuth()
-  const {data: acceptedRequest = [], isLoading: isDataLoading} = useGetGarbageAcceptedResident(user?.rp || '')
+  const {data: acceptedRequest = [], isLoading: isDataLoading} = useGetGarbageAcceptedResident(user?.resident?.rp_id)
   const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, false)
 
   console.log('Accepted:', acceptedRequest)

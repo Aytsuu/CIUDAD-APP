@@ -15,7 +15,7 @@ class PostQueries:
   
   def position(self, data):
     response = requests.post(
-      f"{self.client}/administration/position/bulk/create/",
+      f"{self.client}/administration/position/",
       json=data
     )
     return response

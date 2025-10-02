@@ -108,12 +108,12 @@ export const useLatestPatientPrenatalRecord = (patientId: string) => {
 }
 
 // for getPrenatalPatientMedHistory
-export const usePrenatalPatientMedHistory = (patientId: string) => {
+export const usePrenatalPatientMedHistory = (patientId: string, search?: string) => {
 	return useQuery({
-		queryKey: ["prenatalPatientMedHistory", patientId],
-		queryFn: () => getPrenatalPatientMedHistory(patientId),
+		queryKey: ["prenatalPatientMedHistory", patientId, search],
+		queryFn: () => getPrenatalPatientMedHistory(patientId,search),
 		enabled: !!patientId,
-		staleTime: 30 * 1,
+		staleTime: 30 * 1000, // Fixed: 30 seconds (was 30 * 1 = 30ms)
 		retry: 2,
 		// refetchOnWindowFocus: true,
 	})

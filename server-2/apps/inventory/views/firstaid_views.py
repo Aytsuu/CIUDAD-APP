@@ -17,12 +17,26 @@ from calendar import monthrange
  
       
 class FirstAidListView(generics.ListCreateAPIView):
-    serializer_class=FirstAidListSerializers
-    queryset=FirstAidList.objects.all()
+    serializer_class = FirstAidListSerializers
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = FirstAidList.objects.all()
+        
+        # Add search functionality
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(fa_name__icontains=search_query) |
+                models.Q(fa_id__icontains=search_query) |
+                models.Q(cat__cat_name__icontains=search_query)
+            )
+        
+        return queryset.order_by('fa_name')
+    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-     
 class FirstAidListUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class=FirstAidListSerializers
     queryset = FirstAidList.objects.all()
@@ -60,8 +74,6 @@ class FirstAidInventoryView(generics.ListAPIView):  # Fixed typo: VIew → View
         # Filter out FirstAidInventory entries where the related Inventory is archived
         queryset = FirstAidInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
-
-
 
 class FirstAidStockTableView(APIView):
     """
@@ -506,9 +518,7 @@ class FirstAidArchiveInventoryView(APIView):
             staff=None  # None for system action
         )
 
-
 # ===========================TRANSACTION===================================
-
 class FirstAidTransactionView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -519,21 +529,21 @@ class FirstAidTransactionView(APIView):
             page = int(request.GET.get('page', 1))
             page_size = int(request.GET.get('page_size', 10))
             
-            # Get first aid transactions with related data
+            # Get first aid transactions with related data - FIXED staff relationship
             transactions = FirstAidTransactions.objects.select_related(
                 'finv_id__fa_id', 
                 'finv_id__inv_id',
-                'staff'
+                'staff__rp__per'  # Add this to get the personal info
             ).all()
             
-            # Apply search filter if provided
+            # Apply search filter if provided - UPDATED search fields
             if search_query:
                 transactions = transactions.filter(
                     Q(finv_id__fa_id__fa_name__icontains=search_query) |
                     Q(finv_id__inv_id__inv_id__icontains=search_query) |
                     Q(fat_action__icontains=search_query) |
-                    Q(staff__first_name__icontains=search_query) |
-                    Q(staff__last_name__icontains=search_query)
+                    Q(staff__rp__per__per_fname__icontains=search_query) |  # Updated
+                    Q(staff__rp__per__per_lname__icontains=search_query)    # Updated
                 )
             
             # Format the data for response
@@ -546,12 +556,13 @@ class FirstAidTransactionView(APIView):
                 inventory = firstaid_inventory.inv_id if firstaid_inventory else None
                 staff = transaction.staff
                 
-                # Format staff name
-                staff_name = "Manage by System"
-                if staff:
-                    staff_name = f"{staff.first_name or ''} {staff.last_name or ''}".strip()
+                # Format staff name - FIXED (consistent with other views)
+                staff_name = "Managed by System"
+                if staff and staff.rp and staff.rp.per:
+                    personal = staff.rp.per
+                    staff_name = f"{personal.per_fname or ''} {personal.per_lname or ''}".strip()
                     if not staff_name:
-                        staff_name = staff.username
+                        staff_name = f"Staff {staff.staff_id}"  # Fallback to staff ID
                 
                 item_data = {
                     'fat_id': transaction.fat_id,
@@ -589,7 +600,6 @@ class FirstAidTransactionView(APIView):
                 'success': False,
                 'error': f'Error fetching first aid transactions: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
             
             
 # ===========================FIRST AID ARCHIVED TABLE==============================

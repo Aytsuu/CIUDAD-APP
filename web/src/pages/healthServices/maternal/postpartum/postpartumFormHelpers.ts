@@ -13,9 +13,9 @@ export const transformPostpartumFormData = (
 
     // Basic postpartum record data
     ppr_lochial_discharges: getLochialDischargeName(formData.postpartumInfo?.lochialDischarges) || "Lochia Rubra",
-    ppr_vit_a_date_given: formData.postpartumInfo?.vitASupplement || "",
+    // ppr_vit_a_date_given: formData.postpartumInfo?.vitASupplement || "",
     ppr_num_of_pads: formData.postpartumInfo?.noOfPadPerDay || 0,
-    ppr_mebendazole_date_given: formData.postpartumInfo?.mebendazole || "",
+    // ppr_mebendazole_date_given: formData.postpartumInfo?.mebendazole || "",
     ppr_date_of_bf: formData.postpartumInfo?.dateBfInitiated || "",
     ppr_time_of_bf: formData.postpartumInfo?.timeBfInitiated || "",
 
@@ -80,7 +80,7 @@ const getOutcomeName = (outcomeId: string): string => {
 export const validatePostpartumFormData = (
   formData: z.infer<typeof PostPartumSchema>, 
   selectedPatientId: string,
-  // postpartumCareData: any[],
+  postpartumCareData: any[],
 ): string[] => {
   const errors: string[] = []
 
@@ -112,31 +112,31 @@ export const validatePostpartumFormData = (
     errors.push("Place of delivery is required")
   }
 
-  // if (!formData.postpartumInfo?.attendedBy) {
-  //   errors.push("Attended by field is required")
-  // }
+  if (!formData.postpartumInfo?.attendedBy) {
+    errors.push("Attended by field is required")
+  }
 
   if (!formData.postpartumInfo?.outcome || formData.postpartumInfo?.outcome === "0") {
     errors.push("Pregnancy outcome is required")
   }
 
   // Validate that at least one assessment has been added
-  // if (postpartumCareData.length === 0) {
-  //   errors.push("At least one postpartum assessment is required")
-  // }
+  if (postpartumCareData.length === 0) {
+    errors.push("At least one postpartum assessment is required")
+  }
 
   // Validate next visit date
-  // if (!formData.postpartumInfo?.nextVisitDate) {
-  //   errors.push("Next visit date is required")
-  // }
+  if (!formData.postpartumInfo?.nextVisitDate) {
+    errors.push("Next visit date is required")
+  }
 
-  // if (!formData.postpartumInfo?.dateBfInitiated) {
-  //   errors.push("Date breastfeeding initiated is required")
-  // }
+  if (!formData.postpartumInfo?.dateBfInitiated) {
+    errors.push("Date breastfeeding initiated is required")
+  }
 
-  // if (!formData.postpartumInfo?.timeBfInitiated) {
-  //   errors.push("Time breastfeeding initiated is required")
-  // }
+  if (!formData.postpartumInfo?.timeBfInitiated) {
+    errors.push("Time breastfeeding initiated is required")
+  }
 
   return errors
 }

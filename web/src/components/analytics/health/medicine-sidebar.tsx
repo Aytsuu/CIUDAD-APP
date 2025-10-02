@@ -4,7 +4,7 @@ import { format } from "date-fns"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries"
 import { useState } from "react"
-
+import { Link } from "react-router"
 
 
 const COLORS = [
@@ -27,7 +27,7 @@ export function MedicineDistributionSidebar() {
 
   // Transform and sort data
   const allMedicines = data?.medicine_counts
-    ? Object.entries(data.medicine_counts)
+    ? Object.entries(data.medicine_counts as Record<string, number>)
         .filter(([name]) => name !== "null")
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count) // Sort by count descending
@@ -97,6 +97,7 @@ export function MedicineDistributionSidebar() {
                 const percentage = ((medicine.count / totalDoses) * 100).toFixed(1)
 
                 return (
+                 <Link to="/inventory/stocks">
                   <div
                     key={medicine.name}
                     className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors"
@@ -123,6 +124,7 @@ export function MedicineDistributionSidebar() {
                       <span className="text-xs text-muted-foreground w-10 text-right">{percentage}%</span>
                     </div>
                   </div>
+                 </Link>
                 )
               })}
             </div>

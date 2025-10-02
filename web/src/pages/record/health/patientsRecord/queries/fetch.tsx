@@ -6,11 +6,14 @@ import {
 	getAllFollowUpVisits, 
 	getAllTransientAddresses,
 	getChildData,
-	checkPatientExistsGet
+	checkPatientExistsGet,
+	getChildren
  } from "../restful-api/get";
 import { AppointmentFilters } from "../restful-api/get";
-
 import { PatientFilters } from "../restful-api/get";
+
+
+
 
 export const useChildData = (id: any,) => {
 	return useQuery({
@@ -118,4 +121,14 @@ export const useCheckPatientExists = (rp_id: string) => {
 		staleTime: 300000, // 5 minutes
 	})
 }
+
+export const useGetChildren = (patientId: string) => {
+	return useQuery({
+		queryKey: ['getchildren', patientId],
+		queryFn: () => getChildren(patientId),
+		staleTime: 300000, // 5 minutes
+		enabled: !!patientId,
+	})
+}
+
 

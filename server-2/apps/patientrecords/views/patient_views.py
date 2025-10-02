@@ -11,6 +11,7 @@ from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from ..serializers.patients_serializers import *
+from ..serializers.followvisits_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 from ...pagination import StandardResultsPagination
 from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
@@ -523,8 +524,7 @@ class UpdateTransientView(generics.RetrieveUpdateAPIView):
         except NotFound:
             return Response({"error": "Transient patient not found."}, status=status.HTTP_404_NOT_FOUND)
 
-
-
+# MOBILE VIEWS KURT
 @api_view(['GET'])
 def get_patient_by_resident_id(request, rp_id):
     try:
