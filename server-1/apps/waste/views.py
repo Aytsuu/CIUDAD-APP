@@ -332,12 +332,42 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
 
 class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
+    
     def get_queryset(self):
-        queryset = WasteReport.objects.all()
+        queryset = WasteReport.objects.select_related(
+            'sitio_id',
+            'rp_id__per',
+            'staff_id'
+        ).prefetch_related(
+            'waste_report_file',
+            'waste_report_rslv_file'
+        ).all()
+        
+        # Get filter parameters from request
+        search_query = self.request.query_params.get('search', '')
+        report_matter = self.request.query_params.get('report_matter', '')
         rp_id = self.request.query_params.get('rp_id')
         
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(rep_id__icontains=search_query) |
+                Q(rep_matter__icontains=search_query) |
+                Q(rep_location__icontains=search_query) |
+                Q(rep_violator__icontains=search_query) |
+                Q(rep_contact__icontains=search_query) |
+                Q(rep_add_details__icontains=search_query) |
+                Q(sitio_id__sitio_name__icontains=search_query) |
+                Q(rp_id__per__per_lname__icontains=search_query) |
+                Q(rp_id__per__per_fname__icontains=search_query)
+            )
+        
+        # Apply report matter filter
+        if report_matter and report_matter != "0":
+            queryset = queryset.filter(rep_matter=report_matter)
+        
+        # Apply resident profile filter if provided
         if rp_id:
-            # Filter by rp_id if provided
             queryset = queryset.filter(rp_id=rp_id)
         
         return queryset
