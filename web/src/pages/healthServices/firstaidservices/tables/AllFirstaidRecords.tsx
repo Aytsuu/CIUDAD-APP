@@ -196,7 +196,7 @@ export default function AllFirstAidRecords() {
         <div className="flex justify-center gap-2">
           <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
             <Link
-              to="/indiv-firstaid-records"
+              to="/services/firstaid/records"
               state={{
                 params: {
                   patientData: {

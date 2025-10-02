@@ -8,12 +8,12 @@ import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useFirstAidRecords } from "./queries/fetchQueries";
+import { useFirstAidRecords } from "./queries/fetch";
 
 export default function MonthlyFirstAidRecords() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10); 
   const [currentPage, setCurrentPage] = useState(1);
   const [yearFilter] = useState<string>("all");
 
@@ -131,7 +131,7 @@ export default function MonthlyFirstAidRecords() {
                           month_name: monthName,
                         }}
                         navigateTo={{
-                          path: "/monthly-firstaid-details",
+                          path: "/reports/monthly-firstaid/records",
                           state: {
                             month: record.month,
                             monthName: monthName,

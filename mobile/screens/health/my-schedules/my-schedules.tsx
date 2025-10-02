@@ -11,15 +11,15 @@ import { LoadingState } from "@/components/ui/loading-state"
 
 type ScheduleRecord = {
   id: number
-  patient: {
-    firstName: string
-    lastName: string
-    middleName: string
-    gender: string
-    age: number
-    ageTime: string
-    patientId: string
-  }
+  // patient: {
+  //   firstName: string
+  //   lastName: string
+  //   middleName: string
+  //   gender: string
+  //   age: number
+  //   ageTime: string
+  //   patientId: string
+  // }
   scheduledDate: string
   purpose: string
   status: "Pending" | "Completed" | "Missed"
@@ -138,7 +138,6 @@ const AppointmentCard: React.FC<{
                 <Text className="font-semibold text-lg text-gray-900">
                   Appointment: {appointment.id}
                 </Text>
-                <Text className="text-gray-500 text-sm">ID: {appointment.patient.patientId}</Text>
               </View>
             </View>
           </View>
@@ -168,12 +167,12 @@ const AppointmentCard: React.FC<{
             Patient Type: <Text className="font-medium text-gray-900">{appointment.type}</Text>
           </Text>
         </View> */}
-        <View className="flex-row items-center">
+        {/* <View className="flex-row items-center">
           <MapPin size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Location: <Text className="font-medium text-gray-900">{appointment.sitio || "N/A"}</Text>
           </Text>
-        </View>
+        </View> */}
       </View>
     </TouchableOpacity>
   )
@@ -181,7 +180,7 @@ const AppointmentCard: React.FC<{
 
 export default function MyAppointmentsScreen() {
   const { user } = useAuth()
-  const rp_id = user?.resident?.rp_id
+  const rp_id = user?.rp;
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("pending")
@@ -205,72 +204,61 @@ export default function MyAppointmentsScreen() {
     return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
   }
 
-  // Transform API data to match ScheduleRecord type (for logged-in user only)
   const userAppointments = useMemo(() => {
-    if (!appointments || appointments.length === 0) {
-      console.warn("No appointments data")
-      return []
-    }
+  if (!appointments || Object.keys(appointments).length === 0) {
+    console.warn("No appointments data")
+    return []
+  }
 
-    // Calculate age from user's DOB (assume user.resident has per_dob or similar; adjust as needed)
-    const calculateAge = (dob: string) => {
-      if (!dob) {
-        console.warn("No DOB provided for age calculation")
-        return { age: 0, ageTime: "yrs" }
-      }
-      try {
-        const birthDate = new Date(dob)
-        const today = new Date()
-        let age = today.getFullYear() - birthDate.getFullYear()
-        const monthDiff = today.getMonth() - birthDate.getMonth()
+  console.log("Raw appointments data:", appointments)
 
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          age--
-        }
-        console.log(`Calculated age for DOB ${dob}: ${age} yrs`)
-        return { age: Math.max(0, age), ageTime: "yrs" }
-      } catch (e) {
-        console.error("Error calculating age:", e, { dob })
-        return { age: 0, ageTime: "yrs" }
-      }
-    }
+  const transformed: ScheduleRecord[] = []
 
-    const userDob = user?.resident?.per_dob || user?.resident?.dob // Adjust field name as per your user object
-    const ageInfo = calculateAge(userDob)
-
-    const transformed = appointments.map((visit: any) => {
-      console.log("Processing visit:", visit)
+  // Process follow-up appointments
+  if (appointments.follow_up_appointments && appointments.follow_up_appointments.length > 0) {
+    appointments.follow_up_appointments.forEach((visit: any) => {
       try {
         const record: ScheduleRecord = {
-          id: visit.followv_id || 0,
-          patient: {
-            firstName: user?.resident?.per_fname || user?.resident?.firstName || "Unknown",
-            lastName: user?.resident?.per_lname || user?.resident?.lastName || "Unknown",
-            middleName: user?.resident?.per_mname || user?.resident?.middleName || "",
-            gender: user?.resident?.per_sex || user?.resident?.gender || "Unknown",
-            age: ageInfo.age,
-            ageTime: ageInfo.ageTime,
-            patientId: rp_id || "", // Use rp_id as patientId for consistency
-          },
+          id: visit.followv_id || visit.id || 0,
           scheduledDate: visit.followv_date || "",
           purpose: visit.followv_description || "Follow-up Visit",
           status: (visit.followv_status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
-          sitio: "", // Default; response lacks address—fetch separately if needed
-          type: "Resident", // Assuming resident user
+          sitio: "", // Default; response lacks address
+          type: "Resident",
           patrecType: "Follow-up",
         }
-
-        console.log("Transformed record:", record)
-        return record
+        console.log("Transformed follow-up record:", record)
+        transformed.push(record)
       } catch (error) {
-        console.error("Error transforming visit data:", error, visit)
-        return null
+        console.error("Error transforming follow-up visit data:", error, visit)
       }
-    }).filter(Boolean)
+    })
+  }
 
-    console.log("Transformed user appointments:", transformed)
-    return transformed
-  }, [appointments, rp_id, user])
+  // Process medical consultation appointments
+  if (appointments.med_consult_appointments && appointments.med_consult_appointments.length > 0) {
+    appointments.med_consult_appointments.forEach((consult: any) => {
+      try {
+        const record: ScheduleRecord = {
+          id: consult.id || 0,
+          scheduledDate: consult.scheduled_date || "",
+          purpose: consult.chief_complaint || "Medical Consultation",
+          status: (consult.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
+          sitio: "", // Default; response lacks address
+          type: "Resident",
+          patrecType: "Consultation",
+        }
+        console.log("Transformed consultation record:", record)
+        transformed.push(record)
+      } catch (error) {
+        console.error("Error transforming consultation data:", error, consult)
+      }
+    })
+  }
+
+  console.log("All transformed appointments:", transformed)
+  return transformed
+}, [appointments, rp_id, user])
 
   // Filter and sort appointments based on search and active tab
   const filteredAppointments = useMemo(() => {
@@ -319,11 +307,7 @@ export default function MyAppointmentsScreen() {
     setRefreshing(false)
   }, [refetch])
 
-  const handleAppointmentPress = (appointment: ScheduleRecord) => {
-    console.log("View appointment:", { id: appointment.id, patient: appointment.patient.patientId })
-    // Navigate to appointment details or perform action
-  }
-
+ 
   if (isLoading) { return <LoadingState/> }
 
   if (isError) {
@@ -413,10 +397,11 @@ export default function MyAppointmentsScreen() {
                 <AppointmentCard
                   appointment={item}
                   actualStatus={actualStatus}
-                  onPress={() => handleAppointmentPress(item)}
+                  onPress={() => console.log("")}
                 />
-              )
-            }}
+              ) 
+            }
+          }
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">
                 <Calendar size={48} color="#D1D5DB" />

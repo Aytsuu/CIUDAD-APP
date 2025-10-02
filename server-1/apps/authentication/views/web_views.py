@@ -30,14 +30,14 @@ class SignupView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
-            email = request.data.get('email')
+            email = request.data.get('email', None)
             phone = request.data.get('phone')
             password = request.data.get('password')
             resident_id = request.data.get('resident_id')
             br = request.data.get('br')
- 
+
             # Check if account already exists
-            if Account.objects.filter(email=email).exists():
+            if Account.objects.filter(~Q(email=None) & Q(email=email)).exists():
                 return Response(
                     {'email': 'Account with this email already exists'},
                     status=status.HTTP_400_BAD_REQUEST
@@ -94,7 +94,23 @@ class SignupView(APIView):
                 {'error': 'Account creation failed'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class VerifyWebAccRegistration(APIView):
+    def post(self, request):
+        phone = request.data.get('phone', None)
+        email = request.data.get('email', None)
 
+        if phone:
+            exists = Account.objects.filter(phone=phone).exists()
+            if exists:
+                return Response({"error": "Phone is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            exists = Account.objects.filter(email=email).exists()
+            if exists:
+                return Response({"error": "Email is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        return Response(status=status.HTTP_200_OK)
+    
 # class MobileLoginView(APIView):
 #     permission_classes = [AllowAny]
 

@@ -6,14 +6,12 @@ export type Businesses = {
     bus_id: string;
     bus_name: string;
     bus_gross_sales: string;
-    sitio: string;
-    bus_street: string;
+    bus_location?: string;
     bus_date_of_registration: string;
     bus_date_verified: string;
     respondent: string;
     rp: string;
-    add_id?: string;
-    address?: string; 
+    address?: string; // derived from bus_location
     requestor?: string; 
 }
 

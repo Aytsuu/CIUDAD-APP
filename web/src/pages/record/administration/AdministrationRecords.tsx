@@ -10,11 +10,10 @@ import {
   Plus,
   Users,
   FileDown,
-  Loader2,
   CircleAlert,
 } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
-import { useFeatures, useStaffs } from "./queries/administrationFetchQueries";
+import { useStaffs } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import {
   Select,
@@ -30,6 +29,7 @@ import { useAuth } from "@/context/AuthContext";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SitioManagement from "./SitioManagement";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AdministrationRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -47,8 +47,6 @@ export default function AdministrationRecords() {
     debouncedSearchQuery,
     user?.staff?.staff_type
   );
-  const { data: features } = useFeatures();
-  console.log(features)
 
   const staffList = staffs?.results || [];
   const totalCount = staffs?.count || 0;
@@ -123,14 +121,7 @@ export default function AdministrationRecords() {
                 mainContent={<SitioManagement/>}
               />
 
-              <Link
-                to="role"
-                state={{
-                  params: {
-                    features: features,
-                  },
-                }}
-              >
+              <Link to="role">
                 <Button
                   variant="outline"
                   className="px-4 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
@@ -182,7 +173,7 @@ export default function AdministrationRecords() {
         {/* Loading State */}
         {isLoadingStaffs && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Spinner size="lg" />
             <span className="ml-2 text-gray-600">Loading staffs...</span>
           </div>
         )}
@@ -240,7 +231,7 @@ export default function AdministrationRecords() {
       <div className="flex items-center gap-2 pb-8">
         <CircleAlert size={18} />
         <p className="text-sm">
-          Staff with admin/midwife position cannot be modified.
+          Staff with <span className="font-bold text-blue-500">ADMIN </span>position cannot be modified.
         </p>
       </div>
     </MainLayoutComponent>

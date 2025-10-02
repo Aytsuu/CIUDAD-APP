@@ -23,7 +23,7 @@ export const BudgetPlanStep1Schema = z.object({
     staff_id: z.string().default('')
 })
 
-export const BudgetPlanStep2Schema = z.object({
+export const  BudgetPlanStep2Schema = z.object({
     honorariaOfficials: DataRequirement,
     cashOfficials: DataRequirement,
     midBonusOfficials: DataRequirement,
@@ -46,29 +46,17 @@ export const BudgetPlanStep2Schema = z.object({
     qrfFund: DataRequirement,
     disasterTraining: DataRequirement,
     disasterSupplies: DataRequirement,
+    disasterProg: DataRequirement,
+    gadProg: DataRequirement,
+    seniorProg: DataRequirement,
 });
 
 export const BudgetPlanStep3Schema = z.object({
-    travelingExpenses: DataRequirement,
-    trainingExpenses: DataRequirement,
-    officeExpenses: DataRequirement,
-    accountableExpenses: DataRequirement,
-    medExpenses: DataRequirement,
-    waterExpenses: DataRequirement,
-    electricityExpenses: DataRequirement,
-    telephoneExpenses: DataRequirement,
-    officeMaintenance: DataRequirement,
-    vehicleMaintenance: DataRequirement,
-    fidelityBond: DataRequirement,
-    insuranceExpense: DataRequirement,
-    gadProg: DataRequirement,
-    seniorProg: DataRequirement,
-    juvJustice: DataRequirement,
-    badacProg: DataRequirement,
-    nutritionProg: DataRequirement,
-    aidsProg: DataRequirement,
-    assemblyExpenses: DataRequirement,
-    disasterProg: DataRequirement,
-    capitalOutlays: DataRequirement,
+  dtl_budget_item: z.string().nonempty("This field is required."),
+  dtl_proposed_budget: DataRequirement,
 })
+
+export const BudgetItemsStep3Schema = z.object({
+  items: z.array(BudgetPlanStep3Schema)
+});
 

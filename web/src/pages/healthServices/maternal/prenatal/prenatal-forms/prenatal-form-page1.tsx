@@ -19,6 +19,8 @@ import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { FormField, FormControl, FormItem, FormLabel } from "@/components/ui/form/form"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
+import { AgeCalculation } from "@/helpers/ageCalculator"
+
 // health components
 import { IllnessCombobox } from "../../maternal-components/illness-combobox"
 import { PatientSearch, type Patient } from "@/components/ui/patientSearch"
@@ -64,17 +66,17 @@ const capitalize = (str: string): string => {
 };
 
 // age calculation for dob
-const calculateAge = (dob: string): number => {
-  const birthDate = new Date(dob)
-  const today = new Date()
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const monthDiff = today.getMonth() - birthDate.getMonth()
+// const calculateAge = (dob: string): number => {
+//   const birthDate = new Date(dob)
+//   const today = new Date()
+//   let age = today.getFullYear() - birthDate.getFullYear()
+//   const monthDiff = today.getMonth() - birthDate.getMonth()
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-  return age
-}
+//   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+//     age--
+//   }
+//   return age
+// }
 
 
 export default function PrenatalFormFirstPg({
@@ -457,7 +459,7 @@ export default function PrenatalFormFirstPg({
       setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname || "")
       setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname || "")
       setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname || "")
-      setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob || "").toLocaleString())
+      setValue("motherPersonalInfo.motherAge", AgeCalculation(personalInfo?.per_dob || "").toLocaleString())
       setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob || "")
 
       if (address) {

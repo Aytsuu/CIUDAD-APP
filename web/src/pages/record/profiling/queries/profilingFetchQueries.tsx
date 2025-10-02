@@ -88,16 +88,37 @@ export const usePersonalHistory = (per_id: string) => {
   })
 }
 
+export const usePersonalModification = (per_id?: string) => {
+  return useQuery({
+    queryKey: ['personalModification', per_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get("profiling/personal/modification-list/", {
+          params: {
+            per: per_id
+          }
+        });
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 export const useResidentsList = (
   is_staff: boolean = false,
   exclude_independent: boolean = false,
+  isSearchOnly: boolean = false,
+  search: string = "",
   disable: boolean = false
 ) => {
   return useQuery({
-    queryKey: ["residentsList", is_staff, exclude_independent, disable],
+    queryKey: ["residentsList", search, isSearchOnly, is_staff, exclude_independent, disable],
     queryFn: () => {
       if(disable) return [];
-      return getResidentsList(is_staff, exclude_independent)
+      return getResidentsList(is_staff, exclude_independent, isSearchOnly, search)
     },
     staleTime: 5000,  
   });
@@ -340,10 +361,10 @@ export const useModificationRequests = () => {
 
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
-export const useHouseholdsList = () => {
+export const useHouseholdsList = (search: string) => {
   return useQuery({
-    queryKey: ["householdsList"],
-    queryFn: getHouseholdList,
+    queryKey: ["householdsList", search],
+    queryFn: () => getHouseholdList(search),
     staleTime: 5000,
   });
 };

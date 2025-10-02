@@ -71,7 +71,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     read_only_fields = ['hh_id', 'hh_date_registered']
 
   def create(self, validated_data):
-    return Household.objects.create(
+    household = Household(
       hh_id = self.generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
@@ -79,6 +79,9 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
       rp = validated_data['rp'],
       staff = validated_data['staff']
     )
+
+    household.save()
+    return household
 
   def generate_hh_no(self):
     next_val = Household.objects.count() + 1

@@ -21,7 +21,7 @@ export interface AIAnalysisResponse {
     keyDifferences?: string[];
     similarities?: string[];
     differences?: string[];
-    recommendations: string[];
+    recommendations?: string[];
     riskLevel?: "low" | "medium" | "high";
     complianceStatus?: "compliant" | "needs-review" | "non-compliant";
     confidence?: number;

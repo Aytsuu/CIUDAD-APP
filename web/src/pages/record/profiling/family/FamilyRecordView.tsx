@@ -28,8 +28,10 @@ export default function FamilyRecordView() {
   const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false)
   const [accordionValue, setAccordionValue] = React.useState<string>("general-info")
   const { showLoading, hideLoading } = useLoading()
-  const { user } = useAuth()
-  const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList()
+  const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList(
+    searchQuery
+  )
   const { data: familyData, isLoading: isLoadingFamData } = useFamilyData(params?.fam_id)
   const { data: familyMembers, isLoading: isLoadingFamMembers } = useFamilyMembers(params?.fam_id)
   
@@ -130,6 +132,7 @@ export default function FamilyRecordView() {
                         familyData={familyData}
                         households={householdsList}
                         setIsOpenDialog={setIsOpenEditDialog}
+                        setSearchQuery={setSearchQuery}
                       />
                     }
                     isOpen={isOpenEditDialog}

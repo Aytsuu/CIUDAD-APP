@@ -1,10 +1,11 @@
 // src/services/childHealthAPI.ts - Simplified version using single API call
 
 import { api2 } from "@/api/api";
+import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { localDateFormatter } from "@/helpers/localDateFormatter";
 
 export interface AddRecordArgs {
   submittedData: FormData;
@@ -39,21 +40,23 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         residenceType: submittedData.residenceType,
 
         // Child health record fields
-        ufcNo: submittedData.ufcNo,
-        familyNo: submittedData.familyNo,
-        placeOfDeliveryType: submittedData.placeOfDeliveryType,
-        placeOfDeliveryLocation: submittedData.placeOfDeliveryLocation,
-        motherOccupation: submittedData.motherOccupation,
+        ufc_no: submittedData.ufcNo,
+        family_no: submittedData.familyNo,
+        place_of_delivery_type: submittedData.placeOfDeliveryType,
+        pod_location: submittedData.placeOfDeliveryLocation,
+        mother_occupation: submittedData.motherOccupation,
         type_of_feeding: submittedData.type_of_feeding,
-        fatherOccupation: submittedData.fatherOccupation,
+        father_occupation: submittedData.fatherOccupation,
         birth_order: submittedData.birth_order,
-        dateNewbornScreening: submittedData.dateNewbornScreening,
+        newborn_screening: localDateFormatter(submittedData.dateNewbornScreening),
         landmarks: submittedData.landmarks,
+        nbscreening_result: submittedData.nbscreening_result,
+        newbornInitiatedbf: submittedData.newbornInitiatedbf,
+        selectedStaffId: submittedData.selectedStaffId,
 
         // Child health history
         status: submittedData.status,
         tt_status: submittedData.tt_status,
-        created_at: submittedData.created_at,
 
         // Vital signs and measurements
         vitalSigns: submittedData.vitalSigns,
@@ -72,16 +75,17 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         anemic: submittedData.anemic,
 
         // Transient parent information
-        motherFname: submittedData.motherFname,
-        motherLname: submittedData.motherLname,
-        motherMname: submittedData.motherMname,
-        motherAge: submittedData.motherAge,
-        motherdob: submittedData.motherdob,
-        fatherFname: submittedData.fatherFname,
-        fatherLname: submittedData.fatherLname,
-        fatherMname: submittedData.fatherMname,
-        fatherAge: submittedData.fatherAge,
-        fatherdob: submittedData.fatherdob
+        mother_fname: submittedData.motherFname,
+        mother_lname: submittedData.motherLname,
+        mother_mname: submittedData.motherMname,
+        mother_age: submittedData.motherAge,
+        mother_dob: localDateFormatter(submittedData.motherdob),
+        father_fname: submittedData.fatherFname,
+        father_lname: submittedData.fatherLname,
+        father_mname: submittedData.fatherMname,
+        father_age: submittedData.fatherAge,
+        father_dob: localDateFormatter(submittedData.fatherdob),
+        passed_status: submittedData.passed_status || "recorded"
       },
       staff: staff,
       todaysHistoricalRecord: todaysHistoricalRecord,
@@ -129,42 +133,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
   }
 }
 
-/**
- * React Query mutation hook for child health records
- * This remains the same but now uses the simplified single API call
- */
-// export const useChildHealthRecordMutation = () => {
-//   const navigate = useNavigate();
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: addChildHealthRecord,
-//     onSuccess: (data) => {
-//       // Invalidate relevant queries
-//       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
-//       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
-//       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
-//       queryClient.invalidateQueries({ queryKey: ["medicineInventory"] });
-
-//       // Show success message
-//       toast.success(data.message || "Child health record processed successfully!");
-
-//       // Navigate back
-//       navigate(-1);
-//     },
-//     onError: (error: unknown) => {
-//       console.error("Child health record mutation failed:", error);
-
-//       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
-
-//       toast.error(`Operation Failed: ${errorMessage}`);
-//     }
-//   });
-// };
-
-/**
- * Optional: Helper function to validate form data before submission
- */
 export function validateChildHealthFormData(formData: FormData): string[] {
   const errors: string[] = [];
 
@@ -201,7 +169,6 @@ export function validateChildHealthFormData(formData: FormData): string[] {
   return errors;
 }
 
-
 export const useChildHealthRecordMutation = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -229,8 +196,9 @@ export const useChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
 
-      toast.success(data.message || "Child health record processed successfully!");
+      showSuccessToast("submitted successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {
@@ -238,7 +206,7 @@ export const useChildHealthRecordMutation = () => {
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
 
-      toast.error(`Operation Failed: ${errorMessage}`);
+      showErrorToast(`Operation Failed: ${errorMessage}`);
     }
   });
 };

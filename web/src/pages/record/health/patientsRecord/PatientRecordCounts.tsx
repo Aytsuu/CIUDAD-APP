@@ -1,7 +1,5 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
-
 import { useMedConCount, useChildHealthRecordCount } from "@/pages/record/health/patientsRecord/queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"

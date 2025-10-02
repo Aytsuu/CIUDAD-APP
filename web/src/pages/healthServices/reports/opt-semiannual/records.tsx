@@ -398,7 +398,7 @@ export default function SemiAnnualOPTDetails() {
                             {formatDate(item.date_of_birth)}
                           </td>
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
-                            {item.sex === "Male" ? "M" : item.sex === "Female" ? "F" : ""}
+                            {item.sex}
                           </td>
 
                           {/* 1st Weighing Age - from backend */}

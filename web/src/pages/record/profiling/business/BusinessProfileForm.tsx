@@ -38,6 +38,7 @@ export default function BusinessProfileForm({
   setMediaFiles,
   setActiveVideoId,
   submit,
+  setSearchQuery
 }: {
   addresses?: any[];
   validAddresses?: boolean[];
@@ -57,6 +58,7 @@ export default function BusinessProfileForm({
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>
   submit: () => void,
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>
 }) {
   const watchedValues = form.watch()
   const residentSelected = watchedValues?.rp_id ? true : false;
@@ -136,6 +138,7 @@ export default function BusinessProfileForm({
                         form.clearErrors();
                         form.setValue("rp_id", value)
                       }}
+                      onSearchChange={(value) => setSearchQuery(value)}
                       placeholder="Search and select a registered resident..."
                       emptyMessage={
                         <div className="flex gap-2 justify-center items-center py-2">
@@ -171,6 +174,7 @@ export default function BusinessProfileForm({
                           label="Last Name"
                           placeholder="Enter last name"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true} 
                         />
                       </div>
                       <div className="lg:col-span-1">
@@ -180,6 +184,7 @@ export default function BusinessProfileForm({
                           label="First Name"
                           placeholder="Enter first name"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true}
                         />
                       </div>
                       <div className="lg:col-span-1">
@@ -189,6 +194,7 @@ export default function BusinessProfileForm({
                           label="Middle Name"
                           placeholder="Enter middle name (optional)"
                           readOnly={isReadOnly || residentSelected}
+                          upper={true}
                         />
                       </div>
                       <div>
@@ -197,8 +203,8 @@ export default function BusinessProfileForm({
                           name="respondent.per_sex"
                           label="Sex"
                           options={[
-                            { id: "female", name: "Female" },
-                            { id: "male", name: "Male" },
+                            { id: "female", name: "FEMALE" },
+                            { id: "male", name: "MALE" },
                           ]}
                           readOnly={isReadOnly || residentSelected}
                         />
@@ -258,6 +264,7 @@ export default function BusinessProfileForm({
                 label="Business Name"
                 placeholder="Enter the official business name"
                 readOnly={isReadOnly}
+                upper={true}
               />
               {formType !== Type.Viewing && 
                 <p className="text-xs text-gray-500 mt-1">Use the exact name as registered with DTI or SEC</p>
@@ -297,6 +304,7 @@ export default function BusinessProfileForm({
                 label="Address"
                 placeholder="Sitio, street, building number"
                 readOnly={isReadOnly}
+                upper={true}
               />
               {formType !== Type.Viewing && 
                 <p className="text-xs text-gray-500 mt-1">

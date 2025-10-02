@@ -8,7 +8,7 @@ spay_due_date = models.DateField(default=default_due_date)
 
 
 class ClerkCertificate(models.Model):
-    cr_id = models.BigAutoField(primary_key=True)
+    cr_id = models.CharField(primary_key=True)
     cr_req_request_date = models.DateTimeField(default = datetime.now)
     cr_req_status = models.CharField(max_length=100, default='None')
     cr_req_payment_status = models.CharField(max_length=100, default='None')
@@ -37,6 +37,7 @@ class ClerkCertificate(models.Model):
 
     class Meta:
         db_table = 'certification_request'
+        managed = False
 
 
 class NonResidentCertificateRequest(models.Model):
@@ -75,13 +76,13 @@ class Business(models.Model):
     bus_id = models.BigIntegerField(primary_key=True)
     bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
+    bus_location = models.CharField(max_length=255)
+    bus_status = models.CharField(max_length=50)
     bus_date_of_registration = models.DateField()
+    bus_date_verified = models.DateField()
     staff_id = models.CharField(max_length=50, null=True)
-    add_id = models.CharField(max_length=50)
     rp_id = models.CharField(max_length=50, null=True)
     br_id = models.CharField(max_length=50)
-    bus_date_verified = models.DateField()
-    bus_status = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'business'
@@ -96,7 +97,7 @@ class BusinessPermitRequest(models.Model):
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
     req_amount = models.DecimalField(max_digits=10, decimal_places=2)
     ags_id = models.ForeignKey('treasurer.annual_gross_sales', on_delete=models.CASCADE, db_column='ags_id', related_name='business_permits', null=True)
-    bus_id = models.ForeignKey('Business', on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests', null=True, blank=True)
+    bus_id = models.ForeignKey('profiling.Business', on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests', null=True, blank=True)
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='business_permits', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', related_name='staff_business_permits', null=True)
     rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
@@ -255,6 +256,7 @@ class ServiceChargeRequest(models.Model):
     sr_req_date = models.DateTimeField(default=datetime.now)
     sr_req_status = models.CharField(max_length = 250)
     sr_case_status = models.CharField(max_length = 250)
+    sr_date_marked = models.DateTimeField(null=True, blank = True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
 
@@ -307,13 +309,26 @@ class SummonSchedule(models.Model):
     ss_reason = models.TextField()
     st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True)
     sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True)
+    sr_id = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
 
     class Meta:
         db_table = 'summon_schedule'
+
+
+class SummonSuppDoc(models.Model):
+    ssd_id = models.BigAutoField(primary_key=True)
+    ssd_name = models.CharField(max_length=255)
+    ssd_type = models.CharField(max_length=100)
+    ssd_path = models.CharField(max_length=500)
+    ssd_url = models.CharField(max_length=500)
+    ssd_upload_date = models.DateTimeField(default=datetime.now)
+    ss_id = models.ForeignKey('SummonSchedule', on_delete=models.CASCADE, null=True, db_column="ss_id", related_name="supporting_docs")
+
+    class Meta:
+        db_table = 'summon_supp_doc'
 
 
 
 
 
     
-

@@ -147,11 +147,13 @@ export function AppSidebar() {
   const [activeItem, setActiveItem] = useState<string>("");
 
   const featureValidator = (requiredFeature?: string) => {
-    if(!requiredFeature) return user?.staff?.pos?.toLowerCase() == "admin"
+    if (!requiredFeature) return user?.staff?.pos?.toLowerCase() == "admin";
 
-    return user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) || 
-                      user?.staff?.pos?.toLowerCase() == "admin"
-  }
+    return (
+      user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) ||
+      user?.staff?.pos?.toLowerCase() == "admin"
+    );
+  };
 
   // BARANGAY FEATURES
   const barangayItems: BaseMenuItem[] = [
@@ -159,124 +161,160 @@ export function AppSidebar() {
       title: "Calendar",
       url: "/waste-calendar-scheduling",
     },
-    ...(featureValidator("report") ? [{
-      title: "Report",
-      url: "/",
-      items: [
-        { title: "Incident", url: "/report/incident" },
-        { title: "Acknowledgement", url: "/report/acknowledgement" },
-        {
-          title: "Weekly Accomplishment",
-          url: "/report/weekly-accomplishment",
-        },
-        { title: "Securado", url: "/report/securado" },
-      ],
-    }] : []),
-    ...(featureValidator("complaint") ? [
-      {
-        title: "Complaint",
-        url: "/complaint",
-      }
-    ] : []),
+    ...(featureValidator("report")
+      ? [
+          {
+            title: "Report",
+            url: "/",
+            items: [
+              { title: "Incident", url: "/report/incident" },
+              { title: "Acknowledgement", url: "/report/acknowledgement" },
+              {
+                title: "Weekly Accomplishment",
+                url: "/report/weekly-accomplishment",
+              },
+              // { title: "Securado", url: "/report/securado" },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("complaint")
+      ? [
+          {
+            title: "Complaint",
+            url: "/complaint",
+          },
+        ]
+      : []),
     {
       title: "Team",
       url: "/team",
     },
-    ...(featureValidator("summon & case tracker") ? [{
-      title: "Summon & Case Tracker",
-      url: "/",
-      items: [
-        { title: "Request List", url: "/request-list" },
-        { title: "Summon Calendar", url: "/summon-calendar" },
-        { title: "Cases", url: "/summon-cases" },
-      ],
-    }] : []),
-    ...(featureValidator("gad") ? [{
-      title: "GAD",
-      url: "/",
-      items: [
-        { title: "Budget Tracker", url: "/gad-budget-tracker-main" },
-        { title: "Project Proposal", url: "/gad-project-proposal" },
-        {
-          title: "Annual Development Plan",
-          url: "/gad-annual-development-plan",
-        },
-        { title: "Activity", url: "/gad-activity" },
-      ],
-    }] : []),
-    ...(featureValidator("council") ? [{
-      title: "Council",
-      url: "/",
-      items: [
-        { title: "Council Events", url: "/calendar-page" },
-        { title: "Attendance", url: "/attendance-page" },
-        { title: "Ordinance", url: "/ord-page" },
-        { title: "Resolution", url: "/res-page" },
-        { title: "Minutes of Meeting", url: "/mom-page" },
-        { title: "Document Template", url: "/templates-main" },
-      ],
-    }] : []),
-    ...(featureValidator("finance") ? [{
-      title: "Finance",
-      url: "/",
-      items: [
-        { title: "Budget Plan", url: "/treasurer-budget-plan" },
-        {
-          title: "Income & Expense Tracking",
-          url: "/treasurer-income-expense-main",
-        },
-        {
-          title: "Income & Disbursement",
-          url: "/treasurer-income-and-disbursement",
-        },
-        {
-          title: "Payment Request",
-          url: "/",
-          items: [
-            {
-              title: "Personal & Others",
-              url: "/treasurer-personal-and-others",
-            },
-            { title: "Permit", url: "/treasurer-permit" },
-            { title: "Service Charge", url: "/treasurer-service-charge" },
-            { title: "Rates", url: "/treasurer-rates" },
-          ],
-        },
-        { title: "Receipts", url: "/treasurer-receipts" },
-      ],
-    }] : []),
-    ...(featureValidator("certificate & clearances") ? [{
-      title: "Certificate & Clearances",
-      url: "/",
-      items: [
-        { title: "Certifications", url: "record/clearances/certification" },
-        { title: "Business Permits", url: "record/clearances/businesspermit" },
-        {
-          title: "Issued Certificates",
-          url: "record/clearances/issuedcertificates",
-        },
-      ],
-    }] : []),
-    ...(featureValidator("donation") ? [{
-      title: "Donation",
-      url: "/donation-record",
-    }] : []),
-    ...(featureValidator("waste") ? [{
-      title: "Illegal Dumping Reports",
-      url: "/waste-illegaldumping-report",
-    },
-    {
-      title: "Garbage Pickup Request",
-      url: "/garbage-pickup-request",
-    },
-    {
-      title: "Waste Personnel & Collection Vehicle",
-      url: "/waste-personnel",
-    }] : []),
-    {
-      title: "Announcement",
-      url: "/announcement",
-    },
+    ...(featureValidator("summon & case tracker")
+      ? [
+          {
+            title: "Summon & Case Tracker",
+            url: "/",
+            items: [
+              { title: "Request List", url: "/request-list" },
+              { title: "Summon Calendar", url: "/summon-calendar" },
+              { title: "Cases", url: "/summon-cases" },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("gad")
+      ? [
+          {
+            title: "GAD",
+            url: "/",
+            items: [
+              { title: "Budget Tracker", url: "/gad-budget-tracker-main" },
+              { title: "Project Proposal", url: "/gad-project-proposal" },
+              {
+                title: "Annual Development Plan",
+                url: "/gad-annual-development-plan",
+              },
+              { title: "Activity", url: "/gad-activity" },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("council")
+      ? [
+          {
+            title: "Council",
+            url: "/",
+            items: [
+              { title: "Council Events", url: "/calendar-page" },
+              { title: "Attendance", url: "/attendance-page" },
+              { title: "Ordinance", url: "/ord-page" },
+              { title: "Resolution", url: "/res-page" },
+              { title: "Minutes of Meeting", url: "/mom-page" },
+              { title: "Document Template", url: "/templates-main" },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("finance")
+      ? [
+          {
+            title: "Finance",
+            url: "/",
+            items: [
+              { title: "Budget Plan", url: "/treasurer-budget-plan" },
+              {
+                title: "Income & Expense Tracking",
+                url: "/treasurer-income-expense-main",
+              },
+              {
+                title: "Income & Disbursement",
+                url: "/treasurer-income-and-disbursement",
+              },
+              {
+                title: "Payment Request",
+                url: "/",
+                items: [
+                  {
+                    title: "Personal & Others",
+                    url: "/treasurer-personal-and-others",
+                  },
+                  { title: "Permit", url: "/treasurer-permit" },
+                  { title: "Service Charge", url: "/treasurer-service-charge" },
+                  { title: "Rates", url: "/treasurer-rates" },
+                ],
+              },
+              { title: "Receipts", url: "/treasurer-receipts" },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("certificate & clearances")
+      ? [
+          {
+            title: "Certificate & Clearances",
+            url: "/",
+            items: [
+              {
+                title: "Certifications",
+                url: "record/clearances/certification",
+              },
+              {
+                title: "Business Permits",
+                url: "record/clearances/businesspermit",
+              },
+              {
+                title: "Issued Certificates",
+                url: "record/clearances/issuedcertificates",
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("donation")
+      ? [
+          {
+            title: "Donation",
+            url: "/donation-record",
+          },
+        ]
+      : []),
+    ...(featureValidator("waste")
+      ? [
+          {
+            title: "Illegal Dumping Reports",
+            url: "/waste-illegaldumping-report",
+          },
+          {
+            title: "Garbage Pickup Request",
+            url: "/garbage-pickup-request",
+          },
+          {
+            title: "Waste Personnel & Collection Vehicle",
+            url: "/waste-personnel",
+          },
+        ]
+      : []),
     {
       title: "Activity Log",
       url: "/record/activity-log",
@@ -285,78 +323,58 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    {
-      title: "Announcement",
-      url: "/announcement",
-    },
-
-    { title: "BHW Daily Notes", url: "/bhw/notes" },
-    { title: "Patient Records", url: "/patientrecords" },
-    {
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
+    ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
+    ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
       url: "/",
       items: [
         {
           title: "Child Immunization",
-          url: "/forwarded-records/child-health-immunization"
+          url: "/forwarded-records/child-health-immunization",
         },
-        { title: "Vaccine Waitlist", url: "/forwarded-records/vaccine-waitlist" },
         {
-          title: "Medical Consultaion",
-          url: "/forwarded-records/medical-consultation"
-        }
-      ]
-    },
-
+          title: "Vaccine Waitlist",
+          url: "/forwarded-records/vaccine-waitlist",
+        },
+        {
+          title: "Maternal",
+          url: "/",
+        },
+      ],
+    }] : []),
+    ...(featureValidator("referred patients") ? [{
+      title: "Referred Patients",
+      url: "/forwarded-records/medical-consultation",
+    }] : []),
     {
       title: "Services",
       url: "/",
       items: [
         { title: "Animal Bites", url: "/Animalbite_viewing" },
-        { title: "Medical Consultation ", url: "/allMedRecords" },
+        { title: "Child Health", url: "/services/childhealthrecords" },
+        { title: "Firstaid", url: "/services/firstaid" },
         { title: "Family Planning", url: "/FamPlanning_table" },
         { title: "Maternal", url: "/services/maternalrecords" },
-        { title: "Child Health", url: "/all-child-health-records" },
-        { title: "Vaccination", url: "/VaccinationManagement" },
-        { title: "Medicine", url: "/all-medicine-records" },
-        { title: "Firstaid", url: "/all-firstaid-records" },
-        { title: "Schedules", url: "/services/scheduled/follow-ups" }
+        {
+          title: "Medical Consultation ",
+          url: "/services/medical-consultation",
+        },
+        { title: "Medicine", url: "/services/medicine" },
+        { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
-
-    {
+    ...(featureValidator("inventory") ? [{
       title: "Inventory",
       url: "/",
       items: [
-        { title: "Inventory List", url: "/mainInventoryList" },
-        { title: "Inventory Stocks", url: "/main-inventory" },
+        { title: "Inventory List", url: "/inventory/list" },
+        { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
-    },
-    {
-      title: "Manage Request",
-      url: "/",
-      items: [
-        {
-          title: "Medicine Request",
-          url: "/medicine-request",
-        },
-        { title: "Medical Consultation", url: "/" },
-      ],
-    },
-
-    { title: "Service Scheduler", url: "/scheduler" },
-    { title: "Reports", url: "/healthcare-reports" },
-    {
-      title: "Manage",
-      url: "/",
-      items: [
-        {
-          title: "Age Group",
-          url: "/age-group",
-        },
-        { title: "Medical Consultation", url: "/" },
-      ],
-    },
+    }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
+    ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
   const items: BaseMenuItem[] = [
@@ -364,35 +382,51 @@ export function AppSidebar() {
       title: "Dashboard",
       url: "/dashboard",
     },
-    ...(featureValidator() ? [{
-      title: "Administration",
-      url: "/administration",
-    }] : []),
-    ...(featureValidator("profiling") ? [{
-      title: "Profiling",
-      url: "/",
-      items: [
-        { title: "All", url: "/profiling/all" },
-        {
-          title: "Resident",
-          url: "/profiling/resident",
-          items: [
-            { title: "Family", url: "/profiling/family" },
-            { title: "Household", url: "/profiling/household" },
-          ],
-        },
-        { title: "Voters", url: "/profiling/voters" },
-        {
-          title: "Business",
-          url: "/profiling/business/record",
-          items: [
-            {
-              title: "Respondent",
-              url: "/profiling/business/record/respondent",
-            },
-          ],
-        },
-      ],
+    ...(featureValidator()
+      ? [
+          {
+            title: "Administration",
+            url: "/administration",
+          },
+        ]
+      : []),
+    ...(featureValidator("profiling")
+      ? [
+          {
+            title: "Profiling",
+            url: "/",
+            items: [
+              { title: "All", url: "/profiling/all" },
+              {
+                title: "Resident",
+                url: "/profiling/resident",
+                items: [
+                  { title: "Family", url: "/profiling/family" },
+                  { title: "Household", url: "/profiling/household" },
+                ],
+              },
+              ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
+                ? [
+                    { title: "Voters", url: "/profiling/voters" },
+                    {
+                      title: "Business",
+                      url: "/profiling/business/record",
+                      items: [
+                        {
+                          title: "Respondent",
+                          url: "/profiling/business/record/respondent",
+                        },
+                      ],
+                    },
+                  ]
+                : []),
+            ],
+          },
+        ]
+      : []),
+    ...(user?.staff?.pos != "DOCTOR" ? [{
+      title: "Announcement",
+      url: "/announcement",
     }] : []),
     ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
       ? barangayItems

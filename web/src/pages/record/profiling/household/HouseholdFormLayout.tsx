@@ -18,7 +18,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
-import { capitalize } from "@mui/material"
 import { Badge } from "@/components/ui/badge"
 
 export default function HouseholdFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
@@ -30,6 +29,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<any[]>([])
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const defaultValues = generateDefaultValues(householdFormSchema)
   const form = useForm<z.infer<typeof householdFormSchema>>({
@@ -38,7 +38,13 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   })
 
   const { mutateAsync: addHousehold } = useAddHousehold()
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
+    false,
+    false,
+    true,
+    searchQuery,
+    false
+  )
   const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList()
   const formattedAddresses = formatAddresses(addresses) || []
   const formattedResidents = formatResidents(residentsList) || []
@@ -104,7 +110,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
     const houseInfo = tab_params?.form.getValues("houseSchema.info");
     append({
       ...houseInfo,
-      nhts: capitalize(houseInfo.nhts)
+      nhts: houseInfo.nhts
     })
     tab_params?.form.resetField("houseSchema.info")
   }
@@ -186,8 +192,8 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                         name="houseSchema.info.nhts"
                         label="Select NHTS status"
                         options={[
-                          { id: "no", name: "No - Not an NHTS household" },
-                          { id: "yes", name: "Yes - NHTS household" },
+                          { id: "no", name: "NO" },
+                          { id: "yes", name: "YES" },
                         ]}
                         readOnly={false}
                       />
@@ -232,9 +238,10 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
 
                     return (
                       <Card className="flex justify-between items-center py-2 px-3">
-                        <div className="flex gap-4">
-                          <div>House {index + 1}</div>
-                          <p>Sitio {capitalize(sitio)}, {street}</p>
+                        <div className="flex gap-3">
+                          <div>HOUSE {index + 1}</div>
+                          -
+                          <p>SITIO {sitio}, {street}</p>
                           <Badge>{house.nhts == "yes" ? "NHTS" : "Not an NHTS"}</Badge>
                         </div>
                         <X 
@@ -298,6 +305,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                 invalidHouseHead={invalidHouseHead}
                 form={form}
                 onSubmit={handleSubmit}
+                setSearchQuery={setSearchQuery}
               /> 
             </form>
           </Form>

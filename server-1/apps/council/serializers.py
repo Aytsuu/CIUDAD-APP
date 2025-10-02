@@ -394,10 +394,10 @@ class OrdinanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ordinance
         fields = ['ord_num', 'ord_title', 'ord_date_created', 'ord_category',
-                  'ord_details', 'ord_year', 'ord_is_archive', 'staff', 'of_id', 'file',
+                  'ord_details', 'ord_year', 'ord_is_archive', 'ord_repealed', 'staff', 'of_id', 'file',
                   'ord_parent', 'ord_is_ammend', 'ord_ammend_ver']
         extra_kwargs = {
-            'ord_num': {'required': False},  #
+            'ord_num': {'required': False, 'allow_blank': True},
             'ord_title': {'required': True},
             'ord_date_created': {'required': True},
             'ord_category': {'required': True},
@@ -421,7 +421,7 @@ class OrdinanceSerializer(serializers.ModelSerializer):
         """
         Check that the ordinance number is unique if provided
         """
-        if value and Ordinance.objects.filter(ord_num=value).exists():
+        if value and value.strip() and Ordinance.objects.filter(ord_num=value).exists():
             raise serializers.ValidationError("An ordinance with this number already exists.")
         return value
         

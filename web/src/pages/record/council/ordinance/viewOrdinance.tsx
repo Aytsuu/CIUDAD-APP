@@ -1,20 +1,21 @@
-// import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// /* eslint-disable @typescript-eslint/no-unused-vars */
-// import { Button } from "@/components/ui/button/button";
-// import { Badge } from '@/components/ui/badge';
-// import { Eye, Brain, Loader2 } from 'lucide-react';
-// import { toast } from 'sonner';
-// import { Ordinance, OrdinanceFolder } from './restful-api/OrdinanceGetAPI';
-// // import { OrdinanceAIService, AIAnalysisResponse } from './queries/OrdinanceAIService.ts';
-// import { useState } from 'react';
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+ 
+import { Button } from "@/components/ui/button/button";
+import { Badge } from '@/components/ui/badge';
+import { Eye, Brain, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Ordinance, OrdinanceFolder } from './restful-api/OrdinanceGetAPI';
+// import { OrdinanceAIService, AIAnalysisResponse } from './queries/OrdinanceAIService.ts';
+import { useMemo, useState } from 'react';
+import { huggingFaceAIService, AIAnalysisResponse } from './services/HuggingFaceAIService';
 
-// interface ViewOrdinanceProps {
-//     folder: OrdinanceFolder | null;
-//     isOpen: boolean;
-//     onOpenChange: (open: boolean) => void;
-//     onAnalysisComplete: (folder: OrdinanceFolder) => void;
-//     // aiService: OrdinanceAIService | null;
-// }
+interface ViewOrdinanceProps {
+    folder: OrdinanceFolder | null;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    onAnalysisComplete: (folder: OrdinanceFolder) => void;
+    // aiService: OrdinanceAIService | null;
+}
 
 function ViewOrdinance(
 //     { 
@@ -102,37 +103,8 @@ function ViewOrdinance(
     //     }
     // };
 
-    // // Function to handle AI analysis for amendments within folders
-    // const handleAmendmentAIAnalysis = async (amendment: Ordinance) => {
-    //     if (!aiService) {
-    //         toast.error("AI service is not available. Please try again later.");
-    //         return;
-    //     }
-
-    //     setIndividualAnalysisLoading(amendment.ord_num);
-    //     try {
-    //         const result = await aiService.analyzeOrdinance({
-    //             ordinance: amendment,
-    //             analysisType: "summary",
-    //             includeFileContent: true
-    //         });
-            
-    //         // Save the analysis result to localStorage
-    //         saveAnalysisToStorage(amendment.ord_num, result);
-            
-    //         toast.success("AI analysis completed successfully!");
-            
-    //         // Open the AI analysis popup to show the results
-    //         const updatedAmendment = { ...amendment, aiAnalysisResult: result };
-    //         setSelectedOrdinanceForAnalysis(updatedAmendment);
-    //         setAiAnalysisOpen(true);
-    //     } catch (error) {
-    //         console.error("Error analyzing amendment:", error);
-    //         toast.error("Failed to analyze amendment. Please try again.");
-    //     } finally {
-    //         setIndividualAnalysisLoading(null);
-    //     }
-    // };
+    // Function to handle AI analysis for amendments within folders
+    // Removed unused handleAmendmentAIAnalysis
 
     // // Function to analyze and compare all amendments within a folder
     // const handleFolderAmendmentComparison = async (folder: OrdinanceFolder) => {
@@ -164,20 +136,27 @@ function ViewOrdinance(
     //         // Use the AI service to compare multiple ordinances (base + amendments)
     //         const comparisonResult = await aiService.compareMultipleOrdinances(allOrdinances);
             
-    //         // Create a custom analysis result for the folder comparison
-    //         const folderComparisonResult: AIAnalysisResponse = {
-    //             ...comparisonResult,
-    //             summary: `Amendment Comparison Analysis for ${folder.baseOrdinance.ord_title}\n\n${comparisonResult.summary}`,
-    //             metadata: {
-    //                 ...comparisonResult.metadata,
-    //                 ordinanceCount: allOrdinances.length,
-    //                 categories: [...new Set(allOrdinances.map(ord => ord.ord_category))],
-    //                 yearRange: {
-    //                     min: Math.min(...allOrdinances.map(ord => ord.ord_year)),
-    //                     max: Math.max(...allOrdinances.map(ord => ord.ord_year))
-    //                 }
-    //             }
-    //         };
+            // Create a custom analysis result for the folder comparison
+            const folderComparisonResult: AIAnalysisResponse = {
+                summary: `Amendment Comparison Analysis for ${folder.baseOrdinance.ord_title}`,
+                keyPoints: [],
+                keyDifferences: comparisonResult.differences,
+                similarities: comparisonResult.similarities,
+                differences: comparisonResult.differences,
+                // recommendations removed per requirements
+                similarityScore: comparisonResult.similarityScore,
+                analysisType: 'amendment_comparison',
+                timestamp: new Date().toISOString(),
+                analysisTimestamp: new Date().toISOString(),
+                metadata: {
+                    ordinanceCount: allOrdinances.length,
+                    categories: [...new Set(allOrdinances.map(ord => ord.ord_category))],
+                    yearRange: {
+                        min: Math.min(...allOrdinances.map(ord => ord.ord_year)),
+                        max: Math.max(...allOrdinances.map(ord => ord.ord_year))
+                    }
+                }
+            };
             
     //         // Save the comparison result to localStorage for the base ordinance
     //         saveAnalysisToStorage(folder.baseOrdinance.ord_num, folderComparisonResult);
@@ -269,12 +248,17 @@ function ViewOrdinance(
     //                             </div>
     //                         </div>
 
-    //                         {/* Amendments */}
-    //                         {folder.amendments.length > 0 && (
-    //                             <div className="space-y-4">
-    //                                 <div className="flex items-center justify-between border-b pb-2">
-    //                                     <h3 className="text-lg font-semibold text-gray-800">Amendments ({folder.amendments.length})</h3>
-    //                                 </div>
+                            {/* Amendments and Repeals separated */}
+                            {folder.amendments.length > 0 && (() => {
+                                const amendmentItems = folder.amendments.filter(a => Boolean(a.ord_is_ammend));
+                                const repealItems = folder.amendments.filter(a => Boolean(a.ord_repealed) && !a.ord_is_ammend);
+                                return (
+                                <div className="space-y-6">
+                                    {amendmentItems.length > 0 && (
+                                        <>
+                                            <div className="flex items-center justify-between border-b pb-2">
+                                                <h3 className="text-lg font-semibold text-gray-800">Amendments ({amendmentItems.length})</h3>
+                                            </div>
 
     //                                 {/* Amendment Comparison Results */}
     //                                 {folder.amendmentComparisonResult && (
@@ -308,38 +292,24 @@ function ViewOrdinance(
     //                                                 </div>
     //                                             )}
 
-    //                                             {/* Recommendations */}
-    //                                             {folder.amendmentComparisonResult.recommendations.length > 0 && (
-    //                                                 <div className="bg-white rounded p-3 border border-green-100">
-    //                                                     <div className="text-xs font-medium text-green-700 mb-2">Recommendations</div>
-    //                                                     <ul className="space-y-1">
-    //                                                         {folder.amendmentComparisonResult.recommendations.map((recommendation, index) => (
-    //                                                             <li key={index} className="flex items-start gap-2">
-    //                                                                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-    //                                                                 <span className="text-xs text-gray-700">{recommendation}</span>
-    //                                                             </li>
-    //                                                         ))}
-    //                                                     </ul>
-    //                                                 </div>
-    //                                             )}
+                                                {/* Recommendations removed */}
 
-    //                                             {/* Metadata */}
-    //                                             <div className="flex items-center gap-4 text-xs text-gray-600">
-    //                                                 <span>Total Ordinances: {folder.amendmentComparisonResult.metadata.ordinanceCount}</span>
-    //                                                 <span>Years: {folder.amendmentComparisonResult.metadata.yearRange.min} - {folder.amendmentComparisonResult.metadata.yearRange.max}</span>
-    //                                                 <span>Confidence: {Math.round(folder.amendmentComparisonResult.confidence * 100)}%</span>
-    //                                             </div>
-    //                                         </div>
-    //                                     </div>
-    //                                 )}
+                                                {/* Metadata */}
+                                                <div className="flex items-center gap-4 text-xs text-gray-600">
+                                                    <span>Total Ordinances: {folder.amendmentComparisonResult.metadata?.ordinanceCount}</span>
+                                                    <span>Years: {folder.amendmentComparisonResult.metadata?.yearRange?.min} - {folder.amendmentComparisonResult.metadata?.yearRange?.max}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
-    //                                 {folder.amendments.map((amendment, index) => (
-    //                                     <div key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
-    //                                         <div className="flex items-center gap-2 mb-3">
-    //                                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-    //                                             <span className="text-sm font-semibold text-green-700">Amendment {index + 1}</span>
-    //                                             <Badge variant="outline" className="text-xs">Version {amendment.ord_ammend_ver || index + 1}</Badge>
-    //                                         </div>
+                                    {amendmentItems.map((amendment, index) => (
+                                        <div key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span className="text-sm font-semibold text-green-700">Amendment {index + 1}</span>
+                                                <Badge variant="outline" className="text-xs">Version {amendment.ord_ammend_ver || index + 1}</Badge>
+                                            </div>
                                             
     //                                         <div className="space-y-3">
     //                                             {/* Amendment Actions */}
@@ -376,20 +346,79 @@ function ViewOrdinance(
     //                                                 </Button>
     //                                             </div>
                                                 
-    //                                             <div className="text font-medium text-lg">{amendment.ord_title}</div>
-    //                                             <div className="text-xs text-gray-600">ORD: {amendment.ord_num} • {amendment.ord_date_created}</div>
-    //                                             <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-    //                                                 {amendment.ord_details || 'No details available'}
-    //                                             </div>
-    //                                         </div>
-    //                                     </div>
-    //                                 ))}
-    //                             </div>
-    //                         )}
-    //                     </div>
-    //                 </div>
-    //             }
-    //         />
+                                                <div className="text font-medium text-lg">{amendment.ord_title}</div>
+                                                <div className="text-xs text-gray-600">ORD: {amendment.ord_num} • {amendment.ord_date_created}</div>
+                                                <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                                                    {amendment.ord_details || 'No details available'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    </>
+                                    )}
+
+                                    {repealItems.length > 0 && (
+                                        <>
+                                            <div className="flex items-center justify-between border-b pb-2">
+                                                <h3 className="text-lg font-semibold text-gray-800">Repeals ({repealItems.length})</h3>
+                                            </div>
+                                            {repealItems.map((repeal) => (
+                                                <div key={repeal.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                        <span className="text-sm font-semibold text-red-700">Repeal</span>
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleOpenAIAnalysis(repeal)}
+                                                                disabled={!aiService || individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id}
+                                                                className="text-xs px-3 py-1 h-7"
+                                                            >
+                                                                {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id) ? (
+                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                ) : (
+                                                                    <Brain className="h-3 w-3 mr-1" />
+                                                                )}
+                                                                {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === folder.id) ? 'Analyzing...' : 'Analyze'}
+                                                            </Button>
+
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    if (repeal.file && repeal.file.file_url) {
+                                                                        window.open(repeal.file.file_url, '_blank');
+                                                                    } else {
+                                                                        toast.error('No file available to view');
+                                                                    }
+                                                                }}
+                                                                className="text-xs px-3 py-1 h-7"
+                                                            >
+                                                                <Eye className="h-3 w-3 mr-1" />
+                                                                View File
+                                                            </Button>
+                                                        </div>
+
+                                                        <div className="text font-medium text-lg">{repeal.ord_title}</div>
+                                                        <div className="text-xs text-gray-600">ORD: {repeal.ord_num} • {repeal.ord_date_created}</div>
+                                                        <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+                                                            {repeal.ord_details || 'No details available'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+                                </div>
+                                )})()}
+                        </div>
+                    </div>
+                }
+            />
 
     //         {/* AI Analysis Popup Dialog */}
     //         <DialogLayout

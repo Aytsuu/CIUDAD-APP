@@ -130,7 +130,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                       <View className="mt-2 pt-2 border-t border-gray-200">
                         <View className="flex-row items-center">
                           <Text className="text-xs font-medium text-gray-500">Follow-up: </Text>
-                          <Text className={`text-xs px-2 py-1 rounded ${statusColors[followUpStatus]}`}>
+                          <Text className={`text-xs px-2 py-1 rounded`}>
                             {followUpStatus}
                           </Text>
                         </View>

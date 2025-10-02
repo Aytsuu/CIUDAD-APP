@@ -1,8 +1,8 @@
 // childHealthColumns.ts
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ChildHealthRecord } from "../../forms/multi-step-form/types";
+import { useNavigate } from "react-router-dom";
+import ViewButton from "@/components/ui/view-button";import { ChildHealthRecord } from "../../forms/multi-step-form/types";
 
 export const childColumns: ColumnDef<ChildHealthRecord>[] = [
   {
@@ -23,7 +23,7 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
           <div className="flex flex-col w-full">
             <div className="font-medium truncate">{fullName}</div>
             <div className="text-sm text-darkGray">
-              {row.original.sex}, {row.original.age} old
+              {row.original.sex}, {row.original.age} 
             </div>
           </div>
         </div>
@@ -107,20 +107,21 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        <div className="bg-white hover:bg-[#f3f2f2] border text-black px-3 py-1.5 rounded cursor-pointer">
-          <Link
-            to={`/child-health-records`}
-            state={{
-              ChildHealthRecord: row.original,
-              mode: "addnewchildhealthrecord",
-            }}
-          >
-            View{" "}
-          </Link>
-        </div>
-      </div>
-    ),
-  },
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+ 
+      return (
+            <ViewButton
+              onClick={() =>
+              navigate(`/services/childhealthrecords/records`, {
+                state: {
+                ChildHealthRecord: row.original,
+                mode: "addnewchildhealthrecord",
+                },
+              })
+              }
+            />
+      );
+    },
+  }
 ];

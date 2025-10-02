@@ -520,7 +520,6 @@ export default function PostpartumFormFirstPg({
       <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
         <div className="pb-4">
           <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
-          <Label className="text-black text-opacity-50 italic mb-10">Page 1 of 1</Label>
           <h2 className="text-3xl font-bold text-center mt-12">POSTPARTUM RECORD</h2>
         </div>
 

@@ -21,6 +21,7 @@ urlpatterns = [
     path('patients/', PatientListView.as_view(), name='patient-list'),
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
@@ -74,10 +75,9 @@ urlpatterns = [
     # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
-    
+
     # Mobile url
     path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
     path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
-    # path('patient-by-resident/<str:rp_id>/', get_patient_by_resident_id, name='patient-by-resident-id'),
 ]
 

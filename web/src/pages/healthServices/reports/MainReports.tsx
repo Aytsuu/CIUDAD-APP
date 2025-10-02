@@ -32,21 +32,21 @@ export default function HealthcareReports() {
       icon: <Syringe className="w-6 h-6 text-red-600" />,
       bgColor: "bg-gradient-to-br from-red-50 to-purple-50",
       description: "Monthly report of vaccination recipients",
-      link: "/monthly-vaccine-records"
+      link: "/reports/monthly-vaccination"
     },
     {
       title: "Medicine Recipient List",
       icon: <Pill className="w-6 h-6 text-sky-600" />,
       bgColor: "bg-gradient-to-br from-sky-50 to-blue-50",
       description: "Monthly report of medicine recipients",
-      link: "/monthly-medicine-records"
+      link: "/reports/monthly-medicine"
     },
     {
       title: "First Aid Recipient List",
       icon: <FaBandAid className="w-6 h-6 text-red-600" />,
       bgColor: "bg-gradient-to-br from-red-50 to-rose-50",
       description: "Monthly report of first aid recipients",
-      link: "/monthly-firstaid-records"
+      link: "/reports/monthly-firstaid"
     },
     {
       title: "New Children 0-5 Years Old List",
@@ -77,7 +77,7 @@ export default function HealthcareReports() {
       icon: <Box className="w-6 h-6 text-indigo-600" />,
       bgColor: "bg-gradient-to-br from-indigo-50 to-blue-50",
       description: "Monthly report of commodity inventory status",
-      link: "/commodity-inventory-reports"
+      link: "/reports/inventory/monthly-commodity"
     },
     {
       title: "EPI Inventory and Utilization",

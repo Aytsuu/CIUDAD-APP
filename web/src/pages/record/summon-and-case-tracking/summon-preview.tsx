@@ -25,7 +25,7 @@ interface SummonPreviewProps {
 
 export const SummonPreview: React.FC<SummonPreviewProps> = ({
   sr_code,
-  incident_type,
+  // incident_type,
   complainant,
   complainant_address,
   accused,
