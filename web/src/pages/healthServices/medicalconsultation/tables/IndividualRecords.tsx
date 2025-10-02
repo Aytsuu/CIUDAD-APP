@@ -10,7 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { Patient } from "../../restful-api-patient/type";
-import { useConsultationHistory, useFamHistory } from "../queries/fetchQueries";
+import { useConsultationHistory, useFamHistory } from "../queries/fetch";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";

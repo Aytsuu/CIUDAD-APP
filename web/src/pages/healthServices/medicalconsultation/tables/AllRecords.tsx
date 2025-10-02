@@ -7,7 +7,7 @@ import { Loader2, Search, Home, UserCheck, Users, FileInput } from "lucide-react
 import { Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useMedicalRecord } from "../queries/fetchQueries";
+import { useMedicalRecord } from "../queries/fetch";
 import { getAllMedicalRecordsColumns, exportColumns } from "./columns/all_col";
 import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";

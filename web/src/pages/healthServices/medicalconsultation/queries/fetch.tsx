@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getConsultationHistory, getMedicalRecord, getPreviousBMI,getMedConPHHistory,getFamHistory } from "../restful-api/get";
+import { getConsultationHistory,getconfirmedAppointments,getpendingAppointments,getMedicalRecord, getPreviousBMI,getMedConPHHistory,getFamHistory } from "../restful-api/get";
 
 export const useConsultationHistory = (patientId?: string, page?: number, pageSize?: number, searchQuery?: string) => {
   return useQuery<any>({
@@ -46,5 +46,24 @@ export const useFamHistory = (pat_id: string, searchQuery?: string) => {
     staleTime: 1000 * 60 * 5,
     enabled: !!pat_id,
     retry: 3
+  });
+};
+
+
+
+
+export const usePendingAppointments = (page: number = 1, pageSize: number = 10, search: string = "", dateFilter: string = "all") => {
+  return useQuery<any>({
+    queryKey: ["pendingmedicalapp", page, pageSize, search, dateFilter],
+    queryFn: () => getpendingAppointments(page, pageSize, search, dateFilter)
+  });
+};
+
+
+
+export const useConfimedAppointments = (page: number = 1, pageSize: number = 10, search: string = "", dateFilter: string = "all") => {
+  return useQuery<any>({
+    queryKey: ["pendingmedicalapp", page, pageSize, search, dateFilter],
+    queryFn: () => getconfirmedAppointments(page, pageSize, search, dateFilter)
   });
 };

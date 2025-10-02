@@ -8,10 +8,10 @@ import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
-import { medicalAppointmentPendingColumns } from "./columns/pendng"; // You'll need to create these columns
-import { usePendingAppointments } from "./queries/get"; // Adjust import path
+import { medicalAppointmentConfirmedColumns } from "./columns/confirmed-appointments"; // You'll need to create these columns
+import { useConfimedAppointments } from "../queries/fetch"; // Adjust import path
 
-export default function PendingMedicalAppointments() {
+export default function ConfirmedMedicalAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -35,7 +35,7 @@ export default function PendingMedicalAppointments() {
     isLoading,
     error,
     refetch
-  } = usePendingAppointments(
+  } = useConfimedAppointments(
     currentPage,
     pageSize,
     debouncedSearch,
@@ -63,8 +63,8 @@ export default function PendingMedicalAppointments() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pending Medical Appointments</h1>
-          <p className="text-gray-600 mt-1">Manage and review pending consultation requests</p>
+          <h1 className="text-2xl font-bold text-gray-900">Medical Appointments</h1>
+          <p className="text-gray-600 mt-1">Manage and review  consultation requests</p>
         </div>
         <Button className="flex items-center gap-2" asChild>
           <Link to="/services/medical/appointment/form">
@@ -127,7 +127,7 @@ export default function PendingMedicalAppointments() {
             <div>
               <p className="text-sm font-medium text-gray-600">This Week</p>
               <p className="text-2xl font-bold text-gray-900">
-                {appointments.filter(apt => {
+                {appointments.filter((apt :any)=> {
                   const today = new Date();
                   const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
                   return new Date(apt.created_at) >= startOfWeek;
@@ -144,7 +144,7 @@ export default function PendingMedicalAppointments() {
             <div>
               <p className="text-sm font-medium text-gray-600">Today</p>
               <p className="text-2xl font-bold text-gray-900">
-                {appointments.filter(apt => {
+                {appointments.filter((apt:any) => {
                   const today = new Date().toDateString();
                   return new Date(apt.created_at).toDateString() === today;
                 }).length}
@@ -212,7 +212,7 @@ export default function PendingMedicalAppointments() {
             </div>
           ) : (
             <DataTable 
-              columns={medicalAppointmentPendingColumns} 
+              columns={medicalAppointmentConfirmedColumns} 
               data={appointments} 
             />
           )}
