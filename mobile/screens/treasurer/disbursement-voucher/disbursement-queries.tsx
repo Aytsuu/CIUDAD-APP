@@ -1,20 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
-import { getDisbursementVouchers, getDisbursementVoucher, getDisbursementFiles, getStaffList, addDisbursementFiles, archiveDisbursementVoucher, restoreDisbursementVoucher, permanentDeleteDisbursementVoucher, deleteDisbursementFile, restoreDisbursementFile, archiveDisbursementFile } from "./disbursement-requests";
+import { getDisbursementVouchers, getDisbursementVoucherYears, getDisbursementVoucher, getDisbursementFiles, getStaffList, addDisbursementFiles, archiveDisbursementVoucher, restoreDisbursementVoucher, permanentDeleteDisbursementVoucher, deleteDisbursementFile, restoreDisbursementFile, archiveDisbursementFile } from "./disbursement-requests";
 import { DisbursementFileInput, DisbursementVoucher, FileMutationVariables } from "./disbursement-types";
 
-export const useGetDisbursementVouchers = (params = {}, options = {}) => {
-  const { toast } = useToastContext();
-
-  return useQuery({
-    queryKey: ["disbursementVouchers", params],
-    queryFn: () =>
-      getDisbursementVouchers(params).catch((error) => {
-        toast.error(error.message || "Failed to fetch disbursement vouchers");
-        console.error("Error fetching disbursement vouchers:", error);
-        throw error;
-      }),
+export const useGetDisbursementVouchers = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  year?: string,
+  archive?: boolean,
+  options = {}
+) => {
+  return useQuery<{ results: DisbursementVoucher[]; count: number }, Error>({
+    queryKey: ["disbursementVouchers", page, pageSize, searchQuery, year, archive],
+    queryFn: () => getDisbursementVouchers(page, pageSize, searchQuery, year, archive),
     staleTime: 1000 * 60 * 5,
+    ...options,
+  });
+};
+
+export const useGetDisbursementVoucherYears = (options = {}) => {
+  return useQuery<number[], Error>({
+    queryKey: ["disbursementVoucherYears"],
+    queryFn: getDisbursementVoucherYears,
+    staleTime: 1000 * 60 * 30, 
     ...options,
   });
 };
