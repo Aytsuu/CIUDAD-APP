@@ -15,6 +15,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <MyRequest/>
+    return <App/>
 }
  
