@@ -74,7 +74,7 @@ export default () => {
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
           <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
+        </TouchableOpacity> 
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Request</Text>}
       rightAction={<View className="w-10 h-10" />}

@@ -123,7 +123,7 @@ export default function ResidentDetails() {
   const RenderDetails = React.memo(() => (
     <View className="flex-1">
       {/* Profile Header */}
-      <View className="px-5 pt-6 pb-6 border-b border-gray-200">
+      <View className="px-6 pt-6 pb-6 border-b border-gray-200">
         <Text className="text-gray-900 font-semibold text-lg mb-2">
           {fullName}
         </Text>
@@ -132,7 +132,7 @@ export default function ResidentDetails() {
 
       {/* Basic Information */}
       {loadingPersonalInfo ? (
-        <View className="px-5 py-5 border-b border-gray-200">
+        <View className="px-6 py-5 border-b border-gray-200">
           <Text className="text-gray-900 font-medium text-sm mb-4">
             Basic Information
           </Text>
@@ -142,7 +142,7 @@ export default function ResidentDetails() {
           </View>
         </View>
       ) : (
-        <View className="px-5 py-5 border-b border-gray-200">
+        <View className="px-6 py-5 border-b border-gray-200">
           <Text className="text-gray-900 font-medium text-sm mb-4">
             Basic Information
           </Text>
@@ -169,7 +169,7 @@ export default function ResidentDetails() {
       {(personalInfo?.per_contact ||
         (personalInfo?.per_addresses &&
           personalInfo.per_addresses.length > 0)) && (
-        <View className="px-5 py-5 border-b border-gray-200">
+        <View className="px-6 py-5 border-b border-gray-200">
           <Text className="text-gray-900 font-medium text-sm mb-4">
             Contact Information
           </Text>
@@ -228,7 +228,7 @@ export default function ResidentDetails() {
 
       {/* Family Members with Accordion */}
       {members.length > 0 && (
-        <View className="px-5 py-5">
+        <View className="px-6 py-5">
           <Accordion type="single" className="border-0">
             <AccordionItem value="family-members" className="border-0">
               <AccordionTrigger className="py-3">

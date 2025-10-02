@@ -162,7 +162,7 @@ export default function HomeScreen() {
           className="w-10 h-10 rounded-full"
           style={{ backgroundColor: '#f3f4f6' }}
         />
-        <Text className="text-lg text-gray-700 font- mb-2">
+        <Text className="text-md text-gray-700 font- mb-2">
           Hi, {user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname}! 👋
         </Text>
       </View>

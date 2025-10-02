@@ -52,10 +52,10 @@ export const features: FeatureType[] = [
     route: "",
     users:  []
   },
-  {
-    name: "Securado",
-    icon: <Securado width={30} height={30}/>,
-    route: "/(securado)",
-    users: [User.resident]
-  },
+  // {
+  //   name: "Securado",
+  //   icon: <Securado width={30} height={30}/>,
+  //   route: "/(securado)",
+  //   users: [User.resident]
+  // },
 ]
