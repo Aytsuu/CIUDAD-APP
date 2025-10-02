@@ -1,6 +1,6 @@
 from django.utils import timezone
 from .models import ActivityLog
-from apps.administration.models import Feature, Staff
+from apps.administration.models import Staff
 import inspect
 import os
 from rest_framework.response import Response
@@ -9,7 +9,6 @@ def create_activity_log(
     act_type,
     act_description,
     staff,
-    feat_name=None,
     record_id=None,
     **kwargs
 ):
@@ -51,22 +50,8 @@ def create_activity_log(
         act_action = "complete"
     
 
+    # Feature creation removed - no longer posting to feature table
     feature = None
-    if feat_name:
-        feature, created = Feature.objects.get_or_create(
-            feat_name=feat_name,
-            defaults={
-                'feat_category': module_name.title()
-            }
-        )
-    else:
-      
-        feature, created = Feature.objects.get_or_create(
-            feat_name=f'{module_name.title()} Management',
-            defaults={
-                'feat_category': module_name.title()
-            }
-        )
     
  
     try:
@@ -77,7 +62,6 @@ def create_activity_log(
             act_module=module_name,
             act_action=act_action,
             act_record_id=record_id,
-            feat=feature,
             staff=staff,
             **kwargs
         )
