@@ -9,7 +9,7 @@ import { useState } from "react";
 import BudgetPlanHistory from "./budget-plan-history";
 import BudgetPlanSuppDocs from "./budget-plan-suppdocs";
 import PageLayout from "@/screens/_PageLayout";
-import { LoadingModal } from "@/components/ui/loading-modal";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function BudgetPlanView() {
     const router = useRouter();
@@ -19,9 +19,9 @@ export default function BudgetPlanView() {
 
     if (isLoading) {
         return (
-            <SafeAreaView className="flex-1 justify-center items-center">
-                <LoadingModal visible={isLoading}/>
-            </SafeAreaView>
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
         );
     }
 

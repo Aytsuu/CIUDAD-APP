@@ -380,7 +380,7 @@ export default function MinutesOfMeetingMain() {
 
   // Loading state component
   const renderLoadingState = () => (
-    <View className="h-64 justify-center items-center">
+    <View className="flex-1 justify-center items-center">
       <LoadingState/>
     </View>
   )
@@ -390,7 +390,7 @@ export default function MinutesOfMeetingMain() {
     if (totalPages <= 1) return null
 
     return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4 mx-4">
+      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4">
         <TouchableOpacity
           onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
@@ -441,6 +441,7 @@ export default function MinutesOfMeetingMain() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
       headerTitle={<Text className="text-gray-900 text-[13px]">Minutes Of Meeting Records</Text>}
       rightAction={
         <TouchableOpacity onPress={() => setShowSearch(!showSearch)} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
@@ -461,8 +462,8 @@ export default function MinutesOfMeetingMain() {
         )}
 
         {/* Tabs */}
-        <View className="px-6">
-          <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')}>
+        <View className="flex-1 px-6">
+          <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')} className="flex-1">
             <TabsList className="bg-blue-50 flex-row justify-between">
               <TabsTrigger 
                 value="active" 
@@ -497,69 +498,67 @@ export default function MinutesOfMeetingMain() {
             </View>
 
             {/* Active Tab Content */}
-            <TabsContent value="active">
+            <TabsContent value="active" className="flex-1">
               {isLoading && !isRefreshing ? (
                 renderLoadingState()
               ) : totalCount === 0 ? (
                 renderEmptyState()
               ) : (
-                <FlatList
-                  data={momRecords}
-                  renderItem={({ item }) => <RenderMOMCard item={item} />}
-                  keyExtractor={(item) => `mom-${item.mom_id}`}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#00a8f0']}
-                    />
-                  }
-                  contentContainerStyle={{ 
-                    paddingBottom: 500,
-                    paddingTop: 16
-                  }}
-                  ListEmptyComponent={
-                    <Text className="text-center text-gray-500 py-4">
-                      No active meetings found
-                    </Text>
-                  }
-                />
+                <View className="flex-1">
+                  <FlatList
+                    data={momRecords}
+                    renderItem={({ item }) => <RenderMOMCard item={item} />}
+                    keyExtractor={(item) => `mom-${item.mom_id}`}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={isRefreshing}
+                        onRefresh={handleRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingTop: 16,
+                      paddingBottom: 20,
+                      flexGrow: 1
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  {renderPagination()}
+                </View>
               )}
-              {!isLoading && totalCount > 0 && renderPagination()}
             </TabsContent>
 
             {/* Archive Tab Content */}
-            <TabsContent value="archive">
+            <TabsContent value="archive" className="flex-1">
               {isLoading && !isRefreshing ? (
                 renderLoadingState()
               ) : totalCount === 0 ? (
                 renderEmptyState()
               ) : (
-                <FlatList
-                  data={momRecords}
-                  renderItem={({ item }) => <RenderMOMCard item={item} />}
-                  keyExtractor={(item) => `mom-${item.mom_id}`}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#00a8f0']}
-                    />
-                  }
-                  contentContainerStyle={{ 
-                    paddingBottom: 500,
-                    paddingTop: 16
-                  }}
-                  ListEmptyComponent={
-                    <Text className="text-center text-gray-500 py-4">
-                      No archived meetings found
-                    </Text>
-                  }
-                />
+                <View className="flex-1">
+                  <FlatList
+                    data={momRecords}
+                    renderItem={({ item }) => <RenderMOMCard item={item} />}
+                    keyExtractor={(item) => `mom-${item.mom_id}`}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={isRefreshing}
+                        onRefresh={handleRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingTop: 16,
+                      paddingBottom: 20,
+                      flexGrow: 1
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  {renderPagination()}
+                </View>
               )}
-              {!isLoading && totalCount > 0 && renderPagination()}
             </TabsContent>
           </Tabs>
         </View>

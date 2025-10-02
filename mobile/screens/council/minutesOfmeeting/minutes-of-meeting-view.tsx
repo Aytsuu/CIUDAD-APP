@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatAreaOfFocus } from "@/helpers/wordFormatter";
 import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function MinutesOfMeetingView() {
     const router = useRouter();
@@ -24,6 +25,22 @@ export default function MinutesOfMeetingView() {
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
     const [selectedImages, setSelectedImages] = useState<{momsp_url: string, momsp_name: string}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    if(isLoading){
+        return(
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
+        )
+    }
+
+    if(archivePending || deletePending || restorePending){
+        return(
+            <View className="flex-1 justify-center items-center">
+                <LoadingModal visible={archivePending || deletePending || restorePending}/>
+            </View>
+        )
+    }
 
     const handleFileOpen = async (url: string) => {
         if (!url) {
@@ -79,8 +96,6 @@ export default function MinutesOfMeetingView() {
             }
             headerBetweenAction={<Text className="text-[13px]">Minutes of Meeting Record</Text>}
             showExitButton={false}
-            loading={isLoading || archivePending || deletePending || restorePending}
-            loadingMessage={archivePending ? "Archiving meeting..." : deletePending? "Deleting meeting..." : restorePending? "Restoring Meeting": "Loading Details...."}
         >
             {momDetails && (
                 <>
