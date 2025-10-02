@@ -29,12 +29,16 @@ import {
 } from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
 import { showErrorToast } from "@/components/ui/toast" 
 
+// fetch hooks
 import { useLatestPatientPostpartumRecord } from "../queries/maternalFetchQueries"
 import { fetchMedicinesWithStock } from "../../medicineservices/restful-api/fetchAPI"
+import { usePatientTTStatus } from "../queries/maternalFetchQueries";
+import { usePostpartumAssessements } from "../queries/maternalFetchQueries";
 
-import type { Patient } from "@/components/ui/patientSearch"
+import { Patient } from "@/pages/record/health/patientsRecord/patient-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import MedicineDisplay from "@/components/ui/medicine-display"
+import { useAuth } from "@/context/AuthContext";
 
 type PostpartumTableType = {
   date: string;
@@ -74,7 +78,13 @@ export default function PostpartumFormFirstPg({
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
+  // Assessment data management:
+  // - postpartumCareData: Combined view for table display (existing + new)
+  // - existingAssessments: Assessments fetched from database (read-only)
+  // - newAssessments: New assessments added in this session (will be submitted)
   const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([])
+  const [existingAssessments, setExistingAssessments] = useState<PostpartumTableType[]>([])
+  const [newAssessments, setNewAssessments] = useState<PostpartumTableType[]>([])
   const [formErrors, setFormErrors] = useState<string[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -85,11 +95,18 @@ export default function PostpartumFormFirstPg({
 
   const navigate = useNavigate()
 
+  // auth hook for staff information
+  const { user } = useAuth()
+  const staffId = user?.staff?.staff_id || ""
+
   // add hooks
   const addPostpartumMutation = useAddPostpartumRecord()
 
   // fetch hooks
   const { data: latestPostpartumRecord, isLoading: latestPostpartumLoading } = useLatestPatientPostpartumRecord(selectedPatientId)
+  const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId);
+  const { data: postpartumAssessments, isLoading: postpartumAssessmentsLoading } = usePostpartumAssessements(selectedPatientId);
+
   const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
 
   // useEffect to preselect patient if coming from individual record page
@@ -109,24 +126,45 @@ export default function PostpartumFormFirstPg({
   // if latest postpatrum record exists, prefill the form
   useEffect(() => {
     const latestRecord = latestPostpartumRecord?.latest_postpartum_record
+    const patientDetails = latestRecord?.patient_details
+    
+    // Determine if patient is resident - check from selected patient or API response
+    const isResident = patientDetails?.pat_type?.toLowerCase() === "resident" || 
+                      selectedPatient?.pat_type?.toLowerCase() === "resident" ||
+                      (latestPostpartumRecord?.spouse_info?.fc_role === "FATHER") // This indicates family composition structure
 
     if (isFromIndividualRecord && !latestRecord) {
-      const spouse = latestPostpartumRecord?.spouse_info
+      const spouseInfo = latestPostpartumRecord?.spouse_info
 
-      setValue("mothersPersonalInfo.husbandLName", spouse?.spouse_lname)
-      setValue("mothersPersonalInfo.husbandFName", spouse?.spouse_fname)
-      setValue("mothersPersonalInfo.husbandMName", spouse?.spouse_mname)
-      setValue("mothersPersonalInfo.husbandDob", spouse?.spouse_dob)
+      if (isResident && spouseInfo?.spouse) {
+        // For resident patients, spouse info comes from family composition
+        const father = spouseInfo.spouse
+
+        setValue("mothersPersonalInfo.husbandLName", father?.per_lname)
+        setValue("mothersPersonalInfo.husbandFName", father?.per_fname)
+        setValue("mothersPersonalInfo.husbandMName", father?.per_mname)
+        setValue("mothersPersonalInfo.husbandDob", father?.per_dob)
+      } else if (!isResident && spouseInfo) {
+        // For non-resident patients, spouse info comes directly
+        setValue("mothersPersonalInfo.husbandLName", spouseInfo?.spouse_lname)
+        setValue("mothersPersonalInfo.husbandFName", spouseInfo?.spouse_fname)
+        setValue("mothersPersonalInfo.husbandMName", spouseInfo?.spouse_mname)
+        setValue("mothersPersonalInfo.husbandDob", spouseInfo?.spouse_dob)
+      }
     }
 
-    if (isFromIndividualRecord && latestPostpartumRecord && latestPostpartumRecord && !latestPostpartumLoading) {
+    if (isFromIndividualRecord && latestPostpartumRecord && !latestPostpartumLoading) {
       setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
 
       if (latestRecord) {
         const spouse = latestRecord.spouse_info
         const delivery = latestRecord.delivery_records?.[0]
         const visit = latestRecord.follow_up_visits
-
+        
+        
+        const fatherFromFC = patientDetails?.family?.family_heads?.father?.personal_info
+        const hasFatherFromFC = !!fatherFromFC
+        
         setValue("postpartumInfo.lochialDischarges", lochialConversion(latestRecord.ppr_lochial_discharges))
         setValue("postpartumInfo.ironSupplement", latestRecord.ppr_iron_supplement)
         setValue("postpartumInfo.vitASupplement", latestRecord.ppr_vit_a_date_given)
@@ -135,7 +173,14 @@ export default function PostpartumFormFirstPg({
         setValue("postpartumInfo.dateBfInitiated", latestRecord.ppr_date_of_bf)
         setValue("postpartumInfo.timeBfInitiated", latestRecord.ppr_time_of_bf)
 
-        if (spouse) {
+        if (isResident && hasFatherFromFC) {
+          
+          setValue("mothersPersonalInfo.husbandLName", fatherFromFC.per_lname)
+          setValue("mothersPersonalInfo.husbandFName", fatherFromFC.per_fname)
+          setValue("mothersPersonalInfo.husbandMName", fatherFromFC.per_mname || "N/A")
+          setValue("mothersPersonalInfo.husbandDob", fatherFromFC.per_dob)
+
+        } else if (spouse) {
           setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
           setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
           setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
@@ -159,6 +204,61 @@ export default function PostpartumFormFirstPg({
   }, [latestPostpartumRecord, latestPostpartumLoading])
   // end of prefill useEffect
 
+  // tt status fetch - get latest TT status
+  useEffect(() => {
+    const ttStatus = ttStatusData?.tt_status;
+    if (ttStatus && !ttStatusLoading && ttStatus?.length > 0) {
+      // Sort by date to get the most recent TT status
+      const sortedTTStatus = [...ttStatus].sort((a, b) => 
+        new Date(b.tts_date_given).getTime() - new Date(a.tts_date_given).getTime()
+      );
+      const latestTTStatus = sortedTTStatus[0];
+      
+      const ttStatusValue = latestTTStatus.tts_status?.toLowerCase() || "";
+      setValue("postpartumInfo.ttStatus", ttStatusValue);
+    } else {
+      setValue("postpartumInfo.ttStatus", "");
+    }
+  }, [ttStatusData, ttStatusLoading, setValue]);
+
+  // postpartum assessments fetch - populate table data
+  useEffect(() => {
+    if (postpartumAssessments?.postpartum_assessments && !postpartumAssessmentsLoading) {
+      const assessmentsTableData = postpartumAssessments.postpartum_assessments.map((assessment: any) => {
+
+        // Get feeding name from the assessment data
+        const feedingName = assessment.ppa_feeding || "Unknown";
+        
+        // Get lochial discharges from postpartum record info
+        const lochialName = assessment.postpartum_record_info?.ppr_lochial_discharges || "Unknown";
+        
+        // Format BP from vital signs
+        const bpDisplay = assessment.vital_signs 
+          ? `${assessment.vital_signs.vital_bp_systolic} / ${assessment.vital_signs.vital_bp_diastolic}`
+          : "N/A";
+
+        return {
+          date: assessment.ppa_date_of_visit,
+          lochialDischarges: lochialName,
+          bp: bpDisplay,
+          feeding: feedingName,
+          findings: assessment.ppa_findings || "Normal",
+          nursesNotes: assessment.ppa_nurses_notes || "None"
+        };
+      });
+
+      setExistingAssessments(assessmentsTableData);
+    } else {
+      setExistingAssessments([]);
+    }
+  }, [postpartumAssessments, postpartumAssessmentsLoading]);
+
+  // Combine existing and new assessments for display
+  useEffect(() => {
+    setPostpartumCareData([...existingAssessments, ...newAssessments]);
+  }, [existingAssessments, newAssessments]);
+
+
   // patient selection handler
   const handlePatientSelection = (patient: Patient | null, patientId: string) => {
     setSelectedPatIdDisplay(patientId)
@@ -166,6 +266,7 @@ export default function PostpartumFormFirstPg({
     if (!patient) {
       setSelectedPatientId("");
       setSelectedPatient(null);
+      setNewAssessments([]); // Clear new assessments when patient is reset
       form.reset({
         mothersPersonalInfo: {
           familyNo: "",
@@ -225,6 +326,7 @@ export default function PostpartumFormFirstPg({
 
     setSelectedPatientId(actualPatientId);
     setSelectedPatient(patient);
+    setNewAssessments([]); // Clear new assessments when a different patient is selected
 
     if (patient && patient.personal_info) {
       const patientRole = patient.family?.fc_role?.toLowerCase();
@@ -397,7 +499,7 @@ export default function PostpartumFormFirstPg({
     const lochialName = lochialOptions.find((option) => option.id === lochialDischarges)?.name || lochialDischarges
 
     if (date && !isNaN(systolic) && !isNaN(diastolic) && feeding && feeding !== "0" && lochialDischarges && lochialDischarges !== "0") {
-      setPostpartumCareData((prev) => [
+      setNewAssessments((prev) => [
         ...prev,
         {
           date: date, // use the actual date from form
@@ -428,7 +530,7 @@ export default function PostpartumFormFirstPg({
 
     const formData = form.getValues()
 
-    // Validate form data
+    // Validate form data (using combined assessments for validation)
     const errors = validatePostpartumFormData(formData, selectedPatientId, postpartumCareData);
 
     if (errors.length > 0) {
@@ -453,9 +555,11 @@ export default function PostpartumFormFirstPg({
     setFormErrors([]);
 
     try {
-      const transformedData = transformPostpartumFormData(formData, selectedPatientId, postpartumCareData);
+      // Only send NEW assessments to prevent duplicates
+      const transformedData = transformPostpartumFormData(formData, selectedPatientId, newAssessments, selectedMedicines, staffId);
 
       console.log("Submitting postpartum data:", transformedData);
+      console.log("New assessments only:", newAssessments);
 
       const success = await addPostpartumMutation.mutateAsync(transformedData);
 
@@ -638,7 +742,7 @@ export default function PostpartumFormFirstPg({
                     </div>
                   ) : (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions ?? []}
+                      medicines={Array.isArray(medicineStocksOptions) ? medicineStocksOptions : medicineStocksOptions?.medicines ?? []}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
@@ -741,7 +845,7 @@ export default function PostpartumFormFirstPg({
 
             <div className="mt-8 sm:mt-auto flex justify-end">
               <Button type="submit" className="mt-4 mr-4 sm-w-32" disabled={addPostpartumMutation.isPending || !selectedPatient}>
-                {addPostpartumMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {addPostpartumMutation.isPending && isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit
               </Button>
             </div>

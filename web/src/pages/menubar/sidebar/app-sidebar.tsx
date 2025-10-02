@@ -372,7 +372,7 @@ export function AppSidebar() {
         { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),
     ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];

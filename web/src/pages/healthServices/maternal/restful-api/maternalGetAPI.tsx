@@ -303,3 +303,13 @@ export const getPatientPostpartumAllRecords = async (pregnancyId: string) => {
     throw error;
   }
 }
+
+export const getPostpartumAssessements = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/postpartum/${patientId}/postpartum-assessments/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching postpartum assessments: ", error);
+    throw error;
+  }
+}

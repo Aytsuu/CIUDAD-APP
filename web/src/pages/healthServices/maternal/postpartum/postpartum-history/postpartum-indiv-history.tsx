@@ -1,8 +1,7 @@
 // In prenatal-indiv-history.tsx - remove mock data and use real API data
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
-import { Loader2, Printer } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import PostpartumViewing from "./form-history/postpartum-care-viewing";
 import PostpartumCareHistory from "./postpartum-care-history";
@@ -91,7 +90,6 @@ export default function PostpartumIndivHistory() {
     return detectChanges(visit, previousVisit);
   });
 
-  const hasData = processedPrenatalData && processedPrenatalData.length > 0;
 
   if (isLoading) {
     return (
@@ -128,8 +126,8 @@ export default function PostpartumIndivHistory() {
         <div className="w-full">
           {/* form section */}
           <div>
-            <div className="flex m-5 p-2 border-b-2 border-black/50">
-                <Label className="text-xl">Form Section</Label>
+            <div className="flex m-5 p-2 ">
+                {/* <Label className="text-xl">Form</Label> */}
             </div>
             <div className="flex items-center justify-center">
                 <PostpartumViewing pprId={recordId} />
@@ -138,9 +136,9 @@ export default function PostpartumIndivHistory() {
 
           {/* table comparison section */}
           <div>
-            <div className="flex m-5 p-2 border-b-2 border-black/50">
-                <Label className="text-xl">Table Comparison Section</Label>
-            </div>
+            {/* <div className="flex m-5 p-2 border-b-2 border-black/50">
+                <Label className="text-xl">Data Comparison</Label>
+            </div> */}
             <div className="px-5">
                 <PostpartumCareHistory pregnancyId={pregnancyId} />
             </div>

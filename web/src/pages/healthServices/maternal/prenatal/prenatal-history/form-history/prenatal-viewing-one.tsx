@@ -74,7 +74,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const bodyMeasurement = prenatalForm.body_measurement_details;
   // const vitalSigns = prenatalForm.vital_signs_details;
   const obstetricHistory = prenatalForm.obstetric_history;
-  // const medicalHistory = prenatalForm.medical_histories || [];
+  const medicalHistory = prenatalForm.medical_histories || [];
   const previousHospitalizations = prenatalForm.previous_hospitalizations || [];
   console.log(previousHospitalizations)
   const previousPregnancies = prenatalForm.previous_pregnancy;
@@ -494,17 +494,17 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
 
               {/* 4anc visits values */}
               <div className="flex text-center items-center justify-center p-3 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_1st_tri}<br /></p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_1st_tri || ""}<br /></p>
               </div>
               <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_2nd_tri}</p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_2nd_tri || ""}</p>
               </div>
               <div className="grid grid-cols-2">
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_3rd_tri_one}</p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_one || ""}</p>
                 </div>
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit.pfav_3rd_tri_two}</p>
+                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_two || ""}</p>
                 </div>
               </div>
             </div>

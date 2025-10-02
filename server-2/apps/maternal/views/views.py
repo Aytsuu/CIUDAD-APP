@@ -805,7 +805,7 @@ def get_prenatal_form_complete(request, pf_id):
             'bm_id',
             'spouse_id',
             'followv_id',
-            'staff_id'
+            'staff'
         ).prefetch_related(
             'pf_prenatal_care',
             'pf_previous_hospitalization',

@@ -151,14 +151,14 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
     <div className="space-y-4">
       {hasData ? (
         <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          {/* <div className="bg-green-50 border border-green-200 rounded-lg p-3">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium text-green-800">
                 {postpartumRecords.length} Postpartum Record{postpartumRecords.length !== 1 ? 's' : ''} Found
               </span>
             </div>
-          </div>
+          </div> */}
           
           {/* Postpartum Records - Each record displayed vertically */}
           <div className="space-y-6">

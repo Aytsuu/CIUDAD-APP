@@ -5,6 +5,8 @@ export const transformPostpartumFormData = (
   formData: z.infer<typeof PostPartumSchema>,
   selectedPatientId: string,
   postpartumCareData: any[],
+  selectedMedicines?: { minv_id: string; medrec_qty: number; reason: string }[],
+  staffId?: string,
 ) => {
   // Transform the form data to match the API structure
   const transformedData = {
@@ -61,6 +63,12 @@ export const transformPostpartumFormData = (
     // Follow-up visit data
     followup_date: formData.postpartumInfo?.nextVisitDate || new Date().toISOString().split("T")[0],
     followup_description: "Postpartum Follow-up Visit",
+
+    // Selected medicines for micronutrient supplementation
+    selected_medicines: selectedMedicines || [],
+    
+    // Staff ID for tracking who performed the transaction
+    staff_id: staffId || "",
   }
 
   return transformedData
@@ -126,9 +134,9 @@ export const validatePostpartumFormData = (
   }
 
   // Validate next visit date
-  if (!formData.postpartumInfo?.nextVisitDate) {
-    errors.push("Next visit date is required")
-  }
+  // if (!formData.postpartumInfo?.nextVisitDate) {
+  //   errors.push("Next visit date is required")
+  // }
 
   if (!formData.postpartumInfo?.dateBfInitiated) {
     errors.push("Date breastfeeding initiated is required")
