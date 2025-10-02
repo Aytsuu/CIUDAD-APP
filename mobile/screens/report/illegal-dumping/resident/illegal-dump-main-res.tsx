@@ -6,74 +6,74 @@ import { SelectLayout } from '@/components/ui/select-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
+import { useDebounce } from '@/hooks/use-debounce'; 
+
+
 
 export default function WasteIllegalDumpingResMain() {
-  let rp_ide = '00002250924';
-  const {
-    data: fetchedData = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useWasteReport(rp_ide);
-
   const [selectedFilterId, setSelectedFilterId] = useState('0');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<
     'pending' | 'resolved' | 'cancelled'
-  >('pending');
+  >('pending')
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+
+  let rp_ide = '00003250925';
+
+
+  const { data: fetchedData = [], isLoading, isError, refetch } = useWasteReport(
+    debouncedSearchQuery, 
+    selectedFilterId,
+    rp_ide 
+  );
+
 
   const filterOptions = [
     { id: "0", name: "All Report Matter" },
-    { id: "1", name: "Littering, Illegal dumping, Illegal disposal of garbage" },
-    { id: "2", name: "Urinating, defecating, spitting in a public place" },
-    { id: "3", name: "Dirty frontage and immediate surroundings for establishment owners" },
-    { id: "4", name: "Improper and untimely stacking of garbage outside residences or establishment" },
-    { id: "5", name: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)" },
-    { id: "6", name: "Dirty public utility vehicles, or no trash can or receptacle" },
-    { id: "7", name: "Spilling, scattering, littering of wastes by public utility vehicles" },
-    { id: "8", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
+    { id: "Littering, Illegal dumping, Illegal disposal of garbage", name: "Littering, Illegal dumping, Illegal disposal of garbage" },
+    { id: "Urinating, defecating, spitting in a public place", name: "Urinating, defecating, spitting in a public place" },
+    { id: "Dirty frontage and immediate surroundings for establishment owners", name: "Dirty frontage and immediate surroundings for establishment owners" },
+    { id: "Improper and untimely stacking of garbage outside residences or establishmen", name: "Improper and untimely stacking of garbage outside residences or establishment" },
+    { id: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)", name: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)" },
+    { id: "Dirty public utility vehicles, or no trash can or receptacle", name: "Dirty public utility vehicles, or no trash can or receptacle" },
+    { id: "Spilling, scattering, littering of wastes by public utility vehicles", name: "Spilling, scattering, littering of wastes by public utility vehicles" },
+    { id: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
   ];
 
-  // Filtering data based on tab, filter, and search
+  // Filtering data based on tab
   const filteredData = useMemo(() => {
     let result = fetchedData;
 
-    // Filter by tab
+    // Filter by active tab
     if (activeTab === 'pending') {
-      result = result.filter(
-        (item) =>
-          item.rep_status !== 'resolved' && item.rep_status !== 'cancelled'
+      result = result.filter(item => 
+        item.rep_status !== 'resolved' && item.rep_status !== 'cancelled'
       );
     } else if (activeTab === 'resolved') {
-      result = result.filter((item) => item.rep_status === 'resolved');
+      result = result.filter(item => item.rep_status === 'resolved');
     } else if (activeTab === 'cancelled') {
-      result = result.filter((item) => item.rep_status === 'cancelled');
-    }
-
-    // Filter by selected report matter
-    if (selectedFilterId !== '0') {
-      const selectedFilterName =
-        filterOptions.find((option) => option.id === selectedFilterId)?.name ||
-        '';
-      result = result.filter(
-        (item) =>
-          item.rep_matter.trim().toLowerCase() ===
-          selectedFilterName.trim().toLowerCase()
-      );
-    }
-
-    // Search filter
-    if (searchQuery) {
-      result = result.filter((item) =>
-        Object.values(item)
-          .join(' ')
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      );
+      result = result.filter(item => item.rep_status === 'cancelled');
     }
 
     return result;
-  }, [fetchedData, selectedFilterId, searchQuery, activeTab]);
+  }, [fetchedData, activeTab]);
+
+
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setSelectedFilterId(value);
+  };
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val as 'pending' | 'resolved' | 'cancelled');
+  };  
+
+
 
   const handleView = async (item: any) => {
     router.push({
@@ -207,32 +207,6 @@ export default function WasteIllegalDumpingResMain() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={
-          <Text className="text-gray-900 text-[13px]">
-            Resident Illegal Dumping Reports
-          </Text>
-        }
-        rightAction={
-          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
-        }
-      >
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-        </View>
-      </PageLayout>
-    );
-  }
 
   return (
     <PageLayout
@@ -265,31 +239,22 @@ export default function WasteIllegalDumpingResMain() {
             <TextInput
               placeholder="Search..."
               value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="pl-10 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+              onChangeText={handleSearchChange}
+              className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
             />
           </View>
 
           <SelectLayout
             placeholder="Select report matter"
-            options={filterOptions.map(({ id, name }) => ({
-              value: id,
-              label: name,
-            }))}
+            options={filterOptions.map(({ id, name }) => ({ value: id, label: name }))}
             selectedValue={selectedFilterId}
-            onSelect={(option) => setSelectedFilterId(option.value)}
+            onSelect={(option) => handleFilterChange(option.value)}
             className="bg-white"
           />
         </View>
 
         {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(val) =>
-            setActiveTab(val as 'pending' | 'resolved' | 'cancelled')
-          }
-          className="flex-1"
-        >
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
           <TabsList className="bg-blue-50 mb-5 mt-2 flex-row justify-between">
             <TabsTrigger
               value="pending"
@@ -355,19 +320,27 @@ export default function WasteIllegalDumpingResMain() {
                 {filteredData.length !== 1 ? 's' : ''} found
               </Text>
             </View>
-            <FlatList
-              data={filteredData}
-              renderItem={({ item }) => renderReportCard(item)}
-              keyExtractor={(item) => item.rep_id.toString()}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <View className="py-8 items-center">
-                  <Text className="text-gray-500 text-center">
-                    No reports found
-                  </Text>
-                </View>
-              }
-            />
+
+            {isLoading ? (
+              <View className="h-64 justify-center items-center">
+                <ActivityIndicator size="large" color="#2a3a61" />
+                <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
+              </View>
+            ) : (    
+              <FlatList
+                data={filteredData}
+                renderItem={({ item }) => renderReportCard(item)}
+                keyExtractor={(item) => item.rep_id.toString()}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                  <View className="py-8 items-center">
+                    <Text className="text-gray-500 text-center">
+                      No reports found
+                    </Text>
+                  </View>
+                }
+              />
+            )}
           </TabsContent>
         </Tabs>
       </View>

@@ -39,7 +39,7 @@ export default function IllegalDumpCreateForm() {
   ];  
 
   const sitioOptions = fetchedSitio.map(sitio => ({
-    value: sitio.sitio_id,  
+    value: String(sitio.sitio_id),  
     label: sitio.sitio_name 
   }));
 
