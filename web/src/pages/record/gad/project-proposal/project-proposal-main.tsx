@@ -345,14 +345,12 @@ function GADProjectProposal() {
           onValueChange={handleViewModeChange}
           className="w-auto"
         >
-          <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="archive">
-                <div className="flex items-center gap-2">
+          <TabsList>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="archived"><div className="flex items-center gap-2">
                   <Archive size={16} /> Archive
-                </div>
-              </TabsTrigger>
-            </TabsList>
+                </div></TabsTrigger>
+          </TabsList>
         </Tabs>
       </div>
 
@@ -584,7 +582,11 @@ function GADProjectProposal() {
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
+              <TabsTrigger value="archived">
+                <div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div>
+                </TabsTrigger>
             </TabsList>
 
             <TabsContent value="active" className="flex-1 overflow-y-auto p-4">
