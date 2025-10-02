@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, Users, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, Pill, ChevronRight, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -144,33 +144,22 @@ const MedicineRecordCard: React.FC<{
       {/* Details */}
       <View className="p-4">
         <View className="flex-row items-center mb-3">
-          <Users size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Age: <Text className="font-medium text-gray-900">{record.age}</Text> • {record.sex}
           </Text>
         </View>
 
         <View className="flex-row items-center mb-3">
-          <Text className="ml-2 text-gray-600 text-sm">
+            <Text className="ml-2 text-gray-600 text-sm">
             Address: <Text className="font-medium text-gray-900">{formatAddress() || "No address provided"}</Text>
           </Text>
         </View>
 
-        {record.sitio && (
-          <View className="flex-row items-center mb-3">
-            {" "}
-            <Users size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-600 text-sm">
-              Sitio: <Text className="font-medium text-gray-900">{record.sitio}</Text>
-            </Text>
-          </View>
-        )}
-
+       
         <View className="flex-row items-center justify-between">
-          <Users size={16} color="#6B7280" />
-
+         
           <View className="flex-row items-center">
-            <Pill size={16} color="#6B7280" />
+         
             <Text className="ml-2 text-gray-600 text-sm">
               Medicine Records: <Text className="font-medium text-gray-900">{record.medicine_count}</Text>
             </Text>
@@ -190,9 +179,9 @@ export default function OverAllMedicineRecords() {
   const [pageSize] = useState(10);
 
   const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500);
 
-  // Build query parameters
+  // Build query parameters for main list
   const queryParams = useMemo(
     () => ({
       page: currentPage,
@@ -203,7 +192,7 @@ export default function OverAllMedicineRecords() {
     [currentPage, pageSize, debouncedSearchQuery, activeTab]
   );
 
-  // Use the useMedicineRecords hook instead of direct useQuery
+  // Main list query
   const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useMedicineRecords(queryParams);
 
   // Reset to first page when filters change
@@ -251,19 +240,24 @@ export default function OverAllMedicineRecords() {
   const hasNext = !!apiResponse?.next;
   const hasPrevious = !!apiResponse?.previous;
 
-  // Calculate counts for summary cards and tabs
+  // ----- NEW: fetch counts separately (server totals) so tab counts remain accurate regardless of active tab -----
+  // memoized tiny query params (page_size:1 ensures we get only meta.count without loading full pages)
+  const countParamsAll = useMemo(() => ({ page: 1, page_size: 1, search: debouncedSearchQuery || undefined }), [debouncedSearchQuery]);
+  const countParamsResident = useMemo(() => ({ page: 1, page_size: 1, search: debouncedSearchQuery || undefined, patient_type: "resident" }), [debouncedSearchQuery]);
+  const countParamsTransient = useMemo(() => ({ page: 1, page_size: 1, search: debouncedSearchQuery || undefined, patient_type: "transient" }), [debouncedSearchQuery]);
+
+  const { data: countAllResponse } = useMedicineRecords(countParamsAll);
+  const { data: countResidentResponse } = useMedicineRecords(countParamsResident);
+  const { data: countTransientResponse } = useMedicineRecords(countParamsTransient);
+
   const counts = useMemo(() => {
-    if (!formattedData) return { all: 0, resident: 0, transient: 0 };
-
-    const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
-    const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
-
     return {
-      all: totalCount,
-      resident: residentCount,
-      transient: transientCount
+      all: countAllResponse?.count ?? 0,
+      resident: countResidentResponse?.count ?? 0,
+      transient: countTransientResponse?.count ?? 0
     };
-  }, [formattedData, totalCount]);
+  }, [countAllResponse?.count, countResidentResponse?.count, countTransientResponse?.count]);
+  // ---------------------------------------------------------------------------------------------------------------
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -352,8 +346,8 @@ export default function OverAllMedicineRecords() {
     >
       <View className="flex-1">
         {/* Search Bar */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
+        <View className="bg-white px-4 py-3 border-b p-3 border-gray-200">
+          <View className="flex-row items-center px-2 border p-3 border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, medicine, or address..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>

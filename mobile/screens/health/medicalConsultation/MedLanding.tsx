@@ -1,18 +1,21 @@
-import { View,Image,Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
-import {Button} from '@/components/ui/button'
+import { View, Image, Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
+import { Button } from '@/components/ui/button'
 import React from 'react'
 import { router } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
+import PageLayout from '@/screens/_PageLayout';
 
 const MedConsultationLanding = () => {
   return (
-    <ScrollView>
-      <TouchableWithoutFeedback onPress={() => router.back()}>
-        <Text className="text-black text-[15px]">Back</Text>
-      </TouchableWithoutFeedback>
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>} >
 
       <View className='flex justify-center items-center' >
         <Image source={require('@/assets/images/Health/Home/Medical_Consultation.png')}
-          className="w-30 justify-center items-center flex h-30 mt-20"
+          className="w-30 justify-center items-center flex h-30"
           resizeMode="contain"
         />
         <View className='items-center mr-18 '>
@@ -25,13 +28,18 @@ const MedConsultationLanding = () => {
           <Text className='color-white font-PoppinsSemiBold text-lg'>BOOK APPOINTMENT</Text>
         </TouchableOpacity>
 
-         <TouchableOpacity onPress={() => router.push("/medconsultation/my-medappointments")} className='justify-center p-3 rounded-2xl bg-blue-900 items-center flex mt-4'>
-          <Text className='color-white font-PoppinsSemiBold text-lg'>MY APPOINTMENTS</Text>
-        </TouchableOpacity>
+         <TouchableOpacity 
+              onPress={() => router.push("/medconsultation/my-medappointments")}
+              className="justify-center border-2 border-blue-900 mt-4 rounded-2xl p-3 flex items-center active:bg-gray-50"
+            >
+              <Text className="text-blue-900 font-PoppinsSemiBold text-base">
+                MY APPOINTMENTS
+              </Text>
+            </TouchableOpacity>
 
 
       </View>
-    </ScrollView>
+    </PageLayout>
 
   );
 };

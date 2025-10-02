@@ -5,7 +5,7 @@ import logging
 
 # Django imports
 from django.db.models import (
-    Case, When, F, CharField, Q, Prefetch, Count
+    Case, When, F, CharField, Q, Prefetch, Count, Subquery
 )
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404
@@ -28,9 +28,6 @@ from apps.healthProfiling.models import *
 from pagination import *
 from apps.inventory.models import * 
 from apps.medicalConsultation.utils import apply_patient_type_filter
-
-
-# views.py
 
 
 class ChildHealthRecordsView(generics.ListAPIView):
@@ -59,12 +56,21 @@ class ChildHealthRecordsView(generics.ListAPIView):
         filters_applied = False
         original_count = queryset.count()
         
-        # Search filter
+        # Combined search (patient name, patient ID, household number, and sitio)
         search_query = self.request.query_params.get('search', '').strip()
+        sitio_search = self.request.query_params.get('sitio', '').strip()
         
-        if search_query and len(search_query) >= 2:
+        # Combine search and sitio parameters
+        combined_search_terms = []
+        if search_query and len(search_query) >= 2:  # Allow shorter search terms
+            combined_search_terms.append(search_query)
+        if sitio_search:
+            combined_search_terms.append(sitio_search)
+        
+        if combined_search_terms:
             filters_applied = True
-            queryset = self._apply_child_search_filter(queryset, search_query)
+            combined_search = ','.join(combined_search_terms)
+            queryset = self._apply_child_search_filter(queryset, combined_search)
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
         
@@ -76,39 +82,68 @@ class ChildHealthRecordsView(generics.ListAPIView):
             if queryset.count() == 0 and original_count > 0:
                 return ChildHealthrecord.objects.none()
         
-    
+       
         
         return queryset
     
-    def _apply_child_search_filter(self, queryset, search_term):
-        """
-        Apply search filter for child health records
-        """
-        return queryset.filter(
-            Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__per_mname__icontains=search_term) |
-            Q(family_no__icontains=search_term) |
-            Q(ufc_no__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_sitio__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_street__icontains=search_term) |
-            Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_barangay__icontains=search_term)
-        )
+    def _apply_child_search_filter(self, queryset, search_query):
+        """Reusable search filter for child health records with multiple term support"""
+        search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
+        if not search_terms:
+            return queryset
+        
+        combined_query = Q()
+        
+        for term in search_terms:
+            term_query = Q()
+            
+            # Search by child/patient name (both resident and transient)
+            term_query |= (
+                Q(patrec__pat_id__rp_id__per__per_fname__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__per_mname__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__per_lname__icontains=term) |
+                Q(patrec__pat_id__trans_id__tran_fname__icontains=term) |
+                Q(patrec__pat_id__trans_id__tran_mname__icontains=term) |
+                Q(patrec__pat_id__trans_id__tran_lname__icontains=term)
+            )
+            
+            # Search by patient ID, resident profile ID, and transient ID
+            term_query |= (
+                Q(patrec__pat_id__pat_id__icontains=term) |
+                Q(patrec__pat_id__rp_id__rp_id__icontains=term) |
+                Q(patrec__pat_id__trans_id__trans_id__icontains=term)
+            )
+            
+            # Search by family number and UFC number
+            term_query |= (
+                Q(family_no__icontains=term) |
+                Q(ufc_no__icontains=term)
+            )
+            
+            # Search by address for residents
+            term_query |= (
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_external_sitio__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_province__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_city__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_street__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__add_barangay__icontains=term) |
+                Q(patrec__pat_id__rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=term)
+            )
+            
+            # Search by address for transients
+            term_query |= (
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_sitio__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_street__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_barangay__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_province__icontains=term) |
+                Q(patrec__pat_id__trans_id__tradd_id__tradd_city__icontains=term)
+            )
+            
+            # Add this term's query to the combined OR query
+            combined_query |= term_query
+        
+        return queryset.filter(combined_query).distinct()
     
-    def _apply_status_filter(self, queryset, status):
-        """
-        Filter by TT status
-        """
-        # Filter by TT status from child health histories
-        if status.lower() == 'completed':
-            return queryset.filter(child_health_histories__tt_status='completed')
-        elif status.lower() == 'pending':
-            return queryset.filter(child_health_histories__tt_status='pending')
-        elif status.lower() == 'active':
-            return queryset.filter(child_health_histories__status='active')
-        elif status.lower() == 'inactive':
-            return queryset.filter(child_health_histories__status='inactive')
-        return queryset
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -120,6 +155,7 @@ class ChildHealthRecordsView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
 
 class ChildHealthHistoryView(generics.ListCreateAPIView):
     queryset = ChildHealth_History.objects.all()
@@ -408,9 +444,11 @@ class GeChildHealthRecordCountView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        
 class ChildHealthRecordByPatIDView(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request, pat_id):
-       
         try:
             chrec = ChildHealthrecord.objects.get(
                 patrec__pat_id=pat_id,
@@ -419,9 +457,37 @@ class ChildHealthRecordByPatIDView(APIView):
         except ChildHealthrecord.DoesNotExist:
             return Response({"detail": "Child health record not found."})
 
+        # Check if pagination parameters are present
+        if any(param in request.query_params for param in ['page', 'page_size']):
+            # Paginate health histories
+            health_histories = chrec.child_health_histories.all().order_by('-created_at')
+            paginator = self.pagination_class()
+            paginated_histories = paginator.paginate_queryset(health_histories, request)
+            
+            if paginated_histories is not None:
+                # Get the main serialized data
+                serializer = ChildHealthrecordSerializerFull(chrec)
+                data = serializer.data
+                
+                # Serialize paginated health histories
+                history_serializer = ChildHealthHistorySerializer(paginated_histories, many=True)
+                data['child_health_histories'] = history_serializer.data
+                
+                # Add pagination metadata
+                data['health_histories_pagination'] = {
+                    'count': paginator.page.paginator.count,
+                    'next': paginator.get_next_link(),
+                    'previous': paginator.get_previous_link(),
+                    'page_size': paginator.page_size,
+                    'total_pages': paginator.page.paginator.num_pages,
+                    'current_page': paginator.page.number,
+                }
+                
+                return Response(data)
+
+        # Return original response if no pagination requested
         serializer = ChildHealthrecordSerializerFull(chrec)
         return Response(serializer.data)
-    
 
 class ChildHealthImmunizationCountView(APIView):
     def get(self, request, *args, **kwargs):
@@ -436,6 +502,123 @@ class ChildHealthImmunizationCountView(APIView):
 
 
 
+class ChildHealthPendingFollowUpView(APIView):
+    """
+    Retrieve pending follow-up visits for a specific child health record (chrec_id)
+    using ChildHealthNotesBaseSerializer
+    """
+    def get(self, request, chrec_id):
+        try:
+            # Get the child health record
+            child_health_record = get_object_or_404(ChildHealthrecord, chrec_id=chrec_id)
+            
+            # Get ChildHealthNotes for this record that have PENDING follow-up visits
+            child_health_notes = ChildHealthNotes.objects.filter(
+                chhist__chrec=child_health_record,  # Link through chhist->chrec
+                followv__isnull=False,  # Only notes with follow-up visits
+                followv__followv_status='pending'  # Only pending status
+            ).select_related('followv', 'staff', 'chhist', 'chhist__chrec')
+            
+            # Group notes by their follow-up visit
+            followups_dict = {}
+            
+            for note in child_health_notes:
+                if note.followv:  # Ensure followv exists
+                    followv_id = note.followv.followv_id
+                    
+                    if followv_id not in followups_dict:
+                        # Create follow-up visit entry
+                        followup_data = FollowUpVisitSerializerBase(note.followv).data
+                        followup_data['child_health_notes'] = []
+                        followups_dict[followv_id] = followup_data
+                    
+                    # Add the note to the follow-up visit using ChildHealthNotesBaseSerializer
+                    note_data = ChildHealthNotesBaseSerializer(note).data
+                    followups_dict[followv_id]['child_health_notes'].append(note_data)
+            
+            # Convert dictionary to list
+            followups_data = list(followups_dict.values())
+            
+            # Add notes count to each follow-up
+            for followup in followups_data:
+                followup['notes_count'] = len(followup['child_health_notes'])
+            
+            return Response({
+                'success': True,
+                'chrec_id': chrec_id,
+                'pending_followups': followups_data,
+                'count': len(followups_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+class FollowUpVisitUpdateView(APIView):
+    """
+    Update a specific follow-up visit status
+    """
+    def patch(self, request, followv_id):
+        try:
+            # Get the follow-up visit instance
+            followup_visit = get_object_or_404(FollowUpVisit, followv_id=followv_id)
+            
+            # Get the new status from request data
+            new_status = request.data.get('followv_status')
+            
+            # Validate the status
+            valid_statuses = ['pending', 'completed','missed']
+            if new_status and new_status not in valid_statuses:
+                return Response({
+                    'success': False,
+                    'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update the follow-up visit
+            if new_status:
+                followup_visit.followv_status = new_status
+                
+                # Set completed_at if status is changed to 'completed'
+                if new_status == 'completed' and not followup_visit.completed_at:
+                    followup_visit.completed_at = timezone.now().date()
+                
+                # Clear completed_at if status is changed from 'completed' to something else
+                if new_status != 'completed' and followup_visit.followv_status == 'completed':
+                    followup_visit.completed_at = None
+            
+            # You can also allow updating other fields if needed
+            if 'followv_description' in request.data:
+                followup_visit.followv_description = request.data.get('followv_description')
+            
+            if 'followv_date' in request.data:
+                followup_visit.followv_date = request.data.get('followv_date')
+            
+            # Save the changes
+            followup_visit.save()
+            
+            # Return the updated data
+            return Response({
+                'success': True,
+                'message': 'Follow-up visit updated successfully',
+                'data': {
+                    'followv_id': followup_visit.followv_id,
+                    'followv_status': followup_visit.followv_status,
+                    'followv_date': followup_visit.followv_date,
+                    'followv_description': followup_visit.followv_description,
+                    'completed_at': followup_visit.completed_at,
+                    'created_at': followup_visit.created_at
+                }
+            }, status=status.HTTP_200_OK)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)       
+            
 class MonthlyNutritionalStatusViewChart(generics.ListAPIView):
     serializer_class = NutritionalStatusSerializerBase
     

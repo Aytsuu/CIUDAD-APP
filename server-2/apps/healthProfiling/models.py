@@ -89,9 +89,8 @@ class PersonalModification(AbstractModels):
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
-    
 
     class Meta:
         db_table = 'personal_address'

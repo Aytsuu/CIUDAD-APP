@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, SafeAreaView, StatusBar, Platform, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Calendar, Clock, AlertCircle, User, ChevronDown } from 'lucide-react-native';
+import { Calendar, Clock, AlertCircle, User, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { api2 } from '@/api/api';
 import { format } from 'date-fns';
+import PageLayout from '@/screens/_PageLayout';
+import { router } from 'expo-router';
 
 interface Slot {
   date: string;
@@ -40,9 +42,9 @@ const SetSchedule = () => {
     const fetchAvailableSlots = async () => {
       setIsLoading(true);
       try {
-        console.log('Fetching from:', api2.defaults.baseURL); // Log the URL
+        // console.log('Fetching from:', api2.defaults.baseURL); // Log the URL
         const response = await api2.get('/medical-consultation/available-slots/');
-        console.log('API Response:', JSON.stringify(response.data, null, 2));
+        // console.log('API Response:', JSON.stringify(response.data, null, 2));
         
         if (!Array.isArray(response.data)) {
           throw new Error('Expected an array of slots, but received: ' + typeof response.data);
@@ -174,18 +176,31 @@ const SetSchedule = () => {
   const isSubmitDisabled = isLoading || !rpId || !selectedDate || !selectedMeridiem || !chiefComplaint.trim();
 
   return (
+     <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} color="#374151" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-lg">Set Medical Consultation Schedule</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
+
+        
     <SafeAreaView className='flex-1 bg-white'>
       <StatusBar barStyle="dark-content" />
       <ScrollView className='p-5'>
-        <Text className='text-2xl font-bold text-blue-900 mb-6'>Set Medical Consultation Schedule</Text>
-        
-        <View className='bg-blue-50 rounded-xl p-4 mb-6 flex-row items-center'>
+       
+        {/* <View className='bg-blue-50 rounded-xl p-4 mb-6 flex-row items-center'>
           <User size={24} color="#2563EB" className='mr-3' />
           <View>
             <Text className='text-sm text-gray-600'>Patient ID</Text>
             <Text className='text-lg font-bold text-blue-900'>{rpId || 'N/A'}</Text>
           </View>
-        </View>
+        </View> */}
         
         {isLoading && availableSlots.length === 0 ? (
           <View className='flex-1 items-center justify-center h-48'>
@@ -241,11 +256,11 @@ const SetSchedule = () => {
               <View className='space-y-2'>
                 <View className='flex-row'>
                   <Text className='text-yellow-700 mr-2'>•</Text>
-                  <Text className='text-yellow-700 flex-1'>Appointments are dependent on the clinic scheduler. If your requested day is a weekday and not on the schedule, it will be rejected, unless it is a weekend (Sat/Sun).</Text>
+                  <Text className='text-yellow-700 flex-1'>Appointments are dependent on the clinic schedules. </Text>
                 </View>
                 <View className='flex-row'>
                   <Text className='text-yellow-700 mr-2'>•</Text>
-                  <Text className='text-yellow-700 flex-1'>Arrive 15 minutes before your appointment</Text>
+                  <Text className='text-yellow-700 flex-1'>Arrive 5-10 minutes before your appointment.</Text>
                 </View>
               </View>
             </View>
@@ -265,6 +280,7 @@ const SetSchedule = () => {
         )}
       </ScrollView>
     </SafeAreaView>
+    </PageLayout>
   );
 };
 

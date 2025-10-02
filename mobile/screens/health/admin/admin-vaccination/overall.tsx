@@ -250,9 +250,9 @@ export default function AllVaccinationRecords() {
     >
       <View className="flex-1">
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center px-2 border p-3 border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
-            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, vaccine, or address..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 

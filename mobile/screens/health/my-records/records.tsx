@@ -20,10 +20,10 @@ interface Service {
 export default function Records() {
   const { pat_id } = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params (optional for user view)
   console.log("[DEBUG] Records.tsx pat_id:", pat_id);
-  
+
   const services: Service[] = [
-   {
-         id: 1,
+    {
+      id: 1,
       name: 'Animal Bites',
       description: 'View animal bite referral records',
       route: '/animalbite/my-records',
@@ -40,6 +40,8 @@ export default function Records() {
       image: require('@/assets/images/Health/Home/child-health.jpg'),
       color: '#059669'
     },
+
+
     {
       id: 3,
       name: 'Family Planning',
@@ -95,7 +97,7 @@ export default function Records() {
       color: '#059669'
     },
   ];
-  
+
   return (
     <PageLayout
       leftAction={
@@ -130,14 +132,15 @@ export default function Records() {
             {services.map((service) => {
               const Icon = service.icon;
               return (
-               <TouchableOpacity
-                key={service.id}
-                onPress={() => {
-                        console.log("[DEBUG] Navigating to:", service.route, "with pat_id:", pat_id);
-                        router.push({ pathname: service.route as any, params: { pat_id } })} // NEW: Pass pat_id
-                 }
+                <TouchableOpacity
+                  key={service.id}
+                  onPress={() => {
+                    console.log("[DEBUG] Navigating to:", service.route, "with pat_id:", pat_id);
+                    router.push({ pathname: service.route as any, params: { pat_id } })
+                  } // NEW: Pass pat_id
+                  }
                   className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-              >
+                >
                   <View className="flex-row">
                     {service.image && (
                       <Image
@@ -146,11 +149,11 @@ export default function Records() {
                         resizeMode="cover"
                       />
                     )}
-                    
+
                     <View className="flex-1 p-4">
                       <View className="flex-row items-center mb-2">
-                        <View className="w-8 h-8 rounded-full items-center justify-center mr-3" 
-                              style={{ backgroundColor: service.color + '20' }}>
+                        <View className="w-8 h-8 rounded-full items-center justify-center mr-3"
+                          style={{ backgroundColor: service.color + '20' }}>
                           <Icon size={16} color={service.color} />
                         </View>
                         <Text className="text-lg font-semibold text-gray-900 flex-1">
@@ -158,11 +161,11 @@ export default function Records() {
                         </Text>
                         <ChevronRight size={16} color="#9CA3AF" />
                       </View>
-                      
+
                       <Text className="text-sm text-gray-500 mb-2">
                         {service.description}
                       </Text>
-                      
+
                       {/* <View className="flex-row items-center">
                         <View className={`px-2 py-1 rounded-full`}
                               style={{ backgroundColor: service.color + '20' }}>
@@ -182,8 +185,8 @@ export default function Records() {
         {/* Additional Info */}
         <View className="px-6 pt-6">
 
-            <Text className="text-blue-800 text-sm italic">{pat_id ? "" : 'Your medical records are securely stored and only accessible to you and authorized healthcare providers.'}</Text>
-            
+          <Text className="text-blue-800 text-sm italic">{pat_id ? "" : 'Your medical records are securely stored and only accessible to you and authorized healthcare providers.'}</Text>
+
         </View>
       </ScrollView>
     </PageLayout>

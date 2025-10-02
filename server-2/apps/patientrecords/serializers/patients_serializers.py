@@ -328,14 +328,14 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def get_address(self, obj):
         if obj.pat_type == 'Resident' and obj.rp_id:
-            # First: Try to fetch PersonalAddress
+            # First: Try to fetch PersonalAddress (this part is correct)
             personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
             if personal_address and personal_address.add:
                 address = personal_address.add
                 sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
                 # Construct full address dynamically based on available fields
                 address_parts = [
-                    f"Sitio {sitio}" if sitio else None,
+                    # f"Sitio {sitio}" if sitio else None,
                     address.add_barangay if address.add_barangay else None,
                     address.add_city if address.add_city else None,
                     address.add_province if address.add_province else None,
@@ -351,38 +351,43 @@ class PatientSerializer(serializers.ModelSerializer):
                     'add_sitio': sitio,
                     'full_address': full_address
                 }
-                # print("✅ PersonalAddress used →", result)
+                print("✅ PersonalAddress used →", result)
                 return result
 
-            # Fallback: Try to fetch from Household
-            household = Household.objects.select_related('add', 'add__sitio').filter(rp=obj.rp_id).first()
-            if household and household.add:
-                address = household.add
-                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                # Construct full address dynamically based on available fields
-                address_parts = [
-                    f"Sitio {sitio}" if sitio else None,
-                    address.add_barangay if address.add_barangay else None,
-                    address.add_city if address.add_city else None,
-                    address.add_province if address.add_province else None,
-                    address.add_street if address.add_street else None,
-                ]
-                # Filter out None values and join with ", "
-                full_address = ", ".join(filter(None, address_parts))
-                result = {
-                    'add_street': address.add_street,
-                    'add_barangay': address.add_barangay,
-                    'add_city': address.add_city,
-                    'add_province': address.add_province,
-                    'add_sitio': sitio,
-                    'full_address': full_address
-                }
-                print("⚠️ No PersonalAddress. Used Household instead →", result)
-                return result
+            # CORRECTED: Fetch from Household - proper relationship traversal
+            try:
+                # Household has ForeignKey to ResidentProfile (rp field)
+                household = Household.objects.select_related('add', 'add__sitio').filter(rp=obj.rp_id).first()
+                
+                if household and household.add:
+                    address = household.add
+                    sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                    # Construct full address dynamically based on available fields
+                    address_parts = [
+                        # f"Sitio {sitio}" if sitio else None,
+                        address.add_barangay if address.add_barangay else None,
+                        address.add_city if address.add_city else None,
+                        address.add_province if address.add_province else None,
+                        address.add_street if address.add_street else None,
+                    ]
+                    # Filter out None values and join with ", "
+                    full_address = ", ".join(filter(None, address_parts))
+                    result = {
+                        'add_street': address.add_street,
+                        'add_barangay': address.add_barangay,
+                        'add_city': address.add_city,
+                        'add_province': address.add_province,
+                        'add_sitio': sitio,
+                        'full_address': full_address
+                    }
+                    print("⚠️ No PersonalAddress. Used Household instead →", result)
+                    return result
+            except Exception as e:
+                print(f"Error fetching household address: {str(e)}")
 
             print("❌ No PersonalAddress or Household address found.")
         
-        # Transient fallback
+        # Transient fallback (this part is correct)
         if obj.pat_type == 'Transient' and obj.trans_id and obj.trans_id.tradd_id:
             trans_addr = obj.trans_id.tradd_id
             sitio = trans_addr.tradd_sitio
@@ -404,12 +409,11 @@ class PatientSerializer(serializers.ModelSerializer):
                 'add_sitio': sitio,
                 'full_address': full_address
             }
-            # print("📦 Transient Address →", result)
+            print("📦 Transient Address →", result)
             return result
 
-        # print("❓ Address not found for any type.")
+        print("❓ Address not found for any type.")
         return None
-    
 
     def get_spouse_info(self, obj):
         try:
@@ -567,14 +571,17 @@ class PatientSerializer(serializers.ModelSerializer):
     def get_additional_info(self, obj):
         try:
             additional_info = {}
-            if obj.pat_type == 'Resident' and obj.rp_id:
-                per_ph_obj = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
-                mother_tt_obj = MotherHealthInfo.objects.filter(rp=obj.rp_id).order_by('-mhi_id').first()
+            if obj.pat_id and obj.rp_id:
+                # Use first() to get a single object instead of checking exists()
+                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
+                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id).first()
 
-                if per_ph_obj:
-                    additional_info['per_add_philhealth_id'] = per_ph_obj.per_add_philhealth_id
-                if mother_tt_obj:
-                    additional_info['mhi_immun_status'] = mother_tt_obj.mhi_immun_status
+                if per_ph_id and mother_tt:
+                    additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
+                    additional_info['mother_tt_status'] = mother_tt.mhi_immun_status
+                else:
+                    additional_info['philhealth_id'] = None
+                    additional_info['mother_tt_status'] = None
 
                 # Only return if at least one value exists
                 return additional_info if additional_info else None

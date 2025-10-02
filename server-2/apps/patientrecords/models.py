@@ -7,18 +7,31 @@ from apps.administration.models import Staff
 
 
 
+from django.db import models
+
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
     tradd_province = models.CharField(max_length=50)
     tradd_city = models.CharField(max_length=50)
     tradd_barangay = models.CharField(max_length=50)
     tradd_street = models.CharField(max_length=50)
-    tradd_sitio= models.CharField(max_length=50, null=True, blank=True)
-
-    class Meta:
+    tradd_sitio = models.CharField(max_length=50, null=True, blank=True)
+ 
+    class Meta:  
         db_table = 'transient_address'
-
-   
+    
+    def save(self, *args, **kwargs):
+        # Capitalize all CharFields before saving
+        char_fields = [f.name for f in self._meta.get_fields() if isinstance(f, models.CharField)]
+        
+        for field_name in char_fields:
+            value = getattr(self, field_name)
+            if value and isinstance(value, str):
+                # Use title() for proper capitalization of each word
+                setattr(self, field_name, value.upper())
+        
+        super().save(*args, **kwargs)
+     
 class Transient(models.Model):
     trans_id = models.CharField(max_length=15, primary_key=True)
     tran_lname = models.CharField(max_length=100)
@@ -50,10 +63,24 @@ class Transient(models.Model):
     father_age = models.CharField(max_length=100, null=True, blank=True)
     father_dob = models.DateField(null=True, blank=True)
 
-
-
     class Meta:
         db_table = 'transient'
+    
+    def save(self, *args, **kwargs):
+        # Capitalize all CharFields before saving
+        char_fields = [f.name for f in self._meta.get_fields() if isinstance(f, models.CharField)]
+        
+        for field_name in char_fields:
+            # Skip contact and ID fields that should remain as-is
+            if field_name in ['trans_id', 'tran_contact', 'philhealth_id']:
+                continue
+                
+            value = getattr(self, field_name)
+            if value and isinstance(value, str):
+                # Use title() for proper capitalization of each word
+                setattr(self, field_name, value.upper())
+        
+        super().save(*args, **kwargs)
 
 class Patient(models.Model):
     PATIENT_TYPES = [
@@ -149,19 +176,50 @@ class PatientRecord(models.Model):
         db_table = 'patient_record'
         ordering = ['-patrec_id']
         
+
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
-    vital_bp_systolic = models.CharField(max_length=100,default="", null=True, blank=True)
-    vital_bp_diastolic = models.CharField(max_length=100,default="", null=True, blank=True)
-    vital_temp = models.CharField(max_length=100,default="", null=True, blank=True)
-    vital_RR = models.CharField(max_length=100,default="" , null=True, blank=True)
-    vital_o2 = models.CharField(max_length=100,default="", null=True, blank=True)
-    vital_pulse = models.CharField(max_length=100,default="", null=True, blank=True)
+    vital_bp_systolic = models.CharField(max_length=100, default="", null=True, blank=True)
+    vital_bp_diastolic = models.CharField(max_length=100, default="", null=True, blank=True)
+    vital_temp = models.CharField(max_length=100, default="", null=True, blank=True)
+    vital_RR = models.CharField(max_length=100, default="", null=True, blank=True)
+    vital_o2 = models.CharField(max_length=100, default="", null=True, blank=True)
+    vital_pulse = models.CharField(max_length=100, default="", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs',null=True)
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='vital_signs', null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='vital_signs', null=True, blank=True)
+
     class Meta:
         db_table = 'vital_signs'
+    
+    # def save(self, *args, **kwargs):
+    #     # Only fill empty fields if this is a new record and patrec exists
+    #     if not self.pk and self.patrec:
+    #         self._fill_empty_with_previous_values()
+    #     super().save(*args, **kwargs)
+    
+    # def _fill_empty_with_previous_values(self):
+    #     """Fill empty vital sign fields with the most recent values from patient history"""
+    #     # Get the most recent vital signs for this patient
+    #     latest_vitals = VitalSigns.objects.filter(
+    #         patrec=self.patrec
+    #     ).order_by('-created_at').first()
+        
+    #     if latest_vitals:
+    #         # List of vital sign fields to check
+    #         vital_fields = [
+    #             'vital_bp_systolic', 'vital_bp_diastolic', 'vital_temp',
+    #             'vital_RR', 'vital_o2', 'vital_pulse'
+    #         ]
+            
+    #         for field in vital_fields:
+    #             current_value = getattr(self, field)
+    #             # If current field is empty or None, use previous value
+    #             if not current_value or current_value.strip() == "":
+    #                 previous_value = getattr(latest_vitals, field)
+    #                 if previous_value and previous_value.strip():
+    #                     setattr(self, field, previous_value)
+
 
 
 class Obstetrical_History(models.Model):
@@ -254,6 +312,7 @@ class Finding(models.Model):
         db_table = 'finding'
 
 
+
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='ill_id')
@@ -264,8 +323,7 @@ class MedicalHistory(models.Model):
     is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
     is_from_famhistory=models.BooleanField(default=False)
     class Meta:
-        db_table = 'medical_history' 
-        
+        db_table = 'medical_history'   
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
@@ -273,9 +331,8 @@ class Diagnosis(models.Model):
     class Meta:
         db_table = 'diagnosis'   
      
-# Section of the physical exam (e.g., "Skin/Extremities", "HEENT")
 class PESection(models.Model):
-    pe_section_id = models.BigAutoField(primary_key=True)
+    pe_section_id = models.BigAutoField(primary_key=True)  
     title = models.CharField(max_length=255)  # Display name
 
     class Meta:

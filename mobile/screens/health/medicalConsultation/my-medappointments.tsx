@@ -21,7 +21,7 @@ interface AppointmentItem {
   archive_reason?: string | null;
 }
 
-type TabType = "pending" | "approved" | "completed" | "cancelled";
+type TabType = "pending" | "confirmed" | "completed" | "cancelled";
 
 // API Functions
 const fetchUserAppointments = async (rpId: string): Promise<AppointmentItem[]> => {
@@ -72,12 +72,12 @@ const getStatusConfig = (status: string) => {
         borderColor: 'border-yellow-200', 
         label: 'Pending' 
       };
-    case 'approved':
+    case 'confirmed':
       return { 
         color: 'text-blue-700', 
         bgColor: 'bg-blue-100', 
         borderColor: 'border-blue-200', 
-        label: 'Approved' 
+        label: 'Confirmed' 
       };
     case 'completed':
       return { 
@@ -118,7 +118,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const TabBar: React.FC<{
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
-  counts: { pending: number; approved: number; completed: number; cancelled: number };
+  counts: { pending: number; confirmed: number; completed: number; cancelled: number };
 }> = ({ activeTab, setActiveTab, counts }) => (
   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
     <TouchableOpacity
@@ -130,11 +130,11 @@ const TabBar: React.FC<{
       </Text>
     </TouchableOpacity>
     <TouchableOpacity
-      onPress={() => setActiveTab('approved')}
-      className={`flex-1 items-center py-3 ${activeTab === 'approved' ? 'border-b-2 border-blue-600' : ''}`}
+      onPress={() => setActiveTab('confirmed')}
+      className={`flex-1 items-center py-3 ${activeTab === 'confirmed' ? 'border-b-2 border-blue-600' : ''}`}
     >
-      <Text className={`text-sm font-medium ${activeTab === 'approved' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Approved ({counts.approved})
+      <Text className={`text-sm font-medium ${activeTab === 'confirmed' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Confirmed ({counts.confirmed})
       </Text>
     </TouchableOpacity>
     <TouchableOpacity
@@ -320,13 +320,13 @@ const AppointmentTracker = () => {
         case 'pending':
           tab = 'pending';
           break;
-        case 'approved':
-          tab = 'approved';
+        case 'confirmed':
+          tab = 'confirmed';
           break;
         case 'completed':
           tab = 'completed';
           break;
-        case 'cancelled':
+        case 'cancelled': case 'rejected':
           tab = 'cancelled';
           break;
         default:
@@ -335,7 +335,7 @@ const AppointmentTracker = () => {
       if (!acc[tab]) acc[tab] = [];
       acc[tab].push(item);
       return acc;
-    }, { pending: [], approved: [], completed: [], cancelled: [] });
+    }, { pending: [], confirmed: [], completed: [], cancelled: [] });
   }, [appointments]);
 
   const filteredAppointments = useMemo(() => {
@@ -357,7 +357,7 @@ const AppointmentTracker = () => {
 
   const counts = useMemo(() => ({
     pending: groupedAppointments.pending.length,
-    approved: groupedAppointments.approved.length,
+    confirmed: groupedAppointments.confirmed.length,
     completed: groupedAppointments.completed.length,
     cancelled: groupedAppointments.cancelled.length,
   }), [groupedAppointments]);
@@ -424,8 +424,7 @@ const AppointmentTracker = () => {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
-      rightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medical Consultation Appointments</Text>}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
@@ -453,7 +452,7 @@ const AppointmentTracker = () => {
             </Text>
           </View>
         )}
-        {activeTab === 'approved' && (
+        {activeTab === 'confirmed' && (
           <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
             <Text className="text-blue-800 text-sm font-medium">
               Reminder: Appointments are at the Barangay Health Center. Arrive 15 minutes early.

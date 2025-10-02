@@ -327,7 +327,7 @@ export default function InventoryScreen() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Inventory</Text>}
+      headerTitle={<Text className="text-gray-900 text-[16px]">Inventory</Text>}
       rightAction={<TouchableOpacity
         onPress={() => setShowFilters(!showFilters)}
         className="p-2 bg-gray-100 rounded-xl"

@@ -66,7 +66,7 @@ const Homepage = () => {
     { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
     { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
     { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
-    { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+    // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
     { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
     { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
     { name: "Medicine", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
@@ -205,7 +205,7 @@ const Homepage = () => {
               className="bg-blue-700 p-1 rounded-xl relative"
               onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
-              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
+              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My schedules</Text>
               {/* Notification Badge */}
               {/* <NotificationBadge count={pendingCount} showBadge={!isLoadingPending && pendingCount > 0} /> */}
             </TouchableOpacity>

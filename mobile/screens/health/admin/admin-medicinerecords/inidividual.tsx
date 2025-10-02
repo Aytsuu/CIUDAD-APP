@@ -135,9 +135,9 @@ export default function IndividualMedicineRecords() {
           {/* Search */}
           <View className="">
             <View className="flex-row items-center space-x-3">
-              <View className="flex-1 flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+              <View className="flex-1 flex-row items-center px-2 border p-3 border-gray-300 bg-gray-50 rounded-lg shadow-sm">
                 <Search size={20} color="#6B7280" />
-                <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by medicine name, category..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+                <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
               </View>
             </View>
           </View>

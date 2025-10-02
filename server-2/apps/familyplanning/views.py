@@ -754,7 +754,7 @@ def get_complete_fp_record(request, fprecord_id):
                 "pat__trans_id",
                 "pat__trans_id__tradd_id"
             ).prefetch_related(
-                "pat__rp_id__per__personaladdress_set__add", 
+                "pat__rp_id__per__personal_addresses__add", 
                 "pat__rp_id__household_set__add"
             ),
             fprecord_id=fprecord_id,

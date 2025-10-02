@@ -122,7 +122,7 @@ class PatientPHIllnessCheckSimpleAPIView(APIView):
                     'ill_description': illness.ill_description,
                     'ill_code': illness.ill_code,
                     'has_illness': illness.ill_id in patient_illness_ids,
-                    'year': next((history.year for history in patient_medical_history 
+                    'ill_date': next((history.ill_date for history in patient_medical_history 
                                 if history.ill_id == illness.ill_id), None)
                 })
             

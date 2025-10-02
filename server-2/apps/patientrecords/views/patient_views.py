@@ -14,8 +14,7 @@ from ..serializers.patients_serializers import *
 from ..serializers.followvisits_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 from ...pagination import StandardResultsPagination
-from apps.medicalConsultation.models import *
-from apps.medicalConsultation.serializers import *
+
 
 @api_view(['GET'])
 def get_resident_profile_list(request):
@@ -24,7 +23,7 @@ def get_resident_profile_list(request):
     ).select_related(
         'per'
     ).prefetch_related(
-        'per__personaladdress_set__add__sitio'
+        'per__personal_addresses__add__sitio'
     )
 
     serializer = ResidentProfileSerializer(residents, many=True)
@@ -47,7 +46,7 @@ class PatientListView(generics.ListAPIView):
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
-                'rp_id__per__personaladdress_set',
+                'rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',
@@ -328,7 +327,7 @@ class PatientView(generics.ListCreateAPIView):
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
-                'rp_id__per__personaladdress_set',
+                'rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
             ),
             'rp_id__household_set',
@@ -374,7 +373,7 @@ class PatientDetailView(generics.RetrieveAPIView):
         return Patient.objects.select_related(
             'rp_id__per'
         ).prefetch_related(
-            'rp_id__per__personaladdress_set__add__sitio'
+            'rp_id__per__personal_addresses__add__sitio'
         ).prefetch_related(
             'rp_id__household_set'
         )
@@ -454,7 +453,6 @@ class UpdateTransientView(generics.RetrieveUpdateAPIView):
         except NotFound:
             return Response({"error": "Transient patient not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# --------------------------------------------------------------------------------------------------------------------------------------------------
 # MOBILE VIEWS KURT
 @api_view(['GET'])
 def get_patient_by_resident_id(request, rp_id):
@@ -476,44 +474,21 @@ def get_patient_by_resident_id(request, rp_id):
 @api_view(['GET'])
 def get_appointments_by_resident_id(request, rp_id):
     """
-    Retrieves all appointments (FollowUpVisit and MedConsultAppointment) 
-    for a specific resident based on their rp_id.
+    Retrieves all appointments (FollowUpVisit) for a specific resident based on their rp_id.
     """
     try:
-        # Verify resident exists
-        resident = ResidentProfile.objects.get(rp_id=rp_id)
+        # Step 1: Query FollowUpVisit directly using the correct lookup chain
+        # The chain is patrec -> pat_id -> rp_id
+        appointments = FollowUpVisit.objects.filter(patrec__pat_id__rp_id=rp_id).order_by('-followv_date', '-created_at')
         
-        # Get FollowUpVisit appointments (through PatientRecord -> Patient -> ResidentProfile)
-        follow_up_appointments = FollowUpVisit.objects.filter(
-            patrec__pat_id__rp_id=rp_id
-        ).order_by('-followv_date', '-created_at')
-        
-        # Get Medical Consultation appointments (direct relationship)
-        med_consult_appointments = MedConsultAppointment.objects.filter(
-            rp_id=rp_id
-        ).order_by('-scheduled_date', '-created_at')
-        
-        # Check if any appointments exist
-        if not follow_up_appointments.exists() and not med_consult_appointments.exists():
+        if not appointments.exists():
             return Response(
                 {"detail": "No appointments found for this resident."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Serialize both types of appointments
-        follow_up_serializer = FollowUpVisitSerializer(follow_up_appointments, many=True)
-        med_consult_serializer = MedConsultAppointmentSerializer(med_consult_appointments, many=True)
-        
-        # Combine the results with type identifiers
-        combined_data = {
-            "follow_up_appointments": follow_up_serializer.data,
-            "med_consult_appointments": med_consult_serializer.data,
-            "total_count": follow_up_appointments.count() + med_consult_appointments.count(),
-            "follow_up_count": follow_up_appointments.count(),
-            "med_consult_count": med_consult_appointments.count()
-        }
-        
-        return Response(combined_data, status=status.HTTP_200_OK)
+        serializer = FollowUpVisitSerializer(appointments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     except ResidentProfile.DoesNotExist:
         return Response(
