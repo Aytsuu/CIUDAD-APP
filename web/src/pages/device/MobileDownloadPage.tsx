@@ -1,4 +1,3 @@
-// components/MobileDownloadPage.tsx
 import React from 'react';
 
 const MobileDownloadPage: React.FC = () => {
