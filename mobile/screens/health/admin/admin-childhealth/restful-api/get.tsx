@@ -90,7 +90,7 @@ export const getChildData = async (id: string, page?: number, pageSize?: number)
         page: page,
         page_size: pageSize
       },
-      timeout: 30000 // Set timeout to 10 seconds
+      timeout: 40000 // Set timeout to 10 seconds
     });
     if (res.status !== 200) {
       throw new Error("Failed to fetch child data");

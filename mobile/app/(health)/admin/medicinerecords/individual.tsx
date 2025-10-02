@@ -1,4 +1,4 @@
-import IndividualMedicineRecords from "@/screens/health/admin/admin-medicinerecords/inidividual"
-export default () => {
-    return <IndividualMedicineRecords/>
-}
+// import IndividualMedicineRecords from "@/screens/health/medicine-records/my-records";
+// export default () => {
+//   return <IndividualMedicineRecords />;
+// };

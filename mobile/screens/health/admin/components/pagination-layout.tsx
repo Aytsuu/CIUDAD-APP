@@ -1,62 +1,54 @@
-// components/ui/pagination-controls.tsx
-import type React from "react"
+// components/ui/simple-pagination.tsx
 import { View, Text, TouchableOpacity } from "react-native"
 import { ChevronLeft, ChevronRight } from "lucide-react-native"
 
-interface PaginationControlsProps {
-  currentPage: number
-  totalPages: number
-  totalItems: number
-pageSize: number
-  onPageChange: (page: number) => void
-  className?: string
-}
+export const PaginationControls = ({ currentPage, totalPages, onPageChange }:any) => {
+  if (totalPages <= 1) return null
 
-export const PaginationControls: React.FC<PaginationControlsProps> = ({
-  currentPage,
-  totalPages,
-  totalItems,
-  pageSize,
-  onPageChange,
-  className = "",
-}) => {
-  if (totalPages <= 10) return null;
-  // Calculate current entries being shown
-  const startEntry = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0
-  const endEntry = Math.min(currentPage * pageSize, totalItems)
   const hasNext = currentPage < totalPages
   const hasPrevious = currentPage > 1
 
   return (
-    <View className={`  bg-white border-t border-gray-200 shadow-lg rounded-lg ${className}`}>
-      {/* Navigation Controls */}
-      <View className="flex-row items-center justify-between px-4 py-3 gap-3">
-        <TouchableOpacity
-          onPress={() => onPageChange(currentPage - 1)}
-          disabled={!hasPrevious}
-          className={`flex-row items-center px-3 py-2 rounded-lg border ${
-            !hasPrevious ? "bg-gray-50 border-gray-200" : "bg-white border-blue-500 shadow-sm active:bg-blue-50"
-          }`}
-        >
-          <ChevronLeft size={16} color={!hasPrevious ? "#9CA3AF" : "#3B82F6"} />
-        </TouchableOpacity>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'white' }}>
+      <TouchableOpacity
+        onPress={() => hasPrevious && onPageChange(currentPage - 1)}
+        disabled={!hasPrevious}
+        style={{ 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          padding: 8, 
+          borderRadius: 8,
+          backgroundColor: hasPrevious ? 'white' : '#f3f4f6',
+          borderWidth: 1,
+          borderColor: hasPrevious ? '#3b82f6' : '#d1d5db',
+          opacity: hasPrevious ? 1 : 0.5
+        }}
+      >
+        <ChevronLeft size={16} color={hasPrevious ? "#3B82F6" : "#9CA3AF"} />
+      </TouchableOpacity>
 
-        <View className="px-4 py-2 bg-gray-50 rounded-lg">
-          <Text className="text-sm font-semibold text-gray-700">
-            {currentPage} / {totalPages}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => onPageChange(currentPage + 1)}
-          disabled={!hasNext}
-          className={`flex-row items-center px-3 py-2 rounded-lg border ${
-            !hasNext ? "bg-gray-50 border-gray-200" : "bg-blue-600 border-blue-600 shadow-sm active:bg-blue-700"
-          }`}
-        >
-          <ChevronRight size={16} color={!hasNext ? "#9CA3AF" : "#FFFFFF"} />
-        </TouchableOpacity>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#f9fafb', borderRadius: 8 }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>
+          {currentPage} / {totalPages}
+        </Text>
       </View>
+
+      <TouchableOpacity
+        onPress={() => hasNext && onPageChange(currentPage + 1)}
+        disabled={!hasNext}
+        style={{ 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          padding: 8, 
+          borderRadius: 8,
+          backgroundColor: hasNext ? '#3b82f6' : '#f3f4f6',
+          borderWidth: 1,
+          borderColor: hasNext ? '#3b82f6' : '#d1d5db',
+          opacity: hasNext ? 1 : 0.5
+        }}
+      >
+        <ChevronRight size={16} color={hasNext ? "white" : "#9CA3AF"} />
+      </TouchableOpacity>
     </View>
   )
 }

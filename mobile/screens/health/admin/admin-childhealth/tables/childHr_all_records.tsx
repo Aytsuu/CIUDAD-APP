@@ -141,11 +141,11 @@ const ChildHealthCard: React.FC<{
               {child.health_checkup_count} checkups
             </UIText>
           </View>
-          <View className="flex-row items-center">
+          {/* <View className="flex-row items-center">
             <UIText className="text-sm text-gray-600">
               Weight: {child.birth_weight || 'N/A'} kg
             </UIText>
-          </View>
+          </View> */}
         </View>
 
         <View className="flex-row items-start">
@@ -158,10 +158,13 @@ const ChildHealthCard: React.FC<{
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center flex-1">
             <MapPin size={16} color="#6B7280" />
-            <UIText className="ml-2 text-sm text-gray-700 flex-1" numberOfLines={1}>
-              {child.sitio || child.address}
+            <UIText 
+              className="ml-2 text-sm text-gray-700 flex-1"
+              style={{ flexWrap: 'wrap' }}
+            >
+              {child.address}
             </UIText>
-          </View>
+          </View> 
         </View>
       </View>
     </TouchableOpacity>

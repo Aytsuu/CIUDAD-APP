@@ -245,7 +245,7 @@ export default function IndividualMedicineRecords() {
           ) : (
             <>
               <FlatList data={medicineRecords} keyExtractor={(item) => `medicine-record-${item.medrec_id}`} showsVerticalScrollIndicator={false} scrollEnabled={false} renderItem={({ item }) => <MedicineRecordCard record={item} />} ListFooterComponent={<View className="h-4" />} />
-              {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} totalItems={0} pageSize={0} />}
+              {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
             </>
           )}
         </View>
