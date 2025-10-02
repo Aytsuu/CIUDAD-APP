@@ -18,7 +18,7 @@ import { z } from 'zod';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
-import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
+import { useGetWasteTrucks, type Trucks  } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
 import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
@@ -91,9 +91,11 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
         name: `${driver.firstname} ${driver.lastname}`  
     }));
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        id: String(truck.truck_id),
-        name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+    const truckOptions = (trucks as Trucks[])
+        .filter(truck => truck.truck_status === "Operational")
+        .map(truck => ({
+            id: String(truck.truck_id),
+            name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`
     }));
 
     const sitioOptions = sitios.map(sitio => ({

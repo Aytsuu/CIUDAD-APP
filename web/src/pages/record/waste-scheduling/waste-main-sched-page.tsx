@@ -25,7 +25,7 @@ const WasteMainScheduling = () => {
   // });
   const [_activeTab, setActiveTab] = useState("calendar");
   const { data: councilEvents = [] } = useGetCouncilEvents();
-  const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
+  // const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
   console.log('Hotspots:', hotspotData)
 
   const calendarSources = [
@@ -65,15 +65,15 @@ const WasteMainScheduling = () => {
     //   timeAccessor: "we_time",
     //   defaultColor: "#f59e0b", // amber
     // },
-    {
-      name: "Council Events",
-      data: calendarEvents,
-      columns: councilEventColumns,
-      titleAccessor: "ce_title",
-      dateAccessor: "ce_date",
-      timeAccessor: "ce_time",
-      defaultColor: "#191970", // midnight blue
-    },
+    // {
+    //   name: "Council Events",
+    //   data: calendarEvents,
+    //   columns: councilEventColumns,
+    //   titleAccessor: "ce_title",
+    //   dateAccessor: "ce_date",
+    //   timeAccessor: "ce_time",
+    //   defaultColor: "#191970", // midnight blue
+    // },
   ];
 
   if (isHotspotLoading || isWasteColLoading ) {
