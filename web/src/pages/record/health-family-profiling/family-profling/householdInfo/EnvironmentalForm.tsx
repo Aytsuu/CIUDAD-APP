@@ -152,7 +152,7 @@ export default function EnvironmentalForm({
                   { id: "santype1", name: "Pour/flush type with septic tank" },
                   {
                     id: "santype2",
-                    name: "Pour/flush toilet connected to septic tank AND to sewerage",
+                    name: "Pour/flush toilet connected to septic tank AND to sewerage system",
                   },
                   { id: "santype3", name: "Ventilated Pit (VIP) Latrine" },
                 ]}

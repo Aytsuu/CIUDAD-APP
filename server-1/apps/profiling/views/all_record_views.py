@@ -79,7 +79,6 @@ class CompleteRegistrationView(APIView):
     business = data_copy.get("business", None)
     staff = data_copy.get("staff", None)
 
-    print("before:",request.data)
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
 
@@ -113,8 +112,6 @@ class CompleteRegistrationView(APIView):
     if family:
         self.join_family(family, rp)
 
-
-    print("after:",request.data)
     # Perform double query
     double_queries = PostQueries()
     response = double_queries.complete_profile(request.data) 
@@ -202,9 +199,11 @@ class CompleteRegistrationView(APIView):
         rp = rp,
         staff = staff
       ))
-    
-    if len(house_instances) > 0:
-      created_instances = Household.objects.bulk_create(house_instances)
+
+    created_instances = []
+    for house in house_instances:
+       house.save()
+       created_instances.append(house)
     
     return created_instances
   
@@ -221,7 +220,7 @@ class CompleteRegistrationView(APIView):
     )
 
     FamilyComposition.objects.create(
-      fc_role="Independent",
+      fc_role="INDEPENDENT",
       fam=fam,
       rp=rp
     )
@@ -239,6 +238,7 @@ class CompleteRegistrationView(APIView):
     files = business.get("files", [])
     
     business = Business(
+      bus_id=generate_business_no(),
       bus_name=business["bus_name"],
       bus_gross_sales=business["bus_gross_sales"],
       bus_location=business["bus_location"],

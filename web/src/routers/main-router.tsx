@@ -36,6 +36,7 @@ import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
 import { team_router } from "./team-router";
+import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 
 export const main_router: RouteObject[] = [
@@ -57,7 +58,7 @@ export const main_router: RouteObject[] = [
       },
       {
         path: "announcement",
-        element: <ProtectedRoute>
+        element: <ProtectedRoute exclude={["DOCTOR"]}>
           <AnnouncementDashboard />
         </ProtectedRoute>,
       },
@@ -171,6 +172,14 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
+      ...activity_log_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute>
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...clearances_router.map((route) => ({
         ...route,
         children: route.children.map((route) => ({
@@ -182,7 +191,14 @@ export const main_router: RouteObject[] = [
           ),
         }))
       })),
-      ...maternal_router,
+      ...maternal_router.map((route) => ({
+        ...route,
+        element: (
+          <ProtectedRoute requiredFeature="SERVICES">
+            {route.element}
+          </ProtectedRoute>
+        ),
+      })),
       ...vaccination,
       ...childHealthServices,
       ...gad_router,

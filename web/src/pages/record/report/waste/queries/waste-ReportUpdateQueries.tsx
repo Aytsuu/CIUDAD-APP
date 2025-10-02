@@ -12,7 +12,7 @@ type FileData = {
 };
 
 
-export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
+export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   
   return useMutation({

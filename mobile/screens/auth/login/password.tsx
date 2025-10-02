@@ -6,10 +6,10 @@ export default function Password(){
 
     return(
         <FormInput
-        control={control}
-        name="accountSchema.password"
-        label="Password"
-        secureTextEntry={true}
+            control={control}
+            name="accountSchema.password"
+            label="Password"
+            secureTextEntry={true}
         />
     )
 }

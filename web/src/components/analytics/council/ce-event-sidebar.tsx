@@ -8,10 +8,6 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 
-// Utility function to capitalize the first letter
-const capitalize = (str: string) =>
-  str.charAt(0).toLocaleUpperCase() + str.slice(1).toLocaleLowerCase();
-
 export const CouncilEventsSidebar = () => {
   const navigate = useNavigate();
   const { data: events, isLoading } = useGetCouncilEvents();
@@ -76,10 +72,6 @@ export const CouncilEventsSidebar = () => {
                       <div>
                         <Label>Title</Label>
                         <p>{event.ce_title}</p>
-                      </div>
-                      <div>
-                        <Label>Type</Label>
-                        <p>{event.ce_type ? capitalize(event.ce_type) : "N/A"}</p>
                       </div>
                       <div>
                         <Label>Date</Label>

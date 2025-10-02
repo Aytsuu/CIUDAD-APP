@@ -112,7 +112,7 @@ export default function NewPositionForm() {
       case Type.Add:
         create({
           ...values, 
-          pos_category: staffType.toLowerCase() == "BARANGAY STAFF" ? "BARANGAY POSITION" : "HEALTH POSITION" 
+          pos_category: staffType.toLowerCase() == "barangay staff" ? "BARANGAY POSITION" : "HEALTH POSITION" 
         }, staffId);
         break;
       case Type.Edit:

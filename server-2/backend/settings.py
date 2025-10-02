@@ -352,6 +352,7 @@ INSTALLED_APPS = [
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
+    "simple_history",
 ]
 
 # REST_FRAMEWORK = {

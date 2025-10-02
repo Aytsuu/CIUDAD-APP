@@ -8,7 +8,7 @@ import { Link, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button/button"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import { Label } from "@/components/ui/label"
-import { formatDate } from "@/helpers/dateHelper"
+import { formatDate, getDateTimeFormat } from "@/helpers/dateHelper"
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast"
 import { useAddFamily, useAddFamilyComposition, useAddResidentAndPersonal } from "../queries/profilingAddQueries"
 import { useDeleteRequest } from "../queries/profilingDeleteQueries"
@@ -28,6 +28,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { demographicInfoSchema } from "@/form-schema/profiling-schema"
 import { capitalize } from "@/helpers/capitalize"
 import { LoadButton } from "@/components/ui/button/load-button"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function RequestFamilyReg() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -37,15 +38,19 @@ export default function RequestFamilyReg() {
   const { user } = useAuth()
   const { safeNavigate } = useSafeNavigate()
   const { showLoading, hideLoading } = useLoading()
+  const [selectedMember, setSelectedMember] = React.useState(0)
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
+  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const debouncedSearchQuery = useDebounce(searchQuery, 50)
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal()
   const { mutateAsync: deleteRequest } = useDeleteRequest()
   const { mutateAsync: updateAccount } = useUpdateAccount()
   const { mutateAsync: addFamily } = useAddFamily()
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition()
-  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList()
-  const [selectedMember, setSelectedMember] = React.useState(0)
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
+  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
+    debouncedSearchQuery
+  )
 
   const currentMember = registrationData.compositions[selectedMember]
   const form = useForm<z.infer<typeof demographicInfoSchema>>({
@@ -128,6 +133,8 @@ export default function RequestFamilyReg() {
     }
   }
 
+  console.log(registrationData)
+
   // ----------------- RENDER --------------------
   if (!registrationData) {
     return (
@@ -148,115 +155,15 @@ export default function RequestFamilyReg() {
     >
       {/* Registration Overview */}
       <Card className="shadow-none rounded-lg">
-        <CardHeader className="">
+        <CardHeader className="mb-4">
           <CardTitle>
-            <p className="text-xl mb-1">Registration Request Overview</p>
-            <p className="text-[15px] font-normal opacity-80">Submitted on {formatDate(registrationData.req_date, "long" as any)}</p>
+            <p className="text-xl mb-1">Overview</p>
+            <p className="text-[14px] font-medium opacity-80">Submitted on {getDateTimeFormat(registrationData?.req_created_at)}</p>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* Left side - Household Registration Form */}
-            <div>
-              <Form {...form}>
-                <form className="space-y-6">
-                  {/* Housing & Community Information */}
-                  <Card className="bg-blue-500 border-none shadow-none rounded-lg">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Label className="text-base font-semibold text-white">Household Assignment</Label>
-                      </div>
-
-                      <p className="text-sm text-white mt-2">
-                        Complete the demographic details to properly categorize and assign this family to the
-                        appropriate household and community groups.
-                      </p>
-                    </CardHeader>
-                    <CardContent className="bg-white rounded-b-lg ring-1 ring-gray-300 ring-inset">
-                      <div className="space-y-4 pt-4">
-                        <div className="grid">
-                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                            Select Household Number
-                          </Label>
-                          <p className="text-sm text-gray-600 mb-3">
-                            Choose the household this family belongs to. Each household represents a group of families
-                            living in the same area or compound.
-                          </p>
-                          <Combobox
-                            options={formattedHouseholds}
-                            value={form.watch(`householdNo`)}
-                            onChange={(value: any) => form.setValue("householdNo", value)}
-                            placeholder="Search and select household..."
-                            contentClassName="w-full"
-                            emptyMessage={
-                              <div className="flex gap-2 justify-center items-center p-4">
-                                <Info className="h-4 w-4 text-gray-400" />
-                                <div className="text-center">
-                                  <Label className="font-normal text-sm text-gray-600 block">No household found.</Label>
-                                  <Link to="/household/form">
-                                    <Label className="font-medium text-sm text-blue-600 cursor-pointer hover:underline">
-                                      Register New Household
-                                    </Label>
-                                  </Link>
-                                </div>
-                              </div>
-                            }
-                          />
-                          {invalidHousehold && (
-                            <Label className="text-[13px] text-red-500 mt-1 block">
-                              Household selection is required for family registration
-                            </Label>
-                          )}
-                        </div>
-
-                        <div className="space-y-4">
-                          {/* Building/Housing Status */}
-                          <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Household Occupancy</Label>
-                            <p className="text-xs text-gray-600 mb-3">
-                              Specify the family's relationship to their current residence. This helps determine housing
-                              assistance eligibility.
-                            </p>
-                            <FormSelect
-                              control={form.control}
-                              name="building"
-                              label=""
-                              options={[
-                                { id: "owner", name: "Owner" },
-                                { id: "renter", name: "Renter" },
-                                { id: "other", name: "Other" },
-                              ]}
-                              readOnly={false}
-                            />
-                          </div>
-
-                          {/* Indigenous People Classification */}
-                          <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Indigenous</Label>
-                            <p className="text-xs text-gray-600 mb-3">
-                              Identify if any family member belongs to an indigenous community. This ensures access to
-                              IP-specific programs and services.
-                            </p>
-                            <FormSelect
-                              control={form.control}
-                              name="indigenous"
-                              label=""
-                              options={[
-                                { id: "no", name: "No" },
-                                { id: "yes", name: "Yes" },
-                              ]}
-                              readOnly={false}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </form>
-              </Form>
-            </div>
-
-            {/* Right side - Selected Member Details */}
+            {/* Selected Member Details */}
             <div className="col-span-2">
               <Card className="border-gray-300 shadow-none rounded-lg">
                 <CardHeader>
@@ -364,6 +271,97 @@ export default function RequestFamilyReg() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+            
+            {/* Household Registration Form */}
+            <div>
+              <Form {...form}>
+                <form className="space-y-6">
+                  {/* Housing & Community Information */}
+                  <Card className="bg-blue-500 border-none shadow-none rounded-lg">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Label className="text-base font-semibold text-white">Household Assignment</Label>
+                      </div>
+
+                      <p className="text-sm text-white mt-2">
+                        Complete the demographic details to properly categorize and assign this family to the
+                        appropriate household and community groups.
+                      </p>
+                    </CardHeader>
+                    <CardContent className="bg-white rounded-b-lg ring-1 ring-gray-300 ring-inset">
+                      <div className="space-y-4 pt-4">
+                        <div className="grid">
+                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Select Household Number
+                          </Label>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Choose the household this family belongs to. Each household represents a group of families
+                            living in the same area or compound.
+                          </p>
+                          <Combobox
+                            options={formattedHouseholds}
+                            value={form.watch(`householdNo`)}
+                            onChange={(value: any) => form.setValue("householdNo", value)}
+                            onSearchChange={(value) => setSearchQuery(value)}
+                            placeholder="Select household"
+                            contentClassName="w-full"
+                            emptyMessage={
+                              <div className="flex gap-2 justify-center items-center p-4">
+                                <Info className="h-4 w-4 text-gray-400" />
+                                <div className="text-center">
+                                  <Label className="font-normal text-sm text-gray-600 block">No household found.</Label>
+                                  <Link to="/household/form">
+                                    <Label className="font-medium text-sm text-blue-600 cursor-pointer hover:underline">
+                                      Register New Household
+                                    </Label>
+                                  </Link>
+                                </div>
+                              </div>
+                            }
+                          />
+                          {invalidHousehold && (
+                            <Label className="text-[13px] text-red-500 mt-1 block">
+                              Household selection is required for family registration
+                            </Label>
+                          )}
+                        </div>
+
+                        <div className="space-y-4">
+                          {/* Building/Housing Status */}
+                          <div>
+                            <FormSelect
+                              control={form.control}
+                              name="building"
+                              label="Household Occupancy"
+                              options={[
+                                { id: "OWNER", name: "OWNER" },
+                                { id: "RENTER", name: "RENTER" },
+                                { id: "SHARER", name: "SHARER" },
+                              ]}
+                              readOnly={false}
+                            />
+                          </div>
+
+                          {/* Indigenous People Classification */}
+                          <div>
+                            <FormSelect
+                              control={form.control}
+                              name="indigenous"
+                              label="Indigenous"
+                              options={[
+                                { id: "NO", name: "NO" },
+                                { id: "YES", name: "YES" },
+                              ]}
+                              readOnly={false}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </form>
+              </Form>
             </div>
           </div>
 

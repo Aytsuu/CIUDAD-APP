@@ -14,12 +14,12 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
         model = CouncilScheduling
         fields = '__all__'
 
-class CouncilAttendeesSerializer(serializers.ModelSerializer):
-    atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
+# class CouncilAttendeesSerializer(serializers.ModelSerializer):
+#     atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
 
-    class Meta:
-        model = CouncilAttendees
-        fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
+#     class Meta:
+#         model = CouncilAttendees
+#         fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
@@ -220,17 +220,11 @@ class ResolutionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class GADProposalSerializer(serializers.ModelSerializer):
-    project_title = serializers.CharField(read_only=True)
-    gprl_id = serializers.SerializerMethodField()
-
+    dev_project = serializers.CharField(source='dev.dev_project', read_only=True)
+    
     class Meta:
         model = ProjectProposal
-        fields = ['gpr_id', 'project_title', 'gprl_id']
-
-    def get_gprl_id(self, obj):
-        # Get the latest approved log ID for this proposal
-        latest_approved_log = obj.logs.filter(gprl_status='Approved').order_by('-gprl_date_approved_rejected').first()
-        return latest_approved_log.gprl_id if latest_approved_log else None
+        fields = ['gpr_id', 'dev_project']
 
 
 class PurposeRatesListViewSerializer(serializers.ModelSerializer):
@@ -394,10 +388,10 @@ class OrdinanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ordinance
         fields = ['ord_num', 'ord_title', 'ord_date_created', 'ord_category',
-                  'ord_details', 'ord_year', 'ord_is_archive', 'staff', 'of_id', 'file',
+                  'ord_details', 'ord_year', 'ord_is_archive', 'ord_repealed', 'staff', 'of_id', 'file',
                   'ord_parent', 'ord_is_ammend', 'ord_ammend_ver']
         extra_kwargs = {
-            'ord_num': {'required': False},  #
+            'ord_num': {'required': False, 'allow_blank': True},
             'ord_title': {'required': True},
             'ord_date_created': {'required': True},
             'ord_category': {'required': True},
@@ -421,7 +415,7 @@ class OrdinanceSerializer(serializers.ModelSerializer):
         """
         Check that the ordinance number is unique if provided
         """
-        if value and Ordinance.objects.filter(ord_num=value).exists():
+        if value and value.strip() and Ordinance.objects.filter(ord_num=value).exists():
             raise serializers.ValidationError("An ordinance with this number already exists.")
         return value
         

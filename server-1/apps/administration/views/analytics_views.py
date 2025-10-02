@@ -5,9 +5,7 @@ from ..models import *
 class CardAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):
     total_staff = Staff.objects.count()
-
-    card_data = [
-      total_staff
-    ]
-    
+    card_data = {
+      "staffs": total_staff
+    }
     return Response(card_data)

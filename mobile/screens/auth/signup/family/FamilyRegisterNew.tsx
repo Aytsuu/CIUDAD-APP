@@ -10,8 +10,7 @@ import React from 'react';
 import { useProgressContext } from "@/contexts/ProgressContext";
 import { Button } from "@/components/ui/button";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import { useAddPersonal, useAddRequest, useAddAddress, useAddPerAddress } from "../../queries/authPostQueries";
-import { capitalizeAllFields } from "@/helpers/capitalize";
+import { useAddRequest } from "../../queries/authPostQueries";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useToastContext } from "@/components/ui/toast";
@@ -121,9 +120,6 @@ export default function FamilyRegisterNew() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { toast } = useToastContext();
   const { getValues, reset } = useRegistrationFormContext();
-  const { mutateAsync: addPersonal } = useAddPersonal();
-  const { mutateAsync: addAddress } = useAddAddress();
-  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
   const { mutateAsync: addRequest } = useAddRequest();
   const { 
     currentStep, 
@@ -206,7 +202,7 @@ export default function FamilyRegisterNew() {
   const submit = async () => {
     if (!canSubmit) return;
     
-    // setIsSubmitting(true);
+    setIsSubmitting(true);
     setStatus('waiting');
     setShowFeedback(true);
 
@@ -221,66 +217,41 @@ export default function FamilyRegisterNew() {
       } = getValues();
 
       const {confirmPassword, ...account } = accountFormSchema
+      const {email, ...acc} = account
       const dependents = dependentInfoSchema.list
-
+      console.log(acc)
       const data = [
         fatherInfoSchema,
         motherInfoSchema,
         guardianInfoSchema,
         ...dependents
       ].map((info: any) => {
-        const {role, ...per} = info;
-        return JSON.stringify(per) === JSON.stringify(personalInfoSchema) ? 
+        const {role, per_id, ...per} = info;
+        const {per_id: id, ...respondent} = personalInfoSchema;
+        return JSON.stringify(per) === JSON.stringify(respondent) ? 
           {
              per: {
               ...per,
               per_addresses: per.per_addresses.list,
-              per_id: +per.per_id
             }, 
           
             role: role, 
-            acc: account 
+            acc: {
+              ...acc,
+              ...(email !== "" && {email: email})
+            }
           } : { 
             per: {
               ...per,
               per_addresses: per.per_addresses.list,
-              per_id: +per.per_id
             }, 
             role: role 
           }
 
       }).filter((info) => info.per.per_contact !== "")
+      console.log(data)
 
-      // const request_info = [];
-    
-      // for (const item of data) {
-      //   const { per_addresses, ...per } = item.per;
-        
-      //   // Add personal info
-      //   const personal = await addPersonal(capitalizeAllFields(per));
-
-      //   // Add addresses
-      //   const addresses = await addAddress(per_addresses.list);
-
-      //   // Link addresses to personal
-      //   await addPersonalAddress({
-      //     data: addresses.map((address: any) => ({
-      //       add: address.add_id,
-      //       per: personal.per_id,
-      //     })),
-      //     history_id: personal.history
-      //   });
-
-      //   // Build the result object
-      //   const result = {
-      //     ...item,
-      //     per: personal.per_id
-      //   };
-
-      //   request_info.push(result);
-      // }
-
-      addRequest({
+      await addRequest({
         comp: data
       }, {
         onSuccess: () => {
@@ -299,7 +270,7 @@ export default function FamilyRegisterNew() {
         setIsSubmitting(false);
       }, 0);
     } finally {
-      // setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -311,7 +282,7 @@ export default function FamilyRegisterNew() {
             setShowFeedback(false);  
             setTimeout(() => {
               setStatus('message')
-              setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features")
+              setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features.")
               setShowFeedback(true);
             }, 0);
           }}
@@ -353,8 +324,9 @@ export default function FamilyRegisterNew() {
         </Text>
         <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
           onPress={() => {
+            router.replace('/(auth)/loginscreen')
+            resetProgress()
             reset()
-            router.replace('/(tabs)')
           }}
         >
           <Text className="text-white text-base font-semibold">

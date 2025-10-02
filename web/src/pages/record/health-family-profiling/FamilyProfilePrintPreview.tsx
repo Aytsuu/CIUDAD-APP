@@ -2,7 +2,6 @@
 
 import { forwardRef, useImperativeHandle } from "react"
 import { formatDate } from "@/helpers/dateHelper"
-import * as XLSX from "xlsx"
 import cityHealthLogo from "./logo/city-health-logo.svg"
 import officialSealCebu from "./logo/official-seal-cebu.svg"
 
@@ -12,9 +11,7 @@ interface FamilyProfilePrintPreviewProps {
 }
 
 export type FamilyProfilePrintPreviewHandle = {
-  exportToExcel: () => void
-  exportToPDF: () => void
-  print: () => void
+  PrintForm: () => void
 }
 
 // Print-specific form field component
@@ -144,6 +141,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
 
   // Derive once for reuse
   const sanitaryFacilityType = environmentalData?.sanitary_facility?.facility_type
+  const sanitaryFacilityDesc = environmentalData?.sanitary_facility?.description
   const sanitaryClass = classifySanitaryFacilityType(sanitaryFacilityType)
   const waterSupplyType = environmentalData?.water_supply?.type
   const wasteType = environmentalData?.waste_management?.type
@@ -185,434 +183,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
     return age >= 5
   })
 
-  // Excel export function
-  const exportToExcel = () => {
-    const wb = XLSX.utils.book_new()
-
-    // Create a comprehensive family profile sheet with proper formatting
-    const familyProfileData = [
-      // Header section
-      ["FAMILY PROFILE FORM", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      ["Republic of the Philippines", "", "", "", "", "", "", ""],
-      ["City of Cebu", "", "", "", "", "", "", ""],
-      ["CITY HEALTH DEPARTMENT", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-
-      // Health Center and Building Type
-      [`Health Center/Station: ${householdData?.address?.barangay || "San Roque"}`, "", "", "", "", "", "", ""],
-      [`Building: ${buildingType || ""}`, "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-
-      // Demographic Data
-      ["DEMOGRAPHIC DATA", "", "", "", "", "", "", ""],
-      [
-        `Household No.: ${householdData?.household_id || ""}`,
-        "",
-        `Family No.: ${data.family_info.family_id || ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      [
-        `Respondent Name: ${surveyData?.informant || ""}`,
-        "",
-        `Contact Number: ${surveyData?.informant_contact || ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      [
-        `Address: ${householdData?.address?.street || ""}, ${householdData?.address?.sitio || ""}, ${householdData?.address?.barangay || ""}, ${householdData?.address?.city || ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      [
-        `Name of Household Head: ${householdHead ? `${householdHead.personal_info.last_name}, ${householdHead.personal_info.first_name} ${householdHead.personal_info.middle_name || ""}`.trim() : ""}`,
-        "",
-        `Contact Number: ${householdHead?.personal_info.contact || ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      ["", "", "", "", "", "", "", ""],
-
-      // NHTS and Indigenous Status
-      [
-        `NHTS Household: ${(() => {
-          const raw = householdData?.nhts_status ?? householdData?.nhts
-          if (raw == null || String(raw).trim() === "") return ""
-          return isNhts(raw) ? "NHTS (4Ps)" : "Non-NHTS"
-        })()}`,
-        "",
-        `Indigenous People: ${(() => {
-          const raw = data.family_info.family_indigenous
-          if (raw == null || String(raw).trim() === "") return ""
-          return isIndigenous(raw) ? "IP" : "Non-IP"
-        })()}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      ["", "", "", "", "", "", "", ""],
-    ]
-
-    // Father's Information
-    if (fatherData) {
-      familyProfileData.push(
-        ["FATHER'S INFORMATION", "", "", "", "", "", "", ""],
-        [
-          `Name: ${fatherData.personal_info.last_name}, ${fatherData.personal_info.first_name} ${fatherData.personal_info.middle_name || ""}`.trim(),
-          "",
-          `Age: ${fatherData.personal_info.date_of_birth ? new Date().getFullYear() - new Date(fatherData.personal_info.date_of_birth).getFullYear() : ""}`,
-          "",
-          `Birthday: ${fatherData.personal_info.date_of_birth ? formatDate(fatherData.personal_info.date_of_birth, "short") : ""}`,
-          "",
-          "",
-          "",
-        ],
-        [
-          `Civil Status: ${fatherData.personal_info.civil_status || ""}`,
-          "",
-          `Education: ${fatherData.personal_info.education || ""}`,
-          "",
-          `Religion: ${fatherData.personal_info.religion || ""}`,
-          "",
-          "",
-          "",
-        ],
-        [
-          `Blood Type: ${fatherData.health_details?.blood_type || ""}`,
-          "",
-          `PhilHealth ID: ${fatherData.per_additional_details?.per_add_philhealth_id || ""}`,
-          "",
-          `COVID Vax Status: ${fatherData.per_additional_details?.per_add_covid_vax_status || ""}`,
-          "",
-          "",
-          "",
-        ],
-        ["", "", "", "", "", "", "", ""],
-      )
-    }
-
-    // Mother's Information
-    if (motherData) {
-      familyProfileData.push(
-        ["MOTHER'S INFORMATION", "", "", "", "", "", "", ""],
-        [
-          `Name: ${motherData.personal_info.last_name}, ${motherData.personal_info.first_name} ${motherData.personal_info.middle_name || ""}`.trim(),
-          "",
-          `Age: ${motherData.personal_info.date_of_birth ? new Date().getFullYear() - new Date(motherData.personal_info.date_of_birth).getFullYear() : ""}`,
-          "",
-          `Birthday: ${motherData.personal_info.date_of_birth ? formatDate(motherData.personal_info.date_of_birth, "short") : ""}`,
-          "",
-          "",
-          "",
-        ],
-        [
-          `Civil Status: ${motherData.personal_info.civil_status || ""}`,
-          "",
-          `Education: ${motherData.personal_info.education || ""}`,
-          "",
-          `Religion: ${motherData.personal_info.religion || ""}`,
-          "",
-          "",
-          "",
-        ],
-        [
-          `Blood Type: ${motherData.health_details?.blood_type || ""}`,
-          "",
-          `PhilHealth ID: ${motherData.per_additional_details?.per_add_philhealth_id || ""}`,
-          "",
-          `COVID Vax Status: ${motherData.per_additional_details?.per_add_covid_vax_status || ""}`,
-          "",
-          "",
-          "",
-        ],
-      )
-
-      if (motherData.mother_health_info) {
-        familyProfileData.push(
-          [
-            `Health Risk Class: ${motherData.mother_health_info.health_risk_class || ""}`,
-            "",
-            `Immunization Status: ${motherData.mother_health_info.immunization_status || ""}`,
-            "",
-            "",
-            "",
-            "",
-            "",
-          ],
-          [
-            `Family Planning Method: ${motherData.mother_health_info.family_planning_method || ""}`,
-            "",
-            `Family Planning Source: ${motherData.mother_health_info.family_planning_source || ""}`,
-            "",
-            "",
-            "",
-            "",
-            "",
-          ],
-        )
-      }
-      familyProfileData.push(["", "", "", "", "", "", "", ""])
-    }
-
-    // Children Under 5 Table
-    familyProfileData.push(
-      ["CHILDREN UNDER 5 (0-59 months)", "", "", "", "", "", "", ""],
-      ["Name", "Sex", "Age", "Birthday", "Relation to HH Head", "FIC", "Nutritional Status", "Exclusive BF"],
-    )
-
-    childrenUnder5.forEach((child: any) => {
-      familyProfileData.push([
-        `${child.personal_info.last_name}, ${child.personal_info.first_name} ${child.personal_info.middle_name || ""}`.trim(),
-        child.personal_info.sex,
-        child.personal_info.date_of_birth
-          ? new Date().getFullYear() - new Date(child.personal_info.date_of_birth).getFullYear()
-          : "",
-        child.personal_info.date_of_birth ? formatDate(child.personal_info.date_of_birth, "short") : "",
-        child.role,
-        "Yes/No",
-        "Yes/No",
-        "Yes/No",
-      ])
-    })
-
-    familyProfileData.push(["", "", "", "", "", "", "", ""])
-
-    // Children Over 5 Table
-    familyProfileData.push(
-      ["CHILDREN OVER 5 (5+ years)", "", "", "", "", "", "", ""],
-      ["Name", "Sex", "Age", "Birthday", "Relation to HH Head", "Blood Type", "COVID Vax Status", "PhilHealth ID"],
-    )
-
-    childrenOver5.forEach((child: any) => {
-      familyProfileData.push([
-        `${child.personal_info.last_name}, ${child.personal_info.first_name} ${child.personal_info.middle_name || ""}`.trim(),
-        child.personal_info.sex,
-        child.personal_info.date_of_birth
-          ? new Date().getFullYear() - new Date(child.personal_info.date_of_birth).getFullYear()
-          : "",
-        child.personal_info.date_of_birth ? formatDate(child.personal_info.date_of_birth, "short") : "",
-        child.role,
-        child.health_details?.blood_type || "",
-        child.per_additional_details?.per_add_covid_vax_status || "",
-        child.per_additional_details?.per_add_philhealth_id || "",
-      ])
-    })
-
-    const ws1 = XLSX.utils.aoa_to_sheet(familyProfileData)
-
-    // Apply formatting to make it look more like the original form
-  // const range = XLSX.utils.decode_range(ws1["!ref"] || "A1")
-
-    // Set column widths
-    ws1["!cols"] = [
-      { width: 25 }, // Name column
-      { width: 8 }, // Sex/Age
-      { width: 8 }, // Age
-      { width: 12 }, // Birthday
-      { width: 15 }, // Relation
-      { width: 12 }, // Blood Type/FIC
-      { width: 15 }, // COVID/Nutritional
-      { width: 15 }, // PhilHealth/BF
-    ]
-
-    XLSX.utils.book_append_sheet(wb, ws1, "Family Profile")
-
-    // Environmental Data Sheet
-    const environmentalData_sheet = [
-      ["ENVIRONMENTAL HEALTH AND SANITATION", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      ["TYPE OF WATER SUPPLY", "", "", "", "", "", "", ""],
-      [`Level I (Point Source): ${equalsToken(waterSupplyType, "LEVEL I") ? "✓" : ""}`, "", "", "", "", "", "", ""],
-      [
-        `Level II (Communal Faucet): ${equalsToken(waterSupplyType, "LEVEL II") ? "✓" : ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      [
-        `Level III (Individual Connection): ${equalsToken(waterSupplyType, "LEVEL III") ? "✓" : ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      ["", "", "", "", "", "", "", ""],
-      ["TYPE OF SANITARY FACILITY", "", "", "", "", "", "", ""],
-      [
-        `Sanitary: ${sanitaryClass === "sanitary" ? "✓" : ""}`,
-        "",
-        `Unsanitary: ${sanitaryClass === "unsanitary" ? "✓" : ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      [`Facility Type: ${sanitaryFacilityType || ""}`, "", "", "", "", "", "", ""],
-      [
-        `Toilet Sharing: ${toiletShareStatus === "shared" ? "Shared" : toiletShareStatus === "not-shared" ? "Not Shared" : ""}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      ["", "", "", "", "", "", "", ""],
-      ["SOLID WASTE MANAGEMENT", "", "", "", "", "", "", ""],
-      [`Waste Type: ${wasteType || ""}`, "", "", "", "", "", "", ""],
-    ]
-
-    const ws2 = XLSX.utils.aoa_to_sheet(environmentalData_sheet)
-    ws2["!cols"] = [
-      { width: 30 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-    ]
-    XLSX.utils.book_append_sheet(wb, ws2, "Environmental Health")
-
-    // Survey Identification Sheet
-    const surveyData_sheet = [
-      ["SURVEY IDENTIFICATION", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      [`Profiled by: ${surveyData?.filled_by || ""}`, "", "B/CHW", "", "", "", "", ""],
-      [`Conforme: ${surveyData?.informant || ""}`, "", "Informant (Name & Signature)", "", "", "", "", ""],
-      [`Checked by (RN/RM): ${surveyData?.checked_by || ""}`, "", "", "", "", "", "", ""],
-      [`Date: ${surveyData?.date ? formatDate(surveyData.date, "short") : ""}`, "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      ["PSA HOUSEHOLD DEFINITION:", "", "", "", "", "", "", ""],
-      ["Household as defined by the Philippine Statistical", "", "", "", "", "", "", ""],
-      ["Authority (PSA) is a social unit consisting of a", "", "", "", "", "", "", ""],
-      ["person living alone or a group of persons who", "", "", "", "", "", "", ""],
-      ["sleep in the same housing unit and have a common", "", "", "", "", "", "", ""],
-      ["arrangement in the preparation and consumption", "", "", "", "", "", "", ""],
-      ["of food.", "", "", "", "", "", "", ""],
-      ["", "", "", "", "", "", "", ""],
-      ["- Manual on Field Health Services Information", "", "", "", "", "", "", ""],
-      ["System (FHSIS) ver. 2018 Department of Health", "", "", "", "", "", "", ""],
-    ]
-
-    const ws3 = XLSX.utils.aoa_to_sheet(surveyData_sheet)
-    ws3["!cols"] = [
-      { width: 40 },
-      { width: 15 },
-      { width: 25 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-    ]
-    XLSX.utils.book_append_sheet(wb, ws3, "Survey Identification")
-
-    // NCD Records Sheet (if any)
-    if (ncdRecords.length > 0) {
-      const ncdData = [
-        ["NON-COMMUNICABLE DISEASE RECORDS", "", "", "", "", "", "", ""],
-        ["Name", "Age", "Sex", "Risk Class", "Comorbidities", "Lifestyle Risk", "In Maintenance", ""],
-      ]
-
-      ncdRecords.forEach((ncd: any) => {
-        ncdData.push([
-          `${ncd.resident_info.personal_info.last_name}, ${ncd.resident_info.personal_info.first_name}`,
-          ncd.resident_info.personal_info.date_of_birth
-            ? new Date().getFullYear() - new Date(ncd.resident_info.personal_info.date_of_birth).getFullYear()
-            : "",
-          ncd.resident_info.personal_info.sex,
-          ncd.health_data.risk_class_age_group,
-          ncd.health_data.comorbidities,
-          ncd.health_data.lifestyle_risk,
-          ncd.health_data.in_maintenance === "yes" ? "Yes" : "No",
-          "",
-        ])
-      })
-
-      const ws4 = XLSX.utils.aoa_to_sheet(ncdData)
-      ws4["!cols"] = [
-        { width: 30 },
-        { width: 8 },
-        { width: 8 },
-        { width: 15 },
-        { width: 20 },
-        { width: 15 },
-        { width: 15 },
-        { width: 15 },
-      ]
-      XLSX.utils.book_append_sheet(wb, ws4, "NCD Records")
-    }
-
-    // TB Records Sheet (if any)
-    if (tbRecords.length > 0) {
-      const tbData = [
-        ["TUBERCULOSIS SURVEILLANCE RECORDS", "", "", "", "", "", "", ""],
-        ["Name", "Age", "Sex", "Source of Anti-TB Meds", "Days on Meds", "Status", "", ""],
-      ]
-
-      tbRecords.forEach((tb: any) => {
-        tbData.push([
-          `${tb.resident_info.personal_info.last_name}, ${tb.resident_info.personal_info.first_name}`,
-          tb.resident_info.personal_info.date_of_birth
-            ? new Date().getFullYear() - new Date(tb.resident_info.personal_info.date_of_birth).getFullYear()
-            : "",
-          tb.resident_info.personal_info.sex,
-          tb.health_data.src_anti_tb_meds,
-          tb.health_data.no_of_days_taking_meds,
-          tb.health_data.tb_status,
-          "",
-          "",
-        ])
-      })
-
-      const ws5 = XLSX.utils.aoa_to_sheet(tbData)
-      ws5["!cols"] = [
-        { width: 30 },
-        { width: 8 },
-        { width: 8 },
-        { width: 20 },
-        { width: 20 },
-        { width: 15 },
-        { width: 15 },
-        { width: 15 },
-      ]
-      XLSX.utils.book_append_sheet(wb, ws5, "TB Records")
-    }
-
-    // Generate filename with family ID and current date
-    const fileName = `Family_Profile_${data.family_info.family_id}_${new Date().toISOString().split("T")[0]}.xlsx`
-
-    // Save the file
-    XLSX.writeFile(wb, fileName)
-  }
+  // Excel export removed per request
 
   const exportToPDF = () => {
     // Create a new window for printing
@@ -668,6 +239,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           
           /* Layout */
           .flex { display: flex; }
+          .block { display: block; }
+          .inline { display: inline; }
+          .inline-block { display: inline-block; }
+          .inline-flex { display: inline-flex; }
           .items-center { align-items: center; }
           .justify-between { justify-content: space-between; }
           .justify-center { justify-content: center; }
@@ -679,13 +254,17 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           .w-80 { width: 20rem; }
           
           /* Spacing */
+          .mb-1 { margin-bottom: 0.25rem; }
           .mb-2 { margin-bottom: 0.5rem; }
           .mb-3 { margin-bottom: 0.75rem; }
           .mb-4 { margin-bottom: 1rem; }
           .mb-6 { margin-bottom: 1.5rem; }
+          .mr-1 { margin-right: 0.25rem; }
           .mr-2 { margin-right: 0.5rem; }
           .mr-4 { margin-right: 1rem; }
           .mr-8 { margin-right: 2rem; }
+          .ml-1 { margin-left: 0.25rem; }
+          .mt-1 { margin-top: 0.25rem; }
           .mt-2 { margin-top: 0.5rem; }
           .mt-4 { margin-top: 1rem; }
           .mt-6 { margin-top: 1.5rem; }
@@ -705,6 +284,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           .border-black { border-color: black; }
           .border-gray-400 { border-color: #9ca3af; }
           .border-b { border-bottom: 1px solid black; }
+          .border-t { border-top-width: 1px; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-top-style: solid; }
           .border-b-2 { border-bottom: 2px solid black; }
           .border-t-1 { border-top: 1px solid black; }
           .border-r { border-right: 1px solid black; }
@@ -719,6 +299,13 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           .grid { display: grid; }
           .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
           .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          .grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+          .col-span-1 { grid-column: span 1 / span 1; }
+          .col-span-2 { grid-column: span 2 / span 2; }
+          .col-span-3 { grid-column: span 3 / span 3; }
+          .col-span-4 { grid-column: span 4 / span 4; }
+          .col-span-5 { grid-column: span 5 / span 5; }
+          .col-span-6 { grid-column: span 6 / span 6; }
           .grid-rows-2 { grid-template-rows: repeat(2, minmax(0, 1fr)); }
           .gap-1 { gap: 0.25rem; }
           .gap-2 { gap: 0.5rem; }
@@ -762,6 +349,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
             margin-right: 4px;
             transform: scale(1.2);
           }
+
+          /* Checkbox label spacing for PDF */
+          label { display: inline-flex; align-items: center; margin-right: 0.75rem; margin-bottom: 0.25rem; }
+          .checkbox-row { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
           
           /* Images */
           img {
@@ -858,9 +449,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
-    exportToExcel,
-    exportToPDF,
-    print: () => window.print(),
+    PrintForm: exportToPDF,
   }))
 
   return (
@@ -914,7 +503,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           {/* Building Type */}
           <div className="border border-black p-2">
             <div className="flex items-center">
-              <span className="text-xs font-bold mr-4">Building:</span>
+              <span className="text-xs font-bold mr-4">Building Occupancy:</span>
               <div className="flex items-center gap-4">
                 <label className="flex items-center text-xs">
                   <input type="checkbox" className="mr-1" checked={equalsCI(buildingType, "OWNER")} readOnly />
@@ -1120,27 +709,33 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           {fatherData && (
             <div className="border border-black mb-4 p-2">
               <h3 className="text-sm font-bold mb-2">Father's Information</h3>
-              <div className="grid grid-cols-3 gap-4 mb-2">
-                <PrintFormField
-                  label="Father's Name"
-                  value={`${fatherData.personal_info.last_name}, ${fatherData.personal_info.first_name} ${fatherData.personal_info.middle_name || ""}`.trim()}
-                />
-                <PrintFormField
-                  label="Age"
-                  value={
-                    fatherData.personal_info.date_of_birth
-                      ? `${new Date().getFullYear() - new Date(fatherData.personal_info.date_of_birth).getFullYear()}`
-                      : ""
-                  }
-                />
-                <PrintFormField
-                  label="Birthday"
-                  value={
-                    fatherData.personal_info.date_of_birth
-                      ? formatDate(fatherData.personal_info.date_of_birth, "short")
-                      : ""
-                  }
-                />
+              <div className="grid grid-cols-6 gap-4 mb-2">
+                <div className="col-span-3">
+                  <PrintFormField
+                    label="Father's Name"
+                    value={`${fatherData.personal_info.last_name}, ${fatherData.personal_info.first_name} ${fatherData.personal_info.middle_name || ""}`.trim()}
+                  />
+                </div>
+                <div className="col-span-1">
+                  <PrintFormField
+                    label="Age"
+                    value={
+                      fatherData.personal_info.date_of_birth
+                        ? `${new Date().getFullYear() - new Date(fatherData.personal_info.date_of_birth).getFullYear()}`
+                        : ""
+                    }
+                  />
+                </div>
+                <div className="col-span-2">
+                  <PrintFormField
+                    label="Birthday"
+                    value={
+                      fatherData.personal_info.date_of_birth
+                        ? formatDate(fatherData.personal_info.date_of_birth, "short")
+                        : ""
+                    }
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-4 mb-2">
                 <PrintFormField label="Civil Status" value={fatherData.personal_info.civil_status} />
@@ -1151,11 +746,19 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                 <PrintFormField label="Blood Type" value={fatherData.health_details?.blood_type} />
                 <PrintFormField
                   label="PhilHealth ID"
-                  value={fatherData.per_additional_details?.per_add_philhealth_id || ""}
+                  value={
+                    fatherData.per_additional_details?.per_add_philhealth_id ||
+                    fatherData.health_details?.philhealth_id ||
+                    ""
+                  }
                 />
                 <PrintFormField
                   label="COVID Vaccination Status"
-                  value={fatherData.per_additional_details?.per_add_covid_vax_status || ""}
+                  value={
+                    fatherData.per_additional_details?.per_add_covid_vax_status ||
+                    fatherData.health_details?.covid_vax_status ||
+                    ""
+                  }
                 />
               </div>
             </div>
@@ -1165,27 +768,33 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
           {motherData && (
             <div className="border border-black mb-4 p-2">
               <h3 className="text-sm font-bold mb-2">Mother's Information</h3>
-              <div className="grid grid-cols-3 gap-4 mb-2">
-                <PrintFormField
-                  label="Mother's Name"
-                  value={`${motherData.personal_info.last_name}, ${motherData.personal_info.first_name} ${motherData.personal_info.middle_name || ""}`.trim()}
-                />
-                <PrintFormField
-                  label="Age"
-                  value={
-                    motherData.personal_info.date_of_birth
-                      ? `${new Date().getFullYear() - new Date(motherData.personal_info.date_of_birth).getFullYear()}`
-                      : ""
-                  }
-                />
-                <PrintFormField
-                  label="Birthday"
-                  value={
-                    motherData.personal_info.date_of_birth
-                      ? formatDate(motherData.personal_info.date_of_birth, "short")
-                      : ""
-                  }
-                />
+              <div className="grid grid-cols-6 gap-2 mb-2">
+                <div className="col-span-3">
+                  <PrintFormField
+                    label="Mother's Name"
+                    value={`${motherData.personal_info.last_name}, ${motherData.personal_info.first_name} ${motherData.personal_info.middle_name || ""}`.trim()}
+                  />
+                </div>
+                <div className="col-span-1">
+                  <PrintFormField
+                    label="Age"
+                    value={
+                      motherData.personal_info.date_of_birth
+                        ? `${new Date().getFullYear() - new Date(motherData.personal_info.date_of_birth).getFullYear()}`
+                        : ""
+                    }
+                  />
+                </div>
+                <div className="col-span-2">
+                  <PrintFormField
+                    label="Birthday"
+                    value={
+                      motherData.personal_info.date_of_birth
+                        ? formatDate(motherData.personal_info.date_of_birth, "short")
+                        : ""
+                    }
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-4 mb-2">
                 <PrintFormField label="Civil Status" value={motherData.personal_info.civil_status} />
@@ -1196,11 +805,19 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                 <PrintFormField label="Blood Type" value={motherData.health_details?.blood_type} />
                 <PrintFormField
                   label="PhilHealth ID"
-                  value={motherData.per_additional_details?.per_add_philhealth_id || ""}
+                  value={
+                    motherData.per_additional_details?.per_add_philhealth_id ||
+                    motherData.health_details?.philhealth_id ||
+                    ""
+                  }
                 />
                 <PrintFormField
                   label="COVID Vaccination Status"
-                  value={motherData.per_additional_details?.per_add_covid_vax_status || ""}
+                  value={
+                    motherData.per_additional_details?.per_add_covid_vax_status ||
+                    motherData.health_details?.covid_vax_status ||
+                    ""
+                  }
                 />
               </div>
 
@@ -1208,12 +825,23 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
               {motherData.mother_health_info && (
                 <div className="mt-4">
                   <h4 className="text-xs font-bold mb-2">Health Risk Classification & Family Planning</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-4 mb-2">
+                    <PrintFormField
+                      label="LMP Date"
+                      value={
+                        motherData.mother_health_info.lmp_date
+                          ? formatDate(motherData.mother_health_info.lmp_date, "short")
+                          : ""
+                      }
+                    />
                     <PrintFormField label="Health Risk Class" value={motherData.mother_health_info.health_risk_class} />
                     <PrintFormField
                       label="Immunization Status"
                       value={motherData.mother_health_info.immunization_status}
                     />
+            
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-1">
                     <PrintFormField
                       label="Family Planning Method"
                       value={motherData.mother_health_info.family_planning_method}
@@ -1260,10 +888,22 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                   <td className="border-r border-black p-1 text-center">
                     {child.personal_info.date_of_birth ? formatDate(child.personal_info.date_of_birth, "short") : ""}
                   </td>
-                  <td className="border-r border-black p-1 text-center">{child.role}</td>
-                  <td className="border-r border-black p-1 text-center">Yes No</td>
-                  <td className="border-r border-black p-1 text-center">Yes No</td>
-                  <td className="p-1 text-center">Yes No</td>
+                  <td className="border-r border-black p-1 text-center">{norm(child.health_details?.relationship_to_hh_head) || 'NONE'}</td>
+                  <td className="border-r border-black p-1 text-center">{child.under_five?.fic || ''}</td>
+                  <td className="border-r border-black p-1 text-center">{child.under_five?.nutritional_status || ''}</td>
+                  <td className="p-1 text-center">{child.under_five?.exclusive_bf || ''}</td>
+                </tr>
+              ))}
+              {Array.from({ length: Math.max(0, 3 - childrenUnder5.length) }).map((_, i) => (
+                <tr key={`u5-empty-${i}`} className="border-b border-black">
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="p-1">&nbsp;</td>
                 </tr>
               ))}
             </tbody>
@@ -1301,12 +941,24 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                   <td className="border-r border-black p-1 text-center">
                     {child.personal_info.date_of_birth ? formatDate(child.personal_info.date_of_birth, "short") : ""}
                   </td>
-                  <td className="border-r border-black p-1 text-center">{child.role}</td>
+                  <td className="border-r border-black p-1 text-center">{norm(child.health_details?.relationship_to_hh_head) || 'NONE'}</td>
                   <td className="border-r border-black p-1 text-center">{child.health_details?.blood_type || ""}</td>
                   <td className="border-r border-black p-1 text-center">
-                    {child.per_additional_details?.per_add_covid_vax_status || ""}
+                    {child.per_additional_details?.per_add_covid_vax_status || child.health_details?.covid_vax_status || ""}
                   </td>
-                  <td className="p-1 text-center">{child.per_additional_details?.per_add_philhealth_id || ""}</td>
+                  <td className="p-1 text-center">{child.per_additional_details?.per_add_philhealth_id || child.health_details?.philhealth_id || ""}</td>
+                </tr>
+              ))}
+              {Array.from({ length: Math.max(0, 3 - childrenOver5.length) }).map((_, i) => (
+                <tr key={`o5-empty-${i}`} className="border-b border-black">
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="p-1">&nbsp;</td>
                 </tr>
               ))}
             </tbody>
@@ -1401,7 +1053,8 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                       type="checkbox"
                       className="mr-1"
                       checked={
-                        sanitaryClass === "sanitary" || equalsCI(sanitaryFacilityType, "POUR/FLUSH WITH SEPTIC TANK")
+                        equalsToken(sanitaryFacilityDesc, "POUR/FLUSH TYPE WITH SEPTIC TANK") ||
+                        equalsToken(sanitaryFacilityType, "POUR/FLUSH TYPE WITH SEPTIC TANK")
                       }
                       readOnly
                     />
@@ -1411,10 +1064,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                     <input
                       type="checkbox"
                       className="mr-1"
-                      checked={equalsCI(
-                        sanitaryFacilityType,
-                        "POUR/FLUSH CONNECTED TO SEPTIC TANK AND SEWERAGE SYSTEM",
-                      )}
+                      checked={
+                        equalsToken(sanitaryFacilityDesc, "POUR/FLUSH TOILET CONNECTED TO SEPTIC TANK AND TO SEWERAGE SYSTEM") ||
+                        equalsToken(sanitaryFacilityType, "POUR/FLUSH TOILET CONNECTED TO SEPTIC TANK AND TO SEWERAGE SYSTEM")
+                      }
                       readOnly
                     />
                     Pour/flush toilet connected to septic tank AND to sewerage system
@@ -1423,7 +1076,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                     <input
                       type="checkbox"
                       className="mr-1"
-                      checked={equalsCI(sanitaryFacilityType, "VENTILATED PIT (VIP) LATRINE")}
+                      checked={
+                        equalsToken(sanitaryFacilityDesc, "VENTILATED PIT (VIP) LATRINE") ||
+                        equalsToken(sanitaryFacilityType, "VENTILATED PIT (VIP) LATRINE")
+                      }
                       readOnly
                     />
                     Ventilated Pit (VIP) Latrine
@@ -1435,8 +1091,8 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                       type="checkbox"
                       className="mr-1"
                       checked={
-                        sanitaryClass === "unsanitary" ||
-                        equalsCI(sanitaryFacilityType, "WATER-SEALED TOILET WITHOUT SEPTIC TANK")
+                        equalsToken(sanitaryFacilityDesc, "WATER-SEALED TOILET WITHOUT SEPTIC TANK") ||
+                        equalsToken(sanitaryFacilityType, "WATER-SEALED TOILET WITHOUT SEPTIC TANK")
                       }
                       readOnly
                     />
@@ -1446,7 +1102,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                     <input
                       type="checkbox"
                       className="mr-1"
-                      checked={equalsCI(sanitaryFacilityType, "OVERHUNG LATRINE")}
+                      checked={
+                        equalsToken(sanitaryFacilityDesc, "OVERHUNG LATRINE") ||
+                        equalsToken(sanitaryFacilityType, "OVERHUNG LATRINE")
+                      }
                       readOnly
                     />
                     Overhung latrine
@@ -1455,7 +1114,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                     <input
                       type="checkbox"
                       className="mr-1"
-                      checked={equalsCI(sanitaryFacilityType, "OPEN PIT LATRINE")}
+                      checked={
+                        equalsToken(sanitaryFacilityDesc, "OPEN PIT LATRINE") ||
+                        equalsToken(sanitaryFacilityType, "OPEN PIT LATRINE")
+                      }
                       readOnly
                     />
                     Open Pit Latrine
@@ -1464,7 +1126,10 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                     <input
                       type="checkbox"
                       className="mr-1"
-                      checked={equalsCI(sanitaryFacilityType, "WITHOUT TOILET")}
+                      checked={
+                        equalsToken(sanitaryFacilityDesc, "WITHOUT TOILET") ||
+                        equalsToken(sanitaryFacilityType, "WITHOUT TOILET")
+                      }
                       readOnly
                     />
                     Without toilet
@@ -1560,78 +1225,102 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
         </div>
 
         {/* NCD Section */}
-        {ncdRecords.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-bold mb-2 bg-gray-200 p-1">NON-COMMUNICABLE DISEASE</h3>
-            <table className="w-full border border-black text-xs">
-              <thead>
-                <tr className="border-b border-black">
-                  <th className="border-r border-black p-1">Pangalan</th>
-                  <th className="border-r border-black p-1">Edad</th>
-                  <th className="border-r border-black p-1">Kasarian</th>
-                  <th className="border-r border-black p-1">Risk Class (40+ years)</th>
-                  <th className="border-r border-black p-1">Comorbidities</th>
-                  <th className="border-r border-black p-1">Lifestyle Risk</th>
-                  <th className="p-1">In Maintenance</th>
+        <div className="mb-6">
+          <h3 className="text-sm font-bold mb-2 bg-gray-200 p-1">NON-COMMUNICABLE DISEASE</h3>
+          <table className="w-full border border-black text-xs">
+            <thead>
+              <tr className="border-b border-black">
+                <th className="border-r border-black p-1">Pangalan</th>
+                <th className="border-r border-black p-1">Edad</th>
+                <th className="border-r border-black p-1">Kasarian</th>
+                <th className="border-r border-black p-1">Risk Class (40+ years)</th>
+                <th className="border-r border-black p-1">Comorbidities</th>
+                <th className="border-r border-black p-1">Lifestyle Risk</th>
+                <th className="p-1">In Maintenance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ncdRecords.map((ncd: any, index: number) => (
+                <tr key={index} className="border-b border-black">
+                  <td className="border-r border-black p-1">{`${ncd.resident_info.personal_info.last_name}, ${ncd.resident_info.personal_info.first_name}`}</td>
+                  <td className="border-r border-black p-1 text-center">
+                    {ncd.resident_info.personal_info.date_of_birth
+                      ? new Date().getFullYear() - new Date(ncd.resident_info.personal_info.date_of_birth).getFullYear()
+                      : ""}
+                  </td>
+                  <td className="border-r border-black p-1 text-center">{ncd.resident_info.personal_info.sex}</td>
+                  <td className="border-r border-black p-1 text-center">{ncd.health_data.risk_class_age_group}</td>
+                  <td className="border-r border-black p-1 text-center">{`${ncd.health_data.comorbidities || ''}${ncd.health_data.comorbidities_others ? ` (${ncd.health_data.comorbidities_others})` : ''}`}</td>
+                  <td className="border-r border-black p-1 text-center">{`${ncd.health_data.lifestyle_risk || ''}${ncd.health_data.lifestyle_risk_others ? ` (${ncd.health_data.lifestyle_risk_others})` : ''}`}</td>
+                  <td className="p-1 text-center">{
+                    (() => {
+                      const raw = ncd?.health_data?.in_maintenance ?? ncd?.ncd_maintenance_status ?? ncd?.health_data?.maintenance_status
+                      if (raw == null || String(raw).trim() === '') return ''
+                      const s = String(raw).trim().toLowerCase()
+                      if (["yes","y","true","1"].includes(s)) return "YES"
+                      if (["no","n","false","0"].includes(s)) return "NO"
+                      return String(raw)
+                    })()
+                  }</td>
                 </tr>
-              </thead>
-              <tbody>
-                {ncdRecords.slice(0, 8).map((ncd: any, index: number) => (
-                  <tr key={index} className="border-b border-black">
-                    <td className="border-r border-black p-1">{`${ncd.resident_info.personal_info.last_name}, ${ncd.resident_info.personal_info.first_name}`}</td>
-                    <td className="border-r border-black p-1 text-center">
-                      {ncd.resident_info.personal_info.date_of_birth
-                        ? new Date().getFullYear() -
-                          new Date(ncd.resident_info.personal_info.date_of_birth).getFullYear()
-                        : ""}
-                    </td>
-                    <td className="border-r border-black p-1 text-center">{ncd.resident_info.personal_info.sex}</td>
-                    <td className="border-r border-black p-1 text-center">{ncd.health_data.risk_class_age_group}</td>
-                    <td className="border-r border-black p-1 text-center">{ncd.health_data.comorbidities}</td>
-                    <td className="border-r border-black p-1 text-center">{ncd.health_data.lifestyle_risk}</td>
-                    <td className="p-1 text-center">{ncd.health_data.in_maintenance === "yes" ? "Yes" : "No"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+              {Array.from({ length: Math.max(0, 3 - ncdRecords.length) }).map((_, i) => (
+                <tr key={`ncd-empty-${i}`} className="border-b border-black">
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="p-1">&nbsp;</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* TB Surveillance Section */}
-        {tbRecords.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-bold mb-2 bg-gray-200 p-1">TUBERCULOSIS SURVEILLANCE</h3>
-            <table className="w-full border border-black text-xs">
-              <thead>
-                <tr className="border-b border-black">
-                  <th className="border-r border-black p-1">Pangalan</th>
-                  <th className="border-r border-black p-1">Edad</th>
-                  <th className="border-r border-black p-1">Kasarian (M/F)</th>
-                  <th className="border-r border-black p-1">Source of Anti-TB Meds</th>
-                  <th className="border-r border-black p-1">No. of Days on Anti-TB Meds</th>
-                  <th className="p-1">Status</th>
+        <div className="mb-6">
+          <h3 className="text-sm font-bold mb-2 bg-gray-200 p-1">TUBERCULOSIS SURVEILLANCE</h3>
+          <table className="w-full border border-black text-xs">
+            <thead>
+              <tr className="border-b border-black">
+                <th className="border-r border-black p-1">Pangalan</th>
+                <th className="border-r border-black p-1">Edad</th>
+                <th className="border-r border-black p-1">Kasarian (M/F)</th>
+                <th className="border-r border-black p-1">Source of Anti-TB Meds</th>
+                <th className="border-r border-black p-1">No. of Days on Anti-TB Meds</th>
+                <th className="p-1">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tbRecords.map((tb: any, index: number) => (
+                <tr key={index} className="border-b border-black">
+                  <td className="border-r border-black p-1">{`${tb.resident_info.personal_info.last_name}, ${tb.resident_info.personal_info.first_name}`}</td>
+                  <td className="border-r border-black p-1 text-center">
+                    {tb.resident_info.personal_info.date_of_birth
+                      ? new Date().getFullYear() - new Date(tb.resident_info.personal_info.date_of_birth).getFullYear()
+                      : ""}
+                  </td>
+                  <td className="border-r border-black p-1 text-center">{tb.resident_info.personal_info.sex}</td>
+                  <td className="border-r border-black p-1 text-center">{tb.health_data.src_anti_tb_meds}</td>
+                  <td className="border-r border-black p-1 text-center">{tb.health_data.no_of_days_taking_meds}</td>
+                  <td className="p-1 text-center">{tb.health_data.tb_status}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {tbRecords.slice(0, 5).map((tb: any, index: number) => (
-                  <tr key={index} className="border-b border-black">
-                    <td className="border-r border-black p-1">{`${tb.resident_info.personal_info.last_name}, ${tb.resident_info.personal_info.first_name}`}</td>
-                    <td className="border-r border-black p-1 text-center">
-                      {tb.resident_info.personal_info.date_of_birth
-                        ? new Date().getFullYear() -
-                          new Date(tb.resident_info.personal_info.date_of_birth).getFullYear()
-                        : ""}
-                    </td>
-                    <td className="border-r border-black p-1 text-center">{tb.resident_info.personal_info.sex}</td>
-                    <td className="border-r border-black p-1 text-center">{tb.health_data.src_anti_tb_meds}</td>
-                    <td className="border-r border-black p-1 text-center">{tb.health_data.no_of_days_taking_meds}</td>
-                    <td className="p-1 text-center">{tb.health_data.tb_status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+              {Array.from({ length: Math.max(0, 3 - tbRecords.length) }).map((_, i) => (
+                <tr key={`tb-empty-${i}`} className="border-b border-black">
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="border-r border-black p-1">&nbsp;</td>
+                  <td className="p-1">&nbsp;</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Survey Identification Section - Exact layout from scanned form */}
         <div className="mb-6">
@@ -1645,16 +1334,11 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
               {/* Filed by row */}
               <div className="mb-6">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium mr-2 w-">Profiled by:</span>
+                  <span className="text-sm font-medium mr-2 w-24">Profiled by:</span>
                   <div className="flex-1 mr-8 relative">
                     <div className="text-sm text-center py-1 min-h-[24px]">{surveyData?.filled_by || ""}</div>
                     <div
-                      className="w-full absolute bottom-0 h-px"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(to right, black 0px, black 3px, transparent 3px, transparent 6px)",
-                        backgroundSize: "6px 1px",
-                      }}
+                      className="w-full absolute bottom-0 h-px border-t border-dashed border-black"
                     ></div>
                   </div>
                   <span className="text-sm font-medium">B/CHW</span>
@@ -1664,7 +1348,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
               {/* Conforme row */}
               <div className="mb-6">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium mr-2 w-16">Conforme:</span>
+                  <span className="text-sm font-medium mr-2 w-24">Conforme:</span>
                   <div className="flex-1 mr-8 relative">
                     <div className="flex flex-col items-center justify-center">
                       {/* Signature area */}
@@ -1687,16 +1371,9 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                         )}
                       </div>
                       {/* Name area */}
-                      <div className="text-sm text-center">{surveyData?.informant || "WELZON ENTERA"}</div>
+                      <div className="text-sm text-center mt-1">{surveyData?.informant || "WELZON ENTERA"}</div>
                     </div>
-                    <div
-                      className="w-full absolute bottom-0 h-px"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(to right, black 0px, black 3px, transparent 3px, transparent 6px)",
-                        backgroundSize: "6px 1px",
-                      }}
-                    ></div>
+                    <div className="w-full absolute bottom-0 h-px border-t border-dashed border-black"></div>
                   </div>
                   <div className="text-sm font-medium text-center leading-tight">
                     <div>Informant</div>
@@ -1711,14 +1388,7 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
                   <span className="text-sm font-medium mr-2 w-20">Checked by (RN/RM):</span>
                   <div className="flex-1 relative">
                     <div className="text-sm text-center py-1 min-h-[24px]">{surveyData?.checked_by || ""}</div>
-                    <div
-                      className="w-full absolute bottom-0 h-px"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(to right, black 0px, black 3px, transparent 3px, transparent 6px)",
-                        backgroundSize: "6px 1px",
-                      }}
-                    ></div>
+                    <div className="w-full absolute bottom-0 h-px border-t border-dashed border-black"></div>
                   </div>
                 </div>
               </div>
@@ -1726,27 +1396,20 @@ const FamilyProfilePrintPreview = forwardRef<FamilyProfilePrintPreviewHandle, Fa
               {/* Date row */}
               <div className="mb-6">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium mr-2 w-8">to</span>
+                  <span className="text-sm font-medium mr-2 w-16">Date:</span>
                   <div className="flex-1 relative">
                     <div className="text-sm text-center py-1 min-h-[24px]">
                       {surveyData?.date ? formatDate(surveyData.date, "short") : ""}
                     </div>
-                    <div
-                      className="w-full absolute bottom-0 h-px"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(to right, black 0px, black 3px, transparent 3px, transparent 6px)",
-                        backgroundSize: "6px 1px",
-                      }}
-                    ></div>
+                    <div className="w-full absolute bottom-0 h-px border-t border-dashed border-black"></div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Right side: PSA definition box with exact styling */}
-            <div className="w-80">
-              <div className="border-2 border-dashed border-black p-4 text-sm leading-relaxed bg-white">
+              <div className="w-80">
+              <div className="border border-dashed border-black p-4 text-sm leading-relaxed bg-white">
                 <p className="mb-4 text-justify">
                   <span className="font-bold">Household </span>
                   as defined by the Philippine Statistical Authority (PSA) is a{" "}

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import *
 from django.utils import timezone
 from datetime import datetime
+from django.db import transaction
 
 class FamilyBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -51,13 +52,13 @@ class FamilyTableSerializer(serializers.ModelSerializer):
 
   def get_registered_by(self, obj):
     staff = obj.staff
-    staff_type = staff.staff_type
-    staff_id = staff.staff_id
-    fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
-    fam_id = fam.fam.fam_id if fam else ""
-    personal = staff.rp.per
-    staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
-
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
 
     return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
@@ -67,6 +68,7 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
     fields = '__all__'
     read_only_fields = ['fam_id', 'fam_date_registered']
 
+  @transaction.atomic
   def create(self, validated_data):
     return Family.objects.create(
       fam_id = self.generate_fam_no(validated_data['fam_building']),

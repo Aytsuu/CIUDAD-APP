@@ -173,7 +173,7 @@ export function AppSidebar() {
                 title: "Weekly Accomplishment",
                 url: "/report/weekly-accomplishment",
               },
-              { title: "Securado", url: "/report/securado" },
+              // { title: "Securado", url: "/report/securado" },
             ],
           },
         ]
@@ -316,10 +316,6 @@ export function AppSidebar() {
         ]
       : []),
     {
-      title: "Announcement",
-      url: "/announcement",
-    },
-    {
       title: "Activity Log",
       url: "/record/activity-log",
     },
@@ -327,13 +323,9 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    {
-      title: "Announcement",
-      url: "/announcement",
-    },
-    { title: "BHW Daily Notes", url: "/bhw/notes" },
-    { title: "Patient Records", url: "/patientrecords" },
-    {
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
+    ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
+    ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
       url: "/",
       items: [
@@ -345,63 +337,40 @@ export function AppSidebar() {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
         },
-        {
-          title: "Medical Consultaion",
-          url: "/forwarded-records/medical-consultation",
-        },
       ],
-    },
+    }] : []),
+    ...(featureValidator("referred patients") ? [{
+      title: "Referred Patients",
+      url: "/forwarded-records/medical-consultation",
+    }] : []),
     {
       title: "Services",
       url: "/",
       items: [
+        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Child Health", url: "/services/childhealthrecords" },
+        { title: "Firstaid", url: "/services/firstaid" },
+        { title: "Family Planning", url: "/FamPlanning_table" },
+        { title: "Maternal", url: "/services/maternalrecords" },
         {
           title: "Medical Consultation ",
           url: "/services/medical-consultation",
         },
-        { title: "Child Health", url: "/services/childhealthrecords" },
-        { title: "Vaccination", url: "/services/vaccination" },
         { title: "Medicine", url: "/services/medicine" },
-        { title: "Firstaid", url: "/services/firstaid" },
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
-        { title: "Family Planning", url: "/FamPlanning_table" },
-        { title: "Maternal", url: "/services/maternalrecords" },
-        { title: "Schedules", url: "/services/scheduled/follow-ups" },
+        { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
-    {
+    ...(featureValidator("inventory") ? [{
       title: "Inventory",
       url: "/",
       items: [
         { title: "Inventory List", url: "/inventory/list" },
         { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
-    },
-    {
-      title: "Request",
-      url: "/",
-      items: [
-        {
-          title: "Medicine Request",
-          url: "/request/medicine",
-        },
-        { title: "Medical Consultation", url: "/" },
-      ],
-    },
-
-    { title: "Reports", url: "/reports" },
-    { title: "Service Scheduler", url: "/scheduler" },
-    {
-      title: "Manage",
-      url: "/",
-      items: [
-        {
-          title: "Age Group",
-          url: "/age-group",
-        },
-        { title: "Medical Consultation", url: "/" },
-      ],
-    },
+    }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
+    ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
   const items: BaseMenuItem[] = [
@@ -451,6 +420,10 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(user?.staff?.pos != "DOCTOR" ? [{
+      title: "Announcement",
+      url: "/announcement",
+    }] : []),
     ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
       ? barangayItems
       : healthItems),

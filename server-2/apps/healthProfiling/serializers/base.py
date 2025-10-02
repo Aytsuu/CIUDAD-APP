@@ -60,3 +60,9 @@ class SolidWasteMgmtSerializer(serializers.ModelSerializer):
         model = SolidWasteMgmt
         fields = '__all__'
 
+
+class MotherHealthInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MotherHealthInfo
+        fields = '__all__'
+

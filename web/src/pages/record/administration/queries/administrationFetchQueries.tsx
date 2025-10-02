@@ -29,10 +29,10 @@ export const usePositions = (staff_type: string) => {
   });
 };
 
-export const useFeatures = () => {
+export const useFeatures = (category: string) => {
   return useQuery({
-    queryKey: ["features"],
-    queryFn: getFeatures,
+    queryKey: ["features", category],
+    queryFn: () => getFeatures(category),
     staleTime: 5000
   });
 };

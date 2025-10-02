@@ -95,7 +95,7 @@ const login = useCallback(
     
     // Mutation states for granular loading
     loginLoading: loginMutation.isPending,
-    signupLoading: signupMutation.isPending,
+    signupLoading: signupMutation.isPending, 
     otpLoading: sendOTPMutation.isPending,
     verifyOtpLoading: verifyOTPMutation.isPending,
     logoutLoading: logoutMutation.isPending,

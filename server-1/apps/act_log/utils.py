@@ -3,6 +3,7 @@ from .models import ActivityLog
 from apps.administration.models import Feature, Staff
 import inspect
 import os
+from rest_framework.response import Response
 
 def create_activity_log(
     act_type,
@@ -109,3 +110,111 @@ def log_model_change(model_instance, action, staff, description=None, **kwargs):
         **kwargs
     )
 
+
+class ActivityLogMixin:
+    """Reusable mixin to automatically log create/update/destroy actions."""
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            staff = getattr(self.request.user, 'staff', None)
+            # Create
+            log_model_change(instance, 'create', staff)
+        except Exception:
+            # Avoid breaking the main flow due to logging issues
+            pass
+        return instance
+
+    def _detect_action_from_diff(self, old_values: dict, new_values: dict) -> str:
+        # Determine specific action label from field changes
+        for key in new_values.keys():
+            old = old_values.get(key)
+            new = new_values.get(key)
+            if old == new:
+                continue
+            k_lower = str(key).lower()
+            # Archive/Restore toggles
+            if 'archive' in k_lower:
+                return 'Archived' if bool(new) else 'Restored'
+            # Repeal / Amend flags
+            if 'repeal' in k_lower:
+                return 'Repealed' if bool(new) else 'Repeal Updated'
+            if 'amend' in k_lower:
+                return 'Amended' if bool(new) else 'Amendment Updated'
+            # Approval / Rejection
+            if 'approve' in k_lower or (str(new).lower() == 'approved'):
+                return 'Approved'
+            if 'reject' in k_lower or (str(new).lower() == 'rejected'):
+                return 'Rejected'
+            # Payment
+            if 'payment' in k_lower or 'paid' in str(new).lower():
+                return 'Payment'
+            # Assignment
+            if 'assign' in k_lower:
+                return 'Assigned'
+            # Status-based common transitions
+            if k_lower.endswith('status'):
+                val = str(new).lower()
+                if 'approved' in val:
+                    return 'Approved'
+                if 'rejected' in val:
+                    return 'Rejected'
+                if 'paid' in val:
+                    return 'Payment'
+        return 'Updated'
+
+    def _build_diff_description(self, model_instance, old_values: dict, new_values: dict) -> str:
+        model_name = model_instance.__class__.__name__
+        changes = []
+        for key in new_values.keys():
+            old = old_values.get(key)
+            new = new_values.get(key)
+            if old == new:
+                continue
+            # shorten long strings
+            def _short(v):
+                s = str(v)
+                return (s[:60] + '…') if len(s) > 60 else s
+            changes.append(f"{key}: '{_short(old)}' → '{_short(new)}'")
+        changes_str = "; ".join(changes) if changes else "No field-level changes recorded"
+        return f"{model_name} changes: {changes_str}"
+
+    def perform_update(self, serializer):
+        # Capture old values for fields being updated
+        instance_before = serializer.instance
+        old_values = {}
+        if instance_before is not None:
+            for k in serializer.validated_data.keys():
+                try:
+                    old_values[k] = getattr(instance_before, k)
+                except Exception:
+                    old_values[k] = None
+
+        instance = serializer.save()
+        try:
+            staff = getattr(self.request.user, 'staff', None)
+            # Determine action and build description
+            new_values = serializer.validated_data
+            action_label = self._detect_action_from_diff(old_values, new_values)
+            description = self._build_diff_description(instance, old_values, new_values)
+
+            # Create activity log with targeted action label
+            create_activity_log(
+                act_type=f"{instance.__class__.__name__} {action_label}",
+                act_description=description,
+                staff=staff,
+                record_id=str(getattr(instance, 'pk', None)) if getattr(instance, 'pk', None) else None,
+            )
+        except Exception:
+            pass
+        return instance
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        response = super().destroy(request, *args, **kwargs)
+        try:
+            staff = getattr(self.request.user, 'staff', None)
+            # instance might be deleted; log with id only if accessible
+            log_model_change(instance, 'delete', staff)
+        except Exception:
+            pass
+        return response

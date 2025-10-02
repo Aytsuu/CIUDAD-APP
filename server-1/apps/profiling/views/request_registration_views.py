@@ -8,6 +8,8 @@ from apps.account.serializers import UserAccountSerializer
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 from rest_framework.permissions import AllowAny
+from ..double_queries import PostQueries
+import copy
 
 class RequestTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -21,7 +23,7 @@ class RequestTableView(generics.ListAPIView):
       'request_composition__per__personal_addresses__add'
     ).only(
       'req_id',
-      'req_date',
+      'req_created_at',
       'request_composition__per__per_lname',
       'request_composition__per__per_fname',
       'request_composition__per__per_mname'
@@ -38,7 +40,6 @@ class RequestTableView(generics.ListAPIView):
     if search_query:
       queryset = queryset.filter(
         Q(req_id__icontains=search_query) |
-        Q(req_date__icontains=search_query) |
         Q(request_composition__per__per_lname__icontains=search_query) |
         Q(request_composition__per__per_fname__icontains=search_query) |
         Q(request_composition__per__per_mname__icontains=search_query)).distinct()
@@ -60,9 +61,10 @@ class RequestCreateView(APIView):
           'per': self.create_personal_info(data['per']),
           'req': request
         } 
-                
+        
         if 'acc' in data:  
           acc = data['acc']  
+          print(acc)
           account = Account.objects.create_user(
               email=acc.get('email', None),
               phone=acc.get('phone', None),
@@ -81,19 +83,20 @@ class RequestCreateView(APIView):
       )
     
     if len(new_comp) > 0:
-      RequestRegistrationComposition.objects.bulk_create(new_comp)
-      serialzer = UserAccountSerializer(account)
-      return Response(data=serialzer.data, status=status.HTTP_200_OK)
+      for comp in new_comp:
+        comp.save()
+      return Response(status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
   def create_personal_info(self, personal, staff=None):
-    addresses = personal.pop("per_addresses", None)
+    personal_copy = copy.deepcopy(personal)
+    addresses = personal_copy.pop("per_addresses", None)
     add_instances = [
       Address.objects.get_or_create(
         add_province=add["add_province"],
         add_city=add["add_city"],
         add_barangay = add["add_barangay"],
-        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+        sitio=Sitio.objects.filter(sitio_name=add["sitio"]).first(),
         add_external_sitio=add["add_external_sitio"],
         add_street=add["add_street"]
       )[0]
@@ -101,7 +104,7 @@ class RequestCreateView(APIView):
     ]
 
     # Create Personal record
-    per_instance = Personal(**personal)
+    per_instance = Personal(**personal_copy)
     per_instance._history_user = staff
     per_instance.save()
 
@@ -116,6 +119,14 @@ class RequestCreateView(APIView):
       history = PersonalAddressHistory(add=add, per=per_instance)
       history.history_id=history_id
       history.save()
+
+    response = PostQueries().personal(personal)
+    if not response.ok:
+      try:
+        error_details = response.json()
+      except ValueError:
+        error_details = response.text
+      raise serializers.ValidationError({'error': error_details})
     
     return per_instance
 

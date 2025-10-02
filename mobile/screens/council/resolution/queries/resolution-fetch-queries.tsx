@@ -47,7 +47,7 @@ export const useApprovedProposals = () => {
 
       return items.map((item: any) => ({
         id: item.gpr_id?.toString() || "",
-        name: item.project_title || "Untitled Proposal",
+        name: item.dev_project || "Untitled Proposal",
       }));
     },
     staleTime: 1000 * 60 * 30,

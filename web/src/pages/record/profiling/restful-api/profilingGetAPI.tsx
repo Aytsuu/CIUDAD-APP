@@ -13,13 +13,17 @@ export const getPerAddressesList = async () => {
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
 export const getResidentsList = async (
   is_staff: boolean = false, 
-  exclude_independent: boolean = false
+  exclude_independent: boolean = false,
+  isSearchOnly: boolean = false,
+  search: string = ""
 ) => {
   try {
     const res = await api.get("profiling/resident/", {
       params: {
         is_staff,
-        exclude_independent
+        exclude_independent,
+        is_search_only: isSearchOnly,
+        search
       }
     });
     return res.data;
@@ -160,9 +164,14 @@ export const getHouseholdTable = async (page: number, pageSize: number, searchQu
   }
 }
 
-export const getHouseholdList = async () => {
+export const getHouseholdList = async (search?: string) => {
   try {
-    const res = await api.get("profiling/household/list/");
+    const res = await api.get("profiling/household/list/", {
+      params: {
+        search,
+        is_search: search != undefined
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;

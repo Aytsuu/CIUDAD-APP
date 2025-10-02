@@ -21,9 +21,8 @@ export default () => {
                 <Stack.Screen name='rates/purpose-and-rate-create' options = {{headerShown: false}} />
                 <Stack.Screen name='rates/purpose-and-rate-edit' options = {{headerShown: false}} />
                 <Stack.Screen name='rates/annual-gross-sales-edit' options = {{headerShown: false}} />
-                <Stack.Screen name="inc-disbursement/inc-disb-main" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="inc-disbursement/inc-disb-create" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="inc-disbursement/inc-disb-edit" options={{ headerShown: false, animation: 'fade' }} />  
+                <Stack.Screen name="disbursementVoucher/disb-main" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="disbursementVoucher/disb-view" options={{ headerShown: false, animation: 'fade' }} />
                       
                 <Stack.Screen name="budgetPlan/budget-plan-view" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="budgetPlan/budget-plan-suppdoc-create" options={{ headerShown: false, animation: 'fade' }} />

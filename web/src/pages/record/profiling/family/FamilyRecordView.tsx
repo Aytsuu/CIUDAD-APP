@@ -12,6 +12,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import AddMemberForm from "./AddMemberForm"
 import EditGeneralDetails from "./EditGeneralDetails"
 import { useFamilyData, useFamilyMembers, useHouseholdsList } from "../queries/profilingFetchQueries"
+import { useSurveyIdentificationByFamily } from "../../health-family-profiling/family-profling/queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { formatDate } from "@/helpers/dateHelper"
 import { Badge } from "@/components/ui/badge"
@@ -32,19 +33,35 @@ export default function FamilyRecordView() {
   const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList()
   const { data: familyData, isLoading: isLoadingFamData } = useFamilyData(params?.fam_id)
   const { data: familyMembers, isLoading: isLoadingFamMembers } = useFamilyMembers(params?.fam_id)
+  const { data: surveyByFamily, isLoading: isLoadingSurvey } = useSurveyIdentificationByFamily(params?.fam_id || null)
   
+  // Only show Complete Health Family Profiling when family has a Survey Identification (si_id)
+  const hasSurveyIdentification = React.useMemo(() => {
+    if (!surveyByFamily) return false
+    // Assume API returns { success, data } or a list; support common shapes safely
+    const payload = (surveyByFamily as any)
+    const si = payload?.data ?? payload
+    if (!si) return false
+    // If an array is returned, check first item; if object, check si_id directly
+    if (Array.isArray(si)) {
+      return si.length > 0 && !!si[0]?.si_id
+    }
+    return !!si?.si_id
+  }, [surveyByFamily])
+
   // Check if current user is health staff and should show health profiling data
-  const showHealthProfiling = params?.showHealthProfiling || user?.staff?.staff_type === "HEALTH STAFF"
+  // AND ensure there is a survey identification (si_id)
+  const showHealthProfiling = (params?.showHealthProfiling || user?.staff?.staff_type === "HEALTH STAFF") && hasSurveyIdentification
 
   const members = familyMembers?.results || []
 
   // =================== SIDE EFFECTS ===================
   React.useEffect(() => {
-    const loadingStates = [isLoadingFamData, isLoadingHHList, isLoadingFamMembers]
+    const loadingStates = [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, isLoadingSurvey]
     
     if (loadingStates.some(loading => loading)) showLoading()
     else hideLoading()
-  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, showLoading, hideLoading])
+  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, isLoadingSurvey, showLoading, hideLoading])
 
   // =================== HANDLERS ====================
   const handleViewInfo = async (resId: string, famId: string) => {
@@ -97,7 +114,7 @@ export default function FamilyRecordView() {
     >
       <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
         <Card className="p-6 shadow-none rounded-lg">
-          {isLoadingFamData || isLoadingHHList ? (
+          {isLoadingFamData ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-3">
                 <Spinner size="lg" />
