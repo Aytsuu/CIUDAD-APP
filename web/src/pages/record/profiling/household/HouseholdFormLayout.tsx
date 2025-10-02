@@ -19,6 +19,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 import { Badge } from "@/components/ui/badge"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function HouseholdFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // =============== STATE INITIALIZATION ==================
@@ -30,6 +31,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<any[]>([])
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 50)
 
   const defaultValues = generateDefaultValues(householdFormSchema)
   const form = useForm<z.infer<typeof householdFormSchema>>({
@@ -42,7 +44,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
     false,
     false,
     true,
-    searchQuery,
+    debouncedSearchQuery,
     false
   )
   const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList()
