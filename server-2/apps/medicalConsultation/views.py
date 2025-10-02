@@ -1274,14 +1274,106 @@ class CancelAppointmentView(APIView):
         
         
         
-# WEBVIEW APPOINTMENT
+#================== WEBVIEW APPOINTMENT==============
 
 class PendingMedicalUserAppointmentsView(generics.ListAPIView):
     serializer_class = MedConsultAppointmentSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Filter only pending appointments
+        # Get the search query and date filter from request parameters
+        search_query = self.request.GET.get('search', '').strip()
+        date_filter = self.request.GET.get('date_filter', 'all').strip()
+        
+        # Base queryset for pending appointments with related data
         queryset = MedConsultAppointment.objects.filter(status='pending')
-
+        
+        # Apply search filter if provided
+        if search_query:
+            queryset = queryset.filter(
+                # Search by patient information (through rp -> ResidentProfile -> Personal)
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(rp__per__per_contact__icontains=search_query) |
+                
+                # Search by appointment details
+                Q(id__icontains=search_query) |
+                Q(rp__rp_id__icontains=search_query) |
+                Q(chief_complaint__icontains=search_query) |
+                Q(notes__icontains=search_query) if hasattr(MedConsultAppointment, 'notes') else Q() |
+                
+                # Search by patient address information
+                Q(rp__per__personal_addresses__add__add_province__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_city__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_barangay__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_street__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__sitio__sitio_name__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by household and family information
+                Q(rp__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(rp__respondents_info__fam__hh__hh_id__icontains=search_query)
+            ).distinct()
+        
+        # Apply date filter if provided
+        if date_filter != 'all':
+            today = datetime.now().date()
+            
+            if date_filter == 'today':
+                # Filter for today's appointments (by created date)
+                queryset = queryset.filter(created_at__date=today)
+                
+            elif date_filter == 'this-week':
+                # Filter for this week's appointments (Monday to Sunday)
+                start_of_week = today - timedelta(days=today.weekday())
+                queryset = queryset.filter(created_at__date__gte=start_of_week)
+                
+            elif date_filter == 'this-month':
+                # Filter for this month's appointments
+                start_of_month = today.replace(day=1)
+                queryset = queryset.filter(created_at__date__gte=start_of_month)
+                
+            elif date_filter == 'tomorrow':
+                # Filter for tomorrow's appointments (by scheduled_date)
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date=tomorrow)
+                
+            elif date_filter == 'upcoming':
+                # Filter for upcoming appointments (from tomorrow onwards)
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date__gte=tomorrow)
+                
+            elif date_filter == 'past':
+                # Filter for past appointments
+                queryset = queryset.filter(scheduled_date__lt=today)
+        
         return queryset.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response = self.get_paginated_response(serializer.data)
+                response.data['total_pending_appointments'] = queryset.count()
+                return response
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({
+                'success': True,
+                'results': serializer.data,
+                'count': len(serializer.data),
+                'total_pending_appointments': queryset.count()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching pending appointments: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

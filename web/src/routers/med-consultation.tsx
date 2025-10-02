@@ -4,10 +4,11 @@ import AllMedicalConsRecord from "@/pages/healthServices/medicalconsultation/tab
 import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/tables/IndividualRecords";
 import DisplayMedicalConsultation from "@/pages/healthServices/medicalconsultation/medicalhistory/DisplayMedCon";
 import MedicalConsultationForm from "@/pages/healthServices/medicalconsultation/Forms/MedicalConForm";
+import PendingMedicalAppointments from "@/pages/healthServices/medicalconsultation/appointment/pending-appoinments";
+
+
 export const medicalConsultation = [
 
- 
- 
   {
     path: "/services/medical-consultation",
     element: <AllMedicalConsRecord />,
@@ -25,6 +26,11 @@ export const medicalConsultation = [
   {
     path: "/services/medical-consultation/form",
     element: <MedicalConsultationForm />,
+  },
+
+  {
+    path: "/services/appointments",
+    element: <PendingMedicalAppointments/>,
   }
 
 ];
