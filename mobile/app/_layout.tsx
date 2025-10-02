@@ -54,9 +54,9 @@ export default function RootLayout() {
             <ToastProvider>
             <StatusBar backgroundColor="transparent" style='dark'/>
             <Stack initialRouteName='(auth)'>
+              <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(business)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(complaint)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(profiling)" options={{ headerShown: false, animation: 'fade' }} />

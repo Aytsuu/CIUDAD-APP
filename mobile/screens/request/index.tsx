@@ -15,24 +15,24 @@ export default () => {
 
   const menuItem = [
     {
-      title: "Garbage Pickup Request",
+      title: "Garbage Pickup",
       description:
         "Request a garbage pickup outside the regular collection schedule.",
       route: "/(request)/garbage-pickup/form",
     },
     {
-      title: "Certification Request",
+      title: "Certification",
       description:
         "Request official certification documents for personal or legal use.",
       route: "/(request)/certification-request/cert-choices",
     },
     {
-      title: "Blotter Request",
+      title: "Blotter",
       description: "",
       route: "/(request)/complaint/complaint_req_form",
     },
     {
-      title: "Medicine Request",
+      title: "Medicine",
       description: "",
       route: "",
     },
@@ -81,37 +81,32 @@ export default () => {
       wrapScroll={false}
     >
       <View className="flex-1 px-5">
-        <Text className="text-sm text-center text-gray-600 leading-6 px-5 mb-4">
-          Monitor barangay requests. Select a category below to view records.
-        </Text>
-        {menuItem.map((item: any, index: number) => (
-          <TouchableOpacity
-            key={index}
-            className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-            activeOpacity={0.7}
-            onPress={() => router.push(item.route)}
-          >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1">
-                {/* Add Visual Image */}
-
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold text-base">
+        <View className="bg-white rounded-xl overflow-hidden border-y border-gray-200">
+          {menuItem.map((item: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              className={`px-4 py-5 ${index !== menuItem.length - 1 ? 'border-b border-gray-200' : ''}`}
+              activeOpacity={0.6}
+              onPress={() => router.push(item.route)}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className="text-gray-900 font-semibold text-base mb-1">
                     {item.title}
                   </Text>
 
-                  <Text className="text-gray-500 text-sm mt-1">
-                    {item.description}
-                  </Text>
+                  {item.description ? (
+                    <Text className="text-gray-500 text-sm leading-5">
+                      {item.description}
+                    </Text>
+                  ) : null}
                 </View>
-              </View>
 
-              <View className="ml-2">
                 <ChevronRight className="text-gray-400" size={20} />
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </PageLayout>
   );

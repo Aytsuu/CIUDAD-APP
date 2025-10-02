@@ -1,6 +1,6 @@
 
 import AnnouncementListPage from "@/screens/announcement";
 
-export default function AnnouncementPage() {
+export default () => {
   return <AnnouncementListPage />;
 }

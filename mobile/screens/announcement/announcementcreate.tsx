@@ -197,7 +197,7 @@ if (announcementData.ann_type === "public") {
       const filesPayload = mediaFiles.map((file) => ({
         name: file.name,
         type: file.type,
-        file: file.url,
+        file: file.file,
       }));
       announcementData.files = filesPayload;
     }
