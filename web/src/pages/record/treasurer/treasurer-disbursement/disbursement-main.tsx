@@ -126,7 +126,7 @@ function TreasurerDisbursementVouchers() {
 
   // Create year filter options
   const yearFilterOptions = [
-    { id: "all", name: "All" },
+    { id: "all", name: "All Years" },
     ...availableYears.map(year => ({ id: year.toString(), name: year.toString() }))
   ];
 

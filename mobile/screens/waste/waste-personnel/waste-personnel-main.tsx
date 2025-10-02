@@ -2,7 +2,6 @@
 import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
 import {
-  SafeAreaView,
   Text,
   View,
   useWindowDimensions,
@@ -10,7 +9,7 @@ import {
   ActivityIndicator,
   TextInput,
   RefreshControl,
-  FlatList
+  ScrollView
 } from "react-native";
 import {
   User,
@@ -34,7 +33,6 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
 import { SearchInput } from "@/components/ui/search-input";
 import { useDebounce } from "@/hooks/use-debounce";
-import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function WastePersonnelMain() {
   const router = useRouter();
@@ -308,144 +306,143 @@ export default function WastePersonnelMain() {
   const isLoading = (selectedRole === "Trucks" ? isTrucksLoading : isPersonnelLoading);
   const isFetching = (selectedRole === "Trucks" ? isTrucksFetching : isPersonnelFetching);
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#2a3a61" />
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <PageLayout
-      leftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerTitle={<Text>Waste Personnel and Collection Vehicle Management</Text>}
-      rightAction={<View></View>}
-    >
-      <LoadingModal visible={isSearching} />
-
-      {/* Fixed Header Section - Outside ScrollView via absolute positioning */}
-      <View className="bg-white border-b border-gray-300">
-        <View className="flex-row justify-between items-center gap-x-2 px-4">
-          {buttonData.map((item, index) => (
-            <View key={index} className="flex-1">
-              <TouchableOpacity
-                className={`items-center justify-center rounded-lg py-3 px-1 ${
-                  selectedRole === item.label ? "bg-gray-100" : "bg-white"
+  <PageLayout
+    leftAction={
+      <TouchableOpacity onPress={() => router.back()}>
+        <ChevronLeft size={30} color="black" className="text-black" />
+      </TouchableOpacity>
+    }
+    headerTitle={<Text>Waste Personnel and Collection Vehicle Management</Text>}
+    rightAction={<View></View>}
+  >
+    {/* Fixed Header Section */}
+    <View className="bg-white border-b border-gray-300">
+      <View className="flex-row justify-between items-center gap-x-2 px-4">
+        {buttonData.map((item, index) => (
+          <View key={index} className="flex-1">
+            <TouchableOpacity
+              className={`items-center justify-center rounded-lg py-3 px-1 ${
+                selectedRole === item.label ? "bg-gray-100" : "bg-white"
+              }`}
+              onPress={() => handleRoleChange(item.label as Role)}
+              activeOpacity={0.7}
+            >
+              {item.icon}
+              <Text
+                className={`font-medium mt-1 text-black text-center ${
+                  width < 400 ? "text-xs" : "text-sm"
                 }`}
-                onPress={() => handleRoleChange(item.label as Role)}
-                activeOpacity={0.7}
               >
-                {item.icon}
-                <Text
-                  className={`font-medium mt-1 text-black text-center ${
-                    width < 400 ? "text-xs" : "text-sm"
-                  }`}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    </View>
+
+    {/* Search and Filter Section */}
+    <View className="px-5 pt-4 pb-3 bg-white">
+      <View className="flex-row items-center gap-x-2 mb-3">
+        <View className="relative flex-1 h-12 mb-2">
+          <SearchInput
+            value={searchQuery}
+            onChange={(text) => {
+              setSearchValue("searchQuery", text);
+              setCurrentPage(1);
+            }}
+            onSubmit={() => {}}
+          />
+         
         </View>
+        {selectedRole === "Trucks" && truckViewMode === "active" && (
+          <TouchableOpacity
+            className="bg-primaryBlue p-2 rounded-full"
+            onPress={handleAddTruck}
+          >
+            <Plus size={20} color="white" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Search and Filter Section */}
-      <View className="px-5 pt-4 pb-3 bg-white">
-        <View className="flex-row items-center gap-x-2 mb-3">
-          <View className="relative flex-1 h-12">
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                className="absolute right-3 top-0 bottom-0 z-10 flex items-center justify-center"
-                onPress={() => {
-                  setSearchValue("searchQuery", "");
-                  searchInputRef.current?.focus();
-                }}
-              >
-                {/* <XCircle size={16} color="#9CA3AF" /> */}
-              </TouchableOpacity>
-            )}
-            <SearchInput
-              value={searchQuery}
-              onChange={(text) => {
-                setSearchValue("searchQuery", text);
+      {selectedRole === "Trucks" && (
+        <View className="flex-row justify-end">
+          <View className="flex-row bg-gray-100 rounded-full border border-gray-200 overflow-hidden">
+            <TouchableOpacity
+              className={`px-4 py-2 ${
+                truckViewMode === "active" ? "bg-gray-100" : "bg-white"
+              }`}
+              onPress={() => {
+                setTruckViewMode("active");
                 setCurrentPage(1);
               }}
-              onSubmit={() => {}}
-            />
-          </View>
-          {selectedRole === "Trucks" && truckViewMode === "active" && (
-            <TouchableOpacity
-              className="bg-primaryBlue p-2 rounded-full"
-              onPress={handleAddTruck}
             >
-              <Plus size={20} color="white" />
+              <Text className="text-sm font-medium">Active</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              className={`px-4 py-2 ${
+                truckViewMode === "archive" ? "bg-gray-100" : "bg-white"
+              }`}
+              onPress={() => {
+                setTruckViewMode("archive");
+                setCurrentPage(1);
+              }}
+            >
+              <Text className="text-sm font-medium">Disposed</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+
+    {/* Content Area - Only this section shows loading */}
+    <ScrollView
+      className="flex-1 px-5"
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      {/* Show loading only in content area */}
+      {(isLoading || (isFetching && searchQuery === debouncedSearchTerm)) ? (
+        <View className="py-8 items-center">
+          <ActivityIndicator size="large" color="#2a3a61" />
+          <Text className="text-gray-500 text-sm mt-2">
+            Loading {selectedRole === "Trucks" ? "trucks" : "personnel"}...
+          </Text>
+        </View>
+      ) : (
+        <View className="pb-4">
+          {selectedRole === "Trucks" ? (
+            filteredTrucks.length > 0 ? (
+              filteredTrucks.map(truck => renderTruckItem(truck))
+            ) : (
+              <View className="py-8 items-center">
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? "No trucks found matching your search"
+                    : "No trucks found"
+                  }
+                </Text>
+              </View>
+            )
+          ) : (
+            preparedPersonnel.length > 0 ? (
+              preparedPersonnel.map(item => renderPersonnelItem(item))
+            ) : (
+              <View className="py-8 items-center">
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? "No personnel found matching your search"
+                    : "No personnel found"
+                  }
+                </Text>
+              </View>
+            )
           )}
         </View>
-
-        {selectedRole === "Trucks" && (
-          <View className="flex-row justify-center">
-            <View className="flex-row bg-gray-100 overflow-hidden">
-              <TouchableOpacity
-                className={`px-4 py-2 ${
-                  truckViewMode === "active" ? "bg-gray-100" : "bg-white"
-                }`}
-                onPress={() => {
-                  setTruckViewMode("active");
-                  setCurrentPage(1);
-                }}
-              >
-                <Text className="text-sm font-medium">Active</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`px-4 py-2 ${
-                  truckViewMode === "archive" ? "bg-gray-100" : "bg-white"
-                }`}
-                onPress={() => {
-                  setTruckViewMode("archive");
-                  setCurrentPage(1);
-                }}
-              >
-                <Text className="text-sm font-medium">Disposed</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Content Area - This is what scrolls and reloads */}
-      <View className="flex-1 px-5">
-        {isFetching && searchQuery === debouncedSearchTerm ? (
-          <View className="py-8">
-            <ActivityIndicator size="small" color="#2a3a61" />
-          </View>
-        ) : (
-          <View className="pb-4">
-            {selectedRole === "Trucks" ? (
-              filteredTrucks.length > 0 ? (
-                filteredTrucks.map(truck => renderTruckItem(truck))
-              ) : (
-                <Text className="mt-4 text-sm text-center text-gray-500">
-                  No trucks found.
-                </Text>
-              )
-            ) : (
-              preparedPersonnel.length > 0 ? (
-                preparedPersonnel.map(item => renderPersonnelItem(item))
-              ) : (
-                <Text className="mt-4 text-sm text-center text-gray-500">
-                  No results found.
-                </Text>
-              )
-            )}
-          </View>
-        )}
-      </View>
-    </PageLayout>
+      )}
+    </ScrollView>
+  </PageLayout>
   );
 }

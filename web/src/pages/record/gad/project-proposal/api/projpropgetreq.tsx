@@ -10,36 +10,6 @@ export const getProjectProposalYears = async (): Promise<number[]> => {
   }
 };
 
-// export const getProjectProposals = async (status?: string) => {
-//   try {
-//     const url = status 
-//       ? `gad/project-proposals/?status=${status}&is_archive=false`
-//       : 'gad/project-proposals/?is_archive=false';
-//     const res = await api.get(url);
-//     const data = res.data?.data ?? res.data ?? [];
-    
-//     const proposalsWithData = await Promise.all(
-//       (Array.isArray(data) ? data : []).map(async (proposal: any) => {
-//         const gprId = proposal.gpr_id || proposal.gprId;
-//         try {
-//           const [suppDocsRes] = await Promise.all([
-//             api.get(`gad/project-proposals/${gprId}/support-docs/`, {
-//               params: { is_archive: false }
-//             })
-//           ]);
-//           return transformProposalWithData(proposal, suppDocsRes.data);
-//         } catch (err) {
-//           return transformProposalWithData(proposal, []);
-//         }
-//       })
-//     );
-    
-//     return proposalsWithData;
-//   } catch (err) {
-//     return [];
-//   }
-// };
-
 export const getProjectProposals = async (
   page: number = 1,
   pageSize: number = 10,

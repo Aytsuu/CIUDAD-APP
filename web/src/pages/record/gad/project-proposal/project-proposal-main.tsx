@@ -77,7 +77,7 @@ function GADProjectProposal() {
   const { data: availableYears = [] } = useGetProjectProposalYears();
   const { showLoading, hideLoading } = useLoading();
   const yearFilterOptions = [
-    { id: "All", name: "All" },
+    { id: "All", name: "All Years" },
     ...availableYears.map((year) => ({
       id: year.toString(),
       name: year.toString(),
