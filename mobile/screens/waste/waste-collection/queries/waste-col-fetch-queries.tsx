@@ -125,7 +125,7 @@ export const useGetWasteTrucks = () => {
             if (data && data.results) {
                 return data.results; // Paginated response
             }
-            return data; // Direct array response
+            return data; // Direct array response for non paginated
         }
     });
 }

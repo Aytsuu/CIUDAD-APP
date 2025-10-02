@@ -454,7 +454,7 @@ function ResolutionPage() {
                             {isLoading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
-                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                    <span className="ml-2 text-gray-600">Loading resolution records...</span>
                                 </div>
                             ) : (
                                 <DataTable 
@@ -470,7 +470,7 @@ function ResolutionPage() {
                             {isLoading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <Spinner size="lg" />
-                                    <span className="ml-2 text-gray-600">Loading income entries...</span>
+                                    <span className="ml-2 text-gray-600">Loading resolution records...</span>
                                 </div>
                             ) : (
                                 <DataTable 

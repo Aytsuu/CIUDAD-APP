@@ -12,7 +12,7 @@ import {
   councilEventColumns,
 } from "./event-columns/event-cols";
 import { useGetCouncilEvents } from "../council/Calendar/queries/councilEventfetchqueries";
-import { useQuery } from "@tanstack/react-query";
+// import { useQuery } from "@tanstack/react-query";
 // import { getWasteEvents } from "./waste-event/queries/wasteEventQueries";
 import WasteEventSched from "./waste-event/waste-event-sched";
 
@@ -24,8 +24,8 @@ const WasteMainScheduling = () => {
   //   queryFn: getWasteEvents
   // });
   const [_activeTab, setActiveTab] = useState("calendar");
-  const { data: councilEvents = [] } = useGetCouncilEvents();
-  const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
+  const { data: councilEvents = { results: [], count: 0 } } = useGetCouncilEvents();
+  const calendarEvents = councilEvents.results.filter((event) => !event.ce_is_archive);
   console.log('Hotspots:', hotspotData)
 
   const calendarSources = [

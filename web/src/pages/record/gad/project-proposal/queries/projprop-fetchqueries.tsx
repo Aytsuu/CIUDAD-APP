@@ -11,14 +11,6 @@ export const useGetProjectProposalYears = (options = {}) => {
   });
 };
 
-// export const useGetProjectProposals = (options = {}) => {
-//   return useQuery<ProjectProposal[], Error>({
-//     queryKey: ["projectProposals", status],
-//     queryFn: () => getProjectProposals(status),
-//     staleTime: 1000 * 60 * 5,
-//     ...options,
-//   });
-// };
 
 export const useGetProjectProposals = (
   page: number = 1,

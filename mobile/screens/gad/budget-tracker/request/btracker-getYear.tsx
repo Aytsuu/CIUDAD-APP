@@ -1,14 +1,16 @@
 import { api } from "@/api/api";
 
-export const getbudgetyearreq = async () => {
+export const getbudgetyearreq = async (searchQuery?: string) => {
     try {
-        const res = await api.get('gad/gad-budget-tracker-main/');
+        const params: any = {};
+        if (searchQuery) {
+            params.search = searchQuery;
+        }
+        
+        const res = await api.get('gad/gad-budget-tracker-main/', { params });
         const data = res.data?.data ?? res.data ?? [];
-        const filteredData = Array.isArray(data) 
-            ? data.filter(item => item.gbudy_is_archive === false) 
-            : [];
-        return filteredData;
+        return Array.isArray(data) ? data : [];
     } catch (err) {
-        return [];  // Always return an array
+        return []; 
     }
 };

@@ -78,12 +78,20 @@ export type Trucks = {
 }
 
 export const useGetWasteTrucks = () => {
-    return useQuery<Trucks[]>({
+    return useQuery<any>({
         queryKey: ["trucks"], 
         queryFn: getWasteTrucks,
         staleTime: 1000 * 60 * 30,
+        select: (data) => {
+            // Handle both paginated response and direct array
+            if (data && data.results) {
+                return data.results; // Paginated response
+            }
+            return data; // Direct array response
+        }
     });
 }
+
 
 
 

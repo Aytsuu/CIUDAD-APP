@@ -92,7 +92,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         console.log("Looking for gross sales amount:", businessGrossSales);
         
         // Find exact matching annual gross sales range
-        let matchingRate = activeRates.find((rate: AnnualGrossSales) => 
+        const matchingRate = activeRates.find((rate: AnnualGrossSales) => 
             businessGrossSales >= Number(rate.ags_minimum) && 
             businessGrossSales <= Number(rate.ags_maximum)
         );

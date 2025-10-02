@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Linking,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import {
   Search,
@@ -39,29 +40,45 @@ import {
 import { useGetGADYearBudgets } from "./queries/btracker-yearqueries";
 import { Input } from "@/components/ui/input";
 import PageLayout from "@/screens/_PageLayout";
-import { GADBudgetEntryUI, DropdownOption, GADBudgetFile } from "./gad-btracker-types";
+import {
+  GADBudgetEntryUI,
+  DropdownOption,
+  GADBudgetFile,
+} from "./gad-btracker-types";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const BudgetTrackerRecords = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("All");
-  const [selectedType, setSelectedType] = useState<
-    "All" | "Expense"
-  >("All");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<GADBudgetFile[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
-  const { data: entries = [], isLoading, refetch } = useGADBudgets(year); 
+  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("All");
+  const [refreshing, setRefreshing] = useState(false);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+
+  const {
+    data: entriesData,
+    isLoading,
+    refetch,
+  } = useGADBudgets(
+    year,
+    1, 
+    1000, 
+    debouncedSearchQuery,
+    selectedMonth,
+    activeTab === "archive"
+  );
+
   const { data: yearBudgets = [] } = useGetGADYearBudgets();
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: deleteEntry } = usePermanentDeleteGADBudget();
-  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -69,29 +86,14 @@ const BudgetTrackerRecords = () => {
     setRefreshing(false);
   };
 
+  // Extract entries from data structure like web
+  const entries = entriesData?.results || [];
+
   const currentYearBudget =
     yearBudgets.find((budget) => budget.gbudy_year === year)?.gbudy_budget || 0;
 
-  const filteredData = entries.filter((entry: GADBudgetEntryUI) => {
-    if (activeTab === "active" && entry.gbud_is_archive) return false;
-    if (activeTab === "archive" && !entry.gbud_is_archive) return false;
-    if (selectedType !== "All" )
-      return false;
-
-    if (selectedMonth !== "All" && entry.gbud_datetime) {
-      const entryDate = new Date(entry.gbud_datetime);
-      const entryMonth = (entryDate.getMonth() + 1).toString().padStart(2, "0");
-      if (entryMonth !== selectedMonth) return false;
-    }
-
-    if (searchQuery) {
-      const searchContent =
-        ` ${entry.gbud_exp_particulars} ${entry.gbud_amount} ${entry.gbud_add_notes}`.toLowerCase();
-      return searchContent.includes(searchQuery.toLowerCase());
-    }
-
-    return true;
-  });
+  // Remove frontend filtering - let backend handle it
+  const filteredData = entries;
 
   const handleArchive = (gbud_num: number) => {
     if (gbud_num) {
@@ -121,27 +123,35 @@ const BudgetTrackerRecords = () => {
 
   const handleOpenFile = () => {
     const currentFile = selectedFiles[currentFileIndex];
-    if (currentFile && (currentFile.gbf_type === 'application/pdf' || currentFile.gbf_url?.includes('.pdf'))) {
-      Linking.openURL(currentFile.gbf_url).catch(err => {
+    if (
+      currentFile &&
+      (currentFile.gbf_type === "application/pdf" ||
+        currentFile.gbf_url?.includes(".pdf"))
+    ) {
+      Linking.openURL(currentFile.gbf_url).catch((err) => {
         console.error("Failed to open PDF:", err);
       });
     }
   };
 
   const nextFile = () => {
-    setCurrentFileIndex(prev => 
+    setCurrentFileIndex((prev) =>
       prev === selectedFiles.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevFile = () => {
-    setCurrentFileIndex(prev => 
+    setCurrentFileIndex((prev) =>
       prev === 0 ? selectedFiles.length - 1 : prev - 1
     );
   };
 
   const isPDF = (file: GADBudgetFile) => {
-    return file.gbf_type === 'application/pdf' || file.gbf_url?.includes('.pdf') || file.gbf_name?.toLowerCase().includes('.pdf');
+    return (
+      file.gbf_type === "application/pdf" ||
+      file.gbf_url?.includes(".pdf") ||
+      file.gbf_name?.toLowerCase().includes(".pdf")
+    );
   };
 
   const handleCreate = () => {
@@ -325,13 +335,10 @@ const BudgetTrackerRecords = () => {
             <Text className="text-gray-600">Amount:</Text>
             <Text className="font-semibold">
               ₱
-              {
-                 (Number(item.gbud_actual_expense) === 0
-                    ? item.gbud_proposed_budget || 0
-                    : item.gbud_actual_expense || item.gbud_proposed_budget || 0
-                  ).toLocaleString("en-US", { minimumFractionDigits: 2 })
-
-                  }
+              {(Number(item.gbud_actual_expense) === 0
+                ? item.gbud_proposed_budget || 0
+                : item.gbud_actual_expense || item.gbud_proposed_budget || 0
+              ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </Text>
           </View>
           <View className="flex-row justify-between">
@@ -364,9 +371,7 @@ const BudgetTrackerRecords = () => {
         </View>
       }
       headerTitle={<Text>{year} Budget Records</Text>}
-      rightAction={
-        <View/>
-      }
+      rightAction={<View />}
     >
       <View className="flex p-2">
         <View className="flex-row items-center">
@@ -443,98 +448,105 @@ const BudgetTrackerRecords = () => {
             </Text>
           </Button>
         </View>
-
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="bg-blue-50 mt-5 flex-row justify-between">
-            <TabsTrigger
-              value="active"
-              className={`flex-1 mx-1 ${
-                activeTab === "active"
-                  ? "bg-white border-b-2 border-primaryBlue"
-                  : ""
-              }`}
-            >
-              <Text
-                className={`${
+        {isLoading ? (
+          <View className="h-64 justify-center items-center">
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text className="text-sm text-gray-500 mt-2">
+              Loading budget records...
+            </Text>
+          </View>
+        ) : (
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="bg-blue-50 mt-5 flex-row justify-between">
+              <TabsTrigger
+                value="active"
+                className={`flex-1 mx-1 ${
                   activeTab === "active"
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-500"
+                    ? "bg-white border-b-2 border-primaryBlue"
+                    : ""
                 }`}
               >
-                Active
-              </Text>
-            </TabsTrigger>
-            <TabsTrigger
-              value="archive"
-              className={`flex-1 mx-1 ${
-                activeTab === "archive"
-                  ? "bg-white border-b-2 border-primaryBlue"
-                  : ""
-              }`}
-            >
-              <View className="flex-row items-center justify-center">
-                <Archive
-                  size={16}
-                  className="mr-1"
-                  color={activeTab === "archive" ? "#00A8F0" : "#6b7280"}
-                />
                 <Text
                   className={`${
-                    activeTab === "archive"
+                    activeTab === "active"
                       ? "text-primaryBlue font-medium"
                       : "text-gray-500"
                   }`}
                 >
-                  Archive
+                  Active
                 </Text>
-              </View>
-            </TabsTrigger>
-          </TabsList>
+              </TabsTrigger>
+              <TabsTrigger
+                value="archive"
+                className={`flex-1 mx-1 ${
+                  activeTab === "archive"
+                    ? "bg-white border-b-2 border-primaryBlue"
+                    : ""
+                }`}
+              >
+                <View className="flex-row items-center justify-center">
+                  <Archive
+                    size={16}
+                    className="mr-1"
+                    color={activeTab === "archive" ? "#00A8F0" : "#6b7280"}
+                  />
+                  <Text
+                    className={`${
+                      activeTab === "archive"
+                        ? "text-primaryBlue font-medium"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    Archive
+                  </Text>
+                </View>
+              </TabsTrigger>
+            </TabsList>
 
-          <View className="flex-row justify-end p-2">
-            <TouchableOpacity
-              onPress={handleViewLogs}
-              className="bg-primaryBlue px-3 py-2 rounded-md"
-            >
-              <Text className="text-white text-[17px]">
-                <ClipboardCheck size={14} color="white" /> Logs
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <TabsContent value="active" className="p-2">
-            <FlatList
-              data={filteredData.filter((item) => !item.gbud_is_archive)}
-              renderItem={renderItem}
-              keyExtractor={(item) =>
-                item.gbud_num?.toString() || Math.random().toString()
-              }
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <Text className="text-center text-gray-500 py-4">
-                  No active entries found
+            <View className="flex-row justify-end p-2">
+              <TouchableOpacity
+                onPress={handleViewLogs}
+                className="bg-primaryBlue px-3 py-2 rounded-md"
+              >
+                <Text className="text-white text-[17px]">
+                  <ClipboardCheck size={14} color="white" /> Logs
                 </Text>
-              }
-            />
-          </TabsContent>
+              </TouchableOpacity>
+            </View>
 
-          <TabsContent value="archive" className="p-2">
-            <FlatList
-              data={filteredData.filter((item) => item.gbud_is_archive)}
-              renderItem={renderItem}
-              keyExtractor={(item) =>
-                item.gbud_num?.toString() || Math.random().toString()
-              }
-              scrollEnabled={false}
-              ListEmptyComponent={
-                <Text className="text-center text-gray-500 py-4">
-                  No archived entries found
-                </Text>
-              }
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="active" className="p-2">
+              <FlatList
+                data={filteredData.filter((item) => !item.gbud_is_archive)}
+                renderItem={renderItem}
+                keyExtractor={(item) =>
+                  item.gbud_num?.toString() || Math.random().toString()
+                }
+                scrollEnabled={false}
+                ListEmptyComponent={
+                  <Text className="text-center text-gray-500 py-4">
+                    No active entries found
+                  </Text>
+                }
+              />
+            </TabsContent>
 
+            <TabsContent value="archive" className="p-2">
+              <FlatList
+                data={filteredData.filter((item) => item.gbud_is_archive)}
+                renderItem={renderItem}
+                keyExtractor={(item) =>
+                  item.gbud_num?.toString() || Math.random().toString()
+                }
+                scrollEnabled={false}
+                ListEmptyComponent={
+                  <Text className="text-center text-gray-500 py-4">
+                    No archived entries found
+                  </Text>
+                }
+              />
+            </TabsContent>
+          </Tabs>
+        )}
         {/* Enhanced Modal with PDF Support */}
         <Modal
           visible={viewFilesModalVisible}
@@ -564,10 +576,12 @@ const BudgetTrackerRecords = () => {
                     <View className="w-full max-w-md aspect-[4/3] bg-gray-100 rounded-lg justify-center items-center p-4">
                       <FileText size={72} color="#0ea5e9" />
                       <Text className="text-lg mt-4 font-medium text-center">
-                        {selectedFiles[currentFileIndex]?.gbf_name || "PDF Document"}
+                        {selectedFiles[currentFileIndex]?.gbf_name ||
+                          "PDF Document"}
                       </Text>
                       <Text className="text-sm mt-2 text-center">
-                        This document is in PDF format. Tap below to open it in your PDF viewer.
+                        This document is in PDF format. Tap below to open it in
+                        your PDF viewer.
                       </Text>
                       <TouchableOpacity
                         className="mt-6 bg-blue-500 px-6 py-3 rounded-md"

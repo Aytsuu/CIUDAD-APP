@@ -17,7 +17,7 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
             rep_add_details: reportInfo.rep_add_details,
             rep_anonymous: reportInfo.rep_anonymous || "None",
             sitio_id: reportInfo.sitio_id,    
-            rp_id: "00002250924",
+            rp_id: "00003250925",
             staff_id: "00001250924"
         });        
 
@@ -30,8 +30,8 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
             rep_violator: reportInfo.rep_violator,
             rep_add_details: reportInfo.rep_add_details || "None",
             rep_anonymous: reportInfo.rep_anonymous,
-            sitio_id: reportInfo.sitio_id,    
-            rp_id: "00002250924",
+            sitio_id: Number(reportInfo.sitio_id),    
+            rp_id: "00003250925",
             staff_id: "00001250924"
         });
 
