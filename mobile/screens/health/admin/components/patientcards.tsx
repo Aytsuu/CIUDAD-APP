@@ -68,7 +68,7 @@ export const PatientInfoCard: React.FC<PatientInfoCardProps> = ({ patient, onPre
               <Text className="text-blue-100 text-xs">ID: {patient.pat_id}</Text>
               <View className="w-1 h-1 bg-blue-200 rounded-full mx-2" />
               <Text className="text-blue-100 text-xs">
-                {calculateAge(patient.personal_info.per_dob)}y, {patient.personal_info.per_sex}
+                {calculateAge(patient.personal_info.per_dob)}, {patient.personal_info.per_sex}
               </Text>
             </View>
           </View>

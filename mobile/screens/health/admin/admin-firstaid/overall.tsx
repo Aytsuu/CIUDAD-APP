@@ -172,18 +172,21 @@ export default function AllFirstAidRecords() {
   const queryClient = useQueryClient();
 
   const {
-    data: firstAidRecords,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching
-  } = useQuery<FirstAidRecord[]>({
-    queryKey: ["firstAidRecords"],
-    queryFn: getFirstaidRecords,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  data: firstAidRecords,
+  isLoading,
+  isError,
+  error,
+  refetch,
+  isFetching
+} = useQuery<FirstAidRecord[]>({
+  queryKey: ["firstAidRecords"],
+  queryFn: async () => {
+    const response = await getFirstaidRecords();
+    return response.results; // Extract the results array
+  },
+  refetchOnMount: true,
+  staleTime: 0,
+});
 
   const filteredData = useMemo(() => {
     if (!firstAidRecords) return [];
@@ -215,7 +218,7 @@ export default function AllFirstAidRecords() {
     
     const residentCount = firstAidRecords.filter(r => r.patient_details.pat_type.toLowerCase() === 'resident').length;
     const transientCount = firstAidRecords.filter(r => r.patient_details.pat_type.toLowerCase() === 'transient').length;
-    
+   
     return {
       all: firstAidRecords.length,
       resident: residentCount,

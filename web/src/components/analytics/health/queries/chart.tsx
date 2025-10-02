@@ -23,3 +23,4 @@ export const useMedicalHistoryChart = (month: string) => {
       queryFn: () => getIllnessChart(month),
     });
   };
+

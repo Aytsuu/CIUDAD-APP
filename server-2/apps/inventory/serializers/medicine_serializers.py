@@ -22,14 +22,7 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
         model = MedicineInventory
         fields = '__all__'
 
-    def to_internal_value(self, data):
-        """Allow partial updates but require all fields for creation."""
-        if self.instance:
-            # Partial update: Allow missing fields
-            for field in self.fields:
-                if field not in data:
-                    self.fields[field].required = False
-        return super().to_internal_value(data)
+   
     
 class MedicineTransactionSerializers(serializers.ModelSerializer):
     # Read-only fields for viewing related details

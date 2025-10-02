@@ -23,7 +23,7 @@ export const useLoginMutation = () => {
       dispatch(setAuthData({ 
         accessToken: data.access_token, 
         user: data.user,
-        // refreshToken: data.refresh_token 
+        refreshToken: data.refresh 
       }));
       dispatch(setLoading(false));
     },
@@ -54,7 +54,7 @@ export const useSignupMutation = () => {
         dispatch(setAuthData({ 
           accessToken: data.access_token, 
           user: data.user,
-          // refreshToken: data.refresh_token 
+          refreshToken: data.refresh_token
         }));
       }
       dispatch(setLoading(false));
@@ -62,72 +62,6 @@ export const useSignupMutation = () => {
     onError: (error: any) => {
       const message = error?.response?.data?.error || 'Signup failed';
       console.error('❌ Signup failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
-
-export const useSendOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: async (phone) => {
-      console.log('📱 Sending OTP to:', phone);
-      const response = await api.post('authentication/mobile/sendOtp/', { 
-        phone: phone 
-      });
-      console.log('✅ OTP sent successfully');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data, phone) => {
-      dispatch(setOtpSent({ sent: true, phone }));
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'Failed to send OTP';
-      console.error('❌ Send OTP failed:', message);
-      dispatch(setError(message));
-      dispatch(setLoading(false));
-    },
-  });
-};
-
-export const useVerifyOTPMutation = () => {
-  const dispatch = useAppDispatch();
-  
-  return useMutation<TokenResponse, Error, OTPCredentials>({
-    mutationFn: async ({ phone, otp }) => {
-      console.log('🔐 Verifying OTP...');
-      const response = await api.post('authentication/mobile/verifyOtp/', {
-        phone: phone,
-        otp,
-      });
-      console.log('✅ OTP verification successful');
-      return response.data;
-    },
-    onMutate: () => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-    },
-    onSuccess: (data) => {
-      if (data.access_token && data.user) {
-        dispatch(setAuthData({ 
-          accessToken: data.access_token, 
-          user: data.user,
-          // refreshToken: data.refresh_token 
-        }));
-        dispatch(clearOtpState());
-      }
-      dispatch(setLoading(false));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.error || 'OTP verification failed';
-      console.error('❌ OTP verification failed:', message);
       dispatch(setError(message));
       dispatch(setLoading(false));
     },

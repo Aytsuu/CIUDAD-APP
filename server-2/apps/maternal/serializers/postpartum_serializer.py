@@ -8,6 +8,7 @@ from apps.maternal.models import *
 
 from apps.maternal.utils import handle_spouse_logic
 from apps.healthProfiling.models import PersonalAddress, FamilyComposition
+from apps.inventory.models import MedicineTransactions
 
 
 class SpouseCreateSerializer(serializers.ModelSerializer):
@@ -47,6 +48,42 @@ class PostpartumAssessmentSerializer(serializers.ModelSerializer):
         fields = ['ppa_date_of_visit', 'ppa_feeding', 'ppa_findings', 'ppa_nurses_notes']
 
 
+class PostpartumAssessmentWithVitalsSerializer(serializers.ModelSerializer):
+    """Serializer for PostpartumAssessment with associated vital signs"""
+    vital_signs = serializers.SerializerMethodField()
+    postpartum_record_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PostpartumAssessment
+        fields = ['ppa_date_of_visit', 'ppa_feeding', 'ppa_findings', 'ppa_nurses_notes', 
+                 'vital_signs', 'postpartum_record_info']
+    
+    def get_vital_signs(self, obj):
+        """Get vital signs from the related PostpartumRecord"""
+        if hasattr(obj, 'ppr_id') and obj.ppr_id and obj.ppr_id.vital_id:
+            vital = obj.ppr_id.vital_id
+            return {
+                'vital_id': vital.vital_id,
+                'vital_bp_systolic': vital.vital_bp_systolic,
+                'vital_bp_diastolic': vital.vital_bp_diastolic,
+            }
+        return None
+    
+    def get_postpartum_record_info(self, obj):
+        """Get basic postpartum record information"""
+        if hasattr(obj, 'ppr_id') and obj.ppr_id:
+            return {
+                'ppr_id': obj.ppr_id.ppr_id,
+                'ppr_lochial_discharges': obj.ppr_id.ppr_lochial_discharges,
+                'created_at': obj.ppr_id.created_at,
+            }
+        return None
+
+
+# class PostpartumAssesmentCareSerializer(serializers.ModelSerializer):
+#     class Meta
+
+
 class PostpartumCompleteSerializer(serializers.ModelSerializer):
     # Nested serializers for related data
     delivery_record = PostpartumDeliveryRecordSerializer(write_only=True)
@@ -61,9 +98,20 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     followup_date = serializers.DateField(write_only=True)
     followup_description = serializers.CharField(default="Postpartum follow-up visit", write_only=True)
     
+    # Medicine data - for micronutrient supplementation
+    selected_medicines = serializers.ListField(
+        child=serializers.DictField(), 
+        write_only=True, 
+        required=False,
+        allow_empty=True
+    )
+    
     # Patient data - we'll create the PatientRecord here
     pat_id = serializers.CharField(write_only=True, required=True)
     patrec_type = serializers.CharField(default="Postpartum Care", write_only=True)  # Fixed: was "Postpartum"
+    
+    # Staff data - for tracking who performed the transaction
+    staff_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate_pat_id(self, value):
         """Validate patient ID exists and is not null"""
@@ -100,7 +148,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             'ppr_num_of_pads', 'ppr_mebendazole_date_given', 'ppr_date_of_bf',
             'ppr_time_of_bf', 'pat_id', 'patrec_type', 'delivery_record', 'assessments',
             'spouse_data', 'vital_bp_systolic', 'vital_bp_diastolic', 'followup_date',
-            'followup_description'
+            'followup_description', 'selected_medicines', 'staff_id'
         ]
 
     def validate_ppr_lochial_discharges(self, value):
@@ -187,6 +235,35 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         return value
 
+    def validate_selected_medicines(self, value):
+        """Validate selected medicines data"""
+        if not value:
+            return value
+        
+        from apps.medicineservices.models import MedicineInventory
+        
+        for medicine in value:
+            minv_id = medicine.get('minv_id')
+            medrec_qty = medicine.get('medrec_qty', 0)
+            
+            if not minv_id:
+                raise serializers.ValidationError("Medicine ID (minv_id) is required for each selected medicine")
+            
+            if not isinstance(medrec_qty, int) or medrec_qty <= 0:
+                raise serializers.ValidationError("Medicine quantity must be a positive integer")
+            
+            try:
+                medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
+                if medicine_inv.minv_qty_avail < medrec_qty:
+                    raise serializers.ValidationError(
+                        f"Insufficient stock for medicine {medicine_inv.med_id.med_name}. "
+                        f"Available: {medicine_inv.minv_qty_avail}, Requested: {medrec_qty}"
+                    )
+            except MedicineInventory.DoesNotExist:
+                raise serializers.ValidationError(f"Medicine with ID {minv_id} not found")
+        
+        return value
+
     def get_patient_details(self, patient):
         """Get comprehensive patient details for both Resident and Transient patients"""
         if not patient:
@@ -267,7 +344,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                             family_heads = {}
                             for member in family_members:
                                 role = member.fc_role.lower()
-                                if role in ['mother', 'father'] and member.rp and member.rp.per:
+                                if role in ['father'] and member.rp and member.rp.per:
                                     family_heads[role] = {
                                         'rp_id': member.rp.rp_id,
                                         'role': member.fc_role,
@@ -286,7 +363,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                                 'fam_id': family_composition.fam.fam_id,
                                 'fc_role': family_composition.fc_role,
                                 'fam_date_registered': family_composition.fam.fam_date_registered,
-                                'family_heads': family_heads,  # Include MOTHER and FATHER details
+                                'family_heads': family_heads, 
                             }
                         else:
                             patient_data['family'] = {
@@ -356,6 +433,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         delivery_data = validated_data.pop('delivery_record')
         assessments_data = validated_data.pop('assessments', [])
         spouse_data = validated_data.pop('spouse_data', None)
+        selected_medicines = validated_data.pop('selected_medicines', [])
         
         vital_bp_systolic = validated_data.pop('vital_bp_systolic')
         vital_bp_diastolic = validated_data.pop('vital_bp_diastolic')
@@ -365,6 +443,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         pat_id = validated_data.pop('pat_id')
         patrec_type = validated_data.pop('patrec_type')
+        staff_id = validated_data.pop('staff_id', None)
 
         try:
             with transaction.atomic():
@@ -500,6 +579,81 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                     )
                     print(f"Created assessment {i+1}: {assessment.ppa_id}")
                 
+                # Process selected medicines for micronutrient supplementation
+                medicine_record = None
+                if selected_medicines:
+                    from apps.medicineservices.models import MedicineRecord, MedicineInventory, MedicineTransactions
+                    from apps.administration.models import Staff
+                    
+                    print(f"Processing {len(selected_medicines)} selected medicines")
+                    
+                    # Get staff instance once for all medicine transactions
+                    staff_instance = None
+                    if staff_id:
+                        try:
+                            staff_instance = Staff.objects.get(staff_id=staff_id)
+                        except Staff.DoesNotExist:
+                            print(f"Staff with ID {staff_id} not found")
+                    
+                    # Create medicine records for each selected medicine
+                    for i, medicine_data in enumerate(selected_medicines):
+                        minv_id = medicine_data.get('minv_id')
+                        medrec_qty = medicine_data.get('medrec_qty')
+                        reason = medicine_data.get('reason', 'Postpartum micronutrient supplementation')
+                        
+                        try:
+                            # Get medicine inventory
+                            medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
+                            
+                            # Check stock availability (already validated but double-check)
+                            if medicine_inv.minv_qty_avail < medrec_qty:
+                                raise Exception(f"Insufficient stock for {medicine_inv.med_id.med_name}")
+                            
+                            # Update inventory stock
+                            medicine_inv.minv_qty_avail -= medrec_qty
+                            medicine_inv.save()
+                            print(f"Updated medicine inventory: {medicine_inv.med_id.med_name}, new stock: {medicine_inv.minv_qty_avail}")
+                            
+                            # Create medicine record
+                            medicine_record = MedicineRecord.objects.create(
+                                medrec_qty=medrec_qty,
+                                reason=reason,
+                                requested_at=timezone.now(),
+                                fulfilled_at=timezone.now(),
+                                patrec_id=patient_record,
+                                minv_id=medicine_inv,
+                                staff=staff_instance
+                            )
+                            print(f"Created medicine record {i+1}: {medicine_record.medrec_id}")
+                            
+                            # Create medicine transaction for audit trail
+                            unit = medicine_inv.minv_qty_unit or 'pcs'
+                            if unit.lower() == 'boxes':
+                                mdt_qty = f"{medrec_qty} pcs"  # Convert boxes to pieces
+                            else:
+                                mdt_qty = f"{medrec_qty} {unit}"
+                            
+                            MedicineTransactions.objects.create(
+                                mdt_qty=mdt_qty,
+                                mdt_action="Deducted",
+                                minv_id=medicine_inv,
+                                staff=staff_instance
+                            )
+                            print(f"Created medicine transaction for {medicine_inv.med_id.med_name}")
+                            
+                        except MedicineInventory.DoesNotExist:
+                            print(f"Medicine with ID {minv_id} not found")
+                            continue
+                        except Exception as e:
+                            print(f"Error processing medicine {minv_id}: {str(e)}")
+                            continue
+                
+                # Link the first medicine record to postpartum record if created
+                if medicine_record:
+                    postpartum_record.medrec_id = medicine_record
+                    postpartum_record.save()
+                    print(f"Linked medicine record {medicine_record.medrec_id} to postpartum record")
+                
                 print(f"Successfully created complete postpartum record: {postpartum_record.ppr_id}")
                 return postpartum_record
                 
@@ -607,3 +761,4 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             representation['follow_up_visit'] = None
         
         return representation
+    

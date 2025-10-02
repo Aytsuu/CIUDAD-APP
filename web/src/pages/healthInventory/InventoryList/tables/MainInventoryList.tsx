@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import FirstAidList from "./FirstAidList";
 import MedicineList from "./MedicineList";
 import CommodityList from "./CommodityList";
 import AntigenList from "./AntigenList";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { useMedicinelistCount } from "../queries/medicine/MedicineFetchQueries";
-import { useCommoditylistCount } from "../queries/commodity/CommodityFetchQueries";
+import { useReportsCount } from "@/pages/healthServices/count-return/count";
 
 const TabConfig = [
   {
@@ -40,14 +39,13 @@ type TabType = (typeof TabConfig)[number]["id"];
 export default function MainInventoryList() {
   const [selectedView, setSelectedView] = useState<TabType>(() => {
     if (typeof window !== "undefined") {
-      const savedView = localStorage.getItem("selectedView");
+      const savedView = localStorage.getItem("mainInventoryListView");
       return (savedView as TabType) || "medicine";
     }
     return "medicine";
   });
 
-  const { data: medicinelistcount, isLoading: isLoadingMedicineCount } = useMedicinelistCount();
-  const { data: commoditylistcount, isLoading: isLoadingCommodityCount } = useCommoditylistCount();
+  const { data: count, isLoading: countLoading } = useReportsCount();
 
   const [counts, setCounts] = useState({
     medicine: 0,
@@ -57,17 +55,20 @@ export default function MainInventoryList() {
   });
 
   useEffect(() => {
-    localStorage.setItem("selectedView", selectedView);
+    localStorage.setItem("mainInventoryListView", selectedView);
   }, [selectedView]);
 
   // Update counts when API data changes
   useEffect(() => {
-    setCounts((prev) => ({
-      ...prev,
-      medicine: medicinelistcount?.count || 0,
-      commodity: commoditylistcount?.count || 0
-    }));
-  }, [medicinelistcount, commoditylistcount]);
+    if (count?.data) {
+      setCounts({
+        medicine: count.data.medicine_count || 0,
+        antigen: count.data.antigen_count || 0,
+        commodity: count.data.commodity_count || 0,
+        firstaid: count.data.firstaid_count || 0
+      });
+    }
+  }, [count]);
 
   const getTitle = () => {
     const tab = TabConfig.find((t) => t.id === selectedView);
@@ -82,27 +83,38 @@ export default function MainInventoryList() {
 
   return (
     <MainLayoutComponent title={getTitle()} description="Manage your health inventory efficiently">
-      <Card>
-        <div className="relative">
+      <Card className="border shadow-sm">
+        <CardHeader className="p-0">
           <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as TabType)} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6 h-auto rounded-md bg-white border border-gray-200 shadow-sm">
-              {TabConfig.map((tab) => {
-                const Icon = tab.icon;
-                const count = counts[tab.id];
-                const isLoading = tab.id === "medicine" ? isLoadingMedicineCount : tab.id === "commodity" ? isLoadingCommodityCount : false;
-                const isActive = selectedView === tab.id;
+            <div className="px-4 pt-4">
+              <TabsList className="w-full grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
+                {TabConfig.map((tab) => {
+                  const Icon = tab.icon;
+                  const countValue = counts[tab.id];
+                  const isActive = selectedView === tab.id;
 
-                return (
-                  <TabsTrigger key={tab.id} value={tab.id} className={`flex items-center justify-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:shadow-sm data-[state=active]:rounded-md border border-transparent transition-all ${isActive ? "text-primary" : "text-gray-600"}`}>
-                    <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-gray-600"}`} />
-                    <span className={isActive ? "text-primary" : "text-gray-600"}>{tab.label}</span>
-                    <span className={`ml-1 text-xs font-medium px-2 py-0.5 rounded-full ${isActive ? "bg-primary/20 text-primary" : "bg-gray-100 text-gray-600"}`}>{getCountDisplay(count, isLoading)}</span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+                  return (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className={`flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{tab.label}</span>
+                      <span className={`text-xs rounded-full h-6 w-6 flex items-center justify-center ${
+                        isActive 
+                          ? "bg-red-500 text-white" 
+                          : "bg-red-300 text-white"
+                      }`}>
+                        {getCountDisplay(countValue, countLoading)}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
 
-            <div className="relative p-4">
+            <CardContent className="p-4 pt-6">
               <TabsContent value="medicine" className="mt-0">
                 <MedicineList />
               </TabsContent>
@@ -118,9 +130,9 @@ export default function MainInventoryList() {
               <TabsContent value="firstaid" className="mt-0">
                 <FirstAidList />
               </TabsContent>
-            </div>
+            </CardContent>
           </Tabs>
-        </div>
+        </CardHeader>
       </Card>
     </MainLayoutComponent>
   );

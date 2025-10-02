@@ -1,4 +1,4 @@
-import React, { useState,useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import { Search,} from "lucide-react";
@@ -8,12 +8,10 @@ import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
 import { getAnnualDevPlanYears } from "./restful-api/annualGetAPI";
 
 function AnnualDevelopmentPlan(){
-    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; year: number | null } | null>(null);
     const [openedYear, setOpenedYear] = useState<number | null>(null);
     const [years, setYears] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchYears();
@@ -30,37 +28,8 @@ function AnnualDevelopmentPlan(){
         }
     };
 
-    React.useEffect(() => {
-        const handleClick = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setContextMenu(null);
-            }
-        };
-        if (contextMenu) {
-            document.addEventListener("mousedown", handleClick);
-        } else {
-            document.removeEventListener("mousedown", handleClick);
-        }
-        return () => document.removeEventListener("mousedown", handleClick);
-    }, [contextMenu]);
-
-    const handleContextMenu = (e: React.MouseEvent, year: number) => {
-        e.preventDefault();
-        setContextMenu({ x: e.clientX, y: e.clientY, year });
-    };
-
-    const handleOpen = () => {
-        if (contextMenu?.year) {
-            setOpenedYear(contextMenu.year);
-        }
-        setContextMenu(null);
-    };
-
-    const handleDelete = () => {
-        if (contextMenu?.year) {
-            alert(`Delete folder for Year ${contextMenu.year}`);
-        }
-        setContextMenu(null);
+    const handleOpen = (year: number) => {
+        setOpenedYear(year);
     };
 
     const handleBack = () => {
@@ -143,7 +112,7 @@ function AnnualDevelopmentPlan(){
                     ) : (
                         <div className="w-full flex flex-row items-start">
                             {(search ? years.filter(y => String(y).includes(search.trim())) : years).map(year => (
-                                <div key={year} onContextMenu={e => handleContextMenu(e, year)} className="flex flex-col items-center group cursor-pointer mx-8 select-none">
+                                <div key={year} onClick={() => handleOpen(year)} className="flex flex-col items-center group cursor-pointer mx-8 select-none">
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2 group-hover:scale-105 transition-transform">
                                         <rect x="3" y="6" width="18" height="14" rx="2" fill="#FFE082"/>
                                         <path d="M3 8V6a2 2 0 0 1 2-2h3.17a2 2 0 0 1 1.41.59l1.83 1.83A2 2 0 0 0 12.83 7H19a2 2 0 0 1 2 2v1" fill="#FFD54F"/>
@@ -152,27 +121,6 @@ function AnnualDevelopmentPlan(){
                                     <span className="text-sm font-medium text-gray-700">Year {year}</span>
                                 </div>
                             ))}
-                            {contextMenu && (
-                                <div
-                                    ref={menuRef}
-                                    style={{ position: "fixed", top: contextMenu.y, left: contextMenu.x, zIndex: 50 }}
-                                    className="bg-white border border-gray-300 rounded shadow-lg min-w-[140px]"
-                                >
-                                    <button
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-black"
-                                        onClick={handleOpen}
-                                    >
-                                        Open Folder
-                                    </button>
-                                    <hr className="my-0" />
-                                    <button
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-                                        onClick={handleDelete}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>

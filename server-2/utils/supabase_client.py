@@ -13,8 +13,8 @@ supabase: Client = create_client(
 def get_realtime_channel():
     return supabase.realtime.channel('notification')
 
-
 def upload_to_storage(file_data, bucket, folder=None):
+    url = None  # Initialize url variable outside try block
     try:
         b64_string = file_data['file']
 
@@ -46,5 +46,4 @@ def upload_to_storage(file_data, bucket, folder=None):
     except Exception as e:
         logger.error(f"Failed to upload file {file_data['name']}: {str(e)}")
 
-    return url 
-         
+    return url

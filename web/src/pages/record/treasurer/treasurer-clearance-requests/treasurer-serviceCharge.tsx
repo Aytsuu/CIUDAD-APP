@@ -1,20 +1,21 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, Search, Loader2 } from 'lucide-react';
+import { X, FileInput, ReceiptText, Search } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import ReceiptForm from "./treasurer-create-receipt-form";
+import ReceiptForm from "./treasurer-create-receipt-form";
+import { Button } from "@/components/ui/button/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
 import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 
-// Create columns function that accepts the handlePaymentSuccess callback
-const createColumns = (): ColumnDef<ServiceCharge>[] => [
-    { accessorKey: "sr_id",
+export const columns: ColumnDef<ServiceCharge>[] = [
+    { accessorKey: "caseNo",
         header: ({ column }) => (
               <div
                 className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -101,18 +102,6 @@ function ServiceCharge(){
     const [pageSize, setPageSize] = useState(10);
     const [activeTab, setActiveTab] = useState<"pending" | "declined">("pending");
     const [searchQuery, setSearchQuery] = useState("");
-
-    // Function to refresh data after successful payment
-    const handlePaymentSuccess = async () => {
-        console.log("Payment successful, refreshing data...");
-        // Invalidate and refetch the service charges data
-        await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
-        await refetch();
-        console.log("Data refreshed successfully");
-    };
-
-    
-    const columns = useMemo(() => createColumns(), [handlePaymentSuccess]);
 
     // Filter data based on active tab
     const filteredData = useMemo(() => {

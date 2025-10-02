@@ -108,53 +108,6 @@ export default function PrenatalFormSecPg({
   }, [form.watch("presentPregnancy.pf_lmp")])
 
   useEffect(() => {
-    const labResultsLatest = form.getValues("labResults.labResultsData") || [];
-    
-    if (Array.isArray(labResultsLatest) && labResultsLatest.length > 0 && 
-      (!labResults || Array.isArray(labResults) && labResults.length === 0)) 
-    {
-      const mappedResults = createInitialLabResults();
-      labResultsLatest.forEach((item: any) => {
-        const labType = (item.lab_type || "").toLowerCase();
-        const keyMap: Record<string, string> = {
-          urinalysis: "urinalysis",
-          cbc: "cbc",
-          sgot_sgpt: "sgotSgpt",
-          creatinine_serum: "creatinineSerum",
-          bua_bun: "buaBun",
-          syphilis: "syphilis",
-          hiv_test: "hivTest",
-          hepa_b: "hepaB",
-          blood_typing: "bloodTyping",
-          ogct_50gms: "ogct50",
-          ogct_100gms: "ogct100",
-        };
-        const key = keyMap[labType];
-        if (key && mappedResults[key]) {
-          mappedResults[key] = {
-            ...mappedResults[key],
-            checked: true,
-            date: item.resultDate || "",
-            toBeFollowed: item.toBeFollowed || false,
-            remarks: item.labRemarks || "",
-            images: Array.isArray(item.images)
-              ? item.images.map((img: any) => ({
-                  file: undefined, 
-                  preview: img.image_url || "",
-                  name: img.image_name || "",
-                  type: img.image_type || "",
-                  size: img.image_size || 0,
-                  url: img.image_url || "",
-                }))
-              : [],
-          };
-        }
-      });
-      setLabResults(mappedResults);
-    }
-  }, [form, labResults]);
-
-  useEffect(() => {
     // convert lab results to the format expected by your form schema
     const convertAndSetLabResults = async () => {
       const convertedLabResults = await convertLabResultsToSchema(labResults)
@@ -178,8 +131,6 @@ export default function PrenatalFormSecPg({
   }, [labResults, form])
 
   const handleNext = async () => {
-    window.scrollTo(0, 0) 
-
     // validate lab results first
     const labValidation = validateLabResults(labResults)
     console.log("Lab validation result:", labValidation.isValid, "Errors:", labValidation.errors)

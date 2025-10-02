@@ -21,6 +21,7 @@ import { fetchMedicines } from "../REQUEST/Medicine/restful-api/MedicineFetchAPI
 export default function AddMedicineStock() {
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || "";
+  console.log("STAFFFACKERS",staff)
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {

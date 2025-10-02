@@ -99,7 +99,6 @@ const ExpenseTracking = () => {
       params: {
         iet_num: Number(item.iet_num),
         iet_serial_num: item.iet_serial_num || '',
-        iet_check_num: item.iet_check_num || '',
         iet_datetime: item.iet_datetime || '',
         iet_entryType: item.iet_entryType || 'Expense',
         iet_particular_id: String(item.exp_id),
@@ -347,7 +346,6 @@ const ExpenseTracking = () => {
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
       }
-      wrapScroll={false} 
     >
       {isLoading || isArchivePending || isDeletePending ? (
         <View className="flex-1 justify-center items-center">
@@ -450,7 +448,6 @@ const ExpenseTracking = () => {
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
-                  showsVerticalScrollIndicator={false} 
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No active entries found
@@ -466,7 +463,6 @@ const ExpenseTracking = () => {
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
-                  showsVerticalScrollIndicator={false} 
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No archived entries found

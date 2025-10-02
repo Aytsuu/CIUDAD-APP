@@ -19,6 +19,7 @@ from pagination import *
 from django.db.models import Q, Prefetch
 from utils import * 
 from apps.medicalConsultation.utils import *
+from apps.patientrecords.serializers.patients_serializers import PatientRecordSerializer
 
 
 
@@ -69,6 +70,10 @@ class PatientMedicineRecordsTableView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
         
+
+
+
+
 class MedicineRecordTableView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -81,6 +86,7 @@ class MedicineRecordTableView(APIView):
             
             # Get medicine records for the patient with prefetch for better performance
             medicine_records = MedicineRecord.objects.select_related(
+                'patrec_id',  # Add this to get patient record data
                 'minv_id',
                 'minv_id__med_id',
                 'staff'
@@ -125,6 +131,12 @@ class MedicineRecordTableView(APIView):
                     record.minv_id.med_id.cat):
                     category_name = record.minv_id.med_id.cat.cat_name
                 
+                # Serialize patient record data
+                patient_record_data = {}
+                if record.patrec_id:
+                    patient_record_serializer = PatientRecordSerializer(record.patrec_id)
+                    patient_record_data = patient_record_serializer.data
+                
                 record_data = {
                     'medrec_id': record.medrec_id,
                     'medrec_qty': record.medrec_qty,
@@ -138,7 +150,8 @@ class MedicineRecordTableView(APIView):
                     'dosage': f"{record.minv_id.minv_dsg} {record.minv_id.minv_dsg_unit}" if record.minv_id else 'N/A',
                     'form': record.minv_id.minv_form if record.minv_id else 'N/A',
                     'files': file_data,
-                    'status': 'Fulfilled' if record.fulfilled_at else 'Pending'
+                    'status': 'Fulfilled' if record.fulfilled_at else 'Pending',
+                    'patient_record': patient_record_data  # Add serialized patient record data here
                 }
                 
                 records_data.append(record_data)
@@ -150,7 +163,9 @@ class MedicineRecordTableView(APIView):
             
             if page_data is not None:
                 response = paginator.get_paginated_response(page_data)
-                return Response(response.data)
+                # Add success field to the paginated response
+                response.data['success'] = True
+                return response
             
             return Response({
                 'success': True,
@@ -163,7 +178,7 @@ class MedicineRecordTableView(APIView):
             traceback.print_exc()
             return Response({
                 'success': False,
-                'error': f'Error fetching medicine records: {str(e)}'
+                'error': f'Error fetching medicine records: {str(e)}',
+                'results': [],
+                'count': 0
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-

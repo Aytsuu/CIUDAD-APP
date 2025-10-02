@@ -208,7 +208,6 @@ export function PregnancyAccordion({
                               </span>
                               <div className="flex gap-1">
                                 <TooltipLayout
-                                <TooltipLayout
                                   trigger={
                                     <Link
                                       to={

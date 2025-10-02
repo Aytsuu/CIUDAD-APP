@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,8 +22,9 @@ interface AnnualDevelopmentPlanViewProps {
 
 interface BudgetItem {
   name: string;
-  pax: string;
-  price: string;
+  pax: string | number;
+  amount?: string | number;
+  price?: string | number; 
 }
 
 interface DevelopmentPlan {
@@ -265,11 +266,67 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
-                      <ul className="list-disc list-inside">
-                        {plan.dev_indicator.split(',').map((indicator, idx) => (
-                          <li key={idx} className="text-sm">{indicator.trim()}</li>
-                        ))}
-                      </ul>
+                      {(() => {
+                        const raw = plan.dev_indicator as unknown as any;
+                        let items: any[] = [];
+                        try {
+                          if (Array.isArray(raw)) {
+                            items = raw;
+                          } else if (typeof raw === 'string') {
+                            const trimmed = raw.trim();
+                            // Try strict JSON first
+                            if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+                              try {
+                                const parsed = JSON.parse(trimmed);
+                                items = Array.isArray(parsed) ? parsed : [parsed];
+                              } catch {
+                      
+                              }
+                            }
+                            if (!items.length) {
+                             
+                              const objectMatches = trimmed.match(/\{[\s\S]*?\}/g);
+                              if (objectMatches && objectMatches.length) {
+                                const parsedObjects = objectMatches.map((block) => {
+                                  const countMatch = block.match(/['\"]count['\"]\s*:\s*(\d+)/);
+                                  const categoryMatch = block.match(/['\"]category['\"]\s*:\s*['\"]([^'\"]+)['\"]/);
+                                  const obj: any = {};
+                                  if (categoryMatch) obj.category = categoryMatch[1];
+                                  if (countMatch) obj.count = Number(countMatch[1]);
+                                  return obj;
+                                }).filter(o => o.category || o.count != null);
+                                if (parsedObjects.length) items = parsedObjects;
+                              }
+                            }
+                            if (!items.length) {
+                              // fallback: comma or newline separated list of plain strings
+                              items = trimmed.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+                            }
+                          }
+                        } catch (_e) {
+                          // fallback to comma split on parse failure
+                          items = String(raw || '').split(',').map(s => s.trim()).filter(Boolean);
+                        }
+
+                        if (!items || items.length === 0) {
+                          return <div className="text-sm text-gray-500">-</div>;
+                        }
+
+                        return (
+                          <ul className="list-disc list-inside">
+                            {items.map((it, idx) => {
+                              if (typeof it === 'string') {
+                                return <li key={idx} className="text-sm">{it}</li>;
+                              }
+                              // object shape: { count, category } or similar
+                              const category = (it && (it.category || it.name || it.type || 'Category')) as string;
+                              const count = (it && (it.count ?? it.pax ?? it.value)) as number | string | undefined;
+                              const text = count != null ? `${category}: ${count}` : String(category);
+                              return <li key={idx} className="text-sm">{text}</li>;
+                            })}
+                          </ul>
+                        );
+                      })()}
                       <div className="mt-2 text-xs text-gray-500">
                         {new Date(plan.dev_date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </div>
@@ -295,20 +352,32 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      plan.dev_gad_items.map((item, idx) => (
-                        <div key={idx}>₱{item.price}</div>
-                      ))
+                      plan.dev_gad_items.map((item, idx) => {
+                        const amount = Number((item.amount ?? item.price) || 0);
+                        return <div key={idx}>₱{isFinite(amount) ? amount.toFixed(2) : '0.00'}</div>;
+                      })
                     ) : (
                       <span>₱{plan.total || '0'}</span>
                     )}
                   </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     {plan.dev_gad_items && plan.dev_gad_items.length > 0 ? (
-                      <div>₱{plan.dev_gad_items.reduce((sum, item) => sum + parseFloat(item.price), 0).toFixed(2)}</div>
+                      <div>
+                        ₱{
+                          plan.dev_gad_items
+                            .reduce((sum, item) => {
+                              const pax = Number(item.pax || 0);
+                              const amount = Number((item.amount ?? item.price) || 0);
+                              const total = (isFinite(pax) ? pax : 0) * (isFinite(amount) ? amount : 0);
+                              return sum + total;
+                            }, 0)
+                            .toFixed(2)
+                        }
+                      </div>
                     ) : (
                       <span>₱{plan.total || '0'}</span>
                     )}
-                  </td>
+              </td>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <ul className="list-disc list-inside">
                       {plan.dev_res_person.split(',').map((person, idx) => (
@@ -362,6 +431,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
                 <td className="px-3 py-2 border border-gray-200">
                   ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2)}
                 </td>
+                <td className="px-3 py-2 border border-gray-200"></td>
                 <td className="px-3 py-2 border border-gray-200"></td>
               </tr>
             </tbody>

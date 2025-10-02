@@ -112,10 +112,7 @@ export default function EmailOTP({ email, onSuccess }: EmailOTPProps) {
     setErrorMessage("");
     
     try {
-      const success = await sendEmailOTP({
-        email: email,
-        type: "signin"
-      });
+      const success = await sendEmailOTP(email);
       
       if (success) {
         setTimer(60);

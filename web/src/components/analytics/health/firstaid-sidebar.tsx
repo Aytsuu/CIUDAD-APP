@@ -2,9 +2,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, BarChart3, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { useFirstAidChart } from "@/pages/healthServices/Reports/firstaid-report/queries/fetchQueries";
+import { useFirstAidChart } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { useState } from "react";
 import { FaFirstAid } from "react-icons/fa";
+import { Link } from "react-router";
 
 const COLORS = [
   "#3b82f6", // Blue
@@ -68,11 +69,7 @@ export function FirstAidDistributionSidebar() {
         </CardTitle>
         <CardDescription>
           Top {itemsToShow.length} most used first aid items in this month
-          {totalItems > 0 && (
-            <span className="block text-xs mt-1">
-              {totalUses} total uses across {totalItems} items
-            </span>
-          )}
+        
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
@@ -98,6 +95,8 @@ export function FirstAidDistributionSidebar() {
                 const percentage = ((item.count / totalUses) * 100).toFixed(1);
 
                 return (
+                  <Link to="/inventory/stocks">
+                  
                   <div
                     key={item.name}
                     className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors"
@@ -126,6 +125,8 @@ export function FirstAidDistributionSidebar() {
                       </span>
                     </div>
                   </div>
+                  </Link>
+                    
                 );
               })}
             </div>

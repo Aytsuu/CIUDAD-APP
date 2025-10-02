@@ -1,5 +1,24 @@
 // Survey validation utilities
 
+// Helper function to format date to YYYY-MM-DD format expected by Django DateField
+function formatDateForBackend(dateValue: any): string {
+  if (!dateValue) return new Date().toISOString().split('T')[0];
+  
+  // If it's already a string in YYYY-MM-DD format, return as is
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+  
+  // Convert to Date object and format to YYYY-MM-DD
+  const date = new Date(dateValue);
+  if (isNaN(date.getTime())) {
+    // If invalid date, use current date
+    return new Date().toISOString().split('T')[0];
+  }
+  
+  return date.toISOString().split('T')[0];
+}
+
 /**
  * Prepares survey data for submission to the API
  */
@@ -18,7 +37,7 @@ export function prepareSurveyDataForSubmission(surveyData: any, familyId: string
     filledBy: surveyData.filledBy || surveyData.si_filled_by || '',
     informant: surveyData.informant || surveyData.si_informant || '',
     checkedBy: surveyData.checkedBy || surveyData.si_checked_by || '',
-    date: surveyData.date || surveyData.si_date || new Date().toISOString().split('T')[0],
+    date: formatDateForBackend(surveyData.date || surveyData.si_date || new Date()),
     signature: surveyData.signature || surveyData.si_signature || ''
   };
 
@@ -44,6 +63,7 @@ export function prepareSurveyDataForSubmission(surveyData: any, familyId: string
   }
 
   console.log('Prepared survey payload:', payload);
+  console.log('Formatted date for backend:', payload.date);
 
   return payload;
 }

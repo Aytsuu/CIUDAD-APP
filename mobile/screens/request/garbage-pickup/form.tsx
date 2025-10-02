@@ -48,7 +48,7 @@ export default function GarbagePickupForm() {
       garb_pref_time: '',
       garb_waste_type: '',
       garb_additional_notes: '',
-      rp_id: user?.rp  || ''
+      rp_id: user.resident.rp_id
     }
   });
 

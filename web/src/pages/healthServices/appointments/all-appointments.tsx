@@ -355,7 +355,7 @@ export default function ScheduleRecords() {
   const showLoadingState = isLoading || isTimeFrameLoading;
 
   return (
-    <LayoutWithBack title="Scheduled Follow-up Visits" description="View patient appointment schedules">
+    <LayoutWithBack title="Follow-up Visits" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
         <div className="flex justify-between mb-4 w-full">
           <div>

@@ -16,8 +16,6 @@ import { useLoading } from "@/context/LoadingContext"
 import { formatDate } from "@/helpers/dateHelper"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
-import { useAuth } from "@/context/AuthContext"
-import HealthFamilyProfileView from "../../health-family-profiling/HealthFamilyProfileView"
 
 export default function FamilyRecordView() {
   // =================== STATE INITIALIZATION ===================
@@ -28,25 +26,17 @@ export default function FamilyRecordView() {
   const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false)
   const [accordionValue, setAccordionValue] = React.useState<string>("general-info")
   const { showLoading, hideLoading } = useLoading()
-  const [searchQuery, setSearchQuery] = React.useState<string>("")
-  const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList(
-    searchQuery
-  )
+  const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList()
   const { data: familyData, isLoading: isLoadingFamData } = useFamilyData(params?.fam_id)
   const { data: familyMembers, isLoading: isLoadingFamMembers } = useFamilyMembers(params?.fam_id)
-  
-  // Check if current user is health staff and should show health profiling data
-  const showHealthProfiling = params?.showHealthProfiling || user?.staff?.staff_type === "HEALTH STAFF"
 
   const members = familyMembers?.results || []
 
   // =================== SIDE EFFECTS ===================
   React.useEffect(() => {
-    const loadingStates = [isLoadingFamData, isLoadingHHList, isLoadingFamMembers]
-    
-    if (loadingStates.some(loading => loading)) showLoading()
+    if (isLoadingFamData || isLoadingHHList || isLoadingFamMembers) showLoading()
     else hideLoading()
-  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, showLoading, hideLoading])
+  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers])
 
   // =================== HANDLERS ====================
   const handleViewInfo = async (resId: string, famId: string) => {
@@ -99,7 +89,7 @@ export default function FamilyRecordView() {
     >
       <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
         <Card className="p-6 shadow-none rounded-lg">
-          {isLoadingFamData || isLoadingHHList ? (
+          {isLoadingFamData ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-3">
                 <Spinner size="lg" />
@@ -132,7 +122,6 @@ export default function FamilyRecordView() {
                         familyData={familyData}
                         households={householdsList}
                         setIsOpenDialog={setIsOpenEditDialog}
-                        setSearchQuery={setSearchQuery}
                       />
                     }
                     isOpen={isOpenEditDialog}
@@ -245,12 +234,6 @@ export default function FamilyRecordView() {
             </div>
           )}
         </Card>
-
-        {/* Health Profiling Section - Only show for Health Staff */}
-        <HealthFamilyProfileView 
-          familyId={params?.fam_id} 
-          showHealthProfiling={showHealthProfiling}
-        />
       </div>
     </LayoutWithBack>
   )

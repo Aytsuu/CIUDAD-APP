@@ -236,9 +236,10 @@ export default function PatientsRecord() {
     }, 1000)
   }, [])
 
-  const handleRecordPress = (pat_id: string) => {
-    console.log(`Navigate to patient ${pat_id}`)
-  }
+const handleRecordPress = (pat_id: string) => {
+  console.log("[DEBUG] Navigating to /records with pat_id:", pat_id);
+  router.push({ pathname: "/my-records/all-records", params: { pat_id } });
+};
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {

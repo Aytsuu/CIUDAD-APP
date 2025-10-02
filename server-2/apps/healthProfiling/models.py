@@ -91,7 +91,6 @@ class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
     add = models.ForeignKey(Address, on_delete=models.CASCADE)
-    
 
     class Meta:
         db_table = 'personal_address'
@@ -191,7 +190,7 @@ class FamilyComposition(AbstractModels):
 #     class Meta:
 #         db_table = 'request_registration_composition'
 
-class HealthRelatedDetails(models.Model):
+class HealthRelatedDetails(AbstractModels):
     per_add_id = models.BigAutoField(primary_key=True)
     per_add_bloodType = models.CharField(max_length=5, null=True, blank=True)
     per_add_philhealth_id = models.CharField(max_length=50, null=True, blank=True)
@@ -221,7 +220,7 @@ class Dependents_Under_Five(models.Model):
     class Meta:
         db_table = 'dep_under_five'
 
-class WaterSupply(models.Model):
+class WaterSupply(AbstractModels):
     water_sup_id = models.BigAutoField(primary_key=True)
     water_sup_type = models.CharField(max_length=50)
     water_conn_type = models.CharField(max_length=50, null=True, blank=True)

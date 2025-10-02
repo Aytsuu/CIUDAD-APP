@@ -26,12 +26,10 @@ class NonCommunicableDiseaseSerializer(serializers.ModelSerializer):
 
 class NonCommunicableDiseaseCreateSerializer(serializers.ModelSerializer):
     rp_id = serializers.CharField(write_only=True)
-    ncd_id = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = NonCommunicableDisease
         fields = [
-            'ncd_id',
             'ncd_riskclass_age',
             'ncd_comorbidities',
             'ncd_lifestyle_risk', 
@@ -48,12 +46,7 @@ class NonCommunicableDiseaseCreateSerializer(serializers.ModelSerializer):
         except ResidentProfile.DoesNotExist:
             raise serializers.ValidationError(f"ResidentProfile with id {rp_id} does not exist")
             
-        # Auto-generate ncd_id if not provided
-        if not validated_data.get('ncd_id'):
-            # Generate based on resident ID and count
-            existing_count = NonCommunicableDisease.objects.filter(rp=rp).count()
-            validated_data['ncd_id'] = f"NCD-{rp_id}-{existing_count + 1:03d}"
-            
+        # BigAutoField will auto-generate the ncd_id, no manual assignment needed
         return super().create(validated_data)
 
 class NonCommunicableDiseaseUpdateSerializer(serializers.ModelSerializer):

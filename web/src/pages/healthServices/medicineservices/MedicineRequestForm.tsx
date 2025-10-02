@@ -124,6 +124,8 @@ export default function MedicineRequestForm() {
     form.setValue("files", files);
   }, [mediaFiles, form]);
 
+  
+
   const handleSignatureChange = useCallback((signature: string | null) => {
     setSignature(signature);
   }, []);
@@ -270,7 +272,11 @@ export default function MedicineRequestForm() {
                 {/* Conditionally show MediaUpload only when prescription medicine is selected */}
                 {hasPrescriptionMedicine && (
                   <div className="w-full p-4">
-                    <MediaUpload title="Supporting Documents" description="Prescription medicine selected. Image upload is required." mediaFiles={mediaFiles} activeVideoId={activeVideoId} setActiveVideoId={setActiveVideoId} setMediaFiles={setMediaFiles} maxFiles={5} />
+                    <MediaUpload title="Supporting Documents" 
+                    description="Prescription medicine selected. Image upload is required." 
+                    mediaFiles={mediaFiles} activeVideoId={activeVideoId} 
+                    setActiveVideoId={setActiveVideoId} 
+                    setMediaFiles={setMediaFiles} maxFiles={5} />
                     {mediaFiles.length === 0 && <div className="mt-2 text-sm text-red-500">Image upload is required for prescription medicines.</div>}
                   </div>
                 )}

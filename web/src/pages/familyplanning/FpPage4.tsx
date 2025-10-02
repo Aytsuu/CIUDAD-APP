@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
 import { page4Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { formatDate } from "@/helpers/dateHelper"
 
 // Add props type to the component
 type Page4Props = {
@@ -159,14 +158,13 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
               />
             </div>
             <span className="text-xs italic mt-5 m">
-  {(formData.weight > 0 || formData.height > 0) && (
-    `Weight & height last recorded (y/m/d): ${
-      formData.bodyMeasurementRecordedAt 
-        ? formatDate(formData.bodyMeasurementRecordedAt) 
-        : formatDate(new Date().toISOString().split('T')[0])
-    }`
-  )}
-</span>
+              {(formData.weight > 0 || formData.height > 0) && (
+                `Weight & height last recorded (y/m/d): ${formData.bodyMeasurementRecordedAt
+                  ? formatDate(formData.bodyMeasurementRecordedAt)
+                  : formatDate(new Date().toISOString().split('T')[0])
+                }`
+              )}
+            </span>
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}
               {renderRadioGroup("SKIN", "skinExamination", [
@@ -238,7 +236,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                   <p className="font-semibold mt-7">CERVICAL CONSISTENCY</p>
                   <FormField
                     control={form.control}
-                    name="cervicalConsistency"
+                    name="fp_pelvic_exam.cervicalConsistency"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
@@ -278,7 +276,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                 <div className="space-y-2 mt-4">
                   <FormField
                     control={form.control}
-                    name="cervicalTenderness"
+                    name="fp_pelvic_exam.cervicalTenderness"
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
@@ -300,7 +298,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
                   <FormField
                     control={form.control}
-                    name="cervicalAdnexal"
+                    name="fp_pelvic_exam.cervicalAdnexal"
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
@@ -325,7 +323,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                   <p className="font-semibold mb-2">UTERINE POSITION</p>
                   <FormField
                     control={form.control}
-                    name="uterinePosition"
+                    name="fp_pelvic_exam.uterinePosition"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
@@ -374,7 +372,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
                 <FormField
                   control={form.control}
-                  name="uterineDepth"
+                  name="fp_pelvic_exam.uterineDepth"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Uterine Depth</FormLabel>

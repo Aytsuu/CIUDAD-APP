@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 
@@ -161,51 +161,17 @@ export default function CreatePatientRecord() {
   const persons = {
     default: residentsData || [],
     formatted:
-      residentsData?.map((personal: any) => {
-        const fullName = `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim();
-        const searchableId = `${personal.rp_id} ${fullName}`;
-        
-        return {
-          id: searchableId, // This is what gets searched and selected
-          actualId: personal.rp_id.toString(), // Store the clean resident ID
-          name: (
-            <div className="flex gap-2 items-center">
-              <span className="rounded-md px-2 py-1 font-poppins bg-green-500 text-white text-sm">
-                #{personal.rp_id}
-              </span>
-              <span>{fullName}</span>
-            </div>
-          ),
-        }
-      }) || [],
+      residentsData?.map((personal: any) => ({
+        id: personal.rp_id.toString(),
+        name: (
+          <>
+            <span className="rounded-md px-2 py-1 font-poppins mr-2 bg-green-500 text-white">#{personal.rp_id} </span>
+            {personal.personal_info?.per_lname || ""}, {personal.personal_info?.per_fname || ""} {personal.personal_info?.per_mname || ""}
+            
+          </>
+        )
+      })) || [],
   }
-
-  // const formatResidents = (residents: any[]) => {
-  //   if (!residents) return [];
-    
-  //   return residents.map((resident: any) => {
-  //     const fullName = `${resident.personal_info?.per_lname || ""} ${resident.personal_info?.per_fname || ""} ${resident.personal_info?.per_mname || ""}`.trim();
-      
-  //     return {
-  //       id: resident.rp_id.toString(),
-  //       // Include both ID and name for search functionality
-  //       value: `${resident.rp_id} ${fullName}`,
-  //       name: (
-  //         <div className="flex gap-2 items-center">
-  //           <span className="bg-green-500 text-white py-1 px-2 text-sm rounded-md shadow-md">
-  //             #{resident.rp_id}
-  //           </span>
-  //           <span>{fullName}</span>
-  //         </div>
-  //       ),
-  //       searchText: `${resident.rp_id} ${fullName}`.toLowerCase()
-  //     };
-  //   });
-  // };
-
-  // const formattedResidents = React.useMemo(() => {
-  //   return formatResidents(residentsData || []);
-  // }, [residentsData]);
 
   const handlePatientSelection = (id: string | undefined) => {
     if (!id) {
@@ -227,19 +193,14 @@ export default function CreatePatientRecord() {
       
       return;
     }
-    const actualResidentId = id.split(' ')[0];
-    setSelectedResidentId(actualResidentId);
+    setSelectedResidentId(id);
     console.log("Selected Resident ID:", id);
-
     const selectedPatient: ResidentProfile | undefined = persons.default.find(
-      (p: ResidentProfile) => p.rp_id.toString() === actualResidentId,
+      (p: ResidentProfile) => p.rp_id.toString() === id,
     );
-    console.log("Selected Patient Object:", selectedPatient);
 
     if (selectedPatient && selectedPatient.personal_info) {
-      console.log("Selected Patient:", selectedPatient);
 
-      const personalInfo = selectedPatient.personal_info;
       const personalInfo = selectedPatient.personal_info;
 
       if (Array.isArray(selectedPatient?.households)) {
@@ -399,24 +360,6 @@ export default function CreatePatientRecord() {
     }
   };
 
-  const getCurrentSelectedValue = () => {
-    if (!selectedResidentId) return "";
-    
-    // Find the formatted option that matches the current selectedResidentId
-    interface PersonFormattedOption {
-      id: string;
-      actualId: string;
-      name: React.ReactNode;
-    }
-
-    const matchingOption: PersonFormattedOption | undefined = persons.formatted.find(
-      (option: PersonFormattedOption) =>
-        option.id.startsWith(selectedResidentId + " ")
-    );
-    
-  return matchingOption ? matchingOption.id : "";
-}
-
   const isResident = () => {
     return patientType === "resident";
   };
@@ -473,8 +416,8 @@ export default function CreatePatientRecord() {
                           <Label className="text-black/70">Resident</Label>
                           <div className="grid mt-[6.5px] ">
                             <Combobox
-                              options={persons.formatted}
-                              value={getCurrentSelectedValue()}
+                              options={persons.formatted }
+                              value={selectedResidentId}
                               onChange={handlePatientSelection}
                               placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
                               triggerClassName="font-normal w-full"

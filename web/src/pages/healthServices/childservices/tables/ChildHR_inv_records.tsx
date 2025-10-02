@@ -67,7 +67,7 @@ export default function InvChildHealthRecords() {
       return [];
     }
     const sortedHistories = [...mainRecord.child_health_histories].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return sortedHistories.map((record: any, index: number) => {
+    return sortedHistories.map((record:any, index: number) => {
       let bmi = "N/A";
       let findingsData = {
         subj_summary: "",

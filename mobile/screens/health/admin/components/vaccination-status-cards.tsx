@@ -1,8 +1,9 @@
 // components/vaccination-status-cards.tsx
 import React, { useState } from "react";
-import { View, TouchableOpacity, ScrollView } from "react-native";
-import { Syringe, CheckCircle, Clock, AlertCircle } from "lucide-react-native";
+import { View, TouchableOpacity, ScrollView, Modal, FlatList } from "react-native";
+import { Syringe, CheckCircle, Clock, AlertCircle, X, ChevronRight } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface VaccinationStatusCardsProps {
   unvaccinatedVaccines: any[];
@@ -14,6 +15,7 @@ export function VaccinationStatusCards({
   vaccinations = [],
 }: VaccinationStatusCardsProps) {
   const [activeTab, setActiveTab] = useState<"unvaccinated" | "completed" | "partial">("unvaccinated");
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Filter out vaccinations with "in queue" status
   const filteredVaccinations = vaccinations.filter(
@@ -239,36 +241,59 @@ export function VaccinationStatusCards({
     }
 
     return (
-      <View className="max-h-80">
-        <ScrollView nestedScrollEnabled>
-          {vaccines.map((record: any, index: number) => (
+      <View className="flex-1">
+        <FlatList
+          data={vaccines}
+          keyExtractor={(item, index) => 
+            item.vac?.vac_id || 
+            item.vaccine_stock?.vaccinelist?.vac_id || 
+            item.vac_details?.vac_id || 
+            `vaccine-${index}`
+          }
+          renderItem={({ item, index }) => (
             <VaccineItem
-              key={index}
-              record={record}
+              record={item}
               type={activeTab}
               index={index}
             />
-          ))}
-        </ScrollView>
+          )}
+          contentContainerStyle={{ paddingBottom: 16 }}
+          showsVerticalScrollIndicator={true}
+        />
       </View>
     );
   };
 
-  return (
-    <ScrollView className="flex-1">
-      <View className="">
-        <View className="bg-white rounded-xl border border-gray-200">
+  // Full Vaccination Status Modal
+  const VaccinationModal = ({
+    visible,
+    onClose,
+  }: {
+    visible: boolean;
+    onClose: () => void;
+  }) => {
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View className="flex-1 bg-white pt-4">
           {/* Header */}
-          <View className="p-4 border-b border-gray-100">
-            <View className="flex flex-row items-center gap-2">
-              <Syringe size={18} color="#3b82f6" />
-              <Text className="font-semibold text-gray-800">Vaccination Status</Text>
-             
+          <View className="flex-row items-center justify-between px-4 pb-4 border-b border-gray-200">
+            <View className="flex-row items-center">
+              <Syringe size={20} color="#3b82f6" />
+              <Text className="text-lg font-semibold text-gray-800 ml-2">
+                Vaccination Status
+              </Text>
             </View>
+            <TouchableOpacity onPress={onClose} className="p-2">
+              <X size={24} color="#6B7280" />
+            </TouchableOpacity>
           </View>
 
           {/* Content */}
-          <View className="p-4">
+          <View className="flex-1 p-4">
             {/* Compact tabs */}
             <View className="flex flex-row mb-4 bg-gray-50 rounded-lg p-1">
               <TabButton
@@ -300,7 +325,95 @@ export function VaccinationStatusCards({
               renderVaccineList(categorizedVaccines.completed)}
           </View>
         </View>
+      </Modal>
+    );
+  };
+
+  // Show limited preview (3 items max)
+  const previewVaccines = categorizedVaccines[activeTab].slice(0, 3);
+  const hasMoreItems = categorizedVaccines[activeTab].length > 3;
+  const totalCount = categorizedVaccines[activeTab].length;
+
+  return (
+    <View className="flex-1">
+      {/* Header */}
+      <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row items-center">
+          <Syringe size={18} color="#3b82f6" />
+          <Text className="text-base font-semibold text-gray-800 ml-2">
+            Vaccination Status
+          </Text>
+        </View>
+        {totalCount > 0 && (
+          <Text className="text-xs text-gray-500">
+            {totalCount} total
+          </Text>
+        )}
       </View>
-    </ScrollView>
+
+      {/* Preview Content with limited items */}
+      <TouchableOpacity 
+        onPress={() => setModalVisible(true)}
+        className="border border-gray-200 rounded-lg bg-white overflow-hidden"
+      >
+        <View className="flex-1">
+          {/* Tabs */}
+          <View className="flex flex-row p-3 bg-gray-50 border-b border-gray-100">
+            <TabButton
+              active={activeTab === "unvaccinated"}
+              type="unvaccinated"
+              count={categorizedVaccines.unvaccinated.length}
+              onClick={() => setActiveTab("unvaccinated")}
+            />
+            <TabButton
+              active={activeTab === "partial"}
+              type="partial"
+              count={categorizedVaccines.partial.length}
+              onClick={() => setActiveTab("partial")}
+            />
+            <TabButton
+              active={activeTab === "completed"}
+              type="completed"
+              count={categorizedVaccines.completed.length}
+              onClick={() => setActiveTab("completed")}
+            />
+          </View>
+
+          {/* Preview Content */}
+          <View className="p-3">
+            {previewVaccines.length === 0 ? (
+              <EmptyState type={activeTab} />
+            ) : (
+              <>
+                {previewVaccines.map((record: any, index: number) => (
+                  <VaccineItem
+                    key={index}
+                    record={record}
+                    type={activeTab}
+                    index={index}
+                  />
+                ))}
+                
+                {/* Show More Footer */}
+                {hasMoreItems && (
+                  <View className="border-t border-gray-100 bg-gray-50 -mx-3 -mb-3 px-4 py-3 flex-row items-center justify-between">
+                    <Text className="text-sm text-blue-600 font-medium">
+                      Show all {totalCount} vaccines
+                    </Text>
+                    <ChevronRight size={16} color="#0EA5E9" />
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      {/* Full Vaccination Modal */}
+      <VaccinationModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </View>
   );
 }

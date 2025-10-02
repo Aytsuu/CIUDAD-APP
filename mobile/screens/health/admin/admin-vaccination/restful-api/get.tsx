@@ -1,5 +1,4 @@
-import {api2} from "@/api/api";
-
+import { api2 } from "@/api/api";
 
 // Helper function to get vaccine stock info
 export const getVaccineStock = async (vaccineTypeId: string) => {
@@ -25,8 +24,7 @@ export interface VaccinationPatientRecord {
   vaccination_count: number;
 }
 
-
-export const getPatient =  async () => {
+export const getPatient = async () => {
   try {
     const response = await api2.get(`/patient`);
     return response.data;
@@ -34,7 +32,6 @@ export const getPatient =  async () => {
     console.error(err);
   }
 };
-
 
 export const getVaccinationRecords = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
   try {
@@ -56,17 +53,18 @@ export const getVaccinationRecords = async (params?: { page?: number; page_size?
   }
 };
 
-export const getLatestVitals =  async (patId: string) => {
+export const getLatestVitals = async (patId: string) => {
   try {
     const response = await api2.get(`/patientrecords/vital-signs/latest/${patId}/`);
     return response.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
-}
+};
 
 // id ani kay pat_id
-export const getVaccinationRecordById =  async (id: string) => {
+export const getVaccinationRecordById = async (id: string) => {
   try {
     const response = await api2.get(`/vaccination/indiv-patient-record/${id}/`);
     console.log("API Response:", response); // Add logging
@@ -76,8 +74,9 @@ export const getVaccinationRecordById =  async (id: string) => {
     return response.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
-}
+};
 
 export const getVaccinationCount = async (patId: string) => {
   try {
@@ -89,58 +88,51 @@ export const getVaccinationCount = async (patId: string) => {
   }
 };
 
-  export const getVaccintStocks =  async () => {
-      try {
-          const response = await api2.get(`/inventory/vaccine_stocks/`);
-          return response.data;
-      } catch (err) {
-          console.error(err);
-      }
-  }
-
-
-export const getVaccinelist =  async () => {
-    try {
-        const response = await api2.get(`/inventory/vac_list`);
-        return response.data;
-    } catch (err) {
-        console.error(err);
-    }
-    }
-
-
-
-   
-export const getSpecificVaccintStocks =  async (vac_id:number) => {
+export const getVaccintStocks = async () => {
   try {
-      const response = await api2.get(`/inventory/vaccine_stocks_vac/${vac_id}/`);
-      return response.data;
+    const response = await api2.get(`/inventory/vaccine_stocks/`);
+    return response.data;
   } catch (err) {
-      console.error(err);
+    console.error(err);
   }
-}
+};
 
-
-export const getVaccinationHistory =  async () => {
+export const getVaccinelist = async () => {
   try {
-      const response = await api2.get(`/vaccination/vaccination-history/`);
-      return response.data;
+    const response = await api2.get(`/inventory/vac_list`);
+    return response.data;
   } catch (err) {
-      console.error(err);
-  }   
-}
-    
+    console.error(err);
+  }
+};
+
+export const getSpecificVaccintStocks = async (vac_id: number) => {
+  try {
+    const response = await api2.get(`/inventory/vaccine_stocks_vac/${vac_id}/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+export const getVaccinationHistory = async () => {
+  try {
+    const response = await api2.get(`/vaccination/vaccination-history/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 export const getVaccinatedCount = async () => {
   try {
-    const response = await api2.get('/vaccination/count-vaccinated/');
+    const response = await api2.get("/vaccination/count-vaccinated/");
     return response.data;
   } catch (error) {
     console.error("Failed to fetch vaccinated count:", error);
     throw error;
   }
 };
-
-
 
 export const getUnvaccinatedResidents = async () => {
   try {
@@ -153,33 +145,24 @@ export const getUnvaccinatedResidents = async () => {
   }
 };
 
-
 export const getUnvaccinatedVaccines = async (patientId: string) => {
   try {
     const response = await api2.get(`/vaccination/unvaccinated-vaccines/${patientId}/`);
     return response.data || [];
   } catch (error) {
-    console.error('Error fetching unvaccinated vaccines:', error);
+    console.error("Error fetching unvaccinated vaccines:", error);
     throw error; // Re-throw the error for the caller to handle
   }
 };
 
-
-
-
-
-
-export const getUnvaccinatedResidentsDetailsForVaccine = async (
-  vacId: number,
-  params: any = {}
-): Promise<any> => {
+export const getUnvaccinatedResidentsDetailsForVaccine = async (vacId: number, params: any = {}): Promise<any> => {
   try {
     const queryParams = new URLSearchParams();
-    
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
-    if (params.age_group_id) queryParams.append('age_group_id', params.age_group_id.toString());
-    if (params.search) queryParams.append('search', params.search);
+
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
+    if (params.age_group_id) queryParams.append("age_group_id", params.age_group_id.toString());
+    if (params.search) queryParams.append("search", params.search);
 
     const url = `/vaccination/unvaccinated-residents-detailssummary/${vacId}/?${queryParams.toString()}`;
     const response = await api2.get(url);
@@ -193,10 +176,10 @@ export const getUnvaccinatedResidentsDetailsForVaccine = async (
 export const getUnvaccinatedVaccinesSummary = async (params: any): Promise<any> => {
   try {
     const queryParams = new URLSearchParams();
-    
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
-    if (params.search) queryParams.append('search', params.search);
+
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
+    if (params.search) queryParams.append("search", params.search);
 
     const url = `/vaccination/unvaccinated-residents-summary/?${queryParams.toString()}`;
     const response = await api2.get(url);
@@ -204,5 +187,5 @@ export const getUnvaccinatedVaccinesSummary = async (params: any): Promise<any> 
   } catch (error) {
     console.error("Failed to fetch unvaccinated vaccines summary:", error);
     throw error;
-  };
+  }
 };

@@ -1,5 +1,5 @@
-import MyVaccinationRecordsScreen from "@/screens/health/vaccination/my-records";
+import IndividualVaccinationRecords from "@/screens/health/vaccination/my-records";
 
 export default () => {
-    return <MyVaccinationRecordsScreen />;
+    return <IndividualVaccinationRecords />;
 }

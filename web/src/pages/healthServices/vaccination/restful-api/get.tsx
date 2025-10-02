@@ -36,12 +36,23 @@ export const getPatient =  async () => {
 };
 
 
-export const getVaccinationRecords =  async () => {
+export const getVaccinationRecords = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
   try {
-    const response = await api2.get(`/vaccination/all-vaccine-records/`);
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.page_size) queryParams.append("page_size", params.page_size.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.patient_type && params.patient_type !== "all") {
+      queryParams.append("patient_type", params.patient_type);
+    }
+
+    const url = `/vaccination/all-vaccine-records/${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    const response = await api2.get(url);
     return response.data;
   } catch (err) {
-    console.error(err); 
+    console.error(err);
+    throw err;
   }
 };
 

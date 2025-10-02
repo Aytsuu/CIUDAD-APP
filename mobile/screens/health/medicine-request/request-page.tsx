@@ -40,8 +40,6 @@ export default function MedicineRequestScreen() {
   const { user } = useAuth();
   const userId = user?.rp;
 
-  const position = user?.staff?.pos;
-  console.log("Position:",position)
   console.log("RP_ID:", userId);
 
   // Debounce the search query (delay API fetch by 500ms)

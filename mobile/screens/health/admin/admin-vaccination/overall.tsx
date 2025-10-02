@@ -198,8 +198,8 @@ export default function AllVaccinationRecords() {
       };
 
       router.push({
-        pathname: "/(health)/admin/vaccination/individual",
-        params: { patientData: JSON.stringify(patientData) }
+        pathname: "/(health)/vaccination/my-records",
+        params: { patId: patientData.pat_id, mode: "admin" }
       });
     } catch (error) {
       console.log("Navigation error:", error);
@@ -249,9 +249,6 @@ export default function AllVaccinationRecords() {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1">
-        {/* Summary Cards */}
-
-        {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
           <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
@@ -303,7 +300,7 @@ export default function AllVaccinationRecords() {
               }
             />
             {/* Pagination Controls */}
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalCount} pageSize={pageSize} onPageChange={handlePageChange} />
+            <PaginationControls currentPage={currentPage} totalPages={totalPages}  onPageChange={handlePageChange} />
           </>
         )}
       </View>

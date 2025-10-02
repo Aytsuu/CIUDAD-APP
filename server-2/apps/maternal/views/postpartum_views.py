@@ -11,14 +11,60 @@ from apps.maternal.serializers.prenatal_serializer import *
 from apps.maternal.serializers.pregnancy_serializer import *
 
 from apps.patientrecords.serializers.patients_serializers import *
-from apps.pagination import StandardResultsPagination
+from apps.healthProfiling.models import FamilyComposition
 from ..models import *
 from ..utils import *
 
 import logging
 
-# postpartum create
 logger = logging.getLogger(__name__)
+
+def get_spouse_info_for_resident_mother(patient):
+    # Returns spouse info if patient is Resident and role is Mother
+    spouse_details = None
+    try:
+        # Get ResidentProfile
+        rp = getattr(patient, 'rp_id', None)
+        if not rp:
+            return None
+        # Find FamilyComposition where rp == patient.rp_id and fc_role == 'Mother'
+        from apps.healthProfiling.models import FamilyComposition
+        mother_fc = FamilyComposition.objects.filter(rp=rp, fc_role__iexact='Mother').first()
+        if not mother_fc:
+            return None
+        fam = getattr(mother_fc, 'fam', None)
+        if not fam:
+            return None
+        # Find FamilyComposition in same family where fc_role == 'Father'
+        father_fc = FamilyComposition.objects.filter(fam=fam, fc_role__iexact='Father').first()
+        if not father_fc:
+            return None
+        father_rp = getattr(father_fc, 'rp', None)
+        if not father_rp:
+            return None
+        personal_info = getattr(father_rp, 'per', None)
+        spouse_details = {
+            "fam_id": getattr(fam, 'fam_id', None),
+            "fc_role": getattr(father_fc, 'fc_role', None),
+            "fc_id": getattr(father_fc, 'fc_id', None),
+            "spouse": {
+                "per_fname": getattr(personal_info, 'per_fname', None),
+                "per_mname": getattr(personal_info, 'per_mname', None),
+                "per_lname": getattr(personal_info, 'per_lname', None),
+                "per_suffix": getattr(personal_info, 'per_suffix', None),
+                "per_dob": getattr(personal_info, 'per_dob', None),
+                "per_sex": getattr(personal_info, 'per_sex', None),
+                "per_contact": getattr(personal_info, 'per_contact', None),
+                "per_status": getattr(personal_info, 'per_status', None),
+                "per_religion": getattr(personal_info, 'per_religion', None),
+                "per_edAttainment": getattr(personal_info, 'per_edAttainment', None)
+            } if personal_info else None
+        }
+    except Exception as e:
+        logger.error(f"Error fetching spouse info for resident mother: {str(e)}")
+    return spouse_details
+
+# postpartum create
 class PostpartumRecordCreateView(generics.CreateAPIView):
     serializer_class = PostpartumCompleteSerializer
     queryset = PostpartumRecord.objects.all()
@@ -120,51 +166,6 @@ def get_patient_postpartum_count(request, pat_id):
 # postpartum latest record retrieve
 @api_view(['GET'])
 def get_latest_patient_postpartum_records(request, pat_id):
-    def get_spouse_info_for_resident_mother(patient):
-        # Returns spouse info if patient is Resident and role is Mother
-        spouse_details = None
-        try:
-            # Get ResidentProfile
-            rp = getattr(patient, 'rp_id', None)
-            if not rp:
-                return None
-            # Find FamilyComposition where rp == patient.rp_id and fc_role == 'Mother'
-            from apps.healthProfiling.models import FamilyComposition
-            mother_fc = FamilyComposition.objects.filter(rp=rp, fc_role__iexact='Mother').first()
-            if not mother_fc:
-                return None
-            fam = getattr(mother_fc, 'fam', None)
-            if not fam:
-                return None
-            # Find FamilyComposition in same family where fc_role == 'Father'
-            father_fc = FamilyComposition.objects.filter(fam=fam, fc_role__iexact='Father').first()
-            if not father_fc:
-                return None
-            father_rp = getattr(father_fc, 'rp', None)
-            if not father_rp:
-                return None
-            personal_info = getattr(father_rp, 'per', None)
-            spouse_details = {
-                "fam_id": getattr(fam, 'fam_id', None),
-                "fc_role": getattr(father_fc, 'fc_role', None),
-                "fc_id": getattr(father_fc, 'fc_id', None),
-                "spouse_info": {
-                    "per_fname": getattr(personal_info, 'per_fname', None),
-                    "per_mname": getattr(personal_info, 'per_mname', None),
-                    "per_lname": getattr(personal_info, 'per_lname', None),
-                    "per_suffix": getattr(personal_info, 'per_suffix', None),
-                    "per_dob": getattr(personal_info, 'per_dob', None),
-                    "per_sex": getattr(personal_info, 'per_sex', None),
-                    "per_contact": getattr(personal_info, 'per_contact', None),
-                    "per_status": getattr(personal_info, 'per_status', None),
-                    "per_religion": getattr(personal_info, 'per_religion', None),
-                    "per_edAttainment": getattr(personal_info, 'per_edAttainment', None)
-                } if personal_info else None
-            }
-        except Exception as e:
-            logger.error(f"Error fetching spouse info for resident mother: {str(e)}")
-        return spouse_details
-
     # Main function logic
     try:
         patient = Patient.objects.get(pat_id=pat_id)
@@ -251,3 +252,58 @@ class PostpartumPartumFormView(generics.RetrieveAPIView):
     serializer_class = PostpartumCompleteSerializer
     queryset = PostpartumRecord.objects.all()
     lookup_field = 'ppr_id'
+
+
+class PostpartumAssessmentsWithVitalsListView(generics.ListAPIView):
+    """
+    List all postpartum assessments with vital signs for a specific patient
+    """
+    serializer_class = PostpartumAssessmentWithVitalsSerializer
+    
+    def get_queryset(self):
+        pat_id = self.kwargs.get('pat_id')
+        
+        # Get all postpartum assessments for the patient with related vital signs
+        return PostpartumAssessment.objects.filter(
+            ppr_id__patrec_id__pat_id=pat_id
+        ).select_related(
+            'ppr_id__vital_id',  # Get the vital signs
+            'ppr_id__patrec_id__pat_id'  # Get patient info
+        ).order_by('-ppa_date_of_visit')
+    
+    def list(self, request, *args, **kwargs):
+        pat_id = self.kwargs.get('pat_id')
+        
+        try:
+            # Verify patient exists
+            patient = get_object_or_404(Patient, pat_id=pat_id)
+            
+            queryset = self.get_queryset()
+            
+            if not queryset.exists():
+                return Response({
+                    'patient': patient.pat_id,
+                    'postpartum_assessments': [],
+                    'total_assessments': 0,
+                    'message': 'No postpartum assessments found for this patient'
+                }, status=status.HTTP_200_OK)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            
+            return Response({
+                'patient': patient.pat_id,
+                'postpartum_assessments': serializer.data,
+                'total_assessments': len(serializer.data)
+            }, status=status.HTTP_200_OK)
+            
+        except Patient.DoesNotExist:
+            return Response({
+                'error': f'Patient with ID {pat_id} does not exist'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error fetching postpartum assessments for patient {pat_id}: {str(e)}")
+            return Response({
+                'error': f'Failed to fetch postpartum assessments: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

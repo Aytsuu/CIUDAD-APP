@@ -266,7 +266,6 @@ const IncomeTracking = () => {
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
       }
-      wrapScroll={false} 
     >
       {isLoading || isArchivePending || isDeletePending ? (
         <View className="flex-1 justify-center items-center">
@@ -349,7 +348,6 @@ const IncomeTracking = () => {
                 renderItem={renderItem}
                 keyExtractor={item => item.inc_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false} 
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No active entries found
@@ -365,7 +363,6 @@ const IncomeTracking = () => {
                 renderItem={renderItem}
                 keyExtractor={item => item.inc_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false} 
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No archived entries found

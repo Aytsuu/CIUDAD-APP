@@ -473,7 +473,7 @@ const ExpenseLogMain = () => {
             <Text>₱{actualAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
           </View>
           <View className="flex-row justify-between pb-2">
-            <Text className="text-gray-600">Return/Excess Amount:</Text>
+            <Text className="text-gray-600">Return Amount:</Text>
             <Text className={`font-semibold ${textColor}`}>
               ₱{returnAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>

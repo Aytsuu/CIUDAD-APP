@@ -14,7 +14,6 @@ import type { CHSSupplementStat } from "./types";
 import { calculateAge, calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { useChildHealthRecordMutation } from "../restful-api/newchrecord";
 import { useUpdateChildHealthRecordMutation } from "../restful-api/newchhistory";
-import type { Patient } from "@/components/ui/patientSearch";
 import { Medicine } from "./types";
 import { initialFormData, ImmunizationTracking, BFCheck } from "./types";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -55,7 +54,7 @@ export default function ChildHealthRecordForm() {
   const [latestHistoricalFollowUpDescription, setLatestHistoricalFollowUpDescription] = useState<string>("");
   const [latestHistoricalFollowUpDate, setLatestHistoricalFollowUpDate] = useState<string>("");
   const [historicalMedicines, setHistoricalMedicines] = useState<Medicine[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [newVitalSigns, setNewVitalSigns] = useState<VitalSignType[]>([]);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -342,7 +341,7 @@ export default function ChildHealthRecordForm() {
         }
 
         if (recordData.pat_id) {
-          setSelectedPatient({ pat_id: recordData.pat_id } as Patient);
+          setSelectedPatient({ pat_id: recordData.pat_id } as any);
           const patientFullName = `${recordData.childFname || ""} ${recordData.childLname || ""}`.trim();
           const fullPatientIdString = `${recordData.pat_id}${patientFullName ? `,${patientFullName}` : ""}`;
           setSelectedPatientId(fullPatientIdString);

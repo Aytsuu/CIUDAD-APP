@@ -19,6 +19,12 @@ export interface Medicine {
   pcs_per_box?: number
   inv_id?: string
   preFilledReason?: string
+  // Additional fields for enhanced medicine mapping
+  med_name?: string
+  display_id?: string
+  original_stock_id?: string
+  requested_qty?: number
+  pending_reason?: string
 }
 
 interface MedicineDisplayProps {
@@ -97,6 +103,7 @@ export const MedicineDisplay = ({
   }, [medicines])
 
   const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
   const currentMedicines = useMemo(
     () => filteredMedicines,
     [filteredMedicines],
@@ -163,7 +170,7 @@ export const MedicineDisplay = ({
   const PaginationControls = () => (
     <div className="flex items-center justify-between px-6 py-3">
       <div className="text-sm text-gray-500">
-        Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalItems)} of{" "}
+        Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of{" "}
         {totalItems} medicines
       </div>
       <div className="flex items-center gap-2">
@@ -233,7 +240,17 @@ export const MedicineDisplay = ({
   )
 
   // Calculate column span for empty state based on readonly mode
-  const emptyStateColSpan = readonly ? 5 : 8
+  const emptyStateColSpan = readonly ? 5 : 7
+
+  // Debug logging for troubleshooting
+  // console.log('MedicineDisplay Debug:', {
+  //   medicines: medicines,
+  //   totalItems: totalItems,
+  //   totalPages: totalPages,
+  //   currentPage: currentPage,
+  //   localSearchQuery: localSearchQuery,
+  //   isLoading: isLoading
+  // });
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">
@@ -344,10 +361,10 @@ export const MedicineDisplay = ({
                 <td colSpan={emptyStateColSpan} className="px-6 py-12 text-center">
                   <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                   <h3 className="text-base font-medium text-gray-900 mb-2">
-                    {searchQuery ? "No medicines found" : "No medicines available"}
+                    {localSearchQuery ? "No medicines found" : "No medicines available"}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {searchQuery
+                    {localSearchQuery
                       ? "Try adjusting your search query."
                       : "There are currently no medicines in the inventory."}
                   </p>
@@ -361,6 +378,9 @@ export const MedicineDisplay = ({
                 const lowStock = isLowStock(medicine.avail, medicine.unit, medicine.pcs_per_box || 0)
                 const hasPreFilledReason = autoFillReasons && !!medicine.preFilledReason
                 const isReasonReadOnly = readOnlyReasons && hasPreFilledReason
+                
+                // Use med_name if available (for enhanced mapping), otherwise fall back to name
+                const displayName = medicine.med_name || medicine.name
                 
                 return (
                   <tr
@@ -384,16 +404,17 @@ export const MedicineDisplay = ({
                     )}
                     <td className="px-6 py-4 text-center">
                       <div className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                        {medicine.inv_id || medicine.id}
+                        {medicine.inv_id || medicine.original_stock_id || medicine.id}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center gap-3 justify-center">
                         <div>
-                          <div className="font-medium text-gray-900">{medicine.name}</div>
+                          <div className="font-medium text-gray-900">{displayName}</div>
                           <div className="text-sm text-gray-500">
                             {medicine.dosage} • {medicine.form}
                           </div>
+                         
                         </div>
                       </div>
                     </td>
@@ -402,7 +423,9 @@ export const MedicineDisplay = ({
                     </td>
                     <td className="px-2 py-4 text-center">
                       <div>
-                        <div className="text-sm text-gray-600">Expiry Date: {medicine.expiry || "N/A"}</div>
+                        <div className="text-sm text-gray-600">
+                          {medicine.expiry ? `Expiry: ${medicine.expiry}` : "No expiry date"}
+                        </div>
                         {nearExpiry && <div className="text-sm text-red-500 font-semibold">Near Expiry</div>}
                       </div>
                     </td>
@@ -495,6 +518,11 @@ export const MedicineDisplay = ({
                                   Reason pre-filled from request
                                 </div>
                               )}
+                              {medicine.pending_reason && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Pending reason: {medicine.pending_reason}
+                                </div>
+                              )}
                             </div>
                           )}
                         </td>
@@ -507,7 +535,7 @@ export const MedicineDisplay = ({
           </tbody>
         </table>
       </div>
-      {!isLoading && totalItems > itemsPerPage && <PaginationControls />}
+      {!isLoading && totalItems > 0 && totalPages > 1 && <PaginationControls />}
     </div>
   )
 }

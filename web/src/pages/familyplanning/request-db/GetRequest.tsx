@@ -330,7 +330,7 @@ export const getLatestCompleteFPRecordForPatient = async (patientId: string): Pr
 }
 
 // Updated getFPCompleteRecord to handle the new structure (used for viewing a specific record)
-export const getFPCompleteRecord = async (fprecord_id: number): Promise<any> => {
+export const getFPCompleteRecord = async (fprecord_id: any): Promise<any> => {
   try {
     const response = await api2.get(`familyplanning/complete-fp-record/${fprecord_id}/`)
     return response.data

@@ -206,6 +206,7 @@ export const familyMembersCol = (
       const navigate = useNavigate()
 
       const handleViewClick = () => {
+        console.log('clicked')
         navigate("/profiling/resident/view/personal", {
           state: {
             params: {

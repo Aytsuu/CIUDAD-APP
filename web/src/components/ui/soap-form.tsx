@@ -33,7 +33,7 @@ interface SoapFormFieldsProps {
   onMedicinePageChange: (page: number) => void;
 }
 
-export default function SoapFormFields({
+export default function SoapFormFields({ 
   form,
   examSections,
   setExamSections,
@@ -43,8 +43,8 @@ export default function SoapFormFields({
   hasPhysicalExamError,
   selectedMedicines,
   onSelectedMedicinesChange,
-  currentPage,
-  onPageChange,
+  // currentPage,
+  // onPageChange,
   onIllnessSelectionChange,
   onAssessmentUpdate,
   onBack,

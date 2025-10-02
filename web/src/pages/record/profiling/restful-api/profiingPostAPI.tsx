@@ -25,6 +25,7 @@ export const addPersonal = async (data: Record<string, any>) => {
 
     return res.data;
   } catch (err) {
+    console.error(err);
     throw err;
   }
 };
@@ -88,7 +89,9 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
     await api2.post("health-profiling/resident/create/combined/", data);
     
     return res.data
-  } catch (err) {     throw err;
+  } catch (err) { 
+    console.error(err)
+    throw err;
   }
 }
 
