@@ -172,8 +172,8 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
         if(Number(values.iet_actual_amount) > 0){
 
             if(prevActualAmount == 0){ // if bag o pa mag add og actual expense
-                let budget = prevAmount + particularAccBudget;
-                let subtractedActualAMT = budget - Number(values.iet_actual_amount);
+                const budget = prevAmount + particularAccBudget;
+                const subtractedActualAMT = budget - Number(values.iet_actual_amount);
 
                 if (subtractedActualAMT < 0) {
                     form.setError("iet_actual_amount", {
@@ -184,8 +184,8 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
                 }  
             }            
             else{ // if mo update sa actual expense
-                let budget = prevActualAmount + particularAccBudget;                
-                let subtractedActualAMT = budget - Number(values.iet_actual_amount);            
+                const budget = prevActualAmount + particularAccBudget;                
+                const subtractedActualAMT = budget - Number(values.iet_actual_amount);            
                 
                 if (subtractedActualAMT < 0) {
                     form.setError("iet_actual_amount", {
@@ -197,8 +197,8 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_d
             }
         }
         else{
-            let budget = prevAmount + particularAccBudget;
-            let subtractAMT = budget - parseFloat(values.iet_amount);
+            const budget = prevAmount + particularAccBudget;
+            const subtractAMT = budget - parseFloat(values.iet_amount);
 
             if (subtractAMT < 0) {
                 form.setError("iet_amount", {

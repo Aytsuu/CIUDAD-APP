@@ -9,6 +9,7 @@ import { useState } from "react";
 import BudgetPlanHistory from "./budget-plan-history";
 import BudgetPlanSuppDocs from "./budget-plan-suppdocs";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function BudgetPlanView() {
     const router = useRouter();
@@ -19,7 +20,7 @@ export default function BudgetPlanView() {
     if (isLoading) {
         return (
             <SafeAreaView className="flex-1 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
+                <LoadingModal visible={isLoading}/>
             </SafeAreaView>
         );
     }

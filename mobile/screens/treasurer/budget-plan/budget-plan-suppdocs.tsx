@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useDeleteBudgetPlanFile } from "./queries/budgetPlanDeleteQueries";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: string, isArchive: boolean }) {
     const router = useRouter();
@@ -42,9 +43,9 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
 
     if (isLoading) {
         return (
-            <SafeAreaView className="flex-1 justify-center items-center bg-white">
-                <ActivityIndicator size="large" color="#1F2937" />
-            </SafeAreaView>
+            <View className="flex-1 justify-center items-center bg-gray-50 pt-10">
+                <LoadingState />
+            </View>
         );
     }
 
@@ -52,7 +53,7 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
 
     return (
         <SafeAreaView className="flex-1 bg-white">
-            <View className="bg-white p-4 border-b border-gray-200">
+            <View className="bg-white p-6 border-b border-gray-200">
                 <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-3">
                         <Paperclip size={20} color="#4B5563" />
@@ -71,7 +72,7 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             </View>
 
             {/* Scrollable content */}
-            <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
                 {imageDocs.length === 0 ? (
                     <View className="flex-1 justify-center items-center py-10">
                         <Text className="text-gray-500 text-sm font-sans">No images available</Text>
@@ -80,7 +81,6 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
                     <View className="pb-3">
                         {/* Image Gallery */}
                         <View className="mb-6">
-                            <Text className="text-base font-semibold text-gray-900 mb-3 font-sans">Image Gallery</Text>
                             <View className="flex-row flex-wrap justify-between">
                                 {imageDocs.map((doc, index) => (
                                     <View key={doc.bpf_id} className="w-[48%] mb-3">

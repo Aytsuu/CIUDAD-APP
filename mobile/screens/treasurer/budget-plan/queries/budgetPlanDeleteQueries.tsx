@@ -4,16 +4,16 @@ import { deleteBudgetPlan, deleteBudgetPlanFile } from "../restful-API/budgetPla
 
 export const useDeleteBudgetPlan = () => {
     const queryClient = useQueryClient();
-    const {toast} = useToastContext();
+    const {toast} = useToastContext()
 
     return useMutation({
         mutationFn: deleteBudgetPlan,
         onMutate: async () => {
-            await queryClient.cancelQueries({ queryKey: ['budgetPlan'] });
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
-            toast.success("Budget Plan deleted successfully")
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] });
+            toast.success("Budget Plan deleted successfully",)
         },
         onError: (err) => {
             toast.error("Failed to delete budget plan")

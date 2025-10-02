@@ -1,17 +1,17 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { archiveBudgetPlan, restoreBudgetPlan } from "../restful-API/budgetPlanPutAPI";
+import { restoreBudgetPlan, archiveBudgetPlan } from "../restful-API/budgetPlanPutAPI";
 import { useToastContext } from "@/components/ui/toast";
 
 export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
-    const {toast} = useToastContext();
+    const {toast} = useToastContext()
 
      return useMutation({
         mutationFn: (plan_id: number) => archiveBudgetPlan(plan_id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
-            queryClient.invalidateQueries({ queryKey: ['budgetDetails'] })
-            toast.success('Budget Plan is archived successfully')
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] })
+            toast.success('Budget Plan is archived successfully',)
             
             onSuccess?.();
         },
@@ -24,13 +24,14 @@ export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
 
 export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
-    const {toast} = useToastContext();
+    const {toast} = useToastContext()
 
      return useMutation({
         mutationFn: (plan_id: number) => restoreBudgetPlan(plan_id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
-            queryClient.invalidateQueries({ queryKey: ['budgetDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] });
+
             toast.success('Budget Plan is restored successfully')
             
             onSuccess?.();
@@ -41,3 +42,6 @@ export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
         }
     })
 }
+
+
+

@@ -154,7 +154,7 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="mb-6">
           <Text className="text-xl font-semibold text-gray-900 mb-1 font-sans">Budget Overview</Text>
