@@ -12,7 +12,7 @@ import Constants from 'expo-constants'
 // });
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.2:8000",
+  baseURL: Constants.expoConfig?.extra?.apiUrl,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
