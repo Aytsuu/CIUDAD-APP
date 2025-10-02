@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBusinesses, getPermitPurposes, getGrossSales } from "../restful-api/permitClearanceGetAPI";
+import { getBusinesses, getPermitPurposes, getGrossSales, getPermitClearances,getAnnualGrossSalesForPermit,getPurposesAndRates } from "../restful-api/permitClearanceGetAPI";
 
 
 export type Businesses = {
@@ -62,6 +62,33 @@ export const useGetGrossSales = () => {
         queryKey: ["grossSales"],  
         queryFn: getGrossSales,
         staleTime: 1000 * 60 * 30, 
+    });
+}
+
+// Hook for permit clearances list
+export const useGetPermitClearances = () => {
+    return useQuery<any[]>({
+        queryKey: ["permitClearances"],
+        queryFn: getPermitClearances,
+        staleTime: 1000 * 60 * 30,
+    });
+}
+
+// Hook for annual gross sales (for permit clearance component)
+export const useGetAnnualGrossSalesForPermit = () => {
+    return useQuery<any[]>({
+        queryKey: ["annualGrossSales"],
+        queryFn: getAnnualGrossSalesForPermit,
+        staleTime: 1000 * 60 * 30,
+    });
+}
+
+// Hook for purposes and rates (for permit clearance component)
+export const useGetPurposesAndRates = () => {
+    return useQuery<any[]>({
+        queryKey: ["purposes"],
+        queryFn: getPurposesAndRates,
+        staleTime: 1000 * 60 * 30,
     });
 }
 

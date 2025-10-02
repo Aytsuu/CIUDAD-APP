@@ -23,7 +23,7 @@ export const getResidents = async () => {
 
 export const getGrossSales = async () => {
   try {
-    const response = await api.get('treasurer/annual-gross-sales/');
+    const response = await api.get('treasurer/annual-gross-sales-active/');
     return response.data;
   } catch (error) {
     console.error("Failed to fetch gross sales:", error);
@@ -131,5 +131,27 @@ export const getPermitPurposes = async () => {
   } catch (error) {
     console.error("Failed to search permit purposes:", error);
     throw new Error("Failed to search permit purposes");
+  }
+};
+
+// Fetch annual gross sales data (moved from component)
+export const getAnnualGrossSalesForPermit = async () => {
+  try {
+    const response = await api.get('treasurer/annual-gross-sales-active/');
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch annual gross sales:", error);
+    throw new Error("Failed to fetch annual gross sales");
+  }
+};
+
+// Fetch purposes and rates data (moved from component)
+export const getPurposesAndRates = async () => {
+  try {
+    const response = await api.get('treasurer/purpose-and-rate/');
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch purposes and rates:", error);
+    throw new Error("Failed to fetch purposes and rates");
   }
 };

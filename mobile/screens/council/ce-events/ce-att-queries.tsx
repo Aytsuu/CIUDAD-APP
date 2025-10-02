@@ -10,7 +10,8 @@ import {
   putCouncilEvent,
   getAttendanceSheets,
   getCouncilEvents,
-  restoreCouncilEvent
+  restoreCouncilEvent,
+  getCouncilEventYears
 } from "./ce-att-requests";
 import { useToastContext } from "@/components/ui/toast";
 import { CouncilEventInput,  AttendanceSheetInput, CouncilEvent, AttendanceSheet, UploadFile } from "./ce-att-typeFile";
@@ -188,14 +189,30 @@ export const useRestoreAttendanceSheet = () => {
   });
 };
 
-export const useGetCouncilEvents = (isArchived?: boolean) => {
-  return useQuery<CouncilEvent[], Error>({
-    queryKey: ["councilEvents", isArchived],
-    // queryFn: () => getCouncilEvents(isArchived),
-    queryFn: () => getCouncilEvents(),
-    staleTime: 1000 * 60 * 5,
+export const useGetCouncilEvents = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  year?: string,
+  isArchive?: boolean
+) => {
+  return useQuery<{ results: CouncilEvent[]; count: number }, Error>({
+    queryKey: ["councilEvents", page, pageSize, searchQuery, year, isArchive],
+    queryFn: () => getCouncilEvents(page, pageSize, searchQuery, year, isArchive).catch((error) => {
+      throw error;
+    }),
+    staleTime: 1000 * 60 * 5, 
   });
 };
+
+export const useGetCouncilEventYears = () => {
+  return useQuery<number[], Error>({
+    queryKey: ["councilEventYears"],
+    queryFn: getCouncilEventYears,
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+  });
+};
+
 
 export const useGetAttendanceSheets = (isArchived?: boolean) => {
   return useQuery<AttendanceSheet[], Error>({
