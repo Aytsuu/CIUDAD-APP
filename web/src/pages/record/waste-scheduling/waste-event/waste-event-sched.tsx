@@ -323,7 +323,7 @@ function WasteEventSched() {
                                     type="button" 
                                     variant="outline" 
                                     onClick={() => form.reset()}
-                                    className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-white border-yellow-400 hover:border-yellow-500"
+                                    className="w-full sm:w-auto bg-amber-700 hover:bg-amber700 text-white"
                                 >
                                     Reset
                                 </Button>

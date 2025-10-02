@@ -68,6 +68,27 @@ function CertificatePage() {
   const [selectedStaffId, setSelectedStaffId] = useState(""); 
   const [custody, setCustody] = useState<string[]>([]);
   const [purposeInput, setPurposeInput] = useState("");
+  
+  // BURIAL fields
+  const [deceasedName, setDeceasedName] = useState("");
+  const [deceasedAge, setDeceasedAge] = useState("");
+  const [deceasedBirthdate, setDeceasedBirthdate] = useState("");
+  const [deceasedAddress, setDeceasedAddress] = useState("");
+  
+  // FIRE VICTIM fields
+  const [dateOfConflagration, setDateOfConflagration] = useState("");
+  
+  // COHABITATION/MARRIAGE fields
+  const [partnerName, setPartnerName] = useState("");
+  const [liveInYears, setLiveInYears] = useState("");
+  
+  // DWUP fields
+  const [dateDemolished, setDateDemolished] = useState("");
+  
+  // Indigency (for minors) fields
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [childBirthdate, setChildBirthdate] = useState("");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -107,6 +128,7 @@ function CertificatePage() {
           {resident.name}
         </div>
       ),
+      displayName: resident.name, // Add plain text name for extraction
       per_id: resident.personal_info.per_id
     }));
   }, [residentsList]);
@@ -197,7 +219,20 @@ function CertificatePage() {
     setSelectedCertificate(null); // previous selection
     setViewingCertificate(certificate);
     setSelectedStaffId(""); // Reset selected staff every time
-    setPurposeInput("")
+    setPurposeInput("");
+    // Reset all certificate-specific fields
+    setDeceasedName("");
+    setDeceasedAge("");
+    setDeceasedBirthdate("");
+    setDeceasedAddress("");
+    setDateOfConflagration("");
+    setPartnerName("");
+    setLiveInYears("");
+    setDateDemolished("");
+    setChildName("");
+    setChildAge("");
+    setChildBirthdate("");
+    setCustody([]);
     setIsDialogOpen(true);
   }
 
@@ -208,9 +243,9 @@ function CertificatePage() {
       // Find the selected staff details
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
       
-      // Get custody names from custody state
+      // Get custody names from custody state - extract plain text names
       const custodies = custody
-        .map(id => residentOptions.find((resident: any) => resident.id === id)?.name)
+        .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
         .filter(Boolean) as string[];
       
       // Create certificate details with both certificate and staff data
@@ -219,12 +254,39 @@ function CertificatePage() {
         AsignatoryStaff: selectedStaff?.name,
         SpecificPurpose: purposeInput,
         custodyChildren: custodies,
+        // BURIAL fields
+        deceasedName: deceasedName || undefined,
+        deceasedAge: deceasedAge || undefined,
+        deceasedBirthdate: deceasedBirthdate || undefined,
+        deceasedAddress: deceasedAddress || undefined,
+        // FIRE VICTIM fields
+        dateOfConflagration: dateOfConflagration || undefined,
+        // COHABITATION/MARRIAGE fields
+        partnerName: partnerName || undefined,
+        liveInYears: liveInYears ? Number(liveInYears) : undefined,
+        // DWUP fields
+        dateDemolished: dateDemolished || undefined,
+        // Indigency (for minors) fields
+        childName: childName || undefined,
+        childAge: childAge || undefined,
+        childBirtdate: childBirthdate || undefined,
       };
       
       setSelectedCertificate(certDetails);
       
       // Reset for next use
       setCustody([]);
+      setDeceasedName("");
+      setDeceasedAge("");
+      setDeceasedBirthdate("");
+      setDeceasedAddress("");
+      setDateOfConflagration("");
+      setPartnerName("");
+      setLiveInYears("");
+      setDateDemolished("");
+      setChildName("");
+      setChildAge("");
+      setChildBirthdate("");
     }
   }
 
@@ -510,13 +572,20 @@ function CertificatePage() {
           setIsDialogOpen(open);
           if (!open) {
             setCustody([]);
+            setDeceasedName("");
+            setDeceasedAge("");
+            setDeceasedBirthdate("");
+            setDeceasedAddress("");
+            setDateOfConflagration("");
+            setPartnerName("");
+            setLiveInYears("");
+            setDateDemolished("");
+            setChildName("");
+            setChildAge("");
+            setChildBirthdate("");
           }
         }}
-        className={`max-w-[30%] flex flex-col overflow-auto scrollbar-custom ${
-          viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" 
-            ? "h-[420px]" 
-            : "h-[330px]"
-        }`}
+        className="max-w-[35%] max-h-[85vh] flex flex-col overflow-auto scrollbar-custom"
         title="Additional Details"
         description={`Please provide the needed details for the certificate.`}
         mainContent={
@@ -546,6 +615,137 @@ function CertificatePage() {
                 </div>
 
                
+                {/* BURIAL FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "burial" && (
+                  <>
+                    <Label className="pb-1">Deceased Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter deceased name"
+                        value={deceasedName}
+                        onChange={(e) => setDeceasedName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Deceased Age</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter deceased age"
+                        value={deceasedAge}
+                        onChange={(e) => setDeceasedAge(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Deceased Birthdate</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter deceased birthdate"
+                        value={deceasedBirthdate}
+                        onChange={(e) => setDeceasedBirthdate(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Deceased Address</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter deceased address"
+                        value={deceasedAddress}
+                        onChange={(e) => setDeceasedAddress(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* FIRE VICTIM FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "fire victim" && (
+                  <>
+                    <Label className="pb-1">Date of Conflagration</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter date of conflagration"
+                        value={dateOfConflagration}
+                        onChange={(e) => setDateOfConflagration(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* COHABITATION/MARRIAGE FIELDS */}
+                {(viewingCertificate?.req_purpose?.toLowerCase() === "cohabitation" || 
+                  viewingCertificate?.req_purpose?.toLowerCase().includes("marriage")) && (
+                  <>
+                    <Label className="pb-1">Partner Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter partner name"
+                        value={partnerName}
+                        onChange={(e) => setPartnerName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Live in Years</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="number"
+                        placeholder="Enter years living together"
+                        value={liveInYears}
+                        onChange={(e) => setLiveInYears(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* DWUP FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "dwup" && (
+                  <>
+                    <Label className="pb-1">Date Demolished</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter date demolished"
+                        value={dateDemolished}
+                        onChange={(e) => setDateDemolished(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* INDIGENCY (FOR MINORS) FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase().includes("indigency for minors") && (
+                  <>
+                    <Label className="pb-1">Child Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter child name"
+                        value={childName}
+                        onChange={(e) => setChildName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Child Age</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter child age"
+                        value={childAge}
+                        onChange={(e) => setChildAge(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Child Birthdate</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter child birthdate"
+                        value={childBirthdate}
+                        onChange={(e) => setChildBirthdate(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* PROOF OF CUSTODY FIELDS */}
                 {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
                   <div className="w-full pb-3">
                     <ComboCheckboxStandalone
@@ -558,7 +758,7 @@ function CertificatePage() {
                       maxDisplayValues={2}
                     />
                   </div>
-                )}                
+                )}                  
 
                 <div className="flex justify-end">
                   <Button 
