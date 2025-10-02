@@ -15,11 +15,19 @@ import {
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
 // import Attendees from "./Attendees";
-import {useGetCouncilEvents, useGetAttendanceSheets, useGetCouncilEventYears} from "../Calendar/queries/councilEventfetchqueries";
-import { CouncilEvent, AttendanceSheet, AttendanceRecord } from "../Calendar/councilEventTypes";
+import {
+  useGetCouncilEvents,
+  useGetAttendanceSheets,
+  useGetCouncilEventYears,
+} from "../Calendar/queries/councilEventfetchqueries";
+import {
+  CouncilEvent,
+  AttendanceSheet,
+  AttendanceRecord,
+} from "../Calendar/councilEventTypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HistoryTable } from "@/components/ui/table/history-table";
-import { useLoading } from "@/context/LoadingContext"; 
+import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatTableDate } from "@/helpers/dateHelper";
 
@@ -60,7 +68,9 @@ const ArchiveTabActions = ({
                               src={sheet.att_file_url}
                               alt={`Archived Event File ${index + 1}`}
                               className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
-                              onError={(e) => (e.currentTarget.src = "/placeholder-image.png")}
+                              onError={(e) =>
+                                (e.currentTarget.src = "/placeholder-image.png")
+                              }
                             />
                           </div>
                           <TooltipLayout
@@ -112,7 +122,8 @@ const ArchiveTabActions = ({
                         </div>
                       ) : (
                         <div className="text-sm text-gray-500">
-                          No file uploaded for Archived Attendance Sheet #{index + 1}
+                          No file uploaded for Archived Attendance Sheet #
+                          {index + 1}
                         </div>
                       )}
                     </div>
@@ -136,7 +147,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
     header: "Date",
     cell: ({ row }) => (
       <div className="whitespace-nowrap overflow-hidden text-ellipsis">
-         <div>{formatTableDate(row.getValue("attMeetingDate"))}</div>
+        <div>{formatTableDate(row.getValue("attMeetingDate"))}</div>
       </div>
     ),
     size: 120,
@@ -147,7 +158,8 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
     cell: ({ row }) => {
       const title = row.getValue("attMettingTitle") as string;
       const lines = title.split("\n");
-      const displayText = lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : title;
+      const displayText =
+        lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : title;
       return (
         <div className="line-clamp-3 overflow-hidden text-ellipsis">
           {displayText}
@@ -162,7 +174,8 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
     cell: ({ row }) => {
       const desc = row.getValue("attMeetingDescription") as string;
       const lines = desc.split("\n");
-      const displayText = lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : desc;
+      const displayText =
+        lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : desc;
       return (
         <div className="line-clamp-3 overflow-hidden text-ellipsis">
           {displayText}
@@ -176,11 +189,13 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
     header: "Action",
     cell: ({ row }) => {
       const ceId = row.original.ceId;
-      const { data: attendanceSheet, refetch: refetchSheets } = useGetAttendanceSheets();
+      const { data: attendanceSheet, refetch: refetchSheets } =
+        useGetAttendanceSheets();
       const { refetch: refetchEvents } = useGetCouncilEvents();
-      const sheets = attendanceSheet?.filter(
-        (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
-      ) || [];
+      const sheets =
+        attendanceSheet?.filter(
+          (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
+        ) || [];
       const archiveSheet = useArchiveAttendanceSheet();
       // const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
       // const [isEditMode, setIsEditMode] = useState(false);
@@ -230,7 +245,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                                 trigger={
                                   <ConfirmationModal
                                     trigger={
-                                      <div className="p-1 cursor-pointer rounded text-white bg-red-500 transition-colors">
+                                      <div className="cursor-pointer rounded text-white bg-red-500 p-1 transition-colors">
                                         <Archive size={16} />
                                       </div>
                                     }
@@ -258,7 +273,10 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
                         </div>
                       ))
                     ) : (
-                      <div>No attendance sheets have been uploaded for this meeting yet.</div>
+                      <div>
+                        No attendance sheets have been uploaded for this meeting
+                        yet.
+                      </div>
                     )}
                   </div>
                 }
@@ -317,24 +335,18 @@ function AttendancePage() {
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   const { showLoading, hideLoading } = useLoading();
-  
+
   // Fetch available years
   const { data: availableYears = [] } = useGetCouncilEventYears();
-  
-  // Updated query with pagination
+
   const {
     data: councilEventsData,
     isLoading: isCouncilEventsLoading,
     error,
-  } = useGetCouncilEvents(
-    currentPage,
-    pageSize,
-    debouncedSearchTerm,
-    filter,
-    activeTab === "archive"
-  );
-  
-  const { data: attendanceSheets = [], isLoading: isSheetsLoading } = useGetAttendanceSheets();
+  } = useGetCouncilEvents(currentPage, pageSize, debouncedSearchTerm, filter, false);
+
+  const { data: attendanceSheets = [], isLoading: isSheetsLoading } =
+    useGetAttendanceSheets(activeTab === "archive");
   const isLoading = isCouncilEventsLoading || isSheetsLoading;
 
   const councilEvents = councilEventsData?.results || [];
@@ -344,16 +356,16 @@ function AttendancePage() {
   // Build table data from paginated results
   const tableData = useMemo(() => {
     const eventMap = new Map<number, CouncilEvent>();
-    councilEvents.forEach(event => {
+    councilEvents.forEach((event) => {
       eventMap.set(event.ce_id, event);
     });
 
     const data: AttendanceRecord[] = [];
 
     if (activeTab === "active") {
-      councilEvents.forEach(event => {
+      councilEvents.forEach((event) => {
         const nonArchivedSheets = attendanceSheets.filter(
-          sheet => sheet.ce_id === event.ce_id && !sheet.att_is_archive
+          (sheet) => sheet.ce_id === event.ce_id && !sheet.att_is_archive
         );
         data.push({
           ceId: event.ce_id,
@@ -361,14 +373,14 @@ function AttendancePage() {
           attMeetingDate: event.ce_date || "N/A",
           attMeetingDescription: event.ce_description || "No description",
           isArchived: false,
-          sheets: nonArchivedSheets
+          sheets: nonArchivedSheets,
         });
       });
     } else {
       const archivedSheetsByEvent = new Map<number, AttendanceSheet[]>();
       attendanceSheets
-        .filter(sheet => sheet.att_is_archive)
-        .forEach(sheet => {
+        .filter((sheet) => sheet.att_is_archive)
+        .forEach((sheet) => {
           const sheets = archivedSheetsByEvent.get(sheet.ce_id) || [];
           sheets.push(sheet);
           archivedSheetsByEvent.set(sheet.ce_id, sheets);
@@ -383,7 +395,7 @@ function AttendancePage() {
             attMeetingDate: event.ce_date || "N/A",
             attMeetingDescription: event.ce_description || "No description",
             isArchived: true,
-            sheets
+            sheets,
           });
         }
       });
@@ -419,8 +431,11 @@ function AttendancePage() {
 
   // Create filter options
   const filterOptions = [
-    { id: "all", name: "All" },
-    ...availableYears.map(year => ({ id: year.toString(), name: year.toString() }))
+    { id: "all", name: "All Years" },
+    ...availableYears.map((year) => ({
+      id: year.toString(),
+      name: year.toString(),
+    })),
   ];
 
   if (error) {
@@ -510,23 +525,19 @@ function AttendancePage() {
           <>
             <Tabs value={activeTab}>
               <TabsContent value="active">
-                <DataTable
-                  columns={columns}
-                  data={tableData}
-                />
+                <DataTable columns={columns} data={tableData} />
               </TabsContent>
               <TabsContent value="archive">
-                <HistoryTable
-                  columns={columns}
-                  data={tableData}
-                />
+                <HistoryTable columns={columns} data={tableData} />
               </TabsContent>
             </Tabs>
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
               <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                Showing {tableData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+                Showing{" "}
+                {tableData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
+                rows
               </p>
 
               {totalPages > 1 && (

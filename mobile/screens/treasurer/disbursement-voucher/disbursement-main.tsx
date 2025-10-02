@@ -3,12 +3,10 @@ import { useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
-  StatusBar,
   RefreshControl,
+  ScrollView
 } from "react-native";
 import {
   Archive,
@@ -18,49 +16,68 @@ import {
 } from "lucide-react-native";
 import {
   useGetDisbursementVouchers,
+  useGetDisbursementVoucherYears,
   usePermanentDeleteDisbursementVoucher,
   useArchiveDisbursementVoucher,
   useRestoreDisbursementVoucher,
 } from "./disbursement-queries";
-import { DisbursementView } from ".//disbursement-view";
+import { DisbursementView } from "./disbursement-view";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { DisbursementVoucher } from "./disbursement-types";
+import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select-layout";
+import { useDebounce } from "@/hooks/use-debounce";
+import PageLayout from "@/screens/_PageLayout";
 
 const DisbursementVoucherList: React.FC = () => {
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedDisbursement, setSelectedDisbursement] =
     useState<DisbursementVoucher | null>(null);
-  const [pageSize] = useState(5);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [selectedYear, setSelectedYear] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-
+  const pageSize = 10;
+  const { data: availableYears = [] } = useGetDisbursementVoucherYears();
   const {
-    data: disbursements = [],
+    data: disbursementsData,
     isLoading,
     refetch,
     error,
-  } = useGetDisbursementVouchers();
+    isFetching,
+  } = useGetDisbursementVouchers(
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    selectedYear,
+    viewMode === "archived"
+  );
+
   const { mutate: deleteDisbursement } = usePermanentDeleteDisbursementVoucher();
   const { mutate: archiveDisbursement } = useArchiveDisbursementVoucher();
   const { mutate: restoreDisbursement } = useRestoreDisbursementVoucher();
 
-  const filteredDisbursements = disbursements.filter((disbursement: DisbursementVoucher) => {
-    return viewMode === "active" ? disbursement.dis_is_archive === false : disbursement.dis_is_archive === true;
-  });
+  // Extract data from paginated response
+  const disbursements = disbursementsData?.results || [];
+  const totalCount = disbursementsData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Calculate pagination values
-  const totalPages = Math.ceil(filteredDisbursements.length / pageSize);
-  const paginatedDisbursements = filteredDisbursements.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Create year filter options
+  const yearFilterOptions = [
+    { label: "All Years", value: "all" },
+    ...availableYears.map((year) => ({
+      label: year.toString(),
+      value: year.toString(),
+    })),
+  ];
 
   // Calculate total amount of all displayed disbursements
-  const totalAmount = filteredDisbursements.reduce((sum, disbursement) => {
+  const totalAmount = disbursements.reduce((sum, disbursement) => {
     if (!disbursement.dis_particulars || disbursement.dis_particulars.length === 0) return sum;
 
     const disbursementTotal = disbursement.dis_particulars.reduce((disbursementSum, particular) => {
@@ -136,47 +153,45 @@ const DisbursementVoucherList: React.FC = () => {
     });
   };
 
-  const router = useRouter();
-
-  const handleBackPress = () => {
-    setSelectedDisbursement(null);
-  };
-
   const handleDisbursementPress = (disbursement: DisbursementVoucher) => {
     setSelectedDisbursement(disbursement);
   };
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
-if (selectedDisbursement) {
-  return (
-    <DisbursementView 
-      disNum={selectedDisbursement.dis_num} 
-      disbursement={selectedDisbursement} 
-      onBack={handleBackPress} 
-    />
-  );
-}
+  const handleSearchChange = (text: string) => {
+    setSearchTerm(text);
+    setCurrentPage(1);
+  };
 
-  if (isLoading) {
+  const handleYearChange = (option: { label: string; value: string }) => {
+    setSelectedYear(option.value);
+    setCurrentPage(1);
+  };
+
+  if (selectedDisbursement) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="mt-4 text-gray-600">Loading disbursement vouchers...</Text>
-        </View>
-      </SafeAreaView>
+      <DisbursementView 
+        disNum={selectedDisbursement.dis_num} 
+        disbursement={selectedDisbursement} 
+        onBack={() => setSelectedDisbursement(null)} 
+      />
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={30} color="black" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text >Disbursement Vouchers</Text>}
+      >
         <View className="flex-1 justify-center items-center p-4">
           <Text className="text-red-500 text-lg font-medium mb-2">
             Error loading disbursement vouchers
@@ -191,31 +206,49 @@ if (selectedDisbursement) {
             <Text className="text-white font-medium">Retry</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
+          <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={
-        <Text className="text-[13px]">Disbursement Vouchers</Text>
-      }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Loading..."
+      headerTitle={<Text >Disbursement Vouchers</Text>}
+      wrapScroll={false}
+      showScrollIndicator={false}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <ScrollView
+      showsVerticalScrollIndicator={true}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      {/* Search and Filter Section */}
+      <View className="p-4">
+        <View className="mb-2">
+          <Input
+            placeholder="Search by payee or particulars..."
+            className="rounded-xl flex-row items-center justify-between px-4 py-3 min-h-[44px] border border-gray-300"
+            value={searchTerm}
+            onChangeText={handleSearchChange}
+          />
+        </View>
+        
+        <SelectLayout
+          options={yearFilterOptions}
+          selectedValue={selectedYear}
+          onSelect={handleYearChange}
+          placeholder="Year"
+          className="bg-white mb-4"
+        />
 
-      <View className="mt-5 pt-4 pb-2 p-3">
-        <View className="flex-row justify-center mb-3">
+        {/* View Mode Toggle and Total Amount */}
+        <View className="flex-row justify-end items-center mb-4">
+          {/* View Mode Toggle */}
           <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
             <TouchableOpacity
               className={`px-4 py-2 ${viewMode === "active" ? "bg-white" : ""}`}
@@ -235,153 +268,161 @@ if (selectedDisbursement) {
         </View>
       </View>
 
-      <ScrollView
-        className="flex-1"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {paginatedDisbursements.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-12">
+        {/* Initial Loading State */}
+        {isLoading ? (
+          <View className="flex-1 justify-center items-center py-16">
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text className="mt-4 text-gray-600">Loading disbursement vouchers...</Text>
+          </View>
+        ) : disbursements.length === 0 ? (
+          <View className="flex-1 justify-center items-center py-12 px-4">
             <Text className="text-gray-500 text-center">
-              No {viewMode === "active" ? "active" : "archived"} disbursement
-              vouchers found.
-            </Text>
-            <Text className="text-gray-400 text-sm mt-2">
-              Total vouchers: {disbursements.length} | Active:{" "}
-              {disbursements.filter((d) => !d.dis_is_archive).length} | Archived:{" "}
-              {disbursements.filter((d) => d.dis_is_archive).length}
+              {searchTerm || selectedYear !== "all"
+                ? "No disbursement vouchers found"
+                : `No ${
+                    viewMode === "active" ? "active" : "archived"
+                  } disbursement vouchers found.`}
             </Text>
           </View>
         ) : (
-          paginatedDisbursements.map((disbursement) => (
-            <TouchableOpacity
-              key={disbursement.dis_num}
-              onPress={() => handleDisbursementPress(disbursement)}
-              className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100"
-            >
-              <View className="flex-row justify-between items-start mb-3">
-                <Text className="text-lg font-semibold text-gray-900 flex-1 mr-3">
-                  DV #{disbursement.dis_num} - {disbursement.dis_payee || "Unknown Payee"}
-                </Text>
-                <View className="flex-row">
-                  {viewMode === "active" ? (
-                    <ConfirmationModal
-                      trigger={
-                        <TouchableOpacity className="p-1">
-                          <Archive color="#ef4444" size={20} />
-                        </TouchableOpacity>
-                      }
-                      title={`Archive DV #${disbursement.dis_num}`}
-                      description="Are you sure you want to archive this disbursement voucher?"
-                      actionLabel="Archive"
-                      onPress={() => handleArchivePress(disbursement)}
-                      loading={isProcessing}
-                    />
-                  ) : (
-                    <>
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="p-1 mr-2">
-                            <ArchiveRestore color="#10b981" size={20} />
-                          </TouchableOpacity>
-                        }
-                        title={`Restore DV #${disbursement.dis_num}`}
-                        description="Are you sure you want to restore this disbursement voucher?"
-                        actionLabel="Restore"
-                        onPress={() => handleRestorePress(disbursement)}
-                        loading={isProcessing}
-                      />
+          <View className="px-4 pb-4">
+            {/* Disbursement List */}
+            {disbursements.map((disbursement) => (
+              <TouchableOpacity
+                key={disbursement.dis_num}
+                onPress={() => handleDisbursementPress(disbursement)}
+                className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-200"
+              >
+                <View className="flex-row justify-between items-start mb-3">
+                  <Text className="text-lg font-semibold text-gray-900 flex-1 mr-3">
+                    DV #{disbursement.dis_num} - {disbursement.dis_payee || "Unknown Payee"}
+                  </Text>
+                  <View className="flex-row">
+                    {viewMode === "active" ? (
                       <ConfirmationModal
                         trigger={
                           <TouchableOpacity className="p-1">
-                            <Trash color="#ef4444" size={20} />
+                            <Archive color="#ef4444" size={20} />
                           </TouchableOpacity>
                         }
-                        title={`Delete DV #${disbursement.dis_num}`}
-                        description="Please confirm if you would like to proceed with deleting the voucher. This action cannot be undone."
-                        actionLabel="Delete"
-                        variant="destructive"
-                        onPress={() => handleDeletePress(disbursement)}
+                        title={`Archive DV #${disbursement.dis_num}`}
+                        description="Are you sure you want to archive this disbursement voucher?"
+                        actionLabel="Archive"
+                        onPress={() => handleArchivePress(disbursement)}
                         loading={isProcessing}
                       />
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <ConfirmationModal
+                          trigger={
+                            <TouchableOpacity className="p-1 mr-2">
+                              <ArchiveRestore color="#10b981" size={20} />
+                            </TouchableOpacity>
+                          }
+                          title={`Restore DV #${disbursement.dis_num}`}
+                          description="Are you sure you want to restore this disbursement voucher?"
+                          actionLabel="Restore"
+                          onPress={() => handleRestorePress(disbursement)}
+                          loading={isProcessing}
+                        />
+                        <ConfirmationModal
+                          trigger={
+                            <TouchableOpacity className="p-1">
+                              <Trash color="#ef4444" size={20} />
+                            </TouchableOpacity>
+                          }
+                          title={`Delete DV #${disbursement.dis_num}`}
+                          description="Please confirm if you would like to proceed with deleting the voucher. This action cannot be undone."
+                          actionLabel="Delete"
+                          variant="destructive"
+                          onPress={() => handleDeletePress(disbursement)}
+                          loading={isProcessing}
+                        />
+                      </>
+                    )}
+                  </View>
                 </View>
-              </View>
 
-              <Text className="text-sm text-gray-600 mb-3" numberOfLines={2}>
-                {disbursement.dis_particulars?.map((p) => p.forPayment).join(", ") || "No particulars provided"}
-              </Text>
-
-              <View className="mb-2">
-                <Text className="text-sm text-gray-600">
-                  Date: {disbursement.dis_date || "No date provided"}
+                <Text className="text-sm text-gray-600 mb-3" numberOfLines={2}>
+                  {disbursement.dis_particulars?.map((p) => p.forPayment).join(", ") || "No particulars provided"}
                 </Text>
+
+                <View className="mb-2">
+                  <Text className="text-sm text-gray-600">
+                    Date: {disbursement.dis_date || "No date provided"}
+                  </Text>
+                </View>
+
+                <View className="mb-2">
+                  <Text className="text-sm text-gray-600">
+                    Fund: ₱
+                    {new Intl.NumberFormat("en-US", {
+                      style: "decimal",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(disbursement.dis_fund || 0)}
+                  </Text>
+                </View>
+
+                <View className="mb-2">
+                  <Text className="text-sm text-gray-600 underline">
+                    Total Amount: ₱
+                    {disbursement.dis_particulars && disbursement.dis_particulars.length > 0
+                      ? new Intl.NumberFormat("en-US", {
+                          style: "decimal",
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(
+                          disbursement.dis_particulars.reduce((total, particular) => {
+                            const amount = particular.amount || 0;
+                            return total + (typeof amount === "string" ? parseFloat(amount) : amount);
+                          }, 0)
+                        )
+                      : "0.00"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <View className="flex-row justify-between items-center mt-4">
+                <TouchableOpacity
+                  onPress={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+                >
+                  <Text className="text-primaryBlue font-bold">← Previous</Text>
+                </TouchableOpacity>
+
+                <View className="flex-row items-center">
+                  {isFetching && (
+                    <ActivityIndicator size="small" color="#3b82f6" className="mr-2" />
+                  )}
+                  <Text className="text-gray-500">
+                    Page {currentPage} of {totalPages}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={`p-2 ${
+                    currentPage === totalPages ? "opacity-50" : ""
+                  }`}
+                >
+                  <Text className="text-primaryBlue font-bold">Next →</Text>
+                </TouchableOpacity>
               </View>
-
-              <View className="mb-2">
-                <Text className="text-sm text-gray-600">
-                  Fund: ₱
-                  {new Intl.NumberFormat("en-US", {
-                    style: "decimal",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }).format(disbursement.dis_fund || 0)}
-                </Text>
-              </View>
-
-              <View className="mb-2">
-                <Text className="text-sm text-gray-600 underline">
-                  Total Amount: ₱
-                  {disbursement.dis_particulars && disbursement.dis_particulars.length > 0
-                    ? new Intl.NumberFormat("en-US", {
-                        style: "decimal",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }).format(
-                        disbursement.dis_particulars.reduce((total, particular) => {
-                          const amount = particular.amount || 0;
-                          return total + (typeof amount === "string" ? parseFloat(amount) : amount);
-                        }, 0)
-                      )
-                    : "0.00"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
-
-        {/* Pagination Controls */}
-        {filteredDisbursements.length > pageSize && (
-          <View className="flex-row justify-between items-center mt-4 px-4 pb-4">
-            <TouchableOpacity
-              onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-            >
-              <Text className="text-primaryBlue font-bold">← Previous</Text>
-            </TouchableOpacity>
-
-            <Text className="text-gray-500">
-              Page {currentPage} of {totalPages}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`p-2 ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
-            >
-              <Text className="text-primaryBlue font-bold">Next →</Text>
-            </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
-    </ScreenLayout>
+    </PageLayout>
   );
 };
 

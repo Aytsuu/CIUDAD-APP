@@ -13,7 +13,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
-import { useGetWasteTrucks } from './queries/waste-col-fetch-queries';
+import { useGetWasteTrucks, type Trucks } from './queries/waste-col-fetch-queries';
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useCreateWasteSchedule } from './queries/waste-col-add-queries';
 import { useAssignCollectors } from './queries/waste-col-add-queries';
@@ -62,10 +62,13 @@ function WasteColCreate() {
     }));
 
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
-        value: String(truck.truck_id)
+    const truckOptions = (trucks as Trucks[])
+        .filter(truck => truck.truck_status === "Operational")
+        .map(truck => ({
+            label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+            value: String(truck.truck_id)
     }));
+
 
 
     const sitioOptions = sitios.map(sitio => ({

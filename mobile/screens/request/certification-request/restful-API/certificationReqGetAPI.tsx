@@ -64,7 +64,8 @@ export const getPersonalClearances = async () => {
 export const getPurposeAndRates = async () => {
     try {
         const response = await api.get('/treasurer/purpose-and-rate/');
-        return response.data;
+        // Ensure we return an array even if API format changes
+        return response.data.results || response.data || [];
     } catch (error) {
         console.error("Failed to fetch purpose and rates:", error);
         throw new Error("Failed to fetch purpose and rates");
@@ -74,8 +75,9 @@ export const getPurposeAndRates = async () => {
 // Annual Gross Sales API
 export const getAnnualGrossSales = async () => {
     try {
-        const response = await api.get('/treasurer/annual-gross-sales/');
-        return response.data;
+        const response = await api.get('/treasurer/annual-gross-sales-active/');
+        // The API returns paginated data with results array
+        return response.data.results || response.data || [];
     } catch (error) {
         console.error("Failed to fetch annual gross sales:", error);
         throw new Error("Failed to fetch annual gross sales");

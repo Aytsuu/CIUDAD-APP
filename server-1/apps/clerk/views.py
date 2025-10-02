@@ -22,6 +22,7 @@ from .models import (
     IssuedBusinessPermit,
     Business,
     ServiceChargeRequest,
+    BusinessPermitFile,
 )
 from rest_framework.generics import RetrieveAPIView
 from django.http import Http404 
@@ -1252,3 +1253,45 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
         )
 
         return queryset.order_by('-sr_req_date')
+
+
+# ---------------------- Business Permit Files ----------------------
+class BusinessPermitFilesView(generics.ListAPIView):
+    """
+    API endpoint to fetch business permit files for a specific business permit request
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, bpr_id):
+        try:
+            # Fetch all files for this business permit request
+            files = BusinessPermitFile.objects.filter(bpr_id=bpr_id)
+            
+            if not files.exists():
+                return Response({
+                    'message': 'No files found for this business permit request',
+                    'files': []
+                }, status=status.HTTP_200_OK)
+            
+            # Serialize the files data
+            files_data = []
+            for file in files:
+                files_data.append({
+                    'bpf_id': file.bpf_id,
+                    'bpf_name': file.bpf_name,
+                    'bpf_type': file.bpf_type,
+                    'bpf_path': file.bpf_path,
+                    'bpf_url': file.bpf_url,
+                })
+            
+            return Response({
+                'files': files_data,
+                'count': len(files_data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error fetching business permit files for {bpr_id}: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching business permit files'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

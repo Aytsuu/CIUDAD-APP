@@ -15,8 +15,6 @@ import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
 import { useGetAnnualGrossSalesActive, type AnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
 
-
-
 interface PermitClearanceFormProps {
     onSuccess?: () => void;
 }
@@ -47,48 +45,37 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         resolver: zodResolver(PermitClearanceFormSchema),
         defaultValues: {
             serialNo: "",
-            businessName: "",
-            businessId: "",
+            businessName: "", // Will store business ID, but display business name
             requestor: "",
             address: "",
             grossSales: "",
-            purposes: "",
-            purposeId: "",
+            purposes: "", // Will store purpose ID, but display purpose name
             rp_id: "",
         },
     })
 
-    // Function to get business address when business is selected
-    const getBusinessAddress = (businessValue: string) => {
-        console.log("getBusinessAddress called with businessValue:", businessValue);
-        console.log("Available businesses:", businesses);
-        
-        
-        let selectedBusiness = businesses.find((business: any) => business.bus_id === businessValue);
-        
-        // If not found by ID, try to find by name
-        if (!selectedBusiness) {
-            selectedBusiness = businesses.find((business: any) => business.bus_name === businessValue);
-        }
-        
-        console.log("Selected business:", selectedBusiness);
-        
-        const address = selectedBusiness?.bus_location || selectedBusiness?.address || '';
-        console.log("Resolved address:", address);
-        
-        return address;
+    // Helper function to get business by ID
+    const getBusinessById = (businessId: string) => {
+        return businesses.find((business: any) => business.bus_id === businessId);
     }
 
-    // Function to get matching annual gross sales rate based on business gross sales
-    const getMatchingGrossSalesRate = (businessValue: string) => {
-        console.log("getMatchingGrossSalesRate called with:", businessValue);
-        console.log("Available businesses:", businesses);
-        console.log("Available gross sales rates:", grossSales);
+    // Function to get business address when business is selected
+    const getBusinessAddress = (businessId: string) => {
+        const selectedBusiness = getBusinessById(businessId);
+        return selectedBusiness?.bus_location || selectedBusiness?.address || '';
+    }
+
+    // Function to get business display name
+    const getBusinessDisplayName = (businessId: string) => {
+        const selectedBusiness = getBusinessById(businessId);
+        return selectedBusiness?.bus_name || '';
+    }
+
+    // Function to get matching annual gross sales rate based on business ID
+    const getMatchingGrossSalesRate = (businessId: string) => {
+        console.log("getMatchingGrossSalesRate called with businessId:", businessId);
         
-        const selectedBusiness = businesses.find((business: any) => 
-            business.bus_id === businessValue || business.bus_name === businessValue
-        );
-        
+        const selectedBusiness = getBusinessById(businessId);
         console.log("Selected business for gross sales:", selectedBusiness);
         
         if (!selectedBusiness || !selectedBusiness.bus_gross_sales) {
@@ -99,27 +86,66 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         const businessGrossSales = Number(selectedBusiness.bus_gross_sales);
         console.log("Business gross sales:", businessGrossSales);
         
-        // Find matching annual gross sales range
-        // const matchingRate = grossSales.find((rate: any) => 
-        //     businessGrossSales >= rate.ags_minimum && 
-        //     businessGrossSales <= rate.ags_maximum
-        // );
-
-        const matchingRate = grossSales?.results.find((rate: AnnualGrossSales) => 
-            businessGrossSales >= rate.ags_minimum && 
-            businessGrossSales <= rate.ags_maximum
+        // Filter only active (non-archived) rates
+        const activeRates = grossSales?.results?.filter((rate: AnnualGrossSales) => !rate.ags_is_archive) || [];
+        console.log("Active rates:", activeRates);
+        console.log("Looking for gross sales amount:", businessGrossSales);
+        
+        // Find exact matching annual gross sales range
+        const matchingRate = activeRates.find((rate: AnnualGrossSales) => 
+            businessGrossSales >= Number(rate.ags_minimum) && 
+            businessGrossSales <= Number(rate.ags_maximum)
         );
         
-        console.log("Matching rate found:", matchingRate);
+        console.log("Exact matching rate found:", matchingRate);
         
-        return matchingRate ? {
-            id: matchingRate.ags_id.toString(),
-            name: `₱${matchingRate.ags_minimum} - ₱${matchingRate.ags_maximum}`,
-            rate: matchingRate.ags_rate
-        } : null;
+        if (matchingRate) {
+            return {
+                id: matchingRate.ags_id.toString(),
+                name: `₱${Number(matchingRate.ags_minimum).toLocaleString()} - ₱${Number(matchingRate.ags_maximum).toLocaleString()}`,
+                rate: matchingRate.ags_rate
+            };
+        }
+        
+        
+        console.log("No exact match found. Looking for closest range...");
+        
+       
+        const sortedRates = [...activeRates].sort((a, b) => Number(a.ags_minimum) - Number(b.ags_minimum));
+        
+        
+        for (const rate of sortedRates) {
+            const min = Number(rate.ags_minimum);
+            const max = Number(rate.ags_maximum);
+            
+           
+            if (businessGrossSales < min && Math.abs(businessGrossSales - min) <= 1) {
+                console.log(`Using closest range: ${min} - ${max} for gross sales: ${businessGrossSales}`);
+                return {
+                    id: rate.ags_id.toString(),
+                    name: `₱${min.toLocaleString()} - ₱${max.toLocaleString()} (Closest Range)`,
+                    rate: rate.ags_rate
+                };
+            }
+        }
+        
+        // If business exceeds highest range, use highest available
+        const highestRate = activeRates.reduce((highest, current) => 
+            Number(current.ags_maximum) > Number(highest.ags_maximum) ? current : highest
+        , activeRates[0]);
+        
+        if (highestRate && businessGrossSales > Number(highestRate.ags_maximum)) {
+            console.log("Business gross sales exceeds highest rate range. Using highest available rate.");
+            return {
+                id: highestRate.ags_id.toString(),
+                name: `₱${Number(highestRate.ags_minimum).toLocaleString()} - ₱${Number(highestRate.ags_maximum).toLocaleString()}`,
+                rate: highestRate.ags_rate
+            };
+        }
+        
+        console.log("No matching rate found for business gross sales:", businessGrossSales);
+        return null;
     }
-
-
 
     const onSubmit = async (values: z.infer<typeof PermitClearanceFormSchema>) => {
         try {
@@ -135,9 +161,15 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             };
             
             console.log("Permit Clearance Data:", payload);
-            console.log("Business ID from form:", payload.businessId);
-            console.log("Business Name from form:", payload.businessName);
-            console.log("Purposes from form:", payload.purposes);
+            console.log("Business ID from form:", payload.businessName); // Now contains business ID
+            console.log("Business Name (display):", getBusinessDisplayName(payload.businessName));
+            console.log("Purpose ID from form:", payload.purposes); // Now contains purpose ID
+            
+            // Get purpose name for logging
+            const selectedPurpose = permitPurposes.find((purpose: any) => 
+                purpose.pr_id?.toString() === payload.purposes?.toString()
+            );
+            console.log("Purpose Name (display):", selectedPurpose?.pr_purpose || 'Not found');
             console.log("Gross Sales from form:", payload.grossSales);
             console.log("All form values:", form.getValues());
             
@@ -194,7 +226,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                 <FormLabel>Business Name</FormLabel>
                                 <FormControl>
                                     <ComboboxInput
-                                        value={field.value}
+                                        value={getBusinessDisplayName(field.value) || field.value}
                                         options={businesses}
                                         isLoading={businessLoading}
                                         label=""
@@ -204,35 +236,21 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                             console.log("Business selected with value:", value);
                                             console.log("Selected option:", selectedOption);
                                             
-                                            // Get the actual business ID from selectedOption (like rp_id pattern)
                                             const businessId = selectedOption?.bus_id || '';
-                                            const businessName = selectedOption?.bus_name || value;
-                                            
                                             console.log("Business ID:", businessId);
-                                            console.log("Business Name:", businessName);
                                             
-                                            // Store business name in the display field
-                                            field.onChange(businessName);
+                                            // Store the business ID in the field (not the display name)
+                                            field.onChange(businessId);
                                             
-                                            // Store business ID separately
-                                            form.setValue("businessId", businessId);
-                                            console.log("Set businessId to:", businessId);
-                                            
-                                            // Find the selected business using the actual ID
-                                            const selectedBusiness = businesses.find((business: any) => business.bus_id === businessId);
-                                            
+                                            const selectedBusiness = getBusinessById(businessId);
                                             console.log("Found selected business:", selectedBusiness);
+                                            
                                             if (selectedBusiness) {
                                                 const address = selectedBusiness.bus_location || selectedBusiness.address || '';
                                                 form.setValue("address", address);
                                                 
                                                 const requestor = selectedBusiness.requestor || '';
                                                 form.setValue("requestor", requestor);
-
-                                                // Store the business gross sales amount as string
-                                                const businessGrossSales = selectedBusiness.bus_gross_sales || '';
-                                                form.setValue("businessGrossSales", businessGrossSales.toString());
-                                                console.log("Set business gross sales to:", businessGrossSales.toString());
 
                                                 // Auto-match gross sales rate using business ID
                                                 const matchingRate = getMatchingGrossSalesRate(businessId);
@@ -245,6 +263,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                             }
                                         }}
                                         onCustomInput={(value: string) => {
+                                            // For custom input, we'll store the display value
                                             field.onChange(value);
                                         }}
                                         displayKey="bus_name"
@@ -256,31 +275,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                         )}>
                     </FormField>
 
-                    {/* Hidden field for businessId */}
-                    <FormField
-                        control={form.control}
-                        name="businessId"
-                        render={({field}) => (
-                            <FormItem className="hidden">
-                                <FormControl>
-                                    <Input {...field} type="hidden" />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Hidden field for purposeId */}
-                    <FormField
-                        control={form.control}
-                        name="purposeId"
-                        render={({field}) => (
-                            <FormItem className="hidden">
-                                <FormControl>
-                                    <input {...field} type="hidden" />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
 
                     <div className="grid grid-cols-2 gap-5 w-full">
                         <FormField
@@ -359,59 +353,65 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                         )}
                     />
 
-                                         <div className="relative mb-8">       
-                         <FormField
-                              control={form.control}
-                              name="purposes"
-                              render={({ field }) => (
-                                  <FormItem>
-                                      <FormLabel>Select purpose(s):</FormLabel>
-                                      <FormControl>
-                                          <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
-                                             <ComboboxInput
-                                                  value={field.value || ''}
-                                                  options={permitPurposes
-                                                      .filter((purpose: any) => purpose.pr_category === 'Business Permit')
-                                                      .map((purpose: any) => ({
-                                                          id: purpose.pr_id,
-                                                          name: purpose.pr_purpose
-                                                      }))}
-                                                  isLoading={purposesLoading}
-                                                  label=""
-                                                  placeholder="Select purpose..."
-                                                  emptyText="No purposes found"
-                                                  onSelect={(value: string, selectedOption: any) => {
-                                                      console.log("Purpose selection debug:");
-                                                      console.log("- value:", value);
-                                                      console.log("- selectedOption:", selectedOption);
-                                                      
-                                                      // Get the purpose ID from selectedOption (like business selection)
-                                                      const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
-                                                      const purposeName = selectedOption?.name || selectedOption?.pr_purpose || value;
-                                                      
-                                                      console.log("- purposeId:", purposeId);
-                                                      console.log("- purposeName:", purposeName);
-                                                      
-                                                      // Set the field value to the purpose name (what user sees)
-                                                      field.onChange(purposeName);
-                                                      
-                                                      // Store the purpose ID in the hidden field for backend submission
-                                                      form.setValue("purposeId", purposeId.toString());
-                                                      console.log("Set purposeId to:", purposeId.toString());
-                                                      console.log("Current form values:", form.getValues());
-                                                  }}
-                                                  onCustomInput={(value: string) => {
-                                                      field.onChange(value);
-                                                  }}
-                                                  displayKey="name"
-                                                  valueKey="id"
-                                              />
-                                         </div>
-                                     </FormControl>
-                                     <FormMessage className="mt-2" />
-                                 </FormItem>
-                             )}
-                         />
+                    <div className="relative mb-8">       
+                        <FormField
+                             control={form.control}
+                             name="purposes"
+                             render={({ field }) => {
+                                 // Find the selected purpose to get its name for display
+                                 const selectedPurpose = permitPurposes.find((purpose: any) => 
+                                     purpose.pr_id?.toString() === field.value?.toString()
+                                 );
+                                 const displayValue = selectedPurpose?.pr_purpose || '';
+                                 
+                                 console.log("Purpose field render - ID stored:", field.value);
+                                 console.log("Purpose field render - Display name:", displayValue);
+                                 
+                                 return (
+                                     <FormItem>
+                                         <FormLabel>Select purpose(s):</FormLabel>
+                                         <FormControl>
+                                             <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
+                                                <ComboboxInput
+                                                     value={displayValue}
+                                                     options={permitPurposes
+                                                         .filter((purpose: any) => purpose.pr_category === 'Business Permit' || purpose.pr_category === 'Barangay Permit')
+                                                         .map((purpose: any) => ({
+                                                             id: purpose.pr_id,
+                                                             name: purpose.pr_purpose
+                                                         }))}
+                                                     isLoading={purposesLoading}
+                                                     label=""
+                                                     placeholder="Select purpose..."
+                                                     emptyText="No purposes found"
+                                                     onSelect={(value: string, selectedOption: any) => {
+                                                         console.log("Purpose selection debug:");
+                                                         console.log("- Display value (name):", value);
+                                                         console.log("- selectedOption:", selectedOption);
+                                                         
+                                                         
+                                                         const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
+                                                         console.log("- Storing purposeId:", purposeId);
+                                                         
+                                                        
+                                                         field.onChange(purposeId.toString());
+                                                         console.log("Stored ID in form:", purposeId.toString());
+                                                         console.log("Will display:", value);
+                                                     }}
+                                                     onCustomInput={(value: string) => {
+                                                         // For custom input, store the display value
+                                                         field.onChange(value);
+                                                     }}
+                                                     displayKey="name"
+                                                     valueKey="id"
+                                                 />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage className="mt-2" />
+                                    </FormItem>
+                                 );
+                             }}
+                        />
                      </div>
 
                     <div className="flex justify-end">

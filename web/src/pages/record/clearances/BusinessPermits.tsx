@@ -101,9 +101,30 @@ function BusinessDocumentPage() {
       cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
     },
     {
-      accessorKey: "req_sales_proof",
+      accessorKey: "business_gross_sales",
       header: "Gross Sales",
-      cell: ({ row }) => <div>₱ {row.getValue("req_sales_proof")}</div>,
+      cell: ({ row }) => {
+        const grossSales = row.getValue("business_gross_sales") as string | number;
+        
+        // If grossSales is empty, null, or undefined, show "Not Set"
+        if (!grossSales || grossSales === "" || grossSales === "0") {
+          return <div className="text-center text-gray-500">Not Set</div>;
+        }
+        
+        // Format the gross sales amount
+        const amount = typeof grossSales === 'string' ? parseFloat(grossSales) : grossSales;
+        
+        // Check if it's a valid number
+        if (isNaN(amount)) {
+          return <div className="text-center text-gray-500">{grossSales}</div>;
+        }
+        
+        return (
+          <div className="text-center">
+            ₱{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "req_pay_method",

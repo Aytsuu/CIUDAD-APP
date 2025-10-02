@@ -22,6 +22,90 @@ from apps.pagination import StandardResultsPagination
 class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteEventSerializer
     queryset = WasteEvent.objects.all()
+    permission_classes = [AllowAny]
+    
+    def create(self, request, *args, **kwargs):
+        # Create the waste event first
+        response = super().create(request, *args, **kwargs)
+        
+        # Get the created event data
+        event_data = response.data
+        
+        # Check if announcements were requested
+        selected_announcements = request.data.get('selectedAnnouncements', [])
+        event_subject = request.data.get('eventSubject', '')
+        
+        if selected_announcements and len(selected_announcements) > 0:
+            try:
+                # Create announcement for the event
+                announcement = Announcement.objects.create(
+                    ann_title=f"WASTE EVENT: {event_data.get('we_name', 'Waste Management Event')}",
+                    ann_details=event_subject or f"Event: {event_data.get('we_name')}\nLocation: {event_data.get('we_location')}\nDate: {event_data.get('we_date')} at {event_data.get('we_time')}\nOrganizer: {event_data.get('we_organizer')}\n\n{event_data.get('we_description', '')}",
+                    ann_created_at=timezone.now(),
+                    ann_type="event",
+                    ann_to_email=True,
+                    ann_to_sms=True,
+                    ann_status="Active",
+                    staff_id=event_data.get('staff')
+                )
+                
+                # Create announcement recipients based on selected options
+                for announcement_type in selected_announcements:
+                    if announcement_type == "all":
+                        # Create recipients for all categories
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="all",
+                            ar_type="ALL"
+                        )
+                    elif announcement_type == "allbrgystaff":
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="staff",
+                            ar_type="ALL"
+                        )
+                    elif announcement_type == "residents":
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="resident",
+                            ar_type="RESIDENT"
+                        )
+                    elif announcement_type == "wmstaff":
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="staff",
+                            ar_type="WASTE_MANAGEMENT"
+                        )
+                    elif announcement_type == "drivers":
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="staff",
+                            ar_type="DRIVER"
+                        )
+                    elif announcement_type == "collectors":
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="staff",
+                            ar_type="LOADER"
+                        )
+                    elif announcement_type == "watchmen":
+                        AnnouncementRecipient.objects.create(
+                            ann=announcement,
+                            ar_category="staff",
+                            ar_type="WATCHMAN"
+                        )
+                
+                # Add announcement ID to response
+                response.data['announcement_id'] = announcement.ann_id
+                response.data['announcement_created'] = True
+                
+            except Exception as e:
+                # Log error but don't fail the event creation
+                print(f"Error creating announcement for waste event: {str(e)}")
+                response.data['announcement_created'] = False
+                response.data['announcement_error'] = str(e)
+        
+        return response
 
 class WasteCollectionStaffView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer
@@ -332,12 +416,42 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
 
 class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
+    
     def get_queryset(self):
-        queryset = WasteReport.objects.all()
+        queryset = WasteReport.objects.select_related(
+            'sitio_id',
+            'rp_id__per',
+            'staff_id'
+        ).prefetch_related(
+            'waste_report_file',
+            'waste_report_rslv_file'
+        ).all()
+        
+        # Get filter parameters from request
+        search_query = self.request.query_params.get('search', '')
+        report_matter = self.request.query_params.get('report_matter', '')
         rp_id = self.request.query_params.get('rp_id')
         
+        # Apply search filter
+        if search_query:
+            queryset = queryset.filter(
+                Q(rep_id__icontains=search_query) |
+                Q(rep_matter__icontains=search_query) |
+                Q(rep_location__icontains=search_query) |
+                Q(rep_violator__icontains=search_query) |
+                Q(rep_contact__icontains=search_query) |
+                Q(rep_add_details__icontains=search_query) |
+                Q(sitio_id__sitio_name__icontains=search_query) |
+                Q(rp_id__per__per_lname__icontains=search_query) |
+                Q(rp_id__per__per_fname__icontains=search_query)
+            )
+        
+        # Apply report matter filter
+        if report_matter and report_matter != "0":
+            queryset = queryset.filter(rep_matter=report_matter)
+        
+        # Apply resident profile filter if provided
         if rp_id:
-            # Filter by rp_id if provided
             queryset = queryset.filter(rp_id=rp_id)
         
         return queryset

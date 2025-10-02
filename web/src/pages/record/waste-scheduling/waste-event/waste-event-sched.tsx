@@ -72,14 +72,23 @@ function WasteEventSched() {
                 we_organizer: values.organizer,
                 we_invitees: values.invitees,
                 we_is_archive: false,
-                staff: staffId
+                staff: staffId,
+                // Include announcement data
+                selectedAnnouncements: values.selectedAnnouncements || [],
+                eventSubject: values.eventSubject || ''
             };
 
-            await createWasteEvent(eventData);
+            const response = await createWasteEvent(eventData);
             
             queryClient.invalidateQueries({ queryKey: ['wasteEvents'] });
+            queryClient.invalidateQueries({ queryKey: ['announcements'] });
             
-            toast.success("Event has been scheduled successfully!");
+            // Show appropriate success message
+            if (response?.announcement_created) {
+                toast.success("Event scheduled and announcement sent successfully!");
+            } else {
+                toast.success("Event has been scheduled successfully!");
+            }
 
             form.reset();
         } catch (error) {
@@ -314,7 +323,7 @@ function WasteEventSched() {
                                     type="button" 
                                     variant="outline" 
                                     onClick={() => form.reset()}
-                                    className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-white border-yellow-400 hover:border-yellow-500"
+                                    className="w-full sm:w-auto bg-amber-700 hover:bg-amber700 text-white"
                                 >
                                     Reset
                                 </Button>

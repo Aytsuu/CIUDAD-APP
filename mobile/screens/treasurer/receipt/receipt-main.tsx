@@ -15,14 +15,25 @@ import { useRouter } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { useInvoiceQuery, type Receipt } from './queries/receipt-getQueries';
 import PageLayout from '@/screens/_PageLayout';
+import { useDebounce } from '@/hooks/use-debounce'; // You'll need to create this hook
 
 const ReceiptPage = () => {
   const router = useRouter();
-  const { data: fetchedData = [], isLoading, isError, refetch } = useInvoiceQuery();
-
+  
+  // State for search and filter
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilterId, setSelectedFilterId] = useState('all');
 
+  // Use debounce for search to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Fetch data with backend filtering
+  const { data: fetchedData = [], isLoading, isError, refetch } = useInvoiceQuery(
+    debouncedSearchQuery, 
+    selectedFilterId
+  );
+
+  // Generate filter options from the fetched data
   const filterOptions = useMemo(() => {
     const uniqueNatures = Array.from(
       new Set(fetchedData.map(item => item.inv_nat_of_collection))
@@ -34,22 +45,19 @@ const ReceiptPage = () => {
     ];
   }, [fetchedData]);
 
-  const filteredData = fetchedData.filter(item => {
-    const matchesFilter =
-      selectedFilterId === 'all' ||
-      item.inv_nat_of_collection?.toLowerCase() === selectedFilterId.toLowerCase();
-
-    const matchesSearch =
-      !searchQuery.trim() ||
-      Object.values(item).some(val =>
-        String(val).toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-    return matchesFilter && matchesSearch;
-  });
+  // No need for frontend filtering - backend handles it
+  const filteredData = fetchedData;
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setSelectedFilterId(value);
   };
 
   const renderItem = ({ item }: { item: Receipt }) => (
@@ -136,35 +144,36 @@ const ReceiptPage = () => {
       }
       wrapScroll={false}
     >
-      {isLoading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-          <Text className="text-sm text-gray-500 mt-2">Loading receipts...</Text>
-        </View>
-      ) : (
-        <View className="flex-1 px-4">
-          {/* Search and Filter */}
-          <View className="flex-col gap-3 pb-8">
-            <View className="relative">
-              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-3 w-full h-12 bg-white text-base rounded-lg p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={(text) => setSearchQuery(text)}
-              />
-            </View>
 
-            <SelectLayout
-              className="w-full bg-white"
-              placeholder="Filter"
-              options={filterOptions}
-              selectedValue={selectedFilterId}
-              onSelect={(option) => setSelectedFilterId(option.value)}
+      <View className="flex-1 px-4">
+        {/* Search and Filter */}
+        <View className="flex-col gap-3 pb-8">
+          <View className="relative">
+            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
+            <TextInput
+              placeholder="Search..."
+              className="pl-5 w-full h-12 bg-white text-base rounded-lg p-2 border border-gray-300"
+              value={searchQuery}
+              onChangeText={handleSearchChange}
             />
           </View>
 
-          {/* Receipts List */}
+          <SelectLayout
+            className="w-full bg-white"
+            placeholder="Filter"
+            options={filterOptions}
+            selectedValue={selectedFilterId}
+            onSelect={(option) => handleFilterChange(option.value)}
+          />
+        </View>
+
+        {/* Receipts List */}
+        {isLoading ? (
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator size="large" color="#2a3a61" />
+            <Text className="text-sm text-gray-500 mt-2">Loading receipts...</Text>
+          </View>
+        ) : (
           <FlatList
             data={filteredData}
             renderItem={renderItem}
@@ -176,8 +185,8 @@ const ReceiptPage = () => {
               </Text>
             }
           />
-        </View>
-      )}
+        )}
+      </View>
     </PageLayout>
   );
 };

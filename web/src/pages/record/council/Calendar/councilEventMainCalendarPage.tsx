@@ -18,19 +18,35 @@ import { useLoading } from "@/context/LoadingContext";
 import { CouncilEvent } from "./councilEventTypes";
 
 function CalendarPage() {
-  const { data: councilEventsData, isLoading: isCouncilEventsLoading } = useGetCouncilEvents(
-    1, 
-    1000, 
-    undefined, 
-    "all", 
-    false 
-  );
-  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendar" | "archive">("calendar");
   const [viewEvent, setViewEvent] = useState<CouncilEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
-  const councilEvents = councilEventsData?.results || [];
+
+// Fetch NON-archived events for calendar tab
+  const { data: activeEventsData, isLoading: isActiveEventsLoading } = useGetCouncilEvents(
+    1, 
+    1000, 
+    undefined, 
+    "all", 
+    false  // is_archive=false
+  );
+  
+  // Fetch ARCHIVED events for archive tab
+  const { data: archivedEventsData, isLoading: isArchivedEventsLoading } = useGetCouncilEvents(
+    1,
+    1000,
+    undefined,
+    "all",
+    true,  // is_archive=true
+  );
+
+  // Use the appropriate data based on active tab
+  const councilEvents = activeTab === "archive" 
+    ? archivedEventsData?.results || [] 
+    : activeEventsData?.results || [];
+
+
   const calendarEvents = councilEvents.filter((event: CouncilEvent) => !event.ce_is_archive);
   const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
   const { showLoading, hideLoading } = useLoading();
@@ -59,16 +75,15 @@ function CalendarPage() {
 
   const filteredEvents = councilEvents.filter((event: CouncilEvent) => {
     if (activeTab === "archive") {
-      return event.ce_is_archive;
+      return true; // All events in archivedEventsData are already archived
     } else {
       const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
       const now = new Date();
       const fiveDaysFromNow = new Date(now);
       fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
-      return eventDateTime >= now && eventDateTime <= fiveDaysFromNow && !event.ce_is_archive;
+      return eventDateTime >= now && eventDateTime <= fiveDaysFromNow;
     }
   });
-
   const { mutate: deleteCouncilEvent } = useDeleteCouncilEvent();
   const { mutate: restoreCouncilEvent } = useRestoreCouncilEvent();
   
@@ -88,7 +103,7 @@ function CalendarPage() {
     });
   };
 
-  const isLoading = isCouncilEventsLoading || isWasteColLoading;
+  const isLoading = (activeTab === "calendar" ? isActiveEventsLoading : isArchivedEventsLoading) || isWasteColLoading;
   
   useEffect(() => {
     if (isLoading) {
@@ -152,7 +167,7 @@ function CalendarPage() {
           </TabsContent>
 
           <TabsContent value="archive">
-            {isCouncilEventsLoading ? (
+            {isArchivedEventsLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Spinner size="lg" />
               </div>

@@ -112,7 +112,7 @@ function BudgetTracker() {
   }> | null>(null);
 
   const monthOptions = [
-    { id: "All", name: "All" },
+    { id: "All", name: "Whole Year" },
     { id: "01", name: "January" },
     { id: "02", name: "February" },
     { id: "03", name: "March" },

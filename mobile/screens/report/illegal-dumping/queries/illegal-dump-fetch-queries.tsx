@@ -54,14 +54,13 @@ export type WasteReport = {
 };
   
 // Retrieving Waste reports for staff
-export const useWasteReport = (rp_id?: string) => {
+export const useWasteReport = (searchQuery?: string, reportMatter?: string, rp_id?: string) => {
     return useQuery<WasteReport[]>({
-        queryKey: ["wastereport", rp_id],
-        queryFn: () => getWasteReport(rp_id), // Wrap in arrow function
-        staleTime: 1000 * 60 * 30, // 30 minutes stale time
+        queryKey: ["wastereport", searchQuery, reportMatter, rp_id],
+        queryFn: () => getWasteReport(searchQuery, reportMatter, rp_id),
+        staleTime: 1000 * 60 * 30,
     });
 };
-
 
 
 
