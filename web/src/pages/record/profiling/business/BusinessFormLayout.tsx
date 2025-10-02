@@ -9,7 +9,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Loader2, Clock, History, Check } from "lucide-react"
+import { FileText, MapPin, User, Database, Store, Clock, History, Check, MoveRight } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
@@ -30,6 +30,7 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { RenderHistory } from "../ProfilingHistory"
 import _ from 'lodash'
+import { Spinner } from "@/components/ui/spinner"
 
 export default function BusinessFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // --------------------- STATE INITIALIZATION -----------------------
@@ -44,6 +45,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
   const [formType, setFormType] = React.useState<Type>(params?.type || tab_params?.type)
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const form = useForm<z.infer<typeof businessFormSchema>>({
     resolver: zodResolver(businessFormSchema),
@@ -56,8 +58,14 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
   const { data: businessInfo, isLoading: isLoadingBusInfo } = useBusinessInfo(params?.busId)
   const { data: businessHistory, isLoading: isLoadingHistory } = useBusinessHistory(params?.busId)
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
+    false, // is staff
+    false, // exclude independent
+    true, // is search only
+    searchQuery, // search query
+    false // disable query
+  )
 
   const formattedSitio = formatSitio(sitioList)
   const formattedResidents = formatResidents(residentsList)
@@ -143,6 +151,33 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         }
       }
     })
+  }
+
+  const handleRespondentClick = () => {
+    if(businessInfo?.br) {
+      navigate("/profiling/business/record/respondent/details", {
+        state: {
+          params: {
+            type: "viewing",
+            data: {
+              respondentId: businessInfo.br.br_id,
+            },
+          },
+        },
+      });
+    } else {
+      navigate("/profiling/resident/view/personal", {
+        state: {
+          params: {
+            type: 'viewing',
+            data: {
+              residentId: businessInfo.rp.rp_id,
+              familyId: businessInfo.rp.fam_id
+            },
+          }
+        }
+      });
+    }
   }
 
   const fullName = (lname: string, fname: string, mname?: string) => {
@@ -322,7 +357,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const BusinessInfoLoading = () => (
     <Card className="w-full">
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Spinner size="lg"/>
         <div className="text-center">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Business Information</h3>
           <p className="text-sm text-gray-600">Please wait while we fetch the business details...</p>
@@ -380,10 +415,15 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
               (<Badge variant={"outline"} className=" text-white">Resident</Badge>)
             }
           </div>
-          <Label className="flex text-xl text-gray-100 items-center gap-4">
+          <Label className="flex text-xl text-gray-100 items-center gap-4 cursor-pointer group"
+            onClick={handleRespondentClick}
+          >
             {businessInfo?.br ? 
               fullName(businessInfo?.br.br_lname, businessInfo?.br.br_fname, businessInfo?.br.br_mname) : 
               fullName(businessInfo?.rp.per_lname, businessInfo?.rp.per_fname, businessInfo?.rp.per_mname)
+            }
+            {formType == Type.Viewing && 
+              <MoveRight size={20} className="opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300 ease-out"/>
             }
             {formType == Type.Editing && <div>
               <Button className="shadow-none bg-green-500 hover:bg-green-500 h-5 px-2">
@@ -428,6 +468,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
                     setMediaFiles={setMediaFiles}
                     setActiveVideoId={setActiveVideoId}
                     submit={submit}
+                    setSearchQuery={setSearchQuery}
                   />
                 </form>
               </Form>

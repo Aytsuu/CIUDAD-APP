@@ -1,5 +1,5 @@
 import React from "react"
-import { Search, Building2, Loader2 } from "lucide-react"
+import { Search, Building2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function PendingRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -83,7 +84,7 @@ export default function PendingRecords() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <Spinner size="lg" />
             <span className="ml-2 text-gray-600">Loading pending records...</span>
           </div>
         )}

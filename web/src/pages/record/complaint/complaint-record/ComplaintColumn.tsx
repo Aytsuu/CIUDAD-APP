@@ -29,7 +29,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
     id: "select",
     header: ({ table }) => {
       return (
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center">
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
             onCheckedChange={(value) =>
@@ -199,8 +199,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
           id: "view",
           name: (
             <Link
-              to={`/complaint/${complaint.comp_id}/`}
-              state={{ complaint }}
+              to={`/complaint/view/`}
               className="w-full h-full flex items-center gap-2"
             >
               <File size={16} className="text-darkGray" />

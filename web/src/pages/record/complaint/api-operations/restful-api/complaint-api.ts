@@ -4,8 +4,8 @@ export const getComplaints = () => {
   return api.get("/complaint/list/");
 };
 
-export const getComplaintById = (id: string) => {
-  return api.get(`/complaint/${id}/`);
+export const getComplaintById = () => {
+  return api.get(`/complaint/view/`);
 };
 
 export const archiveComplaint = (id: string) => {

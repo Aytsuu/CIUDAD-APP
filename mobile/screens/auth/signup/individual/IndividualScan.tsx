@@ -5,11 +5,7 @@ import { LoadingModal } from "@/components/ui/loading-modal";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { router } from "expo-router";
 import {
-  useAddPersonal,
-  useAddAddress,
-  useAddPerAddress,
   useAddRequest,
-  useAddAccount,
   useAddBusinessRespondent,
 } from "../../queries/authPostQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
@@ -124,7 +120,7 @@ export default function IndividualScan() {
             } else {
               setTimeout(() => {
                 setStatus('message')
-                setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features")
+                setFeedbackMessage("Your registration request has been submitted. Please go to the barangay to verify your account, and access verified exclusive features.")
                 setShowFeedback(true);
               }, 0);
             }
@@ -170,7 +166,7 @@ export default function IndividualScan() {
         <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
           onPress={() => {
             reset()
-            router.replace('/(tabs)')
+            router.replace('/(auth)/loginscreen')
           }}
         >
           <Text className="text-white text-base font-semibold">

@@ -1,4 +1,4 @@
-import { TouchableOpacity, View, Text } from "react-native";
+import { TouchableOpacity, View, Text, Alert } from "react-native";
 import PageLayout from "@/screens/_PageLayout";;
 import { router } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
@@ -6,22 +6,39 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateAccount } from "../queries/accountUpdateQueries";
 import AccountDetails from "@/screens/auth/signup/account/AccountDetails";
+import React from "react";
+import { KeychainService } from "@/services/keychainService";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function ChangePassword() {
   const { user } = useAuth();
   const { mutateAsync: updateAccount } = useUpdateAccount();
   const { getValues, reset } = useRegistrationFormContext();
+  const [isChanging, setIsChanging] = React.useState<boolean>(false);
 
   const submit = async () => {
-    await updateAccount({
-      data: {
-        password: getValues("accountFormSchema.password")
-      }, 
-      accId: user?.acc_id as any
-    })
+    try {
+      setIsChanging(true)
+      const isAuthenticated = await KeychainService.authenticate(
+        "Confirm phone change with your device passcode"
+      )
 
-    router.back()
-    reset()
+      if(!isAuthenticated) {
+        Alert.alert('Authentication Failed', 'Please try again.');
+        return false;
+      }
+      await updateAccount({
+        data: {
+          password: getValues("accountFormSchema.password")
+        }, 
+        accId: user?.acc_id as any
+      })
+
+      router.back()
+      reset()
+    } finally {
+
+    }
   }
 
   return (
@@ -42,6 +59,8 @@ export default function ChangePassword() {
           next: submit
         }}
       />
+
+      <LoadingModal visible={isChanging}/>
     </PageLayout>
   )
 }

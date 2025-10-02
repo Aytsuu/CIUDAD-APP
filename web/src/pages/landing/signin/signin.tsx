@@ -3,7 +3,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button/button";
-import {Form} from "@/components/ui/form/form";
+import {
+  Form,
+} from "@/components/ui/form/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
@@ -311,7 +313,7 @@ export default function SignIn() {
     </div>
   );
 
-  // ---------- Main Render ----------
+  // ---------- Main Renderer ----------
   const renderDialogContent = () => {
     switch (currentStep) {
       case "phone-login":

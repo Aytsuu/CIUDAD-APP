@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { Footer } from "./Footer"
 
+
 const healthServices = [
   {
     id: "general",
@@ -148,6 +149,7 @@ const staffMembers = [
 ]
 
 export default function Health() {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [appointmentForm, setAppointmentForm] = useState({
     name: "",
     phone: "",

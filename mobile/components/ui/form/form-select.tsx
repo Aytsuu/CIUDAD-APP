@@ -34,7 +34,10 @@ export const FormSelect = <T extends FieldValues>({
           <SelectLayout
             options={options}
             selectedValue={value}
-            onSelect={(option: any) => onChange(option.value)}
+            onSelect={(option: any) => {
+              if(option.value == value) onChange("")
+              else onChange(option.value)
+            }}
             label={label}
             placeholder={placeholder}
             error={error?.message}

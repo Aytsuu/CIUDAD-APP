@@ -29,6 +29,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [addresses, setAddresses] = React.useState<any[]>([])
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const defaultValues = generateDefaultValues(householdFormSchema)
   const form = useForm<z.infer<typeof householdFormSchema>>({
@@ -37,7 +38,13 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
   })
 
   const { mutateAsync: addHousehold } = useAddHousehold()
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList()
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
+    false,
+    false,
+    true,
+    searchQuery,
+    false
+  )
   const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList()
   const formattedAddresses = formatAddresses(addresses) || []
   const formattedResidents = formatResidents(residentsList) || []
@@ -298,6 +305,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                 invalidHouseHead={invalidHouseHead}
                 form={form}
                 onSubmit={handleSubmit}
+                setSearchQuery={setSearchQuery}
               /> 
             </form>
           </Form>

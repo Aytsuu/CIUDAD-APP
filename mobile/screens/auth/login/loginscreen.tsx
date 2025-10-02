@@ -10,10 +10,14 @@ import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastContext } from "@/components/ui/toast";
+import { SignupOptions } from "./SignupOptions";
+
+const SignupOptionsMemo = React.memo(SignupOptions);
 
 export default function Login() {
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const [loginMethod, setLoginMethod] = React.useState<"phone" | "email">("phone");
+  const [showSignupOptions, setShowSignupOptions] = React.useState<boolean>(false);
   const {control, getValues} = useRegistrationFormContext();
   const { login, isAuthenticated, user } = useAuth();
   const router = useRouter();
@@ -30,12 +34,13 @@ export default function Login() {
     } 
   }, [user, isAuthenticated, router, toast]);
 
+  const handleCloseSignupOptions = () => setShowSignupOptions(false)
+
   const handleLogin = async () => {
     try {
       const values = getValues();
       const {accountFormSchema} = values;
-      console.log(accountFormSchema)
-      const result = await login({
+      await login({
         ...(loginMethod == "phone" ? { 
           phone: accountFormSchema.phone
         } : {
@@ -74,7 +79,13 @@ export default function Login() {
         <View>
         </View>
       }
-      rightAction={<View className="w-10 h-10" />}
+      rightAction={<View className="h-10 pr-2">
+        <TouchableOpacity
+          onPress={() => setShowSignupOptions(true)}
+        >
+          <Text className="text-[13px]">Sign up</Text>
+        </TouchableOpacity>
+      </View>}
     >
       <ScrollView
         showsHorizontalScrollIndicator={false}
@@ -138,6 +149,13 @@ export default function Login() {
           </View>
         )}
       </ScrollView>
+
+      {/* Signup Options Modal */}
+      <SignupOptionsMemo
+        visible={showSignupOptions}
+        onClose={handleCloseSignupOptions}
+      />
+
     </PageLayout>
   );
 }

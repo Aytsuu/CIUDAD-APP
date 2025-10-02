@@ -120,6 +120,14 @@ class PersonalModification(AbstractModels):
     class Meta:
         db_table = 'personal_modification'
 
+class PersonalAddressModification(models.Model):
+    pam_id = models.BigAutoField(primary_key=True)
+    pm = models.ForeignKey(PersonalModification, on_delete=models.CASCADE, related_name="modified_addresses")
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "personal_address_modification"
+
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_addresses')
@@ -198,7 +206,7 @@ class FamilyComposition(ProfilingAbstractModel):
     
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField(auto_now_add=True)
+    req_created_at = models.DateTimeField(auto_now_add=True)
     req_is_archive = models.BooleanField(default=False)
 
     class Meta: 
@@ -214,8 +222,8 @@ class RequestRegistrationComposition(ProfilingAbstractModel):
     class Meta:
         db_table = 'request_registration_composition'
 
-class BusinessRespondent(ProfilingAbstractModel):
-    br_id = models.BigAutoField(primary_key=True)
+class BusinessRespondent(AbstractModels):
+    br_id = models.CharField(max_length=100, primary_key=True)
     br_date_registered = models.DateField(default=date.today)
     br_lname = models.CharField(max_length=50)
     br_fname = models.CharField(max_length=50)
@@ -228,8 +236,8 @@ class BusinessRespondent(ProfilingAbstractModel):
     class Meta:
         db_table = 'business_respondent'
 
-class Business(ProfilingAbstractModel):
-    bus_id = models.BigAutoField(primary_key=True)
+class Business(AbstractModels):
+    bus_id = models.CharField(max_length=100,primary_key=True)
     bus_name = models.CharField(max_length=100)
     bus_gross_sales = models.FloatField()
     bus_location = models.TextField()

@@ -10,7 +10,7 @@ urlpatterns = [
     
     path('create/', ComplaintCreateView.as_view(), name='complaint-create'),
     path('list/', ComplaintListView.as_view(), name='complaint-list'),
-    path('<int:comp_id>/', ComplaintDetailView.as_view(), name='complaint-detail'),
+    path('view/', ComplaintDetailView.as_view(), name='complaint-detail'),
 
     # Archive
     path('<int:comp_id>/restore', RestoreComplaintView.as_view(), name='complaint-restore'),

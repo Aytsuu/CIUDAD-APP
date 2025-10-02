@@ -107,9 +107,9 @@ export const fileSchema = z.object({
 })
 
 export const addressSchema = z.object({
-  add_province: z.string().min(1).default("Cebu"),
-  add_city: z.string().min(1).default("Cebu City"),
-  add_barangay: z.string().min(1).default("San Roque (ciudad)"),
+  add_province: z.string().min(1).default("CEBU"),
+  add_city: z.string().min(1).default("CEBU CITY"),
+  add_barangay: z.string().min(1).default("SAN ROQUE (CIUDAD)"),
   add_external_sitio: z.string().min(1),
   sitio: z.string().min(1),
   add_street: z.string().min(1)

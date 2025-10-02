@@ -20,7 +20,7 @@ class RequestTableView(generics.ListAPIView):
       'request_composition__per__personal_addresses__add'
     ).only(
       'req_id',
-      'req_date',
+      'req_created_at',
       'request_composition__per__per_lname',
       'request_composition__per__per_fname',
       'request_composition__per__per_mname'
@@ -37,7 +37,6 @@ class RequestTableView(generics.ListAPIView):
     if search_query:
       queryset = queryset.filter(
         Q(req_id__icontains=search_query) |
-        Q(req_date__icontains=search_query) |
         Q(request_composition__per__per_lname__icontains=search_query) |
         Q(request_composition__per__per_fname__icontains=search_query) |
         Q(request_composition__per__per_mname__icontains=search_query)).distinct()
@@ -91,7 +90,7 @@ class RequestCreateView(APIView):
         add_province=add["add_province"],
         add_city=add["add_city"],
         add_barangay = add["add_barangay"],
-        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+        sitio=Sitio.objects.filter(sitio_name=add["sitio"]).first(),
         add_external_sitio=add["add_external_sitio"],
         add_street=add["add_street"]
       )[0]

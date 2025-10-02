@@ -21,6 +21,7 @@ import {
 import { showErrorToast } from "@/components/ui/toast";
 import { formatResidents, formatSitio } from "../../ProfilingFormats";
 import { Button } from "@/components/ui/button/button";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const DEFAULT_ADDRESS = [
   {
@@ -50,9 +51,17 @@ export default function ResidentCreateForm({ params }: {
     React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
   const [validAddresses, setValidAddresses] = React.useState<boolean[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const { data: residentsList, isLoading: isLoadingResidents } =
-    useResidentsList(params?.origin === Origin.Administration);
+    useResidentsList(
+      params?.origin === Origin.Administration, // is _staff
+      false, // exclude independent
+      true, // is search only
+      debouncedSearchQuery, // search query
+      false // disable query
+    );
 
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
 
@@ -155,40 +164,6 @@ export default function ResidentCreateForm({ params }: {
       showErrorToast("Please fill out all required fields");
       return;
     }
-
-    // // Get values and insert to DB
-    // try {
-    //   setIsSubmitting(true);
-    //   form.setValue("per_addresses", addresses)
-    //   const personalInfo = capitalizeAllFields(form.getValues());
-    //   const staffId = user?.staff?.staff_id;
-    //   const resident = await addResidentAndPersonal({
-    //     personalInfo: personalInfo,
-    //     staffId: staffId
-    //   });
-
-    //   const new_addresses = await addAddress(addresses)
-    //   const personalAddressData = new_addresses?.map((address: any) => ({
-    //     add: address.add_id,
-    //     per: resident.per.per_id,
-    //   }));
-
-    //   await addPersonalAddress({
-    //     data: personalAddressData,
-    //     staff_id: user?.staff?.staff_id,
-    //     history_id: resident.per.history
-    //   })
-      
-    //   showSuccessToast('Successfully registered new resident!')
-    //   setIsSubmitting(false);
-    //   form.reset(defaultValues);
-
-    // } catch (err) {
-    //   setIsSubmitting(false);
-    //   showErrorToast(
-    //     err instanceof Error ? err.message : "An error occurred"
-    //   );
-    // }
   };
 
   // ==================== RENDER HELPERS ======================
@@ -220,6 +195,7 @@ export default function ResidentCreateForm({ params }: {
           onComboboxChange={handleComboboxChange}
           isAssignmentOpen={isAssignmentOpen}
           setIsAssignmentOpen={setIsAssignmentOpen}
+          setSearchQuery={setSearchQuery}
         />
       </form>
     </Form>

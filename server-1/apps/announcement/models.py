@@ -3,7 +3,7 @@ from django.db import models
 class Announcement(models.Model):
     ann_id = models.AutoField(primary_key=True)
     ann_title = models.TextField()
-    ann_details = models.TextField(max_length=255)
+    ann_details = models.TextField()
     ann_created_at = models.DateTimeField(auto_now_add=True)
     ann_start_at = models.DateTimeField(null=True, blank=True)
     ann_end_at = models.DateTimeField(null=True, blank=True)
@@ -12,7 +12,7 @@ class Announcement(models.Model):
     ann_type = models.CharField(max_length=50)
     ann_to_sms = models.BooleanField(default=True)
     ann_to_email = models.BooleanField(default=True)
-    # ann_status = models.CharField(max_length=50, default="Inactive")
+    ann_status = models.CharField(max_length=50, default="Inactive")
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:
@@ -42,8 +42,8 @@ class AnnouncementRecipient(models.Model):
         Announcement,
         on_delete=models.CASCADE,
     )
-
-    ar_type = models.CharField(max_length=50)
+    ar_category = models.CharField(max_length=50)
+    ar_type = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'announcement_recipient'

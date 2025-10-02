@@ -11,7 +11,7 @@ export const complaint_router = [
     element: <ComplaintRecord />,
   },
   {
-    path: "complaint/:comp_id/",
+    path: "complaint/view/",
     element: <ComplaintViewRecord />,
   },
   {
