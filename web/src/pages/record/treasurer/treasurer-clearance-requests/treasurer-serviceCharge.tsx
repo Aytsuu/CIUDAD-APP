@@ -1,12 +1,12 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, ReceiptText, Search, Loader2 } from 'lucide-react';
+import { X, Search, Loader2 } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import ReceiptForm from "./treasurer-create-receipt-form";
+// import ReceiptForm from "./treasurer-create-receipt-form";
 import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
 import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 
 // Create columns function that accepts the handlePaymentSuccess callback
-const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharge>[] => [
+const createColumns = (): ColumnDef<ServiceCharge>[] => [
     { accessorKey: "sr_id",
         header: ({ column }) => (
               <div
@@ -56,11 +56,11 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
     {accessorKey: "sr_req_status", header: "Request Status"},
     { accessorKey: "action", 
         header: "Action",
-        cell: ({ row }) =>(
+        cell: ({  }) =>(
           <div className="flex justify-center gap-1">
-              <TooltipLayout
-              trigger={
-                  <DialogLayout
+              {/* <TooltipLayout
+                trigger={
+                    <DialogLayout
                     trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
                     className="flex flex-col"
                     title="Create Receipt"
@@ -96,7 +96,7 @@ const createColumns = (handlePaymentSuccess: () => void): ColumnDef<ServiceCharg
                         })()
                     } 
                   />
-              } content="Create Receipt"/>
+              } content="Create Receipt"/> */}
               <TooltipLayout 
                trigger={
                   <DialogLayout
@@ -137,7 +137,7 @@ function ServiceCharge(){
     };
 
     
-    const columns = useMemo(() => createColumns(handlePaymentSuccess), [handlePaymentSuccess]);
+    const columns = useMemo(() => createColumns(), [handlePaymentSuccess]);
 
     // Filter data based on active tab
     const filteredData = useMemo(() => {

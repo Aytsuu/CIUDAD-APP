@@ -89,7 +89,7 @@ export default function FamilyRecordView() {
     >
       <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
         <Card className="p-6 shadow-none rounded-lg">
-          {isLoadingFamData || isLoadingHHList ? (
+          {isLoadingFamData ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-3">
                 <Spinner size="lg" />

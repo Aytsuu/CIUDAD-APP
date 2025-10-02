@@ -242,7 +242,7 @@ function OrdinancePage() {
     const confirmToggleRepealed = async () => {
         if (!ordinanceToToggle) return;
         try {
-            const newValue = !Boolean(ordinanceToToggle.ord_repealed);
+            const newValue = !ordinanceToToggle.ord_repealed;
             await updateOrdinance(ordinanceToToggle.ord_num, { ord_repealed: newValue });
             toast.success(newValue ? 'Ordinance marked as repealed' : 'Ordinance un-repealed');
             setRepealDialogOpen(false);
@@ -1183,7 +1183,7 @@ function OrdinancePage() {
                                 {/* Amendments & Repeals separated */}
                                 {selectedFolder.amendments.length > 0 && (() => {
                                     const amendmentItems = selectedFolder.amendments.filter(a => Boolean(a.ord_is_ammend));
-                                    const repealItems = selectedFolder.amendments.filter(a => Boolean(a.ord_repealed) && !Boolean(a.ord_is_ammend));
+                                    const repealItems = selectedFolder.amendments.filter(a => Boolean(a.ord_repealed) && !a.ord_is_ammend);
                                     return (
                                     <div className="space-y-6">
                                         {amendmentItems.length > 0 && (

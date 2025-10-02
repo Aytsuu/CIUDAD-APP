@@ -300,7 +300,7 @@ export default function AnnualDevelopmentPlanEdit() {
                   form.setValue('dev_res_person', plan.dev_res_person || '');
                   form.setValue('dev_indicator', plan.dev_indicator || '');
                   try {
-                    let activitiesSrc: any = plan.dev_activity;
+                    const activitiesSrc: any = plan.dev_activity;
                     let parsedActs: any[] = [];
                     if (Array.isArray(activitiesSrc)) {
                       parsedActs = activitiesSrc;

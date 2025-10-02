@@ -14,7 +14,7 @@ class RequestTableSerializer(serializers.ModelSerializer):
   compositions = serializers.SerializerMethodField()
   class Meta:
     model = RequestRegistration
-    fields = ['req_id', 'req_date', 'compositions']
+    fields = ['req_id', 'req_created_at', 'compositions']
 
   def get_compositions(self, obj):
     compositions = obj.request_composition.all()
@@ -54,10 +54,10 @@ class AccountInputSerializer(serializers.Serializer):
   username = serializers.CharField(write_only=True)
   password = serializers.CharField(write_only=True)
 
-class CompositionSerializer(serializers.Serializer):
-  per = PersonalBaseSerializer(write_only=True)
-  role = serializers.CharField(write_only=True)
-  acc = AccountInputSerializer(write_only=True, required=False)
+# class CompositionSerializer(serializers.Serializer):
+#   per = PersonalBaseSerializer(write_only=True)
+#   role = serializers.CharField(write_only=True)
+#   acc = AccountInputSerializer(write_only=True, required=False)
 
 # class RequestCreateSerializer(serializers.ModelSerializer):
 #   comp = CompositionSerializer(write_only=True, many=True)
@@ -107,35 +107,35 @@ class CompositionSerializer(serializers.Serializer):
     
 #     return request
 
-  def create_personal_info(self, personal, staff=None):
-    addresses = personal.pop("per_addresses", None)
-    add_instances = [
-      Address.objects.get_or_create(
-        add_province=add["add_province"],
-        add_city=add["add_city"],
-        add_barangay = add["add_barangay"],
-        sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
-        add_external_sitio=add["add_external_sitio"],
-        add_street=add["add_street"]
-      )[0]
-      for add in addresses
-    ]
+  # def create_personal_info(self, personal, staff=None):
+  #   addresses = personal.pop("per_addresses", None)
+  #   add_instances = [
+  #     Address.objects.get_or_create(
+  #       add_province=add["add_province"],
+  #       add_city=add["add_city"],
+  #       add_barangay = add["add_barangay"],
+  #       sitio=Sitio.objects.filter(sitio_id=add["sitio"]).first(),
+  #       add_external_sitio=add["add_external_sitio"],
+  #       add_street=add["add_street"]
+  #     )[0]
+  #     for add in addresses
+  #   ]
 
-    # Create Personal record
-    per_instance = Personal(**personal)
-    per_instance._history_user = staff
-    per_instance.save()
+  #   # Create Personal record
+  #   per_instance = Personal(**personal)
+  #   per_instance._history_user = staff
+  #   per_instance.save()
 
-    try:
-      latest_history = per_instance.history.latest()
-      history_id = latest_history.history_id
-    except per_instance.history.model.DoesNotExist:
-      history_id = None  
+  #   try:
+  #     latest_history = per_instance.history.latest()
+  #     history_id = latest_history.history_id
+  #   except per_instance.history.model.DoesNotExist:
+  #     history_id = None  
 
-    for add in add_instances:
-      PersonalAddress.objects.create(add=add, per=per_instance) 
-      history = PersonalAddressHistory(add=add, per=per_instance)
-      history.history_id=history_id
-      history.save()
+  #   for add in add_instances:
+  #     PersonalAddress.objects.create(add=add, per=per_instance) 
+  #     history = PersonalAddressHistory(add=add, per=per_instance)
+  #     history.history_id=history_id
+  #     history.save()
     
-    return per_instance
+  #   return per_instance

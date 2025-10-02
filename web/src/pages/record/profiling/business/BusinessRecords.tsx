@@ -114,7 +114,7 @@ export default function BusinessRecords() {
                   customTrigger={
                     <Button variant="outline" className="w-full sm:w-auto">
                       <Paperclip className="cursor-pointer"/>
-                      Modification Request
+                      Edit Request
                     </Button>
                   }
                   onChange={(value) => {
@@ -130,7 +130,7 @@ export default function BusinessRecords() {
                   staticVal={true}
                   variant="modal"
                   placeholder="Search request by business id, name..."
-                  modalTitle="Business Modification Requests"
+                  modalTitle="Business Edit Requests"
                   emptyMessage={"No modification requests."}
                 />
               </div>
@@ -152,7 +152,7 @@ export default function BusinessRecords() {
           </div>
         </div>
 
-        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700">Show</span>
@@ -169,6 +169,9 @@ export default function BusinessRecords() {
                 </SelectContent>
               </Select>
               <span className="text-sm text-gray-600">entries</span>
+            </div>
+            <div>
+              
             </div>
           </div>
         </div>

@@ -190,7 +190,6 @@
 //               /> */}
 //             </TouchableOpacity>
 //           </View>
-
 //           <View className="flex-row mt-3 gap-4">
 //             <TouchableOpacity
 //               onPress={() => router.push("/maternal/maternal-landing")}
@@ -204,7 +203,6 @@
 //                     resizeMode="cover"
 //                   />
 //                   <View className="absolute inset-0 bg-black/40" />
-
 //                   <View className="absolute top-3 left-3">
 //                     <BookHeart size={32} color="white" />
 //                   </View>

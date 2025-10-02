@@ -11,25 +11,22 @@ class CardAnalyticsView(APIView):
     total_households = Household.objects.count()
     total_businesses = Business.objects.count()
 
-    card_data = [
-      total_residents, 
-      total_families,
-      total_households,
-      total_businesses
-    ]
+    card_data = {
+      "residents": total_residents, 
+      "families": total_families,
+      "households": total_households,
+      "businesses": total_businesses
+    }
 
     return Response(card_data)
 
 class SidebarAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):
-    period = request.query_params.get('period', None)
-
-    if period:
-      if period == "today":
-        queryset = RequestRegistration.objects.filter(req_date=date.today())
-      else:
-        today = date.today()
-        start_of_week = today-timedelta(days=today.weekday())
-        queryset = RequestRegistration.objects.filter(req_date__gte=start_of_week, req_date__lte=today)
+    today = date.today()
+    three_days_ago = today-timedelta(days=3)
+    queryset = RequestRegistration.objects.filter(
+      req_created_at__date__gte=three_days_ago, 
+      req_created_at__date__lte=today
+    )
     
     return Response(RequestTableSerializer(queryset, many=True).data)

@@ -51,8 +51,7 @@ export type ResidentBusinessRecord = {
   bus_name: string;
   bus_gross_sales: string;
   bus_date_verified: string;
-  sitio: string;
-  bus_street: string;
+  bus_location: string;
 }
 
 export type DependentRecord = {
@@ -127,14 +126,14 @@ export type IndividualRequestRecord = {
   per_edAttainment: string;
   per_religion: string;
   per_addresses: Record<string, any>[];
-  req_date: string;
+  req_created_at: string;
 }
 
 export type FamilyRequestRecord = {
   req_id: string;
   respondent: Record<string, any>;
   compositions: Record<string, any>[];
-  req_date: string;
+  req_created_at: string;
 }
 
 export type BusinessRecord = {

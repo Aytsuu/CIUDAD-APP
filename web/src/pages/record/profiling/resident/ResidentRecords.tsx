@@ -46,6 +46,7 @@ export default function ResidentRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
+  // const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification()
   const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
   const { data: residentsTableData, isLoading } = useResidentsTable(
     currentPage,
@@ -56,6 +57,8 @@ export default function ResidentRecords() {
   const residents = residentsTableData?.results || [];
   const totalCount = residentsTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // const formattedPersonalModification = formatPersonalModification(personalModification)
 
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
@@ -70,8 +73,8 @@ export default function ResidentRecords() {
 
   // ----------------- HANDLERS --------------------
 
+  // ----------------- RENDER --------------------
   return (
-    // ----------------- RENDER --------------------
     <MainLayoutComponent title="Resident" description="Manage and view all residents in your community">
       <div className="space-y-6">
         {/* Search and Actions */}
@@ -118,6 +121,39 @@ export default function ResidentRecords() {
                     )}
                   </Button>
                 </Link>
+
+                {/* <div>
+                  <Combobox
+                    options={formattedPersonalModification}
+                    value={""}
+                    customTrigger={
+                      <Button variant="outline" className="w-full sm:w-auto">
+                        <Paperclip className="cursor-pointer"/>
+                        Edit Request
+                      </Button>
+                    }
+                    onChange={(value) => {
+                      const rp_id = value?.split(" ")[0]
+                      const fam_id = value?.split(" ")[1]
+                      navigate('view/personal', {
+                        state: {
+                          params: {
+                            type: "viewing",
+                            data: {
+                              residentId: rp_id,
+                              familyId: fam_id
+                            }
+                          }
+                        }
+                      })
+                    }}
+                    staticVal={true}
+                    variant="modal"
+                    placeholder="Search request by resident no, name..."
+                    modalTitle="Profile Edit Requests"
+                    emptyMessage={"No modification requests."}
+                  />
+                </div> */}
 
                 <Link
                   to="/profiling/resident/registration"

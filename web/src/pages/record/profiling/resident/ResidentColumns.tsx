@@ -9,6 +9,8 @@ import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "..
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useLinkToVoter } from "../queries/profilingUpdateQueries";
 import { showErrorToast } from "@/components/ui/toast";
+import { formatCurrency } from "@/helpers/currencyFormat";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -274,7 +276,10 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
   },
   {
     accessorKey: 'dob',
-    header: 'Birthdate'
+    header: 'Birthdate',
+    cell: ({ row }) => (
+      formatDate(row.original.dob, "short")
+    )
   },
   {
     accessorKey: 'status',
@@ -284,7 +289,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
     accessorKey: 'role',
     header: 'Role',
     cell: ({row}) => (
-      <Badge>
+      <Badge className="rounded-full bg-blue-50 border-blue-400 text-blue-700 hover:bg-blue-50">
         {row.original.fc_role === null ? "Family Member" : row.original.fc_role}
       </Badge>
     )
@@ -296,7 +301,7 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
       const navigate = useNavigate();
 
       const handleViewClick = async () => {
-        navigate("/profiling/resident/view/personal", {
+        navigate("/profiling/resident/view/family", {
           state: {
             params: {
               type: 'viewing',
@@ -337,19 +342,64 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     header: 'Name'
   },
   {
-    accessorKey: 'location',
-    header: 'Location',
-    cell: ({row}) => (
-      <p>{row.original.bus_street}, Sitio {row.original.sitio}</p>
+    accessorKey: "size",
+    header: "Business Size",
+    cell: ({ row }) => {
+      const color: any = {
+        MICRO: "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-50",
+        SMALL: "bg-green-50 border-green-300 text-green-700 hover:bg-green-50",
+        MEDIUM: "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-50",
+        LARGE: "bg-red-50 border-red-300 text-red-700 hover:bg-red-50",
+      };
+
+      const tooltip: any = {
+        MICRO:
+          "Assets: <₱3M | Sales: <₱3M | Examples: Sari-sari stores, small neighborhood businesses",
+        SMALL:
+          "Assets: ₱3M-₱15M | Growing businesses with several employees | Local market focus",
+        MEDIUM:
+          "Assets: ₱15M-₱100M | Established businesses with structured operations | Regional reach",
+        LARGE:
+          "Assets: >₱100M | Major corporations | National/International operations",
+      };
+
+      const amount = row.original.bus_gross_sales;
+      let size = "MICRO";
+      if (+amount < 3000000) size = "MICRO";
+      else if (+amount < 20000000) size = "SMALL";
+      else if (+amount < 1000000000) size = "MEDIUM";
+      else size = "LARGE";
+
+      return (
+        <TooltipLayout
+          trigger={
+            <div>
+              <Badge className={`rounded-full ${color[size]}`}>{size}</Badge>
+            </div>
+          }
+          content={tooltip[size]}
+          contentClassName="w-64"
+        />
+      );
+    },
+  },
+   {
+    accessorKey: 'bus_gross_sales',
+    header: 'Gross Sales',
+    cell: ({ row }) => (
+      formatCurrency(+row.original.bus_gross_sales)
     )
   },
   {
-    accessorKey: 'bus_gross_sales',
-    header: 'Gross Sales'
+    accessorKey: 'bus_location',
+    header: 'Location'
   },
   {
     accessorKey: 'bus_date_verified',
-    header: 'Date Registered'
+    header: 'Registered',
+    cell: ({ row }) => (
+      formatDate(row.original.bus_date_verified, "short")
+    )
   },
   {
     accessorKey: "action",
@@ -357,7 +407,7 @@ export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] =>
     cell: ({ row }) => {
       const navigate = useNavigate();
       const handleViewClick = async () => {
-        navigate("/profiling/business/form", {
+        navigate("/profiling/business/record/form", {
           state: {
             params: {
               type: "viewing",

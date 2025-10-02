@@ -169,8 +169,10 @@ class CompleteRegistrationView(APIView):
         staff = staff
       ))
     
-    if len(house_instances) > 0:
-      created_instances = Household.objects.bulk_create(house_instances)
+    created_instances = []
+    for house in house_instances:
+       house.save()
+       created_instances.append(house)
     
     return created_instances
   
@@ -187,7 +189,7 @@ class CompleteRegistrationView(APIView):
     )
 
     FamilyComposition.objects.create(
-      fc_role="Independent",
+      fc_role="INDEPENDENT",
       fam=fam,
       rp=rp
     )

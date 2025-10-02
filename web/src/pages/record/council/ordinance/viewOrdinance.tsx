@@ -1,5 +1,5 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import { Button } from "@/components/ui/button/button";
 import { Badge } from '@/components/ui/badge';
 import { Eye, Brain } from 'lucide-react';
@@ -252,7 +252,7 @@ function ViewOrdinance({
                             {/* Amendments and Repeals separated */}
                             {folder.amendments.length > 0 && (() => {
                                 const amendmentItems = folder.amendments.filter(a => Boolean(a.ord_is_ammend));
-                                const repealItems = folder.amendments.filter(a => Boolean(a.ord_repealed) && !Boolean(a.ord_is_ammend));
+                                const repealItems = folder.amendments.filter(a => Boolean(a.ord_repealed) && !a.ord_is_ammend);
                                 return (
                                 <div className="space-y-6">
                                     {amendmentItems.length > 0 && (
