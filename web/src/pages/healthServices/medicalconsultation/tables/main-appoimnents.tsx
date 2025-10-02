@@ -10,7 +10,7 @@ import ConfirmedMedicalAppointments from "./confirmed-appointments";
 export default function MainAppointments() {
   const [selectedView, setSelectedView] = useState<string>("appointment");
   const [isMounted, setIsMounted] = useState(false);
-  const { data, isLoading, error } = useReportsCount();
+  const { data, isLoading } = useReportsCount();
 
   useEffect(() => {
     setIsMounted(true);

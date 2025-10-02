@@ -49,7 +49,7 @@ const MedicalHistorySearch = ({
 };
 
 export const MedicalHistoryTab: React.FC<MedicalHistoryTabProps> = ({
-  pat_id,
+  // pat_id,
   searchValue,
   onSearchChange,
   onClearSearch,

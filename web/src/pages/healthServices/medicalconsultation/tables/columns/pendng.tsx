@@ -37,10 +37,7 @@ const formatDateTime = (dateString: string | null | undefined) => {
 };
 
 // Truncate text with ellipsis for long content
-const truncateText = (text: string, maxLength: number = 50): string => {
-  if (!text) return "";
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-};
+
 
 export const medicalAppointmentPendingColumns: ColumnDef<any>[] = [
   {

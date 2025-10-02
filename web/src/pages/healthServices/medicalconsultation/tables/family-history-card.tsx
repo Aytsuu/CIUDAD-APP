@@ -47,7 +47,7 @@ const FamilyHistorySearch = ({
 };
 
 export const FamilyHistoryTab: React.FC<FamilyHistoryTabProps> = ({
-  pat_id,
+  // pat_id,
   searchValue,
   onSearchChange,
   onClearSearch,

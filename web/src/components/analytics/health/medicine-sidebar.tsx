@@ -1,11 +1,10 @@
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Loader2, BarChart3, Pill, ChevronDown } from "lucide-react"
-import { format } from "date-fns"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries"
-import { useState } from "react"
-import { Link } from "react-router"
-
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Loader2, BarChart3, Pill, ChevronDown } from "lucide-react";
+import { format } from "date-fns";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries";
+import { useState } from "react";
+import { Link } from "react-router";
 
 const COLORS = [
   "#3b82f6", // Blue
@@ -16,14 +15,14 @@ const COLORS = [
   "#ec4899", // Pink
   "#14b8a6", // Teal
   "#f97316", // Orange
-  "#64748b", // Slate
-]
+  "#64748b" // Slate
+];
 
 export function MedicineDistributionSidebar() {
-  const initialMonth= format(new Date(), "yyyy-MM")
-  const { data, isLoading, error } = useMedicineChart(initialMonth)
+  const initialMonth = format(new Date(), "yyyy-MM");
+  const { data, isLoading, error } = useMedicineChart(initialMonth);
   // const currentDate = parseISO(`${initialMonth}-01`)
-  const [showAll, setShowAll] = useState(false)
+  const [showAll, setShowAll] = useState(false);
 
   // Transform and sort data
   const allMedicines = data?.medicine_counts
@@ -31,12 +30,12 @@ export function MedicineDistributionSidebar() {
         .filter(([name]) => name !== "null")
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count) // Sort by count descending
-    : []
+    : [];
 
   // Determine which medicines to show
-  const medicinesToShow = showAll ? allMedicines : allMedicines.slice(0, 10)
-  const totalMedicines = allMedicines.length
-  const totalDoses = allMedicines.reduce((sum, item) => sum + item.count, 0)
+  const medicinesToShow = showAll ? allMedicines : allMedicines.slice(0, 10);
+  const totalMedicines = allMedicines.length;
+  const totalDoses = allMedicines.reduce((sum, item) => sum + item.count, 0);
 
   if (error) {
     return (
@@ -55,25 +54,11 @@ export function MedicineDistributionSidebar() {
           </Alert>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card className="rounded-md shadow-none">
-      <CardHeader className="border-b border-gray-200 pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <BarChart3 className="h-5 w-5 text-blue-500" />
-          Medicine Distribution
-        </CardTitle>
-        <CardDescription>
-          Top {medicinesToShow.length} most requested medicines this month
-          {totalMedicines > 0 && (
-            <span className="block text-xs mt-1">
-              {/* {totalDoses} total doses across {totalMedicines} medicines */}
-            </span>
-          )}
-        </CardDescription>
-      </CardHeader>
       <CardContent className="pt-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-[300px]">
@@ -85,60 +70,44 @@ export function MedicineDistributionSidebar() {
               <Pill className="h-6 w-6 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No Data Available</h3>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              No medicine administration data available for the selected period.
-            </p>
+            <p className="text-sm text-muted-foreground max-w-sm">No medicine administration data available for the selected period.</p>
           </div>
         ) : (
           <>
             <div className="grid gap-2">
               {medicinesToShow.map((medicine, index) => {
-                const color = COLORS[index % COLORS.length]
-                const percentage = ((medicine.count / totalDoses) * 100).toFixed(1)
+                const color = COLORS[index % COLORS.length];
+                const percentage = ((medicine.count / totalDoses) * 100).toFixed(1);
 
                 return (
-                 <Link to="/inventory/stocks">
-                  <div
-                    key={medicine.name}
-                    className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                      >
-                        #{index + 1}
+                  <Link to="/inventory/stocks">
+                    <div key={medicine.name} className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: color }}>
+                          #{index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{medicine.name}</p>
+                          <p className="text-xs text-muted-foreground">{medicine.count} records</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{medicine.name}</p>
-                        <p className="text-xs text-muted-foreground">{medicine.count} total</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${percentage}%`, backgroundColor: color }} />
+                        </div>
+                        <span className="text-xs text-muted-foreground w-10 text-right">{percentage}%</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${percentage}%`, backgroundColor: color }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-10 text-right">{percentage}%</span>
-                    </div>
-                  </div>
-                 </Link>
-                )
+                  </Link>
+                );
               })}
             </div>
 
             {totalMedicines > 10 && (
               <div className="text-center pt-4">
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1"
-                >
+                <button onClick={() => setShowAll(!showAll)} className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1">
                   {showAll ? "Show Less" : `View All ${totalMedicines} Medicines`}
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
                 </button>
               </div>
             )}
@@ -146,5 +115,5 @@ export function MedicineDistributionSidebar() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

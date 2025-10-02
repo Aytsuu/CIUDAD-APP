@@ -193,9 +193,9 @@ export default function LastPage({
     return sorted[0];
   };
 
-  const todaysHistoricalRecord = useMemo(() => {
-    return historicalVitalSigns.find((vital) => isToday(vital.date));
-  }, [historicalVitalSigns]);
+  // const todaysHistoricalRecord = useMemo(() => {
+  //   return historicalVitalSigns.find((vital) => isToday(vital.date));
+  // }, [historicalVitalSigns]);
 
   const hasTodaysVitalSigns = useMemo(() => {
     const hasTodaysHistorical = historicalVitalSigns.some((vital) => isToday(vital.date));
@@ -211,9 +211,9 @@ export default function LastPage({
     }));
   }, [newVitalSigns, currentAge]);
 
-  const shouldShowGeneralHealthSections = useMemo(() => {
-    return !hasTodaysVitalSigns;
-  }, [hasTodaysVitalSigns]);
+  // const shouldShowGeneralHealthSections = useMemo(() => {
+  //   return !hasTodaysVitalSigns;
+  // }, [hasTodaysVitalSigns]);
 
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {

@@ -83,8 +83,8 @@ export const getItemsConfig = (
       card: [childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal],
       sidebar: [
         {
-          title: "Medicine Distribution",
-          element: <ProfilingSidebar />,
+          title: "Most Requested Medicine",
+          element: <MedicineDistributionSidebar />,
         },
       ],
     }

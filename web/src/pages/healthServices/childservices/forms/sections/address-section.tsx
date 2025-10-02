@@ -1,13 +1,12 @@
 import { Control } from "react-hook-form";
 import { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { FormInput } from "@/components/ui/form/form-input";
-import { Patient } from "@/components/ui/patientSearch";
 
 interface FormSectionsProps {
   control: Control<FormData>;
   isTransient: boolean;
   isAddNewMode: boolean;
-  selectedPatient: Patient | null;
+  selectedPatient: any | null;
 }
 
 
