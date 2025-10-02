@@ -11,6 +11,7 @@ import WasteIllegalDumpingResMain from "@/screens/report/illegal-dumping/residen
 import WasteIllegalDumping from "@/screens/report/illegal-dumping/staff/illegal-dump-main-staff";
 import CertChoices from "@/screens/request/certification-request/cert-choices";
 import BudgetPlanMain from "@/screens/treasurer/budget-plan/budget-plan-main";
+import MinutesOfMeetingMain from "@/screens/council/minutesOfmeeting/minutes-of-meeting-main";
 
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
@@ -20,6 +21,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <BudgetPlanMain/>
+    return <MinutesOfMeetingMain/>
 }
  
