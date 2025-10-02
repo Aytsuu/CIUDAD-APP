@@ -2,7 +2,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { ReceiptText, Search, Ban } from 'lucide-react';
+import { ReceiptText, Search, Ban, Eye } from 'lucide-react';
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -12,6 +12,7 @@ import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/t
 import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAndRates } from "./queries/permitClearanceFetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
+import { DocumentViewer } from "./components/DocumentViewer";
 
 
 const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
@@ -148,6 +149,31 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
           header: "Action",
           cell: ({row}: {row: any}) =>(
             <div className="flex justify-center gap-0.5">
+                {/* View Documents Icon - Only show if bpf_id exists */}
+                {row.original.bpf_id && (
+                    <TooltipLayout
+                        trigger={
+                            <DialogLayout
+                                trigger={
+                                    <div className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 px-4 py-2 rounded cursor-pointer">
+                                        <Eye size={16}/>
+                                    </div>
+                                }
+                                className="max-w-6xl"
+                                title="Business Permit Documents"
+                                description={`View documents for ${row.original.businessName}`}
+                                mainContent={
+                                    <DocumentViewer 
+                                        bprId={row.original.bpr_id} 
+                                        businessName={row.original.businessName}
+                                    />
+                                } 
+                            />
+                        } 
+                        content="View Documents"
+                    />
+                )}
+                
                 <TooltipLayout
                 trigger={
                     <DialogLayout
@@ -221,6 +247,7 @@ type PermitClearance = {
     req_purpose?: string,
     cr_id?: string,
     bpr_id?: string, // Add bpr_id field
+    bpf_id?: number | null, // Add bpf_id field for document viewing
     req_payment_status?: string,
     pr_id?: number,
     ags_id?: number,
@@ -252,13 +279,23 @@ function PermitClearance(){
     
     // Fetch data from backend using custom hooks
     const { data: permitClearances, isLoading, error } = useGetPermitClearances();
-    const { data: annualGrossSales = [] } = useGetAnnualGrossSalesForPermit();
-    const { data: purposes = [] } = useGetPurposesAndRates();
+    const { data: annualGrossSalesResponse } = useGetAnnualGrossSalesForPermit();
+    const { data: purposesResponse } = useGetPurposesAndRates();
+
+    // Extract arrays from paginated responses (handle both paginated and direct array responses)
+    const annualGrossSales = Array.isArray(annualGrossSalesResponse) 
+        ? annualGrossSalesResponse 
+        : (annualGrossSalesResponse as any)?.results || [];
+    const purposes = Array.isArray(purposesResponse) 
+        ? purposesResponse 
+        : (purposesResponse as any)?.results || [];
 
     // Debug: Log the raw API response
     console.log("Raw permit clearances data:", permitClearances);
-    console.log("Annual gross sales data:", annualGrossSales);
-    console.log("Purposes data:", purposes);
+    console.log("Annual gross sales response:", annualGrossSalesResponse);
+    console.log("Annual gross sales array:", annualGrossSales);
+    console.log("Purposes response:", purposesResponse);
+    console.log("Purposes array:", purposes);
 
     // Fetch purpose and rates data for amount calculation
     // const { data: purposes = [] } = useGetPurposeAndRate();
@@ -304,6 +341,7 @@ function PermitClearance(){
             amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
             req_amount: item.req_amount || 0, // Include req_amount field
             bpr_id: item.bpr_id || "", // Include bpr_id field
+            bpf_id: item.bpf_id || null, // Include bpf_id field for document viewing
             req_declined_reason: item.req_declined_reason || "", // Include declined reason
             ags_id: item.ags_id, // Include ags_id
             pr_id: item.pr_id, // Include pr_id

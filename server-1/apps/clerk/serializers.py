@@ -443,7 +443,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'bus_permit_address',  
         ]
         extra_kwargs = {
-            'bpr_id': {'required': False},
+            'bpr_id': {'required': False, 'read_only': True},
             'req_status': {'required': False, 'default': 'Pending'},
             'req_payment_status': {'required': False, 'default': 'Unpaid'},
             'ags_id': {'required': False, 'allow_null': True},
@@ -455,11 +455,19 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        # Generate bpr_id if not provided
+        # Generate bpr_id if not provided (format: BR001-25)
         if 'bpr_id' not in validated_data or not validated_data['bpr_id']:
-            import time
-            # Generate a numeric ID using timestamp
-            validated_data['bpr_id'] = int(time.time() * 1000) % 100000000  # 8-digit number
+            from django.utils import timezone
+            from .models import BusinessPermitRequest
+            year_suffix = timezone.now().year % 100
+            try:
+                # Count existing business permits with the current year suffix
+                existing_count = BusinessPermitRequest.objects.filter(bpr_id__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                # Fallback to total count if filtering fails
+                existing_count = BusinessPermitRequest.objects.count()
+            seq = existing_count + 1
+            validated_data['bpr_id'] = f"BR{seq:03d}-{year_suffix:02d}"
         
         
         # Create the BusinessPermitRequest

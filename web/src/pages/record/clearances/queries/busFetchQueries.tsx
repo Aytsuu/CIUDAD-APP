@@ -5,16 +5,23 @@ export type BusinessPermit = {
   bpr_id: string;
   business_name: string;
   business_gross_sales: string;
-  req_sales_proof: string;
-  req_pay_method: string;
+  business_address?: string;
   req_request_date: string;
-  req_claim_date: string;
   req_status: string;
   req_payment_status: string;
-  req_transac_id: string;
-  req_purpose?: string;
-  pr_id?: string;
-  business_address?: string;
+  req_amount?: number;
+  ags_id?: number;
+  bus_id?: string;
+  pr_id?: number;
+  staff_id?: string;
+  rp_id?: string;
+  req_date_completed?: string;
+  bus_permit_name?: string;
+  bus_permit_address?: string;
+  bpf_id?: string | null;
+  purpose?: string;
+  amount_to_pay?: number;
+  requestor?: string;
 };
 
 export const getBusinessPermit = async (): Promise<BusinessPermit[]> => {

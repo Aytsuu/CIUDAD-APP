@@ -63,4 +63,7 @@ urlpatterns = [
 
     # Treasurer - Service Charge Requests
     path('treasurer/service-charges/', ServiceChargeTreasurerListView.as_view(), name='treasurer-service-charges'),
+    
+    # Business Permit Files
+    path('business-permit-files/<str:bpr_id>/', BusinessPermitFilesView.as_view(), name='business-permit-files'),
 ]

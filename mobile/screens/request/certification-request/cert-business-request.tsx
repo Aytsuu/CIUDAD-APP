@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -10,6 +10,7 @@ import { CertificationRequestSchema } from "@/form-schema/certificates/certifica
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import _ScreenLayout from '@/screens/_ScreenLayout';
+import { uploadMultipleFiles, prepareFileForUpload, type FileUploadData } from "@/helpers/fileUpload";
 
 const CertPermit: React.FC = () => {
   const router = useRouter();
@@ -28,6 +29,10 @@ const CertPermit: React.FC = () => {
   const [previousPermitImage, setPreviousPermitImage] = useState<string | null>(null);
   const [assessmentImage, setAssessmentImage] = useState<string | null>(null);
   const [isBusinessOld, setIsBusinessOld] = useState(false);
+  
+  // File upload progress states
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>("");
 
   const addBusinessPermit = useAddBusinessPermit();
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
@@ -41,18 +46,14 @@ const CertPermit: React.FC = () => {
   
     useEffect(() => {
     if (businessData && businessData.length > 0) {
-      const business = businessData[0]; 
-      
-      setBusinessName(business.bus_name || "");
-      
-      const fullAddress = (business as any).bus_location || "";
-      setBusinessAddress(fullAddress || "Address not available");
-      
-      setGrossSales(business.bus_gross_sales?.toString() || "");
-      
+      const business = businessData[0];
+
+      setBusinessName(prev => prev || business.bus_name || "");
+      setBusinessAddress(prev => prev || business.bus_location || "Address not available");
+      setGrossSales(prev => prev || business.bus_gross_sales?.toString() || "");
       setIsBusinessOld(!!business.bus_date_verified);
     }
-  }, [businessData, isLoadingBusiness]);
+  }, [businessData]);
 
   const pickImage = async (type: 'permit' | 'assessment') => {
     try {
@@ -92,8 +93,8 @@ const CertPermit: React.FC = () => {
   );
 
   
-  // Filter options based on business existence
-  const permitTypeOptions: DropdownOption[] = (() => {
+  // Memoize permit type options to prevent re-renders
+  const permitTypeOptions: DropdownOption[] = useMemo(() => {
     if (isLoadingBusiness) {
       return [{ label: 'Loading...', value: '' }];
     }
@@ -116,23 +117,47 @@ const CertPermit: React.FC = () => {
         }))
       ];
     }
-  })();
+  }, [isLoadingBusiness, businessData.length, permitPurposes]);
 
-  // Convert gross sales data to dropdown options for residents without business
-  const grossSalesOptions: DropdownOption[] = annualGrossSales
-    .filter(sales => sales.ags_is_archive === false)
-    .filter((sales, index, self) => 
-      index === self.findIndex(s => 
-        s.ags_minimum === sales.ags_minimum && s.ags_maximum === sales.ags_maximum
+  // Memoize gross sales options to prevent re-renders
+  const grossSalesOptions: DropdownOption[] = useMemo(() => {
+    return annualGrossSales
+      .filter(sales => sales.ags_is_archive === false)
+      .filter((sales, index, self) => 
+        index === self.findIndex(s => 
+          s.ags_minimum === sales.ags_minimum && s.ags_maximum === sales.ags_maximum
+        )
       )
-    )
-    .map(sales => ({
-      label: `₱${sales.ags_minimum} - ₱${sales.ags_maximum}`,
-      value: `${sales.ags_minimum} - ${sales.ags_maximum}`
-    }));
+      .map(sales => ({
+        label: `₱${sales.ags_minimum} - ₱${sales.ags_maximum}`,
+        value: `${sales.ags_minimum} - ${sales.ags_maximum}`
+      }));
+  }, [annualGrossSales]);
+
+  // Memoize text input handlers to prevent re-renders
+  const handleBusinessNameChange = useCallback((text: string) => {
+    if (permitType === 'Business Clearance' && businessData.length === 0) {
+      setBusinessName(text);
+    }
+  }, [permitType, businessData.length]);
+
+  const handleBusinessAddressChange = useCallback((text: string) => {
+    if (permitType === 'Business Clearance' && businessData.length === 0) {
+      setBusinessAddress(text);
+    }
+  }, [permitType, businessData.length]);
+
+  // Memoize editable state
+  const isBusinessNameEditable = useMemo(() => {
+    return permitType === 'Business Clearance' && businessData.length === 0;
+  }, [permitType, businessData.length]);
+
+  const isBusinessAddressEditable = useMemo(() => {
+    return permitType === 'Business Clearance' && businessData.length === 0;
+  }, [permitType, businessData.length]);
 
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(null);
     
     // Prevent submission if no business exists (except for Business Clearance)
@@ -170,8 +195,6 @@ const CertPermit: React.FC = () => {
         return;
       }
     }
-    
-
     
     const result = CertificationRequestSchema.safeParse({
       cert_type: "permit",
@@ -217,19 +240,66 @@ const CertPermit: React.FC = () => {
       reqAmount = selectedPurpose?.pr_rate || 0;
     }
 
-    addBusinessPermit.mutate({
+    // Prepare payload
+    let payload: any = {
       cert_type: "permit",
       business_name: businessName,
       business_address: businessAddress,
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
-      pr_id: selectedPurpose?.pr_id, // Add the purpose and rates ID
+      pr_id: selectedPurpose?.pr_id,
       rp_id: rp,
-      req_amount: reqAmount, // Add the required amount field
-      ags_id: agsId || undefined, // Add the annual gross sales ID
-      previous_permit_image: previousPermitImage || undefined,
-      assessment_image: assessmentImage || undefined,
-    });
+      req_amount: reqAmount,
+      ags_id: agsId || undefined,
+    };
+
+    // Handle file uploads if images are provided
+    if ((previousPermitImage || assessmentImage) && permitType !== 'Business Clearance') {
+      try {
+        setIsUploadingFiles(true);
+        setUploadProgress("Preparing files for upload...");
+        
+        const filesToUpload: FileUploadData[] = [];
+        
+        // Add previous permit image if exists
+        if (previousPermitImage && isBusinessOld) {
+          filesToUpload.push(prepareFileForUpload(previousPermitImage, 'permit', businessName));
+        }
+        
+        // Add assessment image if exists
+        if (assessmentImage) {
+          filesToUpload.push(prepareFileForUpload(assessmentImage, 'assessment', businessName));
+        }
+        
+        if (filesToUpload.length > 0) {
+          setUploadProgress(`Uploading ${filesToUpload.length} file(s)...`);
+          
+          const uploadedFiles = await uploadMultipleFiles(filesToUpload);
+          
+          // Add uploaded file URLs to payload
+          const previousPermitFile = uploadedFiles.find(file => file.file_name.includes('permit'));
+          const assessmentFile = uploadedFiles.find(file => file.file_name.includes('assessment'));
+          
+          payload.previous_permit_image = previousPermitFile?.file_url || null;
+          payload.assessment_image = assessmentFile?.file_url || null;
+          
+          setUploadProgress("Files uploaded successfully!");
+        }
+        
+      } catch (uploadError) {
+        console.error("File upload failed:", uploadError);
+        setError("Failed to upload files. Please try again.");
+        setIsUploadingFiles(false);
+        setUploadProgress("");
+        return;
+      } finally {
+        setIsUploadingFiles(false);
+        setUploadProgress("");
+      }
+    }
+
+    // Submit the form
+    addBusinessPermit.mutate(payload);
   };
 
   // Show loading screen while auth is loading
@@ -282,7 +352,7 @@ const CertPermit: React.FC = () => {
           </View>
         )}
 
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         
         
         {error && (
@@ -359,12 +429,8 @@ const CertPermit: React.FC = () => {
               }
               placeholderTextColor="#888"
               value={businessName}
-              onChangeText={
-                permitType === 'Business Clearance' && businessData.length === 0 
-                  ? setBusinessName 
-                  : undefined
-              }
-              editable={permitType === 'Business Clearance' && businessData.length === 0}
+              onChangeText={handleBusinessNameChange}
+              editable={isBusinessNameEditable}
             />
 
             {/* Business Address */}
@@ -382,12 +448,8 @@ const CertPermit: React.FC = () => {
               }
               placeholderTextColor="#888"
               value={businessAddress}
-              onChangeText={
-                permitType === 'Business Clearance' && businessData.length === 0 
-                  ? setBusinessAddress 
-                  : undefined
-              }
-              editable={permitType === 'Business Clearance' && businessData.length === 0}
+              onChangeText={handleBusinessAddressChange}
+              editable={isBusinessAddressEditable}
             />
 
             {/* Annual Gross Sales */}
@@ -519,17 +581,42 @@ const CertPermit: React.FC = () => {
               </Text>
             </View>
 
+            {/* Upload Progress */}
+            {isUploadingFiles && (
+              <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+                <View className="flex-row items-center justify-center">
+                  <ActivityIndicator size="small" color="#00AFFF" />
+                  <Text className="text-blue-700 text-sm font-medium ml-2">
+                    {uploadProgress}
+                  </Text>
+                </View>
+              </View>
+            )}
+
             {/* Submit Button */}
             {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || permitType === 'Business Clearance') ? (
               <TouchableOpacity
-                className={`bg-[#00AFFF] rounded-xl py-4 items-center mt-2 mb-8 ${addBusinessPermit.status === 'pending' ? 'opacity-50' : ''}`}
+                className={`rounded-xl py-4 items-center mt-2 mb-8 ${
+                  (addBusinessPermit.status === 'pending' || isUploadingFiles) 
+                    ? 'bg-gray-400 opacity-50' 
+                    : 'bg-[#00AFFF]'
+                }`}
                 activeOpacity={0.85}
                 onPress={handleSubmit}
-                disabled={addBusinessPermit.status === 'pending'}
+                disabled={addBusinessPermit.status === 'pending' || isUploadingFiles}
               >
-                <Text className="text-white font-semibold text-base">
-                  {addBusinessPermit.status === 'pending' ? 'Submitting...' : 'Submit'}
-                </Text>
+                {(addBusinessPermit.status === 'pending' || isUploadingFiles) ? (
+                  <View className="flex-row items-center">
+                    <ActivityIndicator size="small" color="white" />
+                    <Text className="text-white font-semibold text-base ml-2">
+                      {isUploadingFiles ? 'Uploading...' : 'Submitting...'}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text className="text-white font-semibold text-base">
+                    Submit
+                  </Text>
+                )}
               </TouchableOpacity>
             ) : (
               <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">

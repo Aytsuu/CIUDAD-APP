@@ -15,8 +15,6 @@ import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
 import { useGetAnnualGrossSalesActive, type AnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
 
-
-
 interface PermitClearanceFormProps {
     onSuccess?: () => void;
 }
@@ -61,11 +59,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         return businesses.find((business: any) => business.bus_id === businessId);
     }
 
-    // Helper function to get purpose by ID  
-    const getPurposeById = (purposeId: string) => {
-        return permitPurposes.find((purpose: any) => purpose.pr_id === purposeId);
-    }
-
     // Function to get business address when business is selected
     const getBusinessAddress = (businessId: string) => {
         const selectedBusiness = getBusinessById(businessId);
@@ -76,12 +69,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
     const getBusinessDisplayName = (businessId: string) => {
         const selectedBusiness = getBusinessById(businessId);
         return selectedBusiness?.bus_name || '';
-    }
-
-    // Function to get purpose display name
-    const getPurposeDisplayName = (purposeId: string) => {
-        const selectedPurpose = getPurposeById(purposeId);
-        return selectedPurpose?.pr_purpose || '';
     }
 
     // Function to get matching annual gross sales rate based on business ID
@@ -151,7 +138,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             console.log("Business gross sales exceeds highest rate range. Using highest available rate.");
             return {
                 id: highestRate.ags_id.toString(),
-                name: `₱${Number(highestRate.ags_minimum).toLocaleString()} - ₱${Number(highestRate.ags_maximum).toLocaleString()} (Highest Available)`,
+                name: `₱${Number(highestRate.ags_minimum).toLocaleString()} - ₱${Number(highestRate.ags_maximum).toLocaleString()}`,
                 rate: highestRate.ags_rate
             };
         }
@@ -159,8 +146,6 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
         console.log("No matching rate found for business gross sales:", businessGrossSales);
         return null;
     }
-
-
 
     const onSubmit = async (values: z.infer<typeof PermitClearanceFormSchema>) => {
         try {
@@ -178,8 +163,13 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             console.log("Permit Clearance Data:", payload);
             console.log("Business ID from form:", payload.businessName); // Now contains business ID
             console.log("Business Name (display):", getBusinessDisplayName(payload.businessName));
-            console.log("Purpose ID from form:", payload.purposes); // Now contains purpose ID  
-            console.log("Purpose Name (display):", getPurposeDisplayName(payload.purposes));
+            console.log("Purpose ID from form:", payload.purposes); // Now contains purpose ID
+            
+            // Get purpose name for logging
+            const selectedPurpose = permitPurposes.find((purpose: any) => 
+                purpose.pr_id?.toString() === payload.purposes?.toString()
+            );
+            console.log("Purpose Name (display):", selectedPurpose?.pr_purpose || 'Not found');
             console.log("Gross Sales from form:", payload.grossSales);
             console.log("All form values:", form.getValues());
             
@@ -363,53 +353,65 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                         )}
                     />
 
-                                         <div className="relative mb-8">       
-                         <FormField
-                              control={form.control}
-                              name="purposes"
-                              render={({ field }) => (
-                                  <FormItem>
-                                      <FormLabel>Select purpose(s):</FormLabel>
-                                      <FormControl>
-                                          <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
-                                             <ComboboxInput
-                                                  value={getPurposeDisplayName(field.value) || field.value}
-                                                  options={permitPurposes
-                                                      .filter((purpose: any) => purpose.pr_category === 'Business Permit')
-                                                      .map((purpose: any) => ({
-                                                          id: purpose.pr_id,
-                                                          name: purpose.pr_purpose
-                                                      }))}
-                                                  isLoading={purposesLoading}
-                                                  label=""
-                                                  placeholder="Select purpose..."
-                                                  emptyText="No purposes found"
-                                                  onSelect={(value: string, selectedOption: any) => {
-                                                      console.log("Purpose selection debug:");
-                                                      console.log("- value:", value);
-                                                      console.log("- selectedOption:", selectedOption);
-                                                      
-                                                      // Get the purpose ID from selectedOption
-                                                      const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
-                                                      console.log("- purposeId:", purposeId);
-                                                      
-                                                      // Store the purpose ID in the field (not the display name)
-                                                      field.onChange(purposeId.toString());
-                                                      console.log("Set purposes field to purposeId:", purposeId.toString());
-                                                  }}
-                                                  onCustomInput={(value: string) => {
-                                                      // For custom input, store the display value
-                                                      field.onChange(value);
-                                                  }}
-                                                  displayKey="name"
-                                                  valueKey="id"
-                                              />
-                                         </div>
-                                     </FormControl>
-                                     <FormMessage className="mt-2" />
-                                 </FormItem>
-                             )}
-                         />
+                    <div className="relative mb-8">       
+                        <FormField
+                             control={form.control}
+                             name="purposes"
+                             render={({ field }) => {
+                                 // Find the selected purpose to get its name for display
+                                 const selectedPurpose = permitPurposes.find((purpose: any) => 
+                                     purpose.pr_id?.toString() === field.value?.toString()
+                                 );
+                                 const displayValue = selectedPurpose?.pr_purpose || '';
+                                 
+                                 console.log("Purpose field render - ID stored:", field.value);
+                                 console.log("Purpose field render - Display name:", displayValue);
+                                 
+                                 return (
+                                     <FormItem>
+                                         <FormLabel>Select purpose(s):</FormLabel>
+                                         <FormControl>
+                                             <div className="[&_[data-radix-popper-content-wrapper]]:!w-[400px] [&_[data-radix-popper-content-wrapper]_div]:!w-full [&_[data-radix-popper-content-wrapper]]:!z-[9999] [&_[data-radix-popper-content-wrapper]]:!top-full [&_[data-radix-popper-content-wrapper]]:!bottom-auto [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!position-absolute [&_[data-radix-popper-content-wrapper]]:!left-0 [&_[data-radix-popper-content-wrapper]]:!right-0">
+                                                <ComboboxInput
+                                                     value={displayValue}
+                                                     options={permitPurposes
+                                                         .filter((purpose: any) => purpose.pr_category === 'Business Permit' || purpose.pr_category === 'Barangay Permit')
+                                                         .map((purpose: any) => ({
+                                                             id: purpose.pr_id,
+                                                             name: purpose.pr_purpose
+                                                         }))}
+                                                     isLoading={purposesLoading}
+                                                     label=""
+                                                     placeholder="Select purpose..."
+                                                     emptyText="No purposes found"
+                                                     onSelect={(value: string, selectedOption: any) => {
+                                                         console.log("Purpose selection debug:");
+                                                         console.log("- Display value (name):", value);
+                                                         console.log("- selectedOption:", selectedOption);
+                                                         
+                                                         
+                                                         const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
+                                                         console.log("- Storing purposeId:", purposeId);
+                                                         
+                                                        
+                                                         field.onChange(purposeId.toString());
+                                                         console.log("Stored ID in form:", purposeId.toString());
+                                                         console.log("Will display:", value);
+                                                     }}
+                                                     onCustomInput={(value: string) => {
+                                                         // For custom input, store the display value
+                                                         field.onChange(value);
+                                                     }}
+                                                     displayKey="name"
+                                                     valueKey="id"
+                                                 />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage className="mt-2" />
+                                    </FormItem>
+                                 );
+                             }}
+                        />
                      </div>
 
                     <div className="flex justify-end">

@@ -11,7 +11,7 @@ export type Businesses = {
     bus_date_verified: string;
     respondent: string;
     rp: string;
-    address?: string; // derived from bus_location
+    address?: string; 
     requestor?: string; 
 }
 

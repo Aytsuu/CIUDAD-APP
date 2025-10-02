@@ -155,3 +155,14 @@ export const getPurposesAndRates = async () => {
     throw new Error("Failed to fetch purposes and rates");
   }
 };
+
+// Fetch business permit files by bpr_id
+export const getBusinessPermitFiles = async (bprId: string) => {
+  try {
+    const response = await api.get(`/clerk/business-permit-files/${bprId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch business permit files:", error);
+    throw new Error("Failed to fetch business permit files");
+  }
+};
