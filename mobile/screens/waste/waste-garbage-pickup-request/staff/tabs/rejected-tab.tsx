@@ -19,12 +19,7 @@ export default function RejectedGarbageRequest() {
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
 
   // Query hook with pagination and search
-  const { 
-    data: rejectedReqData, 
-    isLoading, 
-    refetch 
-  } = useGetGarbageRejectRequest(currentPage, pageSize, searchQuery);
-
+  const { data: rejectedReqData, isLoading, refetch } = useGetGarbageRejectRequest(currentPage, pageSize, searchQuery);
   const requests = rejectedReqData?.results || [];
   const totalCount = rejectedReqData?.count || 0;
 

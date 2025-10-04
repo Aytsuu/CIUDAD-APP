@@ -94,9 +94,9 @@ export type GarbageRequestPending = {
 
 export const useGetGarbagePendingRequest = (page: number, pageSize: number, searchQuery: string) => {
     return useQuery<{results:GarbageRequestPending[], count: number}>({
-        queryKey: ["garbagePendingRequest", page, pageSize, searchQuery], // Changed query key
-        queryFn:() => getGarbagePendingRequest(page, pageSize, searchQuery),
-        staleTime: 1000 * 60 * 30,
+        queryKey: ["garbageRequest", page, pageSize, searchQuery],
+        queryFn:() =>  getGarbagePendingRequest(page, pageSize, searchQuery),
+        staleTime: 1000 * 60 * 30, 
     });
 }
 
@@ -119,13 +119,12 @@ export type GarbageRequestReject = {
 
 
 export const useGetGarbageRejectRequest = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results: GarbageRequestReject[], count: number}>({
-        queryKey: ["garbageRejectedRequest", { page, pageSize, search: searchQuery }], 
+return useQuery<{results: GarbageRequestReject[], count: number}>({
+        queryKey: ["garbageRejectedRequest", page, pageSize, searchQuery], 
         queryFn:() => getGarbageRejectedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
     });
 }
-
 
 export type GarbageRequestAccept = {
   garb_id: string;
@@ -162,7 +161,6 @@ export const useGetGarbageAcceptRequest = (page: number, pageSize: number, searc
         staleTime: 1000 * 60 * 30,
     });
 }
-
 
 
 export type GarbageRequestAcceptDetails = {
