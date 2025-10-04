@@ -60,7 +60,7 @@ function CertificatePage() {
   const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
-  const { data: residentsList = [], isLoading: isLoadingResidents, error: residentsError } = useResidentsList();
+  const { data: residentsList = [] } = useResidentsList();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
