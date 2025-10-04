@@ -3,6 +3,7 @@ import { useGetBudgetPlanHistory, type BudgetPlanHistory } from "./queries/budge
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/loading-state";
+import EmptyState from "@/components/ui/emptyState";
 
 export default function BudgetPlanHistory({ planId }: { planId: string }) {
   const { data: fetchedData = [], isLoading } = useGetBudgetPlanHistory(planId);
@@ -85,9 +86,7 @@ export default function BudgetPlanHistory({ planId }: { planId: string }) {
             </Card>
           ))
         ) : (
-          <View className="flex-1 justify-center items-center py-8">
-            <Text className="text-gray-500">No history found</Text>
-          </View>
+            <EmptyState emptyMessage="No budget plan history yet." />
         )}
       </ScrollView>
     </SafeAreaView>

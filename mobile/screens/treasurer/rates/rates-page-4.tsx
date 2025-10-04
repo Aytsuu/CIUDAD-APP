@@ -1,15 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
-import { Plus, Edit3, History, CheckCircle, XCircle } from 'lucide-react-native';
+import { Edit3, History, CheckCircle, XCircle, Search } from 'lucide-react-native';
 import { useGetPurposeAndRateAllBarangayPermit, useGetPurposeAndRateBarangayPermitActive, type PurposeAndRate } from './queries/ratesFetchQueries';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
 import { useDeletePurposeAndRate } from './queries/ratesDeleteQueries';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
 import { LoadingModal } from '@/components/ui/loading-modal';
+import EmptyState from '@/components/ui/emptyState';
 
 export default function RatesPage4() {
   const router = useRouter();
@@ -130,22 +130,12 @@ export default function RatesPage4() {
   ));
 
   // Empty state component
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <History size={32} className="text-gray-400" />
-      </View>
-      <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No barangay permits found' : `No ${activeTab} barangay permits`}
-      </Text>
-      <Text className="text-gray-400 text-center px-8">
-        {searchQuery 
-          ? 'Try adjusting your search terms' 
-          : `${activeTab === 'active' ? 'Active' : 'Historical'} barangay permits will appear here once added`
-        }
-      </Text>
-    </View>
-  );
+  const renderEmptyState = () => {
+    const emptyMessage = searchQuery
+    ? 'No records found. Try adjusting your search terms.'
+    : 'No records available yet.';
+    return <EmptyState emptyMessage={emptyMessage} />;
+  };
 
   // Loading state component
   const renderLoadingState = () => (
@@ -166,13 +156,19 @@ export default function RatesPage4() {
     <>
       <View className="flex-1 p-6">
         {/* Search Bar */}
-        <Input 
-          placeholder="Search..." 
-          value={searchInputVal} 
-          onChangeText={setSearchInputVal}
-          onSubmitEditing={handleSearch}
-          className="bg-white text-black rounded-lg p-3 border border-gray-300 mb-3"
-        />
+        <View className="mb-4">
+          <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3">
+            <Search size={18} color="#6b7280" />
+            <Input
+              className="flex-1 ml-2 bg-white text-black"
+              placeholder="Search..."
+              value={searchInputVal}
+              onChangeText={setSearchInputVal}
+              onSubmitEditing={handleSearch}
+              style={{ borderWidth: 0, shadowOpacity: 0 }}
+            />
+          </View>
+        </View>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')} className="flex-1">

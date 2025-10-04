@@ -15,6 +15,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { SearchInput } from "@/components/ui/search-input";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { LoadingState } from "@/components/ui/loading-state";
+import EmptyState from "@/components/ui/emptyState";
 
 export default function BudgetPlanMain() {
   const router = useRouter();
@@ -176,22 +177,16 @@ export default function BudgetPlanMain() {
   ));
 
   // Empty state component
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <Archive size={32} className="text-gray-400" />
-      </View>
-      <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No budget plans found' : `No ${activeTab} budget plans`}
-      </Text>
-      <Text className="text-gray-400 text-center px-8">
-        {searchQuery 
-          ? 'Try adjusting your search terms' 
-          : `${activeTab === 'active' ? 'Active' : 'Archived'} budget plans will appear here once added`
-        }
-      </Text>
-    </View>
-  );
+   const renderEmptyState = () => {
+    const emptyMessage = searchQuery
+    ? 'No records found. Try adjusting your search terms.'
+    : 'No records available yet.';
+    return (
+        <View className="flex-1 justify-center items-center">
+          <EmptyState emptyMessage={emptyMessage} />
+        </View>
+      );  
+    };
 
   // Loading state component
   const renderLoadingState = () => (

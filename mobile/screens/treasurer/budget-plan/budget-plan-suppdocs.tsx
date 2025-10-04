@@ -8,6 +8,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useDeleteBudgetPlanFile } from "./queries/budgetPlanDeleteQueries";
 import { LoadingState } from "@/components/ui/loading-state";
+import EmptyState from "@/components/ui/emptyState";
 
 export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: string, isArchive: boolean }) {
     const router = useRouter();
@@ -74,9 +75,7 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             {/* Scrollable content */}
             <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
                 {imageDocs.length === 0 ? (
-                    <View className="flex-1 justify-center items-center py-10">
-                        <Text className="text-gray-500 text-sm font-sans">No images available</Text>
-                    </View>
+                    <EmptyState emptyMessage="No supporting images available yet."/>
                 ) : (
                     <View className="pb-3">
                         {/* Image Gallery */}

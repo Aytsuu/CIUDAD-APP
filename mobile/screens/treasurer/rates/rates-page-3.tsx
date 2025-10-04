@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
 import { LoadingModal } from '@/components/ui/loading-modal';
+import EmptyState from '@/components/ui/emptyState';
 
 export default function RatesPage3() {
   const router = useRouter();
@@ -120,22 +121,12 @@ export default function RatesPage3() {
   ));
 
   // Empty state component
-  const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center py-20">
-      <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-        <History size={32} className="text-gray-400" />
-      </View>
-      <Text className="text-gray-500 text-lg font-medium mb-2">
-        {searchQuery ? 'No service charges found' : `No ${activeTab} service charges`}
-      </Text>
-      <Text className="text-gray-400 text-center px-8">
-        {searchQuery 
-          ? 'Try adjusting your search terms' 
-          : `${activeTab === 'active' ? 'Active' : 'Historical'} service charges will appear here once added`
-        }
-      </Text>
-    </View>
-  );
+  const renderEmptyState = () => {
+    const emptyMessage = searchQuery
+    ? 'No records found. Try adjusting your search terms.'
+    : 'No records available yet.';
+    return <EmptyState emptyMessage={emptyMessage} />;
+  };
 
   // Loading state component
   const renderLoadingState = () => (

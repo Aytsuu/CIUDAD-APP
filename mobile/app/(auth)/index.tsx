@@ -27,6 +27,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <GarbagePickupMain/>
+    return <BudgetPlanMain/>
 }
  
