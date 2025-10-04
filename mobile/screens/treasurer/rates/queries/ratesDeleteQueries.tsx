@@ -14,7 +14,8 @@ export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
 
         toast.success('Record deleted successfully')
 
-        queryClient.invalidateQueries({ queryKey: ['grossSales'] });
+        queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+        queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
         
         if (onSuccess) onSuccess();
     },

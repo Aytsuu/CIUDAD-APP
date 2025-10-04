@@ -11,6 +11,7 @@ export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
       onMutate: async () => {
             queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
             queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
+            
             toast.loading("Deleting record...", { id: "deleteGrossSales" });
       },
       onSuccess: () => {

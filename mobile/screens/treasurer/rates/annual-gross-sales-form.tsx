@@ -55,9 +55,9 @@ export default function AnnualGrossSalesCreate() {
       loading={isPending}
       loadingMessage='Submitting Record...'
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="mb-8">
-          <View className="space-y-4 p-4">
+          <View className="space-y-4 p-6">
             <FormInput
               control={control}
               label="Minimum Annual Gross Sales"

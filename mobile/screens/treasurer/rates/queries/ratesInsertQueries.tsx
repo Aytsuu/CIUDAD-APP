@@ -15,8 +15,9 @@ export const useAddAnnualGrossSales = (onSuccess?: () => void) => {
             mutationFn: (values: z.infer<typeof AnnualGrossSalesSchema>) => 
             addAnnualGrossSales(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['grossSales'] });
-
+                queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
+                queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
+                
                 toast.success('Record Submitted!')
                 onSuccess?.()
                 router.back()

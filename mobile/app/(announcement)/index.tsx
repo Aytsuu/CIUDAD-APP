@@ -1,6 +1,6 @@
 
-import AnnouncementListPage from "@/screens/announcement";
+// import AnnouncementListPage from "@/screens/announcement";
 
-export default function AnnouncementPage() {
-  return <AnnouncementListPage />;
-}
+// export default function AnnouncementPage() {
+//   return <AnnouncementListPage />;
+// }
