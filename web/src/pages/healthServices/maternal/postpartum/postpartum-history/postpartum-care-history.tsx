@@ -296,7 +296,7 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
                     key={index} 
                     className={`font-semibold text-slate-700 p-5 text-xs uppercase tracking-wide text-center ${hasMoreRecords ? 'min-w-48' : 'w-auto'}`}
                   >
-                    Record {sortedData.length - index}
+                    Visit {sortedData.length - index}
                     {index === 0 && <span className="text-blue-500 ml-1">[CURRENT]</span>}
                   </TableHead>
                 ))}

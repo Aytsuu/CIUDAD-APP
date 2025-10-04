@@ -53,7 +53,7 @@ export default function ForwardedScheduledVaccinationsTables() {
   const {
     data: vaccinationData,
     isLoading,
-    refetch
+    
   } = useQuery({
     queryKey: ["scheduledVaccination", staff_id, debouncedSearchQuery, patientType, currentPage, pageSize],
     queryFn: () => getScheduledVaccinations(staff_id!, debouncedSearchQuery, patientType, currentPage, pageSize),

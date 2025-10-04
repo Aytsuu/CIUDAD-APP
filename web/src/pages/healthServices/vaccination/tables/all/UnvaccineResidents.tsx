@@ -107,9 +107,9 @@ export default function UnvaccinatedResidents() {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  // const handlePageChange = (page: number) => {
+  //   setCurrentPage(page);
+  // };
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize >= 1 ? newPageSize : 1);

@@ -1,6 +1,7 @@
 // mutations.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { update_monthly_recipient_list_report } from "../restful-api/updateAPI";
+import { update_monthly_recipient_list_report } from "@/pages/healthServices/reports/firstaid-report/restful-api/updateAPI";
+
 import { toast } from "sonner";
 
 export const useUpdateMonthlyRecipientList = () => {
@@ -9,7 +10,7 @@ export const useUpdateMonthlyRecipientList = () => {
   return useMutation({
     mutationFn: ({ monthlyrcplist_id, data }: { monthlyrcplist_id: string; data: any }) => update_monthly_recipient_list_report(monthlyrcplist_id, data),
 
-    onSuccess: (data, variables) => {
+    onSuccess: ( variables) => {
       // Invalidate and refetch relevant queries
       queryClient.invalidateQueries({ queryKey: ["fareport"] });
       queryClient.invalidateQueries({ queryKey: ["medreport"] });

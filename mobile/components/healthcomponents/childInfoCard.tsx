@@ -40,12 +40,12 @@ const getSexDisplayText = (sex: string | undefined | null) => {
   return sex.trim()
 }
 
-const getAgeDisplayText = (age: string | undefined | null) => {
-  if (!age || typeof age !== "string" || age.trim() === "") {
-    return "Age not specified"
-  }
-  return `${age.trim()}y`
-}
+// const getAgeDisplayText = (age: string | undefined | null) => {
+//   if (!age || typeof age !== "string" || age.trim() === "") {
+//     return "Age not specified"
+//   }
+//   return `${age.trim()}y`
+// }
 
 const getBirthOrderDisplay = (birthOrder: string | undefined | null) => {
   if (!birthOrder || typeof birthOrder !== "string" || birthOrder.trim() === "") {
@@ -127,7 +127,7 @@ export const ChildHealthRecordCard: React.FC<any> = ({ child }) => {
   const fatherName = formatParentName(child.father_fname, child.father_mname, child.father_lname, "Father not provided")
 
   const sexDisplay = getSexDisplayText(child.sex)
-  const ageDisplay = getAgeDisplayText(child.age)
+  // const ageDisplay = getAgeDisplayText(child.age)
   const birthOrder = getBirthOrderDisplay(child.birth_order)
   const patientId = getPatientIdDisplay(child.pat_id)
   const feedingType = getFeedingTypeDisplay(child.type_of_feeding)
@@ -161,9 +161,9 @@ export const ChildHealthRecordCard: React.FC<any> = ({ child }) => {
             <View className="flex-row items-center mt-0.5">
               <Text className="text-blue-100 text-xs">{patientId}</Text>
               <View className="w-1 h-1 bg-blue-200 rounded-full mx-2" />
-              <Text className="text-blue-100 text-xs">
+              {/* <Text className="text-blue-100 text-xs">
                 {ageDisplay}, {sexDisplay}
-              </Text>
+              </Text> */}
               {birthOrder && (
                 <>
                   <View className="w-1 h-1 bg-blue-200 rounded-full mx-2" />

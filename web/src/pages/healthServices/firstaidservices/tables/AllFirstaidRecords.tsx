@@ -169,9 +169,9 @@ export default function AllFirstAidRecords() {
     }
   };
 
-  const handleManualSitioSearch = (value: string) => {
-    // Not used since we're using the main search field
-  };
+  // const handleManualSitioSearch = (value: string) => {
+  //   // Not used since we're using the main search field
+  // };
 
   const columns: ColumnDef<any>[] = [
     {

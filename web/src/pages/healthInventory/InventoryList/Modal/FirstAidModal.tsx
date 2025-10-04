@@ -41,12 +41,10 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
-      fa_name:  initialData?.fa_name || "",
+      fa_name: initialData?.fa_name || "",
       cat_id: String(initialData?.cat_id) || ""
     }
   });
-
-  
 
   useEffect(() => {
     if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
@@ -117,7 +115,6 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
     return firstAids.some((fa) => fa.id !== currentId && fa?.fa_name?.trim()?.toLowerCase() === newFirstAid?.trim()?.toLowerCase());
   };
 
- 
   const onSubmit = (data: FirstAidType) => {
     if (!data.cat_id) {
       toast.error("Please select a category");

@@ -1,15 +1,10 @@
-"use client"
-
-import { useState } from "react"
-
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { MonthInfoCardV2 } from "../bhw-report/folder-component"
 
-
 export default function BHWReportsMainTable() {
-	const [selectedSort, setSelectedSort] = useState("All");
+	// const [selectedSort, setSelectedSort] = useState("All");
 
 	// sample data
 	const sampleData = [	
@@ -20,11 +15,11 @@ export default function BHWReportsMainTable() {
 		{ month: "2025-08" },
 	]
 
-	const sortOptions = [
-		{ id: "All", name: "All" },
-		{ id: "Resident", name: "Resident" },
-		{ id: "Transient", name: "Transient" },
-	]
+	// const sortOptions = [
+	// 	{ id: "All", name: "All" },
+	// 	{ id: "Resident", name: "Resident" },
+	// 	{ id: "Transient", name: "Transient" },
+	// ]
 
 	return (
 		<LayoutWithBack

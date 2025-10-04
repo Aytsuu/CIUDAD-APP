@@ -11,7 +11,7 @@
     const { params } = location.state || {};
     const { patientData, MedicalConsultation } = params || {};
 
-    const patientId = useMemo(() => patientData?.pat_id, [patientData]);
+    // const patientId = useMemo(() => patientData?.pat_id, [patientData]);
 
     const currentConsultation = useMemo(() => {
       // Since we're not fetching history in parent anymore, just return the current consultation

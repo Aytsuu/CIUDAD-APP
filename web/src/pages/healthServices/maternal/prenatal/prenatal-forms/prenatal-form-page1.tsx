@@ -488,6 +488,7 @@ export default function PrenatalFormFirstPg({
           noOfAbortion: 0,
           noOfStillBirths: 0,
           historyOfLBabies: 0,
+          historyOfLBabiesStr: undefined,
           historyOfDiabetes: undefined,
         },
         medicalHistory: {
@@ -770,18 +771,9 @@ export default function PrenatalFormFirstPg({
       );
       setValue("obstetricHistory.noOfLivingCh", currObs?.obs_living_ch || 0);
       setValue("obstetricHistory.noOfAbortion", currObs?.obs_abortion || 0);
-      setValue(
-        "obstetricHistory.noOfStillBirths",
-        currObs?.obs_still_birth || 0
-      );
-      setValue(
-        "obstetricHistory.historyOfLBabiesStr",
-        currObs?.obs_lg_babies_str || 0
-      );
-      setValue(
-        "obstetricHistory.historyOfLBabies",
-        currObs?.obs_lg_babies || 0
-      );
+      setValue("obstetricHistory.noOfStillBirths", currObs?.obs_still_birth || 0);
+      setValue("obstetricHistory.historyOfLBabiesStr", currObs?.obs_lg_babies_str || false);
+      setValue("obstetricHistory.historyOfLBabies", currObs?.obs_lg_babies || 0);
       setValue("presentPregnancy.gravida", currObs?.obs_gravida || 0);
       setValue("presentPregnancy.para", currObs?.obs_para || 0);
       setValue("presentPregnancy.fullterm", currObs?.obs_fullterm || 0);
@@ -792,6 +784,7 @@ export default function PrenatalFormFirstPg({
       setValue("obstetricHistory.noOfAbortion", undefined);
       setValue("obstetricHistory.noOfStillBirths", undefined);
       setValue("obstetricHistory.historyOfLBabies", undefined);
+      setValue("obstetricHistory.historyOfLBabiesStr", false);
       setValue("presentPregnancy.gravida", undefined);
       setValue("presentPregnancy.para", undefined);
       setValue("presentPregnancy.fullterm", undefined);

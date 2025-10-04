@@ -17,7 +17,7 @@ import { calculateAge } from "@/helpers/ageCalculator";
 import { useSubmitVaccinationRecord } from "../queries/AddVacrecord";
 import { ValidationAlert } from "../../../../components/ui/vac-required-alert";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-import { PatientSearch, type Patient } from "@/components/ui/patientSearch";
+import { PatientSearch } from "@/components/ui/patientSearch";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAuth } from "@/context/AuthContext";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -38,7 +38,7 @@ export default function VaccinationRecordForm() {
   const patientDataFromLocation = params?.patientData;
   const shouldShowPatientSearch = mode === "newvaccination_record";
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [, setNextVisitDate] = useState<string | null>(null);
@@ -121,7 +121,7 @@ export default function VaccinationRecordForm() {
     if (currentDose && totalDose) {
       const doseNum = Number(currentDose);
       const totalDoseNum = Number(totalDose);
-      
+
       if (doseNum > totalDoseNum) {
         setIsDoseExceeded(true);
       } else {
@@ -136,7 +136,7 @@ export default function VaccinationRecordForm() {
     setSignature(signature);
   }, []);
 
-  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+  const handlePatientSelect = (patient: any | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
     if (patient) {
@@ -189,7 +189,7 @@ export default function VaccinationRecordForm() {
           if (existingRecord && existingRecord.vacrec_details?.vacrec_totaldose) {
             const totalDoseValue = existingRecord.vacrec_details.vacrec_totaldose.toString();
             form.setValue("vacrec_totaldose", totalDoseValue);
-            
+
             // Check if current dose exceeds total dose for conditional vaccines
             if (doseNumber > Number(totalDoseValue)) {
               setIsVaccineCompleted(true);
@@ -203,7 +203,7 @@ export default function VaccinationRecordForm() {
           // For non-conditional vaccines, use the no_of_doses from vaccinelist
           const totalDoseValue = vaccinelist.no_of_doses.toString();
           form.setValue("vacrec_totaldose", totalDoseValue);
-          
+
           // Check if current dose exceeds total dose
           if (doseNumber > Number(totalDoseValue)) {
             setIsVaccineCompleted(true);
@@ -305,11 +305,7 @@ export default function VaccinationRecordForm() {
     form.handleSubmit(onSubmit)();
   };
 
-  const hasInvalidFields = (shouldShowPatientSearch && !selectedPatientId) || 
-                          !form.watch("vaccinetype") || 
-                          !form.watch("vachist_doseNo") || 
-                          isVaccineCompleted || 
-                          isDoseExceeded;
+  const hasInvalidFields = (shouldShowPatientSearch && !selectedPatientId) || !form.watch("vaccinetype") || !form.watch("vachist_doseNo") || isVaccineCompleted || isDoseExceeded;
 
   return (
     <>
@@ -378,16 +374,7 @@ export default function VaccinationRecordForm() {
                       />
                       {form.watch("vaccinetype") && (
                         <div className="mt-4 flex flex-col sm:flex-row sm:space-x-4">
-                          <FormInput 
-                            control={form.control} 
-                            name="vacrec_totaldose" 
-                            label="Total Doses Required" 
-                            placeholder="Enter total doses" 
-                            type="number" 
-                            readOnly={selectedVaccineType !== "conditional" || isDoseExceeded
-
-                            } 
-                          />
+                          <FormInput control={form.control} name="vacrec_totaldose" label="Total Doses Required" placeholder="Enter total doses" type="number" readOnly={selectedVaccineType !== "conditional" || isDoseExceeded} />
 
                           <FormDateTimeInput control={form.control} name="followv_date" label="Next Follow-up Visit Date" type="date" />
                         </div>
@@ -396,18 +383,9 @@ export default function VaccinationRecordForm() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormDateTimeInput control={form.control} name="datevaccinated" label="Date Vaccinated" type="date" readOnly />
-                      <FormInput 
-                        control={form.control} 
-                        name="vachist_doseNo" 
-                        label="Dose Number" 
-                        placeholder="Enter dose number" 
-                        type="number" 
-                        readOnly={isDoseExceeded}
-                        min={1}
-                      />
+                      <FormInput control={form.control} name="vachist_doseNo" label="Dose Number" placeholder="Enter dose number" type="number" readOnly={isDoseExceeded} min={1} />
                     </div>
                   </div>
-
 
                   <div className="border-t border-gray-200 my-8"></div>
 
@@ -455,11 +433,7 @@ export default function VaccinationRecordForm() {
                     <Button variant="outline" className="w-[120px] border-gray-300 hover:bg-gray-50 bg-transparent" type="button" onClick={() => form.reset()}>
                       Cancel
                     </Button>
-                    <Button 
-                      type="submit" 
-                      className="w-[120px]" 
-                      disabled={hasInvalidFields || submitting || isVaccineCompleted || isDoseExceeded}
-                    >
+                    <Button type="submit" className="w-[120px]" disabled={hasInvalidFields || submitting || isVaccineCompleted || isDoseExceeded}>
                       {submitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

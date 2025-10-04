@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCommodity } from "../../restful-api/commodity/fetch-api";
 import { api2 } from "@/api/api";
 
-export const useCommodities = (page: number, pageSize: number, search?: string) => {
+export const useCommodities = (page?: number, pageSize?: number, search?: string) => {
   return useQuery({
     queryKey: ["commodities", page, pageSize, search],
     queryFn: () => getCommodity(page, pageSize, search),

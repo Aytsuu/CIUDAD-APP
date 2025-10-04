@@ -28,12 +28,11 @@ export default function MonthlyMedicineDetails() {
     report: any;
   };
 
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { monthlyrcplist_id, month, monthName, recordCount } = state || {};
+  const { monthlyrcplist_id, month, monthName } = state || {};
 
   const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(month);
   const monthlyData = apiResponse?.data as { records: MonthlyMedicineRecord[]; report: any } | undefined;

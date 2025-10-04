@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import { Printer,Stethoscope } from "lucide-react";
 import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
 import PhysicalExamTable from "./philhealth-display";
-import { useMedConPHHistory, useFamHistory } from "../queries/fetchQueries";
+import { useMedConPHHistory, useFamHistory } from "../queries/fetch";
 import { ConsultationHistoryTable } from "./table-history";
 interface CurrentConsultationCardProps {
   consultation: any;

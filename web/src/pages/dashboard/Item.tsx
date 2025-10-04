@@ -4,16 +4,25 @@ import { ProfilingSidebar } from "@/components/analytics/profiling/profiling-sid
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
+import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
+import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
   administrationCards: ReturnType<typeof useAdminSectionCards>,
   reportCards: ReturnType<typeof useReportSectionCards>,
+  healthCards:ReturnType<typeof useHealthServicesSectionCards>
+
+  
+  
 ) => {
   const { residents, families, households, businesses } = profilingCards
   const { staffs } = administrationCards
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards
+  const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal } = healthCards
+  
+
   return [
     {
       dashboard: "ADMINISTRATION",
@@ -69,5 +78,15 @@ export const getItemsConfig = (
     {
       dashboard: "WASTE",
     },
+    {
+      dashboard: "MIDWIFE",
+      card: [childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal],
+      sidebar: [
+        {
+          title: "Most Requested Medicine",
+          element: <MedicineDistributionSidebar />,
+        },
+      ],
+    }
   ];
 };

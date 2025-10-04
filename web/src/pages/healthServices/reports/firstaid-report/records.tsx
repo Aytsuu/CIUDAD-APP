@@ -24,7 +24,6 @@ export default function MonthlyFirstAidDetails() {
     recordCount: number;
   };
 
-  const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -49,7 +48,7 @@ export default function MonthlyFirstAidDetails() {
 
   const records = results.records || [];
   const report = results.report || {};
-  const totalRecords = results.record_count;
+  // const totalRecords = results.record_count;
 
   const staffDetails = report?.staff_details?.rp?.per;
   const signatureBase64 = report?.signature;

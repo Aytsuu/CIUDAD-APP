@@ -1,4 +1,3 @@
-import React from "react";
 import { AlertCircle, Loader2, Check } from "lucide-react";
 
 const PHIllnessTable = ({ phHistoryData, isLoading, isError }: any) => {

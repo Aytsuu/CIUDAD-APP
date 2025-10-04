@@ -275,7 +275,7 @@ const Homepage = () => {
               })}
             </View>
           </View>
-        )}
+        )} 
       </ScrollView>
     </SafeAreaView>
   );

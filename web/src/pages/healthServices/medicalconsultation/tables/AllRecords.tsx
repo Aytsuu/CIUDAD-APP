@@ -7,13 +7,12 @@ import { Loader2, Search, Home, UserCheck, Users, FileInput } from "lucide-react
 import { Link } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useMedicalRecord } from "../queries/fetchQueries";
+import { useMedicalRecord } from "../queries/fetch";
 import { getAllMedicalRecordsColumns, exportColumns } from "./columns/all_col";
-import { useLoading } from "@/context/LoadingContext";
+// import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
 import { useDebounce } from "@/hooks/use-debounce";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
@@ -26,7 +25,7 @@ export default function AllMedicalConsRecord() {
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
-  const { showLoading, hideLoading } = useLoading();
+  // const { showLoading, hideLoading } = useLoading();
 
   // Fetch sitio data
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
@@ -67,13 +66,13 @@ export default function AllMedicalConsRecord() {
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useMedicalRecord(queryParams);
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+  // useEffect(() => {
+  //   if (isLoading) {
+  //     showLoading();
+  //   } else {
+  //     hideLoading();
+  //   }
+  // }, [isLoading, showLoading, hideLoading]);
 
   // Handle API response structure (could be paginated or not)
   const {
@@ -190,7 +189,7 @@ export default function AllMedicalConsRecord() {
   };
 
   return (
-    <MainLayoutComponent title="Medical Consultation" description="Manage Medical Consultation">
+    <div >
       <div className="w-full h-full flex flex-col">
         {/* Summary Cards - Updated with EnhancedCardLayout */}
         <div className="w-full">
@@ -332,6 +331,6 @@ export default function AllMedicalConsRecord() {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
+    </div>
   );
 }

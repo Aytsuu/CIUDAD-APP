@@ -7,8 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate, useLocation } from "react-router"
 
-import { Patient } from "@/pages/record/health/patientsRecord/patient-types"
-
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-page1"
 import PrenatalFormSecPg from "./prenatal-form-page2"
@@ -35,7 +33,7 @@ export default function PrenatalForm() {
   const defaultValues = generateDefaultValues(PrenatalFormSchema)
   const [currentPage, setCurrentPage] = useState(1)
   const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
-  const [preselectedPatient, setPreselectedPatient] = useState<Patient | null>(null)
+  const [preselectedPatient, setPreselectedPatient] = useState<any | null>(null)
   const [activePregnancyId, setActivePregnancyId] = useState<string | null>(null)
 
   const navigate = useNavigate()
