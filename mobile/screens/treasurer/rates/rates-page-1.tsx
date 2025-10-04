@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
-import { Plus, Edit3, Trash2, History, CheckCircle, XCircle } from 'lucide-react-native';
+import { Plus, Edit3, Trash2, History, CheckCircle, XCircle, Search } from 'lucide-react-native';
 import { useGetAnnualGrossSalesActive, useGetAllAnnualGrossSales, type AnnualGrossSales } from './queries/ratesFetchQueries';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
@@ -203,14 +203,18 @@ export default function RatesPage1() {
     <>
       <View className="flex-1 p-6">
         {/* Search Bar */}
-        <View className="mb-4">
-          <Input 
-            placeholder="Search..." 
-            value={searchInputVal} 
-            onChangeText={setSearchInputVal}
-            onSubmitEditing={handleSearch}
-            className="bg-white text-black rounded-lg p-3 border border-gray-300 mb-3"
-          />
+         <View className="mb-4">
+          <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3">
+            <Search size={18} color="#6b7280" />
+            <Input
+              className="flex-1 ml-2 bg-white text-black"
+              placeholder="Search..."
+              value={searchInputVal}
+              onChangeText={setSearchInputVal}
+              onSubmitEditing={handleSearch}
+              style={{ borderWidth: 0, shadowOpacity: 0 }}
+            />
+          </View>
           
           <Button onPress={handleCreate} className="bg-primaryBlue px-4 py-3 rounded-xl flex-row items-center justify-center shadow-md">
             <Plus size={20} color="white" />

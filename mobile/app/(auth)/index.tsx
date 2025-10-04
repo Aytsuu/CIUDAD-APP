@@ -13,6 +13,7 @@ import CertChoices from "@/screens/request/certification-request/cert-choices";
 import BudgetPlanMain from "@/screens/treasurer/budget-plan/budget-plan-main";
 import MinutesOfMeetingMain from "@/screens/council/minutesOfmeeting/minutes-of-meeting-main";
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
+import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
@@ -26,6 +27,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <App/>
+    return <GarbagePickupMain/>
 }
  

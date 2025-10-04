@@ -773,76 +773,79 @@ class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.filter(
-            garb_req_status='pending'  
-        ).select_related(
-            'rp__per',
-            'sitio_id',
-            'gprf'
-        ).only(
-            'garb_id',
-            'garb_location',
-            'garb_waste_type',
-            'garb_pref_date',
-            'garb_pref_time',
-            'garb_req_status',
-            'garb_additional_notes',
-            'garb_created_at',
-            'rp__per__per_lname',
-            'rp__per__per_fname',
-            'rp__per__per_mname',
-            'sitio_id__sitio_name',
-            'gprf__gprf_url'
+        queryset = (
+            Garbage_Pickup_Request.objects.filter(garb_req_status='pending')
+            .select_related('rp__per', 'sitio_id', 'gprf')
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'sitio_id__sitio_name',
+                'gprf__gprf_url',
+            )
         )
 
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
-                Q(garb_id__icontains=search_query) |
-                Q(garb_location__icontains=search_query) |
-                Q(garb_waste_type__icontains=search_query) |
-                Q(garb_additional_notes__icontains=search_query) |
-                Q(garb_pref_date__icontains=search_query) |
-                Q(garb_pref_time__icontains=search_query) |
-                Q(rp__per__per_lname__icontains=search_query) |
-                Q(rp__per__per_fname__icontains=search_query) |
-                Q(rp__per__per_mname__icontains=search_query) |
-                Q(sitio_id__sitio_name__icontains=search_query)
+                Q(garb_id__icontains=search_query)
+                | Q(garb_location__icontains=search_query)
+                | Q(garb_waste_type__icontains=search_query)
+                | Q(garb_additional_notes__icontains=search_query)
+                | Q(garb_pref_date__icontains=search_query)
+                | Q(garb_pref_time__icontains=search_query)
+                | Q(rp__per__per_lname__icontains=search_query)
+                | Q(rp__per__per_fname__icontains=search_query)
+                | Q(rp__per__per_mname__icontains=search_query)
+                | Q(sitio_id__sitio_name__icontains=search_query)
             ).distinct()
 
         return queryset.order_by('-garb_created_at')
-    
+
 
 class GarbagePickupRequestRejectedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestRejectedSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = Garbage_Pickup_Request.objects.filter(
-            garb_req_status='rejected'
-        ).select_related(
-            'rp__per',
-            'sitio_id',
-            'gprf'
-        ).prefetch_related(
-            'pickup_request_decision_set__staff_id__rp__per'
-        ).only(
-            'garb_id',
-            'garb_location',
-            'garb_waste_type',
-            'garb_pref_date',
-            'garb_pref_time',
-            'garb_req_status',
-            'garb_additional_notes',
-            'garb_created_at',
-            'rp__per__per_lname',
-            'rp__per__per_fname',
-            'rp__per__per_mname',
-            'sitio_id__sitio_name',
-            'gprf__gprf_url'
+        queryset = (
+            Garbage_Pickup_Request.objects.filter(
+                garb_req_status='rejected'
+            )
+            .select_related(
+                'rp__per',
+                'sitio_id',
+                'gprf'
+            )
+            .prefetch_related(
+                'pickup_decisions__staff_id__rp__per' 
+            )
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'sitio_id__sitio_name',
+                'gprf__gprf_url'
+            )
         )
 
-        # Search functionality
+        # 🔍 Search functionality
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
@@ -856,13 +859,14 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
                 Q(rp__per__per_fname__icontains=search_query) |
                 Q(rp__per__per_mname__icontains=search_query) |
                 Q(sitio_id__sitio_name__icontains=search_query) |
-                Q(pickup_request_decision_set__dec_reason__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query)
+                Q(pickup_decisions__dec_reason__icontains=search_query) | 
+                Q(pickup_decisions__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_decisions__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_decisions__staff_id__rp__per__per_mname__icontains=search_query)
             ).distinct()
 
         return queryset.order_by('-garb_created_at')
+
     
 
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
@@ -870,24 +874,27 @@ class GarbagePickupRequestAcceptedView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        # Base queryset with status filter and related data
-        queryset = Garbage_Pickup_Request.objects.filter(
-            garb_req_status='accepted'  # Filter for accepted status
-        ).select_related(
-            'rp', 'rp__per', 'gprf', 'sitio_id'
-        ).prefetch_related(
-            'pickup_request_decision_set',
-            'pickup_request_decision_set__staff_id',
-            'pickup_request_decision_set__staff_id__rp',
-            'pickup_request_decision_set__staff_id__rp__per',
-            'pickup_assignment_set',
-            'pickup_assignment_set__truck_id',
-            'pickup_assignment_set__wstp_id',
-            'pickup_assignment_set__assignment_collector_set',
-            'pickup_assignment_set__assignment_collector_set__wstp_id',
+        queryset = (
+            Garbage_Pickup_Request.objects.filter(
+                garb_req_status='accepted'
+            )
+            .select_related(
+                'rp', 'rp__per', 'gprf', 'sitio_id'
+            )
+            .prefetch_related(
+                'pickup_decisions',
+                'pickup_decisions__staff_id',
+                'pickup_decisions__staff_id__rp',
+                'pickup_decisions__staff_id__rp__per',
+                'pickup_assignments',
+                'pickup_assignments__truck_id',
+                'pickup_assignments__wstp_id',
+                'pickup_assignments__collectors',
+                'pickup_assignments__collectors__wstp_id',
+                'pickup_assignments__collectors__wstp_id__staff_id__rp__per',  
+            )
         )
-        
-        # Search functionality
+
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
@@ -901,18 +908,18 @@ class GarbagePickupRequestAcceptedView(generics.ListAPIView):
                 Q(rp__per__per_fname__icontains=search_query) |
                 Q(rp__per__per_mname__icontains=search_query) |
                 Q(sitio_id__sitio_name__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query) |
-                Q(pickup_assignment_set__truck_id__truck_plate_number__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__rp__per__per_mname__icontains=search_query) |
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__rp__per__per_mname__icontains=search_query)
+                Q(pickup_decisions__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_decisions__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_decisions__staff_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignments__truck_id__truck_plate_num__icontains=search_query) |  
+                Q(pickup_assignments__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignments__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignments__wstp_id__staff_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignments__collectors__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignments__collectors__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignments__collectors__wstp_id__staff_id__rp__per__per_mname__icontains=search_query)
             ).distinct()
-        
+
         return queryset.order_by('-garb_created_at')
     
 class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
@@ -946,37 +953,26 @@ class GarbagePickupRequestsByDriverView(generics.ListAPIView):
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestCompletedSerializer
     pagination_class = StandardResultsPagination
-    
+
     def get_queryset(self):
-        # Base queryset with status filter and related data
-        queryset = Garbage_Pickup_Request.objects.filter(
-            garb_req_status='completed'  # Filter for completed status
-        ).select_related(
-            'rp__per',
-            'sitio_id',
-            'gprf'
-        ).prefetch_related(
-            'pickup_request_decision_set__staff_id__rp__per',
-            'pickup_assignment_set__truck_id',
-            'pickup_assignment_set__wstp_id__staff_id__rp__per',  # CORRECTED: wstp_id__staff_id__rp__per
-            'pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per'  # CORRECTED: wstp_id__staff_id__rp__per
-        ).only(
-            'garb_id',
-            'garb_location',
-            'garb_waste_type',
-            'garb_pref_date',
-            'garb_pref_time',
-            'garb_req_status',
-            'garb_additional_notes',
-            'garb_created_at',
-            'rp__per__per_lname',
-            'rp__per__per_fname',
-            'rp__per__per_mname',
-            'sitio_id__sitio_name',
-            'gprf__gprf_url'
+        queryset = (
+            Garbage_Pickup_Request.objects.filter(garb_req_status='completed')
+            .select_related(
+                'rp__per',
+                'sitio_id',
+                'gprf'
+            )
+            .prefetch_related(
+                'pickup_decisions__staff_id__rp__per',
+                'pickup_assignments__truck_id',
+                'pickup_assignments__wstp_id__staff_id__rp__per',
+                'pickup_assignments__collectors',
+                'pickup_assignments__collectors__wstp_id__staff_id__rp__per',
+                'pickup_confirmations',
+            )
         )
 
-        # Search functionality
+        # 🔍 Search Functionality
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
@@ -990,16 +986,16 @@ class GarbagePickupRequestCompletedView(generics.ListAPIView):
                 Q(rp__per__per_fname__icontains=search_query) |
                 Q(rp__per__per_mname__icontains=search_query) |
                 Q(sitio_id__sitio_name__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_lname__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_fname__icontains=search_query) |
-                Q(pickup_request_decision_set__staff_id__rp__per__per_mname__icontains=search_query) |
-                Q(pickup_assignment_set__truck_id__truck_plate_number__icontains=search_query) |
-                Q(pickup_assignment_set__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |  # CORRECTED
-                Q(pickup_assignment_set__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |  # CORRECTED
-                Q(pickup_assignment_set__wstp_id__staff_id__rp__per__per_mname__icontains=search_query) |  # CORRECTED
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |  # CORRECTED
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |  # CORRECTED
-                Q(pickup_assignment_set__assignment_collector_set__wstp_id__staff_id__rp__per__per_mname__icontains=search_query)  # CORRECTED
+                Q(pickup_decisions__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_decisions__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_decisions__staff_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignments__truck_id__truck_plate_num__icontains=search_query) |
+                Q(pickup_assignments__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignments__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignments__wstp_id__staff_id__rp__per__per_mname__icontains=search_query) |
+                Q(pickup_assignments__collectors__wstp_id__staff_id__rp__per__per_lname__icontains=search_query) |
+                Q(pickup_assignments__collectors__wstp_id__staff_id__rp__per__per_fname__icontains=search_query) |
+                Q(pickup_assignments__collectors__wstp_id__staff_id__rp__per__per_mname__icontains=search_query)
             ).distinct()
 
         return queryset.order_by('-garb_created_at')

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
-import { Plus, Edit3, History, CheckCircle, XCircle } from 'lucide-react-native';
+import { Plus, Edit3, History, CheckCircle, XCircle, Search } from 'lucide-react-native';
 import { useGetPurposeAndRatePersonalActive, useGetPurposeAndRateAllPersonal, type PurposeAndRate } from './queries/ratesFetchQueries';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useRouter } from 'expo-router';
@@ -169,13 +169,19 @@ export default function RatesPage2() {
   return (
     <View className="flex-1 p-6">
       {/* Search Bar */}
-      <Input 
-        placeholder="Search..." 
-        value={searchInputVal} 
-        onChangeText={setSearchInputVal}
-        onSubmitEditing={handleSearch}
-        className="bg-white text-black rounded-lg p-3 border border-gray-300 mb-3"
-      />
+      <View className="mb-4">
+        <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3">
+          <Search size={18} color="#6b7280" />
+          <Input
+            className="flex-1 ml-2 bg-white text-black"
+            placeholder="Search..."
+            value={searchInputVal}
+            onChangeText={setSearchInputVal}
+            onSubmitEditing={handleSearch}
+            style={{ borderWidth: 0, shadowOpacity: 0 }}
+          />
+        </View>
+      </View>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')} className="flex-1">

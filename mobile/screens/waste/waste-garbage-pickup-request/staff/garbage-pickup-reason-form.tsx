@@ -47,7 +47,7 @@ export default function RejectGarbagePickupForm() {
         >
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             <View className="mb-8">
-            <View className="space-y-4">
+            <View className="space-y-4 p-6">
                 <FormInput
                 control={control}
                 label="Reason"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Modal, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, Image, RefreshControl } from "react-native";
 import { CheckCircle, XCircle, X, Search, Info } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,30 +8,41 @@ import { useGetGarbagePendingRequest } from "../queries/garbagePickupStaffFetchQ
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useRouter } from "expo-router";
+import { LoadingState } from "@/components/ui/loading-state";
+import EmptyState from "@/components/ui/emptyState";
 
 export default function PendingGarbageRequest() {
+  const [searchInputVal, setSearchInputVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, _setPageSize] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const router = useRouter();
   
-  const { data: pendingReqData = [], isLoading } = useGetGarbagePendingRequest();
+  // Query hook with pagination and search
+  const { 
+    data: pendingReqData, 
+    isLoading, 
+    refetch 
+  } = useGetGarbagePendingRequest(currentPage, pageSize, searchQuery);
 
-  const filteredData = pendingReqData.filter((request) => {
-    const searchString = `
-      ${request.garb_id} 
-      ${request.garb_requester} 
-      ${request.garb_location} 
-      ${request.garb_waste_type} 
-      ${request.garb_pref_date} 
-      ${request.garb_pref_time} 
-      ${request.garb_additional_notes || ""}
-      ${request.file_url || ""}
-      ${request.sitio_name || ""}
-    `.toLowerCase();
-    return searchString.includes(searchQuery.toLowerCase());
-  });
+  const requests = pendingReqData?.results || [];
+  const totalCount = pendingReqData?.count || 0;
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  };
 
   const handleViewImage = (imageUrl: string) => {
     setCurrentImage(imageUrl);
@@ -59,52 +70,64 @@ export default function PendingGarbageRequest() {
     });
   };
 
+  // Empty state component
+  const renderEmptyState = () => (
+  searchQuery ? (
+    <EmptyState emptyMessage="No pending requests found" />
+  ) : (
+    <EmptyState emptyMessage="No pending requests available" />
+  )
+);
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
+
   return (
     <View className="flex-1">
       {/* Header */}
       <Text className="text-lg font-medium text-gray-800 mb-2">
-        Pending Requests ({filteredData.length})
+        Pending Requests ({requests.length})
       </Text>
 
       {/* Search Bar */}
-      {!isLoading?(
-        <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3 mb-4 mt-2">
+      <View className="mb-4">
+        <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3">
           <Search size={18} color="#6b7280" />
           <Input
             className="flex-1 ml-2 bg-white text-black"
-            placeholder="Search pending requests..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            placeholder="Search rejected requests..."
+            value={searchInputVal}
+            onChangeText={setSearchInputVal}
+            onSubmitEditing={handleSearch}
             style={{ borderWidth: 0, shadowOpacity: 0 }}
           />
         </View>
-      ):( null )}
+      </View>
 
       {/* List */}
-      {isLoading ? (
-        <View className="justify-center items-center">
-          <Text className="text-center text-gray-500 py-8">Loading pending requests...</Text>
-        </View>
-      ) : filteredData.length === 0 ? (
-        <View className="justify-center items-center">
-          <View className="bg-blue-50 p-6 rounded-lg items-center">
-            <Info size={24} color="#3b82f6" className="mb-2" />
-            <Text className="text-center text-gray-600">
-              {pendingReqData.length === 0 
-                ? "No pending requests available" 
-                : "No matching pending requests found"}
-            </Text>
-            {searchQuery && (
-              <Text className="text-center text-gray-500 mt-1">
-                Try a different search term
-              </Text>
-            )}
-          </View>
-        </View>
+      {isLoading && !isRefreshing ? (
+        renderLoadingState()
+      ) : totalCount === 0 ? (
+        renderEmptyState()
       ) : (
-        <ScrollView className="pb-4" showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}>
+        <ScrollView 
+          className="pb-4" 
+          showsVerticalScrollIndicator={false} 
+          showsHorizontalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#00a8f0']}
+            />
+          }
+        >
           <View className="gap-4">
-            {filteredData.map((request) => (
+            {requests.map((request) => (
               <Card
                 key={request.garb_id}
                 className="border border-gray-200 rounded-lg bg-white"
@@ -191,7 +214,7 @@ export default function PendingGarbageRequest() {
         </ScrollView>
       )}
 
-      {/* Image Modal - Same as in rejected requests */}
+      {/* Image Modal */}
       <Modal
         visible={viewImageModalVisible}
         transparent={true}

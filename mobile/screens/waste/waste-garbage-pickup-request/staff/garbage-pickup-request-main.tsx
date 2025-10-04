@@ -217,6 +217,7 @@ export default function GarbagePickupMain() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
       headerTitle={<Text className="text-gray-900 text-[13px]">Garbage Pickup Requests</Text>}
       rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
     >
@@ -240,7 +241,7 @@ export default function GarbagePickupMain() {
 
       {/* Tab Content */}
       <View className="flex-1 bg-gray-50">
-        <View className="flex-1 bg-white rounded-lg shadow-sm p-4">{renderTabContent()}</View>
+        <View className="flex-1 bg-white rounded-lg shadow-sm p-6">{renderTabContent()}</View>
       </View>
     </PageLayout>
   )

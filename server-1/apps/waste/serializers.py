@@ -712,7 +712,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
                 'pick_time': assignment.pick_time.strftime('%H:%M') if assignment.pick_time else None,
                 'driver': assignment.wstp_id.get_staff_name() if assignment.wstp_id else None,
                 'truck': self._get_truck_info(assignment.truck_id) if assignment.truck_id else None,
-                'collectors': self._get_collector_names(assignment)
+                'collectors': self._get_collector_names(assignment),
             }
         except Pickup_Assignment.DoesNotExist:
             return None
@@ -720,9 +720,10 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             print(f"Error getting assignment info: {str(e)}")
             return None
 
+
     def _get_collector_names(self, assignment):
         try:
-            collectors = assignment.assignment_collector_set.all()  # ← use default reverse name
+            collectors = assignment.collectors.all()
             return [
                 collector.wstp_id.get_staff_name()
                 for collector in collectors
@@ -731,6 +732,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting collectors: {str(e)}")
             return []
+
 
 
     def _get_truck_info(self, truck):
