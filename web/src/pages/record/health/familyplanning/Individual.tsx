@@ -146,16 +146,7 @@ const IndividualFamPlanningTable: React.FC = () => {
   const location = useLocation();
   const { patientId } = location.state || {};
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date()); // For countdown timer
-
-  // Update time every minute for countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, []);
+  // Removed unused currentTime state and its related logic
 
   const {
     data: fpPatientRecords = [],

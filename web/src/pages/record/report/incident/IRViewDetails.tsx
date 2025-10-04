@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useGetIRInfo } from "../queries/reportFetch";
 import { useLoading } from "@/context/LoadingContext";
 import { MediaGallery } from "@/components/ui/media-gallery";
 import { getDateTimeFormat } from "@/helpers/dateHelper";
@@ -55,7 +54,7 @@ export default function IRViewDetails() {
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const { showLoading, hideLoading } = useLoading();
   const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
-  const { data: IRInfo, isLoading } = useGetIRInfo(params?.ir_id);
+  const { data: IRInfo, isLoading } =   (params?.ir_id);
   const images = IRInfo?.files || [];
 
   // ================ SIDE EFFECTS ================

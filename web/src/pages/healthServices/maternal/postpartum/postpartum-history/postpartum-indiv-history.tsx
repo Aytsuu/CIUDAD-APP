@@ -35,7 +35,7 @@ interface PrenatalVisit {
 
 export default function PostpartumIndivHistory() {
   const location = useLocation();
-  const { patientData, pregnancyId, visitNumber, recordId } = location.state?.params || {};
+  const { patientData, pregnancyId, visitNumber } = location.state?.params || {};
 
   // fetching
   const { data: prenatalCareData, isLoading, error } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "");
@@ -91,7 +91,7 @@ export default function PostpartumIndivHistory() {
     return detectChanges(visit, previousVisit);
   });
 
-  const hasData = processedPrenatalData && processedPrenatalData.length > 0;
+  // const hasData = processedPrenatalData && processedPrenatalData.length > 0;
 
   if (isLoading) {
     return (

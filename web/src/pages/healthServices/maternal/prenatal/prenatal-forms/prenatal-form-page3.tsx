@@ -487,7 +487,7 @@ export default function PrenatalFormThirdPg({
                     </div>
                   ) : (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions ?? []}
+                      medicines={medicineStocksOptions?.medicines ?? []}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
