@@ -47,9 +47,13 @@ export default function AcceptedGarbageRequest() {
   // Empty state component
   const renderEmptyState = () => (
     searchQuery ? (
-      <EmptyState emptyMessage="No accepted requests found" />
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <EmptyState emptyMessage="No accepted requests found" />
+      </View>
     ) : (
-      <EmptyState emptyMessage="No accepted requests available" />
+      <View className="flex-1 justify-center items-center bg-gray-50">
+          <EmptyState emptyMessage="No accepted requests available" />
+      </View>
     )
   );
 

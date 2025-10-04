@@ -73,57 +73,61 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             </View>
 
             {/* Scrollable content */}
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <View className="flex-1">
                 {imageDocs.length === 0 ? (
-                    <EmptyState emptyMessage="No supporting images available yet."/>
+                    <View className="flex-1 justify-center items-center">
+                        <EmptyState emptyMessage="No supporting images available yet."/>
+                    </View>
                 ) : (
-                    <View className="pb-3">
-                        {/* Image Gallery */}
-                        <View className="mb-6">
-                            <View className="flex-row flex-wrap justify-between">
-                                {imageDocs.map((doc, index) => (
-                                    <View key={doc.bpf_id} className="w-[48%] mb-3">
-                                        <Pressable 
-                                            onPress={() => handleViewImages(imageDocs, index)}
-                                            className="relative bg-white border border-gray-200 rounded-lg overflow-hidden"
-                                        >
-                                            <Image 
-                                                source={{ uri: doc.bpf_url }}
-                                                className="w-full h-32"
-                                                resizeMode="cover"
-                                            />
-                                            <View className="p-2">
-                                                <Text className="text-gray-900 font-medium text-xs font-sans" numberOfLines={1}>
-                                                    {doc.bpf_name}
-                                                </Text>
-                                                <Text className="text-gray-500 text-xs mt-1 font-sans">
-                                                    {formatTimestamp(doc.bpf_upload_date)}
-                                                </Text>
-                                                <Text className="text-gray-600 text-xs mt-1 font-sans" numberOfLines={2}>
-                                                    {doc.bpf_description || 'No description available'}
-                                                </Text>
-                                            </View>
-                                            <ConfirmationModal
-                                                trigger={
-                                                    <TouchableOpacity
-                                                        className="absolute top-2 right-2 bg-gray-900/80 rounded-full p-1"
-                                                    >
-                                                        <Trash2 size={16} color="#FFFFFF" />
-                                                    </TouchableOpacity>
-                                                }
-                                                title="Confirm Delete"
-                                                description={`Are you sure you want to delete ${doc.bpf_name}?`}
-                                                actionLabel="Confirm"
-                                                onPress={() => handleDeleteDocument(doc.bpf_id)}
-                                            />
-                                        </Pressable>
-                                    </View>
-                                ))}
+                    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+                        <View className="pb-3">
+                            {/* Image Gallery */}
+                            <View className="mb-6">
+                                <View className="flex-row flex-wrap justify-between">
+                                    {imageDocs.map((doc, index) => (
+                                        <View key={doc.bpf_id} className="w-[48%] mb-3">
+                                            <Pressable 
+                                                onPress={() => handleViewImages(imageDocs, index)}
+                                                className="relative bg-white border border-gray-200 rounded-lg overflow-hidden"
+                                            >
+                                                <Image 
+                                                    source={{ uri: doc.bpf_url }}
+                                                    className="w-full h-32"
+                                                    resizeMode="cover"
+                                                />
+                                                <View className="p-2">
+                                                    <Text className="text-gray-900 font-medium text-xs font-sans" numberOfLines={1}>
+                                                        {doc.bpf_name}
+                                                    </Text>
+                                                    <Text className="text-gray-500 text-xs mt-1 font-sans">
+                                                        {formatTimestamp(doc.bpf_upload_date)}
+                                                    </Text>
+                                                    <Text className="text-gray-600 text-xs mt-1 font-sans" numberOfLines={2}>
+                                                        {doc.bpf_description || 'No description available'}
+                                                    </Text>
+                                                </View>
+                                                <ConfirmationModal
+                                                    trigger={
+                                                        <TouchableOpacity
+                                                            className="absolute top-2 right-2 bg-gray-900/80 rounded-full p-1"
+                                                        >
+                                                            <Trash2 size={16} color="#FFFFFF" />
+                                                        </TouchableOpacity>
+                                                    }
+                                                    title="Confirm Delete"
+                                                    description={`Are you sure you want to delete ${doc.bpf_name}?`}
+                                                    actionLabel="Confirm"
+                                                    onPress={() => handleDeleteDocument(doc.bpf_id)}
+                                                />
+                                            </Pressable>
+                                        </View>
+                                    ))}
+                                </View>
                             </View>
                         </View>
-                    </View>
+                    </ScrollView>
                 )}
-            </ScrollView>
+            </View>
 
             {/* Image Viewer Modal */}
             <Modal

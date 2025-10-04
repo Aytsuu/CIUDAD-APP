@@ -134,7 +134,11 @@ export default function RatesPage4() {
     const emptyMessage = searchQuery
     ? 'No records found. Try adjusting your search terms.'
     : 'No records available yet.';
-    return <EmptyState emptyMessage={emptyMessage} />;
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50 py-10">
+        <EmptyState emptyMessage={emptyMessage} />
+      </View>
+    );
   };
 
   // Loading state component

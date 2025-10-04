@@ -93,7 +93,9 @@ export default function BudgetPlanView() {
                 )}
 
                 {activeTab === "history" && (
-                    <BudgetPlanHistory planId={plan_id as string} />
+                    <View className="flex-1">
+                        <BudgetPlanHistory planId={plan_id as string} />
+                    </View>
                 )}
 
                 {activeTab === "documents" && (

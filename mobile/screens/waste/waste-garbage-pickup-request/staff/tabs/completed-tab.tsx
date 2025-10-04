@@ -46,9 +46,13 @@ export default function CompletedGarbageRequest() {
   // Empty state component
   const renderEmptyState = () => (
     searchQuery ? (
-      <EmptyState emptyMessage="No completed requests found" />
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <EmptyState emptyMessage="No completed requests found" />
+      </View>
     ) : (
-      <EmptyState emptyMessage="No completed requests available" />
+      <View className="flex-1 justify-center items-center bg-gray-50">
+          <EmptyState emptyMessage="No completed requests available" />
+      </View>
     )
   );
 

@@ -73,9 +73,13 @@ export default function PendingGarbageRequest() {
   // Empty state component
   const renderEmptyState = () => (
   searchQuery ? (
-    <EmptyState emptyMessage="No pending requests found" />
+    <View className="flex-1 justify-center items-center bg-gray-50">
+        <EmptyState emptyMessage="No pending requests found" />
+    </View>
   ) : (
-    <EmptyState emptyMessage="No pending requests available" />
+    <View className="flex-1 justify-center items-center bg-gray-50">
+        <EmptyState emptyMessage="No pending requests available" />
+    </View>
   )
 );
 

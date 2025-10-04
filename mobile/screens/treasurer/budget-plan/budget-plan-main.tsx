@@ -177,16 +177,17 @@ export default function BudgetPlanMain() {
   ));
 
   // Empty state component
-   const renderEmptyState = () => {
+  const renderEmptyState = () => {
     const emptyMessage = searchQuery
     ? 'No records found. Try adjusting your search terms.'
     : 'No records available yet.';
+    
     return (
-        <View className="flex-1 justify-center items-center">
-          <EmptyState emptyMessage={emptyMessage} />
-        </View>
-      );  
-    };
+      <View className="flex-1 justify-center items-center py-8">
+        <EmptyState emptyMessage={emptyMessage} />
+      </View>
+    );
+  };
 
   // Loading state component
   const renderLoadingState = () => (
@@ -194,47 +195,6 @@ export default function BudgetPlanMain() {
       <LoadingState/>
     </View>
   );
-
-  // Pagination component
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4 mx-4">
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1 ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === 1 ? 'text-gray-400' : 'text-white'
-          }`}>
-            Previous
-          </Text>
-        </TouchableOpacity>
-        
-        <Text className="text-gray-600 font-medium">
-          Page {currentPage} of {totalPages}
-        </Text>
-        
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === totalPages ? 'text-gray-400' : 'text-white'
-          }`}>
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   // Handle tab change
   const handleTabChange = (tab: 'active' | 'archive') => {
@@ -277,8 +237,8 @@ export default function BudgetPlanMain() {
           )}
 
           {/* Tabs */}
-          <View className="px-6">
-            <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')}>
+          <View className="px-6 flex-1">
+            <Tabs value={activeTab} onValueChange={val => handleTabChange(val as 'active' | 'archive')} className="flex-1">
               <TabsList className="bg-blue-50 flex-row justify-between">
                 <TabsTrigger 
                   value="active" 
@@ -301,69 +261,70 @@ export default function BudgetPlanMain() {
               </TabsList>
 
               {/* Active Tab Content */}
-              <TabsContent value="active">
+              <TabsContent value="active" className="flex-1 mt-4">
                 {isLoading && !isRefreshing ? (
                   renderLoadingState()
-                ) : totalCount === 0 ? (
-                  renderEmptyState()
                 ) : (
-                  <FlatList
-                    data={plans}
-                    renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={false} />}
-                    keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={isRefreshing}
-                        onRefresh={handleRefresh}
-                        colors={['#00a8f0']}
-                      />
-                    }
-                    contentContainerStyle={{ 
-                      paddingBottom: 500,
-                      paddingTop: 16
-                    }}
-                    ListEmptyComponent={
-                      <Text className="text-center text-gray-500 py-4">
-                        No active budget plans found
-                      </Text>
-                    }
-                  />
+                  <View className="flex-1">
+                    {totalCount === 0 ? (
+                      renderEmptyState()
+                    ) : (
+                      <>
+                        <FlatList
+                          data={plans}
+                          renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={false} />}
+                          keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
+                          showsVerticalScrollIndicator={false}
+                          refreshControl={
+                            <RefreshControl
+                              refreshing={isRefreshing}
+                              onRefresh={handleRefresh}
+                              colors={['#00a8f0']}
+                            />
+                          }
+                          contentContainerStyle={{ 
+                            paddingBottom: 16,
+                            paddingTop: 16
+                          }}
+                        />
+    
+                      </>
+                    )}
+                  </View>
                 )}
-                {!isLoading && totalCount > 0 && renderPagination()}
               </TabsContent>
 
               {/* Archive Tab Content */}
-              <TabsContent value="archive">
+              <TabsContent value="archive" className="flex-1 mt-4">
                 {isLoading && !isRefreshing ? (
                   renderLoadingState()
-                ) : totalCount === 0 ? (
-                  renderEmptyState()
                 ) : (
-                  <FlatList
-                    data={plans}
-                    renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={true} />}
-                    keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={isRefreshing}
-                        onRefresh={handleRefresh}
-                        colors={['#00a8f0']}
-                      />
-                    }
-                    contentContainerStyle={{ 
-                      paddingBottom: 500,
-                      paddingTop: 16
-                    }}
-                    ListEmptyComponent={
-                      <Text className="text-center text-gray-500 py-4">
-                        No archived budget plans found
-                      </Text>
-                    }
-                  />
+                  <View className="flex-1">
+                    {totalCount === 0 ? (
+                      renderEmptyState()
+                    ) : (
+                      <>
+                        <FlatList
+                          data={plans}
+                          renderItem={({ item }) => <RenderBudgetPlanCard item={item} isArchived={true} />}
+                          keyExtractor={(item) => item.plan_id?.toString() ?? Math.random().toString()}
+                          showsVerticalScrollIndicator={false}
+                          refreshControl={
+                            <RefreshControl
+                              refreshing={isRefreshing}
+                              onRefresh={handleRefresh}
+                              colors={['#00a8f0']}
+                            />
+                          }
+                          contentContainerStyle={{ 
+                            paddingBottom: 16,
+                            paddingTop: 16
+                          }}
+                        />
+                      </>
+                    )}
+                  </View>
                 )}
-                {!isLoading && totalCount > 0 && renderPagination()}
               </TabsContent>
             </Tabs>
           </View>

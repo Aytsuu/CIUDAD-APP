@@ -141,7 +141,11 @@ export default function MinutesOfMeetingMain() {
     const emptyMessage = searchQuery
     ? 'No records found. Try adjusting your search terms.'
     : 'No records available yet.';
-    return <EmptyState emptyMessage={emptyMessage} />;
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50 py-10">
+        <EmptyState emptyMessage={emptyMessage} />
+      </View>
+    );
   };
 
   // Loading state component
@@ -151,46 +155,6 @@ export default function MinutesOfMeetingMain() {
     </View>
   )
 
-  // Pagination component
-  const renderPagination = () => {
-    if (totalPages <= 1) return null
-
-    return (
-      <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 rounded-lg mt-4">
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1 ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === 1 ? 'text-gray-400' : 'text-white'
-          }`}>
-            Previous
-          </Text>
-        </TouchableOpacity>
-        
-        <Text className="text-gray-600 font-medium">
-          Page {currentPage} of {totalPages}
-        </Text>
-        
-        <TouchableOpacity
-          onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages ? 'bg-gray-200' : 'bg-blue-500'
-          }`}
-        >
-          <Text className={`font-medium ${
-            currentPage === totalPages ? 'text-gray-400' : 'text-white'
-          }`}>
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
-    )
-  }
 
   // Handle tab change
   const handleTabChange = (tab: 'active' | 'archive') => {
@@ -290,7 +254,6 @@ export default function MinutesOfMeetingMain() {
                     }}
                     style={{ flex: 1 }}
                   />
-                  {renderPagination()}
                 </View>
               )}
             </TabsContent>
@@ -322,7 +285,6 @@ export default function MinutesOfMeetingMain() {
                     }}
                     style={{ flex: 1 }}
                   />
-                  {renderPagination()}
                 </View>
               )}
             </TabsContent>
