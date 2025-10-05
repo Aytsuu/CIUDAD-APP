@@ -5,6 +5,7 @@ import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { format } from 'date-fns'; // Import format from date-fns
+import { calculateAge } from '@/helpers/ageCalculator';
 
 import { useAddPrenatalAppointment } from './queries/add';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,7 +86,7 @@ const PrenatalBookingPage: React.FC = () => {
   };
 
   // Restrict access for non-female users or users <= 13 years old
-  if (user?.personal?.per_sex !== 'FEMALE' || (user?.personal?.per_dob && calculateAge(user.personal.per_dob) <= 13)) {
+  if (user?.personal?.per_sex !== 'FEMALE' || (user?.personal?.per_dob && Number(calculateAge(user?.personal?.per_dob)) <= 13)) {
     Alert.alert(
       'Access Restricted',
       'Maternal services are only available for female users above 13 years old.',
