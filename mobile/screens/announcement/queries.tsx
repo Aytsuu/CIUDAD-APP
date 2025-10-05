@@ -6,8 +6,8 @@ import {
   postAnnouncementRecipient,
   postAnnouncementFile,
   deleteAnnouncement,
-  getCreatedReceivedAnnouncements
 } from "./restful-api";
+import api from "@/api/api";
 
 // Fetch all announcements
 export const useGetAnnouncement = () => {
@@ -29,12 +29,26 @@ export const useGetAnnouncementRecipient = (ann_id: number) => {
 };
 
 
-export function useGetCreatedReceivedAnnouncements(staff_id: string) {
+export function useGetAnnouncementList(page: number = 1, page_size: number = 10, search: string) {
   return useQuery({
-    queryKey: ["createdReceivedAnnouncements", staff_id],
-    queryFn: () => getCreatedReceivedAnnouncements(staff_id),
-    enabled: !!staff_id,
+    queryKey: ["announcements", page, page_size, search],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`announcement/list/`, {
+          params: {
+            page,
+            page_size,
+            search
+          }
+        });
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
     staleTime: 5000,
+    placeholderData: (previous) => previous,
+    retry: false,
   });
 }
 

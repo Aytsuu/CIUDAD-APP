@@ -20,6 +20,7 @@ import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
 import Svg, { Path } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
+import { capitalize } from "@/helpers/capitalize";
 
 const styles = StyleSheet.create({
   container: {
@@ -163,7 +164,7 @@ export default function HomeScreen() {
           style={{ backgroundColor: '#f3f4f6' }}
         />
         <Text className="text-md text-gray-700 font- mb-2">
-          Hi, {user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname}! 👋
+          Hi, {capitalize(user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname)}! 👋
         </Text>
       </View>
 

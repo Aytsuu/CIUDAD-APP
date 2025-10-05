@@ -13,6 +13,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# New
+class AnnouncementListSerializer(serializers.ModelSerializer):
+    staff = serializers.SerializerMethodField()
+    class Meta:
+        model = Announcement
+        fields = '__all__'
+    
+    def get_staff(self, obj):
+        info = obj.staff.rp.per
+        name = f"{info.per_lname}, {info.per_fname}{f" {info.per_mname[0]}." if info.per_mname else ""}"
+
+        return {
+            "id": obj.staff.staff_id,
+            "name": name,
+            "position": obj.staff.pos.pos_title
+        }
+
+
 class AnnouncementFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementFile

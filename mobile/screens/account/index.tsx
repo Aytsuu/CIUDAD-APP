@@ -14,6 +14,8 @@ import Settings from '@/assets/icons/essentials/settings.svg'
 import UserLock from '@/assets/icons/essentials/user-lock.svg'
 import Star from '@/assets/icons/essentials/star.svg'
 import Service from '@/assets/icons/essentials/service.svg'
+import House from '@/assets/icons/essentials/house.svg'
+import UserGorup from '@/assets/icons/essentials/user-group.svg'
 import InformationCircle from '@/assets/icons/essentials/information-circle.svg'
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
@@ -24,15 +26,25 @@ export default () => {
 
   const menuItems = [
     {
+      name: "About",
+      icon: InformationCircle,
+      addIcon: Ciudad,
+      route: "/(account)/about"
+    },
+    {
       name: "Personal Information",
       icon: UserLock,
       route: "/(account)/personal"
     },
     {
-      name: "About",
-      icon: InformationCircle,
-      addIcon: Ciudad,
-      route: "/(account)/about"
+      name: "Family Information",
+      icon: UserGorup,
+      route: "/(account)/family"
+    },
+    {
+      name: "Houses Owned",
+      icon: House,
+      route: "/(account)/house"
     },
     {
       name: "Rate our app",
@@ -107,8 +119,8 @@ export default () => {
             >
               <View className="flex-row items-center gap-2">
                 <item.icon width={35} height={20}/>
-                <Text className="text-[14px] text-gray-800">{item.name}</Text>
-                {item.addIcon && <item.addIcon width={40} height={30}/>}
+                <Text className="text-[13px] text-gray-800">{item.name}</Text>
+                {item.addIcon && <item.addIcon width={40} height={20}/>}
               </View>
               <ChevronRight className="text-primaryBlue"/>
             </TouchableOpacity>
