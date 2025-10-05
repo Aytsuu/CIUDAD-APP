@@ -214,7 +214,7 @@ function WasteColEdit() {
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -258,7 +258,7 @@ function WasteColEdit() {
       }
       stickyFooter={true}
     >
-      <View className="w-full px-4">
+      <View className="w-full px-6">
         {/* Date Input */}
         <View className="relative">
           <FormSelect

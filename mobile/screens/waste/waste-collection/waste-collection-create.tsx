@@ -189,7 +189,7 @@ function WasteColCreate() {
 
       footer={
             <TouchableOpacity
-              className="bg-primaryBlue py-4 rounded-md w-full items-center"
+              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
             >
               <Text className="text-white text-base font-semibold">Schedule</Text>
@@ -197,7 +197,7 @@ function WasteColCreate() {
       }
       stickyFooter={true}
     >
-        <View className="w-full px-4">
+        <View className="w-full px-6">
 
             <FormSelect
                 control={form.control}

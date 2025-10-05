@@ -626,7 +626,7 @@ const WasteCollectionMain = () => {
     >
 
       {/* Search and Filter */}
-      <View className="px-4 pb-4 pt-4">
+      <View className="px-6 pb-4 pt-4">
         <View className="flex-row items-center gap-2">
           <View className="relative flex-1">
             <Search className="absolute left-3 top-3 text-gray-500" size={17} />
@@ -652,7 +652,7 @@ const WasteCollectionMain = () => {
       </View>
 
       {/* Create Button */}
-      <View className="pb-4 px-4">
+      <View className="pb-4 px-6">
         <TouchableOpacity
           className="bg-primaryBlue flex-row items-center justify-center w-full px-4 py-4 rounded-lg mb-3"
           onPress={() => router.push('/(waste)/waste-collection/waste-col-create')}
@@ -663,7 +663,7 @@ const WasteCollectionMain = () => {
       </View>      
 
       {/* View Mode Toggle - Simplified version */}
-      <View className="flex-row justify-center px-3 mb-3">
+      <View className="flex-row justify-center px-6 mb-3">
         <View className="flex-row bg-blue-50 mb-3 w-full p-2 rounded-md items-center">
           <TouchableOpacity
             className={`flex-1 mx-1 h-8 items-center justify-center ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
@@ -693,7 +693,7 @@ const WasteCollectionMain = () => {
 
       {/* Conditional rendering based on active tab */}
       {activeTab === 'active' ? (
-        <View className="flex-1 px-4">
+        <View className="flex-1 px-6">
           {isLoading || isRestoring || isArchiving || isDeleting ? (
             <View className="flex-1 justify-center items-center">
               <ActivityIndicator size="large" color="#2a3a61" />
@@ -725,7 +725,7 @@ const WasteCollectionMain = () => {
           )}
         </View>
       ) : (
-        <View className="flex-1 px-4">
+        <View className="flex-1 px-6">
           {isLoading || isRestoring || isArchiving || isDeleting ? (
             <View className="flex-1 justify-center items-center">
               <ActivityIndicator size="large" color="#2a3a61" />
