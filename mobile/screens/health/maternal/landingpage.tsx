@@ -83,10 +83,10 @@ const MaternalLanding = () => {
         {/* Conditionally render button or restricted message */}
         {isEligible ? (
           <Button
-            className='justify-center bg-blue-800 items-center flex mt-4'
+            className='justify-center bg-blue-900 items-center flex mt-4'
             onPress={handleBookingPress}
           >
-            <Text className='color-white font-PoppinsSemiBold text-lg'>BOOK PRENATAL APPOINTMENT</Text>
+            <Text className='color-white font-PoppinsSemiBold  text-lg'>BOOK PRENATAL APPOINTMENT</Text>
           </Button>
         ) : (
           <View className='mt-4'>

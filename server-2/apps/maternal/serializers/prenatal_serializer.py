@@ -219,11 +219,11 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
         return None
 
     def get_staff_details(self, obj):
-        if obj.staff_id:
+        if obj.staff:
             return {
-                'staff_id': obj.staff_id.staff_id,
-                'staff_fname': getattr(obj.staff_id, 'staff_fname', 'Unknown'),
-                'staff_lname': getattr(obj.staff_id, 'staff_lname', 'Unknown'),
+                'staff_id': obj.staff.staff_id,
+                'staff_fname': getattr(obj.staff, 'staff_fname', 'Unknown'),
+                'staff_lname': getattr(obj.staff, 'staff_lname', 'Unknown'),
             }
         return None
 
@@ -432,10 +432,39 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                             ).select_related('fam').first()
 
                             if family_composition and family_composition.fam:
+                                # Get all family members to find MOTHER and FATHER roles
+                                family_members = FamilyComposition.objects.filter(
+                                    fam=family_composition.fam
+                                ).select_related('rp', 'rp__per')
+                                
+                                family_heads = {}
+                                for member in family_members:
+                                    role = member.fc_role.lower()
+                                    if role in ['father'] and member.rp and member.rp.per:
+                                        family_heads[role] = {
+                                            'rp_id': member.rp.rp_id,
+                                            'role': member.fc_role,
+                                            'composition_id': member.fc_id,
+                                            'personal_info': {
+                                                'per_lname': member.rp.per.per_lname,
+                                                'per_fname': member.rp.per.per_fname,
+                                                'per_mname': member.rp.per.per_mname,
+                                                'per_dob': member.rp.per.per_dob,
+                                                'per_sex': member.rp.per.per_sex,
+                                                # 'per_occupation': getattr(ember.rp.per, 'per_occupation', ''),
+                                            }
+                                        }
+                                
                                 patient_data['family'] = {
                                     'fam_id': family_composition.fam.fam_id,
                                     'fc_role': family_composition.fc_role,
                                     'fam_date_registered': family_composition.fam.fam_date_registered,
+                                    'family_heads': family_heads,  # Include MOTHER and FATHER details
+                                }
+                            else:
+                                patient_data['family'] = {
+                                    'fam': None,
+                                    'note': 'No family composition found for this resident'
                                 }
                         except Exception as e:
                             print(f"Error getting family info: {e}")
@@ -602,8 +631,8 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             } for tt in tts]
     
     def get_staff_details(self, obj):
-        if obj.staff_id:
-            staff = obj.staff_id
+        if obj.staff:
+            staff = obj.staff
             staff_name = None
             if hasattr(staff, 'rp') and staff.rp and hasattr(staff.rp, 'per') and staff.rp.per:
                 personal = staff.rp.per
@@ -1077,11 +1106,13 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 if assessed_by:
                     try:
                         staff = Staff.objects.get(staff_id=assessed_by)
-                        print(f"Linked to staff: {staff.staff_id}")
+                        print(f"✅ Found staff: {staff.staff_id} - {staff}")
                     except Staff.DoesNotExist:
-                        print(f"Staff with ID {assessed_by} not found. Proceeding without staff link.")
+                        print(f"❌ Staff with ID {assessed_by} not found. Proceeding without staff link.")
+                        staff = None
 
                 # create Prenatal_Form
+                print(f"🔍 Creating prenatal form with staff: {staff}")
                 prenatal_form = Prenatal_Form.objects.create(
                     patrec_id=patient_record,
                     pregnancy_id=pregnancy,
@@ -1089,10 +1120,11 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     spouse_id=spouse,
                     bm_id=body_measurement,
                     followv_id=follow_up_visit,
-                    staff_id=staff,
+                    staff=staff if staff else None,
                     **validated_data 
                 )
-                print(f"Created prenatal form: {prenatal_form.pf_id}")
+                print(f"✅ Created prenatal form: {prenatal_form.pf_id}")
+                print(f"🔍 Prenatal form staff field after creation: {prenatal_form.staff}")
 
                 # create Previous_Hospitalization records
                 if previous_hospitalizations_data:
@@ -1176,8 +1208,8 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         if instance.followv_id:
             representation['followv_id'] = instance.followv_id.followv_id
 
-        if instance.staff_id:
-            representation['staff_id'] = instance.staff_id.staff_id
+        if instance.staff:
+            representation['staff_id'] = instance.staff.staff_id
         
         if hasattr(instance, 'pf_obstetric_risk_code') and instance.pf_obstetric_risk_code.exists():
             representation['obstetric_risk_code_id'] = instance.pf_obstetric_risk_code.first().pforc_id
@@ -1191,7 +1223,13 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrenatalAppointmentRequest
-        fields = ['requested_at', 'confirmed_at', 'status', 'rp_id', 'pat_id']
+        fields = ['requested_at', 'approved_at', 'cancelled_at', 'completed_at', 'rejected_at', 'reason', 'status', 'rp_id', 'pat_id']
         extra_kwargs = {
             'pat_id': {'required': False, 'allow_null': True},
         }
+
+
+class PrenatalAppointmentCancellationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrenatalAppointmentRequest
+        fields = ['cancelled_at', 'status']

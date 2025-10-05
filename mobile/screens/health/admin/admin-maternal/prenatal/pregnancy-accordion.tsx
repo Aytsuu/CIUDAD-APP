@@ -167,7 +167,7 @@ export function PregnancyAccordion({
                     const visitNumber = record.visitNumber || sortedRecords.length - recordIndex
 
                     return (
-                      <Card key={record.id} className="border-l-4 border-l-blue-200 bg-white">
+                      <Card key={record.id} className="border-l-4 mb-2 border-l-blue-200 bg-white">
                         <View className="p-4">
                             <View className="flex-row items-center justify-between mb-3">
                                 <View className="flex-row items-center gap-2">

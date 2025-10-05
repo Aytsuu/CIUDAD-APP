@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View,Text,TouchableOpacity,ScrollView,Alert,SafeAreaView,StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
+import { format } from 'date-fns'; // Import format from date-fns
 
 import { useAddPrenatalAppointment } from './queries/add';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGetScheduler } from '../admin/admin-scheduler/queries/schedulerFetchQueries';
 
 interface User {
   name: string;
@@ -14,11 +16,28 @@ interface User {
 }
 
 interface PrenatalAppointmentData {
-  userId: string;
-  reqDate: string;
-  time: string;
-  appointmentType: 'prenatal';
+  requested_at: string;
+  status: string;
+  rp_id: string;
+  pat_id: string;
+  approved_at?: string | null;
+  cancelled_at?: string | null;
+  completed_at?: string | null;
+  rejected_at?: string | null;
+  reason?: string | null;
 }
+
+// Helper function to calculate age from DOB
+const calculateAge = (dob: string): number => {
+  const birthDate = new Date(dob);
+  const today = new Date('2025-09-28'); // Current date
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 const PrenatalBookingPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -30,39 +49,86 @@ const PrenatalBookingPage: React.FC = () => {
   const { user } = useAuth();
   const rp_id = user?.rp;
 
-  const currentUser:User = {
+  const currentUser: User = {
     name: `${user?.personal?.per_fname} ${user?.personal?.per_mname}${user?.personal?.per_lname}`,
     id: rp_id || "",
   };
 
-  const unavailableDates: string[] = [
-    '2024-06-05',
-    '2024-06-06',
-    '2024-06-08',
-    '2024-06-09'
-  ];
+  const { data: schedulersData = [] } = useGetScheduler(); // Fetch scheduler data
 
+  // Compute available days for 'Prenatal' service (case-insensitive)
+  const availableDays = new Set(
+    schedulersData
+      .filter((s) => s.service_name.toLowerCase() === 'prenatal' || s.service_name.toLowerCase() === 'maternal') // Adjust service name as needed
+      .map((s) => s.day)
+  );
+
+  
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
 
   const isDateDisabled = (date: Date): boolean => {
-    const dayOfWeek = date.getDay();
+    const dayName = format(date, 'EEEE'); // Get day name (e.g., 'Thursday')
     const dateString = formatDate(date);
-    // Disable all days except Thursday (4) for prenatal, and unavailable dates
-    return dayOfWeek !== 4 || unavailableDates.includes(dateString);
+
+    if (availableDays.size > 0) {
+      // If services are scheduled, only enable dates on available days
+      return !availableDays.has(dayName);
+    } else {
+      // Fallback to Thursdays if no services are defined
+      const dayOfWeek = date.getDay();
+      return dayOfWeek !== 4;
+    }
   };
 
   const onDateChange = (event: any, selected?: Date): void => {
     setShowDatePicker(false);
     if (selected) {
       if (isDateDisabled(selected)) {
-        Alert.alert('Unavailable Date', 'Prenatal appointments are only available on Thursdays that are not marked as unavailable.');
-        return; 
+        Alert.alert(
+          'Unavailable Date',
+          availableDays.size > 0
+            ? 'Prenatal appointments are only available on scheduled days.'
+            : 'Prenatal appointments are only available on Thursdays.'
+        );
+        return;
       }
       setSelectedDate(selected);
     }
   };
+
+  // Restrict access for non-female users or users <= 13 years old
+  if (user?.personal?.per_sex !== 'FEMALE' || (user?.personal?.per_dob && calculateAge(user.personal.per_dob) <= 13)) {
+    Alert.alert(
+      'Access Restricted',
+      'Maternal services are only available for female users above 13 years old.',
+      [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/home'),
+        },
+      ]
+    );
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-[13px]">Access Restricted</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 justify-center items-center p-4">
+          <Text className="text-lg text-red-600">Maternal services are only available for female users above 13 years old.</Text>
+        </View>
+      </PageLayout>
+    );
+  }
 
   const handleSubmit = (): void => {
     if (!selectedDate) {
@@ -71,8 +137,8 @@ const PrenatalBookingPage: React.FC = () => {
     }
 
     const payload = {
-      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`, 
-      confirmed_at: null,
+      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`,
+      // confirmed_at: null,
       status: 'pending',
       rp_id: rp_id || '',
       pat_id: ''
@@ -98,7 +164,6 @@ const PrenatalBookingPage: React.FC = () => {
       });
   };
 
-
   return (
     <PageLayout
       leftAction={
@@ -112,22 +177,18 @@ const PrenatalBookingPage: React.FC = () => {
       headerTitle={<Text className="text-gray-900 text-[13px]">Prenatal Appointment</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-    
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       <ScrollView className='flex-1 p-4' showsVerticalScrollIndicator={false}>
-        
         {/* Header */}
         <View className='bg-blue-100 p-3 rounded-lg'>
-          <Text className='text-lg font-semibold text-gray-800'>{currentUser .name}</Text>
+          <Text className='text-lg font-semibold text-gray-800'>{currentUser.name}</Text>
           <Text className='text-sm text-gray-600 mt-1'>
-            ID: {currentUser .id}
+            ID: {currentUser.id}
           </Text>
         </View>
 
         {/* Appointment Form */}
         <View className='bg-white rounded-lg p-5 shadow-md'>
-          {/* <Text className='text-xl font-semibold text-gray-800 mb-5'>Book Prenatal Appointment</Text> */}
-          
           {/* Date Selection */}
           <View className='mb-5'>
             <Text className='text-lg font-medium text-gray-700 mb-2'>Select Date</Text>
@@ -145,7 +206,9 @@ const PrenatalBookingPage: React.FC = () => {
               </Text>
             </TouchableOpacity>
             <Text className='text-xs text-gray-500 mt-1'>
-              Prenatal appointments available only every Thursdays
+              {availableDays.size > 0
+                ? 'Prenatal appointments available only on scheduled days'
+                : 'Prenatal appointments available only every Thursday'}
             </Text>
           </View>
 
@@ -191,7 +254,7 @@ const PrenatalBookingPage: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
-   </PageLayout>
+    </PageLayout>
   );
 };
 

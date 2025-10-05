@@ -14,7 +14,10 @@ from ..serializers.patients_serializers import *
 from ..serializers.followvisits_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 from ...pagination import StandardResultsPagination
-
+from apps.medicalConsultation.models import *
+from apps.medicalConsultation.serializers import *
+from apps.maternal.models import *
+from apps.maternal.serializers.prenatal_serializer import *
 
 @api_view(['GET'])
 def get_resident_profile_list(request):
@@ -473,22 +476,39 @@ def get_patient_by_resident_id(request, rp_id):
         
 @api_view(['GET'])
 def get_appointments_by_resident_id(request, rp_id):
-    """
-    Retrieves all appointments (FollowUpVisit) for a specific resident based on their rp_id.
-    """
     try:
-        # Step 1: Query FollowUpVisit directly using the correct lookup chain
-        # The chain is patrec -> pat_id -> rp_id
-        appointments = FollowUpVisit.objects.filter(patrec__pat_id__rp_id=rp_id).order_by('-followv_date', '-created_at')
+        # Get follow-up visits
+        follow_up_appointments = FollowUpVisit.objects.filter(
+            patrec__pat_id__rp_id=rp_id
+        ).order_by('-followv_date', '-created_at')
         
-        if not appointments.exists():
+        # Get medical consultation appointments
+        med_consult_appointments = MedConsultAppointment.objects.filter(
+            rp__rp_id=rp_id
+        ).order_by('-scheduled_date', '-created_at')
+        
+        # Get prenatal appointments
+        prenatal_appointments = PrenatalAppointmentRequest.objects.filter(
+            rp_id=rp_id
+        ).order_by('-requested_at')
+        
+        # Check if any appointments exist
+        if not any([follow_up_appointments.exists(), med_consult_appointments.exists(), prenatal_appointments.exists()]):
             return Response(
                 {"detail": "No appointments found for this resident."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = FollowUpVisitSerializer(appointments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Serialize all appointment types
+        follow_up_serializer = FollowUpVisitSerializer(follow_up_appointments, many=True)
+        med_consult_serializer = MedConsultAppointmentSerializer(med_consult_appointments, many=True)
+        prenatal_serializer = PrenatalRequestAppointmentSerializer(prenatal_appointments, many=True)
+        
+        return Response({
+            "follow_up_appointments": follow_up_serializer.data,
+            "med_consult_appointments": med_consult_serializer.data,
+            "prenatal_appointments": prenatal_serializer.data
+        }, status=status.HTTP_200_OK)
     
     except ResidentProfile.DoesNotExist:
         return Response(

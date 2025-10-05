@@ -43,3 +43,23 @@ class PregLossPregnancyView(APIView):
                 'prenatal_end_date': updated_pregnancy.prenatal_end_date
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class PostpartumPregnancyView(APIView):
+    def post(self, request):
+        pat_id = request.data.get('pat_id')
+        pregnancy_id = request.data.get('pregnancy_id')
+        try:
+            pregnancy = Pregnancy.objects.get(pregnancy_id=pregnancy_id, pat_id=pat_id)
+        except Pregnancy.DoesNotExist:
+            return Response({'error': f'Pregnancy with ID {pregnancy_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PregnancyPostpartumCompleteStatusSerializer(pregnancy, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_pregnancy = serializer.update(pregnancy, serializer.validated_data)
+            return Response({
+                'message': 'Pregnancy postpartum completed',
+                'pregnancy_id': updated_pregnancy.pregnancy_id,
+                'status': updated_pregnancy.status, 
+                'postpartum_end_date': updated_pregnancy.postpartum_end_date
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

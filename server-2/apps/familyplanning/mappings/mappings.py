@@ -98,28 +98,28 @@ def get_detailed_monthly_fp_report(request, year, month):
         prev_month_end = (month_start - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
 
         # Debug: Print date range
-        print(f"Date range: {month_start} to {month_end}")
-        print(f"Previous month range: {prev_month_start} to {prev_month_end}")
+        # print(f"Date range: {month_start} to {month_end}")
+        # print(f"Previous month range: {prev_month_start} to {prev_month_end}")
 
         # Debug: Print unique fpt_method_used values
         unique_methods = FP_Record.objects.values('fp_type__fpt_method_used').distinct()
-        print("Unique fpt_method_used values:", [m['fp_type__fpt_method_used'] for m in unique_methods])
+        # print("Unique fpt_method_used values:", [m['fp_type__fpt_method_used'] for m in unique_methods])
 
         # Debug: Print all FP_Record details
         all_records = FP_Record.objects.select_related('fp_type').values(
             'fp_type__fpt_method_used', 'created_at', 'fp_type__fpt_client_type', 'fprecord_id', 'pat__pat_id'
         )
-        print("All FP_Record details:")
-        for record in all_records:
-            print(f"Method: {record['fp_type__fpt_method_used']}, Created: {record['created_at']}, Client Type: {record['fp_type__fpt_client_type']}, Record ID: {record['fprecord_id']}, Patient ID: {record['pat__pat_id']}")
+        # print("All FP_Record details:")
+        # for record in all_records:
+            # print(f"Method: {record['fp_type__fpt_method_used']}, Created: {record['created_at']}, Client Type: {record['fp_type__fpt_client_type']}, Record ID: {record['fprecord_id']}, Patient ID: {record['pat__pat_id']}")
 
         # Debug: Print FP_Assessment_Record details
         assessment_records = FP_Assessment_Record.objects.select_related('fprecord__fp_type').values(
             'fprecord__fp_type__fpt_method_used', 'followv__followv_status', 'followv__followv_date', 'fprecord_id'
         )
-        print("FP_Assessment_Record details:")
-        for record in assessment_records:
-            print(f"Method: {record['fprecord__fp_type__fpt_method_used']}, Status: {record['followv__followv_status']}, Date: {record['followv__followv_date']}, Record ID: {record['fprecord_id']}")
+        # print("FP_Assessment_Record details:")
+        # for record in assessment_records:
+            # print(f"Method: {record['fprecord__fp_type__fpt_method_used']}, Status: {record['followv__followv_status']}, Date: {record['followv__followv_date']}, Record ID: {record['fprecord_id']}")
 
         # Check and update dropouts
         cutoff_start = month_start - timedelta(days=3)
@@ -131,7 +131,7 @@ def get_detailed_monthly_fp_report(request, year, month):
         ).select_related('patrec__pat_id')
         
         patient_ids = set(fu.patrec.pat_id.pat_id for fu in pending_follow_ups if fu.patrec and fu.patrec.pat_id)
-        print(f"Pending follow-ups patient IDs: {patient_ids}")
+        # print(f"Pending follow-ups patient IDs: {patient_ids}")
         for pat_id in patient_ids:
             _check_and_update_dropouts_for_patient(pat_id)
 
@@ -183,7 +183,7 @@ def get_detailed_monthly_fp_report(request, year, month):
             ).exclude(
                 created_at__range=(month_start, month_end)
             ).count()
-            print(f"Method {method}: {outside_count} records outside {month_start} to {month_end}")
+            # print(f"Method {method}: {outside_count} records outside {month_start} to {month_end}")
 
             for age_group in age_groups:
                 # DOB annotation
@@ -229,7 +229,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                     has_current=False
                 )
                 # Debug: Print matching records
-                print(f"Prev month new {method} (age {age_group}): {list(prev_month_new_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                # print(f"Prev month new {method} (age {age_group}): {list(prev_month_new_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
                 prev_month_new_counts[method][age_group] = prev_month_new_query.count()
 
                 # 2. BOM: Previous month's active users + new acceptors
@@ -260,7 +260,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                     has_dropout=False
                 )
                 # Debug: Print matching records
-                print(f"BOM {method} (age {age_group}): {list(bom_carryover_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                # print(f"BOM {method} (age {age_group}): {list(bom_carryover_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
                 bom_counts[method][age_group] = bom_carryover_query.count() + prev_month_new_query.count()
 
                 # 3. NEW: Current month new acceptors
@@ -283,7 +283,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                     has_current=False
                 )
                 # Debug: Print matching records
-                print(f"New {method} (age {age_group}): {list(new_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                # print(f"New {method} (age {age_group}): {list(new_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
                 new_counts[method][age_group] = new_query.count()
 
                 # 4. OTHER: Current users with previous records
@@ -298,7 +298,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                     first_record_date__lt=F('created_at')
                 )
                 # Debug: Print matching records
-                print(f"Other {method} (age {age_group}): {list(other_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
+                # print(f"Other {method} (age {age_group}): {list(other_query.values('fprecord_id', 'fp_type__fpt_method_used', 'created_at', 'pat__pat_id'))}")
                 other_counts[method][age_group] = other_query.count()
 
                 # 5. DROP-OUTS
@@ -333,7 +333,7 @@ def get_detailed_monthly_fp_report(request, year, month):
                     dropout_date__range=(month_start, month_end)
                 )
                 # Debug: Print matching dropouts
-                print(f"Dropouts for {method} (age {age_group}): {list(dropout_query.values('fprecord_id', 'fprecord__fp_type__fpt_method_used', 'followv__followv_date'))}")
+                # print(f"Dropouts for {method} (age {age_group}): {list(dropout_query.values('fprecord_id', 'fprecord__fp_type__fpt_method_used', 'followv__followv_date'))}")
                 drop_outs_counts[method][age_group] = dropout_query.count()
 
         response_data = {

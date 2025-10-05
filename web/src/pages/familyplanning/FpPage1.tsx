@@ -181,6 +181,7 @@ export default function FamilyPlanningForm({
     }
     const realPatId = id.split(' ')[0];
     setSelectedPatientId(realPatId);
+    setSelectedPatientId(id);
     try {
       // Fetch basic patient data
       const response = await api2.get(`patientrecords/patient/${realPatId}/`);

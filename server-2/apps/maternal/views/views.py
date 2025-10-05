@@ -19,13 +19,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 # medical history GET
+# medical history GET
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
         patient = get_object_or_404(Patient, pat_id=pat_id)
-
+        
+        # Get search parameter from query string
+        search_query = request.GET.get('search', '').strip()
+        
         try:
             all_patrec_w_medhis = PatientRecord.objects.filter(
-                pat_id=patient,
+                pat_id=patient
             )
             print("Found patient records w/ medical history for patient: ", patient.pat_id)
 
@@ -33,12 +37,22 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 return Response({
                     'patient': patient.pat_id,
                     'medical_history': [],
-                    'message': 'No medical history found for this patient'
+                    'message': 'No medical history found for this patient',
+                    'search_query': search_query if search_query else None
                 })
 
             medical_history_obj = MedicalHistory.objects.filter(
                 patrec__in=all_patrec_w_medhis 
             ).select_related('ill', 'patrec').order_by('-created_at')
+            
+            # Apply search filter if search query is provided
+            if search_query:
+                medical_history_obj = medical_history_obj.filter(
+                    models.Q(ill__illname__icontains=search_query) |
+                    models.Q(ill__ill_code__icontains=search_query) |
+                    models.Q(ill__ill_description__icontains=search_query)
+                )
+                print(f"Applied search filter: '{search_query}'")
 
             print(f'Found medical history for patient: {patient.pat_id}')
 
@@ -46,15 +60,21 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
             
             return Response({
                 'patient': patient.pat_id,
-                'medical_history': medhis_data
+                'medical_history': medhis_data,
+                'search_query': search_query if search_query else None,
+                'search_results_count': len(medhis_data)
             })
 
         except Exception as e:
             print(f"Error fetching medical history: {e}")
             return Response({
                 'patient': patient.pat_id,
-                'medical_history': []
-            })
+                'medical_history': [],
+                'search_query': search_query if search_query else None,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
 
 # obstetrical history GET
 class PrenatalPatientObsHistoryView(generics.RetrieveAPIView):
@@ -383,6 +403,16 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 status__in=['completed', 'pregnancy loss']
             ).order_by('-created_at').first()
 
+            # Get latest occupation from any prenatal form for this patient
+            latest_occupation = None
+            latest_pf_with_occupation = Prenatal_Form.objects.filter(
+                patrec_id__pat_id=patient,
+                pf_occupation__isnull=False
+            ).exclude(pf_occupation='').order_by('-created_at').first()
+            
+            if latest_pf_with_occupation:
+                latest_occupation = latest_pf_with_occupation.pf_occupation
+
             if not spouse_data and latest_completed_or_pregloss:
                 latest_pf_spouse = Prenatal_Form.objects.filter(
                     pregnancy_id=latest_completed_or_pregloss
@@ -390,12 +420,13 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 if latest_pf_spouse:
                     spouse_serializer = SpouseCreateSerializer(latest_pf_spouse.spouse_id)
                     spouse_data = spouse_serializer.data
-
+            
             return Response({
                 'pat_id': pat_id,
                 'message': 'No active pregnancy',
                 'latest_prenatal_form': {
-                    'spouse_details': spouse_data
+                    'spouse_details': spouse_data,
+                    'pf_occupation': latest_occupation
                 }
             }, status=status.HTTP_200_OK)
 
@@ -774,7 +805,7 @@ def get_prenatal_form_complete(request, pf_id):
             'bm_id',
             'spouse_id',
             'followv_id',
-            'staff_id'
+            'staff'
         ).prefetch_related(
             'pf_prenatal_care',
             'pf_previous_hospitalization',

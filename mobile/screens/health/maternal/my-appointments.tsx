@@ -1,0 +1,401 @@
+import React from "react";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl } from "react-native";
+import { useRouter } from "expo-router";
+import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react-native";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePrenatalAppointmentRequests } from "./queries/fetch";
+import { useUpdatePrenatalAppointment } from "./queries/update";
+import PageLayout from "@/screens/_PageLayout";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
+
+export default function MyPrenatalAppointments() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'completed' | 'cancelled' | 'rejected'>('all');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const rp_id = user?.rp || "";
+  
+  const { data: appointmentData, isLoading, isError, refetch } = usePrenatalAppointmentRequests(rp_id);
+  const { mutate: updateAppointment, isPending: isUpdating } = useUpdatePrenatalAppointment();
+
+  const appointments = appointmentData?.requests || [];
+  const statusCounts = appointmentData?.status_counts || {
+    pending: 0,
+    approved: 0,
+    cancelled: 0,
+    completed: 0,
+    rejected: 0
+  };
+
+  // Refresh functionality
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } catch (error) {
+      console.error("Error refreshing appointments:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
+  // Status badge component
+  const getStatusBadge = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    
+    switch (normalizedStatus) {
+      case 'pending':
+        return (
+          <View className="flex-row items-center bg-yellow-50 border border-yellow-200 px-2 py-1 rounded-full">
+            <Clock size={12} color="#d97706" />
+            <Text className="ml-1 text-xs font-medium text-yellow-700">Pending</Text>
+          </View>
+        );
+      case 'approved':
+        return (
+          <View className="flex-row items-center bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+            <CheckCircle size={12} color="#059669" />
+            <Text className="ml-1 text-xs font-medium text-green-700">Approved</Text>
+          </View>
+        );
+      case 'completed':
+        return (
+          <View className="flex-row items-center bg-blue-50 border border-blue-200 px-2 py-1 rounded-full">
+            <CheckCircle size={12} color="#2563eb" />
+            <Text className="ml-1 text-xs font-medium text-blue-700">Completed</Text>
+          </View>
+        );
+      case 'cancelled':
+        return (
+          <View className="flex-row items-center bg-red-50 border border-red-200 px-2 py-1 rounded-full">
+            <XCircle size={12} color="#dc2626" />
+            <Text className="ml-1 text-xs font-medium text-red-700">Cancelled</Text>
+          </View>
+        );
+      case 'rejected':
+        return (
+          <View className="flex-row items-center bg-red-50 border border-red-200 px-2 py-1 rounded-full">
+            <AlertCircle size={12} color="#dc2626" />
+            <Text className="ml-1 text-xs font-medium text-red-700">Rejected</Text>
+          </View>
+        );
+      default:
+        return (
+          <View className="flex-row items-center bg-gray-50 border border-gray-200 px-2 py-1 rounded-full">
+            <Text className="text-xs font-medium text-gray-700">{status}</Text>
+          </View>
+        );
+    }
+  };
+
+  // Format date helper
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '—';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: '2-digit', 
+        year: 'numeric' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Cancel appointment function
+  const handleCancelAppointment = (appointment: any) => {
+    const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    updateAppointment(
+      {
+        par_id: appointment.par_id.toString(),
+        updateData: {
+          cancelled_at: currentDate,
+          status: 'cancelled'
+        }
+      },
+      {
+        onSuccess: () => {
+          Alert.alert(
+            "Success", 
+            "Your appointment has been cancelled successfully.",
+            [{ text: "OK" }]
+          );
+          refetch(); // Refresh the appointments list
+        },
+        onError: (error: any) => {
+          console.error("Cancel appointment error:", error);
+          Alert.alert(
+            "Error", 
+            "Failed to cancel appointment. Please try again or contact support.",
+            [{ text: "OK" }]
+          );
+        }
+      }
+    );
+  };
+
+  // Filter appointments based on status
+  const filteredAppointments = appointments.filter((appointment: any) => {
+    if (statusFilter === 'all') return true;
+    return appointment.status.toLowerCase() === statusFilter;
+  });
+
+  // Show authentication loading
+  if (authLoading) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
+        </View>
+      </PageLayout>
+    );
+  }
+
+  // Show data loading
+  if (isLoading) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="text-gray-600 text-base mt-4">Loading appointments...</Text>
+        </View>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Appointments</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <ScrollView 
+        className="flex-1 p-4"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />
+        }
+      >
+        {/* Status Filter Tabs */}
+        <View className="bg-white rounded-lg p-1 mb-4 shadow-sm border border-gray-200">
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 4 }}
+          >
+            {[
+              { key: 'all', label: 'All', count: appointments.length },
+              { key: 'pending', label: 'Pending', count: statusCounts.pending },
+              { key: 'approved', label: 'Approved', count: statusCounts.approved },
+              { key: 'completed', label: 'Completed', count: statusCounts.completed },
+              { key: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled },
+              { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
+            ].map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => setStatusFilter(tab.key as any)}
+                className={`px-4 py-2 mx-1 rounded-md ${
+                  statusFilter === tab.key ? 'bg-blue-100 border border-blue-300' : 'bg-transparent'
+                }`}
+                activeOpacity={0.8}
+              >
+                <Text
+                  className={`text-sm font-medium ${
+                    statusFilter === tab.key ? 'text-blue-600' : 'text-gray-500'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Error State */}
+        {isError && (
+          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+            <Text className="text-red-800 text-sm">Failed to load appointments. Please try again.</Text>
+          </View>
+        )}
+
+        {/* Appointments List */}
+        {filteredAppointments.length === 0 ? (
+          <View className="bg-white rounded-xl p-8 items-center border border-gray-200">
+            <Calendar size={48} color="#9CA3AF" />
+            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
+              {statusFilter === 'all' ? 'No appointments found' : `No ${statusFilter} appointments`}
+            </Text>
+            <Text className="text-gray-600 text-center mt-2 mb-4">
+              {statusFilter === 'all' 
+                ? "You haven't made any prenatal appointment requests yet." 
+                : `You don't have any ${statusFilter} appointments.`
+              }
+            </Text>
+            <TouchableOpacity
+              className="bg-blue-600 px-6 py-3 rounded-lg"
+              onPress={() => router.push('/(health)/maternal/bookingpage')}
+            >
+              <Text className="text-white font-medium">Book New Appointment</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View className="space-y-3">
+            {filteredAppointments.map((appointment: any, index: number) => (
+              <View key={appointment.par_id || index} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <View className="flex-row justify-between items-start mb-3">
+                  <View className="flex-1">
+                    <Text className="text-gray-900 font-semibold text-lg">Prenatal Appointment</Text>
+                    <Text className="text-gray-600 text-sm mt-1">Request No: {appointment.par_id}</Text>
+                  </View>
+                  {getStatusBadge(appointment.status)}
+                </View>
+
+                <View className="space-y-2 gap-2">
+                  <View className="flex-row items-center">
+                    <Calendar size={16} color="#6B7280" />
+                    <Text className="text-gray-600 text-sm ml-2">
+                      Requested: {formatDate(appointment.requested_at)}
+                    </Text>
+                  </View>
+
+                  {appointment.approved_at && (
+                    <View className="flex-row items-center">
+                      <CheckCircle size={16} color="#059669" />
+                      <Text className="text-gray-600 text-sm ml-2">
+                        Approved: {formatDate(appointment.approved_at)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {appointment.completed_at && (
+                    <View className="flex-row items-center">
+                      <CheckCircle size={16} color="#2563eb" />
+                      <Text className="text-gray-600 text-sm ml-2">
+                        Completed: {formatDate(appointment.completed_at)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {appointment.cancelled_at && (
+                    <View className="flex-row items-center">
+                      <XCircle size={16} color="#dc2626" />
+                      <Text className="text-gray-600 text-sm ml-2">
+                        Cancelled: {formatDate(appointment.cancelled_at)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {appointment.rejected_at && (
+                    <View className="flex-row items-center">
+                      <AlertCircle size={16} color="#dc2626" />
+                      <Text className="text-gray-600 text-sm ml-2">
+                        Rejected: {formatDate(appointment.rejected_at)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {appointment.reason && (
+                    <View className="mt-2 p-2 bg-gray-50 rounded-lg">
+                      <Text className="text-gray-700 text-sm">
+                        <Text className="font-medium">Reason: </Text>
+                        {appointment.reason}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Action buttons for pending appointments */}
+                {appointment.status.toLowerCase() === 'pending' && (
+                  <View className="flex-row space-x-2 mt-3">
+                    <TouchableOpacity
+                      className={`flex-1 py-2 px-4 rounded-lg ${
+                        isUpdating 
+                          ? 'bg-gray-100 border border-gray-300' 
+                          : 'bg-red-100 border border-red-300'
+                      }`}
+                      disabled={isUpdating}
+                      onPress={() => {
+                        Alert.alert(
+                          "Cancel Appointment",
+                          "Are you sure you want to cancel this appointment request?",
+                          [
+                            { text: "No", style: "cancel" },
+                            { 
+                              text: "Yes", 
+                              style: "destructive",
+                              onPress: () => handleCancelAppointment(appointment)
+                            }
+                          ]
+                        );
+                      }}
+                    >
+                      {isUpdating ? (
+                        <View className="flex-row items-center justify-center">
+                          <ActivityIndicator size="small" color="#6B7280" />
+                          <Text className="text-gray-600 text-center font-medium ml-2">Cancelling...</Text>
+                        </View>
+                      ) : (
+                        <Text className="text-red-700 text-center font-medium">Cancel</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Footer info */}
+        <View className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <Text className="text-blue-800 font-medium mb-2">📋 Appointment Information</Text>
+          <Text className="text-blue-700 text-sm">
+            • Please arrive 15 minutes early{'\n'}
+            • Bring necessary documents and previous medical records{'\n'}
+            • Contact the health center for any concerns{'\n'}
+            • Cancellations must be made at least 2-3 days in advance
+          </Text>
+        </View>
+      </ScrollView>
+    </PageLayout>
+  );
+}

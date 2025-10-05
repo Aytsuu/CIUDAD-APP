@@ -55,7 +55,7 @@ export default function FamilyPlanningForm2({
   // NEW: Fetch illnesses from database
   const { data: illnesses = [], isLoading: isLoadingIllnesses } = useQuery<Illness[]>({
     queryKey: ["illnesses"],
-    queryFn: () => fetchIllnesses("FP")
+    queryFn: () => fetchIllnesses("FP"), 
   })
 
   const form = useForm<FormData>({

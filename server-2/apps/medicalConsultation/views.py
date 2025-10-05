@@ -3,7 +3,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Count, Q
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.models import *
@@ -25,11 +25,7 @@ from apps.childhealthservices.serializers import ChildHealthHistoryFullSerialize
 from apps.inventory.models import MedicineInventory
 from pagination import *
 from apps.healthProfiling.models import *
-from apps.servicescheduler.models import *
-from django.http import Http404
-from datetime import date, timedelta
-from dateutil import parser
-
+from apps.medicineservices.serializers import MedicineRequestItemSerializer
 
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
@@ -60,15 +56,12 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         # Combined search (patient name, patient ID, household number, and sitio)
         search_query = self.request.query_params.get('search', '').strip()
-        sitio_search = self.request.query_params.get('sitio', '').strip()
         
         # Combine search and sitio parameters
         combined_search_terms = []
         if search_query and len(search_query) >= 2:  # Allow shorter search terms
             combined_search_terms.append(search_query)
-        if sitio_search:
-            combined_search_terms.append(sitio_search)
-        
+    
         if combined_search_terms:
             filters_applied = True
             combined_search = ','.join(combined_search_terms)
@@ -110,6 +103,8 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    
     
     
 #================== MEDICAL CONSULTAION FORWARDED TABLE==================
@@ -363,18 +358,18 @@ class CombinedHealthRecordsView(APIView):
         
         return {}
 
-# USE FOR ADDING MEDICAL RECORD
-class MedicalConsultationRecordView(generics.CreateAPIView):
-    serializer_class = MedicalConsultationRecordSerializer
-    queryset  =MedicalConsultation_Record.objects.all()
+# # USE FOR ADDING MEDICAL RECORD
+# class MedicalConsultationRecordView(generics.CreateAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     queryset  =MedicalConsultation_Record.objects.all()
     
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)
     
-class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
-    serializer_class = MedicalConsultationRecordSerializer
-    queryset = MedicalConsultation_Record.objects.all()
-    lookup_field = 'medrec_id'
+# class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     queryset = MedicalConsultation_Record.objects.all()
+#     lookup_field = 'medrec_id'
 
 
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
@@ -383,12 +378,25 @@ class ViewMedicalConsultationRecordView(generics.ListAPIView):
     
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
-        return MedicalConsultation_Record.objects.filter(
+        search_query = self.request.GET.get('search', '').strip()
+        
+        queryset = MedicalConsultation_Record.objects.filter(
             patrec__pat_id=pat_id,
             medrec_status='completed' 
         ).order_by('-created_at')
-
-
+        
+        # Add search functionality
+        if search_query:
+            queryset = queryset.filter(
+                Q(created_at__icontains=search_query) |
+                Q(find__assessment_summary__icontains=search_query) |
+                Q(find__subj_summary__icontains=search_query) |
+                Q(find__obj_summary__icontains=search_query) |
+                Q(find__plantreatment_summary__icontains=search_query) |
+                Q(medrec_chief_complaint__icontains=search_query)
+            )
+        
+        return queryset
 
 class PendingPatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
@@ -432,7 +440,6 @@ class PendingMedConCountView(APIView):
             .filter(status="check-up")
             .count()
         )
-        
         # Total count
         total_count = med_con_count + child_checkup_count
         
@@ -440,22 +447,24 @@ class PendingMedConCountView(APIView):
             "count": total_count
         })
     
-class MedicalConsultationTotalCountAPIView(APIView):
-    def get(self, request):
-        try:
-            # Count total unique medical consultation records
-            total_records = MedicalConsultation_Record.objects.count()
+    
+# class MedicalConsultationTotalCountAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             # Count total unique medical consultation records
+#             total_records = MedicalConsultation_Record.objects.count()
             
-            return Response({
-                'success': True,
-                'total_records': total_records
-            }, status=status.HTTP_200_OK)
+#             return Response({
+#                 'success': True,
+#                 'total_records': total_records
+#             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 #================================ CREATE STEP1
@@ -567,8 +576,6 @@ class CreateMedicalConsultationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-from apps.medicineservices.serializers import MedicineRequestItemSerializer
-
 # ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -616,7 +623,7 @@ class SoapFormSubmissionView(APIView):
                 # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
                     minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('medrec_qty', 0)
+                    requested_qty = medicine.get('medreqitem_qty', 0)
                     
                     # Update MedicineInventory with temporary deduction
                     if minv_id and requested_qty > 0:
@@ -675,7 +682,12 @@ class SoapFormSubmissionView(APIView):
             # 5. Medical History
             if data.get('selected_illnesses'):
                 medical_history_data = [
-                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': date.today().strftime('%y-%m-%d')}
+                    {
+                        'patrec_id': patrec_id,
+                        'ill_id': ill_id,
+                        'ill_date': date.today().strftime('%Y-%m-%d'),  # Corrected year format
+                        'is_for_surveillance': True  # Added field for surveillance
+                    }
                     for ill_id in data['selected_illnesses']
                 ]
                 MedicalHistory.objects.bulk_create([
@@ -733,8 +745,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
             if medicine_request_data and medicine_request_data.get("medicines"):
                 # Create MedicineRequest first
                 med_request_data = {
-                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
-                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'rp_id': medicine_request_data.get('rp_id'),  
+                    'pat_id': medicine_request_data.get('pat_id'), 
                     'status': 'pending',
                     'mode': medicine_request_data.get('mode', 'walk-in')
                 }
@@ -809,7 +821,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     MedicalHistory(
                         patrec_id=patrec_id,
                         ill_id=ill_id,
-                        year=date.today().strftime('%y-%m-%d')
+                        ill_date=date.today().strftime('%y-%m-%d'),
+                        is_for_surveillance=True  
                     )
                     for ill_id in data["selected_illnesses"]
                 ])
@@ -830,148 +843,212 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-            
-            
-# FOR MOBILE APP /////////////////////////////////////////////////////////////////////////////////////////
+   
 
-# class AvailableSlotsView(APIView):
-#     def get(self, request):
-#         today = date.today()
-#         available = []
-#         try:
-#             service = Service.objects.get(service_name='Medical Consultation')
-#         except Service.DoesNotExist:
-#             raise Http404("Medical Consultation service not found")
 
-#         for i in range(30):
-#             d = today + timedelta(days=i)
-#             if d.weekday() >= 5:  # Skip weekends (5=Sat, 6=Sun)
-#                 continue
-#             day_name = d.strftime('%A')
-#             try:
-#                 day_obj = Day.objects.get(day=day_name)
-#             except Day.DoesNotExist:
-#                 continue
 
-#             am_scheduled = ServiceScheduler.objects.filter(service_id=service, day_id=day_obj, meridiem='AM').exists()
-#             pm_scheduled = ServiceScheduler.objects.filter(service_id=service, day_id=day_obj, meridiem='PM').exists()
 
-#             if not am_scheduled and not pm_scheduled:
-#                 continue
-
-#             try:
-#                 date_slot, created = DateSlot.objects.get_or_create(
-#                     date=d,
-#                     defaults={
-#                         'am_max_slots': 10 if am_scheduled else 0,
-#                         'pm_max_slots': 10 if pm_scheduled else 0,
-#                         'am_current_bookings': 0,
-#                         'pm_current_bookings': 0
-#                     }
-#                 )
-#             except Exception as e:
-#                 return Response(
-#                     {'error': f'Failed to create/get DateSlot: {str(e)}'},
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#                 )
-
-#             am_available = date_slot.am_available_slots > 0 and am_scheduled
-#             pm_available = date_slot.pm_available_slots > 0 and pm_scheduled
-
-#             if am_available or pm_available:
-#                 available.append({
-#                     'date': d.isoformat(),
-#                     'am_available': am_available,
-#                     'pm_available': pm_available,
-#                     'am_remaining': date_slot.am_available_slots if am_scheduled else 0,
-#                     'pm_remaining': date_slot.pm_available_slots if pm_scheduled else 0,
-#                 })
-
-#         return Response(available)
-
-# class BookAppointmentView(APIView):
-#     @transaction.atomic
-#     def post(self, request):
-#         data = request.data
-#         patient_id = data.get('patient_id')
-#         scheduled_date_str = data.get('scheduled_date')
-#         meridiem = data.get('meridiem')
-#         chief_complaint = data.get('chief_complaint')
-#         is_pregnant = data.get('is_pregnant', False)
-
-#         if not all([patient_id, scheduled_date_str, meridiem, chief_complaint]):
-#             return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             d = date.fromisoformat(scheduled_date_str)
-#         except ValueError:
-#             return Response({'error': 'Invalid date format'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         if d.weekday() >= 5:
-#             return Response({'error': 'Appointments not available on weekends'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         day_name = d.strftime('%A')
-#         try:
-#             day_obj = Day.objects.get(day=day_name)
-#             service = Service.objects.get(service_name='Medical Consultation')
-#         except (Day.DoesNotExist, Service.DoesNotExist):
-#             return Response({'error': 'Service or day configuration missing'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         if not ServiceScheduler.objects.filter(service_id=service, day_id=day_obj, meridiem=meridiem).exists():
-#             return Response({'error': 'Service not scheduled for this day/time'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             date_slot, created = DateSlot.objects.get_or_create(
-#                 date=d,
-#                 defaults={
-#                     'am_max_slots': 10 if meridiem == 'AM' else 0,
-#                     'pm_max_slots': 10 if meridiem == 'PM' else 0,
-#                     'am_current_bookings': 0,
-#                     'pm_current_bookings': 0
-#                 }
-#             )
-#         except Exception as e:
-#             return Response(
-#                 {'error': f'Failed to create/get DateSlot: {str(e)}'},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
-
-#         if meridiem == 'AM' and date_slot.am_available_slots <= 0:
-#             return Response({'error': 'No available AM slots'}, status=status.HTTP_400_BAD_REQUEST)
-#         elif meridiem == 'PM' and date_slot.pm_available_slots <= 0:
-#             return Response({'error': 'No available PM slots'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             patient = Patient.objects.get(pat_id=patient_id)
-#         except Patient.DoesNotExist:
-#             return Response({'error': 'Patient not found'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         patrec, _ = PatientRecord.objects.get_or_create(pat_id=patient)
-#         vital = VitalSigns.objects.create()
-#         bm = BodyMeasurement.objects.create()
-
-#         medrec_data = {
-#             'medrec_status': 'pending',
-#             'medrec_chief_complaint': chief_complaint,
-#             'patrec': patrec,
-#             'vital': vital,
-#             'bm': bm,
-#             'scheduled_date': d,
-#             'meridiem': meridiem,
-#         }
-#         if is_pregnant:
-#             medrec_data['lmp'] = data.get('lmp')
-
-#         medrec = MedicalConsultation_Record.objects.create(**medrec_data)
-
-#         if meridiem == 'AM':
-#             date_slot.am_current_bookings += 1
-#         else:
-#             date_slot.pm_current_bookings += 1
-#         date_slot.save()
-
-#         return Response({'success': True, 'medrec_id': medrec.medrec_id}, status=status.HTTP_201_CREATED)
+# ===================FAMILY HISTORY===============================
+class FamilyPHIllnessCheckAPIView(APIView):
+    """
+    API view that checks family medical history for illnesses
+    Gets family members through FamilyComposition and checks their medical history
+    """
     
+    def get(self, request, pat_id):
+        try: 
+            # Get search parameter from query string
+            search_query = request.GET.get('search', '').strip()
+            
+            # First, find the patient using the string ID
+            patient = Patient.objects.get(pat_id=pat_id)
+            
+            # Get the ResidentProfile for this patient
+            try:
+                resident_profile = ResidentProfile.objects.get(patients=patient)
+            except ResidentProfile.DoesNotExist:
+                return Response({
+                    'status': 'error',
+                    'message': 'Resident profile not found for patient',
+                    'error': f'No resident profile found for patient ID {pat_id}',
+                    'search_query': search_query if search_query else None
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get family compositions where this resident profile is involved
+            family_compositions = FamilyComposition.objects.filter(rp=resident_profile)
+            
+            if not family_compositions.exists():
+                return Response({
+                    'status': 'success',
+                    'message': 'No family members found',
+                    'patient_id': pat_id,
+                    'family_members_count': 0,
+                    'ph_illnesses': {
+                        'count': 0,
+                        'data': []
+                    },
+                    'other_illnesses': "None",
+                    'search_query': search_query if search_query else None
+                }, status=status.HTTP_200_OK)
+            
+            # Get all family members from the same families
+            family_ids = family_compositions.values_list('fam_id', flat=True)
+            
+            # Get all family members (excluding the patient themselves)
+            family_members_excluding_patient = FamilyComposition.objects.filter(
+                fam_id__in=family_ids
+            ).exclude(rp=resident_profile)
+            
+            # Get ResidentProfile IDs of family members
+            family_rp_ids_excluding_patient = family_members_excluding_patient.values_list('rp_id', flat=True)
+            
+            # Get Patient instances for family members
+            family_patients_excluding_patient = Patient.objects.filter(rp_id__in=family_rp_ids_excluding_patient)
+            family_patient_ids_excluding_patient = list(family_patients_excluding_patient.values_list('pat_id', flat=True))
+            
+            # Get PatientRecord instances for family members
+            family_patient_records = PatientRecord.objects.filter(
+                pat_id__in=family_patient_ids_excluding_patient
+            )
+            family_record_ids = list(family_patient_records.values_list('patrec_id', flat=True))
+            
+            # Get PatientRecord instance for the current patient
+            current_patient_record = PatientRecord.objects.filter(pat_id=pat_id).first()
+            current_patient_record_id = current_patient_record.patrec_id if current_patient_record else None
+            
+            # Get all PH illnesses (PH-1 to PH-20)
+            ph_codes = [f'PH-{i}' for i in range(1, 21)]
+            # Get all FP illnesses (FP-1 to FP-11)
+            fp_codes = [f'FP-{i}' for i in range(1, 12)]
+            
+            # Get PH illnesses with search filter if provided
+            ph_illnesses = Illness.objects.filter(ill_code__in=ph_codes)
+            
+            # Apply search filter to PH illnesses if search query is provided
+            if search_query:
+                ph_illnesses = ph_illnesses.filter(
+                    models.Q(illname__icontains=search_query) |
+                    models.Q(ill_code__icontains=search_query) |
+                    models.Q(ill_description__icontains=search_query)
+                )
+            
+            ph_illnesses = ph_illnesses.order_by('ill_code')
+            
+            # Get FP illnesses
+            fp_illnesses = Illness.objects.filter(ill_code__in=fp_codes)
+            
+            # Get family medical history from MedicalHistory (family members + current patient's is_from_famhistory records)
+            family_medical_history = MedicalHistory.objects.filter(
+                models.Q(patrec_id__in=family_record_ids) |  # Family members' medical history
+                models.Q(patrec_id=current_patient_record_id, is_from_famhistory=True)  # Current patient's family history records
+            ).select_related('ill')
+            
+            # Apply search filter to family medical history if search query is provided
+            if search_query:
+                family_medical_history = family_medical_history.filter(
+                    models.Q(ill__illname__icontains=search_query) |
+                    models.Q(ill__ill_code__icontains=search_query) |
+                    models.Q(ill__ill_description__icontains=search_query)
+                )
+            
+            # Combine all illness IDs that family members have (using set for distinct)
+            family_illness_ids = set()
+            # Also store illness names for checking FP codes
+            family_illness_names = set()
+            
+            # From MedicalHistory
+            for history in family_medical_history:
+                if history.ill_id:
+                    family_illness_ids.add(history.ill_id)
+                    if history.ill:
+                        family_illness_names.add(history.ill.illname)
+            
+            # Prepare PH illnesses data with check if family has them
+            ph_illnesses_data = []
+            for illness in ph_illnesses:
+                # Check if family has this PH illness by ID
+                has_family_history = illness.ill_id in family_illness_ids
+                
+                # Get year information if available
+                year_info = None
+                if has_family_history:
+                    # Check MedicalHistory
+                    med_history = family_medical_history.filter(ill_id=illness.ill_id).first()
+                    if med_history:
+                        year_info = med_history.ill_date
+                
+                ph_illnesses_data.append({
+                    'ill_id': illness.ill_id,
+                    'illname': illness.illname,
+                    'ill_description': illness.ill_description,
+                    'ill_code': illness.ill_code,
+                    'has_family_history': has_family_history,
+                    'year': year_info
+                })
+            
+            # Get other illnesses (illnesses that family has but are NOT in PH codes)
+            # This includes FP codes that don't have matching PH codes
+            other_illnesses_set = set()
+            
+            # From MedicalHistory - get distinct illnesses that family has
+            for history in family_medical_history:
+                if history.ill:
+                    illness_name = history.ill.illname
+                    illness_code = history.ill.ill_code
+                    
+                    # Check if this illness is a PH code
+                    is_ph_code = illness_code in ph_codes
+                    
+                    # If it's NOT a PH code, include it in other illnesses
+                    if not is_ph_code:
+                        other_illnesses_set.add(illness_name)
+            
+            # Convert set to sorted list for consistent ordering
+            other_illnesses_list = sorted(list(other_illnesses_set)) if other_illnesses_set else []
+            
+            # Format as comma-separated string (already distinct due to set)
+            other_illnesses_string = ", ".join(other_illnesses_list) if other_illnesses_list else "None"
+            
+            # Filter other illnesses by search query if provided
+            if search_query:
+                other_illnesses_list = [illness for illness in other_illnesses_list if search_query.lower() in illness.lower()]
+                other_illnesses_string = ", ".join(other_illnesses_list) if other_illnesses_list else "None"
+            
+            return Response({
+                'status': 'success',
+                'message': 'Family illness check completed successfully',
+                'patient_id': pat_id,
+                'family_members_count': len(family_patient_ids_excluding_patient),
+                'ph_illnesses': {
+                    'count': len([ill for ill in ph_illnesses_data if ill['has_family_history']]),
+                    'total_count': len(ph_illnesses_data),
+                    'data': ph_illnesses_data
+                },
+                'other_illnesses': other_illnesses_string,
+                'other_illnesses_distinct_count': len(other_illnesses_list),
+                'search_query': search_query if search_query else None,
+                'search_applied': bool(search_query)
+            }, status=status.HTTP_200_OK)
+            
+        except Patient.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Patient not found',
+                'error': f'Patient with ID {pat_id} does not exist',
+                'search_query': search_query if search_query else None
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': 'Failed to retrieve family illness data',
+                'error': str(e),
+                'search_query': search_query if search_query else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+# =============================APPOINTMENT
 class AvailableMedicalConsultationSlotsView(APIView):
     def get(self, request):
         try:
@@ -1151,6 +1228,8 @@ class UserAppointmentsView(generics.ListAPIView):
             queryset = queryset.exclude(status='cancelled')
 
         return queryset.order_by('-created_at')
+    
+
 
 
 class CancelAppointmentView(APIView):
@@ -1192,3 +1271,216 @@ class CancelAppointmentView(APIView):
             return Response({'success': True, 'detail': 'Appointment cancelled, but slot update failed.'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+#================== WEBVIEW APPOINTMENT==============
+
+class PendingMedicalUserAppointmentsView(generics.ListAPIView):
+    serializer_class = MedConsultAppointmentSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Get the search query and date filter from request parameters
+        search_query = self.request.GET.get('search', '').strip()
+        date_filter = self.request.GET.get('date_filter', 'all').strip()
+        
+        # Base queryset for pending appointments with related data
+        queryset = MedConsultAppointment.objects.filter(status='pending')
+        
+        # Apply search filter if provided
+        if search_query:
+            queryset = queryset.filter(
+                # Search by patient information (through rp -> ResidentProfile -> Personal)
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(rp__per__per_contact__icontains=search_query) |
+                
+                # Search by appointment details
+                Q(id__icontains=search_query) |
+                Q(rp__rp_id__icontains=search_query) |
+                Q(chief_complaint__icontains=search_query) |
+                Q(notes__icontains=search_query) if hasattr(MedConsultAppointment, 'notes') else Q() |
+                
+                # Search by patient address information
+                Q(rp__per__personal_addresses__add__add_province__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_city__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_barangay__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_street__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__sitio__sitio_name__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by household and family information
+                Q(rp__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(rp__respondents_info__fam__hh__hh_id__icontains=search_query)
+            ).distinct()
+        
+        # Apply date filter if provided
+        if date_filter != 'all':
+            today = datetime.now().date()
+            
+            if date_filter == 'today':
+                # Filter for today's appointments (by created date)
+                queryset = queryset.filter(created_at__date=today)
+                
+            elif date_filter == 'this-week':
+                # Filter for this week's appointments (Monday to Sunday)
+                start_of_week = today - timedelta(days=today.weekday())
+                queryset = queryset.filter(created_at__date__gte=start_of_week)
+                
+            elif date_filter == 'this-month':
+                # Filter for this month's appointments
+                start_of_month = today.replace(day=1)
+                queryset = queryset.filter(created_at__date__gte=start_of_month)
+                
+            elif date_filter == 'tomorrow':
+                # Filter for tomorrow's appointments (by scheduled_date)
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date=tomorrow)
+                
+            elif date_filter == 'upcoming':
+                # Filter for upcoming appointments (from tomorrow onwards)
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date__gte=tomorrow)
+                
+            elif date_filter == 'past':
+                # Filter for past appointments
+                queryset = queryset.filter(scheduled_date__lt=today)
+        
+        return queryset.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response = self.get_paginated_response(serializer.data)
+                response.data['total_confirmed_appointments'] = queryset.count()
+                return response
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({
+                'success': True,
+                'results': serializer.data,
+                'count': len(serializer.data),
+                'total_confirmed_appointments': queryset.count()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching pending appointments: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ActionAppointmentView(generics.RetrieveUpdateAPIView):
+    serializer_class=MedConsultAppointmentSerializer
+    queryset = MedConsultAppointment.objects.all()
+
+        
+#================== WEBVIEW APPOINTMENT==============
+
+class ConfirmedMedicalUserAppointmentsView(generics.ListAPIView):
+    serializer_class = MedConsultAppointmentSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Get the search query and date filter from request parameters
+        search_query = self.request.GET.get('search', '').strip()
+        date_filter = self.request.GET.get('date_filter', 'all').strip()
+        
+        # Base queryset for pending appointments with related data
+        queryset = MedConsultAppointment.objects.filter(status='confirmed')
+        
+        # Apply search filter if provided
+        if search_query:
+            queryset = queryset.filter(
+                # Search by patient information (through rp -> ResidentProfile -> Personal)
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) |
+                Q(rp__per__per_mname__icontains=search_query) |
+                Q(rp__per__per_contact__icontains=search_query) |
+                
+                # Search by appointment details
+                Q(id__icontains=search_query) |
+                Q(rp__rp_id__icontains=search_query) |
+                Q(chief_complaint__icontains=search_query) |
+                Q(notes__icontains=search_query) if hasattr(MedConsultAppointment, 'notes') else Q() |
+                
+                # Search by patient address information
+                Q(rp__per__personal_addresses__add__add_province__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_city__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_barangay__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_street__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__sitio__sitio_name__icontains=search_query) |
+                Q(rp__per__personal_addresses__add__add_external_sitio__icontains=search_query) |
+                
+                # Search by household and family information
+                Q(rp__respondents_info__fam__fam_id__icontains=search_query) |
+                Q(rp__respondents_info__fam__hh__hh_id__icontains=search_query)
+            ).distinct()
+        
+        # Apply date filter if provided
+        if date_filter != 'all':
+            today = datetime.now().date()
+            
+            if date_filter == 'today':
+                # Filter for today's appointments (by created date)
+                queryset = queryset.filter(created_at__date=today)
+                
+            elif date_filter == 'this-week':
+                # Filter for this week's appointments (Monday to Sunday)
+                start_of_week = today - timedelta(days=today.weekday())
+                queryset = queryset.filter(created_at__date__gte=start_of_week)
+                
+            elif date_filter == 'this-month':
+                # Filter for this month's appointments
+                start_of_month = today.replace(day=1)
+                queryset = queryset.filter(created_at__date__gte=start_of_month)
+                
+            elif date_filter == 'tomorrow':
+                # Filter for tomorrow's appointments (by scheduled_date)
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date=tomorrow)
+                
+            elif date_filter == 'upcoming':
+                # Filter for upcoming appointments (from tomorrow onwards)
+                tomorrow = today + timedelta(days=1)
+                queryset = queryset.filter(scheduled_date__gte=tomorrow)
+                
+            elif date_filter == 'past':
+                # Filter for past appointments
+                queryset = queryset.filter(scheduled_date__lt=today)
+        
+        return queryset.order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response = self.get_paginated_response(serializer.data)
+                response.data['total_confirmed_appointments'] = queryset.count()
+                return response
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response({
+                'success': True,
+                'results': serializer.data,
+                'count': len(serializer.data),
+                'total_confirmed_appointments': queryset.count()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'error': f'Error fetching pending appointments: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

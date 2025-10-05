@@ -1,5 +1,7 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getResident, getPatients, getPatientDetails, AppointmentFilters, getAllFollowUpVisits, getAllTransientAddresses, checkPatientExistsGet, getChildData, getAppointmentsByResidentId } from "./get";
+import { api2 } from "@/api/api";
+
 export const useChildData = (id: any,) => {
 	return useQuery({
 		queryKey: ['childData', id],
@@ -84,16 +86,42 @@ export const appointmentQueryKey = {
   byResidentId: (rp_id: string) => [...appointmentQueryKey.allAppointments, "byResident", rp_id]
 };
 
+// Define the proper interface
+export interface CombinedAppointmentsResponse {
+  follow_up_appointments: any[];
+  med_consult_appointments: any[];
+  prenatal_appointments: any[];
+}
 
-export const useAppointmentsByResidentId = (rp_id: string, options = {}) => {
+// Create a default empty response
+const defaultAppointmentsResponse: CombinedAppointmentsResponse = {
+  follow_up_appointments: [],
+  med_consult_appointments: [],
+  prenatal_appointments: []
+};
+
+export const useAppointmentsByResidentId = (rp_id: string) => {
   return useQuery({
-    queryKey: appointmentQueryKey.byResidentId(rp_id),
-    queryFn: () => getAppointmentsByResidentId(rp_id),
-    enabled: !!rp_id, // This ensures the query only runs when the rp_id is available
-    staleTime: 60 * 2,
-    retry: 3,
-    placeholderData: keepPreviousData,
-    ...options,
+    queryKey: ['appointments', rp_id],
+    queryFn: async (): Promise<CombinedAppointmentsResponse> => {
+      if (!rp_id) {
+        return defaultAppointmentsResponse;
+      }
+      
+      try {
+        const response = await api2.get(`/patientrecords/appointments/by-resident/${rp_id}/`);
+        // Ensure the response has the expected structure
+        return {
+          follow_up_appointments: response.data?.follow_up_appointments || [],
+          med_consult_appointments: response.data?.med_consult_appointments || [],
+          prenatal_appointments: response.data?.prenatal_appointments || []
+        };
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        return defaultAppointmentsResponse;
+      }
+    },
+    enabled: !!rp_id,
   });
 };
 

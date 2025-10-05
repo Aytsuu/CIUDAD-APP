@@ -10,10 +10,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { LoadingState } from "@/components/ui/loading-state"
 import PageLayout from "@/screens/_PageLayout"
 
+import PregnancyVisitTracker from "../admin-maternal/prenatal/visit-tracker"
+import { PregnancyAccordion } from "../admin-maternal/prenatal/pregnancy-accordion"
 
 import { usePregnancyDetails } from "./queries/maternalFETCH"
-import { PregnancyAccordion } from "./prenatal/pregnancy-accordion"
-import PregnancyVisitTracker from "./prenatal/visit-tracker"
 
 interface Patient {
   pat_id: string
@@ -201,6 +201,37 @@ export default function IndividualMaternalRecordScreen() {
     isLoading: pregnancyDataLoading,
     refetch,
   } = usePregnancyDetails(selectedPatient?.pat_id || "")
+
+  const getLatestFollowupVisit = () => {
+    let followUpData = [];
+    
+    if (pregnancyData && typeof pregnancyData === 'object' && 'results' in pregnancyData) {
+      // Handle paginated response structure: { count, next, previous, results: [...] }
+      const results = (pregnancyData as any).results;
+      if (Array.isArray(results) && results.length > 0) {
+        followUpData = results[0]?.follow_up || [];
+      }
+    } else if (Array.isArray(pregnancyData) && pregnancyData.length > 0) {
+      // Handle direct array response
+      followUpData = pregnancyData[0]?.follow_up || [];
+    }
+    
+    return followUpData;
+  };
+
+  const latestFollowupVisit = getLatestFollowupVisit();
+  const nextFollowVisit = [...latestFollowupVisit]
+    .filter(visit => visit.followv_status === 'pending') // Only show pending visits
+    .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
+  console.log('Next Follow-up Visit:', nextFollowVisit);
+
+  const dateWords = () => {
+    return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
 
   useEffect(() => {
     if (params.patientData) {
@@ -465,12 +496,25 @@ export default function IndividualMaternalRecordScreen() {
             </View>
           )}
 
-          <View className="mb-5">
-            <Card className="bg-white border-gray-200">
-              <CardContent className="p-4">
-                <Text className="font-semibold text-gray-900">Upcoming follow-up visit</Text>
-              </CardContent>
-            </Card>
+          {/* Upcoming Follow-up Visit */}
+          <View className="flex rounded-md w-full border border-blue-400 mb-5 bg-blue-200 shadow-md">
+            {nextFollowVisit ? (
+              <View className="p-3 flex-row justify-between items-center w-full">
+                <View className="flex-row items-center">
+                  <Clock size={18} color="#2563eb" style={{ marginRight: 5 }} />
+                  <Text className="font-semibold text-blue-700">Upcoming follow-up visit</Text>
+                </View>
+                <View className="items-center">
+                  <Text className="font-semibold italic text-blue-700">{dateWords()}</Text>
+                  <Text className="text-blue-700 text-sm">{nextFollowVisit.followv_description}</Text>
+                </View>
+               
+              </View>
+            ) : (
+              <View className="p-3">
+                <Text className="font-semibold text-white">No follow-up visit</Text>
+              </View>
+            )}
           </View>
 
           {/* Controls */}
