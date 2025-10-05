@@ -28,18 +28,29 @@ export const useGetAnnouncementRecipient = (ann_id: number) => {
   });
 };
 
-
-export function useGetAnnouncementList(page: number = 1, page_size: number = 10, search: string) {
+export function useGetAnnouncementList(
+  page: number = 1,
+  page_size: number = 10,
+  search: string,
+  staff: string | null,
+  sort: string,
+  filter: string,
+  recipient: string
+) {
   return useQuery({
-    queryKey: ["announcements", page, page_size, search],
+    queryKey: ["announcements", page, page_size, search, staff, sort, filter, recipient],
     queryFn: async () => {
       try {
         const res = await api.get(`announcement/list/`, {
           params: {
             page,
             page_size,
-            search
-          }
+            search,
+            staff,
+            sort,
+            filter,
+            recipient
+          },
         });
         return res.data;
       } catch (err) {
@@ -62,7 +73,10 @@ export const usePostAnnouncement = () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
     onError: (err: any) => {
-      console.error("Error submitting announcement:", err.response?.data || err.message);
+      console.error(
+        "Error submitting announcement:",
+        err.response?.data || err.message
+      );
     },
   });
 };
@@ -91,12 +105,18 @@ export const usePostAnnouncementFile = () => {
     onSuccess: (_, variables) => {
       if (variables.length && (variables[0].ann || variables[0].ann_id)) {
         queryClient.invalidateQueries({
-          queryKey: ["announcementFiles", variables[0].ann || variables[0].ann_id],
+          queryKey: [
+            "announcementFiles",
+            variables[0].ann || variables[0].ann_id,
+          ],
         });
       }
     },
     onError: (err: any) => {
-      console.error("Error uploading files:", err.response?.data || err.message);
+      console.error(
+        "Error uploading files:",
+        err.response?.data || err.message
+      );
     },
   });
 };
@@ -111,7 +131,10 @@ export const useDeleteAnnouncement = () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
     onError: (err: any) => {
-      console.error("Error deleting announcement:", err.response?.data || err.message);
+      console.error(
+        "Error deleting announcement:",
+        err.response?.data || err.message
+      );
     },
   });
 };

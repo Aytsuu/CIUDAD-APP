@@ -28,16 +28,49 @@ class AnnouncementListView(generics.ListAPIView):
 
     def get_queryset(self):
         search = self.request.query_params.get('search', '').strip()
-        
+        staff = self.request.query_params.get('staff', None)
+        sort = self.request.query_params.get('sort', None).lower()
+        filter = self.request.query_params.get('filter', None).lower()
+        recipient = self.request.query_params.get('recipient', None).lower()
+
         queryset = Announcement.objects.filter(
-            ann_status__icontains="ACTIVE"
-        ).order_by('-ann_created_at')  # Order by newest first
+            ann_status__iexact="ACTIVE"
+        ).order_by('-ann_created_at')
+
+        if staff:
+            print("Retrieving data created by you...")
+            queryset = queryset.filter(staff=Staff.objects.filter(staff_id=staff).first())
+        
+        if filter:
+            print(f"Handling {filter} filter...")
+            if filter == 'event':
+                queryset = queryset.filter(ann_type__icontains='event')
+            elif filter == 'general':
+                queryset = queryset.filter(~Q(ann_type__icontains='event'))
+
+        if recipient:
+            if recipient == 'staff only':
+                queryset = queryset.filter(announcement_recipients__ar_category__iexact='staff').distinct()
+            elif recipient == 'resident only':
+                queryset = queryset.filter(Q(announcement_recipients__ar_category__iexact='resident') | Q(ann_type__iexact='public'))
 
         if search:
+            print("Handling search...")
             queryset = queryset.filter(
                 Q(ann_title__icontains=search)
             )
-             
+
+        if sort:
+            print("Handling sort...")
+            if sort == "newest":
+                queryset = queryset.order_by('-ann_created_at') 
+            elif sort == "oldest":
+                queryset = queryset.order_by('ann_created_at') 
+            elif sort == "A - Z":
+                queryset = queryset.order_by('-ann_title') 
+            else:
+                queryset = queryset.order_by('ann_title') 
+                
         return queryset
         
 

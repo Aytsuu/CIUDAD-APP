@@ -13,7 +13,7 @@ import PageLayout from "@/screens/_PageLayout";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { FileText } from "@/lib/icons/FileText";
 import { Calendar } from "@/lib/icons/Calendar";
-import { formatTimeAgo, getDateTimeFormat } from "@/helpers/dateHelpers";
+import { formatTimeAgo } from "@/helpers/dateHelpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "@/components/ui/loading-state";
 import { Plus } from "@/lib/icons/Plus";
@@ -21,35 +21,54 @@ import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
 import { LinearGradient } from "expo-linear-gradient";
 import { Button } from "@/components/ui/button";
-import { SelectLayout } from "@/components/ui/select-layout";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const INITIAL_PAGE_SIZE = 10;
 
 export default () => {
   const router = useRouter();
   const { user } = useAuth();
-
-  const staff_id = user?.staff?.staff_id;
-
+  const [isInitialRender, setIsInitialRender] = React.useState<boolean>(true);
+  const [isLoadMore, setIsLoadMore] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [isSearching, setIsSearching] = React.useState<boolean>(false);
   const [searchInputVal, setSearchInputVal] = React.useState<string>("");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState<number>(INITIAL_PAGE_SIZE);
   const [hasScrolled, setHasScrolled] = React.useState(false);
-  const [myAnnouncement, setMyAnnouncement] = React.useState<boolean>(false);
+  const [myAnnouncement, setMyAnnouncement] = React.useState<string | null>(
+    null
+  );
+  const [sortBy, setSortBy] = React.useState<string>("Newest");
+  const [filter, setFilter] = React.useState<string>("Type");
+  const [recipient, setRecipient] = React.useState<string>("Recipient");
 
   const {
     data: announcements,
     isLoading,
     refetch,
     isFetching,
-  } = useGetAnnouncementList(currentPage, pageSize, searchQuery);
+  } = useGetAnnouncementList(
+    currentPage,
+    pageSize,
+    searchQuery,
+    myAnnouncement,
+    sortBy,
+    filter,
+    recipient
+  );
+
   const { mutate: deleteAnnouncement } = useDeleteAnnouncement();
 
   const data = announcements?.results || [];
+  const totalCount = announcements?.count || 0;
   const hasNext = announcements?.next;
 
   React.useEffect(() => {
@@ -59,14 +78,37 @@ export default () => {
   }, [searchQuery, searchInputVal]);
 
   React.useEffect(() => {
-    if (!isFetching && isSearching) setIsSearching(false);
-  }, [isFetching]);
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  React.useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  React.useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   const handleSearch = React.useCallback(() => {
-    setIsSearching(true);
+    setIsRefreshing(true);
     setSearchQuery(searchInputVal);
     setPageSize(INITIAL_PAGE_SIZE);
   }, [searchInputVal]);
+
+  const handleSortBy = (sort: string) => {
+    setIsRefreshing(true);
+    setSortBy(sort);
+  };
+
+  const handleFilter = (filter: string) => {
+    setIsRefreshing(true);
+    setFilter(filter);
+  };
+
+  const handleRecipient = (recip: string) => {
+    setIsRefreshing(true);
+    setRecipient(recip);
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -77,6 +119,7 @@ export default () => {
 
   // Load more items when user reaches end of list
   const handleLoadMore = () => {
+    setIsLoadMore(true);
     if (hasNext && hasScrolled && !isFetching && !isRefreshing && !isLoading) {
       setPageSize((prev) => prev + 5);
     }
@@ -87,8 +130,9 @@ export default () => {
     return text.substring(0, maxLength);
   };
 
-  if (isLoading && currentPage === 1 && searchQuery == "")
+  if (isLoading && isInitialRender) {
     return <LoadingState />;
+  }
 
   return (
     <PageLayout
@@ -132,27 +176,114 @@ export default () => {
         />
       )}
       <View className="flex-1 px-6">
-        <View className="flex-row">
-          <Button
-            variant={"outline"}
-            className={`native:h-9 native:p-0 rounded-full ${
-              myAnnouncement ? "border-primaryBlue" : "border-gray-400"
-            } transition-colors duration-100`}
-            onPress={() => setMyAnnouncement((prev) => !prev)}
-          >
-            <Text
-              className={`text-xs ${
-                myAnnouncement ? "text-primaryBlue font-medium" : "text-gray-700 font-normal"
-              } transition-colors duration-100`}
+        <View>
+          <View className="flex-row gap-2 pb-2 flex-wrap">
+            <Button
+              variant={"outline"}
+              className={`native:h-9 native:p-0 rounded-full ${
+                myAnnouncement ? "border-primaryBlue" : "border-gray-400"
+              }`}
+              onPress={() => {
+                setIsRefreshing(true);
+                setMyAnnouncement(
+                  myAnnouncement ? null : user?.staff?.staff_id
+                );
+              }}
             >
-              My Announcement
-            </Text>
-          </Button>
+              <Text
+                className={`text-xs ${
+                  myAnnouncement
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-700 font-normal"
+                }`}
+              >
+                Created
+              </Text>
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
+                  <Text className="text-xs text-gray-700">{sortBy}</Text>
+                </View>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mt-2">
+                <DropdownMenuItem onPress={() => handleSortBy("Newest")}>
+                  <Text className="text-xs">Newest</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onPress={() => handleSortBy("Oldest")}>
+                  <Text className="text-xs">Oldest</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onPress={() => handleSortBy("A to Z")}>
+                  <Text className="text-xs">A to Z</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onPress={() => handleSortBy("Z to A")}>
+                  <Text className="text-xs">Z to A</Text>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
+                  <Text className="text-xs text-gray-700">{filter}</Text>
+                </View>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="mt-2">
+                <DropdownMenuItem onPress={() => handleFilter("All")}>
+                  <Text className="text-xs">All</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onPress={() => handleFilter("Event")}>
+                  <Text className="text-xs">Event</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onPress={() => handleFilter("General")}>
+                  <Text className="text-xs">General</Text>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {user?.staff?.staff_id && (
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
+                    <Text className="text-xs text-gray-700">{recipient}</Text>
+                  </View>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="mt-2">
+                  <DropdownMenuItem onPress={() => handleRecipient("All")}>
+                    <Text className="text-xs">All</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onPress={() => handleRecipient("Staff Only")}
+                  >
+                    <Text className="text-xs">Staff Only</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onPress={() => handleRecipient("Resident Only")}
+                  >
+                    <Text className="text-xs">Resident Only</Text>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </View>
+          {!isRefreshing && (
+            <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${totalCount} announcements ${
+              myAnnouncement ? "you created" : ""
+            }`}</Text>
+          )}
         </View>
-        {isFetching && searchQuery !== "" && <LoadingState />}
+        {isFetching && !isLoadMore && <LoadingState />}
 
         {/* List */}
-        {!isSearching && (
+        {!isRefreshing && (
           <FlatList
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
@@ -165,7 +296,7 @@ export default () => {
               if (!hasScrolled) setHasScrolled(true);
             }}
             renderItem={({ item }) => (
-              <View className="py-3">
+              <View className="">
                 {/* Header */}
                 <View className="flex-row items-start justify-between mb-2">
                   <View className="flex-1 mr-2">
@@ -245,9 +376,9 @@ export default () => {
               />
             }
             contentContainerStyle={{
-              paddingTop: 12,
+              paddingTop: 0,
               paddingBottom: 20,
-              gap: 8,
+              gap: 20,
             }}
             ListEmptyComponent={
               <View className="items-center justify-center py-12">

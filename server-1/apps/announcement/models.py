@@ -41,6 +41,7 @@ class AnnouncementRecipient(models.Model):
     ann = models.ForeignKey(
         Announcement,
         on_delete=models.CASCADE,
+        related_name="announcement_recipients"
     )
     ar_category = models.CharField(max_length=50)
     ar_type = models.CharField(max_length=50, null=True, blank=True)
