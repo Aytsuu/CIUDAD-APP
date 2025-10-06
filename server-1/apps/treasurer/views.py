@@ -526,16 +526,32 @@ class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
         search_query = self.request.query_params.get('search', '')
         month = self.request.query_params.get('month', 'All')
+        is_archive = self.request.query_params.get('is_archive', None)
         
         queryset = Income_Expense_Tracking.objects.filter(
             Q(iet_datetime__year=year)
         ).select_related('exp_id').prefetch_related('files')
+        
+        # Filter by archive status if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(iet_is_archive=is_archive_bool)
         
         # Apply search filter if search query exists
         if search_query:
@@ -553,7 +569,7 @@ class Income_Expense_TrackingView(generics.ListCreateAPIView):
         if month and month != "All":
             queryset = queryset.filter(iet_datetime__month=month)
         
-        return queryset
+        return queryset.order_by('-iet_datetime')
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):

@@ -186,7 +186,6 @@ class Expense_Particular(models.Model):
     exp_id = models.BigAutoField(primary_key = True)
     exp_budget_item = models.CharField(max_length=200)
     exp_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    exp_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='expense_particulars')
     class Meta: 
         db_table = 'expense_particular'    
