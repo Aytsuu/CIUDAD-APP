@@ -2,8 +2,7 @@ from django.utils import timezone
 from .models import Announcement
 
 def update_ann_status():
-    now = timezone.now()  # UTC internally
-
+    now = timezone.now() 
     print(f"[{timezone.localtime(now)}] Checking announcements...")
 
     Announcement.objects.filter(

@@ -36,7 +36,7 @@ export const SearchInput = React.memo(({
         transform: [{ translateY: slideAnim }],
         opacity: fadeAnim,
       }}
-      className="px-5 py-3 bg-white border-b border-gray-100"
+      className="px-5 pt-2 pb-3 bg-white"
     >
       <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2">
         <Search size={18} className="text-gray-400 mr-2" />

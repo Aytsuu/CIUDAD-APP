@@ -6,8 +6,8 @@ import {
   postAnnouncementRecipient,
   postAnnouncementFile,
   deleteAnnouncement,
-  getCreatedReceivedAnnouncements
 } from "./restful-api";
+import api from "@/api/api";
 
 // Fetch all announcements
 export const useGetAnnouncement = () => {
@@ -28,13 +28,38 @@ export const useGetAnnouncementRecipient = (ann_id: number) => {
   });
 };
 
-
-export function useGetCreatedReceivedAnnouncements(staff_id: string) {
+export function useGetAnnouncementList(
+  page: number = 1,
+  page_size: number = 10,
+  search: string,
+  staff: string | null,
+  sort: string,
+  filter: string,
+  recipient: string
+) {
   return useQuery({
-    queryKey: ["createdReceivedAnnouncements", staff_id],
-    queryFn: () => getCreatedReceivedAnnouncements(staff_id),
-    enabled: !!staff_id,
+    queryKey: ["announcements", page, page_size, search, staff, sort, filter, recipient],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`announcement/list/`, {
+          params: {
+            page,
+            page_size,
+            search,
+            staff,
+            sort,
+            filter,
+            recipient
+          },
+        });
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
     staleTime: 5000,
+    placeholderData: (previous) => previous,
+    retry: false,
   });
 }
 
@@ -48,7 +73,10 @@ export const usePostAnnouncement = () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
     onError: (err: any) => {
-      console.error("Error submitting announcement:", err.response?.data || err.message);
+      console.error(
+        "Error submitting announcement:",
+        err.response?.data || err.message
+      );
     },
   });
 };
@@ -77,12 +105,18 @@ export const usePostAnnouncementFile = () => {
     onSuccess: (_, variables) => {
       if (variables.length && (variables[0].ann || variables[0].ann_id)) {
         queryClient.invalidateQueries({
-          queryKey: ["announcementFiles", variables[0].ann || variables[0].ann_id],
+          queryKey: [
+            "announcementFiles",
+            variables[0].ann || variables[0].ann_id,
+          ],
         });
       }
     },
     onError: (err: any) => {
-      console.error("Error uploading files:", err.response?.data || err.message);
+      console.error(
+        "Error uploading files:",
+        err.response?.data || err.message
+      );
     },
   });
 };
@@ -97,7 +131,10 @@ export const useDeleteAnnouncement = () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
     onError: (err: any) => {
-      console.error("Error deleting announcement:", err.response?.data || err.message);
+      console.error(
+        "Error deleting announcement:",
+        err.response?.data || err.message
+      );
     },
   });
 };

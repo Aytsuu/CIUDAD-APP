@@ -52,6 +52,7 @@ urlpatterns = [
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
     path("family/verify/account-create/", VerifyFamily.as_view(), name="join-existing-family"),
+    path("family/data/resident-specific/", FamilyDataResidentSpecificView.as_view(), name="family-data-resident-specific"),
 
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
@@ -59,6 +60,7 @@ urlpatterns = [
     path("household/<str:hh_id>/data/", HouseholdDataView.as_view(), name="household-details"),
     path("household/create/", HouseholdCreateView.as_view(), name="create-household"),
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
+    path("household/owned-by-<str:rp>/", OwnedHousesListView.as_view(), name="owned-houses"),
 
     # Resident Urls
     path("resident/", ResidentProfileListWithOptions.as_view(), name="resident-details"),
