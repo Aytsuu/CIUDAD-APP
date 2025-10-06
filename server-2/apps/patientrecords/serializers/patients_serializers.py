@@ -65,7 +65,7 @@ class PatientSerializer(serializers.ModelSerializer):
     family = serializers.SerializerMethodField()
     family_head_info = serializers.SerializerMethodField()
     spouse_info = serializers.SerializerMethodField()
-    # family_planning_record = serializers.SerializerMethodField()
+    family_planning_record = serializers.SerializerMethodField()
     additional_info = serializers.SerializerMethodField()
     completed_pregnancy_count = serializers.IntegerField(read_only=True)
 
@@ -142,6 +142,7 @@ class PatientSerializer(serializers.ModelSerializer):
                         'fam_id': str(current_role.fam_id),
                         'fc_role': current_role.fc_role,
                         'fc_id': current_role.fc_id
+                        
                     }
 
                 # try to find mother role first (existing logic)

@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.utils import timezone
 from apps.servicescheduler.models import *
 from apps.healthProfiling.models import *
+from apps.maternal.models import *
 
 class MedicalConsultation_Record(models.Model):
     medrec_id = models.BigAutoField(primary_key=True)
@@ -21,16 +22,14 @@ class MedicalConsultation_Record(models.Model):
     medreq = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True)
     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record_assigned', null=True, blank=True)
-    
-    # Optional fields
+    tts =models.ForeignKey(TT_Status, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True, blank=True)
+    obs = models.ForeignKey(Obstetrical_History, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True, blank=True)
     is_phrecord = models.BooleanField(default=False)
     iswith_atc = models.BooleanField(default=False)
     marital_status = models.CharField(max_length=50, null=True, blank=True)
     dependent_or_member = models.CharField(max_length=50, null=True, blank=True)
-    lmp = models.DateField(null=True, blank=True)
-    obgscore_g = models.CharField(max_length=100, null=True, blank=True)
-    obgscore_p = models.CharField(max_length=100, null=True, blank=True)
-    tpal = models.CharField(max_length=100, null=True, blank=True)
+    # tpal = models.CharField(max_length=100, null=True, blank=True)
+
     tt_status = models.CharField(max_length=100, null=True, blank=True)
     ogtt_result = models.CharField(max_length=100, null=True, blank=True)
     contraceptive_used = models.CharField(max_length=100, null=True, blank=True)

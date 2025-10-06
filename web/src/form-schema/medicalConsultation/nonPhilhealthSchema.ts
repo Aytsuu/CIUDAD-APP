@@ -122,17 +122,33 @@ export const nonPhilHealthSchema = z.object({
   // PhilHealth membership status - changed to boolean for radio button
   
   // Additional fields that show when PhilHealth member is selected
-  
+  obs_id:z.string().optional().default(""),
   selectedDoctorStaffId: z.string().optional().default(""),
   is_phrecord: z.boolean().optional().default(false),
   phil_pin:z.string().optional(),
   iswith_atc: z.boolean().optional().default(false),
   dependent_or_member: z.string().optional().default(""),
-  lmp: z.string().optional().default(""),
-  obscore_g: z.string().optional().default(""),
-  obscore_p: z.string().optional().default(""),
-  tpal: z.string().optional().default(""),
+
+
+  obs_lmp: z.string().optional().default(""),
+  // obscore_g: z.string().optional().default(""),
+  // obscore_p: z.string().optional().default(""),
+  // tpal: z.string().optional().default(""),
+  tts_id: z.string().optional().default(""),
   tt_status: z.string().optional().default(""),
+  tts_date_given: z.string().optional().default(""),
+  obs_ch_born_alive: z.string().optional().default(""),
+  obs_living_ch: z.string().optional().default(""),
+  obs_abortions: z.string().optional().default(""),
+  obs_still_births: z.string().optional().default(""),
+  obs_lg_babies: z.string().optional().default(""),
+  obs_lg_babies_str:z.boolean().optional().default(false),
+  obs_gravida: z.string().optional().default(""),
+  obs_para: z.string().optional().default(""),
+  obs_fullterm: z.string().optional().default(""),
+  obs_preterm: z.string().optional().default(""),
+
+
   ogtt_result: z.string().optional().default(""),
   contraceptive_used: z.string().optional().default(""),
   smk_sticks_per_day: z.string().optional().default(""),

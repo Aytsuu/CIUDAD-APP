@@ -155,8 +155,7 @@ class TT_Status(models.Model):
     tts_date_given = models.DateField(null=True, blank=True)
     tts_tdap = models.BooleanField(null=True, blank=True)
     vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='tt_status', db_column='vacrec_id', null=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='tt_status', db_column='pf_id', null=True)
-
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='tt_status', db_column='pat_id', null=True)
     class Meta:
         db_table = 'tt_status'
 
