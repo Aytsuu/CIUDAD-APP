@@ -3,6 +3,8 @@ import { updateIncomeExpense } from "../request/income-ExpenseTrackingPutRequest
 import { updateIncomeTracking } from "../request/income-ExpenseTrackingPutRequest";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";
 import { updateIncomeMain } from "../request/income-ExpenseTrackingPostRequest";
 import { expense_log } from "../request/income-ExpenseTrackingPostRequest";
@@ -78,13 +80,8 @@ export const useUpdateIncomeExpense = (
       return iet_num;
     },
     onSuccess: () => {
-      toast.loading("Updating entry...", { id: "updateExpense" });
 
-      toast.success('Expense Entry updated', {
-        id: 'updateExpense',
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Expense entry updated')
       
       // Invalidate any related queries if needed
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
@@ -97,7 +94,7 @@ export const useUpdateIncomeExpense = (
     },
     onError: (err) => {
       console.error("Error updating expense:", err);
-      toast.error("Failed to update expense entry");
+      showErrorToast("Failed to update expense");
     }
   });
 };
@@ -170,13 +167,8 @@ export const useUpdateIncome = (
       return response;
     },
     onSuccess: () => {
-      toast.loading("Updating entry...", { id: "updateIncome" });
 
-      toast.success('Income Entry updated', {
-        id: "updateIncome",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Income entry updated')
       
       // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['income'] });
@@ -186,7 +178,7 @@ export const useUpdateIncome = (
     },
     onError: (err) => {
       console.error("Error updating income:", err);
-      toast.error("Failed to update income entry");
+      showErrorToast("Failed to update income");
     }
   });
 };
