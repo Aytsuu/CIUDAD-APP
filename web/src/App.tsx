@@ -11,7 +11,7 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { queryClient } from "./lib/queryClient";
 import { PersistGate } from "redux-persist/integration/react";
-import MobileDetect from "./pages/device/MobileDetect";
+import { MobileDetect } from "./pages/device/MobileDetect";
 
 const router = createBrowserRouter([
   ...landing_router,
