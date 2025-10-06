@@ -25,7 +25,7 @@ type CertificateRequest = {
     pr_id?: number; // Purpose and Rate ID
     business_name?: string; // Business name for permit clearances
     req_amount?: number; // Add req_amount field for business clearance
-    req_sales_proof?: string; // Add gross sales range
+    // req_sales_proof field removed
 };
 
 

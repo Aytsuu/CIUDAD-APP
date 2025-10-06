@@ -49,7 +49,6 @@ export const BusinessPermitRequestSubmissionSchema = z.object({
     bpr_id: z.string().min(1, "Business Permit Request ID is required"),
     req_request_date: z.string().min(1, "Request date is required"),
     req_transac_id: z.string().optional(),
-    req_sales_proof: z.string().optional(),
     req_status: z.enum(["Pending", "Approved", "Rejected", "Completed"]).default("Pending"),
     req_payment_status: z.enum(["Unpaid", "Paid", "Partial"]).default("Unpaid"),
     business: z.string().optional(),
@@ -63,7 +62,6 @@ export const BusinessPermitRequestSubmissionSchema = z.object({
     business_gross_sales: z.string().optional(),
     requestor: z.string().optional(),
 });
-
 
 export const SearchCertificationRequestSchema = z.object({
     query: z.string().min(1, "Search query is required"),

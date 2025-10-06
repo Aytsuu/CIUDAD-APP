@@ -195,7 +195,7 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                     pr_id: row.original.pr_id,
                                     business_name: row.original.businessName && row.original.businessName !== "No Business Linked" ? row.original.businessName : row.original.requestor || "Unknown Business",
                                     req_amount: row.original.grossSalesData ? parseFloat(row.original.grossSalesData.ags_rate) : 0, // Pass the ags_rate
-                                    req_sales_proof: row.original.req_sales_proof || "" // Pass the gross sales range
+                                    // req_sales_proof field removed
                                 }}
                                 onSuccess={() => {}}
                             />
@@ -243,7 +243,7 @@ type PermitClearance = {
     reqDate: string,
     claimDate: string,
     paymentStat: "Paid" | "Pending",
-    req_sales_proof?: string,
+    // req_sales_proof field removed
     req_purpose?: string,
     cr_id?: string,
     bpr_id?: string, // Add bpr_id field
@@ -337,7 +337,7 @@ function PermitClearance(){
             reqDate: item.req_request_date,
             claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
             paymentStat: item.req_payment_status,
-            req_sales_proof: item.business_gross_sales || "Not Set",
+            // req_sales_proof field removed
             amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
             req_amount: item.req_amount || 0, // Include req_amount field
             bpr_id: item.bpr_id || "", // Include bpr_id field
