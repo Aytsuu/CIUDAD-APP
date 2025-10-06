@@ -460,10 +460,11 @@ import { Separator } from "@/components/ui/separator"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useFamilyHealthProfilingData } from "../../record/health-family-profiling/family-profling/queries/profilingFetchQueries"
 import { formatDate } from "@/helpers/dateHelper"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
 import { Printer, Users, Home, Droplets, FileText, Activity, Stethoscope, ClipboardCheck } from "lucide-react"
-import FamilyProfilePrintPreview, { type FamilyProfilePrintPreviewHandle } from "./FamilyProfilePrintPreview"
+import FamilyProfilePrintPreview from "./FamilyProfilePrintPreview"
+import { type FamilyProfilePrintPreviewHandle } from "./print/utils"
 import { useRef, useState } from "react"
 
 interface HealthFamilyProfileViewProps {
@@ -648,7 +649,7 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
                 <AccordionContent>
                   <Separator />
                   <div className="p-6 space-y-4 bg-muted/20">
-                    {healthProfilingData.data.family_members.map((member: any, index: number) => (
+                    {healthProfilingData.data.family_members.map((member: any) => (
                       <Card key={member.resident_id} className="border-border shadow-sm bg-background">
                         <CardContent className="p-5 space-y-5">
                           {/* Member Header */}
@@ -827,7 +828,7 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
                               label="Waste Management"
                               value={healthProfilingData.data.environmental_health.waste_management.type.replace(
                                 /([A-Z])/g,
-                                " $1",
+                                "$1",
                               )}
                             />
                           )}
@@ -959,7 +960,7 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
                     <div className="px-6 py-5 bg-muted/20 space-y-6">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <FormField
-                          label="Filled By"
+                          label="Profiled By"
                           value={healthProfilingData.data.survey_identification.filled_by}
                           optional={true}
                         />

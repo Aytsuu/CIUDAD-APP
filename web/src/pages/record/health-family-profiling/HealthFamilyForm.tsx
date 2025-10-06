@@ -399,9 +399,12 @@ export default function HealthFamilyForm() {
             toilet_facility_type: formData.environmentalForm.toiletFacilityType || ''
           } : undefined,
           waste_management: formData.environmentalForm.wasteManagement ? {
-            waste_management_type: formData.environmentalForm.wasteManagement === "others"
+            waste_management_type: (formData.environmentalForm.wasteManagement || "").toUpperCase() === "OTHERS"
+              ? formData.environmentalForm.wasteManagementOthers || "OTHERS"
+              : formData.environmentalForm.wasteManagement,
+            description: (formData.environmentalForm.wasteManagement || "").toUpperCase() === "OTHERS"
               ? formData.environmentalForm.wasteManagementOthers || ""
-              : formData.environmentalForm.wasteManagement
+              : undefined
           } : undefined
         };
 

@@ -153,7 +153,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_addresses = serializers.SerializerMethodField()
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
-    fam_id = serializers.SerializerMethodField()
+    # fam_id = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile

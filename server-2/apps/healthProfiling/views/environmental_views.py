@@ -220,7 +220,8 @@ class EnvironmentalDataView(APIView):
                 'sanitary_facility': SanitaryFacilitySerializer(sanitary_facility).data if sanitary_facility else None,
                 'waste_management': {
                     'swm_id': waste_mgmt.swm_id if waste_mgmt else None,
-                    'disposal_type': waste_mgmt.swn_desposal_type if waste_mgmt else None,
+                    # Use a consistent key name ("type") to match consumers
+                    'type': waste_mgmt.swn_desposal_type if waste_mgmt else None,
                     'description': waste_mgmt.swm_desc if waste_mgmt else None
                 } if waste_mgmt else None
             }
