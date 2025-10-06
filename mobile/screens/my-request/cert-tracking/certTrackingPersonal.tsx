@@ -9,6 +9,7 @@ import { usePurposeAndRates } from "@/screens/request/certification-request/quer
 import ReactMemo = React;
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import EmptyState from "@/components/ui/emptyState";
 
 export default function CertTrackingPersonal() {
   const router = useRouter();
@@ -139,7 +140,9 @@ export default function CertTrackingPersonal() {
                 </View>
               ))
             ) : (
-              <Text className="text-gray-500 text-sm mb-4">No {activeTab} personal certification requests.</Text>
+              <View className="flex-1 justify-center items-center py-8">
+                <EmptyState emptyMessage={`No ${activeTab} personal certification requests`} />
+              </View>
             )}
           </ScrollView>
         )}

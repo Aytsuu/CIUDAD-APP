@@ -8,6 +8,7 @@ import { useCertTracking, useCancelBusinessPermit } from "./queries/certTracking
 import { usePurposeAndRates } from "@/screens/request/certification-request/queries/certificationReqFetchQueries";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import EmptyState from "@/components/ui/emptyState";
 
 export default function CertTrackingBusiness() {
   const router = useRouter();
@@ -137,7 +138,9 @@ export default function CertTrackingBusiness() {
                 </View>
               ))
             ) : (
-              <Text className="text-gray-500 text-sm mb-4">No {activeTab} business permit requests.</Text>
+              <View className="flex-1 justify-center items-center py-8">
+                <EmptyState emptyMessage={`No ${activeTab} business permit requests`} />
+              </View>
             )}
           </ScrollView>
         )}
