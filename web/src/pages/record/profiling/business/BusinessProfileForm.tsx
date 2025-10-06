@@ -38,6 +38,7 @@ export default function BusinessProfileForm({
   setMediaFiles,
   setActiveVideoId,
   submit,
+  setSearchQuery
 }: {
   addresses?: any[];
   validAddresses?: boolean[];
@@ -57,6 +58,7 @@ export default function BusinessProfileForm({
   setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>
   submit: () => void,
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>
 }) {
   const watchedValues = form.watch()
   const residentSelected = watchedValues?.rp_id ? true : false;
@@ -136,6 +138,7 @@ export default function BusinessProfileForm({
                         form.clearErrors();
                         form.setValue("rp_id", value)
                       }}
+                      onSearchChange={(value) => setSearchQuery(value)}
                       placeholder="Search and select a registered resident..."
                       emptyMessage={
                         <div className="flex gap-2 justify-center items-center py-2">

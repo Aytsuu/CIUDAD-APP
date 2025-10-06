@@ -2,10 +2,9 @@
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
-import { Loader2, Printer } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-import { PrenatalCareHistoryTable } from "../../maternal-components/prenatalcare-history";
+import { PrenatalCareHistoryTable } from "../../prenatal/prenatal-history/prenatalcare-history";
 import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
 import PrenatalFormTableHistory from "./prenatal-form-history";
 import PrenatalIndivHistoryTab from "./prenatal-indiv-history-tab";
@@ -138,46 +137,41 @@ export default function PrenatalIndivHistory() {
       description="Complete record of prenatal visits and clinical notes"
     >
       <div className="bg-white p-3 space-y-2">
-        <div className="flex justify-end pr-4 my-5">
-          <Button variant="outline"><Printer/> Print</Button>
-        </div>
-
-        <div className="w-full" defaultValue={1}>
+        <div className="w-full mt-8" defaultValue={1}>
           <div className="flex items-center justify-center">
             <PFHistoryTab onPageChange={handlePFPageChange} />
           </div>
-          
+
+          {pfPageNum === 1 && (
+            <PrenatalViewingOne pfId={recordId} />
+          )}
+
+          {pfPageNum === 2 && (
+            <PrenatalViewingTwo />
+          )}
         </div>
-
-        {pfPageNum === 1 && (
-          <PrenatalViewingOne pfId={recordId} />
-        )}
-
-        {pfPageNum === 2 && (
-          <PrenatalViewingTwo />
-        )}
-
-        <div className="bg-white/70 pt-5 px-2">
-          <div className="flex-1 p-1 border rounded-md bg-blue-50">
+       
+        <div className="bg-white/70 pt-5 px-2 py-2">
+          <div className="flex-1 px-1 py-1 m-5 border rounded-md bg-blue-50">
             <PrenatalIndivHistoryTab onTabChange={(tab) => setActiveTab(tab)} />
           </div>
+
+          {hasData && activeTab === "prenatalcare" ? (
+            <div className="px-5">
+              <PrenatalCareHistoryTable data={processedPrenatalData} />
+            </div>
+          ):
+            <div className="text-center py-8 text-gray-500">
+              No prenatal care records found for this pregnancy.
+            </div>
+          }
+
+            {activeTab === "prenatalform" && (
+              <PrenatalFormTableHistory/>
+            )}
+          </div>
         </div>
-
-        {/* Prenatal History Table with real data */}
-        {hasData && activeTab === "prenatalcare" ? (
-          <div className="px-2">
-            <PrenatalCareHistoryTable data={processedPrenatalData} />
-          </div>
-        ):
-          <div className="text-center py-8 text-gray-500">
-            No prenatal care records found for this pregnancy.
-          </div>
-        }
-
-        {activeTab === "prenatalform" && (
-          <PrenatalFormTableHistory/>
-        )}
-      </div>
+        
     </LayoutWithBack>
   );
 }

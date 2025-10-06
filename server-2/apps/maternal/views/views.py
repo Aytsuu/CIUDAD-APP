@@ -403,6 +403,16 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 status__in=['completed', 'pregnancy loss']
             ).order_by('-created_at').first()
 
+            # Get latest occupation from any prenatal form for this patient
+            latest_occupation = None
+            latest_pf_with_occupation = Prenatal_Form.objects.filter(
+                patrec_id__pat_id=patient,
+                pf_occupation__isnull=False
+            ).exclude(pf_occupation='').order_by('-created_at').first()
+            
+            if latest_pf_with_occupation:
+                latest_occupation = latest_pf_with_occupation.pf_occupation
+
             if not spouse_data and latest_completed_or_pregloss:
                 latest_pf_spouse = Prenatal_Form.objects.filter(
                     pregnancy_id=latest_completed_or_pregloss
@@ -410,12 +420,13 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 if latest_pf_spouse:
                     spouse_serializer = SpouseCreateSerializer(latest_pf_spouse.spouse_id)
                     spouse_data = spouse_serializer.data
-
+            
             return Response({
                 'pat_id': pat_id,
                 'message': 'No active pregnancy',
                 'latest_prenatal_form': {
-                    'spouse_details': spouse_data
+                    'spouse_details': spouse_data,
+                    'pf_occupation': latest_occupation
                 }
             }, status=status.HTTP_200_OK)
 
@@ -794,7 +805,7 @@ def get_prenatal_form_complete(request, pf_id):
             'bm_id',
             'spouse_id',
             'followv_id',
-            'staff_id'
+            'staff'
         ).prefetch_related(
             'pf_prenatal_care',
             'pf_previous_hospitalization',

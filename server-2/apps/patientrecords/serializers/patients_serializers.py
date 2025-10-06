@@ -9,6 +9,7 @@ from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
 from apps.healthProfiling.serializers.minimal import *
 from apps.healthProfiling.models import *
 from apps.healthProfiling.serializers.resident_profile_serializers import *
+from apps.familyplanning.models import *
 from .spouse_serializers import SpouseSerializer
 
 
@@ -73,13 +74,13 @@ class PatientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_personal_info(self, obj):
+        """Get personal information for both resident and transient patients"""
         # Resident personal data
         if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
-            personal = obj.rp_id.per
-            return PersonalSerializer(personal, context=self.context).data
-        #
+            return PersonalSerializer(obj.rp_id.per, context=self.context).data
+        
         # Transient personal data
-        if obj.pat_type == 'Transient' and obj.trans_id:
+        elif obj.pat_type == 'Transient' and obj.trans_id:
             trans = obj.trans_id
             return {
                 'per_fname': trans.tran_fname,
@@ -94,6 +95,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 'per_contact': trans.tran_contact,
                 'philhealth_id': trans.philhealth_id,
             }
+        
         return None
 
     def get_family_compositions(self, obj):
@@ -210,23 +212,6 @@ class PatientSerializer(serializers.ModelSerializer):
                 return latest_tt.tts_status
             else:
                 return 'No TT Status found'
-            
-            # for i, pat_record in enumerate(mom_prenatal_record):
-            #     try:
-            #         if hasattr(pat_record, 'prenatal_forms') and pat_record.prenatal_forms:
-            #             prenatal = pat_record.prenatal_forms.all()
-                        
-            #             tt_status_record = TT_Status.objects.filter(pf_id=prenatal).order_by('-tts_date_given', '-tts_id').first()
-            #             if tt_status_record:
-            #                 record_rank = "latest" if i == 0 else "previous"
-            #                 print(f'Found tt status in record {record_rank}')
-
-            #                 if hasattr(tt_status_record, 'tts_status'):
-            #                     return tt_status_record.tts_status
-            #     except Exception as record_error:
-            #         print(f'Error fetching in record {i+1}: {str(record_error)}')   
-            #         continue
-            # return f'TT Status not found - No TT Status records'
         
         except Exception as e:
             print(f'Error in getting mother tt status: {str(e)}')
@@ -327,44 +312,43 @@ class PatientSerializer(serializers.ModelSerializer):
         return []
 
     def get_address(self, obj):
-        if obj.pat_type == 'Resident' and obj.rp_id:
-            # First: Try to fetch PersonalAddress (this part is correct)
-            personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
-            if personal_address and personal_address.add:
-                address = personal_address.add
-                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
-                # Construct full address dynamically based on available fields
-                address_parts = [
-                    # f"Sitio {sitio}" if sitio else None,
-                    address.add_barangay if address.add_barangay else None,
-                    address.add_city if address.add_city else None,
-                    address.add_province if address.add_province else None,
-                    address.add_street if address.add_street else None,
-                ]
-                # Filter out None values and join with ", "
-                full_address = ", ".join(filter(None, address_parts))
-                result = {
-                    'add_street': address.add_street,
-                    'add_barangay': address.add_barangay,
-                    'add_city': address.add_city,
-                    'add_province': address.add_province,
-                    'add_sitio': sitio,
-                    'full_address': full_address
-                }
-                print("✅ PersonalAddress used →", result)
-                return result
+        """Get address information with improved error handling"""
+        try:
+            if obj.pat_type == 'Resident' and obj.rp_id:
+                # First: Try to fetch PersonalAddress
+                personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
+                if personal_address and personal_address.add:
+                    address = personal_address.add
+                    sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                    # Construct full address dynamically based on available fields
+                    address_parts = [
+                        f"Sitio {sitio}" if sitio else None,
+                        address.add_barangay if address.add_barangay else None,
+                        address.add_city if address.add_city else None,
+                        address.add_province if address.add_province else None,
+                        address.add_street if address.add_street else None,
+                    ]
+                    # Filter out None values and join with ", "
+                    full_address = ", ".join(filter(None, address_parts))
+                    result = {
+                        'add_street': address.add_street,
+                        'add_barangay': address.add_barangay,
+                        'add_city': address.add_city,
+                        'add_province': address.add_province,
+                        'add_sitio': sitio,
+                        'full_address': full_address
+                    }
+                    print("✅ PersonalAddress used →", result)
+                    return result
 
-            # CORRECTED: Fetch from Household - proper relationship traversal
-            try:
-                # Household has ForeignKey to ResidentProfile (rp field)
+                # Fallback: Try to fetch from Household
                 household = Household.objects.select_related('add', 'add__sitio').filter(rp=obj.rp_id).first()
-                
                 if household and household.add:
                     address = household.add
                     sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
                     # Construct full address dynamically based on available fields
                     address_parts = [
-                        # f"Sitio {sitio}" if sitio else None,
+                        f"Sitio {sitio}" if sitio else None,
                         address.add_barangay if address.add_barangay else None,
                         address.add_city if address.add_city else None,
                         address.add_province if address.add_province else None,
@@ -382,38 +366,41 @@ class PatientSerializer(serializers.ModelSerializer):
                     }
                     print("⚠️ No PersonalAddress. Used Household instead →", result)
                     return result
-            except Exception as e:
-                print(f"Error fetching household address: {str(e)}")
 
-            print("❌ No PersonalAddress or Household address found.")
-        
-        # Transient fallback (this part is correct)
-        if obj.pat_type == 'Transient' and obj.trans_id and obj.trans_id.tradd_id:
-            trans_addr = obj.trans_id.tradd_id
-            sitio = trans_addr.tradd_sitio
-            # Construct full address dynamically based on available fields
-            address_parts = [
-                f"Sitio {sitio}" if sitio else None,
-                trans_addr.tradd_barangay if trans_addr.tradd_barangay else None,
-                trans_addr.tradd_city if trans_addr.tradd_city else None,
-                trans_addr.tradd_province if trans_addr.tradd_province else None,
-                trans_addr.tradd_street if trans_addr.tradd_street else None,
-            ]
-            # Filter out None values and join with ", "
-            full_address = ", ".join(filter(None, address_parts))
-            result = {
-                'add_street': trans_addr.tradd_street,
-                'add_barangay': trans_addr.tradd_barangay,
-                'add_city': trans_addr.tradd_city,
-                'add_province': trans_addr.tradd_province,
-                'add_sitio': sitio,
-                'full_address': full_address
-            }
-            print("📦 Transient Address →", result)
-            return result
+                print("❌ No PersonalAddress or Household address found.")
+            
+            # Transient fallback
+            elif obj.pat_type == 'Transient' and obj.trans_id and obj.trans_id.tradd_id:
+                trans_addr = obj.trans_id.tradd_id
+                sitio = trans_addr.tradd_sitio
+                # Construct full address dynamically based on available fields
+                address_parts = [
+                    f"Sitio {sitio}" if sitio else None,
+                    trans_addr.tradd_barangay if trans_addr.tradd_barangay else None,
+                    trans_addr.tradd_city if trans_addr.tradd_city else None,
+                    trans_addr.tradd_province if trans_addr.tradd_province else None,
+                    trans_addr.tradd_street if trans_addr.tradd_street else None,
+                ]
+                # Filter out None values and join with ", "
+                full_address = ", ".join(filter(None, address_parts))
+                result = {
+                    'add_street': trans_addr.tradd_street,
+                    'add_barangay': trans_addr.tradd_barangay,
+                    'add_city': trans_addr.tradd_city,
+                    'add_province': trans_addr.tradd_province,
+                    'add_sitio': sitio,
+                    'full_address': full_address
+                }
+                print("📦 Transient Address →", result)
+                return result
 
-        print("❓ Address not found for any type.")
-        return None
+            print("❓ Address not found for any type.")
+            return None
+            
+        except Exception as e:
+            print(f"Error retrieving address: {str(e)}")
+            return None
+    
 
     def get_spouse_info(self, obj):
         try:
@@ -514,17 +501,17 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def _check_medical_records_for_spouse(self, obj):
         try:
-            # family_planning_with_spouse = PostpartumRecord.objects.filter(
-            #     patrec_id__pat_id=obj,
-            #     spouse_id__isnull=False
-            # ).select_related('spouse_id').order_by('-created_at').first()
+            family_planning_with_spouse = FP_Record.objects.filter(
+                patrec_id__pat_id=obj,
+                spouse_id__isnull=False
+            ).select_related('spouse_id').order_by('-created_at').first()
             
-            # if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
-            #     return {
-            #         'spouse_exists': True,
-            #         'spouse_source': 'postpartum_record',
-            #         'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
-            #     }
+            if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
+                return {
+                    'spouse_exists': True,
+                    'spouse_source': 'postpartum_record',
+                    'spouse_info': SpouseSerializer(family_planning_with_spouse.spouse_id, context=self.context).data
+                }
 
             # query PostpartumRecord with spouse
             postpartum_with_spouse = PostpartumRecord.objects.filter(

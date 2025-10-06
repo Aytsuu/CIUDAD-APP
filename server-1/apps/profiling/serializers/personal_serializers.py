@@ -133,8 +133,37 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
 
         return instance
 
+class PersonalAddressModifSerializer(serializers.ModelSerializer):
+    address = serializers.SerializerMethodField()
+    class Meta:
+        model = PersonalAddressModification
+        fields = ['address']
+    
+    def get_address(self, obj):
+        return AddressBaseSerializer(Address.objects.filter(add_id=obj.add.add_id).first()).data
 
 class PersonalModificationBaseSerializer(serializers.ModelSerializer):
+    modified_addresses = serializers.SerializerMethodField()
+    current_details = serializers.SerializerMethodField()
+    rp_id = serializers.SerializerMethodField()
+    fam_id = serializers.SerializerMethodField()
     class Meta:
         model = PersonalModification
         fields = '__all__'
+    
+    def get_modified_addresses(self, obj):
+        instances = PersonalAddressModification.objects.filter(pm=obj.pm_id)
+        return PersonalAddressModifSerializer(instances, many=True).data
+    
+    def get_current_details(self, obj):
+        return PersonalBaseSerializer(Personal.objects.filter(per_id=obj.per.per_id).first()).data
+    
+    def get_rp_id(self, obj):
+        return ResidentProfile.objects.filter(per=obj.per).first().rp_id
+    
+    def get_fam_id(self, obj):
+        rp = ResidentProfile.objects.filter(per=obj.per).first().rp_id
+        fam = FamilyComposition.objects.filter(rp=rp).first()
+        if fam:
+            fam = fam.fam
+        return fam

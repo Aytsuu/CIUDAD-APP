@@ -34,16 +34,14 @@ export default function EditGeneralDetails({
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
   const { mutateAsync: updateFamily } = useUpdateFamily(); 
-  const formattedHouseholds = React.useMemo(() => 
-    formatHouseholds(households), [households]
-  );
+  const formattedHouseholds = formatHouseholds(households)
 
   
 
   React.useEffect(() => {
     if(familyData) {
       const houseData = formattedHouseholds.find((fh: any) => fh.id.split(" ")[0] == familyData.household_no);
-      form.setValue("householdNo", houseData.id)
+      form.setValue("householdNo", houseData?.id)
       form.setValue("building", familyData.fam_building)
       form.setValue("indigenous", familyData.fam_indigenous)
     }
@@ -68,8 +66,6 @@ export default function EditGeneralDetails({
     }
 
     const values = form.getValues();
-    console.log('familyData:', familyData)
-    console.log('values:', values)
     
     if(checkDefaultValues(values)) {
       setIsOpenDialog(false);

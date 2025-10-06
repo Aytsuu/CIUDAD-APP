@@ -1,7 +1,5 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
-
 import { useMedConCount, useChildHealthRecordCount } from "@/pages/record/health/patientsRecord/queries/count"
 import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
 import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
@@ -74,7 +72,7 @@ export default function PatientRecordCount({ patientId }: PatientRecordCountProp
   ])
 
   if (totalRecords === null) {
-    return <div className="flex justify-center items-center"><Loader2 className="animate-spin" /></div> // Or a spinner
+    return <div className="flex justify-center items-center">...</div> // Or a spinner
   }
 
   return <div>{totalRecords}</div>

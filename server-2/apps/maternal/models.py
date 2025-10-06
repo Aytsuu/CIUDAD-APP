@@ -19,11 +19,18 @@ year = str(today.year)
 class PrenatalAppointmentRequest(models.Model):
     par_id = models.BigAutoField(primary_key=True)
     requested_at = models.DateTimeField(auto_now_add=True)
-    confirmed_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled')
+        ('approved', 'Approved'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('completed', 'Completed'),
+        ('rejected', 'Rejected'),
     ], default='pending')
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='pa_request')
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pa_request', null=True)
@@ -89,7 +96,7 @@ class Prenatal_Form(models.Model):
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='prenatal_form', db_column='followv_id', null=True)
     medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medrec_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
-    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
 
     def save(self, *args, **kwargs):
         if not self.pf_id:
@@ -298,6 +305,7 @@ class PostpartumRecord(models.Model):
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True, blank=True)
+    medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medrec_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):

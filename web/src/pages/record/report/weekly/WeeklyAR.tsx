@@ -3,13 +3,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Loader2, Plus } from "lucide-react"
+import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Plus } from "lucide-react"
 import { useGetWeeklyAR } from "../queries/reportFetch"
 import { getAllWeeksInMonth, getMonthName, getMonths, getRangeOfDaysInWeek, getWeekNumber, hasWeekPassed } from "@/helpers/dateHelper"
 import { Link, useNavigate } from "react-router"
 import RecentWeeklyAR from "./RecentWeeklyAR"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { Button } from "@/components/ui/button/button"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function WeeklyAR() {
   const navigate = useNavigate()
@@ -101,8 +102,8 @@ export default function WeeklyAR() {
       <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">
-              <Loader2 className="w-full text-center animate-spin mb-2"/>
+            <div className="text-muted-foreground flex items-center justify-center gap-4">
+              <Spinner size="lg"/>
               Please wait while we load your report records...
             </div>
           </div>

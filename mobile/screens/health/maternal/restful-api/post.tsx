@@ -3,7 +3,11 @@ import axios from "axios";
 
 interface PrenatalAppointmentData {
     requested_at: string;
-    confirmed_at: string | null;
+    approved_at: string | null;
+    cancelled_at: string | null;
+    completed_at: string | null;
+    rejected_at: string | null;
+    reason: string | null;
     status: string;
     rp_id: string;
     pat_id: string;

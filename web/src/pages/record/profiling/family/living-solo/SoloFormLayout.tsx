@@ -39,19 +39,25 @@ export default function SoloFormLayout({ tab_params } : { tab_params?: Record<st
   const { showLoading, hideLoading } = useLoading()
   const { mutateAsync: addFamily } = useAddFamily()
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition()
-
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
-    false, // is_staff
-    true, // exclude_independent
-  )
-
-  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList()
-
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false)
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
   const [buildingReadOnly, setBuildingReadOnly] = React.useState<boolean>(false)
   const [selectOwnedHouses, setSelectOwnedHouses] = React.useState<boolean>(false);
+  const [residentSearch, setResidentSearch] = React.useState<string>("");
+  const [houseSearch, setHouseSearch] = React.useState<string>("");
+
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
+    false, // is_staff
+    true, // exclude_independent
+    true, // is search only
+    residentSearch, //search
+    false // disable query
+  )
+
+  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
+    houseSearch
+  )
   const formattedResidents = formatResidents(residentsList)
   const formattedHouseholds = formatHouseholds(householdsList)
 
@@ -191,6 +197,8 @@ export default function SoloFormLayout({ tab_params } : { tab_params?: Record<st
           selectOwnedHouses={selectOwnedHouses}
           setSelectOwnedHouses={setSelectOwnedHouses}
           onSubmit={submit}
+          setResidentSearch={setResidentSearch}
+          setHouseSearch={setHouseSearch}
         />
       </form>
     </Form>

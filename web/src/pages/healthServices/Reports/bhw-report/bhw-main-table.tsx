@@ -1,7 +1,7 @@
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { MonthInfoCardV2 } from "./folder-component"
+import { MonthInfoCardV2 } from "../bhw-report/folder-component"
 
 export default function BHWReportsMainTable() {
 	// const [selectedSort, setSelectedSort] = useState("All");

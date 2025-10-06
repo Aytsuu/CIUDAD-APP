@@ -29,8 +29,7 @@ import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
 import { showErrorToast } from "@/components/ui/toast";
-import { SignatureField, SignatureFieldRef } from "../../reports/firstaid-report/signature";
-import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
+import { fetchStaffWithPositions } from "../../reports/firstaid-report/queries/fetch";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();

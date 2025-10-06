@@ -35,6 +35,7 @@ urlpatterns = [
     path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
     path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
+    path("personal/modification-list/", PersonalModificationRequestsView.as_view(), name="personal-modification-request-list"),
 
     # Family Urls
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
@@ -79,9 +80,9 @@ urlpatterns = [
     path("business/respondent/list/table/", BusinessRespondentTableView.as_view(), name="business-respondent-list"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
     path("business/respondent/create/", BRCreateUpdateView.as_view(), name="create-business-respondent"),
-    path("business/<int:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
-    path("business/respondent/<int:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
-    path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
+    path("business/<str:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
+    path("business/respondent/<str:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
+    path("business/<str:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
     path("business/specific/ownership/", SpecificOwnerView.as_view(), name="business-for-specific-owner"),
     path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
     path("business/verify/account-creation/", VerifyBusinessRespondent.as_view(), name="respondent-account-creation"),

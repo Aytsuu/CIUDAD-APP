@@ -367,7 +367,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
               options={[
                 { id: "all", name: "All Types" },
                 { id: "child-health", name: "Child Health" },
-                { id: "medical-consultation", name: "Medical Consultation" }
+                { id: "medical-consultation", name: "Medical Consultation" },
+                { id: "prenatal", name: "Prenatal" }
               ]}
               value={recordTypeFilter}
               onChange={(value) => setRecordTypeFilter(value)}

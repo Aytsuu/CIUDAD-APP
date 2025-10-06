@@ -51,7 +51,7 @@ export const AddressDrawer = ({
   React.useEffect(() => {
     if (barangay?.trim().toLowerCase() === "san roque" || 
         barangay?.trim().toLowerCase() === "ciudad") {
-      setValue('personalInfoSchema.per_addresses.new.add_barangay', "San Roque (ciudad)");
+      setValue('personalInfoSchema.per_addresses.new.add_barangay', "SAN ROQUE (CIUDAD)");
     }
 
     if (barangay?.trim().toLowerCase() === "san roque (ciudad)") {
@@ -95,14 +95,12 @@ export const AddressDrawer = ({
 
     if (alreadyAdded) {
       Alert.alert("Address already exist!");
-      // toast.error("Address already exist!");
-      // handleClose();
       return;
     }
 
     append({
-      ...capitalizeAllFields(values),
-      sitio: values.sitio ? values.sitio.toLowerCase() : ''
+      ...values,
+      sitio: values.sitio ? values.sitio: ''
     } as any);
     handleClose();
   };
@@ -130,16 +128,19 @@ export const AddressDrawer = ({
             control={control}
             label="Province"
             name="personalInfoSchema.per_addresses.new.add_province"
+            upper={true}
           />
           <FormInput
             control={control}
             label="City"
             name="personalInfoSchema.per_addresses.new.add_city"
+            upper={true}
           />
           <FormInput
             control={control}
             label="Barangay"
             name="personalInfoSchema.per_addresses.new.add_barangay"
+            upper={true}
           />
           {isInternalAddress ? (
             <FormSelect
@@ -159,6 +160,7 @@ export const AddressDrawer = ({
             control={control}
             label="Street"
             name="personalInfoSchema.per_addresses.new.add_street"
+            upper={true}
           />
         </View>
       </ScrollView>

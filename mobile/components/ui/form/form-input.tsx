@@ -13,7 +13,8 @@ interface FormInputProps {
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
   editable?: boolean;
-  maxInput?: number; // New optional prop
+  maxInput?: number;
+  upper?: boolean
 }
 
 export const FormInput = ({
@@ -26,7 +27,8 @@ export const FormInput = ({
   returnKeyType = 'next',
   submitBehavior = 'newline',
   editable = true,
-  maxInput, // New prop
+  maxInput,
+  upper = false
 }: FormInputProps) => {
   return (
     <Controller
@@ -36,15 +38,18 @@ export const FormInput = ({
         // Handle maxInput logic
         const handleChange = (text: string) => {
           if (maxInput !== undefined && text.length > maxInput) {
-            return; // Don't update if exceeds max length
+            return;
           }
-          onChange(text);
+          
+          const processedText = upper ? text.toUpperCase() : text;
+          onChange(processedText);
         };
 
         return (
           <View className="mb-4">
             {label && <Text className="text-sm mb-2">{label}</Text>}
             <Input
+              autoCapitalize={upper ? 'characters' : 'none'}
               className={`
                 h-[45px]
                 bg-white
@@ -56,7 +61,7 @@ export const FormInput = ({
               `}
               placeholder={placeholder}
               placeholderTextColor="#888"
-              value={value != null ? String(value): ''}
+              value={value != null ? String(value) : ''}
               onChangeText={handleChange} // Use the custom handler
               onBlur={onBlur}
               secureTextEntry={secureTextEntry}

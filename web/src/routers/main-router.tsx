@@ -220,8 +220,6 @@ export const main_router: RouteObject[] = [
       ...template_router, 
       ...healthreports_router,
       ...medicalConsultation,
-
- 
       ])
     }
 ]

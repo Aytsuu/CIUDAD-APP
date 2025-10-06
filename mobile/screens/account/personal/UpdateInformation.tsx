@@ -8,31 +8,39 @@ import PersonalInformation from "@/screens/auth/signup/PersonalInformation";
 import isEqual from "lodash.isequal";
 import { useToastContext } from "@/components/ui/toast";
 import { uppercaseAll } from "@/helpers/caseHelper";
-import { useGetPersonalModificationReq } from "../../queries/accountFetchQueries";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
+import { useGetPersonalModificationReq } from "../queries/accountFetchQueries";
 
 export default function UpdateInformation() {
   // ===================== STATE INITIALIZATION =====================
   const params = useLocalSearchParams();
   const data = React.useMemo(() => JSON.parse(params?.data as string), [params])
+  const { per_addresses, ...per } = data; 
   const { toast } = useToastContext();
-  const { getValues, reset, setValue, formState } = useRegistrationFormContext();
+  const { getValues, setValue } = useRegistrationFormContext();
   const { data: personalModReq, isLoading } = useGetPersonalModificationReq(data?.per_id);
 
   // ===================== SIDE EFFECTS =====================
   React.useEffect(() => {
     if(data) {
-      Object.entries(data).map(([key, val]) => {
-        setValue(`personalInfoSchema.${key}` as any, typeof val == "string" ? val.toLowerCase() : val)
+      Object.entries(per).map(([key, val]) => {
+        setValue(`personalInfoSchema.${key}` as any, val)
       })
     }
-  }, [data]) 
+  }, [per]) 
+
+  React.useEffect(() => {
+    if(per_addresses?.length > 0) {
+      setValue('personalInfoSchema.per_addresses.list', per_addresses)
+    }
+  }, [per_addresses])
 
   // ===================== HANDLERS =====================
   const submit = () => {
     const personal = uppercaseAll(getValues("personalInfoSchema"))
-    if(isEqual(data, personal)) {
+    const {per_addresses: new_per_addresses, ...new_per} = personal;
+    if(isEqual(per, new_per) && isEqual(per_addresses, new_per_addresses.list)) {
       toast.info("No changes were made")
       router.back();
       return;

@@ -24,12 +24,12 @@ import { SheetLayout } from "@/components/ui/sheet/sheet-layout"
 import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router"
 import { RenderHistory } from "../../ProfilingHistory"
-import { ActivityIndicator } from "@/components/ui/activity-indicator"
 import { EmptyState } from "@/components/ui/empty-state"
 import { CardSidebar } from "@/components/ui/card-sidebar"
 import { Button } from "@/components/ui/button/button"
 import { Badge } from "@/components/ui/badge"
 import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
@@ -55,6 +55,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()
   const { data: personalHistory, isLoading: isLoadingPersonalHistory } = usePersonalHistory(personalInfo?.per_id)
+  // const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification(
+  //   personalInfo?.per_id
+  // )
 
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm(personalInfo)
   const family = familyMembers?.results || []
@@ -133,6 +136,12 @@ export default function ResidentViewForm({ params }: { params: any }) {
   ]
   
   // ================= SIDE EFFECTS ==================
+  React.useEffect(() => {
+    if(currentPath !== selectedItem) {
+      setSelectedItem(currentPath)
+    }
+  }, [currentPath, selectedItem])
+
   React.useEffect(() => {
     if (isLoadingFam || isLoadingPersonalInfo || isLoadingBusinesses || isLoadingPersonalHistory) showLoading()
     else hideLoading()
@@ -265,7 +274,12 @@ export default function ResidentViewForm({ params }: { params: any }) {
   // Render Family Card Content
   const renderFamilyContent = () => {
     if (isLoadingFam || isLoadingSitio) {
-      return <ActivityIndicator message="Loading family members..." />
+      return (
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <Spinner size="lg" />
+          <p className="text-sm text-gray-500">Loading family members...</p>
+        </div>
+      )
     }
     if (!family || family.length === 0) {
       return (
@@ -294,7 +308,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const renderBusinessContent = () => {
     return (
       <div className="flex justify-center">
-        <div className="w-full max-w-5xl mt-5 border">
+        <div className="w-full mt-5 border">
           <DataTable
             columns={businessDetailsColumns()}
             data={businesses}
@@ -357,7 +371,10 @@ export default function ResidentViewForm({ params }: { params: any }) {
             </div>
           </div>
           {isLoadingPersonalInfo ? (
-            <ActivityIndicator message="Loading personal information..." />
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Spinner size="lg" />
+              <p className="text-sm text-gray-500">Loading personal information...</p>
+            </div>
           ) : (
             <>
               <Form {...form}>
@@ -385,7 +402,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
               </Form>
               {registered_by.length > 0 && <div className="flex">
                 <div className="space-y-1">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-3 items-center">
                     <Label className="text-xs font-medium text-black/50 uppercase tracking-wide">Registered By</Label>
                     <Badge className="bg-green-500 hover:bg-green-500">{staffType}</Badge>
                   </div>

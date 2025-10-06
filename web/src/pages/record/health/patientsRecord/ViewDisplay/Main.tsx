@@ -112,7 +112,7 @@ export default function ViewPatientRecord() {
       lastName: currentPatient.personal_info.per_lname,
       firstName: currentPatient.personal_info.per_fname,
       middleName: currentPatient.personal_info.per_mname,
-      sex: currentPatient.personal_info.per_sex,
+      sex: currentPatient.personal_info.per_sex?.toLowerCase() || "",
       contact: currentPatient.personal_info.per_contact,
       dateOfBirth: currentPatient.personal_info.per_dob,
       patientType: currentPatient.pat_type,
@@ -288,22 +288,25 @@ export default function ViewPatientRecord() {
           tran_dob: formData.dateOfBirth,
           tran_sex: formData.sex,
           tran_contact: formData.contact,
-          tran_status: "Active",
-          tran_ed_attainment: "N/A",
-          tran_religion: "N/A",
+          tran_status: "ACTIVE",
+          tran_ed_attainment: "NOT SPECIFIED",
+          tran_religion: "NOT SPECIFIED",
           philhealth_id: formData.philhealthId,
           address: {
             tradd_street: formData.address.street,
             tradd_sitio: formData.address.sitio,
             tradd_barangay: formData.address.barangay,
             tradd_city: formData.address.city,
-            tradd_province: formData.address.province
-          }
-        }
-      };
-      await updatePatientData.mutateAsync(updatedData);
-      setIsEditable(false);
-      showSuccessToast("Patient data updated successfully!");
+            tradd_province: formData.address.province,
+          },
+        },
+      }
+      await updatePatientData.mutateAsync({
+        patientId: currentPatient.pat_id,
+        patientData: updatedData
+      })
+      setIsEditable(false)
+      showSuccessToast("Patient data updated successfully!")
     } catch (error) {
       console.error("Error saving patient data: ", error);
       showErrorToast("Failed to update patient data. Please try again.");

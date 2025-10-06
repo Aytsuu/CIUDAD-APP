@@ -37,10 +37,6 @@ export default function PrenatalFormThirdPg({
 }) {
 
   const handleNext = async () => {
-    setTimeout(() => {
-      window.scrollTo(0, 0)
-    }, 100)
-
     if (Object.keys(form.formState.errors).length === 0) {
       console.log("Form is valid, proceeding to next page")
       onSubmit() 

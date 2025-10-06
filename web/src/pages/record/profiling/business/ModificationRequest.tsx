@@ -7,8 +7,9 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { useAuth } from "@/context/AuthContext";
 import { getDateTimeFormat } from "@/helpers/dateHelper";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, Info, Loader2, X } from "lucide-react";
+import { Check, Info, X } from "lucide-react";
 import { MediaGallery } from "@/components/ui/media-gallery";
+import { Spinner } from "@/components/ui/spinner";
 
 interface FieldComparisonProps {
   label: string;
@@ -153,7 +154,7 @@ export default function ModificationRequest({ data } : {
           <div className="pt-10 space-y-6">
             <div className="flex gap-3 items-center justify-center">
               {isSubmitting ? (<>
-                <Loader2 className="animate-spin w-5 h-5 text-gray-600"/>
+                <Spinner size="md"/>
               </>) : (<>
                 <ConfirmationModal
                   trigger={<Button className="flex-1 bg-green-500 hover:bg-green-400">

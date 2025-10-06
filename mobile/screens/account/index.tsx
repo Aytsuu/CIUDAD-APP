@@ -11,7 +11,7 @@ import PageLayout from "../_PageLayout";
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
 import Logout from '@/assets/icons/essentials/logout.svg'
 import Settings from '@/assets/icons/essentials/settings.svg'
-import TermsCondition from '@/assets/icons/essentials/termsCon.svg'
+import UserLock from '@/assets/icons/essentials/user-lock.svg'
 import Star from '@/assets/icons/essentials/star.svg'
 import Service from '@/assets/icons/essentials/service.svg'
 import InformationCircle from '@/assets/icons/essentials/information-circle.svg'
@@ -23,6 +23,11 @@ export default () => {
   const { toast } = useToastContext();
 
   const menuItems = [
+    {
+      name: "Personal Information",
+      icon: UserLock,
+      route: "/(account)/personal"
+    },
     {
       name: "About",
       icon: InformationCircle,
@@ -38,10 +43,6 @@ export default () => {
       name: "Support",
       icon: Service,
       route: "/(account)/support"
-    },
-    {
-      name: "Terms & Condition",
-      icon: TermsCondition
     },
     {
       name: "Settings",

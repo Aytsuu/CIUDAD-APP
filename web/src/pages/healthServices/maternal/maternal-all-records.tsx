@@ -10,13 +10,22 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CardLayout from "@/components/ui/card/card-layout";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLoading } from "@/context/LoadingContext";
+import ViewButton from "@/components/ui/view-button";
+
+
 import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { capitalize } from "@/helpers/capitalize";
+
 
 export default function MaternalAllRecords() {
   interface maternalRecords {
@@ -46,6 +55,7 @@ export default function MaternalAllRecords() {
     pregnancy_count?: number;
   }
 
+  
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -53,11 +63,7 @@ export default function MaternalAllRecords() {
   const [selectedFilter, setSelectedFilter] = useState("all");
 
   const { showLoading, hideLoading } = useLoading();
-  const {
-    data: maternalRecordsData,
-    isLoading,
-    refetch
-  } = useMaternalRecords({
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords({
     page,
     page_size: pageSize,
     status: selectedFilter !== " All" ? selectedFilter : undefined,
@@ -72,7 +78,7 @@ export default function MaternalAllRecords() {
   const filter = [
     { id: "all", name: "All" },
     { id: "resident", name: "Resident" },
-    { id: "transient", name: "Transient" }
+    { id: "transient", name: "Transient" },
   ];
 
   useEffect(() => {
@@ -82,34 +88,37 @@ export default function MaternalAllRecords() {
       hideLoading();
     }
   }, [isLoading, showLoading, hideLoading]);
-
+  
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
+    setPage(newPage)
+  }
 
   const handleSearch = (search: string) => {
-    setSearchTerm(search);
-    setPage(1);
-  };
+    setSearchTerm(search)
+    setPage(1)
+  }
 
   const handleFilterChange = (filter: string) => {
-    setSelectedFilter(filter);
-    setPage(1);
-  };
+    setSelectedFilter(filter)
+    setPage(1) 
+  }
 
   const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setPage(1);
-  };
-
+    setPageSize(newPageSize)
+    setPage(1) 
+  }
+  
   const calculateAge = (dob: string): number => {
     const birthDate = new Date(dob);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
@@ -118,7 +127,7 @@ export default function MaternalAllRecords() {
   const transformData = useMemo((): maternalRecords[] => {
     if (!maternalRecordsData?.results) return [];
 
-    return maternalRecordsData.results.map((record: any) => {
+    return maternalRecordsData.results.map((record:any) => {
       const personalInfo = record.personal_info;
       const dateOfBirth = personalInfo?.per_dob || "";
 
@@ -126,7 +135,9 @@ export default function MaternalAllRecords() {
       const ageTime = "yrs";
 
       if (dateOfBirth) {
-        age = Number.isNaN(calculateAge(dateOfBirth)) ? 0 : calculateAge(dateOfBirth);
+        age = Number.isNaN(calculateAge(dateOfBirth))
+          ? 0
+          : calculateAge(dateOfBirth);
       }
 
       const address = record.address;
@@ -140,7 +151,7 @@ export default function MaternalAllRecords() {
           per_mname: personalInfo?.per_mname || "",
           per_sex: personalInfo?.per_sex || "",
           ageTime: ageTime,
-          per_dob: dateOfBirth || ""
+          per_dob: dateOfBirth || "",
         },
         address: {
           add_street: address?.add_street,
@@ -148,9 +159,9 @@ export default function MaternalAllRecords() {
           add_city: address?.add_city,
           add_province: address?.add_province,
           add_external_sitio: address?.add_external_sitio,
-          add_sitio: address?.add_sitio || "Not Provided"
+          add_sitio: address?.add_sitio || "Not Provided",
         },
-        pat_type: record.pat_type || "N/A"
+        pat_type: record.pat_type || "N/A",
       };
     });
   }, [maternalRecordsData]);
@@ -161,60 +172,83 @@ export default function MaternalAllRecords() {
       header: "Patient ID",
       cell: ({ row }) => (
         <div className="flex w-full justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.pat_id}</div>
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+            {row.original.pat_id}
+          </div>
         </div>
-      )
+      ),
     },
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Patient <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const patient = row.original.personal_info;
         const age = row.original.age || 0;
-        const fullName = `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname}`.trim();
+        const fullName =
+          `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname}`.trim();
 
         return (
           <div className="flex justify-center w-full">
-            <div className="flex flex-col ">
-              <div className="font-medium truncate">{fullName}</div>
+            <div className="flex flex-col">
+              <div className="font-medium truncate">{capitalize(fullName)}</div>
               <div className="text-sm text-darkGray">
-                {patient.per_sex}, {age} {patient.ageTime} old
+                {capitalize(patient.per_sex)}, {age} {patient.ageTime} old
               </div>
             </div>
           </div>
         );
-      }
+      },
     },
     {
       accessorKey: "address",
+      size: 300,
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Address <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const addressObj = row.original.address;
-        const fullAddress = addressObj ? [addressObj.add_street, addressObj.add_barangay, addressObj.add_city, addressObj.add_province].filter(Boolean).join(", ") || "Unknown" : "Unknown";
+        const fullAddress = addressObj
+          ? [
+              addressObj.add_street,
+              addressObj.add_barangay,
+              addressObj.add_city,
+              addressObj.add_province,
+            ]
+              .filter(Boolean)
+              .join(", ") || "Unknown"
+          : "Unknown";
         return (
-          <div className="flex justify-center min-w-full px-2">
-            <div className="w-full break-words">{fullAddress}</div>
+          <div className="flex justify-center min-w-full px-">
+            <div className="w-full truncate">{capitalize(fullAddress)}</div>
           </div>
         );
-      }
+      },
     },
 
     {
       accessorKey: "sitio",
-      header: ({}) => <div>Sitio</div>,
+      header: ({}) => (
+        <div>Sitio</div>
+      ),
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.address?.add_sitio}</div>
+          <div className="text-center w-full">
+            {capitalize(row.original.address?.add_sitio)}
+          </div>
         </div>
-      )
+      ),
     },
     {
       accessorKey: "type",
@@ -223,7 +257,7 @@ export default function MaternalAllRecords() {
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.pat_type}</div>
         </div>
-      )
+      ),
     },
     {
       accessorKey: "action",
@@ -233,7 +267,7 @@ export default function MaternalAllRecords() {
           <div className="flex justify-center gap-2 ">
             <TooltipLayout
               trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border border-gray text-black px-4 py-2 rounded-lg cursor-pointer ">
+                <div className="bg-white hover:bg-[#f3f2f2] text-black px-4 rounded-lg cursor-pointer ">
                   <Link
                     to="/services/maternalindividualrecords"
                     state={{
@@ -249,14 +283,14 @@ export default function MaternalAllRecords() {
                             per_mname: row.original.personal_info.per_mname,
                             per_sex: row.original.personal_info.per_sex,
                             per_dob: row.original.personal_info.per_dob,
-                            ageTime: row.original.personal_info.ageTime
+                            ageTime: row.original.personal_info.ageTime,
                           },
-                          patrec_type: row.original.patrec_type
-                        }
-                      }
+                          patrec_type: row.original.patrec_type,
+                        },
+                      },
                     }}
                   >
-                    <p className="font-semibold">View</p>
+                    <ViewButton onClick={() => {}} />
                   </Link>
                 </div>
               }
@@ -264,10 +298,12 @@ export default function MaternalAllRecords() {
             />
           </div>
         </>
-      )
-    }
+      ),
+    },
   ];
 
+  
+  
   const handleRefetching = async () => {
     try {
       setIsRefetching(true);
@@ -280,7 +316,10 @@ export default function MaternalAllRecords() {
   };
 
   return (
-    <LayoutWithBack title="Maternal Health Records  " description="Manage and view mother's maternal information">
+    <LayoutWithBack
+      title="Maternal Health Records  "
+      description="Manage and view mother's maternal information"
+    >
       <div className="w-full h-full flex flex-col">
         <div className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -291,7 +330,9 @@ export default function MaternalAllRecords() {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{totalMaternalCount}</span>
-                    <span className="text-xs text-muted-foreground">Total patients</span>
+                    <span className="text-xs text-muted-foreground">
+                      Total patients
+                    </span>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                     <WomanRoundedIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />
@@ -330,36 +371,57 @@ export default function MaternalAllRecords() {
           {/* Search Input and Filter Dropdown */}
           <div className="flex flex-col md:flex-row gap-2 w-full">
             <div>
-              <Button className="hover:bg-gray-100 transition-colors duration-200 ease-in-out" variant="outline" onClick={handleRefetching} disabled={isRefetching || isLoading}>
-                <RefreshCw className={`${isRefetching ? "animate-spin" : ""}`} size={20} />
+              <Button
+                className="hover:bg-gray-100 transition-colors duration-200 ease-in-out"
+                variant="outline"
+                onClick={handleRefetching}
+                disabled={isRefetching || isLoading}
+              >
+                <RefreshCw
+                  className={`${isRefetching ? "animate-spin" : ""}`}
+                  size={20}
+                />
               </Button>
             </div>
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input placeholder="Search..." className="pl-10 w-full bg-white" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                  size={17}
+                />
+                <Input
+                  placeholder="Search..."
+                  className="pl-10 w-full bg-white"
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
               </div>
-              <SelectLayout placeholder="Select filter" label="All" className="w-full md:w-[200px] bg-white text-black" options={filter} value={selectedFilter} onChange={handleFilterChange} />
+              <SelectLayout
+                placeholder="Select filter"
+                label="All"
+                className="w-full md:w-[200px] bg-white text-black"
+                options={filter}
+                value={selectedFilter}
+                onChange={handleFilterChange}
+              />
             </div>
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
-            <div className="w-full sm:w-auto">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default">New Record</Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <Link to="/services/maternal/prenatal/form">Prenatal</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/services/maternal/postpartum/form">Postpartum</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </ProtectedComponentButton>
+          <div className="w-full sm:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default">New Record</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>
+                  <Link to="/services/maternal/prenatal/form">Prenatal</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/services/maternal/postpartum/form">Postpartum</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/*  */}
@@ -369,7 +431,12 @@ export default function MaternalAllRecords() {
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-6" defaultValue={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
+              <Input
+                type="number"
+                className="w-14 h-6"
+                defaultValue={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
@@ -401,11 +468,20 @@ export default function MaternalAllRecords() {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, maternalRecordsData?.count) || 0} of {maternalRecordsData?.count} rows
+              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, maternalRecordsData?.count) || 0} of {maternalRecordsData?.count} rows
+
             </p>
 
             {/* Pagination */}
-            <div className="w-full sm:w-auto flex justify-center">{totalPages > 1 && <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />}</div>
+            <div className="w-full sm:w-auto flex justify-center">
+              {totalPages > 0 && (
+                <PaginationLayout
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

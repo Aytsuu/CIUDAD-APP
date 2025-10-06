@@ -4,12 +4,12 @@ import MedicineRequestDetail from "@/pages/healthServices/medicineservices/Reque
 import MedicineRequestForm from "@/pages/healthServices/medicineservices/MedicineRequestForm";
 import MedicineRequestMain from "@/pages/healthServices/medicineservices/Request/Main";
 import MedicineRequestPendingItems from "@/pages/healthServices/medicineservices/Request/request-pending/request-pending-items";
-import MainMedicine from "@/pages/healthServices/medicineservices/Main";
+import AllMedicineRecords from "@/pages/healthServices/medicineservices/tables/AllMedicineRecords";
 
 export const medicineRequest = [
   {
     path: "/services/medicine",
-    element: <MainMedicine />,
+    element: <AllMedicineRecords />,
   },
   {
     path: "/services/medicine/records",

@@ -138,15 +138,19 @@ export default function PersonalInfoTab({ form, isEditable, isTransient, handleS
                       render={({ field }) => (
                         <FormItem className="space-y-2">
                           <FormLabel className="text-sm font-medium">Sex</FormLabel>
-                          <Select disabled={!isEditable} value={field.value} onValueChange={field.onChange}>
+                          <Select 
+                            disabled={!isEditable} 
+                            value={field.value?.toLowerCase()} 
+                            onValueChange={field.onChange}
+                          >
                             <FormControl>
                               <SelectTrigger className={!isEditable ? "bg-muted/30" : ""}>
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>

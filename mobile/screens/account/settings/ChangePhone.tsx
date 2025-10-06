@@ -1,4 +1,4 @@
-import { TouchableOpacity, View, Text } from "react-native";
+import { TouchableOpacity, View, Text, Alert } from "react-native";
 import PageLayout from "@/screens/_PageLayout";
 import PhoneOTP from "../../auth/signup/account/PhoneOTP";
 import { router } from "expo-router";
@@ -6,21 +6,40 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateAccount } from "../queries/accountUpdateQueries";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import { KeychainService } from "@/services/keychainService";
+import React from "react";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 export default function ChangePhone() {
   const { user } = useAuth();
   const { mutateAsync: updateAccount } = useUpdateAccount();
-  const { getValues } = useRegistrationFormContext();
+  const { getValues, reset } = useRegistrationFormContext();
+  const [isChanging, setIsChanging] = React.useState<boolean>(false);
 
   const submit = async () => {
-    await updateAccount({
-      data: {
-        phone: getValues("accountFormSchema.phone")
-      }, 
-      accId: user?.acc_id as any
-    })
+    try {
+      setIsChanging(true)
+      const isAuthenticated = await KeychainService.authenticate(
+        "Confirm phone change with your device passcode"
+      )
+  
+      if(!isAuthenticated) {
+        Alert.alert('Authentication Failed', 'Please try again.');
+        return false;
+      }
 
-    router.back()
+      await updateAccount({
+        data: {
+          phone: getValues("accountFormSchema.phone")
+        }, 
+        accId: user?.acc_id as any
+      })
+
+      router.back()
+      reset()
+    } finally {
+      setIsChanging(false);
+    }
   }
 
   return (
@@ -41,6 +60,8 @@ export default function ChangePhone() {
           next: submit
         }}
       />
+
+      <LoadingModal visible={isChanging}/>
     </PageLayout>
   )
 }

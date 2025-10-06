@@ -323,7 +323,7 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
     ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
     ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
@@ -336,6 +336,10 @@ export function AppSidebar() {
         {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
+        },
+        {
+          title: "Maternal",
+          url: "/",
         },
       ],
     }] : []),
@@ -368,8 +372,8 @@ export function AppSidebar() {
         { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
-    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
