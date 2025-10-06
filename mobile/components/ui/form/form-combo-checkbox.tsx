@@ -92,7 +92,7 @@ const FormComboCheckbox = ({
 
         return (
           <View className="w-full">
-            {label && <Text className="text-sm mb-2 font-medium">{label}</Text>}
+            {label && <Text className="text-black/70 text-sm mb-2">{label}</Text>}
             {!readOnly ? (
               <>
                 <TouchableOpacity

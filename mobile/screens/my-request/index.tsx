@@ -24,8 +24,8 @@ export default () => {
   },
   {
     title: "Medicine Request",
-     description: "Monitor your medicine requests.",
-     route: "/(health)/medicine-request/my-requests"
+     description: "",
+     route: ""
   },
   {
     title: "Maternal Appointment",

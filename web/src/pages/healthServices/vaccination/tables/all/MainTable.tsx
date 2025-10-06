@@ -48,7 +48,9 @@ export default function VaccinationManagement() {
     <>
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="flex-col items-center">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">{getTitle()}</h1>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            {getTitle()}
+          </h1>
           <p className="text-xs sm:text-sm text-darkGray">{getDescription()}</p>
         </div>
       </div>
@@ -56,14 +58,25 @@ export default function VaccinationManagement() {
 
       <CardLayout
         content={
-          <Tabs defaultValue={selectedView} value={selectedView} onValueChange={handleTabChange} className="w-full">
+          <Tabs
+            defaultValue={selectedView}
+            value={selectedView}
+            onValueChange={handleTabChange}
+            className="w-full"
+          >
             <div className="px-2 pt-4">
               <TabsList className="w-full grid grid-cols-2 gap-2 h-auto p-1">
-                <TabsTrigger value="vaccinated" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                <TabsTrigger
+                  value="vaccinated"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
                   <Shield className="h-4 w-4" />
                   <span>Vaccination Records</span>
                 </TabsTrigger>
-                <TabsTrigger value="unvaccinated" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+                <TabsTrigger
+                  value="unvaccinated"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
                   <UserX className="h-4 w-4" />
                   <span>Unvaccinated Residents</span>
                 </TabsTrigger>

@@ -1,165 +1,177 @@
-import { useState, useEffect, useMemo } from "react"
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert, ScrollView } from "react-native"
-import { router, useLocalSearchParams } from "expo-router"
-import { ArrowLeft, AlertCircle, Pill } from "lucide-react-native"
-import { addToCart, Medicine as CartMedicineType } from "./cart-state"
+"use client"
 
-// The medicine type received from request-page.tsx
-type MedicineDetailsProps = {
-  minv_id: number;
-  name: string;
-  category: string;
-  med_type: string; // "Prescription" or "Over-the-Counter"
-  dosage: string;
-  description?: string;
-  availableStock: number; // Available stock
-};
+import { useState, useEffect } from "react"
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, Alert } from "react-native"
+import { router, useLocalSearchParams } from "expo-router"
+import { ArrowLeft, Minus, Plus } from "lucide-react-native"
+
+import type { Medicine } from "./request-page"
+import { addToCart } from "./cart-state"
 
 export default function MedicineDetailsScreen() {
-  const params = useLocalSearchParams();
-  // Parse the medicineData string back into an object
-  const medicine: MedicineDetailsProps | null = useMemo(() => {
-    if (params.medicineData) {
-      try {
-        return JSON.parse(params.medicineData as string);
-      } catch (e) {
-        console.error("Failed to parse medicineData param:", e);
-        return null;
+  const { id } = useLocalSearchParams()
+  const [medicine, setMedicine] = useState<Medicine | null>(null)
+  const [quantity, setQuantity] = useState(1)
+  const [reason, setReason] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Mock data for medicines (same as in index.tsx)
+  const mockMedicines: Medicine[] = [
+    {
+      id: 1,
+      name: "Biogesic",
+      category: "Paracetamol",
+      description:
+        "Biogesic is a brand of paracetamol used to relieve mild to moderate pain such as headache, backache, menstrual pain, toothache, and help reduce fever.",
+    },
+    {
+      id: 2,
+      name: "Panadol",
+      category: "Paracetamol",
+      description:
+        "Panadol is a pain reliever and fever reducer used to temporarily relieve mild to moderate pain and reduce fever.",
+    },
+    {
+      id: 3,
+      name: "Calpol",
+      category: "Paracetamol",
+      description: "Calpol is a common paracetamol-based pain and fever relief medication for children and infants.",
+    },
+    {
+      id: 4,
+      name: "Neozep",
+      category: "Paracetamol",
+      description: "Neozep is a combination medicine used to treat symptoms of the common cold or flu.",
+    },
+    {
+      id: 5,
+      name: "Amoxicillin",
+      category: "Antibiotics",
+      description: "Amoxicillin is a penicillin antibiotic that fights bacteria in the body.",
+    },
+    {
+      id: 6,
+      name: "Cefalexin",
+      category: "Antibiotics",
+      description: "Cefalexin is an antibiotic used to treat a number of bacterial infections.",
+    },
+  ]
+
+  // Find the medicine by ID
+  useEffect(() => {
+    setIsLoading(true)
+
+    if (id) {
+      const foundMedicine = mockMedicines.find((m) => m.id === Number.parseInt(id as string))
+      if (foundMedicine) {
+        setMedicine(foundMedicine)
+        setIsLoading(false)
+      } else {
+        // Handle medicine not found
+        Alert.alert("Error", "Medicine not found", [{ text: "OK", onPress: () => router.back() }])
       }
+    } else {
+      // Handle missing ID
+      Alert.alert("Error", "No medicine selected", [{ text: "OK", onPress: () => router.back() }])
     }
-    return null;
-  }, [params.medicineData]);
+  }, [id])
 
-  const [reason, setReason] = useState("");
-
-  // Check if prescription is required based on med_type
-  const requiresPrescription = medicine?.med_type === 'Prescription';
-  
   const handleAddToCart = () => {
-    if (!medicine) return; // Should not happen if medicine is loaded
+    if (medicine) {
+      if (!reason.trim()) {
+        Alert.alert("Required", "Please provide a reason for requesting this medicine")
+        return
+      }
 
-    if (!reason.trim()) {
-      Alert.alert("Required Field", "Please provide a reason for requesting this medicine.");
-      return;
+      addToCart({
+        ...medicine,
+        quantity,
+        reason,
+      })
+
+      Alert.alert("Success", "Medicine added to your bag", [{ text: "OK", onPress: () => router.back() }])
     }
+  }
 
-    // Add to cart with full details
-    const itemToAdd: CartMedicineType = {
-      minv_id: medicine.minv_id,
-      name: medicine.name,
-      category: medicine.category,
-      med_type: medicine.med_type,
-      dosage: medicine.dosage,
-      description: medicine.description,
-      availableStock: medicine.availableStock,
-      reason: reason,
-    };
-
-    addToCart(itemToAdd);
-
-    Alert.alert("Success", "Medicine added to your request", [
-      { text: "Continue Browsing", onPress: () => router.back() },
-      { text: "View Cart", onPress: () => router.push("/medicine-request/cart") },
-    ]);
-  };
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#ECF8FF] justify-center items-center">
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    )
+  }
 
   if (!medicine) {
-    // This state indicates medicineData was not passed correctly or could not be parsed
     return (
-      <SafeAreaView className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 justify-center items-center">
-        <View className="bg-white p-6 rounded-2xl shadow-lg items-center">
-          <AlertCircle size={48} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-800 mt-4 mb-2">Medicine details not found</Text>
-          <Text className="text-gray-600 text-center mb-4">Please select a medicine from the list.</Text>
-          <TouchableOpacity className="bg-indigo-600 px-6 py-3 rounded-xl" onPress={() => router.back()}>
-            <Text className="text-white font-semibold">Go Back</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView className="flex-1 bg-[#ECF8FF] justify-center items-center">
+        <Text>Medicine not found</Text>
+        <TouchableOpacity className="mt-4 bg-[#263D67] px-4 py-2 rounded-lg" onPress={() => router.back()}>
+          <Text className="text-white">Go Back</Text>
+        </TouchableOpacity>
       </SafeAreaView>
-    );
+    )
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1">
-        <View className="flex-row items-center p-4 mt-10 bg-white border-b border-gray-100">
-            <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
-                <ArrowLeft size={24} color="#333" />
-            </TouchableOpacity>
-            <Text className="text-xl font-bold text-gray-800 flex-1">Medicine Details</Text>
+    <SafeAreaView className="flex-1 bg-[#ECF8FF]">
+      <View className="flex-1 p-4">
+        {/* Header */}
+        <View className="flex-row items-center mb-6">
+          <TouchableOpacity onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#000" />
+          </TouchableOpacity>
+          <Text className="ml-4 text-lg font-medium">Back</Text>
         </View>
 
-        <View className="px-4 pt-6 pb-6">
-          {/* Medicine Info Card */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-            {/* Medicine Header */}
-            <View className="flex-row items-start justify-between mb-4">
-              <View className="flex-1">
-                <View className="flex-row items-center mb-2">
-                  <View className="bg-indigo-100 p-3 rounded-full mr-3">
-                    <Pill size={24} color="#4F46E5" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-2xl font-bold text-gray-800">{medicine.name}</Text>
-                    <Text className="text-gray-500">{medicine.dosage}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
+        {/* Medicine Details Card */}
+        <View className="bg-white rounded-lg p-6 shadow-md">
+          {/* Medicine Name */}
+          <Text className="text-xl font-bold text-[#263D67] mb-4">{medicine.name}</Text>
 
-            {/* Prescription Warning */}
-            {requiresPrescription && (
-              <View className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                <View className="flex-row items-center">
-                  <AlertCircle size={20} color="#F59E0B" />
-                  <Text className="text-amber-800 font-medium ml-2">Prescription Required</Text>
-                </View>
-                <Text className="text-amber-700 text-sm mt-1">
-                  This medicine requires a prescription. You will need to upload a doctor's prescription or consultation document in the cart.
-                </Text>
-              </View>
-            )}
+          {/* Description */}
+          <Text className="text-gray-700 mb-6">{medicine.description}</Text>
+
+          {/* Quantity Selector */}
+          <View className="mb-6">
+            <Text className="text-[#263D67] font-semibold mb-2">Quantity</Text>
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                className="bg-[#E2EEFF] w-10 h-10 rounded-md items-center justify-center"
+                onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              >
+                <Minus size={20} color="#263D67" />
+              </TouchableOpacity>
+
+              <Text className="mx-4 text-lg font-semibold">{quantity}</Text>
+
+              <TouchableOpacity
+                className="bg-[#E2EEFF] w-10 h-10 rounded-md items-center justify-center"
+                onPress={() => setQuantity(quantity + 1)}
+              >
+                <Plus size={20} color="#263D67" />
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Request Form Card */}
-          <View className="bg-white rounded-2xl p-6 shadow-md">
-            {/* Reason Input */}
-             <View className="mb-6">
-              <Text className="text-gray-700 font-semibold mb-2">Reason for Request *</Text>
-              <Text className="text-red-600 text-sm mb-3 italic">
-                Please describe your symptoms or medical condition requiring this medicine. 
-                Be specific and truthful for proper evaluation.
-              </Text>
-              <TextInput
-                className="border border-gray-200 rounded-xl p-4 min-h-[120px] text-gray-700 bg-white"
-                placeholder="Example: I have been experiencing fever and headache for 2 days. Temperature is 38.5°C..."
-                multiline
-                textAlignVertical="top"
-                value={reason}
-                onChangeText={setReason}
-              />
-              
-            </View>
-
-            {/* Add to Cart Button */}
-            <TouchableOpacity
-              className={`py-4 rounded-xl items-center ${medicine.availableStock > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
-              onPress={handleAddToCart}
-              disabled={medicine.availableStock === 0}
-            >
-              <Text className="text-white font-bold text-lg">
-                {medicine.availableStock > 0 ? "Add to Request" : "Out of Stock"}
-              </Text>
-            </TouchableOpacity>
-
-            {!reason.trim() && (
-                <Text className="text-red-500 text-sm text-center mt-3">
-                    * Reason for request is required.
-                </Text>
-            )}
+          {/* Reason Input */}
+          <View className="mb-6">
+            <Text className="text-[#263D67] font-semibold mb-2">Reason</Text>
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 min-h-[100px] text-gray-700"
+              placeholder="Enter reason for requesting this medicine"
+              multiline
+              value={reason}
+              onChangeText={setReason}
+            />
           </View>
+
+          {/* Add Button */}
+          <TouchableOpacity className="bg-green-500 py-3 rounded-lg items-center" onPress={handleAddToCart}>
+            <Text className="text-white font-bold text-lg">Add</Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   )
 }
+

@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { formatDate } from "@/helpers/dateHelper";
 
@@ -19,6 +19,7 @@ export const addStaff = async (
       manager: staffId,
     };
     const res = await api.post("administration/staff/", body);
+    await api2.post("administration/staff/", body);
     return res.data;
   } catch (err) {
     console.error(err);
@@ -30,6 +31,7 @@ export const addStaff = async (
 export const addPosition = async (data: any, staffId: string) => {
   try {
     const res = await api.post("administration/position/", {...capitalizeAllFields(data), staffId});
+    await api2.post("administration/position/", {...capitalizeAllFields(data), staffId});
     return res.data;
   } catch (err) {
     console.error(err);
@@ -56,6 +58,7 @@ export const assignFeature = async (
       staff: staffId,
     };
     const res = await api.post("administration/assignment/create/", body);
+    await api2.post("administration/assignment/create/", body);
     return res.data;
   } catch (err) {
     console.error(err);
@@ -63,10 +66,11 @@ export const assignFeature = async (
   }
 };
 
-export const setPermission = async (assignmentId: string) => { //Deprecated
+export const setPermission = async (assignmentId: string) => {
   try {
     const body = { assi: assignmentId };
     const res = await api.post("administration/permission/", body);
+    await api2.post("administration/permission/", body);
     return res.data;
   } catch (err) {
     console.error(err);

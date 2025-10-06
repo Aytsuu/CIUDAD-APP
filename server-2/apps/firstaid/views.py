@@ -23,7 +23,9 @@ class PatientFirstaidRecordsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Patient.objects.filter(
-          Q(patient_records__first_aid_records__patrec_id__isnull=False)
+            # Q(patient_records__patrec_type__iexact='Firstaid Request'),
+            # Q(patient_records__first_aid_records__status__iexact='RECORDED'),
+            Q(patient_records__first_aid_records__patrec_id__isnull=False)
         ).distinct()
 
 class IndividualFirstaidRecordView(generics.ListCreateAPIView):
@@ -32,7 +34,8 @@ class IndividualFirstaidRecordView(generics.ListCreateAPIView):
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
         return FirstAidRecord.objects.filter(
-            patrec_id__pat_id=pat_id
+            patrec_id__pat_id=pat_id,
+            is_archived=False
         ).order_by('-created_at')  # Optional: latest first
         
 class CreateFirstaidRecordView(generics.CreateAPIView):
@@ -40,6 +43,19 @@ class CreateFirstaidRecordView(generics.CreateAPIView):
     queryset = FirstAidRecord.objects.all()
     
 
+class ArchiveFirstaidRecordView(APIView):
+    def patch(self, request, farec_id):
+        try:
+            record = FirstAidRecord.objects.get(farec_id=farec_id)
+            record.is_archived = True
+            record.save()
+            return Response({"message": "First aid record archived successfully"}, status=status.HTTP_200_OK)
+        except FirstAidRecord.DoesNotExist:
+            return Response({"error": "Record not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
 class GetFirstaidRecordCountView(APIView):
     def get(self, request, pat_id):
         try:
@@ -48,7 +64,65 @@ class GetFirstaidRecordCountView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-     
+        
+        
+# class MonthlyFirstAidRecordsAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             # Get base queryset with proper relationships
+#             queryset = FirstAidRecord.objects.select_related(
+#                 'finv',  # ForeignKey to FirstAidInventory
+#                 'finv__inv_id',  # OneToOne to Inventory
+#                 'finv__fa_id',  # ForeignKey to FirstAidList
+#                 'patrec'
+#             ).order_by('-created_at')
+            
+#             # Filter by year if provided
+#             year = request.GET.get('year')
+#             if year and year != 'all':
+#                 queryset = queryset.filter(created_at__year=year)
+            
+#             # Group by month and get counts
+#             monthly_data = queryset.annotate(
+#                 month=TruncMonth('created_at')
+#             ).values('month').annotate(
+#                 record_count=Count('farec_id')
+#             ).order_by('-month')
+            
+#             # Format the response
+#             formatted_data = []
+#             for item in monthly_data:
+#                 month_str = item['month'].strftime('%Y-%m')
+#                 month_records = queryset.filter(
+#                     created_at__year=item['month'].year,
+#                     created_at__month=item['month'].month
+#                 )
+                
+#                 # Serialize records
+#                 serialized_records = []
+#                 for record in month_records:
+#                     # Serialize record
+#                     serialized_record = FirstaidRecordSerializer(record).data
+#                     serialized_records.append(serialized_record)
+                
+#                 formatted_data.append({
+#                     'month': month_str,
+#                     'record_count': item['record_count'],
+#                     'records': serialized_records
+#                 })
+            
+#             return Response({
+#                 'success': True,
+#                 'data': formatted_data,
+#                 'total_records': len(formatted_data)
+#             }, status=status.HTTP_200_OK)
+            
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class MonthlyFirstAidSummariesAPIView(APIView):
     pagination_class = StandardResultsPagination
     
@@ -137,6 +211,56 @@ class MonthlyFirstAidSummariesAPIView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
             
+            
+# class MonthlyFirstAidRecordsDetailAPIView(APIView):
+#     def get(self, request, month):
+#         try:
+#             # Validate month format (YYYY-MM)
+#             try:
+#                 year, month_num = map(int, month.split('-'))
+#                 if month_num < 1 or month_num > 12:
+#                     raise ValueError
+#             except ValueError:
+#                 return Response({
+#                     'success': False,
+#                     'error': 'Invalid month format. Use YYYY-MM.'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             # Get records for the specified month
+#             queryset = FirstAidRecord.objects.select_related(
+#                 'finv', 'finv__inv_id', 'finv__fa_id', 'patrec'
+#             ).filter(
+#                 created_at__year=year,
+#                 created_at__month=month_num
+#             ).order_by('-created_at') 
+
+#             # Get or create report record for this month
+#             report_obj, created = MonthlyRecipientListReport.objects.get_or_create(
+#                 month_year=month,
+#                 rcp_type='FirstAid'
+#             )
+
+#             report_data = MonthlyRCPReportSerializer(report_obj).data
+#             serialized_records = [
+#                 FirstaidRecordSerializer(record).data for record in queryset
+#             ]
+
+#             return Response({
+#                 'success': True,
+#                 'data': {
+#                     'month': month,
+#                     'record_count': len(serialized_records),
+#                     'monthlyrcplist_id': report_obj.monthlyrcplist_id,
+#                     'report': report_data,
+#                     'records': serialized_records
+#                 }
+#             }, status=status.HTTP_200_OK)
+
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 
 class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
@@ -228,71 +352,36 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
                 'records': serializer.data
             }
         }, status=status.HTTP_200_OK)
-        
-   
-   
-class MonthlyFirstAidChart(APIView):
-    def get(self, request, month):
-        try:
-            # Validate month format (YYYY-MM)
-            try:
-                year, month_num = map(int, month.split('-'))
-                if month_num < 1 or month_num > 12:
-                    raise ValueError
-            except ValueError:
-                return Response({
-                    'success': False,
-                    'error': 'Invalid month format. Use YYYY-MM.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Get first aid item counts for the specified month
-            queryset = FirstAidRecord.objects.filter(
-                created_at__year=year,
-                created_at__month=month_num
-            ).values(
-                'finv__fa_id__fa_name'  # Path to first aid item name
-            ).annotate(
-                count=Count('finv__fa_id')
-            ).order_by('-count')
-
-            # Convert to dictionary format {item_name: count}
-            item_counts = {
-                item['finv__fa_id__fa_name']: item['count'] 
-                for item in queryset
-            }
-
-            return Response({
-                'success': True,
-                'month': month,
-                'first_aid_counts': item_counts,
-                'total_records': sum(item_counts.values())
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-class FirstAidTotalCountAPIView(APIView):
+class FirstAidMonthlyCountsAPIView(APIView):
     def get(self, request):
         try:
-            # Count total records
-            total_records = FirstAidRecord.objects.count()
+            today = now()
+            current_month_start = today.replace(day=1)
+            last_month_start = (current_month_start - relativedelta(months=1)).replace(day=1)
+            last_month_end = current_month_start - timedelta(days=1)
 
-            # Count records grouped by first aid item
-            items_count = FirstAidRecord.objects.values(
-                'finv__fa_id__fa_name'
-            ).annotate(
-                count=Count('farec_id')
-            ).order_by('-count')
+            # Count records for current month
+            current_month_count = FirstAidRecord.objects.filter(
+                created_at__year=current_month_start.year,
+                created_at__month=current_month_start.month
+            ).count()
+
+            # Count records for last month
+            last_month_count = FirstAidRecord.objects.filter(
+                created_at__year=last_month_start.year,
+                created_at__month=last_month_start.month
+            ).count()
 
             return Response({
                 'success': True,
-                'total_records': total_records,
-                'items_count': items_count
+                'current_month': {
+                    'month': current_month_start.strftime('%Y-%m'),
+                    'total_records': current_month_count
+                },
+                'last_month': {
+                    'month': last_month_start.strftime('%Y-%m'),
+                    'total_records': last_month_count
+                }
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

@@ -11,8 +11,13 @@ export const getValueByPath = (obj: any, path: string[]): any => {
   }, obj);
 };
 
-export const getDiffClass = (currentColumnValue: any, previousRecordValue: any, isCurrentRecord: boolean): string => {
-  const normalizeValue = (val: any) => (val === null || val === undefined || val === "" ? null : val);
+export const getDiffClass = (
+  currentColumnValue: any,
+  previousRecordValue: any,
+  isCurrentRecord: boolean
+): string => {
+  const normalizeValue = (val: any) =>
+    val === null || val === undefined || val === "" ? null : val;
   const normalizedCurrent = normalizeValue(currentColumnValue);
   const normalizedPrevious = normalizeValue(previousRecordValue);
 
@@ -24,17 +29,33 @@ export const getDiffClass = (currentColumnValue: any, previousRecordValue: any, 
     return "";
   }
 
-  if (typeof normalizedCurrent === "string" && typeof normalizedPrevious === "string" && (normalizedCurrent.match(/^\d{4}-\d{2}-\d{2}/) || normalizedCurrent.match(/^\d{4}-\d{2}-\d{2}T/)) && (normalizedPrevious.match(/^\d{4}-\d{2}-\d{2}/) || normalizedPrevious.match(/^\d{4}-\d{2}-\d{2}T/))) {
+  if (
+    typeof normalizedCurrent === "string" &&
+    typeof normalizedPrevious === "string" &&
+    (normalizedCurrent.match(/^\d{4}-\d{2}-\d{2}/) ||
+      normalizedCurrent.match(/^\d{4}-\d{2}-\d{2}T/)) &&
+    (normalizedPrevious.match(/^\d{4}-\d{2}-\d{2}/) ||
+      normalizedPrevious.match(/^\d{4}-\d{2}-\d{2}T/))
+  ) {
     const currentDate = parseISO(normalizedCurrent);
     const previousDate = parseISO(normalizedPrevious);
-    return isValid(currentDate) && isValid(previousDate) && !isSameDay(currentDate, previousDate) ? "text-red-500 font-semibold" : "";
+    return isValid(currentDate) &&
+      isValid(previousDate) &&
+      !isSameDay(currentDate, previousDate)
+      ? "text-red-500 font-semibold"
+      : "";
   }
 
   if (Array.isArray(normalizedCurrent) && Array.isArray(normalizedPrevious)) {
-    return JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedPrevious) ? "text-red-500 font-semibold" : "";
+    return JSON.stringify(normalizedCurrent) !==
+      JSON.stringify(normalizedPrevious)
+      ? "text-red-500 font-semibold"
+      : "";
   }
 
-  return normalizedCurrent !== normalizedPrevious ? "text-red-500 font-semibold" : "";
+  return normalizedCurrent !== normalizedPrevious
+    ? "text-red-500 font-semibold"
+    : "";
 };
 
 // export const formatSupplement = (supplement: CHSupplement): string => {

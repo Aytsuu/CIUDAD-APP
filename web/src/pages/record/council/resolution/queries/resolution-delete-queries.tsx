@@ -10,7 +10,7 @@ export const useDeleteResolution = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (res_num: string) => deleteResolution(res_num),
+    mutationFn: (res_num: String) => deleteResolution(res_num),
     onMutate: async (res_num) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['resData'] });
@@ -45,7 +45,7 @@ export const useDeleteResolution = () => {
 
 //Resolution Restore or Archive
 interface ArchiveResolutionPayload {
-  res_num: string;
+  res_num: String;
   res_is_archive: boolean;
 }
 

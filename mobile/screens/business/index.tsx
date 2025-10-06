@@ -17,7 +17,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { NoAccessScreen } from "@/components/ui/feedback-screen"
 
 export default () => {
-  // =================== STATE INITIALIZATION ===================
+  // ---------------- STATE INITIALIZATION -------------------
   const { user } = useAuth();
   const [isReady, setIsReady] = React.useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
@@ -53,7 +53,7 @@ export default () => {
     }
   }, [searchQuery, searchInputVal])
 
-  // =================== HANDLERS ===================  
+  // ---------------- HANDLERS -------------------  
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();

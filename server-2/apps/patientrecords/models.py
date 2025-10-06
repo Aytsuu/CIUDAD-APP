@@ -4,9 +4,7 @@ from django.utils import timezone
 from decimal import Decimal
 from apps.healthProfiling.models import ResidentProfile
 from apps.administration.models import Staff
-
-
-
+# Create your models here.
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
     tradd_province = models.CharField(max_length=50)
@@ -35,6 +33,7 @@ class Transient(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     tradd_id = models.ForeignKey(TransientAddress, on_delete=models.CASCADE, related_name='transients', db_column='tradd_id', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
     
     # MOTHER fields
     mother_fname = models.CharField(max_length=100, null=True, blank=True)
@@ -213,20 +212,14 @@ class Spouse(models.Model):
     
 class BodyMeasurement(models.Model):
     bm_id = models.BigAutoField(primary_key=True)  
+    age = models.CharField(max_length=100 ,default="")
     height = models.DecimalField(max_digits=5, decimal_places=2,default=Decimal('0.00'))
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
-    wfa = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Age
-    lhfa = models.CharField(max_length=100, blank=True, null=True)  # Length-for-Age
-    wfl = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Length
-    muac = models.CharField(max_length=100, blank=True, null=True)  # Mid-Upper Arm Circumference
+    # bmi = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
+    # bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
-    edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
-    muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
-    remarks = models.TextField(blank=True, null=True)  # Additional remarks
-    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
-    created_at = models.DateTimeField(auto_now_add=True)
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='body_measurements', null=True, blank=True)
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', db_column='pat_id', null=True, blank=True)
     class Meta:
         db_table = 'body_measurement'
            
@@ -244,7 +237,7 @@ class Illness(models.Model):
 # FINDINGS
 class Finding(models.Model):
     find_id = models.BigAutoField(primary_key=True)
-    assessment_summary =models.TextField(default="",blank=True,null=True)
+    assessment_summary =models.TextField(default="")
     obj_summary = models.TextField(default="")
     subj_summary = models.TextField(default="")
     plantreatment_summary=models.TextField(default="")
@@ -257,7 +250,7 @@ class Finding(models.Model):
 class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='ill_id')
-    year = models.CharField(max_length=255, null=True, blank=True)
+    year = models.IntegerField(null=True, blank=True)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:

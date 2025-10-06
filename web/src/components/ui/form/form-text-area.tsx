@@ -2,17 +2,6 @@ import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form";
 import { Textarea } from "../textarea";
 
-interface FormTextAreaProps {
-  control: any;
-  name: string;
-  label: string;
-  placeholder?: string;
-  readOnly?: boolean;
-  className?: string;
-  rows?: number;
-  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-}
-
 export const FormTextArea = React.memo(({ 
   control, 
   name, 
@@ -20,9 +9,16 @@ export const FormTextArea = React.memo(({
   placeholder, 
   readOnly, 
   className,
-  rows = 2,
-  onChange
-}: FormTextAreaProps) => (
+  rows = 2 // Default rows if not specified
+}: { 
+  control: any; 
+  name: string; 
+  label: string; 
+  placeholder?: string; 
+  readOnly?: boolean; 
+  className?: string;
+  rows?: number;
+}) => (
   <FormField
     control={control}
     name={name}
@@ -32,13 +28,7 @@ export const FormTextArea = React.memo(({
         <FormControl>
           <Textarea 
             placeholder={placeholder} 
-            {...field}
-            onChange={(e) => {
-              field.onChange(e); 
-              if (onChange) {
-                onChange(e); 
-              }
-            }}
+            {...field} 
             readOnly={readOnly}
             rows={rows}
           />
@@ -48,4 +38,3 @@ export const FormTextArea = React.memo(({
     )}
   />
 ));
-

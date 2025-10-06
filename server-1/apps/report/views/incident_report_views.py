@@ -21,14 +21,13 @@ class IRTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    rp_id = self.request.query_params.get("rp_id", None)
     is_archive = self.request.query_params.get('is_archive', 'false') == 'true'
-
     queryset = IncidentReport.objects.filter(
-      ir_is_archive=is_archive,
+      ir_is_archive=is_archive
     ).select_related(
       'rt',
       'rp',
+      'add'
     ).only(
       'ir_id',
       'ir_add_details',
@@ -43,9 +42,6 @@ class IRTableView(generics.ListAPIView):
       'rp__per__per_mname'
     )
 
-    if rp_id:
-      queryset = queryset.filter(rp=rp_id)
-
     search = self.request.query_params.get('search', '').strip()
     if search:
       queryset = queryset.filter(
@@ -53,6 +49,8 @@ class IRTableView(generics.ListAPIView):
         Q(ir_add_details__icontains=search) |
         Q(ir_date__icontains=search) |
         Q(ir_time__icontains=search) |
+        Q(add__sitio__sitio_name__icontains=search) |
+        Q(add__add_street__icontains=search) |
         Q(rt__rt_label__icontains=search) |
         Q(rp__per__per_lname__icontains=search) |
         Q(rp__per__per_fname__icontains=search) |

@@ -21,7 +21,11 @@ interface CurrentConsultationCardProps {
   className?: string;
 }
 
-export default function CurrentConsultationCard({ consultation, patientData, className = "" }: CurrentConsultationCardProps) {
+export default function CurrentConsultationCard({
+  consultation,
+  patientData,
+  className = "",
+}: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const bhw = `${consultation.staff_details?.rp?.per?.per_fname || ""} ${consultation.staff_details?.rp?.per?.per_lname || ""} ${consultation.staff_details?.rp?.per?.per_mname || ""} ${consultation.staff_details?.rp?.per?.per_suffix || ""}`;
   console.log("BHW Assigned:", bhw);
@@ -287,30 +291,44 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
   return (
     <div className={`bg-white ${className}`}>
       {/* Print Button */}
-      <div className="no-print mb-4 flex justify-end gap-2">
-        <Button onClick={handlePrint} variant="outline" className="flex gap-2 py-2 px-4 rounded border border-zinc-400">
+      <div className="no-print mb-4 flex justify-end">
+        <Button
+          onClick={handlePrint}
+          variant="outline"
+          className="flex gap-2 py-2 px-4 rounded border border-zinc-400"
+        >
           <Printer /> Print
         </Button>
       </div>
 
       {/* Content to be printed */}
       <div ref={printRef}>
-        <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 sm:mb-8 md:mb-10">PATIENT RECORD</h3>
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-center mb-6 sm:mb-8 md:mb-10">
+          PATIENT RECORD
+        </h3>
 
         {/* Patient Information Section */}
         <div className="space-y-6 sm:space-y-8">
           {/* Row 1: Name and Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Name:</span>
+              <span className="font-bold text-black text-sm ">
+                Name:
+              </span>
               <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm truncate">{`${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_lname}`}</span>
+                <span className="text-sm truncate">
+                  {`${patientData?.personal_info?.per_fname} ${patientData?.personal_info?.per_lname}`}
+                </span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Date:</span>
+              <span className="font-bold text-black text-sm ">
+                Date:
+              </span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{consultation.created_at ? format(new Date(consultation.created_at), "MMM d, yyyy") : "N/A"}</span>
+                <span className="text-sm">
+                  {consultation.created_at ? format(new Date(consultation.created_at), "MMM d, yyyy") : "N/A"}
+                </span>
               </div>
             </div>
           </div>
@@ -318,19 +336,29 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* Row 2: Age, Sex, and Date of Birth */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Age:</span>
+              <span className="font-bold text-black text-sm ">
+                Age:
+              </span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{patientData.personal_info.per_dob && consultation.created_at ? Math.floor((new Date(consultation.created_at).getTime() - new Date(patientData.personal_info.per_dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) : "N/A"}</span>
+                <span className="text-sm">{consultation.medrec_age}</span>
               </div>
-              <span className="font-bold text-black text-sm  sm:ml-4">Sex:</span>
+              <span className="font-bold text-black text-sm  sm:ml-4">
+                Sex:
+              </span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{patientData.personal_info.per_sex}</span>
+                <span className="text-sm">
+                  {patientData.personal_info.per_sex}
+                </span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Date of Birth:</span>
+              <span className="font-bold text-black text-sm ">
+                Date of Birth:
+              </span>
               <div className="border-b border-black flex-1">
-                <span className="text-sm">{patientData.personal_info.per_dob}</span>
+                <span className="text-sm">
+                  {patientData.personal_info.per_dob}
+                </span>
               </div>
             </div>
           </div>
@@ -338,13 +366,19 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* Row 3: Address and BHW Assigned */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">Address:</span>
+              <span className="font-bold text-black text-sm ">
+                Address:
+              </span>
               <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm line-clamp-2">{patientData.addressFull}</span>
+                <span className="text-sm line-clamp-2">
+                  {patientData.addressFull}
+                </span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm ">BHW Assigned:</span>
+              <span className="font-bold text-black text-sm ">
+                BHW Assigned:
+              </span>
               <div className="border-b border-black flex-1">
                 <span className="text-sm">{bhw}</span>
               </div>
@@ -357,32 +391,48 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             <div className="flex flex-col space-y-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex items-baseline gap-2  flex-1">
-                  <span className="font-bold text-black text-sm ">BP:</span>
+                  <span className="font-bold text-black text-sm ">
+                    BP:
+                  </span>
                   <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}</span>
+                    <span className="text-sm">
+                      {consultation.vital_signs ? `${consultation.vital_signs.vital_bp_systolic}/${consultation.vital_signs.vital_bp_diastolic}` : "N/A"}
+                    </span>
                   </div>
                   <span className="text-black text-sm">mmHg</span>
                 </div>
                 <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm ">RR:</span>
+                  <span className="font-bold text-black text-sm ">
+                    RR:
+                  </span>
                   <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}</span>
+                    <span className="text-sm">
+                      {consultation.vital_signs ? consultation.vital_signs.vital_RR : "N/A"}
+                    </span>
                   </div>
                   <span className="text-black text-sm">cpm</span>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex items-baseline gap-2  flex-1">
-                  <span className="font-bold text-black text-sm ">HR:</span>
+                  <span className="font-bold text-black text-sm ">
+                    HR:
+                  </span>
                   <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs?.vital_pulse || "N/A"}</span>
+                    <span className="text-sm">
+                      {consultation.vital_signs?.vital_pulse || "N/A"}
+                    </span>
                   </div>
                   <span className="text-black text-sm">bpm</span>
                 </div>
                 <div className="flex items-baseline gap-2 flex-1">
-                  <span className="font-bold text-black text-sm ">Temperature:</span>
+                  <span className="font-bold text-black text-sm ">
+                    Temperature:
+                  </span>
                   <div className="border-b border-black flex-1">
-                    <span className="text-sm">{consultation.vital_signs?.vital_temp || "N/A"}</span>
+                    <span className="text-sm">
+                      {consultation.vital_signs?.vital_temp || "N/A"}
+                    </span>
                   </div>
                   <span className="text-black text-sm">°C</span>
                 </div>
@@ -392,23 +442,23 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             {/* Right Column - WT, HT */}
             <div className="flex flex-col space-y-4">
               <div className="flex items-baseline gap-2">
-                <span className="font-bold text-black text-sm ">WT:</span>
+                <span className="font-bold text-black text-sm ">
+                  WT:
+                </span>
                 <div className="border-b border-black flex-1">
                   <span className="text-sm">
-                    {parseFloat(consultation.bmi_details?.weight ?? "0")
-                      .toFixed(2)
-                      .replace(/\.00$/, "")}
+                    {parseFloat(consultation.bmi_details?.weight ?? "0").toFixed(2).replace(/\.00$/, "")}
                   </span>
                 </div>
                 <span className="text-black text-sm">kg</span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-bold text-black text-sm ">HT:</span>
+                <span className="font-bold text-black text-sm ">
+                  HT:
+                </span>
                 <div className="border-b border-black flex-1">
                   <span className="text-sm">
-                    {parseFloat(consultation.bmi_details?.height ?? "0")
-                      .toFixed(2)
-                      .replace(/\.00$/, "")}
+                      {parseFloat(consultation.bmi_details?.height ?? "0").toFixed(2).replace(/\.00$/, "")}
                   </span>
                 </div>
                 <span className="text-black text-sm">cm</span>
@@ -419,9 +469,13 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
           {/* Chief Complaint */}
           <div className="pt-2">
             <div className="flex flex-col sm:flex-row items-baseline gap-2">
-              <span className="font-bold text-black text-sm sm:min-w-[120px]">Chief of Complaint:</span>
+              <span className="font-bold text-black text-sm sm:min-w-[120px]">
+                Chief of Complaint:
+              </span>
               <div className="border-b border-black flex-1 min-w-0">
-                <span className="text-sm">{consultation.medrec_chief_complaint}</span>
+                <span className="text-sm">
+                  {consultation.medrec_chief_complaint}
+                </span>
               </div>
             </div>
           </div>
@@ -430,26 +484,40 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
             <div className="grid grid-cols-1 sm:grid-cols-2">
               {/* History of Present Illness/Findings */}
               <div className="border border-black py-4">
-                <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">History of Present Illness/Findings</h5>
+                <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">
+                  History of Present Illness/Findings
+                </h5>
                 <div className="space-y-2 p-4">
                   <div>
-                    <span className="font-bold text-black text-sm">Subjective Summary:</span>
-                    <div className="text-sm mt-1">{consultation.find_details?.subj_summary}</div>
-                  </div>
-                  <div>
-                    <span className="font-bold text-black text-sm">Objective Summary:</span>
+                    <span className="font-bold text-black text-sm">
+                      Subjective Summary:
+                    </span>
                     <div className="text-sm mt-1">
-                      {consultation.find_details?.obj_summary?.split("-").map((line: any, index: any) => (
-                        <div key={index}>{line.trim()}</div>
-                      ))}
+                      {consultation.find_details?.subj_summary}
                     </div>
                   </div>
                   <div>
-                    <span className="font-bold text-black text-sm">Diagnosis:</span>
+                    <span className="font-bold text-black text-sm">
+                      Objective Summary:
+                    </span>
                     <div className="text-sm mt-1">
-                      {consultation.find_details?.assessment_summary?.split(",").map((item: any, index: any) => (
-                        <div key={index}>{item.trim()}</div>
-                      ))}
+                      {consultation.find_details?.obj_summary
+                        ?.split("-")
+                        .map((line: any, index: any) => (
+                          <div key={index}>{line.trim()}</div>
+                        ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-bold text-black text-sm">
+                      Diagnosis:
+                    </span>
+                    <div className="text-sm mt-1">
+                      {consultation.find_details?.assessment_summary
+                        ?.split(",")
+                        .map((item: any, index: any) => (
+                          <div key={index}>{item.trim()}</div>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -457,13 +525,17 @@ export default function CurrentConsultationCard({ consultation, patientData, cla
 
               {/* Plan/Treatment */}
               <div className="border border-black py-4">
-                <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">Plan Treatment</h5>
+                <h5 className="text-md font-bold mb-2 text-center border-b border-black pb-4">
+                  Plan Treatment
+                </h5>
                 <div className="space-y-2 p-4">
                   <div>
                     <div className="text-sm mt-1">
-                      {consultation.find_details?.plantreatment_summary?.split("-").map((item, index) => (
-                        <div key={index}>{item.trim()}</div>
-                      ))}
+                      {consultation.find_details?.plantreatment_summary
+                        ?.split("-")
+                        .map((item, index) => (
+                          <div key={index}>{item.trim()}</div>
+                        ))}
                     </div>
                   </div>
                 </div>

@@ -90,9 +90,9 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
         const inputYear = inputDate.getFullYear();
         let totalIncome = 0.0
 
-        const totIncome = Number(totInc);
-        const prev_amount = Number(inc_amount);
-        const current_amount = Number(values.inc_amount);
+        let totIncome = Number(totInc);
+        let prev_amount = Number(inc_amount);
+        let current_amount = Number(values.inc_amount);
 
         if (inputYear !== Number(year)) {
             form.setError('inc_datetime', {

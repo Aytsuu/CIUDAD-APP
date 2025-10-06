@@ -1,180 +1,216 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { UseFormReturn } from 'react-hook-form';
-import { ComplaintFormData } from '@/form-schema/complaint-schema';
-import { FormInput } from '@/components/ui/form/form-input';
-import { FormSelect } from '@/components/ui/form/form-select';
-import { FormTextArea } from '@/components/ui/form/form-text-area';
-import { Plus, X, UserX } from 'lucide-react-native';
+import React, { memo, useCallback, useMemo } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { UseFormReturn, useFieldArray } from "react-hook-form";
+import { ComplaintFormData } from "@/form-schema/complaint-schema";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormTextArea } from "@/components/ui/form/form-text-area";
+import { Plus, X, UserX, ChevronLeft } from "lucide-react-native";
+import ScreenLayout from "@/screens/_ScreenLayout";
+import { SearchInput } from "@/components/ui/search-input";
+import { useGetResidentLists } from "../api-operations/queries/ComplaintGetQueries";
 
 interface AccusedStepProps {
   form: UseFormReturn<ComplaintFormData>;
 }
 
-export const Accused: React.FC<AccusedStepProps> = ({ form }) => {
-  const { control, watch, setValue } = form;
-  const accused = watch('accused') || [];
+const AccusedFormSection = memo(
+  ({
+    control,
+    index,
+    onRemove,
+    showRemoveButton,
+    id, // Add unique ID for better memoization
+  }: {
+    control: any;
+    index: number;
+    onRemove: () => void;
+    showRemoveButton: boolean;
+    id: string;
+  }) => {
+    // Memoize gender options to prevent recreation on every render
+    const genderOptions = useMemo(
+      () => [
+        { label: "Male", value: "Male" },
+        { label: "Female", value: "Female" },
+        { label: "Other", value: "Other" },
+      ],
+      []
+    );
 
-  const genderOptions = [
-    { label: 'Male', value: 'Male' },
-    { label: 'Female', value: 'Female' },
-    { label: 'Other', value: 'Other' },
-  ];
+    // Watch only the specific gender field we need
+    const currentGender = control._formValues?.accused?.[index]?.acsd_gender;
 
-  const addAccused = () => {
+    // Memoize the custom gender input to only re-render when gender changes
+    const CustomGenderInput = useMemo(() => {
+      if (currentGender === "Other") {
+        return (
+          <FormInput
+            control={control}
+            name={`accused.${index}.acsd_custom_gender`}
+            label="Specify Gender"
+            placeholder="Please specify your gender"
+          />
+        );
+      }
+      return null;
+    }, [currentGender, control, index]);
+
+    return (
+      <View className="bg-white rounded-lg p-4 border border-gray-100">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-md font-medium text-gray-900">
+            Accused {index + 1}
+          </Text>
+          {showRemoveButton && (
+            <TouchableOpacity onPress={onRemove} className="p-2">
+              <X size={18} className="text-red-500" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View className="space-y-4">
+          <FormInput
+            control={control}
+            name={`accused.${index}.acsd_name`}
+            label="Name/Alias"
+            placeholder="Full name or known alias"
+          />
+
+          <View className="flex-row space-x-3">
+            <View className="flex-1">
+              <FormSelect
+                control={control}
+                name={`accused.${index}.acsd_gender`}
+                label="Gender"
+                options={genderOptions}
+              />
+            </View>
+            <View className="flex-1">
+              <FormInput
+                control={control}
+                name={`accused.${index}.acsd_age`}
+                label="Age"
+                placeholder="Age"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Custom Gender Input */}
+          {CustomGenderInput}
+
+          <FormTextArea
+            control={control}
+            name={`accused.${index}.acsd_description`}
+            label="Physical Description"
+            placeholder="Describe physical appearance, clothing, distinguishing features..."
+            numberOfLines={3}
+          />
+
+          <FormTextArea
+            control={control}
+            name={`accused.${index}.acsd_address`}
+            label="Known Address"
+            placeholder="Enter complete address (Street, Barangay, City, Province)"
+            numberOfLines={2}
+          />
+
+          <FormInput
+            control={control}
+            name={`accused.${index}.rp_id`}
+            label="Resident ID (Optional)"
+            placeholder="If known resident, enter ID"
+            keyboardType="numeric"
+          />
+        </View>
+      </View>
+    );
+  }
+);
+
+AccusedFormSection.displayName = "AccusedFormSection";
+
+// Memoized add button component
+const AddAccusedButton = memo(({ onAdd }: { onAdd: () => void }) => (
+  <TouchableOpacity
+    onPress={onAdd}
+    className="bg-white rounded-lg p-4 border-2 border-dashed border-gray-300 flex-row items-center justify-center"
+  >
+    <Plus size={20} className="text-red-600 mr-2" />
+    <Text className="text-red-600 font-medium">Add Another Accused</Text>
+  </TouchableOpacity>
+));
+
+AddAccusedButton.displayName = "AddAccusedButton";
+
+export const Accused: React.FC<AccusedStepProps> = memo(({ form }) => {
+  const { control } = form;
+
+  // Use useFieldArray instead of watch for better performance
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "accused",
+  });
+
+  // Memoize the add accused function
+  const addAccused = useCallback(() => {
     const newAccused = {
-      alias: '',
-      age: '',
-      gender: 'Male',
-      description: '',
-      address: {
-        street: '',
-        barangay: '',
-        city: '',
-        province: '',
-        sitio: '',
-      },
+      acsd_name: "",
+      acsd_age: "",
+      acsd_gender: "Male" as const,
+      acsd_description: "",
+      acsd_address: "",
+      rp_id: null,
     };
-    
-    setValue('accused', [...accused, newAccused]);
-  };
 
-  const removeAccused = (index: number) => {
-    const updated = accused.filter((_, i) => i !== index);
-    setValue('accused', updated);
-  };
+    append(newAccused);
+  }, [append]);
+
+  // Memoize the remove accused function
+  const removeAccused = useCallback(
+    (index: number) => {
+      remove(index);
+    },
+    [remove]
+  );
+
+  // Memoize the list of accused forms with stable keys
+  const AccusedForms = useMemo(
+    () =>
+      fields.map((field, index) => (
+        <AccusedFormSection
+          key={field.id} // Use field.id instead of index for stable keys
+          control={control}
+          index={index}
+          onRemove={() => removeAccused(index)}
+          showRemoveButton={fields.length > 1}
+          id={field.id}
+        />
+      )),
+    [fields, control, removeAccused]
+  );
 
   return (
-    <View className="space-y-4">
-      {/* Header */}
-      <View className="bg-white rounded-lg p-4 border border-gray-100">
-        <View className="flex-row items-center mb-2">
-          <UserX size={20} className="text-red-600 mr-2" color={"#111111"}/>
-          <Text className="text-lg font-semibold text-gray-900">
-            Accused Information
-          </Text>
-        </View>
-        <Text className="text-sm text-gray-600">
-          Provide details about the person(s) being accused
-        </Text>
+    <ScreenLayout
+      customLeftAction={
+        <TouchableOpacity
+          // onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">Accused</Text>}
+      customRightAction={<View className="w-10 h-10" />}
+    >
+      <View className="space-y-4">
+        {AccusedForms}
+
+        <AddAccusedButton onAdd={addAccused} />
       </View>
-
-      {/* Existing Accused */}
-      {accused.map((accusedPerson, index) => (
-        <View key={index} className="bg-white rounded-lg p-4 border border-gray-100">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-md font-medium text-gray-900">
-              Accused {index + 1}
-            </Text>
-            {accused.length > 1 && (
-              <TouchableOpacity
-                onPress={() => removeAccused(index)}
-                className="p-2"
-              >
-                <X size={18} className="text-red-500" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View className="space-y-4">
-            <FormInput
-              control={control}
-              name={`accused.${index}.alias`}
-              label="Name/Alias"
-              placeholder="Full name or known alias"
-            />
-
-            <View className="flex-row space-x-3">
-              <View className="flex-1">
-                <FormSelect
-                  control={control}
-                  name={`accused.${index}.gender`}
-                  label="Gender"
-                  options={genderOptions}
-                />
-              </View>
-              <View className="flex-1">
-                <FormInput
-                  control={control}
-                  name={`accused.${index}.age`}
-                  label="Age"
-                  placeholder="Age"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <FormTextArea
-              control={control}
-              name={`accused.${index}.description`}
-              label="Physical Description"
-              placeholder="Describe physical appearance, clothing, distinguishing features..."
-              numberOfLines={3}
-            />
-
-            {/* Address Section */}
-            <View className="border-t border-gray-100 pt-4">
-              <Text className="text-sm font-medium text-gray-900 mb-3">Known Address</Text>
-              
-              <View className="space-y-3">
-                <FormInput
-                  control={control}
-                  name={`accused.${index}.address.street`}
-                  label="Street/House No."
-                  placeholder="Street address"
-                />
-                
-                <View className="flex-row space-x-3">
-                  <View className="flex-1">
-                    <FormInput
-                      control={control}
-                      name={`accused.${index}.address.barangay`}
-                      label="Barangay"
-                      placeholder="Barangay"
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <FormInput
-                      control={control}
-                      name={`accused.${index}.address.sitio`}
-                      label="Sitio (Optional)"
-                      placeholder="Sitio"
-                    />
-                  </View>
-                </View>
-
-                <View className="flex-row space-x-3">
-                  <View className="flex-1">
-                    <FormInput
-                      control={control}
-                      name={`accused.${index}.address.city`}
-                      label="City"
-                      placeholder="City"
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <FormInput
-                      control={control}
-                      name={`accused.${index}.address.province`}
-                      label="Province"
-                      placeholder="Province"
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-      ))}
-
-      {/* Add Accused Button */}
-      <TouchableOpacity
-        onPress={addAccused}
-        className="bg-white rounded-lg p-4 border-2 border-dashed border-gray-300 flex-row items-center justify-center"
-      >
-        <Plus size={20} className="text-red-600 mr-2" />
-        <Text className="text-red-600 font-medium">Add Another Accused</Text>
-      </TouchableOpacity>
-    </View>
+    </ScreenLayout>
   );
-};
+});
+
+Accused.displayName = "Accused";

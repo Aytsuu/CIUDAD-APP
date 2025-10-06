@@ -1,20 +1,10 @@
 import * as React from 'react';
-import { View, TouchableOpacity, ScrollView, StatusBar, SafeAreaView, Image } from 'react-native';
-import { ChevronLeft, Calendar, FileText, ChevronRight, Heart, Baby, Dog } from 'lucide-react-native';
+import { View, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { ChevronLeft, Bell, Calendar } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
+import SelectLayout from '@/components/ui/select-layout';
 import { router } from 'expo-router';
-import PageLayout from '@/screens/_PageLayout';
-
-interface Service {
-  id: number;
-  name: string;
-  description: string;
-  route: string;
-  icon: any;
-  image?: any;
-  color: string;
-}
 
 export default function Records() {
   const services: Service[] = [
@@ -48,94 +38,46 @@ export default function Records() {
   ];
 
   return (
-    <PageLayout
-      leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-      }
-      headerTitle={<Text className="text-gray-900 text-[13px]"></Text>}
-      rightAction={<View className="w-10 h-10" />}
-    >
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <View className="flex-1 h-full bg-[#ECF8FF] p-4">
 
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24 }}
-      >
-        {/* Header */}
-        <View className="px-6 mt-1">
-          <Text className="text-2xl font-semibold text-gray-900 mb-2">My Health Records</Text>
-          <Text className="text-gray-500 text-sm">
-            Access your medical records across different services
-          </Text>
-        </View>
+      {/* Header */}
+      <View className="flex-row justify-between items-center mb-6">
+        <TouchableWithoutFeedback onPress={() => router.back()}>
+          <Text className="text-black text-[15px]">Back</Text>
+        </TouchableWithoutFeedback>
+        <Bell size={24} color="#263D67" />
+      </View>
 
-        {/* Services Grid */}
-        <View className="px-6 pt-6">
-          <View className="gap-4">
-            {services.map((service) => {
-              const Icon = service.icon;
-              return (
-                <TouchableOpacity
-                  key={service.id}
-                  onPress={() => router.push(service.route as any)}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-                >
-                  <View className="flex-row">
-                    {service.image && (
-                      <Image
-                        source={service.image}
-                        className="w-24 h-24"
-                        resizeMode="cover"
-                      />
-                    )}
-                    
-                    <View className="flex-1 p-4">
-                      <View className="flex-row items-center mb-2">
-                        <View className="w-8 h-8 rounded-full items-center justify-center mr-3" 
-                              style={{ backgroundColor: service.color + '20' }}>
-                          <Icon size={16} color={service.color} />
-                        </View>
-                        <Text className="text-lg font-semibold text-gray-900 flex-1">
-                          {service.name}
-                        </Text>
-                        <ChevronRight size={16} color="#9CA3AF" />
-                      </View>
-                      
-                      <Text className="text-sm text-gray-500 mb-2">
-                        {service.description}
-                      </Text>
-                      
-                      {/* <View className="flex-row items-center">
-                        <View className={`px-2 py-1 rounded-full`}
-                              style={{ backgroundColor: service.color + '20' }}>
-                          <Text className="text-xs font-medium" style={{ color: service.color }}>
-                            View Records
-                          </Text>
-                        </View>
-                      </View> */}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
+      {/* Title */}
+      <Text className="text-3xl font-PoppinsSemiBold text-[#263D67] mb-6">My records</Text>
 
-        {/* Additional Info */}
-        <View className="px-6 pt-6">
-          <View className="bg-blue-50 rounded-lg p-4">
-            <Text className="text-blue-800 text-sm">
-              💡 Your medical records are securely stored and only accessible to you and authorized healthcare providers.
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-    </PageLayout>
+      {/* Services Dropdown */}
+      <Text className="text-lg font-bold font-PoppinsRegular text-[#263D67] mb-4">Services</Text>
+      <SelectLayout
+        className="min-w-[100%] font-PoppinsRegular"
+        contentClassName="w-full "
+        options={services}
+        selected={selectedService}
+        onValueChange={(value) => setSelectedService(value!)}
+      />
+
+      {/* Display Records Dynamically */}
+      <View className="mt-6">
+        {records.length > 0 ? (
+          records.map((record) => (
+            <Card key={record.id} className="p-4 mb-3 border-0  bg-[#D6E6F2] rounded-lg">
+              <View className="flex-row items-center">
+                <Calendar size={20} color="#263D67" className="mr-2" />
+                <Text className="text-lg font-PoppinsMedium text-[#263D67]">
+                  {record.date} - {record.time}
+                </Text>
+              </View>
+            </Card>
+          ))
+        ) : (
+          <Text className="text-lg font-PoppinsRegular text-[#263D67] mt-4">No records found.</Text>
+        )}
+      </View>
+    </View>
   );
 }

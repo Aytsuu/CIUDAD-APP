@@ -4,8 +4,7 @@ from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
 from django.core.validators import MinValueValidator
 from apps.administration.models import Staff
-
-
+# kene,e
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
@@ -39,10 +38,6 @@ class Medicinelist(models.Model):
                 last_num = 1
                 
             self.med_id = f"{prefix}{last_num:03d}"
-            
-        if self.med_name:
-            self.med_name = self.med_name.title()
-        
         
         super().save(*args, **kwargs)
             
@@ -56,14 +51,7 @@ class CommodityList(models.Model):
         ('New acceptor', 'New acceptor'),
         ('Both', 'Both'),
     ]
-    
-    SEX_TYPE_CHOICES = [
-        ('Male', 'Male'),
-        ('Female', 'Female'),
-        ('Both', 'Both'),
-    ]
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
-    gender_type = models.CharField(max_length=10, choices=SEX_TYPE_CHOICES, default='Both')
 
     class Meta:
         db_table = 'commodity_list'
@@ -84,10 +72,6 @@ class CommodityList(models.Model):
                 last_num = 1
                 
             self.com_id = f"{prefix}{last_num:03d}"
-            
-        if self.com_name:
-            self.com_name = self.com_name.title()
-        
         
         super().save(*args, **kwargs)
             
@@ -117,22 +101,17 @@ class FirstAidList(models.Model):
                 last_num = 1
                 
             self.fa_id = f"{prefix}{last_num:03d}"
-            
-        if self.fa_name:
-            self.fa_name = self.fa_name.title()
-            
+        
         super().save(*args, **kwargs)
-        
-        
 
 class Inventory(models.Model):
     inv_id = models.CharField(max_length=20, primary_key=True)
-    expiry_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField()
     inv_type = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     is_Archived = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def save(self, *args, **kwargs):
         if not self.inv_id:
             # Ensure expiry_date is provided
@@ -168,7 +147,6 @@ class Inventory(models.Model):
         super().save(*args, **kwargs)
     class Meta:
         db_table = 'inventory'
-        
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
     minv_dsg = models.PositiveIntegerField(default=0)
@@ -183,9 +161,11 @@ class MedicineInventory(models.Model):
     med_id = models.ForeignKey('Medicinelist', on_delete=models.PROTECT, db_column='med_id')
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_inventories', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    wasted = models.PositiveIntegerField(default=0)
-    temporary_deduction= models.PositiveIntegerField(default=0)
 
+    # APP NA END
+    # min_qty_to_display = models.PositiveIntegerField(default=0)
+    # set_low_stock = models.PositiveBigIntegerField(default=0)
+    # set_near_expiry =models.PositiveBigIntegerField(default=0)
     class Meta: 
         db_table = 'medicine_inventory'
         ordering = ['-created_at']
@@ -196,6 +176,7 @@ class MedicineTransactions(models.Model):
     mdt_id =models.BigAutoField(primary_key=True)
     mdt_qty = models.CharField(max_length=100)
     mdt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
     minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,related_name='medicine_transaction',  db_column='minv_id')
@@ -211,13 +192,12 @@ class CommodityInventory(models.Model):
     cinv_qty = models.PositiveIntegerField(default=0)
     cinv_qty_unit = models.CharField(max_length=100)
     cinv_pcs = models.PositiveIntegerField(default=0)
+    cinv_dispensed = models.PositiveIntegerField(default=0)
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')
     com_id = models.ForeignKey('CommodityList', on_delete=models.PROTECT,db_column ='com_id')
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    wasted = models.PositiveIntegerField(default=0)
-
 
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
@@ -229,6 +209,7 @@ class CommodityTransaction(models.Model):
     comt_id =models.BigAutoField(primary_key=True)
     comt_qty = models.CharField(max_length=100)
     comt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,related_name='commodity_transaction',  db_column='cinv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='commodity_transaction', null=True, blank=True)  
@@ -249,7 +230,7 @@ class FirstAidInventory(models.Model):
     finv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id',related_name='inventory_firstaid')
     fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id', related_name='firstaid_inventory')
-    wasted = models.PositiveIntegerField(default=0)
+    # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     class Meta:
         db_table = 'firstaid_inventory'
@@ -259,6 +240,7 @@ class FirstAidTransactions(models.Model):
     fat_id =models.BigAutoField(primary_key=True)
     fat_qty = models.CharField(max_length=100)
     fat_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
@@ -298,12 +280,6 @@ class VaccineList(models.Model):
     class Meta:
         db_table = 'vaccines'
         ordering = ['-created_at']
-        
-    def save(self, *args, **kwargs):
-        # Convert vac_name to uppercase before saving
-        if self.vac_name:
-            self.vac_name = self.vac_name.title()
-        super().save(*args, **kwargs)
         
     
         
@@ -345,12 +321,12 @@ class ConditionalVaccine(models.Model):
     vac_id = models.ForeignKey(VaccineList, on_delete=models.PROTECT, db_column='vac_id', related_name='conditional_vaccines')
     class Meta:
         db_table = 'conditional_vaccine'    
-       
           
 class VaccineStock(models.Model):
     vacStck_id =models.BigAutoField(primary_key=True)
     solvent = models.CharField(max_length=10 )
     batch_number = models.CharField(max_length=100, default=" N/A")
+    volume = models.PositiveIntegerField(default=0)
     qty = models.PositiveIntegerField(default=0)
     dose_ml = models.PositiveIntegerField(default=0)
     vacStck_qty_avail = models.PositiveIntegerField(default=0)
@@ -379,12 +355,6 @@ class ImmunizationSupplies(models.Model):
         db_table = 'immunization_supplies'
         ordering = ['-created_at']
         
-    def save(self, *args, **kwargs):
-        # Convert vac_name to uppercase before saving
-        if self.imz_name:
-            self.imz_name = self.imz_name.title()
-        super().save(*args, **kwargs)
-        
         
 class ImmunizationStock(models.Model):
     imzStck_id = models.BigAutoField(primary_key=True)
@@ -407,9 +377,20 @@ class ImmunizationStock(models.Model):
         ordering = ['-created_at']
         
   
+class ImmunizationTransaction(models.Model):
+    imzt_id =models.BigAutoField(primary_key=True)
+    imzt_qty = models.CharField(max_length=100)
+    imzt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)  
+    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.PROTECT, db_column='imzStck_id')
+
+    class Meta:
+        db_table = 'immunization_transaction'
+        
 
 class AntigenTransaction(models.Model):
-    antt_id = models.CharField(primary_key=True, max_length=20, editable=False)
+    antt_id =models.BigAutoField(primary_key=True)
     antt_qty = models.CharField(max_length=100)
     antt_action = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -417,38 +398,9 @@ class AntigenTransaction(models.Model):
     imzStck_id = models.ForeignKey(ImmunizationStock, on_delete=models.PROTECT, db_column='imzStck_id',related_name='antigen_transactions' ,null=True, blank=True)
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='antigen_transactions', null=True, blank=True)  
 
+
     class Meta:
         db_table = 'antigen_transaction'
         ordering = ['-created_at']
 
-    def save(self, *args, **kwargs):
-        if not self.antt_id:
-            with transaction.atomic():
-                # Get current date
-                now = timezone.now()
-                
-                # Prefix: TRNSANT
-                prefix = "TRNSANT"
-                
-                # Format: TRNSANT + Year (2-digit) + Month + Day
-                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
-                base_id = f"{prefix}{date_part}"
-                
-                # Get the maximum existing ID for today using database aggregation
-                max_id_today = AntigenTransaction.objects.filter(
-                    antt_id__startswith=base_id
-                ).aggregate(Max('antt_id'))['antt_id__max']
-                
-                if max_id_today:
-                    try:
-                        # Extract the numeric part from the max ID and increment
-                        last_num = int(max_id_today[len(base_id):]) + 1
-                    except (ValueError, IndexError):
-                        last_num = 1
-                else:
-                    last_num = 1
-                
-                # Generate unique antt_id with 6-digit number
-                self.antt_id = f"{base_id}{last_num:04d}"
         
-        super().save(*args, **kwargs)

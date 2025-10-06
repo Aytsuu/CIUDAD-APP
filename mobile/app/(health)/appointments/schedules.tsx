@@ -1,4 +1,4 @@
-import Schedules from "@/screens/health/my-schedules/my-schedules";
+import Schedules from "@/screens/health/schedules";
 
 export default () => {
     return  <Schedules/>

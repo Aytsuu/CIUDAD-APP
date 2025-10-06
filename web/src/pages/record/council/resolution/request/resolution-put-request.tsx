@@ -1,7 +1,7 @@
 import {api} from "@/api/api";
 
 
-export const useUpdateResolution = async (res_num: string, resolutionInfo: Record<string, any>) => {
+export const useUpdateResolution = async (res_num: String, resolutionInfo: Record<string, any>) => {
 
     try{
 

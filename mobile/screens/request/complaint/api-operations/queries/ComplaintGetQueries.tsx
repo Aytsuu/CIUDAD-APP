@@ -16,6 +16,21 @@ export const getComplaintLists = () => {
   });
 };
 
+export const useGetResidentLists = () => {
+  return useQuery({
+    queryKey: [""],
+    queryFn: async() => {
+      try{
+        const res = await api.get("complaint/residentLists/")
+        return res.data;
+      } catch (error){
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export const useGetComplaintById = (id: string) => {
   return useQuery({
     queryKey: ["complaint", id],

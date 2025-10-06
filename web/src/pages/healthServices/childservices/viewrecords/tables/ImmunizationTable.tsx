@@ -1,33 +1,47 @@
 import React from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table/table";
+import { ChildHealthHistoryRecord } from "../types";
 import { format, isValid } from "date-fns";
-import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
+
 interface ImmunizationTableProps {
-  fullHistoryData: any[];
+  fullHistoryData: ChildHealthHistoryRecord[];
   chhistId: string;
 }
 
-export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({ fullHistoryData, chhistId }) => {
+export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({
+  fullHistoryData,
+  chhistId,
+}) => {
   // Check if there are any immunization records
-  const hasImmunizationRecords = fullHistoryData.some((record) => record.immunization_tracking && record.immunization_tracking.length > 0);
-  const extractDOBFromRecord = (record: any): string => {
-    return record?.chrec_details?.patrec_details?.pat_details?.personal_info?.per_dob || "";
-  };
+  const hasImmunizationRecords = fullHistoryData.some(
+    (record) => record.immunization_tracking && record.immunization_tracking.length > 0
+  );
+
   return (
-    <div className="border border-black mb-6">
+    <div className="border overflow-hidden">
       <Table className="border-collapse [&_tr:hover]:bg-inherit">
-        <TableHeader>
+        <TableHeader className="bg-gray-100">
           <TableRow className="hover:bg-inherit">
-            <TableHead className="w-[100px] border-r border-b border-black text-black bg-white">Date</TableHead>
-            <TableHead className="border-r border-b border-black text-black bg-white">Vaccine</TableHead>
-            <TableHead className="border-r border-b border-black text-black bg-white">Dose</TableHead>
-            <TableHead className="border-b border-black text-black bg-white">Age Given</TableHead>
+            <TableHead className="w-[100px] border-r">Date</TableHead>
+            <TableHead className="border-r">Vaccine</TableHead>
+            <TableHead className="border-r">Dose</TableHead>
+            <TableHead className="border-r">Age Given</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {!hasImmunizationRecords ? (
             <TableRow className="hover:bg-inherit">
-              <TableCell colSpan={4} className="text-center text-gray-600 py-4 border-b border-black">
+              <TableCell
+                colSpan={5}
+                className="text-center text-gray-600 py-4 border-r hover:bg-inherit"
+              >
                 No vaccination records yet.
               </TableCell>
             </TableRow>
@@ -35,35 +49,63 @@ export const ImmunizationTable: React.FC<ImmunizationTableProps> = ({ fullHistor
             fullHistoryData
               .flatMap(
                 (record) =>
-                  record.immunization_tracking?.map((tracking: any) => ({
+                  record.immunization_tracking?.map((tracking) => ({
                     record,
-                    tracking
+                    tracking,
                   })) || []
               )
               .filter(({ record }) => {
                 const recordDate = new Date(record.created_at).getTime();
-                const currentRecordDate = new Date(fullHistoryData.find((r) => r.chhist_id === chhistId)?.created_at || 0).getTime();
+                const currentRecordDate = new Date(
+                  fullHistoryData.find((r) => r.chhist_id === chhistId)
+                    ?.created_at || 0
+                ).getTime();
                 return recordDate <= currentRecordDate;
               })
-              .sort((a, b) => new Date(a.record.created_at).getTime() - new Date(b.record.created_at).getTime())
-              .map(({ record, tracking }, index, array) => {
+              .sort(
+                (a, b) =>
+                  new Date(a.record.created_at).getTime() -
+                  new Date(b.record.created_at).getTime()
+              )
+              .map(({ record, tracking }) => {
                 const isCurrentRecord = record.chhist_id === chhistId;
-                const isLastRow = index === array.length - 1;
                 const vaccinationHistory = tracking.vachist_details || {};
                 const vaccineStock = vaccinationHistory.vaccine_stock || {};
                 const vaccineDetails = vaccineStock.vaccinelist || {};
-                const childDOB = extractDOBFromRecord(record); // Extract DOB
 
                 // Format dose number with suffix
                 const doseNumber = vaccinationHistory.vachist_doseNo;
-                const doseSuffix = doseNumber === 1 ? "1st dose" : doseNumber === 2 ? "2nd dose" : doseNumber === 3 ? "3rd dose" : `${doseNumber}th dose`;
+                const doseSuffix =
+                  doseNumber === 1
+                    ? "1st dose"
+                    : doseNumber === 2
+                    ? "2nd dose"
+                    : doseNumber === 3
+                    ? "3rd dose"
+                    : `${doseNumber}th dose`;
 
                 return (
-                  <TableRow key={`${tracking.imt_id}-${vaccinationHistory.vachist_id || ""}`} className={`hover:bg-inherit ${isCurrentRecord ? "font-medium" : ""}`}>
-                    <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{vaccinationHistory.created_at && isValid(new Date(vaccinationHistory.created_at)) ? format(new Date(vaccinationHistory.created_at), "MMM dd, yyyy") : "N/A"}</TableCell>
-                    <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{vaccineDetails.vac_name || vaccinationHistory?.vac_details?.vac_name}</TableCell>
-                    <TableCell className={`border-r border-black ${!isLastRow ? "border-b" : ""}`}>{doseSuffix}</TableCell>
-                    <TableCell className={`${!isLastRow ? "border-b border-black" : ""}`}>{childDOB && record.created_at ? `${calculateAgeFromDOB(childDOB, record.created_at).ageString} months` : "N/A"}</TableCell>
+                  <TableRow
+                    key={`${tracking.imt_id}-${vaccinationHistory.vachist_id || ""}`}
+                    className={`hover:bg-inherit ${
+                      isCurrentRecord ? " font-medium" : ""
+                    }`}
+                  >
+                    <TableCell className="border-r">
+                      {vaccinationHistory.created_at && isValid(new Date(vaccinationHistory.created_at))
+                        ? format(new Date(vaccinationHistory.created_at), "MMM dd, yyyy")
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {vaccineDetails.vac_name ||  vaccinationHistory?.vac_details?.vac_name}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {doseSuffix}
+                    </TableCell>
+                    <TableCell className="border-r">
+                      {vaccinationHistory.vachist_age || "N/A"}
+                    </TableCell>
+                   
                   </TableRow>
                 );
               })

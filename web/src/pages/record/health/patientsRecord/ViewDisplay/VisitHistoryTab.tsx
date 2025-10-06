@@ -20,13 +20,19 @@ export default function VisitHistoryTab({ completedData, pendingData }: VisitHis
               <div className="mt-4">
                 <Tabs defaultValue="pending" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 h-full">
-                    <TabsTrigger value="pending" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none bg-transparent font-medium">
+                    <TabsTrigger
+                      value="pending"
+                      className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none bg-transparent font-medium"
+                    >
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         Upcoming Follow-up visit
                       </div>
                     </TabsTrigger>
-                    <TabsTrigger value="completed" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none bg-transparent font-medium">
+                    <TabsTrigger
+                      value="completed"
+                      className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none bg-transparent font-medium"
+                    >
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />
                         Completed Visits
@@ -37,7 +43,10 @@ export default function VisitHistoryTab({ completedData, pendingData }: VisitHis
                     <div className="space-y-3 mt-6">
                       {pendingData?.results?.length > 0 ? (
                         pendingData.results.map((visit: any) => (
-                          <div key={visit.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+                          <div
+                            key={visit.id}
+                            className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
+                          >
                             <div className="flex justify-between items-start">
                               <div>
                                 <h3 className="font-semibold text-gray-900">{visit.description}</h3>
@@ -64,7 +73,10 @@ export default function VisitHistoryTab({ completedData, pendingData }: VisitHis
                     <div className="space-y-3 mt-6">
                       {completedData?.results?.length > 0 ? (
                         completedData.results.map((visit: any) => (
-                          <div key={visit.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+                          <div
+                            key={visit.id}
+                            className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
+                          >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <h3 className="font-semibold text-gray-900">{visit.description}</h3>
@@ -72,7 +84,11 @@ export default function VisitHistoryTab({ completedData, pendingData }: VisitHis
                                   <Clock className="w-4 h-4" />
                                   Date: {format(new Date(visit.date), "MMM dd, yyyy")}
                                 </p>
-                                {visit.updated_at && <p className="text-xs text-gray-500 mt-1">Recorded on: {format(new Date(visit.updated_at), "MMM dd, yyyy HH:mm")}</p>}
+                                {visit.updated_at && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Recorded on: {format(new Date(visit.updated_at), "MMM dd, yyyy HH:mm")}
+                                  </p>
+                                )}
                               </div>
                               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <CheckCircle className="w-3 h-3 mr-1" />

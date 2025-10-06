@@ -5,7 +5,6 @@ import * as MediaLibrary from "expo-media-library"
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from "@expo/vector-icons"
 import { getMimeType } from "@/helpers/fileHandling";
-import { CloudUpload } from "@/lib/icons/CloudUpload";
 
 export interface MediaItem {
   uri: string
@@ -21,10 +20,11 @@ interface MediaPickerProps {
   multiple?: boolean
   maxImages?: number
   editable?: boolean
+  // New props for remove functionality
   showRemoveButtons?: boolean
   showClearAllButton?: boolean
   onlyRemoveNewImages?: boolean
-  initialImageIds?: string[]
+  initialImageIds?: string[] // IDs of images that were initially loaded (existing images)
 }
 
 export default function MediaPicker({
@@ -302,14 +302,16 @@ export default function MediaPicker({
     setGalleryVisible(true)
   }
 
+  // Helper function to determine if an image can be removed
   const canRemoveImage = (image: MediaItem, index: number) => {
     if (!editable || !showRemoveButtons) return false;
     
     if (onlyRemoveNewImages) {
+      // Only allow removal if the image is NOT in the initial images list
       return !initialImageIds.includes(image.id || '');
     }
     
-    return true;
+    return true; // Allow removal of all images if not restricted
   }
 
   const removeImage = (index: number) => {
@@ -319,6 +321,7 @@ export default function MediaPicker({
     setSelectedImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  // Helper function to get removable images count
   const getRemovableImagesCount = () => {
     if (!onlyRemoveNewImages) return selectedImages.length;
     
@@ -329,8 +332,10 @@ export default function MediaPicker({
     if (!editable || !showClearAllButton) return;
     
     if (onlyRemoveNewImages) {
+      // Only remove new images, keep existing ones
       setSelectedImages((prev) => prev.filter(image => initialImageIds.includes(image.id || '')));
     } else {
+      // Remove all images
       setSelectedImages([]);
     }
   }
@@ -473,7 +478,7 @@ export default function MediaPicker({
         </View>
       ) : (
         <TouchableOpacity
-          className="w-full bg-white justify-center rounded-3xl items-center overflow-hidden border-2 border-primaryBlue shadow-lg shadow-blue-500"
+          className="w-full h-[300px] bg-[#f0f2f5] justify-center items-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
           onPress={editable ? openGallery : undefined}
           disabled={isProcessingImages}
         >
@@ -495,7 +500,17 @@ export default function MediaPicker({
         </TouchableOpacity>
       )}
 
-      {/* Upload More Button */}
+      {editable && multiple && showClearAllButton && removableCount > 1 && (
+        <TouchableOpacity
+          className="mt-2 p-2 bg-red-500 rounded-lg justify-center items-center"
+          onPress={removeAllImages}
+        >
+          <Text className="text-white font-medium">
+            {onlyRemoveNewImages ? `Clear New Images (${removableCount})` : `Clear All (${selectedImages.length})`}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {editable && multiple && selectedImages?.length > 0 && canSelectMore && (
         <View className="flex-row justify-center">
           <TouchableOpacity
@@ -510,7 +525,6 @@ export default function MediaPicker({
         </View>
       )}
 
-      {/* Gallery Modal */}
       <Modal
         visible={galleryVisible}
         animationType="slide"
@@ -573,7 +587,6 @@ export default function MediaPicker({
         </View>
       </Modal>
 
-      {/* Camera Modal */}
       <Modal visible={cameraVisible} animationType="slide" transparent={false} onRequestClose={closeCamera}>
         <View className="flex-1 relative">
           {device && (

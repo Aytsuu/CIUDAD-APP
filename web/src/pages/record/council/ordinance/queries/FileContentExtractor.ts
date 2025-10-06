@@ -77,7 +77,7 @@ export class FileContentExtractor {
             const pdf = await loadingTask.promise;
 
             let fullText = '';
-            const totalPages = pdf.numPages;
+            let totalPages = pdf.numPages;
 
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 const page = await pdf.getPage(pageNum);

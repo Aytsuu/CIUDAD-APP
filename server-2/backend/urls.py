@@ -28,11 +28,8 @@ urlpatterns = [
     path('health-profiling/', include("apps.healthProfiling.urls")),
     path('maternal/', include('apps.maternal.urls')),
     path('animalbites/', include("apps.animalbites.urls")),
-    # path('patientrecords/', include('apps.patientrecords.urls')),
     path('vaccination/', include("apps.vaccination.urls")),
-    path('administration/', include("apps.administration.urls")),
-    # path('user/', include('apps.account.urls')),
-    path('familyplanning/', include("apps.familyplanning.urls")),
+    path('family-planning/', include("apps.familyplanning.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
     path('medical-consultation/', include("apps.medicalConsultation.urls")),
     path('medicine/', include("apps.medicineservices.urls")),
@@ -41,6 +38,5 @@ urlpatterns = [
 	path('servicescheduler/', include("apps.servicescheduler.urls")),
     path('reports/', include('apps.reports.urls')),
 ]
-
 
 

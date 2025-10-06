@@ -254,7 +254,6 @@ export default () => {
         </View>
       }
       rightAction={<View className="w-10 h-10"/>}
-      wrapScroll={false}
     >
       <View className="flex-1 bg-white">
         <View className="flex-1">

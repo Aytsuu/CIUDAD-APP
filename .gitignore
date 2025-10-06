@@ -66,7 +66,11 @@ venv/
 env/
 .venv/
 
-/mobile/android/
+# Mobile
+**/android/
 
 # Vite cache
 /web/.vite/
+
+# firebase
+server-1/firebase/firebase-key.json

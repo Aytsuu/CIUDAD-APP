@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCommodity } from "../../restful-api/commodity/fetch-api";
-import { api2 } from "@/api/api";
+import { getCommodity } from "../../restful-api/commodity/CommodityFetchAPI";
 
 export const useCommodities = () => {
     return useQuery({
@@ -10,13 +9,3 @@ export const useCommodities = () => {
         staleTime: 0,
     });
 };
-
-export const useCommoditylistCount = () => {
-    return useQuery({
-      queryKey: ["commoditylistcount"],
-      queryFn: async () => {
-        const response = await api2.get("inventory/commoditylistcount/");
-        return response.data;
-      }
-    });
-  };

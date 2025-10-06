@@ -1,44 +1,90 @@
-// WastedAPI.ts (update these functions)
-import { api2 } from "@/api/api"; // Your axios instance
+import { api2 } from "@/api/api";
 
-// Replace the multiple API calls with single endpoints
-export const handleVaccineWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string }) => {
+export const fetchVaccineStockById = async (vacStck_id: number) => {
+  const response = await api2.get(`inventory/vaccine_stocks/${vacStck_id}/`);
+  return response.data;
+};
+
+export const fetchImzSupplyStockById = async (imzStck_id: number) => {
+  const response = await api2.get(
+    `inventory/immunization_stock/${imzStck_id}/`
+  );
+  return response.data;
+};
+
+// export const updateVaccineStockQuantity = async (
+//   vacStck_id: number,
+//   wasted_dose: number,
+//   vacStck_qty_avail: number
+// ) => {
+//   const payload = {
+//     wasted_dose,
+//     vacStck_qty_avail,
+//     updated_at: new Date().toISOString(),
+//   };
+
+//   const response = await updateVaccineStock({
+//     vacStck_id,
+//     payload,
+//   });
+
+//   return response.data;
+// };
+
+export const createVaccineWasteTransaction = async (
+  vacStck_id: number,
+  wastedAmount: number,
+  unit: "doses" | "containers"
+) => {
   try {
-    const response = await api2.post(`/inventory/waste/vaccine/${id}/`, data);
-    return response.data;
-  } catch (error) {
-    console.error("Error in handleVaccineWasteAPI:", error);
-    throw error;
+    const res = await api2.post("inventory/antigens_stocks/transaction/", {
+      antt_qty: `${wastedAmount} ${unit}`,
+      antt_action: "Wasted",
+      vacStck_id: vacStck_id,
+      staff: 0,
+    });
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
   }
 };
 
-export const handleSupplyWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string }) => {
-  try {
-    const response = await api2.post(`/inventory/waste/supply/${id}/`, data);
-    return response.data;
-  } catch (error) {
-    console.error("Error in handleSupplyWasteAPI:", error);
-    throw error;
-  }
+export const updateImmunizationStockQuantity = async (
+  imzStck_id: number,
+  wasted_items: number,
+  imzStck_avail: number
+) => {
+  const payload: {
+    wasted_items: number;
+    imzStck_avail: number;
+    updated_at: string;
+  } = {
+    wasted_items,
+    imzStck_avail,
+    updated_at: new Date().toISOString(),
+  };
+
+  const response = await api2.put(
+    `inventory/immunization_stock/${imzStck_id}/`,
+    payload
+  );
+  return response.data;
 };
 
-// You can keep these for other purposes if needed, but they won't be used for waste handling
-export const fetchVaccineStockById = async (id: number) => {
-  try {
-    const response = await api2.get(`/inventory/vaccine-stocks/${id}/`);
-    return response.data;
-  } catch (error) {
-    console.error("Error in fetchVaccineStockById:", error);
-    throw error;
-  }
-};
+export const createImmunizationWasteTransaction = async (
+  imzStck_id: number,
+  wastedAmount: number,
+  unit: "pcs" | "boxes"
+) => {
+  const payload = {
+    imzt_qty: `${wastedAmount} ${unit}`,
+    imzt_action: "Wasted",
+    staff: 0, // Assuming staff ID 0 for system-generated transactions
+    imzStck_id,
+    created_at: new Date().toISOString(),
+  };
 
-export const fetchImzSupplyStockById = async (id: number) => {
-  try {
-    const response = await api2.get(`/inventory/immunization-stocks/${id}/`);
-    return response.data;
-  } catch (error) {
-    console.error("Error in fetchImzSupplyStockById:", error);
-    throw error;
-  }
+  const response = await api2.post("inventory/imz_transaction/", payload);
+  return response.data;
 };

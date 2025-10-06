@@ -1,6 +1,6 @@
 from .models import *
 from apps.inventory.models import *
-from apps.inventory.serializers.vaccine_serializers import *
+from apps.inventory.serializers import VacccinationListSerializer
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer
 from apps.patientrecords.models import *
 from django.db.models import Q
@@ -13,28 +13,28 @@ from apps.childhealthservices.serializers import *
 from datetime import date
 
 
+
 def get_unvaccinated_vaccines_for_patient(pat_id):
-    # Get all vaccine IDs that patient has completed (from both fields)
-    completed_vaccines = set()
-    
-    # From vacStck_id field
-    completed_vaccines.update(VaccinationHistory.objects.filter(
-        vacrec__patrec_id__pat_id=pat_id,
-        vachist_status="completed",
-        vacStck_id__isnull=False
-    ).values_list('vacStck_id__vac_id', flat=True))
-    
-    # From vac field
-    completed_vaccines.update(VaccinationHistory.objects.filter(
-        vacrec__patrec_id__pat_id=pat_id,
-        vachist_status="completed", 
-        vac__isnull=False
-    ).values_list('vac__vac_id', flat=True))
+    today = timezone.now().date()
 
-    print(f"Completed vaccine IDs: {completed_vaccines}")
+    # Get all vaccine IDs already given to the patient
+    vaccinated_vac_ids = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id
+    ).values_list('vacStck_id__vac_id', flat=True).distinct()
 
-    # Return vaccines that are NOT in the completed list
-    return VaccineList.objects.exclude(vac_id__in=completed_vaccines)
+    # Get overdue follow-up vaccines of type "routine"
+    overdue_vac_ids = VaccinationHistory.objects.filter(
+        vacrec__patrec_id__pat_id=pat_id,
+        vacStck_id__vac_id__vac_type_choices="routine",
+        followv__followv_date__lt=today,
+    ).values_list('vacStck_id__vac_id', flat=True).distinct()
+
+    # Combine: all vaccines EXCEPT vaccinated ones MINUS those with overdue routine followups
+    unvaccinated_vaccines = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids).union(
+        VaccineList.objects.filter(vac_id__in=overdue_vac_ids)
+    )
+
+    return unvaccinated_vaccines
 
 def has_existing_vaccine_history(pat_id, vac_id):
     return VaccinationHistory.objects.filter(

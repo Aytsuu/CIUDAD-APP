@@ -10,6 +10,7 @@ class AssignmentBaseSerializer(serializers.ModelSerializer):
 class AssignmentMinimalSerializer(serializers.ModelSerializer):
   feat = FeatureBaseSerializer(read_only=True)
   feat_id = serializers.PrimaryKeyRelatedField(queryset=Feature.objects.all(), write_only=True, source="feat")
+  pos = PositionBaseSerializer(read_only=True)
 
   class Meta:
     model = Assignment

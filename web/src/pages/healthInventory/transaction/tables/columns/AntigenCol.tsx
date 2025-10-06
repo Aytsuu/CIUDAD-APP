@@ -1,63 +1,94 @@
-import { ColumnDef } from "@tanstack/react-table";
+// src/app/antigen-transactions/columns.ts
+import { ColumnDef } from "@tanstack/react-table"
+import type { AntigenTransaction } from "../type"
 
-export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
+export const columns: ColumnDef<AntigenTransaction>[] = [
   {
-    accessorKey: "id",
-    header: "#",
+    accessorKey: "inv_id",
+    header: "ID",
     cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
-          {row.original.antt_id}
-        </div>
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+{row.original.vac_stock?.inv_details?.inv_id || row.original.imz_stock?.inv_detail?.inv_id || "N/A"}    </div>
+    )
+  },
+  {
+    accessorKey: "item",
+    header: "Item Name",
+    cell: ({ row }) => (
+      <div className="capitalize">
+        {row.original.vac_stock?.vaccinelist?.vac_name || 
+         row.original.imz_stock?.imz_detail?.imz_name || "N/A"}
       </div>
     ),
   },
   {
-    accessorKey: "item_name",
-    header: "Item Name",
-  },
-  {
-    accessorKey: "item_type",
-    header: "Item Type",
-    cell: ({ row }) => {
-      const itemType = row.original.item_type;
-      let bgColor = "bg-gray-100";
-      let textColor = "text-gray-800";
-      
-      if (itemType === "Vaccine") {
-        bgColor = "bg-blue-100";
-        textColor = "text-blue-800";
-      } else if (itemType === "Immunization Supply") {
-        bgColor = "bg-green-100";
-        textColor = "text-green-800";
-      }
-      
-      return (
-        <div className={`px-2 py-1 rounded-md text-center ${bgColor} ${textColor}`}>
-          {itemType}
-        </div>
-      );
-    },
-  },
- 
-  {
     accessorKey: "antt_qty",
     header: "Quantity",
+    cell: ({ row }) => (
+      <div className="text-center">{row.original.antt_qty}</div>
+    ),
   },
   {
     accessorKey: "antt_action",
     header: "Action",
+    cell: ({ row }) => (
+      <div className="capitalize">
+        {row.original.antt_action.toLowerCase()}
+      </div>
+    ),
   },
   {
     accessorKey: "staff",
-    header: "Staff",
+    header: "Staff Name",
+    cell: ({ row }) => (
+      <div className="text-center">{row.original.staff}</div>
+    ),
   },
   {
     accessorKey: "created_at",
-    header: "Created At",
-    cell: ({ row }) => {
-      const createdAt = row.original.created_at;
-      return createdAt ? new Date(createdAt).toLocaleString() : "N/A";
-    }
+    header: "Date",
+    cell: ({ row }) => (
+      <div>{new Date(row.original.created_at).toLocaleDateString()}</div>
+    ),
+  },
+]
+
+export const exportColumns = [
+  {
+    key: "inv_id",
+    header: "ID",
+    format: (row: any) =>
+      row.vac_stock?.inv_details?.inv_id ||
+      row.imz_stock?.inv_detail?.inv_id ||
+      "N/A",
+  },
+  {
+    key: "item",
+    header: "Item Name",
+    format: (row: any) =>
+      row.vac_stock?.vaccinelist?.vac_name ||
+      row.imz_stock?.imz_detail?.imz_name ||
+      "N/A",
+  },
+  {
+    key: "antt_qty",
+    header: "Quantity",
+    format: (row: any) => row.antt_qty || 0,
+  },
+  {
+    key: "antt_action",
+    header: "Action",
+    format: (row: any) => row.antt_action.toLowerCase(),
+  },
+  {
+    key: "staff",
+    header: "Staff Name",
+    format: (row: any) => row.staff || "N/A",
+  },
+  {
+    key: "created_at",
+    header: "Date",
+    format: (row: any) =>
+      row.created_at ? new Date(row.created_at).toLocaleDateString() : "N/A",
   },
 ];

@@ -52,7 +52,7 @@ export default function RootLayout() {
           <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
             <ToastProvider>
-            <StatusBar backgroundColor="transparent" style='dark'/>
+            <StatusBar backgroundColor="transparent" style="dark" />
             <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(announcement)" options={{ headerShown: false, animation: 'fade' }} />
@@ -63,6 +63,7 @@ export default function RootLayout() {
               <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="animal-bites/[id]" options = {{ headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
               <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
               <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>

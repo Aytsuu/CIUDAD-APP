@@ -788,7 +788,7 @@ const SummonCalendar = () => {
                             <span>{selectedDateForTimeSlots.toLocaleString('default', { weekday: 'long' })}</span>
                           </div>
                           <div className="text-lg font-semibold text-blue-800 mt-1">
-                            {formatDate(selectedDateForTimeSlots, "long")}
+                            {formatDate(selectedDateForTimeSlots, true)}
                           </div>
                         </div>
 
@@ -859,7 +859,7 @@ const SummonCalendar = () => {
                               <Plus size={14} className="mr-2" /> Add Time Slot
                             </Button>
                           }
-                          title={`Add new time slots for ${formatDate(selectedDateForTimeSlots, "long")}`}
+                          title={`Add new time slots for ${formatDate(selectedDateForTimeSlots, true)}`}
                           description="Add or manage time slots for the selected date"
                           mainContent={
                             <SummonTimeSlot

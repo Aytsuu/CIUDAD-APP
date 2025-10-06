@@ -1,4 +1,3 @@
-import LottieView from 'lottie-react-native';
 import React from 'react';
 import {
   Modal,
@@ -8,10 +7,12 @@ import {
 
 export const LoadingModal = ({ 
   visible, 
+  message = '', 
   transparent = true,
   animationType = 'fade'
 } : {
   visible: boolean;
+  message?: string;
   transparent?: boolean;
   animationType?: 'none' | 'slide' | 'fade';
 }) => {
@@ -22,13 +23,12 @@ export const LoadingModal = ({
       animationType={animationType || "none"}
       statusBarTranslucent={true}
     >
-      <View className="flex-1 bg-black/80 justify-center items-center">
-        <LottieView 
-          source={require('@/assets/animated/loading.json')}
-          autoPlay
-          loop
-          style={{ width: 70, height: 70 }}
-        />
+      <View className="flex-1 bg-black/50 justify-center items-center">
+          <ActivityIndicator 
+            size="large" 
+            color="#d0d0d0" 
+            className="mb-4"
+          />
       </View>
     </Modal>
   );

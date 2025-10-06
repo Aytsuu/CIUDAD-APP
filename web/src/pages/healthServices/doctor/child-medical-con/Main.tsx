@@ -4,7 +4,7 @@ import PendingDisplaycheckupData from "./ChildhealthHistory";
 import SoapForm from "./SoapFormCH";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
-import { ChevronLeft } from "lucide-react";
+import {ChevronLeft} from "lucide-react";
 
 interface Medicine {
   minv_id: string;
@@ -38,7 +38,8 @@ export default function ChildMedicalConsultation() {
   console.log("Checkup Data:", checkupData);
   // Initialize form data with proper default values
   const [formData, setFormData] = useState<FormData>(() => {
-    const initialMedicines = checkupData?.find_details?.prescribed_medicines || [];
+    const initialMedicines =
+      checkupData?.find_details?.prescribed_medicines || [];
 
     return {
       subj_summary: "",
@@ -50,8 +51,8 @@ export default function ChildMedicalConsultation() {
         medicines: initialMedicines.map((med: Medicine) => ({
           minv_id: med.minv_id,
           medrec_qty: med.medrec_qty,
-          reason: med.reason || ""
-        }))
+          reason: med.reason || "",
+        })),
       },
       physicalExamResults: [],
       selectedIllnesses: [],
@@ -59,8 +60,8 @@ export default function ChildMedicalConsultation() {
       selectedMedicines: initialMedicines.map((med: Medicine) => ({
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,
-        reason: med.reason || ""
-      }))
+        reason: med.reason || "",
+      })),
     };
   });
 
@@ -72,13 +73,17 @@ export default function ChildMedicalConsultation() {
           const updatedData = {
             ...prev,
             ...data,
-            selectedMedicines: data.selectedMedicines || data.medicineRequest?.medicines || prev.selectedMedicines || []
+            selectedMedicines:
+              data.selectedMedicines ||
+              data.medicineRequest?.medicines ||
+              prev.selectedMedicines ||
+              [],
           };
 
           if (data.selectedMedicines) {
             updatedData.medicineRequest = {
               pat_id: patientData?.pat_id || "",
-              medicines: data.selectedMedicines
+              medicines: data.selectedMedicines,
             };
           }
 
@@ -102,21 +107,23 @@ export default function ChildMedicalConsultation() {
       setFormData((prev) => {
         const newData = {
           ...prev,
-          ...updatedData
+          ...updatedData,
         };
 
         if (updatedData.selectedMedicines) {
           newData.selectedMedicines = updatedData.selectedMedicines;
           newData.medicineRequest = {
             pat_id: patientData?.pat_id || "",
-            medicines: updatedData.selectedMedicines
+            medicines: updatedData.selectedMedicines,
           };
         } else if (updatedData.medicineRequest?.medicines) {
-          newData.selectedMedicines = updatedData.medicineRequest.medicines.map((med) => ({
-            minv_id: med.minv_id,
-            medrec_qty: med.medrec_qty,
-            reason: med.reason || ""
-          }));
+          newData.selectedMedicines = updatedData.medicineRequest.medicines.map(
+            (med) => ({
+              minv_id: med.minv_id,
+              medrec_qty: med.medrec_qty,
+              reason: med.reason || "",
+            })
+          );
         }
 
         return newData;
@@ -129,7 +136,9 @@ export default function ChildMedicalConsultation() {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-4">No medical consultation data found.</p>
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-4">
+            No medical consultation data found.
+          </p>
           <Button onClick={() => navigate(-1)} className="ml-4">
             Go Back
           </Button>
@@ -140,27 +149,48 @@ export default function ChildMedicalConsultation() {
 
   return (
     <>
-      <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <button onClick={() => navigate(-1)} className="text-darkGray p-2 bg-white hover:bg-gray-100 rounded-md border border-gray-200">
+   <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="text-darkGray p-2 bg-white hover:bg-gray-100 rounded-md border border-gray-200"
+        >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
         <div>
-          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">Medical Consultation Record</h1>
-          <p className="text-xs sm:text-sm text-darkGray">View consultation details and patient information</p>
+          <h1 className="font-semibold text-lg sm:text-xl md:text-2xl text-darkBlue2">
+            Medical Consultation Record
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            View consultation details and patient information
+          </p>
         </div>
       </div>
       <hr className="border-gray mb-4 sm:mb-6" />
 
       <CardLayout
-        cardClassName="px-6"
+      cardClassName="px-6"
         title=""
         content={
           <>
             {/* Step Content */}
-            {currentStep === 1 && <PendingDisplaycheckupData patientData={patientData} checkupData={checkupData} onNext={nextStep} />}
+            {currentStep === 1 && (
+              <PendingDisplaycheckupData
+                patientData={patientData}
+                checkupData={checkupData}
+                onNext={nextStep}
+              />
+            )}
 
-            {currentStep === 2 && <SoapForm patientData={patientData} checkupData={checkupData} onBack={prevStep} initialData={formData} onFormDataUpdate={handleFormDataUpdate} />}
+            {currentStep === 2 && (
+              <SoapForm
+                patientData={patientData}
+                checkupData={checkupData}
+                onBack={prevStep}
+                initialData={formData}
+                onFormDataUpdate={handleFormDataUpdate}
+              />
+            )}
           </>
         }
       />

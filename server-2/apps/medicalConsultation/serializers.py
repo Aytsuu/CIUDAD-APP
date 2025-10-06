@@ -7,7 +7,7 @@ from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasu
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.patientrecords.models import *
 from apps.administration.serializers.staff_serializers import *  
-from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
+
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     patient_details = PatientSerializer(source='*', read_only=True)
     medicalrec_count = serializers.IntegerField(read_only=True)  # ✅ Add this line
@@ -16,6 +16,8 @@ class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
         model = Patient
         fields = "__all__"
         
+
+ 
     
 class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
@@ -30,22 +32,3 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     
-# serializers.py
-# serializers.py
-
-class MedicalConsultationCreateSerializer(serializers.Serializer):
-    pat_id = serializers.IntegerField()
-    vital_bp_systolic = serializers.CharField(required=False, allow_blank=True)
-    vital_bp_diastolic = serializers.CharField(required=False, allow_blank=True)
-    vital_temp = serializers.CharField(required=False, allow_blank=True)
-    vital_RR = serializers.CharField(required=False, allow_blank=True)
-    vital_pulse = serializers.CharField(required=False, allow_blank=True)
-    height = serializers.FloatField()
-    weight = serializers.FloatField()
-    medrec_chief_complaint = serializers.CharField()
-
-    def validate_height(self, value):
-        return value or 0
-
-    def validate_weight(self, value):
-        return value or 0

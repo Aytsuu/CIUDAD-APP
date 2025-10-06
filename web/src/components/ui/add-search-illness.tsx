@@ -212,7 +212,7 @@ export const IllnessComponent = ({
           filteredIllnesses.map((illness) => (
             <div
               key={illness.ill_id}
-              className="flex items-center  text-sm space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
             >
               <input
                 type="checkbox"

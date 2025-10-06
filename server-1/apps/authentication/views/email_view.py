@@ -24,7 +24,7 @@ class emailOTPView(APIView):
                 raise serializers.ValidationError({"email" : "Email is already in use"})
 
         otp = generate_otp()
-        print(otp)
+        print(f"Generated OTP for {email}: {otp}")
         cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
         send_mail(subject="Your OTP Code", message=f"Your OTP code is {otp}", from_email=None, recipient_list=[email])
         return Response({f'message': 'Sucessfully sent an OTP to {email}'}, status=status.HTTP_200_OK)

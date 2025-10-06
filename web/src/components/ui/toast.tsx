@@ -4,7 +4,7 @@ import { toast } from "sonner";
 export const showErrorToast = (message: string) => {
   toast(message, {
     icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-    style: { 
+    style: {
       border: "1px solid rgb(225, 193, 193)",
       padding: "16px",
       color: "#b91c1c",

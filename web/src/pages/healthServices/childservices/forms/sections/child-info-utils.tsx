@@ -9,7 +9,7 @@ export const populatePatientData = (patient: Patient | null): Partial<FormData> 
   const newFormData: Partial<FormData> = {
     pat_id: patient.pat_id?.toString() || "",
     familyNo: patient.family?.fam_id || "",
-    ufcNo: "",
+    ufcNo: "N/A",
     childFname: patient.personal_info?.per_fname || "",
     childLname: patient.personal_info?.per_lname || "",
     childMname: patient.personal_info?.per_mname || "",

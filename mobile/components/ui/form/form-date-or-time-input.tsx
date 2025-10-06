@@ -11,9 +11,8 @@ interface FormDateTimeInputProps {
   type: 'date' | 'time';
   placeholder?: string;
   editable?: boolean;
-  minimumDate?: Date;
-  maximumDate?: Date;
-  restrictToCurrentAndPast?: boolean; // New prop to enable past-only restriction
+  minimumDate?: Date;  // Changed to Date type
+  maximumDate?: Date;  // Changed to Date type
 }
 
 export const FormDateTimeInput = ({
@@ -25,12 +24,11 @@ export const FormDateTimeInput = ({
   editable = true,
   minimumDate,
   maximumDate,
-  restrictToCurrentAndPast = false,
 }: FormDateTimeInputProps) => {
   const [showPicker, setShowPicker] = useState(false);
 
   const formatDisplayValue = (value: string | undefined) => {
-    if (!value) return placeholder || `${type === 'date' ? 'mm/dd/yyy' : '00:00 PM'}`;
+    if (!value) return placeholder || `Select ${type === 'date' ? 'Date' : 'Time'}`;
 
     if (type === 'date') {
       const dateObj = new Date(value);
@@ -45,35 +43,10 @@ export const FormDateTimeInput = ({
     }
   };
 
-  // Function to check if selected time is in the future
-  const isTimeInFuture = (selectedTime: string): boolean => {
-    if (type !== 'time' || !restrictToCurrentAndPast) return false;
-    
-    const now = new Date();
-    const [hours, minutes] = selectedTime.split(':');
-    const selectedDate = new Date();
-    selectedDate.setHours(parseInt(hours || '0', 10));
-    selectedDate.setMinutes(parseInt(minutes || '0', 10));
-    selectedDate.setSeconds(0);
-    selectedDate.setMilliseconds(0);
-
-    const currentTime = new Date();
-    currentTime.setSeconds(0);
-    currentTime.setMilliseconds(0);
-
-    return selectedDate.getTime() > currentTime.getTime();
-  };
-
   return (
     <Controller
       control={control}
       name={name}
-      rules={{
-        validate: restrictToCurrentAndPast && type === 'time' ? {
-          notFuture: (value: string) => 
-            !isTimeInFuture(value) || 'Time cannot be in the future'
-        } : undefined
-      }}
       render={({ field: { onChange, value }, fieldState: { error } }) => {
         const dateValue = type === 'date' && value ? new Date(value) : 
                          type === 'time' && value ? (() => {
@@ -95,37 +68,23 @@ export const FormDateTimeInput = ({
             } else {
               const hours = String(selectedDate.getHours()).padStart(2, '0');
               const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
-              const timeString = `${hours}:${minutes}`;
-              
-              // Additional validation for future time
-              if (restrictToCurrentAndPast && isTimeInFuture(timeString)) {
-                // You could show an alert here or handle it differently
-                return;
-              }
-              
-              onChange(timeString);
+              onChange(`${hours}:${minutes}`);
             }
           }
         };
 
-        // Set maximum date/time for picker
-        const getMaximumDate = () => {
-          if (type === 'time' && restrictToCurrentAndPast) {
-            return new Date(); // Current date/time as maximum
-          }
-          return maximumDate;
-        };
-
         return (
           <View className="mb-4">
-            {label && <Text className="text-sm mb-2">{label}</Text>}
+            {label && (
+              <Text className="text-[12px] font-PoppinsRegular mb-2">{label}</Text>
+            )}
             <TouchableOpacity
               className={`
                 h-[45px]
                 px-3
                 bg-white
                 border
-                rounded-xl
+                rounded-md
                 flex-row
                 items-center
                 justify-between
@@ -137,7 +96,7 @@ export const FormDateTimeInput = ({
             >
               <Text
                 className={`
-                  text-sm
+                  font-PoppinsRegular
                   ${!value ? 'text-[#888]' : 'text-black'}
                 `}
               >
@@ -158,8 +117,8 @@ export const FormDateTimeInput = ({
                 mode={type}
                 display="default"
                 onChange={handlePickerChange}
-                minimumDate={minimumDate}
-                maximumDate={getMaximumDate()}
+                minimumDate={minimumDate}  // Now properly typed as Date
+                maximumDate={maximumDate}  // Now properly typed as Date
               />
             )}
           </View>

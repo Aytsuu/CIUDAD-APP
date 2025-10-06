@@ -6,9 +6,9 @@ export const FirstaidRequestArraySchema = z.object({
     z.object({
       finv_id: z.string(),
       qty: z.number().int().min(0),
-      reason: z.string().optional()
+      reason: z.string().optional(),
     })
-  )
+  ),
 });
 
 export type FirstaidRequestArrayType = z.infer<typeof FirstaidRequestArraySchema>;

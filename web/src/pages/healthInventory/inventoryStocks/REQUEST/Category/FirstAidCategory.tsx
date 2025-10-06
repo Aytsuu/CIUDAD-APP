@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {api2} from "@/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { toast } from "sonner";
+import { CircleCheck, CircleX } from "lucide-react";
 import { toTitleCase } from "@/helpers/ToTitleCase";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { showErrorToast,showSuccessToast } from "@/components/ui/toast";
 
 interface Option {
   id: string;
@@ -12,14 +12,17 @@ interface Option {
 
 export const useCategoriesFirstAid = () => {
   const [categories, setCategories] = useState<Option[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   // State for delete confirmation dialog
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const queryClient = useQueryClient();
 
   // State to store the onCategoryAdded callback
   const [onCategoryAddedCallback, setOnCategoryAddedCallback] = useState<((newId: string) => void) | null>(null);
@@ -39,42 +42,38 @@ export const useCategoriesFirstAid = () => {
     }
   };
 
-  // GET CATEGORIES with react-query
-  const { data, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ['firstAidCategories'],
-    queryFn: async () => {
-      try {
-        const { data } = await api2.get("inventory/category/", {
-          params: { cat_type: "FirstAid" },
-        });
+  // GET CATEGORIES
+  const getCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await api2.get("inventory/category/", {
+        params: { cat_type: "FirstAid" },
+      });
 
-        if (Array.isArray(data)) {
-          const transformedCategories = data
-            .filter((cat) => cat.cat_type === "FirstAid")
-            .map((cat) => ({
-              id: String(cat.cat_id),
-              name: cat.cat_name || "Unnamed Category",
-            }));
+      if (Array.isArray(data)) {
+        const transformedCategories = data
+          .filter((cat) => cat.cat_type === "FirstAid")
+          .map((cat) => ({
+            id: String(cat.cat_id),
+            name: cat.cat_name || "Unnamed Category",
+          }));
 
-          return transformedCategories;
-        } else {
-          console.error("Unexpected data format:", data);
-          throw new Error("Unexpected data format from server");
-        }
-      } catch (err) {
-        console.error(err);
-        throw new Error("Failed to fetch categories");
+        setCategories(transformedCategories);
+      } else {
+        console.error("Unexpected data format:", data);
+        setError("Unexpected data format from server");
       }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes stale time
-  });
-
-  // Update categories when data changes
-  useEffect(() => {
-    if (data) {
-      setCategories(data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch categories");
+    } finally {
+      setLoading(false);
     }
-  }, [data]);
+  }, []);
+
+  useEffect(() => {
+    getCategories();
+  }, [getCategories]);
 
   const handleAddCategory = async (
     newCategoryName: string,
@@ -88,7 +87,11 @@ export const useCategoriesFirstAid = () => {
     );
 
     if (categoryExists) {
-      showErrorToast("Category already exists")
+      setError("Category already exists.");
+      toast.error("Category already exists", {
+        icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
       setIsProcessing(false);
       return;
     }
@@ -100,19 +103,25 @@ export const useCategoriesFirstAid = () => {
       });
 
       if (newCategory && newCategory.cat_id) {
-        // Invalidate the query to refetch data
-        queryClient.invalidateQueries({ queryKey: ['firstAidCategories'] });
+        const newCategoryOption = {
+          id: String(newCategory.cat_id),
+          name: newCategory.cat_name,
+        };
+
+        setCategories((prev) => [...prev, newCategoryOption]);
+        onCategoryAdded(newCategoryOption.id);
         
-        // Call the callback if provided
-        if (onCategoryAdded) {
-          onCategoryAdded(String(newCategory.cat_id));
-        }
-        
-        showSuccessToast("Category added successfully")
+        toast.success("Category added successfully", {
+          icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+        });
       }
     } catch (error) {
       console.error("❌ Failed to add category:", error);
-      showErrorToast("Failed to add category");
+      toast.error("Failed to add category", {
+        icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -153,17 +162,27 @@ export const useCategoriesFirstAid = () => {
       const response = await api2.delete(`inventory/category/${categoryId}/`);
 
       if (response.status === 200 || response.status === 204) {
-        // Invalidate the query to refetch data
-        queryClient.invalidateQueries({ queryKey: ['firstAidCategories'] });
+        setCategories((prev) =>
+          prev.filter((category) => category.id !== String(categoryId))
+        );
         
-        showSuccessToast("Category deleted successfully")
+        toast.success("Category deleted successfully", {
+          icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+        });
       } else {
         console.error(response);
-        showErrorToast("Failed to delete category")
+        toast.error("Failed to delete category", {
+          icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
+          duration: 2000,
+        });
       }
     } catch (err) {
       console.error(err);
-      showErrorToast("Failed to delete category. It may be in use.")
+      toast.error("Failed to delete category. It may be in use.", {
+        icon: <CircleX size={18} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     }
   };
 
@@ -203,7 +222,7 @@ export const useCategoriesFirstAid = () => {
   );
 
   return {
-    categories: loading ? [] : categories, // Return empty array when loading
+    categories,
     loading,
     error,
     handleAddCategory,
@@ -211,6 +230,5 @@ export const useCategoriesFirstAid = () => {
     handleDeleteConfirmation,
     categoryHandleAdd,
     ConfirmationDialogs,
-    refetch,
   };
 };

@@ -28,10 +28,10 @@ export const FormTextArea = ({
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className="mb-4">
           {label && (
-            <Text className="text-sm mb-2">{label}</Text>
+            <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
           )}
           <Textarea
-            className={`native:text-sm rounded-xl bg-white text-black ${
+            className={`font-PoppinsRegular native:text-sm bg-white text-black ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}

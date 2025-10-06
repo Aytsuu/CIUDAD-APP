@@ -1,14 +1,12 @@
 import { ColumnDef } from "@tanstack/react-table";
-
-export const CommodityTransactionColumns = (): ColumnDef<any>[] => [
+import { CommodityRecords } from "../../tables/type";
+export const CommodityColumns = (): ColumnDef<CommodityRecords>[] => [
   {
-    accessorKey: "id",
-    header: "#",
+    accessorKey: "inv_id",
+    header: "ID",
     cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-          {row.original.comt_id}
-        </div>
+      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
+        {row.original.inv_id}{" "}
       </div>
     ),
   },
@@ -18,7 +16,7 @@ export const CommodityTransactionColumns = (): ColumnDef<any>[] => [
   },
   {
     accessorKey: "comt_qty",
-    header: "Quantity",
+    header: "Qty",
   },
   {
     accessorKey: "comt_action",
@@ -31,9 +29,5 @@ export const CommodityTransactionColumns = (): ColumnDef<any>[] => [
   {
     accessorKey: "created_at",
     header: "Created At",
-    cell: ({ row }) => {
-      const createdAt = row.original.created_at;
-      return createdAt ? new Date(createdAt).toLocaleString() : "N/A";
-    }
   },
 ];

@@ -4,7 +4,7 @@ export const updateVaccinationHistory = async (
 data:Record<string,any>
 ) => {
   try {
-    const response = await api2.patch(
+    const response = await api2.put(
       `vaccination/vaccination-history/${data.vachist_id}/`,
      data
     );

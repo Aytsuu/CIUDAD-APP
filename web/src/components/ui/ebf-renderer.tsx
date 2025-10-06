@@ -1,11 +1,11 @@
 import React from "react";
-// import { FieldConfig, ChildHealthHistoryRecord, EBFCheck } from "../../pages/healthServices/childservices/viewrecords/types";
+import { FieldConfig, ChildHealthHistoryRecord, EBFCheck } from "../../pages/healthServices/childservices/viewrecords/types";
 import { getValueByPath } from "../../pages/healthServices/childservices/viewrecords/ChildHealthutils";
 import { format, isSameDay } from "date-fns";
 
 interface EbfRendererProps {
-  field: any;
-  recordsToDisplay: any[];
+  field: FieldConfig;
+  recordsToDisplay: ChildHealthHistoryRecord[];
   chhistId: string;
 }
 
@@ -63,7 +63,7 @@ export const EbfRenderer: React.FC<EbfRendererProps> = ({
                     const shouldHighlight =
                       isCurrentRecord &&
                       !recordsToDisplay[1]?.exclusive_bf_checks?.some(
-                        (prevEbf: any) =>
+                        (prevEbf: EBFCheck) =>
                           prevEbf.ebf_date &&
                           ebf.date &&
                           isSameDay(

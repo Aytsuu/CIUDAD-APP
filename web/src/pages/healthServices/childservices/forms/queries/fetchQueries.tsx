@@ -1,56 +1,34 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory } from "../restful-api/get";
+import { getChildHealthRecords,getNutrionalSummary } from "../restful-api/get";
+import { getChildHealthHistory } from "../restful-api/get";
 
 export function useChildHealthRecords() {
   return useQuery({
     queryKey: ["childHealthRecords"],
     queryFn: getChildHealthRecords,
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5, 
   });
 }
 
-export function useNutritionalSummary(id: string) {
+
+
+export function useNutritionalSummary(chrec_id: string) {
   return useQuery({
-    queryKey: ["nutritionalSummary", id],
-    queryFn: () => getNutrionalSummary(id),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5
+    queryKey: ["nutritionalSummary", chrec_id],
+    queryFn: () => getNutrionalSummary(chrec_id),
+    enabled: !!chrec_id,              
+    staleTime: 1000 * 60 * 5, 
   });
 }
 
-export const useChildHealthHistory = (id: string | undefined) => {
+
+export const useChildHealthHistory = (chrec: string | undefined) => {
+
   return useQuery({
-    queryKey: ["childHealthHistory", id],
-    queryFn: () => getChildHealthHistory(id!),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5
+    queryKey: ["childHealthHistory", chrec],
+    queryFn: () => getChildHealthHistory(chrec!),
+    enabled: !!chrec,
+    staleTime: 1000 * 60 * 5,
   });
 };
-
-export const useNutriotionalStatus = (id: string | undefined) => {
-  return useQuery({
-    queryKey: ["NutritionalStatus", id],
-    queryFn: () => getNutritionalStatus(id!),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5
-  });
-};
-
-export const useNextufcno = () => {
-  return useQuery({
-    queryKey: ["nextufc"],
-    queryFn:getNextufc,
-    staleTime: 1000 * 60 * 5
-  });
-};
-
-
-export const useChildLatestVitals = (id: string | undefined) => {
-  return useQuery({
-    queryKey: ["latestVitals", id],
-    queryFn: () => getLatestVitals(id!),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5
-  });
-}

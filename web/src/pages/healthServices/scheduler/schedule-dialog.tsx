@@ -1,24 +1,38 @@
-"use client";
+"use client"
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog/dialog";
-import { Button } from "@/components/ui/button/button";
-import { Edit } from "lucide-react";
-import ServiceScheduleForm from "../scheduler/schedule-form";
-import type { WeeklySchedule } from "../scheduler/schedule-types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog/dialog"
+import { Button } from "@/components/ui/button/button"
+import { Edit } from "lucide-react"
+import ServiceScheduleForm from "../scheduler/schedule-form"
+import type { WeeklySchedule } from "../scheduler/schedule-types"
 
 interface ScheduleDialogProps {
-  weeklySchedule: WeeklySchedule;
-  weekDays: Date[];
-  services: string[];
-  onSave: (schedule: WeeklySchedule) => void;
-  onAddService: (serviceName: string) => void;
-  onAddDay: (newDay: Date) => void;
+  weeklySchedule: WeeklySchedule
+  weekDays: Date[]
+  services: string[]
+  onSave: (schedule: WeeklySchedule) => void
+  onAddService: (serviceName: string) => void
+  onAddDay: (newDay: Date) => void
 }
 
-export default function ScheduleDialog({ weeklySchedule, weekDays, services, onSave, onAddService, onAddDay }: ScheduleDialogProps) {
+export default function ScheduleDialog({
+  weeklySchedule,
+  weekDays,
+  services,
+  onSave,
+  onAddService,
+  onAddDay,
+}: ScheduleDialogProps) {
   const handleSave = (newSchedule: WeeklySchedule) => {
-    onSave(newSchedule);
-  };
+    onSave(newSchedule)
+  }
 
   return (
     <Dialog>
@@ -33,8 +47,15 @@ export default function ScheduleDialog({ weeklySchedule, weekDays, services, onS
           <DialogTitle>Edit Weekly Schedule</DialogTitle>
           <DialogDescription>Update your service availability for the week.</DialogDescription>
         </DialogHeader>
-        <ServiceScheduleForm initialSchedule={weeklySchedule} weekDays={weekDays} services={services} onSave={handleSave} onAddService={onAddService} onAddDay={onAddDay} />
+        <ServiceScheduleForm
+          initialSchedule={weeklySchedule}
+          weekDays={weekDays}
+          services={services}
+          onSave={handleSave}
+          onAddService={onAddService}
+          onAddDay={onAddDay}
+        />
       </DialogContent>
     </Dialog>
-  );
+  )
 }

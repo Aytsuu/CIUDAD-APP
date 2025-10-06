@@ -1,15 +1,3 @@
-export const adjustForWeekends = (date: Date): Date => {
-  const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  if (dayOfWeek === 0) { // Sunday
-    date.setDate(date.getDate() + 1); // Move to Monday
-  } else if (dayOfWeek === 6) { // Saturday
-    date.setDate(date.getDate() + 2); // Move to Monday
-  }
-  
-  return date;
-};
-
 export const calculateNextVisitDate = (
   interval: number,
   timeUnit: string,
@@ -42,9 +30,6 @@ export const calculateNextVisitDate = (
       break;
   }
 
-  // Adjust for weekends (Saturday/Sunday -> Monday)
-  const adjustedDate = adjustForWeekends(date);
-  
-  console.log(" Next visit date calculated:", adjustedDate.toISOString());
-  return adjustedDate;
+  console.log(" Next visit date calculated:", date.toISOString());
+  return date;
 };

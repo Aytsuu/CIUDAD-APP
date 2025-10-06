@@ -93,19 +93,15 @@ export default function HomeScreen() {
     if(user?.staff) userStatus.push(user?.staff?.pos)
 
     const INITIAL_FEATURES_COUNT = 5;
-    const myFeatures = features.filter((feat: Record<string, any>) => {
-      if(feat.users?.length == 0) return feat;
-      if(userStatus.some((stat: string) => feat.users.includes(stat))) return feat;
-    })
 
-    if (myFeatures.length <= 6) {
+    if (features.length <= 6) {
       // Show all features, no Show More/Less button
-      return myFeatures.map((feature, index) => renderFeatureItem(feature, index));
+      return features.map((feature, index) => renderFeatureItem(feature, index));
     }
 
     if (!showMoreFeatures) {
       // Show first 5 features + Show More button
-      const visibleFeatures = myFeatures.slice(0, INITIAL_FEATURES_COUNT);
+      const visibleFeatures = features.slice(0, INITIAL_FEATURES_COUNT);
       const items = [
         ...visibleFeatures.map((feature, index) => renderFeatureItem(feature, index)),
         renderFeatureItem({}, INITIAL_FEATURES_COUNT, true) // Show More button
@@ -113,18 +109,19 @@ export default function HomeScreen() {
       return items;
     } else {
       // Show all features + Show Less button
-      const allFeatureItems = myFeatures.map((feature, index) => 
+      const allFeatureItems = features.map((feature, index) => 
         renderFeatureItem(feature, index)
       );
       // Add Show Less button
-      allFeatureItems.push(renderFeatureItem({}, myFeatures.length, true));
+      allFeatureItems.push(renderFeatureItem({}, features.length, true));
       return allFeatureItems;
     }
   };
 
   const RenderPage = React.memo(() => (
-    <SafeAreaView className="flex-1 mb-16"> 
-      <View className="px-6 flex-1">
+    <View className="flex-1 mb-16">
+      <View className="px-5 flex-1 justify-center">
+        {/* <Text className="font-PoppinsSemiBold text-lg text-blue-500"></Text> */}
         <Ciudad width={80} height={70}/>
       </View>
       {/* Header Card Section */}
@@ -202,7 +199,7 @@ export default function HomeScreen() {
       </View>
 
       {/* Features Section */}
-      <Card className="p-6 bg-white rounded-none">
+      <Card className="p-5 bg-white rounded-none border-b border-border">
         <View className="mb-6">
           <Text className="text-lg font-semibold text-gray-900">
             Features
@@ -219,7 +216,7 @@ export default function HomeScreen() {
       </Card>
 
       {/* What's New Section */}
-      {/* <View className="px-6 py-6">
+      <View className="px-5 py-6">
         <View className="mb-6">
           <Text className="text-xl font-semibold text-gray-900">
             What's New For You
@@ -290,10 +287,7 @@ export default function HomeScreen() {
   ))  
 
   return (
-    <PageLayout
-      showHeader={false}
-      wrapScroll={false}
-    >
+    <PageLayout showHeader={false}>
       <FlatList 
         maxToRenderPerBatch={1}
         showsVerticalScrollIndicator={false}
@@ -313,3 +307,56 @@ export default function HomeScreen() {
     </PageLayout>
   );
 }
+
+// import React from "react";
+// import { ScrollView, View, Text } from "react-native";
+// import { useAuth } from "@/contexts/AuthContext";
+// import PageLayout from "../_PageLayout";
+// import { LoadingModal } from "@/components/ui/loading-modal";
+
+// export default function HomeScreen() {
+//   const { user, isLoading } = useAuth();
+
+//   if (isLoading) return <LoadingModal visible={true} />;
+
+//   // 🔹 Recursive renderer
+//   const RenderTree = ({ data, indent = 0 }) => {
+//     if (typeof data !== "object" || data === null) {
+//       return (
+//         <Text style={{ marginLeft: indent, color: "#111" }}>
+//           {String(data)}
+//         </Text>
+//       );
+//     }
+
+//     return (
+//       <View style={{ marginLeft: indent }}>
+//         {Object.entries(data).map(([key, value], index) => (
+//           <View key={index} style={{ marginBottom: 2 }}>
+//             <Text style={{ fontWeight: "600", color: "#333" }}>
+//               {key}:
+//             </Text>
+//             {typeof value === "object" ? (
+//               <RenderTree data={value} indent={indent + 12} />
+//             ) : (
+//               <Text style={{ marginLeft: indent + 12, color: "#555" }}>
+//                 {String(value)}
+//               </Text>
+//             )}
+//           </View>
+//         ))}
+//       </View>
+//     );
+//   };
+
+//   return (
+//     <PageLayout showHeader={false}>
+//       <ScrollView style={{ padding: 16 }}>
+//         <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 12 }}>
+//           User Data
+//         </Text>
+//         <RenderTree data={user} />
+//       </ScrollView>
+//     </PageLayout>
+//   );
+// }

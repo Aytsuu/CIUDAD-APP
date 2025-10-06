@@ -113,10 +113,10 @@ class GetCompletedFollowUpVisits(APIView):
 
 
 class GetPendingFollowUpVisits(APIView):
-    def get(self, request, pat_id):
+    def get(self, request, patrec_id):
         try:
             # Get completed visits using the utility function
-            visits = get_pending_followup_visits(pat_id)
+            visits = get_pending_followup_visits(patrec_id)
             
             # Serialize the data
             serialized_visits = [{

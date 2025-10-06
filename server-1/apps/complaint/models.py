@@ -50,22 +50,21 @@ class Complaint(models.Model):
         max_length=20, 
         default='Pending',
     )
-    staff_id = models.ForeignKey(
+    staff = models.ForeignKey(
         'administration.Staff',
         on_delete=models.CASCADE,
         null=True,
-        db_column='staff_id',
-        related_name='accept_complaints',
+        related_name='complaints',
     )
     complainant = models.ManyToManyField(
         Complainant,
         through='ComplaintComplainant',
-        related_name='complaint'
+        related_name='complaints'
     )
     accused = models.ManyToManyField(
         Accused,
         through='ComplaintAccused',
-        related_name='complaint'
+        related_name='complaints'
     )
 
     class Meta:
@@ -87,6 +86,9 @@ class Complaint(models.Model):
 
             self.comp_id = int(f"{date_str}{seq:03d}") 
         super().save(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        return f"/complaint/{self.comp_id}/"
         
 class ComplaintComplainant(models.Model):
     cc_id = models.BigAutoField(primary_key=True)
@@ -110,11 +112,11 @@ class Complaint_File(models.Model):
     comp_file_id = models.BigAutoField(primary_key=True)
     comp_file_name = models.CharField(max_length=100)
     comp_file_type = models.CharField(max_length=50)
-    # comp_file_url = models.URLField(max_length=500)
+    comp_file_url = models.URLField(max_length=500)
     comp = models.ForeignKey(
         Complaint,
         on_delete=models.CASCADE,
-        related_name='complaint_file',
+        related_name='files',
     )
 
     class Meta:

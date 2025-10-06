@@ -1,6 +1,5 @@
 import { Text, TouchableOpacity, View, ScrollView, Dimensions, Platform, Image, InteractionManager} from "react-native"
 import { router, useRouter } from "expo-router"
-import React from "react"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { ChevronRight } from "@/lib/icons/ChevronRight"
 import PageLayout from "../_PageLayout"
@@ -97,163 +96,54 @@ export default () => {
   }
 
   return (
-    <PageLayout
-      leftAction={
+    <ScreenLayout
+      customLeftAction={
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 items-center justify-center"
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
-          <ChevronLeft size={24} className="text-white" />
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-white font-medium text-[13px]">Report</Text>}
-      rightAction={<View className="w-10 h-10" />}
-      backgroundColor="bg-primaryBlue"
-      wrapScroll={false}
+      headerBetweenAction={<Text className="text-[13px]">Report</Text>}
+      customRightAction={<View className="w-10 h-10"/>}
     >
-      <View className="flex-1">
-        {/* Top section with cards */}
-        <View className="pb-8">
-          {/* Header */}
-          <View className="pt-6 px-6 pb-6">
-            <Text className="text-xl font-medium text-white">File a Report</Text>
-            <Text className="text-sm text-white/90">Share your concern to the barangay San Roque (CIUDAD)</Text>
-          </View>
-          {/* Horizontal ScrollView with Cards */}
-          <View className="relative">
-            <ScrollView
-              ref={scrollViewRef}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={handleScroll}
-              contentContainerStyle={{ paddingHorizontal: 0 }}
-              overScrollMode="never"
+      <View className="flex-1 px-5">
+        <Text className="text-sm text-center text-gray-600 leading-6 px-5 mb-4">
+          Monitor barangay reports. Select a category below to view records.
+        </Text> 
+        {
+          menuItem.map((item: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
+              activeOpacity={0.7}
+              onPress={() => router.push(item.route)}
             >
-              {fileReportItem.map((item: any, index: number) => (
-                <View 
-                  key={index} 
-                  style={{ width: cardWidth }} 
-                  className={`pr-4 ${index == 0 && "pl-6"} ${index == fileReportItem.length - 1 && "pr-6"}`}
-                >
-                  {/* Add padding and overflow visible to prevent shadow clipping */}
-                  <View className="py-2" style={{ overflow: 'visible' }}>
-                    <TouchableOpacity
-                      className="bg-white rounded-3xl"
-                      style={[
-                        cardShadowStyle,
-                        { 
-                          height: 280, // Use style prop for height instead of className
-                          overflow: 'visible' // Ensure shadow isn't clipped
-                        }
-                      ]}
-                      activeOpacity={1}
-                      onPress={() => router.push(item.route)}
-                    >
-                      {/* Optimized Image section with JPG */}
-                      <View className="h-48 bg-black rounded-t-3xl overflow-hidden">
-                        <Image
-                          source={item.image}
-                          style={{ width: "100%", height: 250, marginBottom: 16, opacity: 0.8 }}
-                          resizeMode="cover"
-                        />
-                      </View>
-                      
-                      {/* Text section - Remove bg-transparent and use bg-white */}
-                      <View className="p-4 flex-1 bg-white rounded-3xl">
-                        <Text className="text-gray-700 font-medium text-lg mb-2">{item.title}</Text>
-                        <Text className="text-gray-500 text-sm">{item.description}</Text>
-                      </View>
-                    </TouchableOpacity>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+
+                  {/* Add Visual Image */}
+
+                  <View className="flex-1">
+                    <Text className="text-gray-900 font-semibold text-base">
+                      {item.title}
+                    </Text>
+
+                    <Text className="text-gray-500 text-sm mt-1">
+                      {item.description}
+                    </Text>
                   </View>
                 </View>
-              ))}
-            </ScrollView>
-            
-            {/* Navigation Arrows */}
-            {currentIndex > 0 && (
-              <TouchableOpacity
-                className="absolute left-0 top-1/2 -translate-y-6 w-12 h-12 rounded-full bg-black/30 items-center justify-center"
-                onPress={() => scrollToIndex(currentIndex - 1)}
-                activeOpacity={0.7}
-              >
-                <ChevronLeft size={20} className="text-white" />
-              </TouchableOpacity>
-            )}
-            
-            {currentIndex < fileReportItem.length - 1 && (
-              <TouchableOpacity
-                className="absolute right-0 top-1/2 -translate-y-6 w-12 h-12 rounded-full bg-black/30 items-center justify-center"
-                onPress={() => scrollToIndex(currentIndex + 1)}
-                activeOpacity={0.7}
-              >
-                <ChevronRight size={20} className="text-white" />
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          {/* Page Indicators */}
-          <View className="flex-row justify-center mt-6 gap-2">
-            {fileReportItem.map((_, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => scrollToIndex(index)}
-                className={`w-2 h-2 rounded-full ${
-                  index === currentIndex ? 'bg-white' : 'bg-gray-400'
-                }`}
-              />
-            ))}
-          </View>
-        </View>
 
-        {/* Bottom white section with rounded top corners */}
-        <View className="flex-1 flex-row items-center justify-center pt-6 px-6" style={{gap: 60}}>
-          {user?.staff?.staff_id && 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => handleDrawer('records')}
-            >
-              <View className="flex items-center justify-center gap-3">
-                <View className="flex-row bg-white p-4 rounded-full shadow-lg elevation-sm">
-                  <Grid  width={25} height={25}/>
+                <View className="ml-2">
+                  <ChevronRight className="text-gray-400" size={20} />
                 </View>
-                <Text className="text-sm text-white font-medium">Records</Text>
               </View>
             </TouchableOpacity>
-          }
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => handleDrawer('history')}
-          >
-            <View className="flex items-center justify-center gap-3">
-              <View className="flex-row bg-white p-4 rounded-full shadow-lg elevation-sm">
-                <File  width={25} height={25}/>
-              </View>
-              <Text className="text-sm text-white font-medium">History</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <Drawer 
-          header={drawerContent === "records" ? "Report Records" : "Report History"}
-          description={drawerContent === "records" ? "View all reports record" : "Your report submission history"}
-          children={
-            <View className="flex-1">
-              {
-                drawerContent == "records" ? (
-                  <ReportRecord />
-                ) : (
-                  <ReportHistory />
-                )
-              }
-            </View>
-          }
-          visible={showDrawer}
-          onClose={() => setShowDrawer(false)}
-        />
+          ))
+        }
       </View>
-    </PageLayout>
+    </ScreenLayout>
   )
 }

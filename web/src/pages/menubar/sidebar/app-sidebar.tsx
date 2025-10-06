@@ -147,11 +147,11 @@ export function AppSidebar() {
   const [activeItem, setActiveItem] = useState<string>("");
 
   const featureValidator = (requiredFeature?: string) => {
-    if (!requiredFeature) return user?.staff?.pos?.toLowerCase() == "admin";
+    if (!requiredFeature) return user?.staff?.pos.toLowerCase() == "admin";
 
     return (
       user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) ||
-      user?.staff?.pos?.toLowerCase() == "admin"
+      user?.staff?.pos.toLowerCase() == "admin"
     );
   };
 

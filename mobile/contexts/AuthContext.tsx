@@ -76,8 +76,8 @@ export const useAuth = () => {
       try {
         await sendEmailOTPMutation.mutateAsync(data);
         return true;
-      } catch (err){
-        throw err;
+      } catch {
+        return false;
       }
     },
     [sendEmailOTPMutation]

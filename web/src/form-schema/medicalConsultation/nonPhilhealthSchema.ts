@@ -92,10 +92,7 @@ const respiratoryRateSchema = z.preprocess(
     })
 );
 
-
-
 export const nonPhilHealthSchema = z.object({
-  staff: z.string().nullable().optional(),
   pat_id: z.string().min(1, "Patient ID is required").default(""),
   bhw_assignment: z.string().min(1, "BHW Assignment is Required").default(""),
   vital_pulse: heartRateSchema,
@@ -113,31 +110,18 @@ export const nonPhilHealthSchema = z.object({
       .max(200, { message: "Diastolic cannot be >200 mmHg" })
       .refine(val => val % 1 === 0, "Must be whole number")
   ),
+
   vital_RR: respiratoryRateSchema,
   height: heightSchema,
   weight: weightSchema,
-  vital_temp: temperatureSchema,
+  vital_temp: temperatureSchema, // Using the specialized temperature validator
   medrec_chief_complaint: z.string().default(""),
-  doctor: z.string().min(1, "Doctor is required"),
-  
-  // PhilHealth membership status - changed to boolean for radio button
-  is_philhealthmember: z.boolean().optional().default(false),
-  
-  // Additional fields that show when PhilHealth member is selected
-  is_withatch: z.boolean().optional().default(false),
-  marital_status: z.string().optional().default("N/A"),
-  is_dependent: z.boolean().optional().default(false),
-  lmp: z.string().optional().default("N/A"),
-  obscore_g: z.string().optional().default("0"),
-  obscore_p: z.string().optional().default("0"),
-  tpal: z.string().optional().default("0-0-0-0"),
-  tt_status: z.string().optional().default("N/A"),
-  ogtt_result: z.string().optional().default("N/A"),
-  contraceptive_used: z.string().optional().default("N/A"),
-  smk_stickused_aday: z.string().optional().default("N/A"),
-  smk_yrs: z.string().optional().default("N/A"),
-  is_passive: z.boolean().optional().default(false),
-  alchl_bottleused_aday: z.string().optional().default("N/A"),
+  doctor: z.string().min(1, "Doctor is required")
 });
 
+
+
 export type nonPhilHealthType = z.infer<typeof nonPhilHealthSchema>;
+
+
+

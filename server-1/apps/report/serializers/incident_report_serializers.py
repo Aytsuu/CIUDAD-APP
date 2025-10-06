@@ -13,6 +13,8 @@ class IRBaseSerializer(serializers.ModelSerializer):
 
 class IRTableSerializer(serializers.ModelSerializer):
   ir_reported_by = serializers.SerializerMethodField()
+  ir_sitio = serializers.CharField(source="add.sitio.sitio_name")
+  ir_street = serializers.CharField(source="add.add_street")
   ir_time = serializers.SerializerMethodField()
   ir_type = serializers.CharField(source="rt.rt_label")
   files = serializers.SerializerMethodField()
@@ -46,8 +48,12 @@ class IRTableSerializer(serializers.ModelSerializer):
     return files
 
 class IRCreateSerializer(serializers.ModelSerializer):
+  ir_street = serializers.CharField(write_only=True, required=False)
+  ir_sitio = serializers.CharField(write_only=True, required=False)
   ir_type = serializers.CharField(write_only=True, required=False)
   ir_other_type = serializers.CharField(write_only=True, required=False)
+  rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), required=False, write_only=True)
+  add = serializers.PrimaryKeyRelatedField(queryset=Address.objects.all(), required=False, write_only=True)
   rp = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), required=True)
   files = FileInputSerializer(write_only=True, many=True, required=False)
    
@@ -57,6 +63,8 @@ class IRCreateSerializer(serializers.ModelSerializer):
               'ir_other_type', 'ir_severity', 'ir_area', 'rp', 'files']
 
   def create(self, validated_data):
+    sitio = validated_data.pop('ir_sitio', None)
+    street = validated_data.pop('ir_street', None)
     report_type = validated_data.pop('ir_type', None)
     other_report_type = validated_data.pop('ir_other_type', None)
     files = validated_data.pop('files', [])
@@ -76,8 +84,7 @@ class IRCreateSerializer(serializers.ModelSerializer):
         new_rep_type.save()
         validated_data['rt'] = new_rep_type
     else: 
-      existing_rep_type = ReportType.objects.filter(rt_label__iexact=report_type).first()
-      print(existing_rep_type)
+      existing_rep_type = ReportType.objects.filter(rt_label=report_type).first()
       validated_data['rt'] = existing_rep_type
 
     incident_report = IncidentReport(**validated_data)

@@ -1,123 +1,123 @@
 "use client"
-import { useState } from "react"
+
+import React from "react"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
 import { Search, Loader2 } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { AntigenTransactionColumns } from "./columns/AntigenCol"
-import { useAntigenTransactions } from "../queries/fetch"
+import { useQuery } from "@tanstack/react-query"
+import { getAntigenTransactions } from "../restful-api/GetRequest"
+import { ExportButton } from "@/components/ui/export"
+import { columns, exportColumns } from "../tables/columns/AntigenCol"
 
-export default function AntigenTransactionTable() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
+export default function AntigenTransactionsTable() {
+  const [searchQuery, setSearchQuery] = React.useState("")
+  const [pageSize, setPageSize] = React.useState(10)
+  const [currentPage, setCurrentPage] = React.useState(1)
 
-  const { data: apiResponse, isLoading, error } = useAntigenTransactions(
-    currentPage, 
-    pageSize, 
-    searchQuery, 
-  )
+  const { data, isLoading } = useQuery({
+    queryKey: ["antigenTransactions", currentPage, pageSize, searchQuery],
+    queryFn: () => getAntigenTransactions(currentPage, pageSize, searchQuery),
+    staleTime: 1000 * 60 * 5,
+  })
 
-  // Extract data from API response
-  const transactionData = Array.isArray(apiResponse?.results) ? apiResponse.results : []
-  const totalCount = apiResponse?.count || 0
+  const formattedAntigenData = React.useMemo(() => {
+    if (!data?.results) return []
+
+    return data.results.map((transaction: any) => {
+      const staffFirstName = transaction.staff_detail?.rp?.per?.per_fname || ""
+      const staffLastName = transaction.staff_detail?.rp?.per?.per_lname || ""
+      const staffFullName = `${staffFirstName} ${staffLastName}`.trim()
+
+      return {
+        ...transaction,
+        staff: staffFullName || transaction.staff,
+        itemName:
+          transaction.vac_stock?.vaccinelist?.vac_name ||
+          transaction.imz_stock?.imz_detail?.imz_name ||
+          "N/A",
+      }
+    })
+  }, [data])
+
+  const totalCount = data?.count || 0
   const totalPages = Math.ceil(totalCount / pageSize)
 
-  const columns = AntigenTransactionColumns()
-
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
-  // Handle search
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setCurrentPage(1)
-  }
-
-  // Handle page size change
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = +e.target.value
-    setPageSize(value >= 1 ? value : 1)
-    setCurrentPage(1)
-  }
-
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-red-500">Error loading antigen transactions</div>
-      </div>
-    )
-  }
-
   return (
-    <>
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+    <div>
+      {/* Search Input */}
+      <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-              size={17}
-            />
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
-              placeholder="Search antigen transactions..."
+              placeholder="Search by item name, action, or staff..."
               className="pl-10 bg-white w-full"
               value={searchQuery}
-              onChange={handleSearchChange}
+              onChange={(e) => {
+                setCurrentPage(1)
+                setSearchQuery(e.target.value)
+              }}
             />
           </div>
         </div>
       </div>
 
-      <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
+      {/* Table + Top Controls */}
+      <div className="bg-white rounded-md">
+        <div className="flex justify-between p-3">
+          <div className="flex items-center gap-2">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={(e) => {
+                const value = +e.target.value
+                setPageSize(value >= 1 ? value : 1)
+                setCurrentPage(1)
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
+          <ExportButton
+            data={formattedAntigenData}
+            filename="antigen-transactions"
+            columns={exportColumns}
+          />
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
+        {/* Table Display */}
+        <div className="overflow-x-auto min-h-[300px]">
           {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading antigen transactions...</span>
-            </div>
-          ) : error ? (
-            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span className="ml-2">Error loading data. Please check console.</span>
-            </div>
-          ) : transactionData.length === 0 ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <span className="ml-2">No antigen transactions found</span>
+            <div className="w-full h-[100px] flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="ml-2">loading....</span>
             </div>
           ) : (
-            <DataTable columns={columns} data={transactionData} />
+            <DataTable columns={columns} data={formattedAntigenData} />
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing{" "}
-            {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-
-            {Math.min(currentPage * pageSize, totalCount)} of{" "}
-            {totalCount} transactions
-          </p>
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+        {/* Pagination + Info */}
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          {formattedAntigenData.length > 0 ? (
+            <>
+              <p className="text-xs sm:text-sm text-darkGray">
+                Showing {(currentPage - 1) * pageSize + 1}–
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+              </p>
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          ) : (
+            <p className="text-xs sm:text-sm text-darkGray">No results found</p>
+          )}
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -5,12 +5,10 @@ import OTPModal from "./OTPModal";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useAuth } from "@/contexts/AuthContext";
-import axios from "axios";
-import { SubmitButton } from "@/components/ui/button/submit-button";
 
 export default function EmailOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
-  const { control, getValues, trigger, setValue, setError } =
+  const { control, getValues, trigger, setValue } =
     useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
@@ -60,6 +58,7 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
 
   const send = async () => {
     if (!(await trigger("accountFormSchema.email"))) {
+      toast.error("Failed to send. Please try again.");
       return;
     }
 
@@ -74,17 +73,8 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
       if (response) {
         setModalVisible(true);
       }
-    } catch (err: any) {
-      if(axios.isAxiosError(err) && err.response){
-          const errors = err.response.data
-
-          if(errors.email){
-            setError('accountFormSchema.email', {
-              type: "server",
-              message: Array.isArray(errors.email) ? errors.email[0] : errors.email,
-            })
-          }
-        }
+    } catch (err) {
+      toast.error("Failed to send. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -116,14 +106,8 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
           />
         </View>
 
-        <SubmitButton 
-          submittingLabel="Sending Code..."
-          buttonLabel="Send Verification Code"
-          isSubmitting={isSubmitting}
-          handleSubmit={send}
-        />
-        {/* <Button
-          className={`bg-primaryBlue native:h-[45px] py-4 rounded-full ${
+        <Button
+          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${
             isSubmitting ? "opacity-70" : ""
           }`}
           onPress={send}
@@ -132,7 +116,7 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
           <Text className="text-white font-semibold text-base">
             {isSubmitting ? "Sending Code..." : "Send Verification Code"}
           </Text>
-        </Button> */}
+        </Button>
 
         <View className="flex-row items-center justify-center mt-8 gap-1">
           {params.signin ? (

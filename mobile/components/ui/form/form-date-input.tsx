@@ -22,7 +22,7 @@ export const FormDateInput = ({ control, name, label, editable = true }: DatePic
       render={({ field: { onChange, value }, fieldState: { error } }) => (
         <View className="mb-4">
           {label && (
-            <Text className="text-sm mb-2">
+            <Text className="text-[12px] font-PoppinsRegular mb-2">
               {label}
             </Text>
           )}

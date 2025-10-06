@@ -30,22 +30,8 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
     header: "Type",
   },
   {
-    accessorKey: "ir_severity",
-    header: "Severity",
-    cell: ({ row }) => {
-      const severity_color: Record<string, any> = {
-        LOW: 'bg-green-100 border-green-400 text-green-700 hover:bg-green-100',
-        MEDIUM: 'bg-amber-100 border-amber-400 text-amber-700 hover:bg-amber-100',
-        HIGH: 'bg-red-100 border-red-400 text-red-700 hover:bg-red-100',
-      }
-      return (
-        <div className="flex justify-center">
-          <Badge className={`px-3 rounded-full ${ severity_color[row.original.ir_severity as string]}`}>
-            {row.original.ir_severity}
-          </Badge>
-        </div>
-      )
-    }
+    accessorKey: "ir_reported_by",
+    header: "Reported By",
   },
   {
     accessorKey: "ir_date",
@@ -57,6 +43,10 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
     accessorKey: "ir_time",
     header: "Time",
+  },
+  {
+    accessorKey: "ir_date",
+    header: "Date",
   },
   {
     accessorKey: "action",
@@ -162,7 +152,6 @@ export const ARColumns = (
         );
       }
     },
-    size: 30,
     enableSorting: false,
     enableHiding: false,
   },
@@ -175,8 +164,14 @@ export const ARColumns = (
     header: "Incident/Activity",
   },
   {
-    accessorKey: "ar_area",
-    header: "Area",
+    accessorKey: "ar_location",
+    header: "Location",
+    cell: ({ row }) => {
+      const sitio = row.original.ar_sitio;
+      const street = row.original.ar_street;
+
+      return `Sitio ${sitio}, ${street} `;
+    },
   },
   {
     accessorKey: "date",

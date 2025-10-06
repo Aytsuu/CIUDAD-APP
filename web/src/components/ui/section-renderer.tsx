@@ -1,11 +1,11 @@
 import React from "react";
-// import { FieldConfig, ChildHealthHistoryRecord } from "../../pages/healthServices/childservices/viewrecords/types";
+import { FieldConfig, ChildHealthHistoryRecord } from "../../pages/healthServices/childservices/viewrecords/types";
 import { getValueByPath, getDiffClass } from "../../pages/healthServices/childservices/viewrecords/ChildHealthutils";
 import { format, isValid } from "date-fns";
 
 interface SectionRendererProps {
-  fields: any[];
-  recordsToDisplay: any[];
+  fields: FieldConfig[];
+  recordsToDisplay: ChildHealthHistoryRecord[];
   chhistId: string;
 }
 

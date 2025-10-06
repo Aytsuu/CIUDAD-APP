@@ -61,6 +61,7 @@ export const MotherInfoSection = ({ control, isAddNewMode, selectedPatient, isTr
         label="Occupation"
         placeholder="Enter Occupation"
         type="text"
+        readOnly={isAddNewMode || (!isTransient && !!selectedPatient)}
       />
     </div>
   </div>

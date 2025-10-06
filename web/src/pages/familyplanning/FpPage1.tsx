@@ -1,450 +1,125 @@
+"use client"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { ChevronLeft } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
-import { toast } from "sonner"
-import { z } from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button/button"
+import { ChevronLeft } from "lucide-react"
+import { Link, useLocation, useNavigate } from "react-router"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
-import { api2 } from "@/api/api"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { page1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
-import { useObstetricalHistoryData } from "./queries/fpFetchQuery"
+import { toast } from "sonner"
 
 type Page1Props = {
   onNext2: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
-  mode?: "create" | "edit" | "view" | "followup"
-  isPatientPreSelected?: boolean
-  patientGender?: string
 }
 
-function calculateAge(dateOfBirth: string): number {
-  const today = new Date()
-  const birthDate = new Date(dateOfBirth)
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const month = today.getMonth() - birthDate.getMonth()
-  if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-  return age
-}
-
-export default function FamilyPlanningForm({
-  onNext2,
-  updateFormData,
-  formData,
-  mode = "create",
-  isPatientPreSelected = false,
-  patientGender,
-}: Page1Props) {
-  const isReadOnly = mode === "view"
-  const navigate = useNavigate()
-  const [originalClientType, setOriginalClientType] = useState<string | null>(null);
-  const [originalMethod, setOriginalMethod] = useState<string | null>(null)
+export default function FamilyPlanningForm({ onNext2, updateFormData, formData }: Page1Props) {
   const form = useForm<FormData>({
-    resolver: zodResolver(page1Schema),
+    // resolver: zodResolver(page1Schema),
+    defaultValues: formData,
     values: formData,
     mode: "onBlur",
   })
 
-
-  const typeOfClient = form.watch("typeOfClient")
-  const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
-  const patientId = formData?.pat_id
-  const { data: obstetricalData } = useObstetricalHistoryData(patientId)
-
-
-
-  useEffect(() => {
-    if (obstetricalData?.livingChildren !== undefined) {
-      form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
-      updateFormData({
-        ...form.getValues(),
-        numOfLivingChildren: obstetricalData.livingChildren,
-        obstetricalHistory: {
-          ...form.getValues().obstetricalHistory,
-          numOfLivingChildren: obstetricalData.livingChildren,
-        },
-      })
-    }
-  }, [obstetricalData, updateFormData])
-
-
-  useEffect(() => {
-    if (patientGender && !isPatientPreSelected) {
-      form.setValue("gender", patientGender);
-    }
-  }, [patientGender, isPatientPreSelected, form]);
+  interface PatientRecord {
+    clientID: string
+    per_id: string
+    per_fname: string
+    per_lname: string
+    per_mname: string
+    per_dob: string
+    per_age: string
+    per_sex: string
+    per_address: string
+    per_edAttainment: string
+    // street: string
+    // sitio: string
+    // barangay: string
+    // city: string
+    // province: string
+    // pat_type: string
+    per_religion: string
+  }
 
   interface FormattedPatient {
     id: string
-    name: React.ReactNode
-  }
-
-  interface FormattedCommodity {
-    gender_type: string
-    id: string
     name: string
-    user_type: string
   }
 
-  const [patients, setPatients] = useState<FormattedPatient[]>([])
-  const [loadingPatients, setLoadingPatients] = useState(false)
+  const [patients, setPatients] = useState<{
+    default: PatientRecord[]
+    formatted: { id: string; name: string }[]
+  }>({ default: [], formatted: [] })
+
   const [selectedPatientId, setSelectedPatientId] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const [commodities, setCommodities] = useState<FormattedCommodity[]>([])
-  const [loadingCommodities, setLoadingCommodities] = useState(false)
-
-  // Set selected patient ID if pre-selected
+  // Fetch patient records
   useEffect(() => {
-    if (isPatientPreSelected && formData.pat_id) {
-      setSelectedPatientId(formData.pat_id);
-      if (mode === "followup") {
-        if (formData.methodCurrentlyUsed) {
-          setOriginalMethod(formData.methodCurrentlyUsed);
-        }
-        if (formData.typeOfClient) {
-          setOriginalClientType(formData.typeOfClient);
-        }
-      }
-    }
-  }, [isPatientPreSelected, formData.pat_id, formData.methodCurrentlyUsed, formData.typeOfClient, mode]);
-
-  useEffect(() => {
-    if (!isPatientPreSelected) {
-      const fetchPatients = async () => {
-        setLoadingPatients(true)
-        try {
-          const response = await api2.get("patientrecords/patient/")
-          const formattedPatients = response.data.map((patient: any) => ({
-            id: patient.pat_id?.toString() || "",
-            name: (
-              <>
-                <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginRight: '0.3rem' }}>
-                  {patient.pat_id || ""}
-                </span>
-                {`${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""} [${patient.pat_type || ""}]`.trim()}
-              </>
-            ),
-          }))
-          setPatients(formattedPatients)
-        } catch (error) {
-          console.error("Error fetching patients:", error)
-          toast.error("Failed to load patient data")
-        } finally {
-          setLoadingPatients(false)
-        }
-      }
-
-      fetchPatients()
-    }
-  }, [isPatientPreSelected])
-
-  const [isAgeInvalid, setIsAgeInvalid] = useState(false);
-
-  const age = form.watch("age");
-
-  useEffect(() => {
-    if (age) {
-      if (age < 10 || age > 49) {
-        setIsAgeInvalid(true);
-        toast.warning("Patient's age is outside the recommended range (10-49 years) for family planning services. Proceed with caution or select another patient.");
-      } else {
-        setIsAgeInvalid(false);
-      }
-    }
-  }, [age]);
-
-  const handlePatientSelection = async (id: string | undefined) => {
-    if (!id) {
-      toast.error("Please select a valid patient");
-      return;
-    }
-
-    setSelectedPatientId(id);
-    try {
-      // Fetch basic patient data
-      const response = await api2.get(`patientrecords/patient/${id}/`);
-      const patientData = response.data;
-
-      // Initialize default spouse info
-      let spouseInfo = {
-        s_lastName: "",
-        s_givenName: "",
-        s_middleInitial: "",
-        s_dateOfBirth: "",
-        s_age: 0,
-        s_occupation: "",
-      };
-
-      // Process spouse info with multiple fallbacks
+    const fetchPatients = async () => {
+      setLoading(true)
       try {
-        const spouseData = patientData.spouse_info?.spouse_info;
+        // const response = await api.get("/health-profiling/personal/")
+        // const patientData = response.data
 
-        if (spouseData) {
-          spouseInfo = {
-            s_lastName: spouseData.spouse_lname || "",
-            s_givenName: spouseData.spouse_fname || "",
-            s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
-            s_dateOfBirth: spouseData.spouse_dob || "",
-            s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
-            s_occupation: spouseData.spouse_occupation || "",
-          };
-        }
-      } catch (e) {
-        console.error("Error processing spouse info:", e);
-      }
+        // Make sure we're mapping the data correctly based on the API response
+        const formatted = patientData.map((patient: PatientRecord) => ({
+          id: patient.per_id.toString(),
+          name: `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname || ""}`.trim(),
+        }))
 
-      // Process address information from the JSON structure
-      const addressInfo = {
-        houseNumber: "", // This field doesn't exist in your JSON, keeping empty
-        street: patientData.address?.add_street || "",
-        barangay: patientData.address?.add_barangay || "",
-        municipality: patientData.address?.add_city || "",
-        province: patientData.address?.add_province || "",
-        sitio: patientData.address?.add_sitio || "",
-        full_address: patientData.address?.full_address || "",
-      };
-
-      console.log("Address info extracted:", addressInfo); // Debug log
-
-      // Fetch additional data with error handling for each request
-      const requests = [
-        api2.get(`familyplanning/body-measurements/${id}`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/obstetrical-history/${id}/`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/last-previous-pregnancy/${id}/`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/patient-details/${id}`).catch(() => ({ data: {} }))
-      ];
-
-      const [
-        bodyMeasurementsResponse,
-        obsHistoryResponse,
-        lastPrevPregResponse,
-        personalResponse
-      ] = await Promise.all(requests);
-
-      const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
-      const spouseData = patientData.spouse_info?.spouse_info;
-
-        if (spouseData) {
-          spouseInfo = {
-            s_lastName: spouseData.spouse_lname || "",
-            s_givenName: spouseData.spouse_fname || "",
-            s_middleInitial: (spouseData.spouse_mname ? spouseData.spouse_mname[0] : "") || "",
-            s_dateOfBirth: spouseData.spouse_dob || "",
-            s_age: spouseData.spouse_dob ? calculateAge(spouseData.spouse_dob) : 0,
-            s_occupation: spouseData.spouse_occupation || "",
-          };
-        }
-      
-      // Build the form data with proper fallbacks
-      const newFormData = {
-        ...formData,
-        ...patientData,
-        pat_id: patientData.pat_id || id,
-        lastName: patientData.personal_info?.per_lname || "",
-        givenName: patientData.personal_info?.per_fname || "",
-        client_id: patientData.client_id || "",
-        middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
-        dateOfBirth: patientData.personal_info?.per_dob || "",
-        gender: patientData.personal_info?.per_sex || "",
-        obstetricalHistory: {
-          ...(obsHistoryResponse.data || {}),
-          livingChildren: obsHistoryResponse.data?.livingChildren || 0
-        },
-        height: bodyMeasurementsResponse.data?.height || 0,
-        weight: bodyMeasurementsResponse.data?.weight || 0,
-        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.recorded_at || "",
-        philhealthNo: personalResponse.data?.philhealthNo || "",
-        nhts_status: personalResponse.data?.nhts_status || false,
-        fourps: personalResponse.data?.fourps || false,
-        educationalAttainment: personalResponse.data?.educationalAttainment || "",
-        occupation: personalResponse.data?.ocupation || "", // Note: there's a typo in the original (ocupation vs occupation)
-        acknowledgement: {
-          ...formData.acknowledgement,
-          clientName: fullName,
-        },
-        // Use the processed address info instead of the fallback
-        address: addressInfo,
-        spouse: spouseInfo,
-        lastDeliveryDate: lastPrevPregResponse.data?.last_delivery_date || "",
-        typeOfLastDelivery: lastPrevPregResponse.data?.last_delivery_type || "",
-      };
-      console.log("New form data:", newFormData); // Debug log
-      console.log("Final form data address:", newFormData.address); // Debug log
-
-      if (newFormData.methodCurrentlyUsed) {
-        setOriginalMethod(newFormData.methodCurrentlyUsed);
-      }
-
-      form.reset(newFormData);
-      updateFormData(newFormData);
-      toast.success("Patient data loaded successfully");
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
-      toast.error("Failed to load patient details. Some information may be incomplete.");
-    }
-  };
-
-  const dateOfBirth = form.watch("dateOfBirth")
-  const spouseDOB = form.watch("spouse.s_dateOfBirth")
-  const methodCurrentlyUsed = form.watch("methodCurrentlyUsed");
-  const otherMethod = form.watch("otherMethod");
-  const subTypeOfClient = form.watch("subTypeOfClient");
-  const currentEffectiveMethod = methodCurrentlyUsed === "Others" ? otherMethod : methodCurrentlyUsed;
-
-  // Get previous effective method from formData (set during prefill)
-  const previousMethod = formData.previousMethod || "";
-  const watchedGender = form.watch("gender")
-  const isNewAcceptor = typeOfClient === "newacceptor"
-  const isCurrentUser = typeOfClient === "currentuser"
-  const isChangingMethod =
-    isCurrentUser &&
-    (subTypeOfClient === "changingmethod" ||
-      subTypeOfClient === "changingclinic" ||
-      subTypeOfClient === "dropoutrestart");
-
-  useEffect(() => {
-    if (dateOfBirth) {
-      form.setValue("age", calculateAge(dateOfBirth))
-    } else {
-      form.setValue("age", 0)
-    }
-  }, [dateOfBirth, form])
-
-  useEffect(() => {
-    if (spouseDOB) {
-      form.setValue("spouse.s_age", calculateAge(spouseDOB))
-    } else {
-      form.setValue("spouse.s_age", 0)
-    }
-  }, [spouseDOB, form])
-
-  useEffect(() => {
-    if (typeOfClient === "newacceptor") {
-      form.setValue("subTypeOfClient", "")
-      form.setValue("reason", "")
-      form.setValue("otherReasonForFP", "")
-      setOriginalMethod(null)
-    } else if (typeOfClient === "currentuser") {
-      // form.setValue("reasonForFP", "")
-      // form.setValue("otherReasonForFP", "")
-
-      if (subTypeOfClient === "changingclinic" || subTypeOfClient === "dropoutrestart") {
-        form.setValue("reason", "")
-        form.setValue("otherReasonForFP", "")
-        form.setValue("methodCurrentlyUsed", "")
-        form.setValue("otherMethod", "")
-      } else if (subTypeOfClient === "changingmethod") {
-        if (form.getValues("methodCurrentlyUsed") !== "others") {
-          form.setValue("otherMethod", "")
-        }
-      }
-    } else {
-      form.setValue("subTypeOfClient", "")
-      form.setValue("reasonForFP", "")
-      form.setValue("otherReasonForFP", "")
-      form.setValue("reason", "")
-      form.setValue("methodCurrentlyUsed", "")
-      form.setValue("otherMethod", "")
-      setOriginalMethod(null)
-    }
-    form.trigger()
-  }, [typeOfClient, subTypeOfClient, form])
-
-  useEffect(() => {
-    const fetchCommodities = async () => {
-      setLoadingCommodities(true);
-      try {
-        const response = await api2.get("inventory/commoditylist/");
-        const allCommodities = response.data;
-
-        let filteredCommodities = allCommodities;
-
-        // First filter by user type (New acceptor/Current user)
-        if (typeOfClient === "newacceptor") {
-          filteredCommodities = filteredCommodities.filter(
-            (com: { user_type: string }) => com.user_type === "New acceptor" || com.user_type === "Both"
-          );
-        } else if (typeOfClient === "currentuser") {
-          if (subTypeOfClient === "changingmethod") {
-            filteredCommodities = filteredCommodities.filter(
-              (com: { user_type: string }) => com.user_type === "Current user" || com.user_type === "Both"
-            );
-          }
-        }
-
-        // Then filter by gender using the watched gender from the form (falls back to prop if needed)
-        const effectiveGender = watchedGender || patientGender;
-        if (effectiveGender) {
-          const genderLower = effectiveGender.toLowerCase();
-          filteredCommodities = filteredCommodities.filter((com: { gender_type: string }) => {
-            const comGender = com.gender_type?.toLowerCase();
-            return comGender === "both" || comGender === genderLower;
-          });
-        }
-console.log("Gender type: ",effectiveGender)
-        // Format the commodities
-        const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
-          id: com.com_name,  // Use name as the value that gets stored
-          name: com.com_name, // Display name
-          user_type: com.user_type,
-          gender_type: com.gender_type,
-          // Store the original ID for reference if needed
-          originalId: com.com_id
-        }));
-
-        setCommodities(formattedCommodities);
+        setPatients({
+          default: patientData,
+          formatted,
+        })
       } catch (error) {
-        console.error("Error fetching commodities:", error);
-        toast.error("Failed to load commodity data");
+        console.error("Error fetching patients:", error)
+        toast.error("Failed to load patient records")
       } finally {
-        setLoadingCommodities(false);
+        setLoading(false)
       }
-    };
-
-    fetchCommodities();
-  }, [typeOfClient, subTypeOfClient, watchedGender, patientGender]);
-
-
-  const onSubmit = async (data: FormData) => {
-    const currentValues = form.getValues()
-    try {
-      if (mode === "followup" && originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
-        toast.error("You cannot change the contraceptive method in this follow-up record. Please create a new record to switch methods.");
-        return;
-      }
-
-      if (mode === "followup" && originalClientType && currentValues.typeOfClient && currentValues.typeOfClient !== originalClientType) {
-        toast.error("You cannot change the client type in a follow-up record. Please create a new record if you want to change client type.");
-        return;
-      }
-
-      const validatedData = page1Schema.parse(data)
-      updateFormData(validatedData)
-      onNext2()
-    } catch (error) {
-      console.error("Validation failed:", error)
-      let errorMessage = "Please fill in all required fields correctly."
-      if (error instanceof z.ZodError) {
-        const fieldErrors = error.errors.map((err) => `${err.path.join(".")}: ${err.message}`).join("\n")
-        errorMessage = `Validation failed:\n${fieldErrors}`
-      }
-      toast.error(errorMessage)
     }
-  }
 
-  const inputProps = {
-    disabled: isReadOnly,
-    readOnly: isReadOnly,
+    fetchPatients()
+  }, [])
+
+  // Update the handlePatientSelection function
+  const handlePatientSelection = (id: string) => {
+    setSelectedPatientId(id)
+    const selectedPatient = patients.default.find((patient) => patient.per_id.toString() === id)
+
+    if (selectedPatient) {
+      // Store the patient ID and information in the form data
+      const patientData = {
+        per_id: selectedPatient.per_id,
+        clientID: selectedPatient.clientID || "",
+        lastName: selectedPatient.per_lname,
+        givenName: selectedPatient.per_fname,
+        middleInitial: selectedPatient.per_mname || "",
+        dateOfBirth: selectedPatient.per_dob,
+        age: calculateAge(selectedPatient.per_dob),
+        educationalAttainment: selectedPatient.per_edAttainment,
+        address: {
+          ...formData.address,
+          // Since per_address is a single field in the API but split in your form
+          // You might need to parse it or use it as is
+          street: selectedPatient.per_address || "",
+        },
+      }
+
+      updateFormData(patientData)
+
+      // For debugging:
+      console.log("Patient data loaded:", selectedPatient)
+      console.log("Updated form data with patient ID:", patientData.per_id)
+    }
   }
 
   const CLIENT_TYPES = [
@@ -467,7 +142,30 @@ console.log("Gender type: ",effectiveGender)
   const REASON_OPTIONS = [
     { id: "medicalcondition", name: "Medical Condition" },
     { id: "sideeffects", name: "Side Effects" },
-    { id: "fp_others", name: "Others" },
+  ]
+
+  const METHOD_OPTIONS = [
+    { id: "COC", name: "COC" },
+    { id: "POP", name: "POP" },
+    { id: "Injectable", name: "Injectable" },
+    { id: "Implant", name: "Implant" },
+    { id: "IUD-Interval", name: "IUD-Interval" },
+    { id: "IUD-Post Partum", name: "IUD-Post Partum" },
+    { id: "Condom", name: "Condom" },
+    { id: "BOM/CMM", name: "BOM/CMM" },
+    { id: "BBT", name: "BBT" },
+    { id: "STM", name: "STM" },
+    { id: "SDM", name: "SDM" },
+    { id: "LAM", name: "LAM" },
+    { id: "Others", name: "Others" },
+  ]
+
+  const EDUCATION_OPTIONS = [
+    { id: "Elementary", name: "Elementary" },
+    { id: "High School", name: "High School" },
+    { id: "Senior High School", name: "Senior High School" },
+    { id: "College level", name: "College level" },
+    { id: "College Graduate", name: "College Graduate" },
   ]
 
   const INCOME_OPTIONS = [
@@ -481,15 +179,87 @@ console.log("Gender type: ",effectiveGender)
     { id: "higher", name: "Higher than 200,000" },
   ]
 
+  // Calculate age matic
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date()
+    const birthDateObj = new Date(birthDate)
+
+    let age = today.getFullYear() - birthDateObj.getFullYear()
+    const monthDiff = today.getMonth() - birthDateObj.getMonth()
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--
+    }
+
+    return age
+  }
+
+  // Track date of birth and compute age
+  const dateOfBirth = form.watch("dateOfBirth")
+  const [computedAge, setComputedAge] = useState<number | null>(null)
+
+  const location = useLocation()
+  // const recordType = location.state?.recordType || "nonExistingPatient"
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (dateOfBirth) {
+      const age = calculateAge(dateOfBirth)
+      setComputedAge(age)
+      form.setValue("age", age)
+    } else {
+      setComputedAge(null)
+      form.setValue("age", 0)
+    }
+  }, [dateOfBirth, form])
+
+  // Spouse compute age by date of birth
+  const spouseDOB = form.watch("spouse.s_dateOfBirth")
+  const [spouseAge, setSpouseAge] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (spouseDOB) {
+      const age = calculateAge(spouseDOB)
+      setSpouseAge(age)
+      form.setValue("spouse.s_age", age)
+    } else {
+      setSpouseAge(null)
+      form.setValue("spouse.s_age", 0)
+    }
+  }, [spouseDOB, form])
+
+  // Watch values for conditional rendering
+  const typeOfClient = form.watch("typeOfClient")
+  const subTypeOfClient = form.watch("subTypeOfClient")
+  const isNewAcceptor = typeOfClient === "newacceptor"
+  const isCurrentUser = typeOfClient === "currentuser"
+  const isChangingMethod = isCurrentUser && subTypeOfClient === "changingmethod"
+
+  useEffect(() => {
+    if (isNewAcceptor) {
+      form.setValue("reason", "")
+      form.setValue("methodCurrentlyUsed", undefined)
+      form.setValue("otherMethod", "")
+    } else if (isCurrentUser) {
+      form.setValue("reasonForFP", "")
+      if (!isChangingMethod) {
+        form.setValue("reason", "")
+        form.setValue("methodCurrentlyUsed", undefined)
+        form.setValue("otherMethod", "")
+      }
+    }
+  }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUser, isChangingMethod])
+
+  const onSubmit = async (data: FormData) => {
+    updateFormData(data)
+    onNext2()
+  }
+
+  const saveFormData = () => updateFormData(form.getValues())
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
       <div className="rounded-lg w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Button
-          className="text-black p-2 self-start bg-transparent"
-          variant="outline"
-          onClick={() => navigate(-1)}
-          type="button"
-        >
+        <Button className="text-black p-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
           <ChevronLeft />
         </Button>
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 p-4 text-center">Family Planning (FP) Form 1</h2>
@@ -506,80 +276,73 @@ console.log("Gender type: ",effectiveGender)
               </p>
             </div>
 
-            {!isPatientPreSelected && (
-              <div className="flex flex-col sm:flex-row items-center justify-between w-full">
-                <div className="grid gap-2">
-                  <Combobox
-                    options={patients}
-                    value={selectedPatientId}
-                    onChange={handlePatientSelection}
-                    placeholder={loadingPatients ? "Loading patients..." : "Select a patient"}
-                    triggerClassName="font-normal w-[30rem]"
-                    emptyMessage={
-                      <div className="flex gap-2 justify-center items-center">
-                        <Label className="font-normal text-[13px]">
-                          {loadingPatients ? "Loading..." : "No patient found."}
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full">
+              <div className="grid gap-2">
+                <Combobox
+                  options={patients.formatted}
+                  value={selectedPatientId}
+                  onChange={(value) => {
+                    handlePatientSelection(value)
+                  }}
+                  placeholder={loading ? "Loading patients..." : "Select a patient"}
+                  triggerClassName="font-normal w-[30rem]"
+                  emptyMessage={
+                    <div className="flex gap-2 justify-center items-center">
+                      <Label className="font-normal text-[13px]">{loading ? "Loading..." : "No patient found."}</Label>
+                      <Link to="/patient-records/new">
+                        <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                          Register New Patient
                         </Label>
-                        <Link to="/create-patients-record">
-                          <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
-                            Register New Patient
-                          </Label>
-                        </Link>
-                      </div>
-                    }
-                  />
-                </div>
+                      </Link>
+                    </div>
+                  }
+                />
               </div>
-            )}
 
-            {isPatientPreSelected && formData.pat_id && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path
-                        fillRule="evenodd"
-                        d="10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-green-700">
-                      <strong>Patient Selected:</strong> {formData.lastName}, {formData.givenName}{" "}
-                      {formData.middleInitial}
-                    </p>
-                  </div>
-                </div>
+              <div className="flex justify-end w-full sm:w-auto sm:ml-auto">
+                <FormField
+                  control={form.control}
+                  name="isTransient"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value === "transient"}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked ? "transient" : "resident")
+                          }}
+                        />
+                      </FormControl>
+                      <FormLabel className="leading-none">Transient</FormLabel>
+                    </FormItem>
+                  )}
+                />
               </div>
-            )}
+            </div>
 
+            {/* Personal Information Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <FormInput control={form.control} name="client_id" label="CLIENT ID:" {...inputProps} />
-              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" {...inputProps}  readOnly={true} />
+              <FormInput control={form.control} name="clientID" label="CLIENT ID:" />
+              {/* rules={{ required: "Client ID is required" }}  */}
+              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" />
 
+              {/* NHTS Checkbox */}
               <FormField
                 control={form.control}
                 name="nhts_status"
                 render={({ field }) => (
                   <FormItem className="ml-5 mt-2 flex flex-col">
-                    <FormLabel className="mb-2">NHTS?</FormLabel>
+                    <Label className="mb-2">NHTS?</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value === true}
-                          onCheckedChange={() => { }}
-                          disabled={true}
-                          className="cursor-not-allowed"
-                        />
+                        <Checkbox checked={field.value} onCheckedChange={() => field.onChange(true)} />
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
                         <Checkbox
-                          className="ml-4 cursor-not-allowed"
-                          checked={field.value === false}
-                          onCheckedChange={() => { }}
-                          disabled={true}
+                          className="ml-4"
+                          checked={!field.value}
+                          onCheckedChange={() => field.onChange(false)}
                         />
                       </FormControl>
                       <Label>No</Label>
@@ -589,27 +352,23 @@ console.log("Gender type: ",effectiveGender)
                 )}
               />
 
+              {/* 4Ps Checkbox */}
               <FormField
                 control={form.control}
-                name="fourps"
+                name="pantawid_4ps"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel className="mb-2 mt-2">Pantawid Pamilya Pilipino (4Ps)</FormLabel>
+                    <Label className="mb-2 mt-2">Pantawid Pamilya Pilipino (4Ps)</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value === true}
-                          onCheckedChange={() => field.onChange(true)}
-                          disabled={isReadOnly}
-                        />
+                        <Checkbox checked={field.value} onCheckedChange={() => field.onChange(true)} />
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
                         <Checkbox
                           className="ml-4"
-                          checked={field.value === false}
+                          checked={!field.value}
                           onCheckedChange={() => field.onChange(false)}
-                          disabled={isReadOnly}
                         />
                       </FormControl>
                       <Label>No</Label>
@@ -620,6 +379,7 @@ console.log("Gender type: ",effectiveGender)
               />
             </div>
 
+            {/* Name and Basic Info Section */}
             <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-6">
               <FormInput
                 control={form.control}
@@ -627,46 +387,36 @@ console.log("Gender type: ",effectiveGender)
                 label="NAME OF CLIENT"
                 placeholder="Last name"
                 className="col-span-1"
-                {...inputProps}
               />
               <FormInput
                 control={form.control}
                 label=""
                 name="givenName"
                 placeholder="Given name"
-                className="col-span-1 m-4"
-                {...inputProps}
+                className="col-span-1 mt-6"
               />
               <FormInput
                 control={form.control}
                 name="middleInitial"
                 label=""
                 placeholder="Middle Initial"
-                className="col-span-1 m-4"
-                {...inputProps}
+                className="col-span-1 mt-6"
               />
-              <FormDateTimeInput
-                control={form.control}
-                type="date"
-                name="dateOfBirth"
-                label="Date of Birth:"
-                {...inputProps}
-              />
+              <FormDateTimeInput control={form.control} type="date" name="dateOfBirth" label="Date of Birth:" />
               <FormInput
                 control={form.control}
                 name="age"
                 label="Age"
                 type="number"
+                readOnly
+                value={computedAge || ""}
                 className="col-span-1"
-                {...inputProps}
-                readOnly={true}
               />
-              <FormInput
+              <FormSelect
                 control={form.control}
                 name="educationalAttainment"
-                label="Education Attainment"
-                {...inputProps}
-                readOnly={true}
+                label="Educational Attainment"
+                options={EDUCATION_OPTIONS}
               />
               <FormInput
                 control={form.control}
@@ -674,59 +424,43 @@ console.log("Gender type: ",effectiveGender)
                 label="Occupation"
                 placeholder="Occupation"
                 className="col-span-1 sm:col-span-2 md:col-span-1"
-                {...inputProps}
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-2 mt-3">
-              <FormLabel className="text-sm font-medium text-muted-foreground">
-                ADDRESS (No. Street, Brgy, Municipality/City, Province)
-              </FormLabel>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                <FormInput
-                  control={form.control}
-                  name="address.houseNumber"
-                  label=""
-                  placeholder="No."
-                  className="col-span-1"
-                  {...inputProps}
-                />
-                <FormInput
-                  control={form.control}
-                  name="address.street"
-                  label=""
-                  placeholder="Street"
-                  className="col-span-1"
-                  {...inputProps}
-                />
-                <FormInput
-                  control={form.control}
-                  name="address.barangay"
-                  label=""
-                  placeholder="Barangay"
-                  className="col-span-1"
-                  {...inputProps}
-                />
-                <FormInput
-                  control={form.control}
-                  name="address.municipality"
-                  label=""
-                  placeholder="Municipality/City"
-                  className="col-span-1"
-                  {...inputProps}
-                />
-                <FormInput
-                  control={form.control}
-                  name="address.province"
-                  label=""
-                  placeholder="Province"
-                  className="col-span-1"
-                  {...inputProps}
-                />
-              </div>
+            {/* Address Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mt-6">
+              <FormInput control={form.control} name="" label="ADDRESS" placeholder="No." className="col-span-1" />
+              <FormInput
+                control={form.control}
+                name="address.street"
+                label=""
+                placeholder="Street"
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="address.barangay"
+                placeholder="Barangay"
+                label=""
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="address.municipality"
+                placeholder="Municipality/City"
+                label=""
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="address.province"
+                placeholder="Province"
+                label=""
+                className="col-span-1 mt-6"
+              />
             </div>
 
+            {/* Spouse Information */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
               <FormInput
                 control={form.control}
@@ -734,39 +468,30 @@ console.log("Gender type: ",effectiveGender)
                 label="NAME OF SPOUSE"
                 placeholder="Last name"
                 className="col-span-1"
-                {...inputProps}
               />
               <FormInput
                 control={form.control}
                 name="spouse.s_givenName"
                 label=""
                 placeholder="Given name"
-                className="col-span-1 mt-4"
-                {...inputProps}
+                className="col-span-1 mt-6"
               />
               <FormInput
                 control={form.control}
                 name="spouse.s_middleInitial"
                 label=""
                 placeholder="Middle Initial"
-                className="col-span-1 mt-4"
-                {...inputProps}
+                className="col-span-1 mt-6"
               />
-              <FormDateTimeInput
-                control={form.control}
-                type="date"
-                name="spouse.s_dateOfBirth"
-                label="Date of Birth"
-                {...inputProps}
-              />
+              <FormDateTimeInput control={form.control} type="date" name="spouse.s_dateOfBirth" label="Date of Birth" />
               <FormInput
                 control={form.control}
                 name="spouse.s_age"
                 label="Age"
                 type="number"
+                readOnly
+                value={spouseAge || ""}
                 className="col-span-1"
-                {...inputProps}
-                readOnly={true}
               />
               <FormInput
                 control={form.control}
@@ -774,40 +499,37 @@ console.log("Gender type: ",effectiveGender)
                 label="Occupation"
                 placeholder="Occupation"
                 className="col-span-1"
-                {...inputProps}
               />
             </div>
 
+            {/* Children and Income */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
               <FormInput
                 control={form.control}
                 name="numOfLivingChildren"
                 label="NO. OF LIVING CHILDREN"
                 type="number"
-                {...inputProps}
               />
               <FormField
                 control={form.control}
-                name="plan_more_children"
+                name="planToHaveMoreChildren"
                 render={({ field }) => (
                   <FormItem className="flex flex-col mt-3 ml-5">
-                    <FormLabel className="mb-2">PLAN TO HAVE MORE CHILDREN?</FormLabel>
+                    <Label className="mb-2">PLAN TO HAVE MORE CHILDREN?</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
                         <Checkbox
                           className="border"
-                          checked={field.value === true}
+                          checked={field.value}
                           onCheckedChange={() => field.onChange(true)}
-                          disabled={isReadOnly}
                         />
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
                         <Checkbox
                           className="border ml-4"
-                          checked={field.value === false}
+                          checked={!field.value}
                           onCheckedChange={() => field.onChange(false)}
-                          disabled={isReadOnly}
                         />
                       </FormControl>
                       <Label>No</Label>
@@ -818,165 +540,110 @@ console.log("Gender type: ",effectiveGender)
               />
               <FormSelect
                 control={form.control}
-                name="avg_monthly_income"
+                name="averageMonthlyIncome"
                 label="AVERAGE MONTHLY INCOME"
                 options={INCOME_OPTIONS}
-                {...inputProps}
               />
             </div>
 
+            {/* Client Type and Methods Section */}
             <div className="border border-t-black w-full p-4 rounded-md mt-6">
               <div className="grid grid-cols-12 gap-6">
+                {/* Type of Client Section */}
                 <div className="col-span-3">
                   <h3 className="font-semibold mb-3">
                     Type of Client<span className="text-red-500 ml-1">*</span>
                   </h3>
-                  <FormSelect control={form.control} name="typeOfClient" options={CLIENT_TYPES} {...inputProps} />
-                  {mode === "followup" && originalClientType && form.watch("typeOfClient") && form.watch("typeOfClient") !== originalClientType && (
-                    <div className="mt-2 text-red-500 text-sm">
-                      Warning: Changing client type in a follow-up record is not allowed.
-                    </div>
-                  )}
-                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && (
+                  <FormSelect control={form.control} name="typeOfClient" options={CLIENT_TYPES} />
+
+                  {isCurrentUser && (
                     <div className="mt-4">
                       <FormSelect
                         control={form.control}
                         name="subTypeOfClient"
                         label="Sub Type of Client"
                         options={SUB_CLIENT_TYPES}
-                        {...inputProps}
                       />
                     </div>
                   )}
                 </div>
+
+                {/* Middle Column - Reasons */}
                 <div className="col-span-4 space-y-6">
-                  {/* Only show reason fields if not in followup mode */}
-                  {mode !== "followup" && isNewAcceptor && (
+                  {/* Reason for FP Section - only show for New Acceptor */}
+                  {isNewAcceptor && (
                     <FormSelect
                       control={form.control}
                       name="reasonForFP"
                       label="Reason for Family Planning"
                       options={REASON_FOR_FP_OPTIONS}
-                      {...inputProps}
                     />
                   )}
-                  {mode !== "followup" && isNewAcceptor && form.watch("reasonForFP") === "fp_others" && (
-                    <FormInput control={form.control} name="otherReasonForFP" label="Specify Reason:" {...inputProps} />
+
+                  {/* Show specify reason field when "Others" is selected as reason for FP */}
+                  {isNewAcceptor && form.watch("reasonForFP") === "fp_others" && (
+                    <FormInput control={form.control} name="otherReasonForFP" label="Specify Reason:" />
                   )}
 
-                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && (
+                  {isChangingMethod && (
                     <FormSelect
                       control={form.control}
-                      name="reasonForFP"
+                      name="reason"
                       label="Reason (Current User)"
                       options={REASON_OPTIONS}
-                      {...inputProps}
                     />
                   )}
 
-
-
-                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && form.watch("reasonForFP") === "sideeffects" && (
-                    <FormInput
-                      control={form.control}
-                      name="reason"
-                      label="Specify Side Effects:"
-                      {...inputProps}
-                    />
+                  {/* Show specify side effects field when "Side Effects" is selected as reason */}
+                  {isChangingMethod && form.watch("reason") === "sideeffects" && (
+                    <FormInput control={form.control} name="otherReason" label="Specify Side Effects:" />
                   )}
-
-                  {mode !== "followup" && isCurrentUser && shouldShowSubtypeAndReason && form.watch("reasonForFP") === "fp_others" && (
-                    <FormInput
-                      control={form.control}
-                      name="otherReasonForFP"
-                      label="Specify Other Reason:"
-                      {...inputProps}
-                    />
-                  )}
-
                 </div>
 
+                {/* Right Column - Methods */}
                 <div className="col-span-5">
-                  {isCurrentUser ? (
-                    <FormField
+                  {isChangingMethod && (
+                    <FormSelect
                       control={form.control}
                       name="methodCurrentlyUsed"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {isChangingMethod
-                              ? "Method currently used"
-                              : "Method currently used"}
-                          </FormLabel>
-                          <Combobox
-                            options={commodities}
-                            value={field.value}
-                            onChange={(value) => {
-                              field.onChange(value)
-                              if (value !== "Others") {
-                                form.setValue("otherMethod", "")
-                              }
-                            }}
-                            placeholder={loadingCommodities ? "Loading methods..." : "Select a method"}
-                            triggerClassName="font-normal w-full"
-                            emptyMessage={
-                              <div className="flex gap-2 justify-center items-center">
-                                <Label className="font-normal text-[13px]">
-                                  {loadingCommodities ? "Loading..." : "No method found."}
-                                </Label>
-                              </div>
-                            }
-                          />
-                          {mode === "followup" && originalMethod && field.value && field.value !== originalMethod && (
-                            <div className="mt-2 text-red-500 text-sm">
-                              Warning: Changing contraceptive method requires creating a new record.
-                            </div>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : isNewAcceptor ? (
-                    <FormField
-                      control={form.control}
-                      name="methodCurrentlyUsed"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Method Accepted (New Acceptor)</FormLabel>
-                          <Combobox
-                            options={commodities}
-                            value={field.value}
-                            onChange={(value) => {
-                              field.onChange(value)
-                              if (value !== "others") {
-                                form.setValue("otherMethod", "")
-                              }
-                            }}
-                            placeholder={loadingCommodities ? "Loading methods..." : "Select a method"}
-                            triggerClassName="font-normal w-full"
-                            emptyMessage={
-                              <div className="flex gap-2 justify-center items-center">
-                                <Label className="font-normal text-[13px]">
-                                  {loadingCommodities ? "Loading..." : "No method found."}
-                                </Label>
-                              </div>
-                            }
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : null}
-
-                  {form.watch("methodCurrentlyUsed") === "Others" && (
-                    <FormInput
-                      control={form.control}
-                      name="otherMethod"
-                      className="mt-6"
-                      label="Specify other method:"
-                      {...inputProps}
+                      label="Method currently used (for Changing Method):"
+                      options={METHOD_OPTIONS}
                     />
                   )}
+
+                  {isNewAcceptor && (
+                    <FormSelect
+                      control={form.control}
+                      name="methodCurrentlyUsed"
+                      label="Method Accepted (New Acceptor)"
+                      options={[
+                        { id: "Pills", name: "Pills" },
+                        { id: "DMPA", name: "DMPA" },
+                        { id: "Condom", name: "Condom" },
+                        { id: "IUD-Interval", name: "IUD-Interval" },
+                        { id: "IUD-Post Partum", name: "IUD-Post Partum" },
+                        { id: "Implant", name: "Implant" },
+                        { id: "Lactating Amenorrhea", name: "Lactating Amenorrhea" },
+                        { id: "Bilateral Tubal Ligation", name: "Bilateral Tubal Ligation" },
+                        { id: "Vasectomy", name: "Vasectomy" },
+                        { id: "Source", name: "Source of FP Method (pls. specify) e.g. Buying,HC,etc) " },
+                      ]}
+                    />
+                  )}
+
+                   {(() => {
+                    const methodUsed = form.watch("methodCurrentlyUsed")
+                    return (
+                      (methodUsed === "Others" || methodUsed === "Source") && (
+                        <FormInput
+                          control={form.control}
+                          name="otherMethod"
+                          className="mt-6"
+                          label={methodUsed === "Source" ? "Specify FP Method:" : "Specify other method:"}
+                        />
+                      )
+                    )
+                  })()}
                 </div>
               </div>
             </div>
@@ -988,21 +655,10 @@ console.log("Gender type: ",effectiveGender)
                   const isValid = await form.trigger()
                   if (isValid) {
                     const currentValues = form.getValues()
-                    if (originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
-                      toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
-                      return
-                    }
-                    if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
-                      toast.error("You cannot select the same method when changing methods. Please choose a different method.");
-                      return;
-                    }
                     updateFormData(currentValues)
                     onNext2()
-                  } else if (isAgeInvalid){
-                    toast.error("Age is outside the allowed range for family planning");
                   }
                 }}
-                disabled={isReadOnly || isAgeInvalid}
               >
                 Next
               </Button>

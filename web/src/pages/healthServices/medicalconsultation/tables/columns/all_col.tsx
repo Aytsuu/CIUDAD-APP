@@ -7,19 +7,25 @@ import { MedicalRecord } from "../../types";
 
 export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
   {
-    accessorKey: "pat_id",
-    header: "Patient ID",
-    cell: ({ row }) => <div className="flex justify-center ">{row.original.pat_id}</div>
+    accessorKey: "index",
+    header: "#",
+    cell: ({ row }) => (
+      <div className="flex justify-center w-[20px] ">{row.index + 1}</div>
+    ),
   },
   {
     accessorKey: "patient",
     header: ({ column }: { column: any }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         Patient <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => {
-      const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
+      const fullName =
+        `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="flex flex-col w-full">
@@ -30,20 +36,25 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
           </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "address",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         Address <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => (
       <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.address ? row.original.address : "No address provided"}</div>
+        <div className="w-full truncate">
+          {row.original.address ? row.original.address : "No address provided"}
+        </div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "sitio",
@@ -52,7 +63,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
       <div className="flex justify-center min-w-[120px] px-2">
         <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "type",
@@ -61,16 +72,18 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
       <div className="flex justify-center min-w-[100px] px-2">
         <div className="text-center w-full">{row.original.pat_type}</div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "medicalrec_count",
     header: "No of Records",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.medicalrec_count}</div>
+        <div className="text-center w-full">
+          {row.original.medicalrec_count}
+        </div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "action",
@@ -89,13 +102,14 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
                       pat_id: row.original.pat_id,
                       pat_type: row.original.pat_type,
                       age: row.original.age,
-                      addressFull: row.original.address || "No address provided",
+                      addressFull:
+                        row.original.address || "No address provided",
                       address: {
                         add_street: row.original.street,
                         add_barangay: row.original.barangay,
                         add_city: row.original.city,
                         add_province: row.original.province,
-                        add_sitio: row.original.sitio
+                        add_sitio: row.original.sitio,
                       },
                       households: [{ hh_id: row.original.householdno }],
                       personal_info: {
@@ -103,10 +117,10 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
                         per_mname: row.original.mname,
                         per_lname: row.original.lname,
                         per_dob: row.original.dob,
-                        per_sex: row.original.sex
-                      }
-                    }
-                  }
+                        per_sex: row.original.sex,
+                      },
+                    },
+                  },
                 }}
               >
                 View{" "}
@@ -115,44 +129,45 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<MedicalRecord>[] => [
           }
         />
       </div>
-    )
-  }
+    ),
+  },
 ];
 
 export const exportColumns = [
   {
     key: "index",
     header: "#",
-    format: (value: number) => value + 1 // Adjusting index for export
+    format  : (value: number) => value + 1, // Adjusting index for export
   },
   {
     key: "patient",
     header: "Patient",
-    format: (row: MedicalRecord) => `${row.lname}, ${row.fname} ${row.mname}`.trim()
+    format: (row: MedicalRecord) =>
+      `${row.lname}, ${row.fname} ${row.mname}`.trim(),
   },
   {
     key: "sex_age",
     header: "Sex/Age",
-    format: (row: MedicalRecord) => `${row.sex}, ${row.age}`
+    format: (row: MedicalRecord) => `${row.sex}, ${row.age}`,
   },
   {
     key: "address",
     header: "Address",
-    format: (row: MedicalRecord) => row.address || "No address provided"
+    format: (row: MedicalRecord) => row.address || "No address provided",
   },
   {
     key: "sitio",
     header: "Sitio",
-    format: (row: MedicalRecord) => row.sitio || "N/A"
+    format: (row: MedicalRecord) => row.sitio || "N/A",
   },
   {
     key: "pat_type",
     header: "Type",
-    format: (row: MedicalRecord) => row.pat_type
+    format: (row: MedicalRecord) => row.pat_type,
   },
   {
     key: "medicalrec_count",
     header: "No of Records",
-    format: (row: MedicalRecord) => row.medicalrec_count
-  }
+    format: (row: MedicalRecord) => row.medicalrec_count,
+  },
 ];

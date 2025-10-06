@@ -9,7 +9,7 @@ class FirstAidRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     finv = models.ForeignKey(FirstAidInventory, on_delete=models.CASCADE, related_name='first_aid_records')
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='first_aid_records')
-    signature = models.TextField(default="", blank=True, null=True)
+    is_archived = models.BooleanField(default=False)
     reason = models.TextField(default="", blank=True, null=True)
     class Meta:
         db_table = 'firstaid_record'

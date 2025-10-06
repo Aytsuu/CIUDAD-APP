@@ -12,7 +12,6 @@ type FeatureType = {
   name: string;
   icon: React.ReactNode;
   route: string;
-  users?: string[]
 }
 
 export const features: FeatureType[] = [
@@ -43,8 +42,7 @@ export const features: FeatureType[] = [
   {
     name: "Business",
     icon: <Business width={30} height={30}/>,
-    route: "/(business)",
-    users: []
+    route: "/(business)"
   },
   {
     name: "Health",

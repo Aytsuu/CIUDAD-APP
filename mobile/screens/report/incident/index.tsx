@@ -83,7 +83,7 @@ export default () => {
               
               <View className="ml-15">
                 <Text className="text-gray-600 text-sm mb-1">
-                  📍 {item.ir_area}
+                  📍 {item.ir_sitio}, {item.ir_street}
                 </Text>
                 <Text className="text-gray-600 text-sm mb-1">
                   📅 {formatDate(item.ir_date, 'short')} at {item.ir_time}
@@ -182,7 +182,6 @@ export default () => {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
-      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CircleCheck, CircleX, Loader2 } from 'lucide-react';
-import { handleDeleteCommodityList } from '../../restful-api/commodity/delete-api';
+import { handleDeleteCommodityList } from '../../restful-api/commodity/CommodityDeleteAPI';
 
 export const useDeleteCommodity = () => {
   const queryClient = useQueryClient();

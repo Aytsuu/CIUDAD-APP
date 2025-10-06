@@ -5,20 +5,21 @@ import {
 	getPatientDetails, 
 	getAllFollowUpVisits, 
 	getAllTransientAddresses,
-	getChildData,
-	checkPatientExistsGet
+	getchilddata,
  } from "../restful-api/get";
 import { AppointmentFilters } from "../restful-api/get";
 
-export const useChildData = (id: any,) => {
-	return useQuery({
-		queryKey: ['childData', id],
-		queryFn: () => getChildData(id),
-		staleTime: 300000, // 5 minutes
-		enabled: !!id,
-	})
-}
 
+
+ export const useChildHealthRecords = (patientId: string | undefined) => {
+	return useQuery({
+	  queryKey: ["childHealthRecords", patientId],
+	  queryFn: () => getchilddata(patientId ?? ""),
+	  refetchOnMount: false,
+	  staleTime: 300000, // 5 minutes
+	  gcTime: 600000, // 10 minutes
+	});
+  };
 // resident query keys
 export const residentQueryKey = {
 	allResidents: ["residents"],
@@ -105,12 +106,3 @@ export const useAllTransientAddresses = (options = []) => {
 		... options,
 	})
 }
-
-export const useCheckPatientExists = (rp_id: string) => {
-	return useQuery({
-		queryKey: ['checkPatientExists', rp_id],
-		queryFn: () => checkPatientExistsGet(rp_id),
-		staleTime: 300000, // 5 minutes
-	})
-}
-

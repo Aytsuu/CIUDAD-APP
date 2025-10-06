@@ -1,21 +1,24 @@
-import { api2 } from "@/api/api";
 
-export const getPreviousBMI = async (id: string) => {
+
+
+import {api2} from "@/api/api";
+
+
+
+
+
+export const previousBMI = async (pat_id: string) => {
   try {
-    const res = await api2.get(`/patientrecords/previous-measurement/${id}/`);
-
+    const res = await api2.get(`/patientrecords/previous-measurement/${pat_id}/`);
     return res.data;
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error fetching previous BMI:", err);
-    if (err.response?.status === 404) {
-      return null; // Return null instead of throwing error
-    }
-
     throw err;
   }
 };
 
-export const getPatient = async () => {
+
+export const getPatient =  async () => {
   try {
     const response = await api2.get(`/patient`);
     return response.data;
@@ -24,37 +27,23 @@ export const getPatient = async () => {
   }
 };
 
-// Updated API functions
-export const getMedicalRecord = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
+
+
+export const getMedicalRecord =  async () => {
   try {
-    const queryParams = new URLSearchParams();
+    const response = await api2.get(`/medical-consultation/all-medical-consultation-record/`);
+    return response.data;
+  } catch (err) {
+    console.error(err); 
+  }
+};
 
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size) queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.patient_type && params.patient_type !== "all") {
-      queryParams.append("patient_type", params.patient_type);
-    }
 
-    const url = `/medical-consultation/all-medical-consultation-record/${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
-    const response = await api2.get(url);
+export const getMedconRecordById = async (id: string) => {
+  try {
+    const response = await api2.get(`/medical-consultation/view-medcon-record/${id}/`);
     return response.data;
   } catch (err) {
     console.error(err);
-    throw err;
   }
-};
-
-export const getConsultationHistory = async (patientId: string, page: number, pageSize: number): Promise<any> => {
-  try {
-    const params = new URLSearchParams();
-    params.append("page", page.toString());
-    params.append("page_size", pageSize.toString());
-
-    const response = await api2.get(`medical-consultation/view-medcon-record/${patientId}/?${params.toString()}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching consultation history:", error);
-    throw error;
-  }
-};
+}

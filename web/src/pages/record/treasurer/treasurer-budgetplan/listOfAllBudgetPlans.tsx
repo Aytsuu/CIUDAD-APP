@@ -57,13 +57,9 @@ export default function BudgetPlan() {
             </TabsList>
           </div>
 
-          {/* Active Plans Tab */}
-          <TabsContent value="active">
-            <ActiveBudgetPlan 
-              deletedPlanYear={deletedPlanYear}
-              showAddButton={showAddButton}
-            />
-          </TabsContent>
+                        <TabsContent value="active">
+                            <DataTable columns={activeColumns} data={paginated} />
+                        </TabsContent>
 
           {/* Archive Plans Tab */}
           <TabsContent value="archive">

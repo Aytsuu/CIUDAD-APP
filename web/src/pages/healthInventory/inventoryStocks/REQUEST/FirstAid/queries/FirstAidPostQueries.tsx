@@ -1,42 +1,122 @@
 // src/services/firstAid/hooks/useFirstAidMutations.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFirstAidStock } from "../restful-api/FirstAidPostAPI";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import {
+  addFirstAidInventory,
+  addFirstAidTransaction,
+} from "../restful-api/FirstAidPostAPI";
+import { useAddInventory } from "../../InventoryAPIQueries";
 import { useNavigate } from "react-router";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
+
+export const useAddFirstAidInventory = () => {
+
+  return useMutation({
+    mutationFn: ({
+      data,
+      inv_id,
+      fa_id,
+      staff_id
+    }: {
+      data: Record<string, any>;
+      inv_id: string;
+      fa_id: string;
+      staff_id:string
+    }) => addFirstAidInventory(data, inv_id, fa_id,staff_id),
+    onError: (error: Error) => {
+      console.error(error.message);
+    },
+  });
+};
+
+export const useAddFirstAidTransaction = () => {
+  return useMutation({
+    mutationFn: ({
+      finv_id,
+      string_qty,
+      action,
+      staffId,
+    }: {
+      finv_id: number;
+      string_qty: string;
+      action: string;
+      staffId: string;
+    }) => addFirstAidTransaction(finv_id, string_qty, action, staffId),
+    onError: (error: Error) => {
+      console.error(error.message);
+    },
+  });
+};
 
 export const useSubmitFirstAidStock = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const navigate=useNavigate()
+  const { mutateAsync: addFirstAidInventory } = useAddFirstAidInventory();
+  const { mutateAsync: addFirstAidTransaction } = useAddFirstAidTransaction();
+  const { mutateAsync: addInventory } = useAddInventory();
 
   return useMutation({
-    mutationFn: async ({ data }: { data: any }) => {
-      console.log("Data being submitted:", data);
-      
-      const fa_id = data.fa_id?.trim();
-      if (!fa_id) {
-        throw new Error("Invalid first aid item selection: fa_id is required and cannot be empty");
+    mutationFn: async ({ data, staff_id }: { data: any; staff_id: string }) => {
+      const inventoryResponse = await addInventory({
+        data,
+        inv_type: "First Aid",
+        staff:staff_id
+      });
+      if (!inventoryResponse?.inv_id) {
+        throw new Error("Failed to generate inventory ID.");
       }
 
-      const atomicData = { ...data, fa_id };
+      const inv_id = inventoryResponse.inv_id;
+      const fa_id = data.fa_id;
 
-      // Single API call handles all three operations atomically
-      const result = await createFirstAidStock(atomicData);
-      return result;
-    },
-    onSuccess: (data) => {
-      // Invalidate relevant queries
+      if (!data.fa_id) {
+        throw new Error("Failed to get FirstAid ID.");
+      }
+
+      // ADD FIRSTAID STOCKS
+      const firstAidInventoryResponse = await addFirstAidInventory({
+        data: data,
+        inv_id,
+        fa_id,
+        staff_id
+      });
+
+      if (!firstAidInventoryResponse) {
+        throw new Error("Failed to add FirstAid inventory.");
+      }
+
+      const string_qty =
+      data.finv_qty_unit === "boxes"
+        ? `${data.finv_qty} boxes (${data.finv_pcs} pcs per box)`
+        : `${data.finv_qty} ${data.finv_qty_unit}`;
+
+
+      const staffId = staff_id; // Replace with actual staff ID from your auth system
+
+      await addFirstAidTransaction({
+        finv_id: firstAidInventoryResponse.finv_id,
+        string_qty,
+        action: "Added",
+        staffId,
+      });
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["firstaidtransactions"] });
-      queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
-      
-      navigate(-1);
-      showSuccessToast("Added successfully");
-      
-      console.log("Created records:", data.data);
+   
+      return;
     },
-    onError: (error) => {
-      console.error("Failed to add first aid stock:", error);
-      showErrorToast(error.message || "Failed to Add");
+    onSuccess: () => {
+      navigate(-1);
+      toast.success("Added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.error || "Failed to add";
+      toast.error(message, {
+        icon: <CircleCheck size={24} className="fill-red-500 stroke-white" />,
+        duration: 2000,
+      });
     },
   });
 };

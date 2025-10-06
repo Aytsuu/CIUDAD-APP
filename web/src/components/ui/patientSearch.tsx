@@ -138,7 +138,7 @@ export function PatientSearch({
       <Combobox
       options={currentData?.formatted ?? []}
       value={value}
-      onChange={handlePatientSelection as any}
+      onChange={handlePatientSelection}
       placeholder={
         currentIsLoading ? "Loading patients..." : `Search and select ${ischildren ? "a child" : "a"} patient`
       }

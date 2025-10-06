@@ -19,19 +19,10 @@ from ..serializers.bodymesurement_serializers import BodyMeasurementSerializer
 
 class BodyMeasurementView(generics.ListCreateAPIView):
     serializer_class = BodyMeasurementSerializer
-    def get_queryset(self):
-        queryset = BodyMeasurement.objects.all()
-        pat_id = self.kwargs.get('pat_id')
-        
-        if pat_id:
-            queryset = queryset.filter(pat_id=pat_id)
-        
-        return queryset
+    queryset = BodyMeasurement.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-    
-    
 class DeleteUpdateBodyMeasurementView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BodyMeasurementSerializer
     queryset = BodyMeasurement.objects.all()

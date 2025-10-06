@@ -1,117 +1,238 @@
-// CommodityStocks.tsx
-"use client";
-import { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import { CommodityStocksColumns } from "./columns/CommodityCol";
-import { useNavigate } from "react-router-dom";
-import { useCommodityStocksTable } from "../REQUEST/Commodity/queries/fetch-queries";
-import { useArchiveCommodityStocks } from "../REQUEST/Archive/ArchivePutQueries";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import WastedModal from "../addstocksModal/WastedModal";
+"use client"
 
-type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { DataTable } from "@/components/ui/table/data-table"
+import { Button } from "@/components/ui/button/button"
+import { Input } from "@/components/ui/input"
+import { Search, Plus, FileInput, CircleCheck, Loader2, XCircle, Clock, CalendarOff } from "lucide-react" // Added XCircle, Clock, CalendarOff
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu" // Corrected import path for dropdown-menu
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
+import { SelectLayout } from "@/components/ui/select/select-layout"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
+import { useQueryClient } from "@tanstack/react-query"
+import { Skeleton } from "@/components/ui/skeleton"
+import { archiveInventory } from "../REQUEST/Archive/ArchivePutAPI"
+import { CommodityStocksColumns } from "./columns/CommodityCol"
+import { toast } from "sonner"
+import { Link } from "react-router-dom" // Assuming react-router-dom for Link
+import type { CommodityStocksRecord } from "./type"
+import { useCommodityStocks } from "../REQUEST/Commodity/queries/CommodityFetchQueries"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Import Card components
+
+type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired"
+
+// Using your existing alert functions
+const isNearExpiry = (expiryDate: string) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate)
+  expiry.setHours(0, 0, 0, 0)
+  const oneMonthFromNow = new Date()
+  oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1)
+  oneMonthFromNow.setHours(0, 0, 0, 0)
+  return expiry > today && expiry <= oneMonthFromNow
+}
+
+const isExpired = (expiryDate: string) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate)
+  expiry.setHours(0, 0, 0, 0)
+  return expiry <= today
+}
+
+const isLowStock = (availQty: number, unit: string, pcs: number) => {
+  if (availQty <= 0) {
+    return false
+  }
+  if (unit.toLowerCase() === "boxes") {
+    const boxCount = Math.ceil(availQty / pcs)
+    return boxCount <= 2 && pcs > 0
+  }
+  return availQty <= 10
+}
 
 export default function CommodityStocks() {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [stockFilter, setStockFilter] = useState<StockFilter>("all");
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [commodityToArchive, setCommodityToArchive] = useState<{
-    inv_id: string;
-    isExpired: boolean;
-    hasAvailableStock: boolean;
-  } | null>(null);
-  
-  // New state for WastedModal
-  const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false)
+  const [commodityToArchive, setCommodityToArchive] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [stockFilter, setStockFilter] = useState<StockFilter>("all")
+  const queryClient = useQueryClient()
+  const { data: commodityStocks, isLoading, error } = useCommodityStocks()
 
-  const queryClient = useQueryClient();
-  const { mutate: archiveCommodityMutation } = useArchiveCommodityStocks();
+  const formatCommodityStocksData = useCallback((): CommodityStocksRecord[] => {
+    if (!commodityStocks) return []
+    return commodityStocks
+      .filter((stock: any) => !stock.inv_detail?.is_Archived)
+      .map((commodityStock: any) => ({
+        cinv_id: commodityStock.cinv_id,
+        commodityInfo: {
+          com_name: commodityStock.com_detail?.com_name,
+        },
+        expiryDate: commodityStock.inv_detail?.expiry_date,
+        category: commodityStock.com_detail?.catlist,
+        qty: {
+          cinv_qty: commodityStock.cinv_qty,
+          cinv_pcs: commodityStock.cinv_pcs,
+        },
+        cinv_qty_unit: commodityStock.cinv_qty_unit,
+        availQty: commodityStock.cinv_qty_avail,
+        dispensed: commodityStock.cinv_dispensed,
+        recevFrom: commodityStock.cinv_recevFrom,
+        inv_id: commodityStock.inv_id,
+        created_at:commodityStock.created_at
+      }))
+  }, [commodityStocks])
 
-  // Updated to use pagination parameters with filter
-  const { data: apiResponse, isLoading, error } = useCommodityStocksTable(currentPage, pageSize, searchQuery, stockFilter);
+  const counts = useMemo(() => {
+    const data = formatCommodityStocksData()
+    let outOfStockCount = 0
+    let nearExpiryCount = 0
+    let expiredCount = 0
+    let lowStockCount = 0
 
-  // Extract data from paginated response
-  const commodityData = Array.isArray(apiResponse?.results) 
-  ? apiResponse.results 
-  : [];
-  const totalCount = apiResponse?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+    data.forEach((record) => {
+      const { availQty, expiryDate, cinv_qty_unit, qty } = record
+      const availableQty = Number.parseInt(availQty)
+      const pcs = qty.cinv_pcs
 
-  // Use backend-provided counts
-  const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
+      const isItemExpired = isExpired(expiryDate)
+      const isItemLowStock = isLowStock(availableQty, cinv_qty_unit, pcs)
+      const isItemOutOfStock = availableQty <= 0
+      const isItemNearExpiry = isNearExpiry(expiryDate)
 
+      if (isItemOutOfStock) {
+        outOfStockCount++
+      }
+      if (isItemNearExpiry) {
+        nearExpiryCount++
+      }
+      if (isItemExpired) {
+        expiredCount++
+      }
+      // Only count as low stock if it's not expired
+      if (isItemLowStock && !isItemExpired) {
+        lowStockCount++
+      }
+    })
+
+    return { outOfStockCount, nearExpiryCount, expiredCount, lowStockCount }
+  }, [formatCommodityStocksData])
+
+  // Auto-archive expired commodities after 10 days
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, stockFilter]);
+    if (!commodityStocks) return
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    formatCommodityStocksData().forEach((commodity) => {
+      if (!commodity.expiryDate) return
+      const expiryDate = new Date(commodity.expiryDate)
+      expiryDate.setHours(0, 0, 0, 0)
+      const archiveDate = new Date(expiryDate)
+      archiveDate.setDate(expiryDate.getDate() + 10)
+      archiveDate.setHours(0, 0, 0, 0)
+      if (now >= archiveDate) {
+        archiveInventory(commodity.inv_id)
+          .then(() => {
+            queryClient.invalidateQueries({
+              queryKey: ["commodityinventorylist"],
+            })
+            queryClient.invalidateQueries({
+              queryKey: ["combinedStocks"],
+            })
+          })
+          .catch((error) => {
+            console.error("Auto-archive failed:", error)
+          })
+      }
+    })
+  }, [commodityStocks, formatCommodityStocksData, queryClient])
 
-  const handleArchiveInventory = (commodity: any) => {
-    const hasAvailableStock = commodity.availableStock > 0;
-    const isExpired = commodity.isExpired;
+  const filteredData = useMemo(() => {
+    const data = formatCommodityStocksData()
+    // First filter by search query
+    const searchFiltered = data.filter((record) =>
+      Object.values(record.commodityInfo).join(" ").toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+    // Then apply stock status filter if not 'all'
+    if (stockFilter === "all") return searchFiltered
+    return searchFiltered.filter((record) => {
+      const { availQty, expiryDate, cinv_qty_unit, qty } = record
+      const availableQty = Number.parseInt(availQty)
+      const pcs = qty.cinv_pcs
+      switch (stockFilter) {
+        case "low_stock":
+          return isLowStock(availableQty, cinv_qty_unit, pcs)
+        case "out_of_stock":
+          return availableQty <= 0
+        case "near_expiry":
+          return isNearExpiry(expiryDate)
+        case "expired":
+          return isExpired(expiryDate)
+        default:
+          return true
+      }
+    })
+  }, [searchQuery, formatCommodityStocksData, stockFilter])
 
-    setCommodityToArchive({
-      inv_id: commodity.inv_id,
-      isExpired: isExpired,
-      hasAvailableStock: hasAvailableStock
-    });
-    setIsArchiveConfirmationOpen(true);
-  };
-
-  // New handler for opening WastedModal
-  const handleOpenWastedModal = (record: any) => {
-    setSelectedRecord(record);
-    setIsWastedModalOpen(true);
-  };
-
-  // New handler for closing WastedModal
-  const handleCloseWastedModal = () => {
-    setIsWastedModalOpen(false);
-    setSelectedRecord(null);
-  };
+  const totalPages = Math.ceil(filteredData.length / pageSize)
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const confirmArchiveInventory = async () => {
     if (commodityToArchive !== null) {
-      setIsArchiveConfirmationOpen(false);
+      setIsArchiveConfirmationOpen(false)
+      const toastId = toast.loading(
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Archiving commodity...
+        </div>,
+        { duration: Number.POSITIVE_INFINITY },
+      )
       try {
-        archiveCommodityMutation({
-          inv_id: commodityToArchive.inv_id,
-          isExpired: commodityToArchive.isExpired,
-          hasAvailableStock: commodityToArchive.hasAvailableStock
-        });
-        queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
-        showSuccessToast("Commodity archived successfully");
+        await archiveInventory(commodityToArchive)
+        queryClient.invalidateQueries({
+          queryKey: ["commodityinventorylist"],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ["combinedStocks"],
+        })
+
+        toast.success("Commodity archived successfully", {
+          id: toastId,
+          icon: <CircleCheck size={20} className="fill-green-500 stroke-white" />, // Changed text-green-500 to fill-green-500 stroke-white for consistency
+          duration: 2000,
+        })
       } catch (error) {
-        console.error("Failed to archive commodity:", error);
-        showErrorToast("Failed to archive commodity.");
+        toast.error("Failed to archive commodity", {
+          id: toastId,
+          duration: 5000,
+        })
       } finally {
-        setCommodityToArchive(null);
+        setCommodityToArchive(null)
       }
     }
-  };
+  }
 
-  // Updated columns to include the wasted modal handler
-  const columns = CommodityStocksColumns(handleArchiveInventory, handleOpenWastedModal);
-
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    )
+  }
   if (error) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <div className="text-red-500">Error loading commodity data</div>
+        <div className="text-red-500">Error loading stock data</div>
       </div>
-    );
+    )
   }
-
+  const columns = CommodityStocksColumns(setCommodityToArchive, setIsArchiveConfirmationOpen)
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -121,7 +242,7 @@ export default function CommodityStocks() {
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{counts.out_of_stock}</div>
+            <div className="text-2xl font-bold">{counts.outOfStockCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -130,7 +251,7 @@ export default function CommodityStocks() {
             <Loader2 className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{counts.low_stock}</div>
+            <div className="text-2xl font-bold">{counts.lowStockCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -139,7 +260,7 @@ export default function CommodityStocks() {
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{counts.near_expiry}</div>
+            <div className="text-2xl font-bold">{counts.nearExpiryCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -148,16 +269,24 @@ export default function CommodityStocks() {
             <CalendarOff className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{counts.expired}</div>
+            <div className="text-2xl font-bold">{counts.expiredCount}</div>
           </CardContent>
         </Card>
+        {/* Note: Counting "Archived" items requires a separate data source or a flag in your existing data. */}
+        {/* The current `formatCommodityStocksData` filters out archived items. */}
+        {/* If you have an API endpoint for archived items, you would fetch and display that count here. */}
       </div>
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search commodity..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <Input
+              placeholder="Search..."
+              className="pl-10 bg-white w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           <SelectLayout
             placeholder="Filter by stock status"
@@ -168,17 +297,20 @@ export default function CommodityStocks() {
               { id: "low_stock", name: "Low Stock" },
               { id: "out_of_stock", name: "Out of Stock" },
               { id: "near_expiry", name: "Near Expiry" },
-              { id: "expired", name: "Expired" }
+              { id: "expired", name: "Expired" },
             ]}
             value={stockFilter}
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
         </div>
-        <Button onClick={() => navigate("/addCommodityStock")} className="hover:bg-buttonBlue/90 group">
-          <Plus size={15} /> New Commodity
-        </Button>
+        <div className="flex gap-2">
+          <Button>
+            <Link to="/addCommodityStock" className="flex justify-center items-center gap-2 px-2">
+              <Plus size={15} /> New
+            </Link>
+          </Button>
+        </div>
       </div>
-
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
@@ -188,9 +320,8 @@ export default function CommodityStocks() {
               className="w-14 h-6"
               value={pageSize}
               onChange={(e) => {
-                const value = +e.target.value;
-                setPageSize(value >= 1 ? value : 1);
-                setCurrentPage(1);
+                const value = +e.target.value
+                setPageSize(value >= 1 ? value : 1)
               }}
               min="1"
             />
@@ -201,7 +332,7 @@ export default function CommodityStocks() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="bg-transparent">
                   <FileInput />
-                  Export Data
+                  Export
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -212,44 +343,24 @@ export default function CommodityStocks() {
             </DropdownMenu>
           </div>
         </div>
-
         <div className="bg-white w-full overflow-x-auto">
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading commodities...</span>
-            </div>
-          ) : error ? (
-            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span className="ml-2">Error loading commodities. Please check console.</span>
-            </div>
-          ) : commodityData.length === 0 ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <span className="ml-2">No commodities found</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={commodityData} />
-          )}
+          <DataTable columns={columns} data={paginatedData} />
         </div>
-
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} items
+            Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
           </p>
           <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </div>
-
       <ConfirmationDialog
         isOpen={isArchiveConfirmationOpen}
         onOpenChange={setIsArchiveConfirmationOpen}
         onConfirm={confirmArchiveInventory}
-        title="Archive Commodity Item"
-        description="Are you sure you want to archive this commodity? It will be preserved in the system but removed from active inventory."
+        title="Archive Commodity"
+        description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
       />
-
-      {/* Wasted Modal */}
-      <WastedModal isOpen={isWastedModalOpen} onClose={handleCloseWastedModal} record={selectedRecord} mode={"commodity"} />
     </>
-  );
+  )
 }

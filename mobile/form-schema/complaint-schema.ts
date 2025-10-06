@@ -1,159 +1,97 @@
-import { z } from "zod";
+import z from "zod";
 
-// ------------------------------
-//  ✪ CONSTANTS AND UTILITIES
-// ------------------------------
 const phoneRegex = /^09\d{9}$/;
 
-export const incidentTypeEnum = z.enum([
-  "Theft",
-  "Assault",
-  "Property Damage",
-  "Noise",
-  "Other"
-]);
-
-const genderEnum = z
-  .enum(["Male", "Female", "Other", "Prefer not to say"], {
-    errorMap: () => ({ message: "Required" }),
-  });
-
-// ------------------------------
-//  ✪ ADDRESS 
-// ------------------------------
-
-export const addressSchema = z.object({
-  street: z.string().optional(),
-  barangay: z.string().optional(),
-  city: z.string().optional(),
-  province: z.string().optional(),
-  sitio: z.string().optional(),
-})
-// .refine((data)=>
-//     data.street.trim() &&
-//     data.barangay.trim() &&
-//     data.city.trim() &&
-//     data.province.trim(),
-//     {
-//       path: ["street"],
-//       message: "All address fields (Street, Barangay, City, Province) are required",
-//     }
-//   );
-
-
-// -------------------------------------
-//  ✪ PERSON ( COMPLAINANT / ACCUSED ) 
-// -------------------------------------
-
 export const complainant = z.object({
-  fullName: z.string().min(1, "Name is required"),
-  gender: genderEnum,
-  customGender: z.string().optional(),
-  age: z.string().min(1, "Age is required"),
-  relation_to_respondent: z.string().min(1, "Relation is required"),
-  contactNumber: z.string()
-    .min(11, "Contact number must be 11 digits")
-    .max(11, "Contact number must be 11 digits")
-    .regex(phoneRegex, "Invalid mobile number (09XXXXXXXXX)"),
-  address: addressSchema,
+  rp_id: z.string().optional().nullable(), 
+  cpnt_name: z.string().optional(), 
+  cpnt_gender: z.string().optional(), 
+  cpnt_custom_gender: z.string().optional(),
+  cpnt_age: z.string().optional(), 
+  cpnt_relation_to_respondent: z.string().min(1, "Relation to respondent is required"), // This remains required
+  cpnt_number: z.string().optional(), 
+  cpnt_address: z.string().optional(), 
 }).refine(
-  (data) => data.gender !== "Other" || (data.customGender && data.customGender.trim().length > 0),
+  (data) => {
+    // If it's a registered user (has rp_id), we don't need manual input
+    if (data.rp_id && data.rp_id.trim() !== '') {
+      return true;
+    }
+    // If not a registered user, require manual input
+    return data.cpnt_name && data.cpnt_name.trim().length > 0;
+  },
   {
-    path: ["customGender"],
-    message: "Please specify gender when 'Other is selected'",
+    path: ["cpnt_name"],
+    message: "Name is required when not selecting a registered user",
+  }
+).refine(
+  (data) => {
+    if (data.rp_id && data.rp_id.trim() !== '') return true;
+    return data.cpnt_gender && data.cpnt_gender.trim().length > 0;
+  },
+  {
+    path: ["cpnt_gender"],
+    message: "Gender is required when not selecting a registered user",
+  }
+).refine(
+  (data) => {
+    if (data.rp_id && data.rp_id.trim() !== '') return true;
+    return data.cpnt_age && data.cpnt_age.trim().length > 0;
+  },
+  {
+    path: ["cpnt_age"],
+    message: "Age is required when not selecting a registered user",
+  }
+).refine(
+  (data) => {
+    if (data.rp_id && data.rp_id.trim() !== '') return true;
+    return data.cpnt_number && phoneRegex.test(data.cpnt_number);
+  },
+  {
+    path: ["cpnt_number"],
+    message: "Valid contact number is required when not selecting a registered user",
+  }
+).refine(
+  (data) => {
+    if (data.rp_id && data.rp_id.trim() !== '') return true;
+    return data.cpnt_address && data.cpnt_address.trim().length > 0;
+  },
+  {
+    path: ["cpnt_address"],
+    message: "Address is required when not selecting a registered user",
   }
 );
 
 export const accused = z.object({
-  alias: z.string().min(1, "Alias is required"),
-  age: z.string().min(1, "Age is required"), 
-  gender: z.string().min(1, "Gender is required"),
-  genderInput: z.string().optional(), 
-  description: z.string().min(5, "Description is required"),
-  address: addressSchema,
+  acsd_name: z.string().min(1, "Name is required"),
+  acsd_age: z.string().min(1, "Age is required"), 
+  acsd_gender: z.string().min(1, "Gender is required"),
+  acsd_custom_gender: z.string().optional(), 
+  acsd_description: z.string().min(5, "Description is required"),
+  acsd_address: z.string().min(1, "Address is required"),
+  rp_id: z.string().optional().nullable(),
 }).refine(
-  (data) => data.gender !== "Other" || (data.genderInput && data.genderInput.trim().length > 0),
+  (data) => data.acsd_gender !== "Other" || (data.acsd_custom_gender && data.acsd_custom_gender.trim().length > 0),
   {
-    path: ["genderInput"],
+    path: ["acsd_custom_gender"],
     message: "Please specify gender when 'Other' is selected",
   }
 );
 
-// -------------------------
-//  ✪ INCIDENT INFORMATION 
-// -------------------------
 export const incidentSchema = z.object({
-  location: z.string().min(1, "Location is required"),
-  type: incidentTypeEnum,
-  otherType: z.string().optional(),
-  description: z.string()
-    .min(20, "Description must be at least 20 characters")
-    .max(1000, "Description cannot exceed 1000 characters"),
-  date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
-}).refine(
-  (data) => data.type !== "Other" || (data.otherType && data.otherType.trim().length > 0),
-  {
-    path: ["otherType"],
-    message: "Please specify the incident type when 'Other' is selected",
-  }
-);
-
-
-// ---------
-//  ✪ FILE 
-// ---------
-export const fileSchema = z.object({
-  id: z.string().optional(),
-  type: z.enum(["image", "video", "document"]),
-  name: z.string(),
-  size: z.number(),
-  file: z.instanceof(File).optional(),
-  publicUrl: z.string().optional(),
-  storagePath: z.string().optional(),
-  status: z.enum(["uploading", "uploaded", "error"]).optional(),
-  previewUrl: z.string().optional(),
+  comp_incident_type: z.string().min(1, "Incident type is required"),
+  comp_other_type: z.string().optional(),
+  comp_location: z.string().min(1, "Location is required"),
+  comp_allegation: z.string().min(20, "Description must be at least 20 characters"),
+  comp_datetime: z.string().min(1, "Date is required"),
+  comp_datetime_time: z.string().min(1, "Date amd Time is required"),
 })
-  .refine(
-    data => data.size <= 10 * 1024 * 1024,
-    "File size must be less than 10MB"
-  )
-  .refine(
-    data => {
-      if (data.file) {
-        const isImage = data.file.type.startsWith("image/");
-        const isVideo = data.file.type.startsWith("video/");
-        const isDocument = [
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ].includes(data.file.type);
-        return isImage || isVideo || isDocument;
-      }
 
-      // If no File, validate based on .type or .name
-      const ext = data.name.toLowerCase();
-      const isValidType =
-        data.type === "image" ||
-        data.type === "video" ||
-        data.type === "document";
-
-      return isValidType && /\.(jpg|jpeg|png|gif|bmp|webp|mp4|mov|avi|webm|pdf|doc|docx)$/.test(ext);
-    },
-    "Only image, video, and document files are allowed (PDF, DOC, DOCX)"
-  );
-
-
-// -------------------------
-//  ✪ MAIN COMPLAINT
-// -------------------------
 export const complaintFormSchema = z.object({
   complainant: z.array(complainant).min(1, "At least one complainant is required"),
   accused: z.array(accused).min(1, "At least one accused is required"),
   incident: incidentSchema,
-  documents: z.array(fileSchema).max(10, "Maximum 10 files allowed").optional(),
+  files: z.array(z.object({})).default([]),
 });
 
-
-// Type Inference
 export type ComplaintFormData = z.infer<typeof complaintFormSchema>;

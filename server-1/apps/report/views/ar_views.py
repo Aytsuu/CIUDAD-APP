@@ -15,7 +15,21 @@ class ARTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = AcknowledgementReport.objects.all()
+    queryset = AcknowledgementReport.objects.select_related(
+      'add',
+    ).only(
+      'ar_id',
+      'ar_title',
+      'ar_date_started',
+      'ar_time_started',
+      'ar_date_completed',
+      'ar_time_completed',
+      'ar_created_at',
+      'ar_status',
+      'ar_result',
+      'add__sitio__sitio_name',
+      'add__add_street',
+    )
 
     search = self.request.query_params.get('search', '').strip()
     if search:
