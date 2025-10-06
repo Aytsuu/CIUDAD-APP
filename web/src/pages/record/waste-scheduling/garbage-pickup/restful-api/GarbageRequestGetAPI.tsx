@@ -31,48 +31,63 @@ export const getCollectors = async () => {
     }
 }
 
-export const getGarbagePendingRequest = async (page: number, pageSize: number, searchQuery: string) => {
+export const getGarbagePendingRequest = async ( page: number, pageSize: number, searchQuery: string, selectedSitio: string
+  ) => {
     try {
-        const { data } = await api.get('waste/garbage-pickup-request-pending/', {
-            params: {
-                page,
-                page_size: pageSize,
-                search: searchQuery
-            }
-        });
-
-        const items = data.results || [];
-        
-        return {
-            results: items.map((item: any) => ({   
-                garb_id: item.garb_id,
-                garb_requester: item.garb_requester || '',
-                garb_location: item.garb_location,
-                garb_waste_type: item.garb_waste_type,
-                garb_pref_date: item.garb_pref_date,
-                garb_pref_time: item.garb_pref_time,
-                garb_created_at: item.garb_created_at,
-                garb_additional_notes: item.garb_additional_notes,
-                file_url: item.file_url || '',
-                sitio_name: item.sitio_name || ''
-            })),
-            count: data.count || 0
-        };
+      const params: Record<string, any> = {
+        page,
+        page_size: pageSize,
+        search: searchQuery,
+      };
+  
+      if (selectedSitio && selectedSitio !== "0") {
+        params.sitio = selectedSitio;
+      }
+  
+      const { data } = await api.get("waste/garbage-pickup-request-pending/", {
+        params,
+      });
+  
+      const items = data.results || [];
+  
+      return {
+        results: items.map((item: any) => ({
+          garb_id: item.garb_id,
+          garb_requester: item.garb_requester || "",
+          garb_location: item.garb_location,
+          garb_waste_type: item.garb_waste_type,
+          garb_pref_date: item.garb_pref_date,
+          garb_pref_time: item.garb_pref_time,
+          garb_created_at: item.garb_created_at,
+          garb_additional_notes: item.garb_additional_notes,
+          file_url: item.file_url || "",
+          sitio_name: item.sitio_name || "",
+        })),
+        count: data.count || 0,
+      };
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
-        return { results: [], count: 0 };
+      console.error("Failed to fetch garbage requests:", err);
+      return { results: [], count: 0 };
     }
-}
+  };
+  
 
-export const getGarbageRejectedRequest = async (page: number, pageSize: number, searchQuery: string) => {
+export const getGarbageRejectedRequest = async (page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
     try {
-        const { data } = await api.get('waste/garbage-pickup-request-rejected/', {
-            params: {
-                page,
-                page_size: pageSize,
-                search: searchQuery
-            }
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (selectedSitio && selectedSitio !== "0") {
+            params.sitio = selectedSitio;
+        }
+    
+        const { data } = await api.get("waste/garbage-pickup-request-rejected/", {
+            params,
         });
+    
 
         const items = data.results || [];
 
@@ -101,14 +116,20 @@ export const getGarbageRejectedRequest = async (page: number, pageSize: number, 
     }
 }
 
-export const getGarbageAcceptedRequest = async (page: number, pageSize: number, searchQuery: string) => {
+export const getGarbageAcceptedRequest = async (page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
     try {
-        const { data } = await api.get('waste/garbage-pickup-request-accepted/', {
-            params: {
-                page,
-                page_size: pageSize,
-                search: searchQuery
-            }
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (selectedSitio && selectedSitio !== "0") {
+            params.sitio = selectedSitio;
+        }
+    
+        const { data } = await api.get("waste/garbage-pickup-request-accepted/", {
+            params,
         });
 
         const items = data.results || [];
@@ -149,15 +170,22 @@ export const getGarbageAcceptedRequest = async (page: number, pageSize: number, 
     }
 }
 
-export const getGarbageCompletedRequest = async (page: number, pageSize: number, searchQuery: string) => {
+export const getGarbageCompletedRequest = async (page: number, pageSize: number, searchQuery: string, selectedSitio: string) => {
     try {
-        const { data } = await api.get('waste/garbage-pickup-request-completed/', {
-            params: {
-                page,
-                page_size: pageSize,
-                search: searchQuery
-            }
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (selectedSitio && selectedSitio !== "0") {
+            params.sitio = selectedSitio;
+        }
+    
+        const { data } = await api.get("waste/garbage-pickup-request-completed/", {
+            params,
         });
+    
 
         const items = data.results || [];
 

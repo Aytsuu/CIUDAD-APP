@@ -1,6 +1,6 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { Plus, X, UserCheck, Search, Trash2 } from "lucide-react";
+import { Plus, X, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import {
