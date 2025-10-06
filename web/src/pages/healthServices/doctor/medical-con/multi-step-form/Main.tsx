@@ -4,8 +4,7 @@ import PendingDisplayMedicalConsultation from "./pending-display";
 import SoapForm from "./soap-form";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Link } from "react-router-dom";
-import { History } from "lucide-react";
+
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 interface Medicine {
   minv_id: string;

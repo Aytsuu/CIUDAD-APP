@@ -30,6 +30,7 @@ import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
 import { showErrorToast } from "@/components/ui/toast";
 import { fetchStaffWithPositions } from "../../reports/firstaid-report/queries/fetch";
+import { SignatureFieldRef,SignatureField } from "../../reports/firstaid-report/signature";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();

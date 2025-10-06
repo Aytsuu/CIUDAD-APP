@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import CurrentConsultationCard from "@/pages/healthServices/medicalconsultation/medicalhistory/current-medrec";
 import { Link } from "react-router-dom";
 import { History } from "lucide-react";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 interface PendingDisplayMedicalConsultationProps {
   patientData: any;
