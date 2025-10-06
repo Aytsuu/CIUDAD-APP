@@ -18,6 +18,7 @@ import { MediaGallery } from "@/components/ui/media-gallery";
 import { getDateTimeFormat } from "@/helpers/dateHelper";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { useGetIRInfo } from "../queries/reportFetch";
 
 const SEVERITY_LEVELS: Record<string, any> = {
   LOW: 'bg-green-100 border-green-400 text-green-700 hover:bg-green-100',
@@ -54,7 +55,7 @@ export default function IRViewDetails() {
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const { showLoading, hideLoading } = useLoading();
   const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
-  const { data: IRInfo, isLoading } =   (params?.ir_id);
+  const { data: IRInfo, isLoading } = useGetIRInfo(params?.ir_id);
   const images = IRInfo?.files || [];
 
   // ================ SIDE EFFECTS ================
