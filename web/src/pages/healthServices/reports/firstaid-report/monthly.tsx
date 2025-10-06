@@ -4,7 +4,7 @@ import { Loader2, Search, Folder } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
-import { useFirstAidRecords } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
+import { useFirstAidRecords } from "./queries/fetch";
 import { MonthInfoCard } from "../month-folder-component";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
