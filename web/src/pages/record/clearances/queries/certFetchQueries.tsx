@@ -104,12 +104,14 @@ export const getCertificates = async (): Promise<Certificate[]> => {
     const residentRes = await api.get('/clerk/certificate/');
     const residentRaw = residentRes.data as any[];
     
+    
     // Fetch non-resident certificates
     const nonResidentRes = await api.get('/clerk/nonresident-personal-clearance/');
     const nonResidentRaw = nonResidentRes.data as NonResidentCertificate[];
 
     // Map resident certificates
     const residentCertificates: Certificate[] = (residentRaw || []).map((item: any) => {
+      
       return {
         cr_id: item.cr_id,
         resident_details: item.resident_details ? {

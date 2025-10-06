@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, CheckCircle , Eye } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -139,11 +139,12 @@ function CertificatePage() {
     queryFn: getCertificates,
   });
 
+
   // Filter and search logic
   const filteredCertificates = useMemo(() => {
     if (!certificates) return [];
     
-    return certificates.filter(certificate => {
+    return certificates.filter((certificate: Certificate) => {
       // Filter by type (resident/non-resident)
       const typeMatch = filterType === "all" || 
         (filterType === "resident" && !certificate.is_nonresident) ||
@@ -240,10 +241,7 @@ function CertificatePage() {
     setIsDialogOpen(false); 
 
     if (viewingCertificate && selectedStaffId) {
-      // Find the selected staff details
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
-      
-      // Get custody names from custody state - extract plain text names
       const custodies = custody
         .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
         .filter(Boolean) as string[];

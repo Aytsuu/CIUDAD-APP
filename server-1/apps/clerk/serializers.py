@@ -9,6 +9,7 @@ from apps.administration.models import Staff
 from apps.treasurer.models import Invoice, Purpose_And_Rates
 from datetime import datetime
 import logging
+import traceback
 from apps.profiling.serializers.business_serializers import FileInputSerializer
 from utils.supabase_client import upload_to_storage
 from django.db import transaction
@@ -179,10 +180,19 @@ class ClerkCertificateSerializer(serializers.ModelSerializer):
                 except Exception as addr_e:
                     logger.error(f"Error getting address: {str(addr_e)}")
                 
+                # Format DOB properly if it exists
+                dob_value = obj.rp_id.per.per_dob
+                if dob_value:
+                    # Convert to string if it's a date object
+                    if hasattr(dob_value, 'strftime'):
+                        dob_value = dob_value.strftime('%Y-%m-%d')
+                    else:
+                        dob_value = str(dob_value)
+                
                 return {
                     'per_fname': obj.rp_id.per.per_fname,
                     'per_lname': obj.rp_id.per.per_lname,
-                    'per_dob': obj.rp_id.per.per_dob,
+                    'per_dob': dob_value,
                     'per_address': address_str,
                     'voter_id': getattr(obj.rp_id, 'voter_id', None)
                 }

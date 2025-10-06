@@ -433,7 +433,8 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                 issuedcertificate__isnull=False
             )
             .select_related(
-                'rp_id__per'
+                'rp_id__per',
+                'pr_id'
             )
             .prefetch_related(
                 'rp_id__per__personal_addresses__add'
@@ -443,14 +444,6 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                     'issuedcertificate_set',
                     queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
                 )
-            )
-            .only(
-                'cr_id',
-                'cr_req_request_date',
-                'cr_req_status',
-                'rp_id__per__per_fname',
-                'rp_id__per__per_lname',
-                'rp_id__per__per_dob'
             )
         )
 
@@ -510,21 +503,6 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-            logger.info(f"Found {queryset.count()} certificates")
-
-            for cert in queryset:
-                logger.info(f"Certificate {cert.cr_id}:")
-                logger.info(f"- RP ID: {cert.rp_id if cert.rp_id else 'None'}")
-                try:
-                    if cert.rp_id and cert.rp_id.per:
-                        logger.info(f"- Person: {cert.rp_id.per.per_fname} {cert.rp_id.per.per_lname}")
-                    issued_cert = cert.issuedcertificate_set.first()
-                    if issued_cert:
-                        logger.info(f"- Issued Certificate: {issued_cert.ic_id}")
-                        logger.info(f"- Certificate ID: {issued_cert.certificate.cr_id if issued_cert.certificate else 'No certificate'}")
-                except (AttributeError, FieldError) as e:
-                    logger.warning(f"Could not access details for certificate {cert.cr_id}: {str(e)}")
-
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
