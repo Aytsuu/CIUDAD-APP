@@ -9,7 +9,6 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import CardLayout from "@/components/ui/card/card-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +17,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
@@ -27,7 +26,6 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
-import { a } from "node_modules/framer-motion/dist/types.d-Cjd591yU";
 
 interface maternalRecords {
     pat_id: string;
@@ -321,7 +319,7 @@ export default function MaternalAllRecords() {
   };
 
   return (
-    <LayoutWithBack
+    <MainLayoutComponent
       title="Maternal Health Records  "
       description="Manage and view mother's maternal information"
     >
@@ -464,6 +462,6 @@ export default function MaternalAllRecords() {
           </div>
         </div>
       </div>
-    </LayoutWithBack>
+    </MainLayoutComponent>
   );
 }
