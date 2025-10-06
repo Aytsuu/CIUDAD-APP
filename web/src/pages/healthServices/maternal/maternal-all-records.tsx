@@ -21,14 +21,15 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 
 import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
+import { useDebounce } from "@/hooks/use-debounce";
+import { a } from "node_modules/framer-motion/dist/types.d-Cjd591yU";
 
-
-export default function MaternalAllRecords() {
-  interface maternalRecords {
+interface maternalRecords {
     pat_id: string;
     age: number;
 
@@ -55,7 +56,7 @@ export default function MaternalAllRecords() {
     pregnancy_count?: number;
   }
 
-  
+export default function MaternalAllRecords() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -63,12 +64,15 @@ export default function MaternalAllRecords() {
   const [selectedFilter, setSelectedFilter] = useState("all");
 
   const { showLoading, hideLoading } = useLoading();
-  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords({
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords(
     page,
-    page_size: pageSize,
-    status: selectedFilter !== " All" ? selectedFilter : undefined,
-    search: searchTerm || undefined
-  });
+    pageSize,
+    selectedFilter,
+    debouncedSearchTerm,
+  );
   const { data: maternalCountsData } = useMaternalCounts();
 
   const totalMaternalCount = maternalCountsData?.total_records || 0;
@@ -239,9 +243,8 @@ export default function MaternalAllRecords() {
 
     {
       accessorKey: "sitio",
-      header: ({}) => (
-        <div>Sitio</div>
-      ),
+      size: 80,
+      header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
@@ -252,6 +255,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "type",
+      size: 80,
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
@@ -261,6 +265,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "action",
+      size: 100,
       header: "Action",
       cell: ({ row }) => (
         <>
@@ -323,46 +328,20 @@ export default function MaternalAllRecords() {
       <div className="w-full h-full flex flex-col">
         <div className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <CardLayout
+            <EnhancedCardLayout 
               title="Total Maternal Patients"
               description="Patients with maternal records"
-              content={
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{totalMaternalCount}</span>
-                    <span className="text-xs text-muted-foreground">
-                      Total patients
-                    </span>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <WomanRoundedIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </div>
-              }
-              cardClassName="border shadow-sm rounded-lg"
-              headerClassName="pb-2"
-              contentClassName="pt-0"
+              value={totalMaternalCount}
+              valueDescription="Total patients"
+              icon={<WomanRoundedIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />}
             />
 
-            <CardLayout
+            <EnhancedCardLayout 
               title="Active Pregnancies"
               description="Patients with active pregnancies"
-              content={
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{activePregnanciesCount}</span>
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <span>Total active pregnancies</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <PregnantWomanIcon fontSize="large" className="text-muted-foreground" />
-                  </div>
-                </div>
-              }
-              cardClassName="border shadow-sm rounded-lg"
-              headerClassName="pb-2"
-              contentClassName="pt-0"
+              value={activePregnanciesCount}
+              valueDescription="Total active pregnancies"
+              icon={<PregnantWomanIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />}
             />
           </div>
         </div>

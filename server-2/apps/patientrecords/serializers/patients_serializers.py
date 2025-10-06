@@ -504,7 +504,7 @@ class PatientSerializer(serializers.ModelSerializer):
             family_planning_with_spouse = FP_Record.objects.filter(
                 patrec_id__pat_id=obj,
                 spouse_id__isnull=False
-            ).select_related('spouse_id').order_by('-created_at').first()
+            ).select_related('spouse').order_by('-created_at').first()
             
             if family_planning_with_spouse and family_planning_with_spouse.spouse_id:
                 return {

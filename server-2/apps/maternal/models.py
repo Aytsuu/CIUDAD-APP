@@ -155,7 +155,7 @@ class TT_Status(models.Model):
     tts_date_given = models.DateField(null=True, blank=True)
     tts_tdap = models.BooleanField(null=True, blank=True)
     vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='tt_status', db_column='vacrec_id', null=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='tt_status', db_column='pf_id', null=True)
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='tt_status', db_column='pat_id', null=True)
 
     class Meta:
         db_table = 'tt_status'
@@ -306,7 +306,7 @@ class PostpartumRecord(models.Model):
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True, blank=True)
     medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medrec_id', null=True)
-    # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
+    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):
         if not self.ppr_id:
