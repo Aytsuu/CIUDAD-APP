@@ -197,16 +197,26 @@ export const generateDisbursementPdf = async (
   const headerText = [
     { text: "Republic of the Philippines", bold: true, size: 12 },
     { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
-    { text: "", size: 14 },
+    { text: "", drawLine: true, size: 14 },
     { text: "Office of the Barangay Captain", bold: false, size: 13 },
     { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-    { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
+    // { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
   ];
 
   const centerX = pageWidth / 2;
   let headerY = yPos + 15;
 
   headerText.forEach((line) => {
+    if (line.drawLine) {
+    // Draw a horizontal line with normal weight
+    const lineWidth = 220;
+    const lineX = centerX - (lineWidth / 2);
+    doc.setLineWidth(1);
+    doc.line(lineX, headerY, lineX + lineWidth, headerY);
+    headerY += 20;
+    return;
+  }
+
     if (line.text === "") {
       headerY += 10;
       return;
