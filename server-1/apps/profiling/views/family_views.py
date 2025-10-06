@@ -93,6 +93,7 @@ class FamilyTableView(generics.ListCreateAPIView):
 class FamilyDataView(generics.RetrieveAPIView):
   permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer # To be modified
+  queryset = Family.objects.all()
   lookup_field = 'fam_id'
   
 class FamilyDataResidentSpecificView(generics.GenericAPIView):
