@@ -11,6 +11,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <Announcement/>
+    return <App/>
 }
  
