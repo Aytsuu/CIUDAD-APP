@@ -25,7 +25,7 @@ class SidebarAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):
     today = date.today()
     three_days_ago = today - timedelta(days=3)
-    queryset = IncidentReport.objects.filter(ir_created_at__date__gte=three_days_ago, ir_created_at__date__lte=today)
+    queryset = IncidentReport.objects.all()
     
     return Response(IRTableSerializer(queryset, many=True).data)
   

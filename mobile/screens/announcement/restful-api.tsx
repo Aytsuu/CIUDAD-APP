@@ -17,22 +17,13 @@ export const deleteAnnouncement = async (ann_id: string) => {
 export const getAnnouncementRequest = async () => {
   try {
     const response = await api.get("announcement/list/");
-    console.log("Announcements raw response:", JSON.stringify(response.data, null, 2));
-
-    const data = Array.isArray(response.data)
-      ? response.data
-      : response.data?.data ?? [];
-
-    const announcements = Array.isArray(data) ? data : [];
-
-    return announcements.sort(
-      (a, b) =>
+    return response.data?.sort(
+      (a: any, b: any) =>
         new Date(b.ann_created_at).getTime() -
         new Date(a.ann_created_at).getTime()
     );
   } catch (err) {
-    console.error("API Error (getAnnouncementRequest):", err);
-    return [];
+    throw err;
   }
 };
 
@@ -109,12 +100,11 @@ export const postAnnouncementFile = async (files: Record<string, any>[]) => {
   }
 };
 
-export const getCreatedReceivedAnnouncements = async (staff_id: string) => {
+export const getCreatedReceivedAnnouncements = async () => {
   try {
-    const response = await api.get(`announcement/created-received/${staff_id}/`);
-    return response.data || { created: [], received: [] };
+    const response = await api.get(`announcement/list/`);
+    return response.data
   } catch (err) {
-    console.error("API Error:", err);
-    return { created: [], received: [] };
+    throw err;
   }
 };

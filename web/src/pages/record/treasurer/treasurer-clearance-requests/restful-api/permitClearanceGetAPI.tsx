@@ -69,7 +69,7 @@ export const getBusinesses = async () => {
     console.log("Using business table address data dynamically");
     
     // Fetch business respondents and personal data
-    let requestorMapping: { [key: number]: any } = {};
+    const requestorMapping: { [key: number]: any } = {};
     
     try {
       // Fetch business respondents

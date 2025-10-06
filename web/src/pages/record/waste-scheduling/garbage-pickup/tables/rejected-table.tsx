@@ -24,7 +24,7 @@ export default function RejectedTable() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { data: rejectedReqData = { results: [], count: 0 }, isLoading: isLoadingRejected } = useGetGarbageRejectRequest( currentPage, pageSize, debouncedSearchQuery,)
+  const { data: rejectedReqData = { results: [], count: 0 }, isLoading: isLoadingRejected } = useGetGarbageRejectRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
 
   const rejectedRequests = rejectedReqData.results || []
   const totalItems = rejectedReqData.count || 0
@@ -46,9 +46,9 @@ export default function RejectedTable() {
   // Get sitio options from the fetched data
   const sitioOptions = [
     { id: "0", name: "All Sitios" },
-    ...Array.from(new Set(rejectedRequests.map(item => item.sitio_name)))
-      .filter(name => name)
-      .map(name => ({ id: name, name }))
+    ...Array.from(new Set(rejectedRequests.map((item: GarbageRequestReject) => item.sitio_name)))
+      .filter(Boolean)
+      .map((name) => ({ id: name as string, name: name as string }))
   ]
 
   const columns: ColumnDef<GarbageRequestReject>[] = [

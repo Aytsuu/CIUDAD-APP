@@ -25,7 +25,7 @@ export default function AcceptedTable() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { data: acceptedReqData = { results: [], count: 0 }, isLoading: isLoadingAccepted } = useGetGarbageAcceptRequest( currentPage, pageSize, debouncedSearchQuery,)
+  const { data: acceptedReqData = { results: [], count: 0 }, isLoading: isLoadingAccepted } = useGetGarbageAcceptRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
 
   const acceptedRequests = acceptedReqData.results || []
   const totalItems = acceptedReqData.count || 0
@@ -47,9 +47,9 @@ export default function AcceptedTable() {
   // Get sitio options from the fetched data
   const sitioOptions = [
     { id: "0", name: "All Sitios" },
-    ...Array.from(new Set(acceptedRequests.map(item => item.sitio_name)))
-      .filter(name => name)
-      .map(name => ({ id: name, name }))
+    ...Array.from(new Set(acceptedRequests.map((item: GarbageRequestAccept) => item.sitio_name)))
+      .filter(Boolean)
+      .map((name) => ({ id: name as string, name: name as string }))
   ]
 
   const handleEditSuccess = () => {

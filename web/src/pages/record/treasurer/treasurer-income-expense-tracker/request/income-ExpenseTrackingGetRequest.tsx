@@ -1,20 +1,40 @@
 import {api} from "@/api/api";
+import { IncomeExpense } from "../queries/treasurerIncomeExpenseFetchQueries";
 
 
-
-export const getIncomeExpense = async (year?: number, searchQuery?: string, selectedMonth?: string) => {
+// EXPENSE DATA
+export const getIncomeExpense = async ( 
+    page: number = 1, 
+    pageSize: number = 10,
+    year?: number,
+    searchQuery?: string,
+    selectedMonth?: string,
+    isArchive?: boolean
+): Promise<{ results: IncomeExpense[]; count: number }> => {
     try {
-        const params: any = {};
+        const params: any = { page, page_size: pageSize };
+        
         if (year) params.year = year;
         if (searchQuery) params.search = searchQuery;
         if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
+        if (isArchive !== undefined) params.is_archive = isArchive; 
         
         const res = await api.get('treasurer/income-expense-tracking/', { params });
-        console.log("EXPENSE W/ URL: ", res)
-        return res.data;
+        
+        if (res.data.results !== undefined) {
+            return {
+                results: res.data.results || [],
+                count: res.data.count || 0
+            };
+        }
+        
+        return {
+            results: Array.isArray(res.data) ? res.data : [],
+            count: Array.isArray(res.data) ? res.data.length : 0
+        };
     } catch (err) {
         console.error(err);
-        throw err;
+        return { results: [], count: 0 };
     }
 };
 

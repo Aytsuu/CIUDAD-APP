@@ -9,16 +9,14 @@ import {
   Clock,
   Edit2,
   Forward,
-  Mail,
   Phone,
   FileText,
-  UserX,
   Download,
 } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { getComplaintById } from "./api-operations/restful-api/complaint-api";
 import { Printer } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 // Type definitions

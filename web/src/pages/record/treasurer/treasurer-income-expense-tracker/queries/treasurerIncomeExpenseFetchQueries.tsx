@@ -31,10 +31,17 @@ export type IncomeExpense = {
 };
   
 
-export const useIncomeExpense = (year?: number, searchQuery?: string, selectedMonth?: string) => {
-    return useQuery<IncomeExpense[]>({
-        queryKey: ["incomeExpense", year, searchQuery, selectedMonth],
-        queryFn: () => getIncomeExpense(year, searchQuery, selectedMonth),
+export const useIncomeExpense = (
+    page: number = 1,
+    pageSize: number = 10,
+    year?: number,
+    searchQuery?: string,
+    selectedMonth?: string,
+    isArchive?: boolean 
+) => {
+    return useQuery<{ results: IncomeExpense[]; count: number }>({
+        queryKey: ["incomeExpense", page, pageSize, year, searchQuery, selectedMonth, isArchive],
+        queryFn: () => getIncomeExpense(page, pageSize, year, searchQuery, selectedMonth, isArchive),
         staleTime: 1000 * 60 * 30,
     });
 };

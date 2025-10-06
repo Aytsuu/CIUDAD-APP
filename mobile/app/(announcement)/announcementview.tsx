@@ -1,5 +1,5 @@
 import AnnouncementViewPage from "@/screens/announcement/announcementview";
 
-export default function AnnouncementPage() {
+export default () => {
   return <AnnouncementViewPage />;
 }
