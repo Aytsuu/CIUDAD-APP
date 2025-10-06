@@ -11,6 +11,9 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Ordinance, getAllOrdinances, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders, updateOrdinance } from './restful-api/OrdinanceGetAPI';
+import { useOrdinancesPaginated } from './queries/OrdinanceFetchQueries';
+import { useDebounce } from "@/hooks/use-debounce";
+import { useQueryClient } from "@tanstack/react-query";
 // import { useNavigate } from 'react-router-dom';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
@@ -31,13 +34,65 @@ type OrdinanceItem = Ordinance;
 
 
 function OrdinancePage() {
+    const queryClient = useQueryClient();
     const [ordinanceItems, setOrdinanceItems] = useState<OrdinanceItem[]>([]);
     const [ordinanceFolders, setOrdinanceFolders] = useState<OrdinanceFolder[]>([]);
     const [filter, setFilter] = useState<string>("all");
     const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // Debounced values for API calls
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+    const debouncedPageSize = useDebounce(pageSize, 100);
+    
+    // Use paginated query
+    const { data: ordinancesData, isLoading: isOrdinancesLoading, error: ordinancesError } = useOrdinancesPaginated(
+        currentPage,
+        debouncedPageSize,
+        debouncedSearchTerm
+    );
+    
+    const ordinances = ordinancesData?.results || [];
+    const totalCount = ordinancesData?.count || 0;
+    const totalPagesFromAPI = ordinancesData?.total_pages || 1;
+    
+    // Reset to page 1 when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchTerm]);
+    
+    // Process ordinances when data changes
+    useEffect(() => {
+        if (ordinances.length > 0) {
+            // Apply filter
+            let filtered = ordinances;
+            if (filter !== "all" && filter !== "Template") {
+                filtered = ordinances.filter((item: Ordinance) => item.ord_category === filter);
+            }
+
+            // Load existing AI analyses from localStorage
+            const ordinancesWithAnalyses = filtered.map(ordinance => {
+                const existingAnalysis = loadAnalysisFromStorage(ordinance.ord_num);
+                return existingAnalysis ? { ...ordinance, aiAnalysisResult: existingAnalysis } : ordinance;
+            });
+
+            setOrdinanceItems(ordinancesWithAnalyses);
+            
+            // Group ordinances into folders
+            const folders = groupOrdinancesIntoFolders(ordinancesWithAnalyses);
+            setOrdinanceFolders(folders);
+            
+            setTotalPages(Math.ceil(folders.length / 10));
+        }
+    }, [ordinances, filter]);
+    
+    // Update loading state
+    useEffect(() => {
+        setLoading(isOrdinancesLoading);
+    }, [isOrdinancesLoading]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<OrdinanceItem | null>(null);
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -135,7 +190,7 @@ function OrdinancePage() {
         resetUploadForm();
         
         // Refresh data to show the new folder structure
-        fetchAllItems();
+        queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
     });
     
     // Handle error case to reset loading state
@@ -178,9 +233,7 @@ function OrdinancePage() {
             name: `${ord.ord_num} - ${ord.ord_title} (${ord.ord_year})`
         }));
 
-    useEffect(() => {
-        fetchAllItems();
-    }, [filter, currentPage]);
+    // Removed useEffect - now using paginated query
 
     // Debug: Log ordinance data to see file structure
     useEffect(() => {
@@ -192,50 +245,7 @@ function OrdinancePage() {
         }
     }, [ordinanceItems]);
 
-    const fetchAllItems = async () => {
-        try {
-            setLoading(true);
-            const ordinances = await getAllOrdinances();
-            console.log('Fetched ordinances from backend:', ordinances);
-            
-            // Check for amendment fields
-            ordinances.forEach((ord: Ordinance, index: number) => {
-                console.log(`Ordinance ${index}:`, {
-                    ord_num: ord.ord_num,
-                    ord_title: ord.ord_title,
-                    ord_parent: ord.ord_parent,
-                    ord_is_ammend: ord.ord_is_ammend,
-                    ord_ammend_ver: ord.ord_ammend_ver
-                });
-            });
-
-            // Apply filter
-            let filtered = ordinances;
-            if (filter !== "all" && filter !== "Template") {
-                filtered = ordinances.filter((item: Ordinance) => item.ord_category === filter);
-            }
-
-            // Load existing AI analyses from localStorage
-            const ordinancesWithAnalyses = filtered.map(ordinance => {
-                const existingAnalysis = loadAnalysisFromStorage(ordinance.ord_num);
-                return existingAnalysis ? { ...ordinance, aiAnalysisResult: existingAnalysis } : ordinance;
-            });
-
-            setOrdinanceItems(ordinancesWithAnalyses);
-            
-            // Group ordinances into folders
-            const folders = groupOrdinancesIntoFolders(ordinancesWithAnalyses);
-            console.log('Created folders:', folders);
-            setOrdinanceFolders(folders);
-            
-            setTotalPages(Math.ceil(folders.length / 10));
-        } catch (error) {
-            console.error('Error fetching items:', error);
-            toast.error('Failed to fetch ordinances');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Removed fetchAllItems - now using paginated query
 
     // Removed unused requestToggleRepealed handler
 
@@ -247,7 +257,7 @@ function OrdinancePage() {
             toast.success(newValue ? 'Ordinance marked as repealed' : 'Ordinance un-repealed');
             setRepealDialogOpen(false);
             setOrdinanceToToggle(null);
-            fetchAllItems();
+            queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (e) {
             console.error('Failed to toggle repeal:', e);
             toast.error('Failed to update ordinance repeal status');
@@ -305,7 +315,7 @@ function OrdinancePage() {
         try {
             await deleteOrdinance(itemToDelete.ord_num);
             toast.success('Ordinance deleted successfully');
-            fetchAllItems();
+            queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (error) {
             console.error('Error deleting ordinance:', error);
             toast.error('Failed to delete ordinance');
@@ -621,6 +631,16 @@ function OrdinancePage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <div className="flex gap-x-2 items-center">
+                        <p className="text-xs sm:text-sm">Show</p>
+                        <Input 
+                            type="number" 
+                            className="w-14 h-8" 
+                            value={pageSize}
+                            onChange={(e) => setPageSize(Number(e.target.value))}
+                        />
+                        <p className="text-xs sm:text-sm">Entries</p>
+                    </div>
 
                     <SelectLayout
                         className="bg-white"
@@ -812,14 +832,14 @@ function OrdinancePage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                 <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing {filteredItems.length > 0 ? ((currentPage - 1) * 10) + 1 : 0}-
-                    {Math.min(currentPage * 10, filteredItems.length)} of {filteredItems.length} rows
+                    Showing {totalCount > 0 ? ((currentPage - 1) * pageSize) + 1 : 0}-
+                    {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                 </p>
 
                 <div className="w-full sm:w-auto flex justify-center">
                     <PaginationLayout 
                         currentPage={currentPage}
-                        totalPages={totalPages}
+                        totalPages={totalPagesFromAPI}
                         onPageChange={setCurrentPage}
                     />
                 </div>

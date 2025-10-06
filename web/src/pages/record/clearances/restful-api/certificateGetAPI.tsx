@@ -1,18 +1,38 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
 
-// Fetch certificates
-export const getCertificates = async () => {
+// Fetch certificates with search and pagination
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
     try {
-        console.log('Making request to /clerk/certificate/');
-        const res = await api.get('/clerk/certificate/');
-        console.log('API Response:', res.data);  // Log the response data
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+        if (page) {
+            params.append('page', page.toString());
+        }
+        if (pageSize) {
+            params.append('page_size', pageSize.toString());
+        }
+        if (status) {
+            params.append('status', status);
+        }
+        if (paymentStatus) {
+            params.append('payment_status', paymentStatus);
+        }
+        
+        const queryString = params.toString();
+        const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Making request to:', url);
+        const res = await api.get(url);
+        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error fetching certificates:', error);
         console.error('Error details:', error.response?.data || 'No error details available');
-        throw error;  // Re-throw the error so React Query can handle it
+        throw error;
     }
 };
 

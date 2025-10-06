@@ -7,6 +7,7 @@ from django.core.exceptions import FieldError
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
+from apps.pagination import StandardResultsPagination
 import logging
 import traceback
 from .serializers import *
@@ -516,7 +517,55 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
 class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = NonResidentCertReqSerializer
-    queryset = NonResidentCertificateRequest.objects.all()
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = NonResidentCertificateRequest.objects.select_related('pr_id').all()
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(nrc_id__icontains=search) |
+                Q(nrc_requester__icontains=search) |
+                Q(nrc_address__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(nrc_req_status__icontains=search) |
+                Q(nrc_req_payment_status__icontains=search)
+            )
+        
+        # Status filter
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(nrc_req_status=status_filter)
+        
+        # Payment status filter
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(nrc_req_payment_status=payment_status)
+        
+        return queryset.order_by('-nrc_req_date')
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error in NonResidentsCertReqView.list: {str(e)}")
+            return Response(
+                {
+                    "error": str(e),
+                    "detail": "An error occurred while retrieving non-resident certificate requests"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class UpdateNonResidentCertReqView(ActivityLogMixin, generics.UpdateAPIView):
@@ -524,6 +573,63 @@ class UpdateNonResidentCertReqView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = NonResidentCertReqUpdateSerializer
     queryset = NonResidentCertificateRequest.objects.all()
     lookup_field = 'nrc_id'
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        old_payment_status = instance.nrc_req_payment_status
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
+        new_payment_status = instance.nrc_req_payment_status
+        if old_payment_status != "Paid" and new_payment_status == "Paid":
+            try:
+                from apps.treasurer.utils import create_automatic_income_entry
+                
+                # Get purpose from the non-resident certificate request
+                purpose = "Unknown"
+                if instance.pr_id:
+                    purpose = instance.pr_id.pr_purpose
+                
+                # Get amount from purpose and rates
+                amount = 0.0
+                if instance.pr_id:
+                    amount = float(instance.pr_id.pr_rate)
+                
+                # Get staff ID from request, certificate, or use default
+                staff_id = request.data.get('staff_id') or getattr(instance, 'staff_id', None)
+                
+                # Get invoice discount reason if available
+                invoice_discount_reason = None
+                try:
+                    from apps.treasurer.models import Invoice
+                    invoice = Invoice.objects.filter(nrc_id=instance).first()
+                    if invoice:
+                        invoice_discount_reason = invoice.inv_discount_reason
+                except Exception as e:
+                    logger.warning(f"Could not get invoice discount reason for non-resident certificate {instance.nrc_id}: {str(e)}")
+                
+                # Create automatic income entry
+                create_automatic_income_entry(
+                    request_type='CERT',
+                    request_id=instance.nrc_id,
+                    purpose=purpose,
+                    amount=amount,
+                    staff_id=staff_id,
+                    discount_notes=getattr(instance, 'nrc_discount_reason', None),
+                    invoice_discount_reason=invoice_discount_reason
+                )
+                logger.info(f"Created automatic income entry for non-resident certificate {instance.nrc_id}")
+            except Exception as e:
+                logger.error(f"Failed to create automatic income entry for non-resident certificate {instance.nrc_id}: {str(e)}")
+                # Don't fail the request if income tracking fails
+        
+        return Response({
+            'message': 'Non-resident certificate request status updated successfully',
+            'nrc_id': instance.nrc_id,
+            'new_payment_status': instance.nrc_req_payment_status
+        }, status=status.HTTP_200_OK)
 
     
 class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
@@ -534,9 +640,54 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_payment_status = instance.cr_req_payment_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
+        new_payment_status = instance.cr_req_payment_status
+        if old_payment_status != "Paid" and new_payment_status == "Paid":
+            try:
+                from apps.treasurer.utils import create_automatic_income_entry
+                
+                # Get purpose from the certificate
+                purpose = "Unknown"
+                if instance.pr_id:
+                    purpose = instance.pr_id.pr_purpose
+                
+                # Get amount from purpose and rates
+                amount = 0.0
+                if instance.pr_id:
+                    amount = float(instance.pr_id.pr_rate)
+                
+                # Get staff from certificate record (primary source) or request data
+                staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                
+                # Get invoice discount reason if available
+                invoice_discount_reason = None
+                try:
+                    from apps.treasurer.models import Invoice
+                    invoice = Invoice.objects.filter(cr_id=instance).first()
+                    if invoice:
+                        invoice_discount_reason = invoice.inv_discount_reason
+                except Exception as e:
+                    logger.warning(f"Could not get invoice discount reason for certificate {instance.cr_id}: {str(e)}")
+                
+                # Create automatic income entry
+                create_automatic_income_entry(
+                    request_type='CERT',
+                    request_id=instance.cr_id,
+                    purpose=purpose,
+                    amount=amount,
+                    staff_id=staff_id,
+                    discount_notes=getattr(instance, 'cr_discount_reason', None),
+                    invoice_discount_reason=invoice_discount_reason
+                )
+                logger.info(f"Created automatic income entry for certificate {instance.cr_id}")
+            except Exception as e:
+                logger.error(f"Failed to create automatic income entry for certificate {instance.cr_id}: {str(e)}")
+                # Don't fail the request if income tracking fails
         
         return Response({
             'message': 'Status updated successfully',
@@ -550,6 +701,59 @@ class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  
     queryset = ClerkCertificate.objects.all()
     serializer_class = ClerkCertificateSerializer
     lookup_field = 'cr_id'
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        old_payment_status = instance.cr_req_payment_status
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
+        new_payment_status = instance.cr_req_payment_status
+        if old_payment_status != "Paid" and new_payment_status == "Paid":
+            try:
+                from apps.treasurer.utils import create_automatic_income_entry
+                
+                # Get purpose from the certificate
+                purpose = "Unknown"
+                if instance.pr_id:
+                    purpose = instance.pr_id.pr_purpose
+                
+                # Get amount from purpose and rates
+                amount = 0.0
+                if instance.pr_id:
+                    amount = float(instance.pr_id.pr_rate)
+                
+                # Get staff from certificate record (primary source) or request data
+                staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                
+                # Get invoice discount reason if available
+                invoice_discount_reason = None
+                try:
+                    from apps.treasurer.models import Invoice
+                    invoice = Invoice.objects.filter(cr_id=instance).first()
+                    if invoice:
+                        invoice_discount_reason = invoice.inv_discount_reason
+                except Exception as e:
+                    logger.warning(f"Could not get invoice discount reason for certificate {instance.cr_id}: {str(e)}")
+                
+                # Create automatic income entry
+                create_automatic_income_entry(
+                    request_type='CERT',
+                    request_id=instance.cr_id,
+                    purpose=purpose,
+                    amount=amount,
+                    staff_id=staff_id,
+                    discount_notes=getattr(instance, 'cr_discount_reason', None),
+                    invoice_discount_reason=invoice_discount_reason
+                )
+                logger.info(f"Created automatic income entry for certificate {instance.cr_id}")
+            except Exception as e:
+                logger.error(f"Failed to create automatic income entry for certificate {instance.cr_id}: {str(e)}")
+                # Don't fail the request if income tracking fails
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CancelCertificateView(APIView):
     permission_classes = [AllowAny]
@@ -756,17 +960,49 @@ class BusinessPermitListView(ActivityLogMixin, generics.ListCreateAPIView):
 
 class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+    
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return BusinessPermitCreateSerializer
         return BusinessPermitSerializer
     
     def get_queryset(self):
-        return BusinessPermitRequest.objects.select_related('bus_id').all()
+        queryset = BusinessPermitRequest.objects.select_related('bus_id').all()
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(bpr_id__icontains=search) |
+                Q(bus_id__bus_name__icontains=search) |
+                Q(bus_id__bus_owner__icontains=search) |
+                Q(req_type__icontains=search) |
+                Q(req_status__icontains=search) |
+                Q(req_payment_status__icontains=search)
+            )
+
+        # Status filter
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(req_status=status_filter)
+
+        # Payment status filter
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(req_payment_status=payment_status)
+
+        return queryset.order_by('-req_request_date')
     
     def list(self, request, *args, **kwargs):
         try:
-            queryset = self.get_queryset()
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -982,34 +1218,49 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
 
 # ---------------------- Personal Clearances and Payment APIs ----------------------
 
-class PersonalClearancesView(APIView):
+class PersonalClearancesView(generics.ListAPIView):
+    serializer_class = ClerkCertificateSerializer
     permission_classes = [AllowAny]
-    
-    def get(self, request):
-        try:
-            clearances = ClerkCertificate.objects.select_related(
-                'rp_id__per',
-                'pr_id'
-            ).only(
-                'cr_id',
-                'cr_req_request_date',
-                'cr_req_payment_status',
-                'cr_req_status',
-                'rp_id__per__per_fname',
-                'rp_id__per__per_lname',
-                'pr_id__pr_purpose',
-                'pr_id__pr_rate'
-            ).all()
+    pagination_class = StandardResultsPagination
 
-            serializer = ClerkCertificateSerializer(clearances, many=True)
-            return Response(serializer.data)
-        except Exception as e:
-            logger.error(f"Error in get_personal_clearances: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            return Response(
-                {"error": str(e), "detail": "An error occurred while retrieving personal clearances"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+    def get_queryset(self):
+        queryset = ClerkCertificate.objects.select_related(
+            'rp_id__per',
+            'pr_id'
+        ).only(
+            'cr_id',
+            'cr_req_request_date',
+            'cr_req_payment_status',
+            'cr_req_status',
+            'rp_id__per__per_fname',
+            'rp_id__per__per_lname',
+            'pr_id__pr_purpose',
+            'pr_id__pr_rate'
+        ).all()
+
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(cr_id__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(cr_req_status__icontains=search) |
+                Q(cr_req_payment_status__icontains=search)
             )
+
+        # Status filter
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(cr_req_status=status_filter)
+
+        # Payment status filter
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(cr_req_payment_status=payment_status)
+
+        return queryset.order_by('-cr_req_request_date')
 
 
 class CreatePaymentIntentView(APIView):
@@ -1172,6 +1423,9 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
             print(f"Current payment status: {instance.req_payment_status}")
             print(f"Request data: {request.data}")
             
+            # Store old payment status for comparison
+            old_payment_status = instance.req_payment_status
+            
             # Update payment status and completion date
             instance.req_payment_status = request.data.get('req_payment_status', instance.req_payment_status)
             
@@ -1196,6 +1450,57 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
             print(f"Completion date: {instance.req_date_completed}")
             
             instance.save(update_fields=['req_payment_status', 'req_date_completed'])
+            
+            # Check if payment status changed to "Paid" and create automatic income entry
+            if old_payment_status != "Paid" and instance.req_payment_status == "Paid":
+                try:
+                    from apps.treasurer.utils import create_automatic_income_entry
+                    
+                    # Get purpose from the business permit request
+                    purpose = "Unknown"
+                    if instance.pr_id:
+                        purpose = instance.pr_id.pr_purpose
+                    
+                    # Get amount from purpose and rates or from ags_id
+                    amount = 0.0
+                    if instance.pr_id:
+                        amount = float(instance.pr_id.pr_rate)
+                    elif instance.ags_id:
+                        # Get amount from Annual_Gross_Sales
+                        from apps.treasurer.models import Annual_Gross_Sales
+                        try:
+                            ags = Annual_Gross_Sales.objects.get(ags_id=instance.ags_id)
+                            amount = float(ags.ags_rate) if ags.ags_rate else 0.0
+                        except Annual_Gross_Sales.DoesNotExist:
+                            pass
+                    
+                    # Get staff ID from request, certificate, or use default
+                    staff_id = request.data.get('staff_id') or getattr(instance, 'staff_id', None)
+                    
+                    # Get invoice discount reason if available
+                    invoice_discount_reason = None
+                    try:
+                        from apps.treasurer.models import Invoice
+                        invoice = Invoice.objects.filter(bpr_id=instance).first()
+                        if invoice:
+                            invoice_discount_reason = invoice.inv_discount_reason
+                    except Exception as e:
+                        logger.warning(f"Could not get invoice discount reason for business permit {instance.bpr_id}: {str(e)}")
+                    
+                    # Create automatic income entry
+                    create_automatic_income_entry(
+                        request_type='PERMIT',
+                        request_id=instance.bpr_id,
+                        purpose=purpose,
+                        amount=amount,
+                        staff_id=staff_id,
+                        discount_notes=getattr(instance, 'req_discount_reason', None),
+                        invoice_discount_reason=invoice_discount_reason
+                    )
+                    logger.info(f"Created automatic income entry for business permit {instance.bpr_id}")
+                except Exception as e:
+                    logger.error(f"Failed to create automatic income entry for business permit {instance.bpr_id}: {str(e)}")
+                    # Don't fail the request if income tracking fails
             
             return Response({
                 'message': 'Business permit request status updated successfully',

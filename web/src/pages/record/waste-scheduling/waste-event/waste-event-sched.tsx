@@ -21,10 +21,9 @@ const announcementOptions = [
     { id: "all", label: "All", checked: false },
     { id: "allbrgystaff", label: "All Barangay Staff", checked: false },
     { id: "residents", label: "Residents", checked: false },
-    { id: "wmstaff", label: "Waste Management Staff", checked: false },
-    { id: "drivers", label: "Drivers", checked: false },
-    { id: "collectors", label: "Collectors", checked: false },
-    { id: "watchmen", label: "Watchmen", checked: false },
+    { id: "wmstaff", label: "Waste Committee", checked: false },
+    { id: "drivers", label: "Driver Loader", checked: false },
+    { id: "collectors", label: "Loaders", checked: false },
 ];
 
 function WasteEventSched() {
