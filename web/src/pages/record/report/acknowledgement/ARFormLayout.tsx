@@ -1,4 +1,3 @@
-// Import necessary libraries and components
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +8,7 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { MediaUploadType } from "@/components/ui/media-upload";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useAddAR } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
@@ -17,6 +16,7 @@ import { ARFormSchema } from "@/form-schema/report-schema";
 
 // Main component for the DRR AR Form
 export default function ARFormLayout() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
@@ -31,25 +31,24 @@ export default function ARFormLayout() {
     resolver: zodResolver(ARFormSchema),
     defaultValues: generateDefaultValues(ARFormSchema)
   });
+  console.log(data?.ir_id)
 
   // Function to handle form submission
   const submit = async () => {
-    setIsSubmitting(true);
     const formIsValid = await form.trigger();
 
-    if(!formIsValid){
-      setIsSubmitting(false);
+    if(!formIsValid){;
       showErrorToast("Please fill out all required fields")
       return;
     }
 
     if(mediaFiles.length === 0) {
-      setIsSubmitting(false);
       showErrorToast("Please upload an image")
       return;
     }
 
     try {
+      setIsSubmitting(true);
       const values = form.getValues();
       const files = mediaFiles.map((media) => ({
         'name': media.name,
@@ -65,12 +64,15 @@ export default function ARFormLayout() {
       }) 
       
       showSuccessToast("Report Added Successfully!")
-      setIsSubmitting(false);
       setMediaFiles([])
       form.reset(defaultValues);
+      if(data?.ir_id) {
+        navigate("/report/incident")
+      }
     } catch (err) {
-      setIsSubmitting(false);
       showErrorToast("Failed to create AR. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

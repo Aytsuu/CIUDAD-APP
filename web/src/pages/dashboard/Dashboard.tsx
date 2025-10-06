@@ -114,7 +114,7 @@ export default function Dashboard() {
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
             <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
-              <Label className="text-white text-xl">Upcomming Events</Label>
+              <Label className="text-white text-xl">Upcoming Events</Label>
   
             </div>
             {cardsWithAccess.length > 0 && (

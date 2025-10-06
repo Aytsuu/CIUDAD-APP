@@ -2,48 +2,65 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getAnnouncementRequest,
   getAnnouncementRecipientRequest,
+  getCreatedReceivedAnnouncements,
 } from "../restful-api/announcementGetRequest";
 
+// Matches Django Announcement model
 export type Announcement = {
-  ann_id?: number;
+  ann_id: number;
   ann_title: string;
   ann_details: string;
-  ann_created_at: Date | string;
-  ann_start_at?: Date | string;
-  ann_end_at?: Date | string;
+  ann_created_at: string; // API will send ISO date string
+  ann_start_at?: string | null;
+  ann_end_at?: string | null;
+  ann_event_start?: string | null;
+  ann_event_end?: string | null;
   ann_type: string;
-  staff: string;
-  files?: {
-    af_id: number;
-    af_name: string;
-    af_type: string;
-    af_url: string;
-  }[];
+  ann_to_sms?: boolean;
+  ann_to_email?: boolean;
+  staff?: number | null; // Foreign key: staff_id
+  files?: AnnouncementFile[];
 };
 
-
-export type AnnouncementRecipient = {
-  position_title: any;
-  ar_id: number;
-  ar_mode: string;
+export type AnnouncementFile = {
+  af_id: number;
   ann: number;
-  position: string;
-  ar_age: string;
+  af_name: string;
+  af_type: string;
+  af_path?: string;
+  af_url: string;
 };
 
-export const useGetAnnouncement = () => {
-  return useQuery<Announcement[], Error>({
+// Matches Django AnnouncementRecipient model
+export type AnnouncementRecipient = {
+  ar_id: number;
+  ann: number; // Announcement ID
+  ar_type?: string | null; // Can be empty
+};
+
+export function useGetAnnouncement() {
+  return useQuery({
     queryKey: ["announcements"],
     queryFn: getAnnouncementRequest,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000
   });
-};
+}
 
-export const useGetAnnouncementRecipient = () => {
-  return useQuery<AnnouncementRecipient[], Error>({
-    queryKey: ["recipients"],
-    queryFn: getAnnouncementRecipientRequest,
-    staleTime: 1000 * 60 * 5,
+// Pass ann_id to fetch only its recipients
+export function useGetAnnouncementRecipient(ann_id: number) {
+  return useQuery({
+    queryKey: ["announcementRecipients", ann_id],
+    queryFn: () => getAnnouncementRecipientRequest(ann_id),
+    enabled: !!ann_id, // only run when we have an id
+    staleTime: 5000
   });
-};
+}
 
+export function useGetCreatedReceivedAnnouncements(staff_id: string) {
+  return useQuery({
+    queryKey: ["createdReceivedAnnouncements", staff_id],
+    queryFn: () => getCreatedReceivedAnnouncements(staff_id),
+    enabled: !!staff_id,
+    staleTime: 5000,
+  });
+}

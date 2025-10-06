@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View, ScrollView, Dimensions, Platform, Image} from "react-native"
+import { Text, TouchableOpacity, View, ScrollView, Dimensions, Platform, Image, InteractionManager} from "react-native"
 import { router, useRouter } from "expo-router"
 import React from "react"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
@@ -11,17 +11,20 @@ import File from "@/assets/icons/essentials/file.svg"
 import { Drawer } from "@/components/ui/drawer"
 import ReportRecord from "./ReportRecord"
 import ReportHistory from "./ReportHistory"
+import { NoAccessScreen } from "@/components/ui/feedback-screen"
+import { LoadingState } from "@/components/ui/loading-state"
 
 
 export default () => {
   // ============== STATE INITIALIZATION ==============
   const { user } = useAuth()
-  const [currentIndex, setCurrentIndex] = React.useState(0)
+  const [currentIndex, setCurrentIndex] = React.useState<number>(0)
   const [showDrawer, setShowDrawer] = React.useState<boolean>(false);
+  const [isReady, setIsReady] = React.useState<boolean>(false);
   const [drawerContent, setDrawerContent] = React.useState<"records" | "history">();
   const scrollViewRef = React.useRef<ScrollView>(null)
   const screenWidth = Dimensions.get('window').width
-  const cardWidth = screenWidth - 40 // Account for padding (20px on each side)
+  const cardWidth = screenWidth - 40 
   
   const fileReportItem = [
     {
@@ -39,6 +42,15 @@ export default () => {
       user: [User.resident]
     },
   ]
+
+  // ============== SIDE EFFECTS ==============
+  React.useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+
+    return () => task.cancel();
+  }, [user]);
 
   // ============== HANDLERS ==============
   const scrollToIndex = (index: number) => {
@@ -77,6 +89,13 @@ export default () => {
   })
 
   // ============== MAIN RENDER ==============
+  if(!user?.rp) {
+    return (isReady && <NoAccessScreen 
+        title="Resident Access Required"
+        description="The report feature is only available to registered residents."/>
+    )
+  }
+
   return (
     <PageLayout
       leftAction={

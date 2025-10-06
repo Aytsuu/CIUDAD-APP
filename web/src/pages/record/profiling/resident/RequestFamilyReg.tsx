@@ -28,6 +28,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { demographicInfoSchema } from "@/form-schema/profiling-schema"
 import { capitalize } from "@/helpers/capitalize"
 import { LoadButton } from "@/components/ui/button/load-button"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function RequestFamilyReg() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -41,13 +42,14 @@ export default function RequestFamilyReg() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
   const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const debouncedSearchQuery = useDebounce(searchQuery, 50)
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal()
   const { mutateAsync: deleteRequest } = useDeleteRequest()
   const { mutateAsync: updateAccount } = useUpdateAccount()
   const { mutateAsync: addFamily } = useAddFamily()
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition()
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
-    searchQuery
+    debouncedSearchQuery
   )
 
   const currentMember = registrationData.compositions[selectedMember]
@@ -131,6 +133,8 @@ export default function RequestFamilyReg() {
     }
   }
 
+  console.log(registrationData)
+
   // ----------------- RENDER --------------------
   if (!registrationData) {
     return (
@@ -151,10 +155,10 @@ export default function RequestFamilyReg() {
     >
       {/* Registration Overview */}
       <Card className="shadow-none rounded-lg">
-        <CardHeader className="">
+        <CardHeader className="mb-4">
           <CardTitle>
-            <p className="text-xl mb-1">Registration Request Overview</p>
-            <p className="text-[15px] font-normal opacity-80">Submitted on {getDateTimeFormat(registrationData.req_created_at)}</p>
+            <p className="text-xl mb-1">Overview</p>
+            <p className="text-[14px] font-medium opacity-80">Submitted on {getDateTimeFormat(registrationData?.req_created_at)}</p>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -300,7 +304,7 @@ export default function RequestFamilyReg() {
                             value={form.watch(`householdNo`)}
                             onChange={(value: any) => form.setValue("householdNo", value)}
                             onSearchChange={(value) => setSearchQuery(value)}
-                            placeholder="Search and select household..."
+                            placeholder="Select household"
                             contentClassName="w-full"
                             emptyMessage={
                               <div className="flex gap-2 justify-center items-center p-4">
@@ -326,15 +330,10 @@ export default function RequestFamilyReg() {
                         <div className="space-y-4">
                           {/* Building/Housing Status */}
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Household Occupancy</Label>
-                            <p className="text-xs text-gray-600 mb-3">
-                              Specify the family's relationship to their current residence. This helps determine housing
-                              assistance eligibility.
-                            </p>
                             <FormSelect
                               control={form.control}
                               name="building"
-                              label=""
+                              label="Household Occupancy"
                               options={[
                                 { id: "OWNER", name: "OWNER" },
                                 { id: "RENTER", name: "RENTER" },
@@ -346,15 +345,10 @@ export default function RequestFamilyReg() {
 
                           {/* Indigenous People Classification */}
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Indigenous</Label>
-                            <p className="text-xs text-gray-600 mb-3">
-                              Identify if any family member belongs to an indigenous community. This ensures access to
-                              IP-specific programs and services.
-                            </p>
                             <FormSelect
                               control={form.control}
                               name="indigenous"
-                              label=""
+                              label="Indigenous"
                               options={[
                                 { id: "NO", name: "NO" },
                                 { id: "YES", name: "YES" },

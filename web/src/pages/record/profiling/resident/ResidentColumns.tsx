@@ -236,7 +236,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const handleViewClick = async () => {
+      const handleViewClick = () => {
         navigate("/profiling/resident/view/personal", {
           state: {
             params: {

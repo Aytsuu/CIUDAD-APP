@@ -1,6 +1,9 @@
 import { Footer } from "./Footer";
 import BackgroundPHMap from "@/assets/background/background-ph-map.svg";
 
+
+
+
 export default function About() {
   return (
     <main className="w-screen h-screen bg-white">

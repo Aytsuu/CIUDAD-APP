@@ -9,71 +9,57 @@ import {
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Card } from "@/components/ui/card";
-import { Calendar } from "@/lib/icons/Calendar";
-import { MapPin } from "@/lib/icons/MapPin";
-import { UserRound } from "@/lib/icons/UserRound";
-import { Phone } from "@/lib/icons/Phone";
 import { FileText } from "@/lib/icons/FileText";
 import { Download } from "@/lib/icons/Download";
 import { Eye } from "@/lib/icons/Eye";
 import PageLayout from "@/screens/_PageLayout";
 import { formatDate } from "@/helpers/dateHelpers";
 import { formatCurrency } from "@/helpers/currencyFormat";
-import { CreditCard } from "lucide-react-native";
 import { useBusinessInfo } from "@/screens/business/queries/businessGetQueries";
 
-// Loading Card Component
-const LoadingCard = ({ title, message }: { title: string, message: string }) => (
-  <Card className="mt-4 p-4">
-    <Text className="text-gray-900 font-semibold text-lg mb-4">
-      {title}
-    </Text>
-    <View className="flex-1 justify-center items-center py-8">
+// Loading Section Component
+const LoadingSection = ({ title }: { title: string }) => (
+  <View className="px-5 py-5 border-b border-gray-200">
+    <Text className="text-gray-900 font-medium text-sm mb-4">{title}</Text>
+    <View className="items-center py-6">
       <ActivityIndicator size="small" color="#3B82F6" />
-      <Text className="text-gray-500 mt-2 text-sm">{message}</Text>
+      <Text className="text-gray-500 text-xs mt-2">Loading...</Text>
     </View>
-  </Card>
+  </View>
 );
 
 export default function BusinessDetails() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
-  // Parse the business data from params
+
   const business = React.useMemo(() => {
     try {
       return JSON.parse(params.business as string);
     } catch (error) {
-      console.error('Error parsing business data:', error);
+      console.error("Error parsing business data:", error);
       return null;
     }
   }, [params.business]);
 
-  const { data: businessInfo, isLoading: loadingBusInfo, error } = useBusinessInfo(business?.bus_id);
+  const {
+    data: businessInfo,
+    isLoading: loadingBusInfo,
+    error,
+  } = useBusinessInfo(business?.bus_id);
 
-  const InfoRow = ({ icon: Icon, label, value, valueColor = "text-gray-900", onPress }: {
-    icon?: any,
-    label: string,
-    value: string | number,
-    valueColor?: string,
-    onPress?: () => void
+  const InfoRow = ({
+    label,
+    value,
+    valueColor = "text-gray-900",
+  }: {
+    label: string;
+    value: string | number;
+    valueColor?: string;
   }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={!onPress}
-      className="flex-row items-center py-3 border-t border-gray-100"
-    >
-      {Icon && <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-3">
-        <Icon size={18} className="text-gray-600" />
-      </View>}
-      <View className="flex-1">
-        <Text className="text-gray-500 text-sm">{label}</Text>
-        <Text className={`text-base font-medium ${valueColor} ${onPress ? 'text-blue-600' : ''}`}>
-          {value}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <View className="py-3 border-b border-gray-100">
+      <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+      <Text className={`text-sm ${valueColor}`}>{value}</Text>
+    </View>
   );
 
   // Show error state
@@ -83,28 +69,30 @@ export default function BusinessDetails() {
         leftAction={
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            className="w-10 h-10 items-center justify-center"
           >
             <ChevronLeft size={24} className="text-gray-700" />
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="text-gray-900 text-[13px]">
+          <Text className="text-gray-900 text-sm font-medium">
             Business Details
           </Text>
         }
         rightAction={<View className="w-10 h-10" />}
       >
         <View className="flex-1 justify-center items-center px-5">
-          <Text className="text-red-600 text-lg font-semibold mb-2">Error Loading Business</Text>
-          <Text className="text-gray-600 text-center mb-4">
+          <Text className="text-red-600 text-base font-semibold mb-2">
+            Error Loading Business
+          </Text>
+          <Text className="text-gray-600 text-sm text-center mb-6">
             Unable to load business information. Please try again.
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}
             className="bg-blue-600 px-6 py-3 rounded-lg"
           >
-            <Text className="text-white font-medium">Go Back</Text>
+            <Text className="text-white text-sm font-medium">Go Back</Text>
           </TouchableOpacity>
         </View>
       </PageLayout>
@@ -112,51 +100,67 @@ export default function BusinessDetails() {
   }
 
   // Prepare data when available
-  const fullName = businessInfo ? 
-    `${businessInfo?.rp ? businessInfo.rp.per_lname : businessInfo?.br?.br_lname}, ` +
-    `${businessInfo?.rp ? businessInfo.rp.per_fname : businessInfo?.br?.br_fname} ` +
-    `${businessInfo?.rp ? businessInfo.rp.per_mname : businessInfo?.br?.br_mname || ''}` : '';
-  
-  const contact = businessInfo?.rp ? businessInfo.rp.per_contact : businessInfo?.br?.br_contact;
+  const fullName = businessInfo
+    ? `${
+        businessInfo?.rp
+          ? businessInfo.rp.per_lname
+          : businessInfo?.br?.br_lname
+      }, ` +
+      `${
+        businessInfo?.rp
+          ? businessInfo.rp.per_fname
+          : businessInfo?.br?.br_fname
+      } ` +
+      `${
+        businessInfo?.rp
+          ? businessInfo.rp.per_mname
+          : businessInfo?.br?.br_mname || ""
+      }`
+    : "";
+
+  const contact = businessInfo?.rp
+    ? businessInfo.rp.per_contact
+    : businessInfo?.br?.br_contact;
   const respondentId = businessInfo?.rp ? business.rp : businessInfo?.br?.br_id;
-  const businessName = business?.bus_name || 'Unnamed Business';
-  const businessAddress = businessInfo ? `${businessInfo?.bus_street || ''}, Sitio ${businessInfo?.sitio || ''}` : '';
-  const registeredDate = businessInfo ? formatDate(businessInfo?.bus_date_registered, 'long') : '';
-  const registeredBy = businessInfo?.bus_registered_by || 'N/A';
+  const businessName = business?.bus_name || "Unnamed Business";
+  const businessAddress = businessInfo ? businessInfo?.bus_location : "";
+  const registeredDate = businessInfo
+    ? formatDate(businessInfo?.bus_date_registered, "long")
+    : "";
+  const registeredBy = businessInfo?.bus_registered_by || "N/A";
   const businessFiles = businessInfo?.files || [];
 
-  const renderDocumentCard = ({ item, index }: { item: any; index: number }) => {
+  const renderDocumentCard = ({
+    item,
+    index,
+  }: {
+    item: any;
+    index: number;
+  }) => {
     return (
-      <TouchableOpacity
-        className="mb-3"
-        activeOpacity={0.7}
-      >
-        <Card className="p-3 bg-gray-50 border border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
-                <FileText size={18} className="text-blue-600" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-gray-900 font-medium text-sm" numberOfLines={1}>
-                  {item.name || `Document ${index + 1}`}
-                </Text>
-                <Text className="text-gray-500 text-xs mt-1">
-                  {item.type || 'Unknown type'} • {item.size || 'Unknown size'}
-                </Text>
-              </View>
-            </View>
-            <View className="flex-row items-center">
-              <TouchableOpacity className="p-2">
-                <Eye size={16} className="text-gray-600" />
-              </TouchableOpacity>
-              <TouchableOpacity className="p-2 ml-1">
-                <Download size={16} className="text-gray-600" />
-              </TouchableOpacity>
-            </View>
+      <View className="py-4 border-b border-gray-100">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1">
+            <Text
+              className="text-gray-900 font-medium text-sm mb-1"
+              numberOfLines={1}
+            >
+              {item.name || `Document ${index + 1}`}
+            </Text>
+            <Text className="text-gray-500 text-xs">
+              {item.type || "Unknown type"} • {item.size || "Unknown size"}
+            </Text>
           </View>
-        </Card>
-      </TouchableOpacity>
+          <View className="flex-row items-center ml-3">
+            <TouchableOpacity className="p-2">
+              <Eye size={18} className="text-gray-600" />
+            </TouchableOpacity>
+            <TouchableOpacity className="p-2">
+              <Download size={18} className="text-gray-600" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
     );
   };
 
@@ -171,93 +175,96 @@ export default function BusinessDetails() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">
-          Business Details
-        </Text>
+        <Text className="text-gray-900 text-[13px]">Business</Text>
       }
       rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView 
-        className="flex-1 px-5"
+      <ScrollView
+        className="flex-1"
         overScrollMode="never"
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
       >
         {/* Business Header */}
-        <View className="pb-6">
-          <View className="items-center">
-            <Text className="text-gray-900 font-bold text-xl text-center mb-2">
-              {businessName}
-            </Text>
-            <View className="bg-blue-100 px-3 py-1 rounded-full">
-              <Text className="text-blue-600 font-medium text-sm">
-                ID: {business?.bus_id}
-              </Text>
-            </View>
-          </View>
+        <View className="px-5 pt-6 pb-6 border-b border-gray-200">
+          <Text className="text-gray-900 font-semibold text-lg mb-2">
+            {businessName}
+          </Text>
+          <Text className="text-gray-600 text-sm">ID: {business?.bus_id}</Text>
         </View>
 
         {/* Respondent Information */}
         {loadingBusInfo ? (
-          <LoadingCard title="Respondent Information" message="Loading respondent information..." />
+          <LoadingSection title="Respondent Information" />
         ) : (
-          <Card className="mt-4 p-4">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">
+          <View className="px-5 py-5 border-b border-gray-200">
+            <Text className="text-gray-900 font-medium text-sm mb-4">
               Respondent Information
             </Text>
-            <InfoRow icon={UserRound} label="Full Name" value={fullName || 'N/A'} />
-            <InfoRow icon={CreditCard} label="Record ID" value={respondentId || 'N/A'} />
-            <InfoRow icon={Phone} label="Contact Number" value={contact || 'N/A'} />
-          </Card>
+            <InfoRow label="Full Name" value={fullName || "N/A"} />
+            <InfoRow label="Record ID" value={respondentId || "N/A"} />
+            <View className="py-3">
+              <Text className="text-gray-500 text-xs mb-1">Contact Number</Text>
+              <Text className="text-gray-900 text-sm">{contact || "N/A"}</Text>
+            </View>
+          </View>
         )}
 
         {/* Business Overview */}
         {loadingBusInfo ? (
-          <LoadingCard title="Business Overview" message="Loading business information..." />
+          <LoadingSection title="Business Overview" />
         ) : (
-          <Card className="mt-4 p-4">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">
+          <View className="px-5 py-5 border-b border-gray-200">
+            <Text className="text-gray-900 font-medium text-sm mb-4">
               Business Overview
             </Text>
-            <InfoRow icon={MapPin} label="Address" value={businessAddress || 'Not specified'} />
-            <InfoRow icon={Calendar} label="Date Registered" value={registeredDate as string || 'N/A'} />
-            <InfoRow icon={UserRound} label="Registered By" value={registeredBy} />
-          </Card>
+            <InfoRow
+              label="Address"
+              value={businessAddress || "Not specified"}
+            />
+            <InfoRow
+              label="Date Registered"
+              value={(registeredDate as string) || "N/A"}
+            />
+            <View className="py-3">
+              <Text className="text-gray-500 text-xs mb-1">Registered By</Text>
+              <Text className="text-gray-900 text-sm">{registeredBy}</Text>
+            </View>
+          </View>
         )}
 
         {/* Financial Information */}
         {loadingBusInfo ? (
-          <LoadingCard title="Financial Information" message="Loading business information..."/>
+          <LoadingSection title="Financial Information" />
         ) : (
-          <Card className="mt-4 p-4">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">
+          <View className="px-5 py-5 border-b border-gray-200">
+            <Text className="text-gray-900 font-medium text-sm mb-4">
               Financial Information
             </Text>
-            <InfoRow 
-              label="Gross Sales" 
-              value={formatCurrency(business?.bus_gross_sales)} 
-              valueColor="text-green-600" 
-            />
-          </Card>
+            <View className="py-3">
+              <Text className="text-gray-500 text-xs mb-1">Gross Sales</Text>
+              <Text className="text-green-600 text-sm font-medium">
+                {formatCurrency(business?.bus_gross_sales)}
+              </Text>
+            </View>
+          </View>
         )}
 
         {/* Documents */}
         {loadingBusInfo ? (
-          <LoadingCard title="Documents" message="Loading business documents..."/>
+          <LoadingSection title="Documents" />
         ) : (
           businessFiles.length > 0 && (
-            <Card className="mt-4 p-4">
+            <View className="px-5 py-5">
               <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-gray-900 font-semibold text-lg">
+                <Text className="text-gray-900 font-medium text-sm">
                   Documents
                 </Text>
-                <View className="bg-blue-100 px-2 py-1 rounded-full">
-                  <Text className="text-blue-600 text-xs font-medium">
-                    {businessFiles.length} {businessFiles.length === 1 ? 'Document' : 'Documents'}
-                  </Text>
-                </View>
+                <Text className="text-gray-500 text-xs">
+                  {businessFiles.length}
+                </Text>
               </View>
-              
+
               <FlatList
                 overScrollMode="never"
                 maxToRenderPerBatch={1}
@@ -267,9 +274,11 @@ export default function BusinessDetails() {
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
               />
-            </Card>
+            </View>
           )
         )}
+
+        <View className="h-8" />
       </ScrollView>
     </PageLayout>
   );

@@ -3,7 +3,7 @@ import { api } from "@/api/api";
 export const getAnnouncementRequest = async () => {
   try {
     const response = await api.get(`announcement/list/`);
-    const data = response.data?.data ?? response.data ?? [];
+    const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
     const announcements = Array.isArray(data) ? data : [];
 
     // Sort announcements by created_at descending
@@ -16,9 +16,9 @@ export const getAnnouncementRequest = async () => {
   }
 };
 
-export const getAnnouncementRecipientRequest = async () => {
+export const getAnnouncementRecipientRequest = async (ann_id: number) => {
   try {
-    const response = await api.get(`announcement/create-recipient/`);
+    const response = await api.get(`announcement/create-recipient/?ann_id=${ann_id}`);
     const data = response.data?.data ?? response.data ?? [];
     return Array.isArray(data) ? data : [];
   } catch (err) {
@@ -27,3 +27,12 @@ export const getAnnouncementRecipientRequest = async () => {
   }
 };
 
+export const getCreatedReceivedAnnouncements = async (staff_id: string) => {
+  try {
+    const response = await api.get(`announcement/created-received/${staff_id}/`);
+    return response.data || { created: [], received: [] };
+  } catch (err) {
+    console.error("API Error:", err);
+    return { created: [], received: [] };
+  }
+};

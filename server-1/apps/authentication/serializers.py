@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileFullSerializer
 from apps.administration.serializers.staff_serializers import StaffAccountSerializer
 from apps.administration.models import Staff
+from apps.profiling.models import RequestRegistrationComposition
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
 from apps.profiling.serializers.business_serializers import BusinessRespondentBaseSerializer
 from django.contrib.auth import get_user_model
@@ -16,6 +17,7 @@ User = get_user_model()
 class UserAccountSerializer(serializers.ModelSerializer):
     staff = serializers.SerializerMethodField()
     personal = serializers.SerializerMethodField()
+    req = serializers.SerializerMethodField()
     
     class Meta:
         model = Account
@@ -28,6 +30,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
             'rp',
             'br',
             'staff',
+            'req',
         ]
 
 
@@ -52,11 +55,18 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
     def get_personal(self, obj):
         personal = None
-        if obj.rp:
+        if obj.rp :
             personal = PersonalBaseSerializer(obj.rp.per).data
-        else:
+        elif obj.br:
             personal = BusinessRespondentBaseSerializer(obj.br).data
+        else:
+            req = RequestRegistrationComposition.objects.filter(acc=obj.acc_id).first()
+            personal = PersonalBaseSerializer(req.per).data
         return personal
+
+    def get_req(self, obj):
+        request = RequestRegistrationComposition.objects.filter(acc=obj.acc_id).first()
+        return request.req.req_id if request and request.req else None
         
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()

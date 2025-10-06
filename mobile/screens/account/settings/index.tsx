@@ -43,7 +43,7 @@ export default () => {
             <Mail width={35} height={20}/>
             <View>
               <Text className="text-[14px] text-gray-800">Email Address</Text>
-              <Text className="text-sm text-gray-500">{user?.email}</Text>
+              <Text className="text-sm text-gray-500">{user?.email || "No email added"}</Text>
             </View>
           </View>
           <TouchableOpacity onPress={() => router.push("/(account)/settings/change-email")}>

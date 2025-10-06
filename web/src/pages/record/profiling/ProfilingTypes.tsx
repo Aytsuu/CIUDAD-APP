@@ -126,14 +126,14 @@ export type IndividualRequestRecord = {
   per_edAttainment: string;
   per_religion: string;
   per_addresses: Record<string, any>[];
-  req_date: string;
+  req_created_at: string;
 }
 
 export type FamilyRequestRecord = {
   req_id: string;
   respondent: Record<string, any>;
   compositions: Record<string, any>[];
-  req_date: string;
+  req_created_at: string;
 }
 
 export type BusinessRecord = {
