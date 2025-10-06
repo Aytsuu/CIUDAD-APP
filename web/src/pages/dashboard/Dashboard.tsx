@@ -20,8 +20,8 @@ export default function Dashboard() {
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards,healthCards),
-    [profilingCards, adminCards, reportCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards),
+    [profilingCards, adminCards, reportCards, healthCards]
   );
 
   const validateFeature = (feature: string) => {

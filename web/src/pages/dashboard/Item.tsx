@@ -163,5 +163,6 @@ export const getItemsConfig = (
         ],
       },
     ];
-  }
+    
+  } else return []
 };
