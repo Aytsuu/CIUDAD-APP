@@ -200,7 +200,7 @@ export const generateDisbursementPdf = async (
     { text: "", size: 14 },
     { text: "Office of the Barangay Captain", bold: false, size: 13 },
     { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-    { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
+    // { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
   ];
 
   const centerX = pageWidth / 2;
