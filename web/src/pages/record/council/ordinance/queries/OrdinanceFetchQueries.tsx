@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getOrdinancesPaginated, type Ordinance } from "../restful-api/OrdinanceGetAPI";
+import { getOrdinancesPaginated } from "../restful-api/OrdinanceGetAPI";
 
 export const useOrdinancesPaginated = (
   page: number,

@@ -11,7 +11,7 @@ import { createPermitClearance } from "@/pages/record/treasurer/treasurer-cleara
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-search";
-import { useGetBusinesses, useGetPermitPurposes, type Businesses } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/permitClearanceFetchQueries";
+import { useGetBusinesses, useGetPermitPurposes } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/permitClearanceFetchQueries";
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
 import { useGetAnnualGrossSalesActive, type AnnualGrossSales } from "../Rates/queries/RatesFetchQueries";
 

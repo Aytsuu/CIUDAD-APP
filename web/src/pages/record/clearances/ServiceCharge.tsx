@@ -10,9 +10,7 @@ import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getPaidServiceCharges, markServiceChargeAsIssued, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
-import { localDateFormatter } from "@/helpers/localDateFormatter";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { toast } from "sonner";
 import { formatDate } from "@/helpers/dateHelper";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
