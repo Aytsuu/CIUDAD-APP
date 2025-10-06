@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { ReceiptText, Search, Ban, Eye } from 'lucide-react';
-import { useState } from "react";
+import React, { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
@@ -13,6 +13,7 @@ import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAn
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
 import { DocumentViewer } from "./components/DocumentViewer";
+import { useLoading } from "@/context/LoadingContext";
 
 
 const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
@@ -274,13 +275,23 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 
 function PermitClearance(){
+    const { showLoading, hideLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
     
     // Fetch data from backend using custom hooks
     const { data: permitClearances, isLoading, error } = useGetPermitClearances();
-    const { data: annualGrossSalesResponse } = useGetAnnualGrossSalesForPermit();
-    const { data: purposesResponse } = useGetPurposesAndRates();
+    const { data: annualGrossSalesResponse, isLoading: grossSalesLoading } = useGetAnnualGrossSalesForPermit();
+    const { data: purposesResponse, isLoading: purposesLoading } = useGetPurposesAndRates();
+
+    // Handle loading state
+    React.useEffect(() => {
+        if (isLoading || grossSalesLoading || purposesLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [isLoading, grossSalesLoading, purposesLoading, showLoading, hideLoading]);
 
     // Extract arrays from paginated responses (handle both paginated and direct array responses)
     const annualGrossSales = Array.isArray(annualGrossSalesResponse) 
@@ -290,17 +301,8 @@ function PermitClearance(){
         ? purposesResponse 
         : (purposesResponse as any)?.results || [];
 
-    // Debug: Log the raw API response
-    console.log("Raw permit clearances data:", permitClearances);
-    console.log("Annual gross sales response:", annualGrossSalesResponse);
-    console.log("Annual gross sales array:", annualGrossSales);
-    console.log("Purposes response:", purposesResponse);
-    console.log("Purposes array:", purposes);
 
-    // Fetch purpose and rates data for amount calculation
-    // const { data: purposes = [] } = useGetPurposeAndRate();
-
-    const filteredData = (permitClearances || []).filter((item: any) => {
+    const filteredData = (Array.isArray(permitClearances) ? permitClearances : []).filter((item: any) => {
         if (activeTab === "declined") {
             // Show only declined requests
             return item.req_status === "Declined";

@@ -9,14 +9,17 @@ import { useState, useEffect } from "react";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import DiscountAuthorizationForm from "./treasurer-discount-form";
-import { format } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetNonResidentCertReq, type NonResidentReq, usegetResidentCertReq, type ResidentReq } from "./queries/CertClearanceFetchQueries";
 import DeclineRequestForm from "./declineForm";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 function PersonalClearance() {
     // const { user } = useAuth();
+    const { showLoading, hideLoading } = useLoading();
 
     const [currentPage, setCurrentPage] = useState(1); 
     const [pageSize, setPageSize] = useState(10);
@@ -40,8 +43,24 @@ function PersonalClearance() {
         hasDisabilityEligible?: boolean;
     } | null>(null);
 
-    const {data: nonResidentClearanceRequests = [], isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq();
-    const {data: residentClearanceRequests = [], isLoading: residentLoading, error: residentError} = usegetResidentCertReq();
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const {data: nonResidentData, isLoading: nonResidentLoading, error: nonResidentError} = useGetNonResidentCertReq(searchTerm, currentPage, pageSize);
+    const {data: residentData, isLoading: residentLoading, error: residentError} = usegetResidentCertReq(searchTerm, currentPage, pageSize);
+
+    // Handle loading state
+    useEffect(() => {
+        if (nonResidentLoading || residentLoading) {
+            showLoading();
+        } else {
+            hideLoading();
+        }
+    }, [nonResidentLoading, residentLoading, showLoading, hideLoading]);
+
+    const nonResidentClearanceRequests = nonResidentData?.results || [];
+    const residentClearanceRequests = residentData?.results || [];
+    const totalCount = residentType === "non-resident" ? (nonResidentData?.count || 0) : (residentData?.count || 0);
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     console.log('resident', residentClearanceRequests)
     
@@ -59,6 +78,7 @@ function PersonalClearance() {
     useEffect(() => {
         if (error) {
             console.error("Error fetching personal clearances:", error);
+            showErrorToast("Failed to load personal clearance data. Please try again.");
         }
     }, [error]);
 
@@ -155,7 +175,7 @@ function PersonalClearance() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {format(new Date(row.getValue("nrc_req_date")), "MM-dd-yyyy")}
+                    {formatDate(row.getValue("nrc_req_date"), "long")}
                 </div>
             ),
         },
@@ -202,7 +222,10 @@ function PersonalClearance() {
                                 <DeclineRequestForm
                                     id = {row.original.nrc_id}
                                     isResident = {false}
-                                    onSuccess={() => setIsDialogOpen(false)}
+                                    onSuccess={() => {
+                                        setIsDialogOpen(false);
+                                        showSuccessToast("Request declined successfully!");
+                                    }}
                                 />
                             }
                         />
@@ -288,7 +311,7 @@ function PersonalClearance() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {format(new Date(row.original.cr_req_request_date), "MM-dd-yyyy")}
+                    {formatDate(row.original.cr_req_request_date, "long")}
                 </div>
             ),
         },
@@ -403,7 +426,10 @@ function PersonalClearance() {
                                     <DeclineRequestForm
                                         id = {row.original.cr_id}
                                         isResident={true}
-                                        onSuccess={() => setIsDialogOpen(false)}
+                                        onSuccess={() => {
+                                            setIsDialogOpen(false);
+                                            showSuccessToast("Request declined successfully!");
+                                        }}
                                     />
                                 }
                             />
@@ -440,17 +466,22 @@ function PersonalClearance() {
                     Create, manage, and process personal clearance requests.
                 </p>
             </div>
-            <hr className="border-gray mb-7 sm:mb-8" /> 
+
 
             <div className="flex flex-col gap-5">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                         <div className="relative flex-1">
                             <Search
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                                className="absolute left-3 top-[38%] transform -translate-y-1/2 text-black-400 "
                                 size={17}
                             />
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
+                            <Input 
+                                placeholder="Search by name, ID, or purpose..." 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 w-full bg-white text-sm border-gray-300" 
+                            />
                         </div>
                         
                         {/* Toggle Button between Resident and Non-Resident */}
@@ -491,7 +522,10 @@ function PersonalClearance() {
                             mainContent={
                                 <div className="w-full h-full">
                                     <PersonalClearanceForm 
-                                        onSuccess={() => setIsDialogOpen(false)} 
+                                        onSuccess={() => {
+                                            setIsDialogOpen(false);
+                                            showSuccessToast("Personal clearance request created successfully!");
+                                        }} 
                                     />
                                 </div>
                             }
@@ -571,12 +605,12 @@ function PersonalClearance() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
                      <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                         Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredData?.length || 0)} of {filteredData?.length || 0} rows
+                         Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                      </p>
  
                      <div className="w-full sm:w-auto flex justify-center">
                          <PaginationLayout
-                             totalPages={Math.ceil((filteredData?.length || 0) / pageSize)}
+                             totalPages={totalPages}
                              currentPage={currentPage}
                              onPageChange={setCurrentPage}
                          />
@@ -599,8 +633,8 @@ function PersonalClearance() {
                             discountedAmount={appliedDiscountAmount}
                             discountReason={appliedDiscountReason}
                             onComplete={() => {
-                                
                                 setIsReceiptModalOpen(false);
+                                showSuccessToast("Receipt created successfully!");
                             }}
                             onRequestDiscount={() => {
                                 setIsReceiptModalOpen(false);

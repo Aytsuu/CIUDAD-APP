@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -8,20 +8,19 @@ import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { format, parseISO } from "date-fns";
 import { getIssuedCertificates, getIssuedBusinessPermits, getAllPurposes, type IssuedCertificate, type IssuedBusinessPermit, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
-import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useAuth } from "@/context/AuthContext";
-import React from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
 import TemplateMainPage from "../council/templates/template-main";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
 
 interface ExtendedIssuedCertificate extends IssuedCertificate {
   AsignatoryStaff?: string;
@@ -31,10 +30,11 @@ interface ExtendedIssuedCertificate extends IssuedCertificate {
 function IssuedCertificates() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
   const [filterValue, setFilterValue] = useState("All");
-  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates");
+  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits">("certificates");
   
   
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
@@ -57,7 +57,7 @@ function IssuedCertificates() {
     }));
   }, [staffList]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("IssuedCertificates: resolved staffId from useAuth:", staffId);
   }, [staffId]);
 
@@ -120,13 +120,7 @@ function IssuedCertificates() {
       header: "Date Issued",
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
-        try {
-          const date = parseISO(dateStr);
-          return <div>{format(date, "MM/dd/yyyy")}</div>;
-        } catch (e) {
-          console.error("Error formatting date:", e);
-          return <div>{dateStr || ""}</div>;
-        }
+        return <div>{formatDate(dateStr, "long")}</div>;
       },
     },
     {
@@ -191,13 +185,7 @@ function IssuedCertificates() {
       header: "Date Issued",
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
-        try {
-          const date = parseISO(dateStr);
-          return <div>{format(date, "MM/dd/yyyy")}</div>;
-        } catch (e) {
-          console.error("Error formatting date:", e);
-          return <div>{dateStr || ""}</div>;
-        }
+        return <div>{formatDate(dateStr, "long")}</div>;
       },
     },
     {
@@ -310,7 +298,7 @@ function IssuedCertificates() {
     {
       accessorKey: "sr_req_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{localDateFormatter(row.getValue("sr_req_date"))}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("sr_req_date"), "long")}</div>,
     },
     {
       id: "actions",
@@ -347,6 +335,15 @@ function IssuedCertificates() {
     queryKey: ["issuedServiceCharges"],
     queryFn: getPaidServiceCharges,
   });
+
+  // Handle loading state
+  useEffect(() => {
+    if (isLoading || businessPermitsLoading || serviceChargesLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, businessPermitsLoading, serviceChargesLoading, showLoading, hideLoading]);
 
   const { data: allPurposes, isLoading: _purposesLoading } = useQuery<Purpose[]>({
     queryKey: ["allPurposes"],
@@ -446,21 +443,7 @@ function IssuedCertificates() {
         </div>
       )}
 
-      {activeTab === "serviceCharges" && (
-        <div className="relative w-full flex justify-between items-center mb-4">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1 bg-white">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input 
-                placeholder="Search..." 
-                className="pl-10 w-72" 
-                value={serviceChargeSearchQuery}
-                onChange={(e) => setServiceChargeSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       <div className="w-full flex flex-col">
         <div className="w-full h-auto bg-white p-3">
@@ -493,16 +476,7 @@ function IssuedCertificates() {
               >
                 Business Permits
               </button>
-              <button
-                onClick={() => setActiveTab("serviceCharges")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors border ${
-                  activeTab === "serviceCharges"
-                    ? "bg-[#eaf4ff] text-[#2563eb] border-[#b6d6f7] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
-                }`}
-              >
-                Service Charges
-              </button>
+              
             </div>
           </div>
         </div>
@@ -543,23 +517,7 @@ function IssuedCertificates() {
           </div>
         )}
 
-        {activeTab === "serviceCharges" && (
-          <div className="bg-white w-full overflow-x-auto">
-            {serviceChargesLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Spinner size="lg" />
-              </div>
-            ) : serviceChargesError ? (
-              <div className="text-center py-5 text-red-500">Error loading data</div>
-            ) : (
-              <DataTable 
-                columns={serviceChargeColumns} 
-                data={filteredServiceCharges || []} 
-                header={true} 
-              />
-            )}
-          </div>
-        )}
+
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

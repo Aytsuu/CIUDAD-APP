@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -14,14 +14,17 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busFetchQueries";
-import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAuth } from "@/context/AuthContext";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 function BusinessDocumentPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
@@ -31,16 +34,32 @@ function BusinessDocumentPage() {
     queryFn: getBusinessPermit,
   });
 
+  // Handle loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      showErrorToast("Failed to load business permit data. Please try again.");
+    }
+  }, [error]);
+
   
   const markAsIssuedMutation = useMutation<any, unknown, MarkBusinessPermitVariables>({
     mutationFn: markBusinessPermitAsIssued,
     onSuccess: (_data, variables) => {
-      toast.success(`Business permit ${variables.bpr_id} marked as printed successfully!`);
+      showSuccessToast(`Business permit ${variables.bpr_id} marked as printed successfully!`);
       
       queryClient.invalidateQueries({ queryKey: ["businessPermits"] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to mark business permit as printed");
+      showErrorToast(error.response?.data?.error || "Failed to mark business permit as printed");
     },
   });
 
@@ -93,7 +112,13 @@ function BusinessDocumentPage() {
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
-      cell: ({ row }) => <div className="capitalize">{row.getValue("bpr_id")}</div>,
+      cell: ({ row }) => (
+        <div className="capitalize flex justify-center items-center">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("bpr_id")}
+          </span>
+        </div>
+      ),
     },
     {
       accessorKey: "business_name",
@@ -127,29 +152,9 @@ function BusinessDocumentPage() {
       },
     },
     {
-      accessorKey: "req_pay_method",
-      header: "Payment Method",
-      cell: ({ }) => {
-        // Display "Walk-in" for all business permit requests
-        const value = "Walk-in";
-        const bg = "bg-[#eaffea]"; 
-        const text = "text-[#15803d]"; 
-        const border = "border border-[#b6e7c3]";
-        
-        return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {value}
-          </span>
-        );
-      },
-    },
-    {
       accessorKey: "req_request_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     // {
     //   accessorKey: "req_claim_date",

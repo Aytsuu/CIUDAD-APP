@@ -24,20 +24,10 @@ export default function RejectedTable() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { data: rejectedReqData = { results: [], count: 0 }, isLoading: isLoadingRejected } = useGetGarbageRejectRequest( 
-    currentPage, 
-    pageSize, 
-    debouncedSearchQuery,
-  )
+  const { data: rejectedReqData = { results: [], count: 0 }, isLoading: isLoadingRejected } = useGetGarbageRejectRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
 
-  // Apply sitio filter to the fetched data
-  const filteredRequests = selectedSitio === "0" 
-    ? rejectedReqData.results 
-    : rejectedReqData.results.filter(item => item.sitio_name === selectedSitio)
-
-  const displayedRequests = filteredRequests || []
+  const rejectedRequests = rejectedReqData.results || []
   const totalItems = rejectedReqData.count || 0
-  const totalDisplayedItems = selectedSitio === "0" ? totalItems : filteredRequests.length
   const totalPages = Math.ceil(totalItems / pageSize)
 
   // ----------------- LOADING MGMT --------------------
@@ -56,9 +46,9 @@ export default function RejectedTable() {
   // Get sitio options from the fetched data
   const sitioOptions = [
     { id: "0", name: "All Sitios" },
-    ...Array.from(new Set(rejectedReqData.results?.map(item => item.sitio_name) || []))
-      .filter(name => name)
-      .map(name => ({ id: name, name }))
+    ...Array.from(new Set(rejectedRequests.map((item: GarbageRequestReject) => item.sitio_name)))
+      .filter(Boolean)
+      .map((name) => ({ id: name as string, name: name as string }))
   ]
 
   const columns: ColumnDef<GarbageRequestReject>[] = [
@@ -171,9 +161,7 @@ export default function RejectedTable() {
       <div className="flex flex-col gap-4 p-6">
         {/* Title and Count */}
         <div className="flex items-center space-x-2">
-          <h2 className="text-lg font-medium text-gray-800">
-            Rejected Requests ({selectedSitio === "0" ? totalItems : totalDisplayedItems})
-          </h2>
+          <h2 className="text-lg font-medium text-gray-800">Rejected Requests ({totalItems})</h2>
         </div>
 
         {/* Filters Row - Modified layout */}
@@ -232,21 +220,21 @@ export default function RejectedTable() {
 
       {/* Cards Container */}
       <div className="p-6 pt-0">
-        {totalDisplayedItems === 0 ? (
+        {totalItems === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">No rejected requests found matching your criteria.</p>
           </div>
         ) : (
           <>
             <div className="space-y-3">
-              <DataTable columns={columns} data={displayedRequests}/>
+              <DataTable columns={columns} data={rejectedRequests}/>
             </div>
 
             {/* Pagination Footer */}
             <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4 mt-6">
               <p className="text-gray-600">
-                Showing {totalDisplayedItems > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-                {Math.min(currentPage * pageSize, totalDisplayedItems)} of {totalDisplayedItems} entries
+                Showing {totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
               </p>
               {totalItems > 0 && (
                 <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

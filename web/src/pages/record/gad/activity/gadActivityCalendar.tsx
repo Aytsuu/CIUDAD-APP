@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAnnualDevPlansByYear } from "../annual_development_plan/queries/annualDevPlanFetchQueries";
@@ -10,6 +10,7 @@ import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-col
 import { hotspotColumns, wasteColColumns } from "../../waste-scheduling/event-columns/event-cols";
 import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
+import { useLoading } from "@/context/LoadingContext";
 
 const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set<number>) => {
   if (!Array.isArray(annualDevPlans)) {
@@ -273,6 +274,7 @@ const legendItems = [
 
 
 function GADActivityPage() {
+  const { showLoading, hideLoading } = useLoading();
   const [isLoading] = useState(false);
   
 
@@ -293,6 +295,15 @@ function GADActivityPage() {
   // Fetch hotspot and waste collection data
   const { data: hotspotData = [], isLoading: isHotspotLoading } = useGetHotspotRecords();
   const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
+
+  // Handle loading state
+  useEffect(() => {
+    if (isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isAnnualDevPlansLoading, isProjectProposalsLoading, isResolutionsLoading, isWasteEventLoading, isHotspotLoading, isWasteColLoading, showLoading, hideLoading]);
 
   // Create a set of dev_ids that have project proposals
   const devIdsWithProposals = useMemo(() => {

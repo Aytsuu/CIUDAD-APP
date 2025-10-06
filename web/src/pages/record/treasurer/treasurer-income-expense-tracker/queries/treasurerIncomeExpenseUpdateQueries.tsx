@@ -1,8 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateIncomeExpense } from "../request/income-ExpenseTrackingPutRequest";
 import { updateIncomeTracking } from "../request/income-ExpenseTrackingPutRequest";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { showErrorToast } from "@/components/ui/toast";
 import { showSuccessToast } from "@/components/ui/toast";
 import { updateIncomeExpenseMain } from "../request/income-ExpenseTrackingPostRequest";

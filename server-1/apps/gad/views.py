@@ -701,13 +701,36 @@ class ProjectProposalForProposal(generics.ListAPIView):
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
     serializer_class = GADDevelopmentPlanSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         year = self.request.query_params.get('year')
         qs = DevelopmentPlan.objects.all()
         if year:
             qs = qs.filter(dev_date__year=year)
-        return qs
+        
+        # Add search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            qs = qs.filter(
+                Q(dev_project__icontains=search) |
+                Q(dev_client__icontains=search) |
+                Q(dev_issue__icontains=search) |
+                Q(dev_indicator__icontains=search)
+            )
+        
+        return qs.order_by('-dev_date')
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):
         try:
@@ -754,8 +777,20 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
 # GET years with data
 class GADDevelopmentPlanYears(APIView):
     def get(self, request, *args, **kwargs):
-        years = DevelopmentPlan.objects.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
-        return Response(sorted(years))
+        # Add search functionality for years
+        search = request.query_params.get('search', None)
+        queryset = DevelopmentPlan.objects.all()
+        
+        if search:
+            queryset = queryset.filter(
+                Q(dev_project__icontains=search) |
+                Q(dev_client__icontains=search) |
+                Q(dev_issue__icontains=search) |
+                Q(dev_indicator__icontains=search)
+            )
+        
+        years = queryset.annotate(year=ExtractYear('dev_date')).values_list('year', flat=True).distinct()
+        return Response(sorted(years, reverse=True))
 
 class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
     queryset = DevelopmentPlan.objects.all()

@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-
 export const PersonalCertificationSchema = z.object({
     cert_type: z.literal('personal'),
     requester: z.string().min(1, "Requester is required"),
@@ -9,21 +8,19 @@ export const PersonalCertificationSchema = z.object({
     pr_id: z.number().optional(), // Add purpose ID field
 });
 
-
 export const BusinessPermitSchema = z.object({
     business_id: z.number().optional(),
     cert_type: z.literal('permit'),
     business_name: z.string().min(1, "Business name is required"),
     business_address: z.string().min(1, "Business address is required"),
     gross_sales: z.string().min(1, "Annual gross sales is required"),
-    previous_permit_image: z.string().optional(), // Previous permit image for existing businesses
-    assessment_image: z.string().optional(), // Assessment document for all businesses
-    pr_id: z.number().optional(), // Purpose and rates ID
-    rp_id: z.string().optional(), // Resident profile ID
-    req_amount: z.number().optional(), // Required amount field
-    ags_id: z.number().optional(), // Annual gross sales ID
+    previous_permit_image: z.string().optional(), 
+    assessment_image: z.string().optional(), 
+    pr_id: z.number().optional(), 
+    rp_id: z.string().optional(), 
+    req_amount: z.number().optional(), 
+    ags_id: z.number().optional(), 
 });
-
 
 export const CertificationRequestSchema = z.discriminatedUnion('cert_type', [
     PersonalCertificationSchema,

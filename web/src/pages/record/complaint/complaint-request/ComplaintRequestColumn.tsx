@@ -3,7 +3,6 @@ import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import {
-  UserCheck2,
   ArrowUpDown,
   MoreHorizontal,
   File,
