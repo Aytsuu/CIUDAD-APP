@@ -289,8 +289,8 @@ function BusinessDocumentPage() {
           mainContent={
             <div className="w-full h-full">
               <TemplateMainPage
-                businessName={selectedPermit.business_name || "Business"}
-                address={selectedPermit.business_address || "Address not available"}
+                businessName={selectedPermit.business_name || "N/A"}
+                address={selectedPermit.business_address || "N/A"}
                 purpose="bussClear"
                 issuedDate={new Date().toISOString()}
               />
