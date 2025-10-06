@@ -25,6 +25,7 @@ import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetc
 import { useLoading } from "@/context/LoadingContext";
 import { formatDate } from "@/helpers/dateHelper";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { useEffect } from "react";
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;

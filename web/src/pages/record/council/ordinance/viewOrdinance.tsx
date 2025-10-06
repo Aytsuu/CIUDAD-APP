@@ -6,7 +6,6 @@ import { Eye, Brain } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { Ordinance, OrdinanceFolder } from './restful-api/OrdinanceGetAPI';
-// import { OrdinanceAIService, AIAnalysisResponse } from './queries/OrdinanceAIService.ts';
 import { useMemo, useState } from 'react';
 import { huggingFaceAIService, AIAnalysisResponse } from './services/HuggingFaceAIService';
 

@@ -40,7 +40,7 @@ function OrdinancePage() {
     const [filter, setFilter] = useState<string>("all");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
+    const [_totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     
@@ -49,7 +49,7 @@ function OrdinancePage() {
     const debouncedPageSize = useDebounce(pageSize, 100);
     
     // Use paginated query
-    const { data: ordinancesData, isLoading: isOrdinancesLoading, error: ordinancesError } = useOrdinancesPaginated(
+    const { data: ordinancesData, isLoading: isOrdinancesLoading, error: _ordinancesError } = useOrdinancesPaginated(
         currentPage,
         debouncedPageSize,
         debouncedSearchTerm

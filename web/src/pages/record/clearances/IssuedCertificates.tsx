@@ -40,7 +40,7 @@ function IssuedCertificates() {
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
   const [businessFilterValue, setBusinessFilterValue] = useState("All");
   
-  const [serviceChargeSearchQuery, setServiceChargeSearchQuery] = useState("");
+  const [serviceChargeSearchQuery, _setServiceChargeSearchQuery] = useState("");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
@@ -241,7 +241,7 @@ function IssuedCertificates() {
     },
   ];
 
-  const serviceChargeColumns: ColumnDef<ServiceCharge>[] = [
+  const _serviceChargeColumns: ColumnDef<ServiceCharge>[] = [
     {
       accessorKey: "sr_code",
       header: ({ column }) => (
@@ -331,7 +331,7 @@ function IssuedCertificates() {
     queryFn: getIssuedBusinessPermits,
   });
 
-  const { data: serviceCharges, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery<ServiceCharge[]>({
+  const { data: serviceCharges, isLoading: serviceChargesLoading, error: _serviceChargesError } = useQuery<ServiceCharge[]>({
     queryKey: ["issuedServiceCharges"],
     queryFn: getPaidServiceCharges,
   });
