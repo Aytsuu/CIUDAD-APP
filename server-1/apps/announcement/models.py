@@ -13,7 +13,7 @@ class Announcement(models.Model):
     ann_to_sms = models.BooleanField(default=True)
     ann_to_email = models.BooleanField(default=True)
     ann_status = models.CharField(max_length=50, default="Inactive")
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'announcement'

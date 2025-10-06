@@ -77,7 +77,7 @@ export const FormDateAndTimeInput = ({
             {label && (
               <Text className="text-sm mb-2">{label}</Text>
             )}
-            <View className="flex-row items-center">
+            <View className="flex-row items-center gap-4">
               <TouchableOpacity
                 className={`
                   flex-1
@@ -85,7 +85,7 @@ export const FormDateAndTimeInput = ({
                   px-3
                   bg-white
                   border
-                  rounded-l-md
+                  rounded-xl
                   flex-row
                   items-center
                   justify-between
@@ -96,13 +96,13 @@ export const FormDateAndTimeInput = ({
                 disabled={!editable}
               >
                 <Text 
-                  className={`
+                  className={`native:text-sm
                     ${!dateValue ? 'text-[#888]' : 'text-black'}
                   `}
                 >
                   {dateValue ? dateValue.toLocaleDateString() : 'Select Date'}
                 </Text>
-                <Calendar size={20} color={error ? '#ef4444' : '#888'} />
+                <Calendar size={18} color={error ? '#ef4444' : '#888'} />
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -111,10 +111,8 @@ export const FormDateAndTimeInput = ({
                   h-[45px]
                   px-3
                   bg-white
-                  border-t
-                  border-b
-                  border-r
-                  rounded-r-md
+                  border
+                  rounded-xl
                   flex-row
                   items-center
                   justify-between
@@ -125,7 +123,7 @@ export const FormDateAndTimeInput = ({
                 disabled={!editable}
               >
                 <Text 
-                  className={`
+                  className={`native:text-sm
                     ${!dateValue ? 'text-[#888]' : 'text-black'}
                   `}
                 >
@@ -134,7 +132,7 @@ export const FormDateAndTimeInput = ({
                     minute: '2-digit' 
                   }) : 'Select Time'}
                 </Text>
-                <Clock size={20} color={error ? '#ef4444' : '#888'} />
+                <Clock size={18} color={error ? '#ef4444' : '#888'} />
               </TouchableOpacity>
             </View>
             

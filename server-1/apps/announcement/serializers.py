@@ -71,7 +71,6 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         files = validated_data.pop('files', [])
         recipients_data = validated_data.pop('recipients', [])
-        print(recipients_data)
 
         # Create the announcement
         announcement = Announcement.objects.create(**validated_data)
