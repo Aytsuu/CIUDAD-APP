@@ -35,7 +35,7 @@ export default function EditMonthlyRecipientList() {
 
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
-      const staffExists = staffOptions.formatted.some((staff: { id: string }) => staff.id === passedStaffId);
+      const staffExists = staffOptions.formatted.some((staff) => staff.id === passedStaffId);
       if (staffExists) {
         setSelectedStaffId(passedStaffId);
       }
