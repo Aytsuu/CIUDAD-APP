@@ -104,8 +104,6 @@ class BusinessPermitRequest(models.Model):
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
     bpf_id = models.ForeignKey('BusinessPermitFile', on_delete=models.CASCADE, db_column='bpf_id', related_name='business_permits', null=True)
     
-    # previous_permit_image = models.CharField(max_length=500, null=True, blank=True)
-    # assessment_image = models.CharField(max_length=500, null=True, blank=True)
     class Meta:
         db_table = 'business_permit_request'
         managed = False
