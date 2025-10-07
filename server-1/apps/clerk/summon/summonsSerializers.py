@@ -1,0 +1,213 @@
+from rest_framework import serializers
+from apps.clerk.models import *
+from apps.complaint.models import *
+
+
+# ======================== SUMMON DATE AND TIME ========================
+class SummonDateAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonDateAvailability
+        fields = '__all__'
+
+class SummonTimeAvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SummonTimeAvailability
+        fields = '__all__'
+
+
+# ======================== COMPLAINT RELATED SERIALIZERS  ========================
+class AccusedDetailsSerializer(serializers.ModelSerializer):
+    # address = AddressDetailsSerializer(source='add')
+    
+    class Meta:
+        model = Accused
+        fields = [
+            'acsd_id', 
+            'acsd_name',
+            'acsd_age',
+            'acsd_gender',
+            'acsd_description',
+            # 'address'
+        ]
+        
+
+# ======================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
+class HearingScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HearingSchedule
+        fields = '__all__'
+
+
+class HearingMinutesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HearingMinutes
+        fields = '__all__'
+
+class RemarkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Remark
+        fields = '__all__'
+
+class RemarkSuppDocSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RemarkSuppDocs
+        fields = '__all__'
+
+class SummonCasesSerializer(serializers.ModelSerializer):
+    complainant_names = serializers.SerializerMethodField()
+    complainant_addresses = serializers.SerializerMethodField()
+    complainant_rp_ids = serializers.SerializerMethodField()  
+    incident_type = serializers.SerializerMethodField()
+    accused_names = serializers.SerializerMethodField()
+    accused_addresses = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SummonCases
+        fields = [
+            'sc_id', 
+            'sc_code',
+            'sc_case_status', 
+            'sc_date_marked', 
+            'sc_reason', 
+            'comp_id', 
+            'complainant_names', 
+            'complainant_addresses',
+            'complainant_rp_ids',  
+            'incident_type', 
+            'accused_names',
+            'accused_addresses'
+        ]
+    
+    def get_complainant_names(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_name for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainants: {e}")
+                return []
+        return []
+    
+    def get_complainant_addresses(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                return [cc.cpnt.cpnt_address or "N/A" for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainant addresses: {e}")
+                return []
+        return []
+    
+    def get_complainant_rp_ids(self, obj):
+        if obj.comp_id:
+            try:
+                complainants = obj.comp_id.complaintcomplainant_set.all()
+                # Get rp_id for each complainant
+                return [cc.cpnt.rp_id_id for cc in complainants]
+            except Exception as e:
+                print(f"Error getting complainant rp_ids: {e}")
+                return []
+        return []
+    
+    def get_incident_type(self, obj):
+        if obj.comp_id:
+            return getattr(obj.comp_id, 'comp_incident_type', None)
+        return None
+    
+    def get_accused_names(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_name for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused: {e}")
+                return []
+        return []
+    
+    def get_accused_addresses(self, obj):
+        if obj.comp_id:
+            try:
+                accused_list = obj.comp_id.complaintaccused_set.all()
+                return [ca.acsd.acsd_address or "N/A" for ca in accused_list]
+            except Exception as e:
+                print(f"Error getting accused addresses: {e}")
+                return []
+        return []
+    
+class RemarkDetailSerializer(serializers.ModelSerializer):
+    supp_docs = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Remark
+        fields = [
+            'rem_id',
+            'rem_remarks',
+            'rem_date',
+            'supp_docs'
+        ]
+    
+    def get_supp_docs(self, obj):
+        try:
+            supp_docs = RemarkSuppDocs.objects.filter(rem_id=obj.rem_id)
+            return RemarkSuppDocSerializer(supp_docs, many=True).data
+        except Exception as e:
+            print(f"Error getting remark supp docs: {e}")
+            return []
+
+class HearingScheduleDetailSerializer(serializers.ModelSerializer):
+    remarks = serializers.SerializerMethodField()
+    hearing_minutes = serializers.SerializerMethodField()
+    summon_date = SummonDateAvailabilitySerializer(source='sd_id', read_only=True)
+    summon_time = SummonTimeAvailabilitySerializer(source='st_id', read_only=True)
+    
+    class Meta:
+        model = HearingSchedule
+        fields = [
+            'hs_id',
+            'hs_level',
+            'hs_is_closed',
+            'summon_date',
+            'summon_time',
+            'remarks',
+            'hearing_minutes'
+        ]
+    
+    def get_remarks(self, obj):
+        try:
+            remarks = Remark.objects.filter(hs_id=obj.hs_id)
+            return RemarkDetailSerializer(remarks, many=True).data
+        except Exception as e:
+            print(f"Error getting remarks: {e}")
+            return []
+    
+    def get_hearing_minutes(self, obj):
+        try:
+            hearing_minutes = HearingMinutes.objects.filter(hs_id=obj.hs_id)
+            return HearingMinutesSerializer(hearing_minutes, many=True).data
+        except Exception as e:
+            print(f"Error getting hearing minutes: {e}")
+            return []
+    
+class SummonCaseDetailSerializer(serializers.ModelSerializer):
+    hearing_schedules = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SummonCases
+        fields = [
+            'sc_id', 
+            'sc_code',
+            'sc_case_status', 
+            'sc_date_marked', 
+            'sc_reason', 
+            'comp_id',
+            'hearing_schedules'
+        ]
+    
+    def get_hearing_schedules(self, obj):
+        try:
+            hearing_schedules = obj.hearing_schedules.all()
+            return HearingScheduleDetailSerializer(hearing_schedules, many=True).data
+        except Exception as e:
+            print(f"Error getting hearing schedules: {e}")
+            return []
+

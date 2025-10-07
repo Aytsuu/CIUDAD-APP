@@ -1,0 +1,90 @@
+from .summonsSerializers import *
+from django.db.models import Prefetch
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+
+
+# ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
+class SummonCasesView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCasesSerializer
+
+    def get_queryset(self):
+        queryset = SummonCases.objects.all().select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintcomplainant_set__cpnt__rp_id'),  # Add this
+            Prefetch('comp_id__complaintaccused_set__acsd')
+        )
+        
+        return queryset.order_by('sc_code')
+
+class SummonCaseDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCaseDetailSerializer
+    queryset = SummonCases.objects.all().prefetch_related(
+        'hearingschedule_set',  # This should be the correct reverse relation name
+        'hearingschedule_set__remark_set',
+        'hearingschedule_set__remark_set__remarksuppdocs_set',
+        'hearingschedule_set__hearingminutes_set',
+        'hearingschedule_set__sd_id',
+        'hearingschedule_set__st_id'
+    )
+    lookup_field = 'sc_id'
+    lookup_url_kwarg = 'sc_id'
+
+# ======================== SUMMON DATE AND TIME ========================
+class SummonDateAvailabilityView(generics.ListCreateAPIView):
+    serializer_class = SummonDateAvailabilitySerializer
+    queryset = SummonDateAvailability.objects.all()
+
+
+class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
+    queryset = SummonDateAvailability.objects.all()
+    serializer_class = SummonDateAvailabilitySerializer
+    lookup_field = 'sd_id'
+
+class SummonTimeAvailabilityView(generics.ListCreateAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+    queryset = SummonTimeAvailability.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        if isinstance(request.data, list):
+            serializer = self.get_serializer(data=request.data, many=True)
+            serializer.is_valid(raise_exception=True)
+            SummonTimeAvailability.objects.bulk_create([
+                SummonTimeAvailability(**data) for data in serializer.validated_data
+            ])
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return super().create(request, *args, **kwargs)
+
+class SummonTimeAvailabilityByDateView(generics.ListAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+
+    def get_queryset(self):
+        sd_id = self.kwargs.get('sd_id')  # get from URL path
+        queryset = SummonTimeAvailability.objects.all()
+        if sd_id is not None:
+            queryset = queryset.filter(sd_id=sd_id)
+        return queryset
+
+class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
+    queryset = SummonTimeAvailability.objects.all()
+    serializer_class = SummonTimeAvailabilitySerializer
+    lookup_field = 'st_id'
+
+
+class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
+    serializer_class = SummonTimeAvailabilitySerializer
+    queryset = SummonTimeAvailability.objects.all()
+    lookup_field = 'st_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

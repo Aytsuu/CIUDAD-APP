@@ -15,8 +15,6 @@ from apps.complaint.models import Complainant, Accused, ComplaintAccused
 from apps.treasurer.models import Invoice
 from apps.act_log.utils import create_activity_log
 from .models import (
-    SummonDateAvailability,
-    SummonTimeAvailability,
     ClerkCertificate,
     IssuedCertificate,
     BusinessPermitRequest,
@@ -32,19 +30,6 @@ from django.db.models import Q
 logger = logging.getLogger(__name__)
 
 # ==================== MIGHT DELETE LATER ========================    
-class SummonCasesView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonCasesSerializer
-
-    def get_queryset(self):
-        queryset = SummonCases.objects.all().select_related(
-            'comp_id'
-        ).prefetch_related(
-            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
-            Prefetch('comp_id__complaintaccused_set__acsd')
-        )
-        
-        return queryset.order_by('sc_code')
 
 class SummonScheduleByServiceRequestView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -82,33 +67,33 @@ class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargePaymentRequestSerializer
     queryset = ServiceChargePaymentRequest.objects.all()
     
-class UpdateSummonRequestView(generics.UpdateAPIView):
-    serializer_class = SummonRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id'
+# class UpdateSummonRequestView(generics.UpdateAPIView):
+#     serializer_class = SummonRequestSerializer
+#     queryset = ServiceChargeRequest.objects.all()
+#     lookup_field = 'sr_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
         
-        # Check if status is being updated to "Paid" and sr_code needs to be generated
-        if (request.data.get('status') == 'Paid' or 
-            request.data.get('sr_req_status') == 'Paid') and not instance.sr_code:
+#         # Check if status is being updated to "Paid" and sr_code needs to be generated
+#         if (request.data.get('status') == 'Paid' or 
+#             request.data.get('sr_req_status') == 'Paid') and not instance.sr_code:
             
-            # Generate sr_code using the logic: 0000-25, 0001-25, etc.
-            sr_count = ServiceChargeRequest.objects.count() + 1
-            year_suffix = timezone.now().year % 100
-            sr_code = f"{sr_count:04d}-{year_suffix:02d}"
+#             # Generate sr_code using the logic: 0000-25, 0001-25, etc.
+#             sr_count = ServiceChargeRequest.objects.count() + 1
+#             year_suffix = timezone.now().year % 100
+#             sr_code = f"{sr_count:04d}-{year_suffix:02d}"
             
-            # Add sr_code to the request data
-            request.data['sr_code'] = sr_code
+#             # Add sr_code to the request data
+#             request.data['sr_code'] = sr_code
             
-            logger.info(f"Generated sr_code: {sr_code} for ServiceChargeRequest: {instance.sr_id}")
+#             logger.info(f"Generated sr_code: {sr_code} for ServiceChargeRequest: {instance.sr_id}")
         
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class SummonSuppDocView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -132,60 +117,9 @@ class ServiceChargeDecisionView(generics.ListCreateAPIView):
     serializer_class = ServiceChargeDecisionSerializer
     queryset = ServiceChargeDecision.objects.all()
 
-class SummonDateAvailabilityView(generics.ListCreateAPIView):
-    serializer_class = SummonDateAvailabilitySerializer
-    queryset = SummonDateAvailability.objects.all()
 
 
-class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
-    queryset = SummonDateAvailability.objects.all()
-    serializer_class = SummonDateAvailabilitySerializer
-    lookup_field = 'sd_id'
-
-class SummonTimeAvailabilityView(generics.ListCreateAPIView):
-    serializer_class = SummonTimeAvailabilitySerializer
-    queryset = SummonTimeAvailability.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        if isinstance(request.data, list):
-            serializer = self.get_serializer(data=request.data, many=True)
-            serializer.is_valid(raise_exception=True)
-            SummonTimeAvailability.objects.bulk_create([
-                SummonTimeAvailability(**data) for data in serializer.validated_data
-            ])
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return super().create(request, *args, **kwargs)
-
-class SummonTimeAvailabilityByDateView(generics.ListAPIView):
-    serializer_class = SummonTimeAvailabilitySerializer
-
-    def get_queryset(self):
-        sd_id = self.kwargs.get('sd_id')  # get from URL path
-        queryset = SummonTimeAvailability.objects.all()
-        if sd_id is not None:
-            queryset = queryset.filter(sd_id=sd_id)
-        return queryset
-
-class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
-    queryset = SummonTimeAvailability.objects.all()
-    serializer_class = SummonTimeAvailabilitySerializer
-    lookup_field = 'st_id'
-
-
-class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
-    serializer_class = SummonTimeAvailabilitySerializer
-    queryset = SummonTimeAvailability.objects.all()
-    lookup_field = 'st_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+#========================== CASE TACKING VIEW ========================
 class CaseTrackingView(generics.RetrieveAPIView):
     serializer_class = CaseTrackingSerializer
     def get_object(self):

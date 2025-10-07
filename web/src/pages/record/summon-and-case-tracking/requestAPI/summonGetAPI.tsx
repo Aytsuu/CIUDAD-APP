@@ -11,14 +11,15 @@ export const getSummonCaseList = async () => {
 }
 
 
-export const getServiceChargeReqDetails = async (sr_id: string) => {
+export const getSummonCaseDetail = async (sc_id: string) => {
     try{
-        const res = await api.get(`clerk/service-charge-request-details/${sr_id}/`)
+        const res = await api.get(`clerk/summon-case-detail/${sc_id}/`)
         return res.data
     }catch(err){
         console.error(err)
     }
 }
+
 
 
 export const getSummonScheduleList = async (sr_id: string) => {
@@ -85,56 +86,12 @@ export const getSummonTimeSlots = async(sd_id: number) => {
 }
 
 
-export const getSummonReqPendingList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-pending-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-export const getSummonReqRejectedList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-rejected-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-
-export const getSummonReqAcceptedList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-accepted-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-
 export const getComplaintDetails = async (comp_id: string) => {
     try{
         const res = await api.get(`/complaint/${comp_id}/`)
 
         return res.data
     }catch(err){
-        console.error(err)
-    }
-}
-
-
-// ================ MIGHT DELETE LATER ===================
-
-export const getCaseDetails = async (srId: string) => {
-    try{
-        const res = await api.get(`clerk/case-details/${srId}/`)
-
-        console.log('complainants', res.data.complainant)
-
-        return res.data
-    } catch(err){
         console.error(err)
     }
 }

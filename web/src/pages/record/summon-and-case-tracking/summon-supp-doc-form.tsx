@@ -9,9 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useAddSuppDoc } from "./queries/summonInsertQueries";
 
-export default function SummonSuppDocForm({ss_id, sr_id, onSuccess}: {
-    ss_id: string;
-    sr_id: string;
+export default function SummonSuppDocForm({hs_id, sc_id, onSuccess}: {
+    hs_id: string;
+    sc_id: string;
     onSuccess: () => void;
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
@@ -40,7 +40,7 @@ export default function SummonSuppDocForm({ss_id, sr_id, onSuccess}: {
 
              addDocs({
                 ss_id,
-                sr_id,
+                sc_id,
                 file: files,
                 reason: values.reason
             })

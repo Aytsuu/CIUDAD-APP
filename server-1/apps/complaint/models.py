@@ -10,11 +10,11 @@ class Complainant(models.Model):
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
     cpnt_address = models.CharField(max_length=255)
-    # rp_id = models.ForeignKey(
-    #     'profiling.ResidentProfile', 
-    #     on_delete=models.CASCADE, 
-    #     db_column='rp_id'
-    # )
+    rp_id = models.ForeignKey(
+        'profiling.ResidentProfile', 
+        on_delete=models.CASCADE, 
+        db_column='rp_id'
+    )
     
     class Meta:
         db_table = 'complainant'

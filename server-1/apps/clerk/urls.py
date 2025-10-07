@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .summon.summonViews import *
 
 urlpatterns = [
     # path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
@@ -15,15 +16,14 @@ urlpatterns = [
  
     # Case List and details
     path('summon-case-list/', SummonCasesView.as_view(), name='summon-case-list'),
+    path('summon-case-detail/<str:sc_id>/', SummonCaseDetailView.as_view(), name='summon-case-detail'),
     path('summon-schedule-list/<str:sr_id>/', SummonScheduleByServiceRequestView.as_view(), name='summon-schedule-list'),
     path('update-summon-sched/<str:ss_id>/', UpdateSummonScheduleView.as_view(), name='update-summon-sched'),
     path('summon-supp-doc/', SummonSuppDocView.as_view(), name='summon-supp-doc'),
     path('summon-supp-doc/<str:ss_id>/', SummonSuppDocRetrieveView.as_view(), name='summon-supp-doc-retrieve'),
     path('create-summon-sched/', SummonScheduleCreateView.as_view(), name='summon-sched-create'),
 
-    path('update-summon-request/<str:sr_id>/', UpdateSummonRequestView.as_view(), name='update-summon-request'),
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
-    path('service-charge-payment-request/', ServiceChargePaymentRequestView.as_view(), name='service-charge-payment-req'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
     path('delete-summon-date/<int:sd_id>/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),

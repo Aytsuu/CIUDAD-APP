@@ -4,8 +4,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatTimestamp } from '@/helpers/timestampformatter';
 import { useState } from 'react';
 
-export default function SummonSuppDocs({ ss_id }: { ss_id: string }) {
-    const { data: suppDocs, isLoading } = useGetSummonSuppDoc(ss_id);
+export default function SummonSuppDocs({ hs_id }: { hs_id: string }) {
+    const { data: suppDocs, isLoading } = useGetSummonSuppDoc(hs_id);
 
     if (isLoading) {
         return (
