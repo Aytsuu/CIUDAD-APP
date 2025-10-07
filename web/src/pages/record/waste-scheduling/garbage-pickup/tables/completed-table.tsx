@@ -27,7 +27,7 @@ export default function CompletedTable() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { data: completedReqData = { results: [], count: 0 }, isLoading: isLoadingCompleted } = useGetGarbageCompleteRequest( currentPage, pageSize, debouncedSearchQuery  )
+  const { data: completedReqData = { results: [], count: 0 }, isLoading: isLoadingCompleted } = useGetGarbageCompleteRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
   console.log('comp', completedReqData)
 
   const completedRequests = completedReqData.results || []
@@ -50,9 +50,9 @@ export default function CompletedTable() {
   // Get unique sitios for filter dropdown
   const sitioOptions = [
     { id: "0", name: "All Sitios" },
-    ...Array.from(new Set(completedRequests.map(item => item.sitio_name)))
-      .filter(name => name)
-      .map(name => ({ id: name, name }))
+    ...Array.from(new Set(completedRequests.map((item: GarbageRequestComplete) => item.sitio_name)))
+      .filter(Boolean)
+      .map((name) => ({ id: name as string, name: name as string }))
   ]
 
   const columns: ColumnDef<GarbageRequestComplete>[] = [

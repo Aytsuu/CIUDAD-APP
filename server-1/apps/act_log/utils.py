@@ -12,7 +12,6 @@ def create_activity_log(
     record_id=None,
     **kwargs
 ):
-
     frame = inspect.currentframe().f_back
     module_name = "unknown"
     
@@ -104,10 +103,10 @@ class ActivityLogMixin:
         instance = serializer.save()
         try:
             staff = getattr(self.request.user, 'staff', None)
-            # Create
+            
             log_model_change(instance, 'create', staff)
         except Exception:
-            # Avoid breaking the main flow due to logging issues
+           
             pass
         return instance
 

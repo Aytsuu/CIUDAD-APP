@@ -465,7 +465,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        # Generate bpr_id if not provided (format: BR001-25)
+        # Generate bpr_id if not provided (format: BPR001-25)
         if 'bpr_id' not in validated_data or not validated_data['bpr_id']:
             from django.utils import timezone
             from .models import BusinessPermitRequest
@@ -477,7 +477,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
                 # Fallback to total count if filtering fails
                 existing_count = BusinessPermitRequest.objects.count()
             seq = existing_count + 1
-            validated_data['bpr_id'] = f"BR{seq:03d}-{year_suffix:02d}"
+            validated_data['bpr_id'] = f"BPR{seq:03d}-{year_suffix:02d}"
         
         
         # Create the BusinessPermitRequest

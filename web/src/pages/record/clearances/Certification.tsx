@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, CheckCircle , Eye } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -13,17 +13,19 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
-import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
-import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
 import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
 import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { useEffect } from "react";
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
@@ -51,6 +53,7 @@ function CertificatePage() {
   // const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [filterType, setFilterType] = useState("all");
@@ -134,37 +137,27 @@ function CertificatePage() {
   }, [residentsList]);
 
 
-  const { data: certificates, isLoading, error } = useQuery<Certificate[]>({
-    queryKey: ["certificates"],
-    queryFn: getCertificates,
+  const { data: certificatesData, isLoading, error } = useQuery({
+    queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
+    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, undefined),
   });
 
+  // Handle loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
-  // Filter and search logic
-  const filteredCertificates = useMemo(() => {
-    if (!certificates) return [];
-    
-    return certificates.filter((certificate: Certificate) => {
-      // Filter by type (resident/non-resident)
-      const typeMatch = filterType === "all" || 
-        (filterType === "resident" && !certificate.is_nonresident) ||
-        (filterType === "nonresident" && certificate.is_nonresident);
-      
-      // Filter by purpose
-      const purposeMatch = filterPurpose === "all" || 
-        (filterPurpose === "employment" && certificate.req_purpose?.toLowerCase() === "employment") ||
-        (filterPurpose === "bir" && certificate.req_purpose?.toLowerCase() === "bir");
-      
-      // Search filter
-      const searchMatch = searchTerm === "" || 
-        certificate.cr_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        certificate.resident_details?.per_fname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        certificate.resident_details?.per_lname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (certificate.is_nonresident && certificate.nrc_requester?.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      return typeMatch && purposeMatch && searchMatch;
-    });
-  }, [certificates, filterType, filterPurpose, searchTerm]);
+  const certificates = certificatesData?.results || [];
+  const totalCount = certificatesData?.count || 0;
+  const totalPages = Math.ceil(totalCount / 10);
+
+
+  // Since we're now using backend filtering, we don't need frontend filtering
+  const filteredCertificates = certificates;
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
@@ -172,7 +165,7 @@ function CertificatePage() {
       const certificateType = variables.is_nonresident ? 'Non-resident certificate' : 'Certificate';
       const certificateId = variables.is_nonresident ? variables.nrc_id : variables.cr_id;
       
-      toast.success(`${certificateType} ${certificateId} marked as printed successfully!`);
+      showSuccessToast(`${certificateType} ${certificateId} marked as printed successfully!`);
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
       
       try {
@@ -186,11 +179,11 @@ function CertificatePage() {
 
         setSelectedCertificate(null);
       } catch (error) {
-        toast.error("First mutation succeeded but second failed");
+        showErrorToast("First mutation succeeded but second failed");
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to mark certificate as printed");
+      showErrorToast(error.response?.data?.error || "Failed to mark certificate as printed");
     },
   });
 
@@ -332,7 +325,9 @@ function CertificatePage() {
               content="Non-resident" 
             />
           )}
-          {row.getValue("cr_id")}
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("cr_id")}
+          </span>
         </div>
       ),
     },
@@ -349,7 +344,7 @@ function CertificatePage() {
     {
       accessorKey: "req_request_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{localDateFormatter(row.getValue("req_request_date"))}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     {
       accessorKey: "req_purpose",
@@ -521,12 +516,12 @@ function CertificatePage() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-{Math.min(10, filteredCertificates.length)} of {filteredCertificates.length} rows
+          Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} rows
         </p>
 
         <div className="w-full sm:w-auto flex justify-center">
           <PaginationLayout
-            totalPages={Math.ceil((filteredCertificates.length || 1) / 10)}
+            totalPages={totalPages}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />

@@ -30,7 +30,7 @@ export default function PendingCards() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { data: pendingReqData = { results: [], count: 0 },  isLoading: isLoadingPending } = useGetGarbagePendingRequest(  currentPage,  pageSize,  debouncedSearchQuery)
+  const { data: pendingReqData = { results: [], count: 0 },  isLoading: isLoadingPending } = useGetGarbagePendingRequest(  currentPage,  pageSize,  debouncedSearchQuery, selectedSitio)
 
   const pendingRequests = pendingReqData.results || []
   const totalItems = pendingReqData.count || 0
@@ -52,9 +52,9 @@ export default function PendingCards() {
   // Get sitio options from the fetched data
   const sitioOptions = [
     { id: "0", name: "All Sitios" },
-    ...Array.from(new Set(pendingRequests.map(item => item.sitio_name)))
-      .filter(name => name)
-      .map(name => ({ id: name, name }))
+    ...Array.from(new Set(pendingRequests.map((item: GarbageRequestPending) => item.sitio_name)))
+      .filter(Boolean)
+      .map((name) => ({ id: name as string, name: name as string }))
   ]
 
   // Function to handle successful accept/reject and close both dialogs

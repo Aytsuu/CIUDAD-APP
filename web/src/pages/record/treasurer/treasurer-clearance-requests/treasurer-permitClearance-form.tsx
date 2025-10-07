@@ -249,13 +249,58 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                                 const address = selectedBusiness.bus_location || selectedBusiness.address || '';
                                                 form.setValue("address", address);
                                                 
-                                                const requestor = selectedBusiness.requestor || '';
-                                                form.setValue("requestor", requestor);
+                                                // Fetch business owner using br_id or rp_id
+                                                const fetchBusinessOwner = async () => {
+                                                    try {
+                                                        let ownerInfo = null;
+                                                        let ownerRpId = null;
+                                                        
+                                                        // Try to get owner from br_id first (business respondent)
+                                                        if (selectedBusiness.br_id) {
+                                                            console.log("Fetching owner by br_id:", selectedBusiness.br_id);
+                                                            // The business data should already have requestor info from the API
+                                                            ownerInfo = selectedBusiness.requestor;
+                                                            console.log("Found requestor from business data:", ownerInfo);
+                                                        }
+                                                        // If no br_id, try rp_id (resident profile)
+                                                        else if (selectedBusiness.rp_id) {
+                                                            console.log("Fetching owner by rp_id:", selectedBusiness.rp_id);
+                                                            // Find the resident in the residents list
+                                                            const owner = residents.find((resident: any) => 
+                                                                resident.rp_id === selectedBusiness.rp_id
+                                                            );
+                                                            if (owner) {
+                                                                ownerInfo = owner.full_name;
+                                                                ownerRpId = owner.rp_id;
+                                                                console.log("Found owner in residents list:", ownerInfo);
+                                                            }
+                                                        }
+                                                        
+                                                        // Set the requestor field and rp_id
+                                                        if (ownerInfo) {
+                                                            form.setValue("requestor", ownerInfo);
+                                                            if (ownerRpId) {
+                                                                form.setValue('rp_id', ownerRpId);
+                                                            }
+                                                            console.log("Set requestor to:", ownerInfo, "rp_id:", ownerRpId);
+                                                        } else {
+                                                            console.log("No owner found for business:", selectedBusiness.bus_name);
+                                                            form.setValue("requestor", "");
+                                                            form.setValue('rp_id', "");
+                                                        }
+                                                    } catch (error) {
+                                                        console.error("Error fetching business owner:", error);
+                                                        form.setValue("requestor", "");
+                                                        form.setValue('rp_id', "");
+                                                    }
+                                                };
+                                                
+                                                fetchBusinessOwner();
 
                                                 // Auto-match gross sales rate using business ID
                                                 const matchingRate = getMatchingGrossSalesRate(businessId);
                                                 if (matchingRate) {
-                                                    form.setValue("grossSales", matchingRate.id);
+                                                    form.setValue("grossSales", matchingRate.rate.toString());
                                                     console.log("Auto-matched gross sales rate:", matchingRate);
                                                 } else {
                                                     console.log("No matching gross sales rate found for:", selectedBusiness.bus_gross_sales);
@@ -282,7 +327,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                             name="grossSales"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Annual Gross Sales Rate</FormLabel>
+                                    <FormLabel>Annual Gross Sales</FormLabel>
                                     <FormControl>
                                         <Input 
                                             {...field} 
@@ -296,7 +341,29 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                 </FormItem>
                             )}
                         />
-
+                        <FormField
+                            control={form.control}
+                            name="grossSales"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Amount to be Paid</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            {...field} 
+                                            value={getMatchingGrossSalesRate(form.watch("businessName"))?.rate ? 
+                                                `₱${Number(getMatchingGrossSalesRate(form.watch("businessName"))?.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+                                                ''
+                                            }
+                                            placeholder="Select a business to auto-fill the rate" 
+                                            className="w-full bg-gray-50" 
+                                            readOnly
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        
                         <FormField
                         control={form.control}
                         name="requestor"

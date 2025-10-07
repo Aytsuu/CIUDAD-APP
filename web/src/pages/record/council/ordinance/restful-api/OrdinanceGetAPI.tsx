@@ -49,6 +49,28 @@ export const getAllOrdinances = async (): Promise<Ordinance[]> => {
     }
 };
 
+export const getOrdinancesPaginated = async (
+    page: number,
+    pageSize: number,
+    searchQuery?: string
+): Promise<{ results: Ordinance[]; count: number; total_pages: number }> => {
+    try {
+        const response = await api.get('/council/ordinance/', {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        });
+        return response.data;
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            console.error('Error fetching paginated ordinances:', error.response?.data);
+        }
+        throw error;
+    }
+};
+
 export const getOrdinanceById = async (id: string) => {
     try {
         const response = await api.get(`/council/ordinance/${id}/`);

@@ -526,16 +526,32 @@ class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
         search_query = self.request.query_params.get('search', '')
         month = self.request.query_params.get('month', 'All')
+        is_archive = self.request.query_params.get('is_archive', None)
         
         queryset = Income_Expense_Tracking.objects.filter(
             Q(iet_datetime__year=year)
         ).select_related('exp_id').prefetch_related('files')
+        
+        # Filter by archive status if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(iet_is_archive=is_archive_bool)
         
         # Apply search filter if search query exists
         if search_query:
@@ -553,7 +569,7 @@ class Income_Expense_TrackingView(generics.ListCreateAPIView):
         if month and month != "All":
             queryset = queryset.filter(iet_datetime__month=month)
         
-        return queryset
+        return queryset.order_by('-iet_datetime')
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):
@@ -1229,10 +1245,11 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
 class ClearanceRequestListView(generics.ListAPIView):
     serializer_class = ClearanceRequestSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         from apps.clerk.models import ClerkCertificate
-        queryset = ClerkCertificate.objects.select_related('rp_id').all()
+        queryset = ClerkCertificate.objects.select_related('rp_id', 'pr_id').all()
         
         # Search functionality
         search_query = self.request.query_params.get('search', None)
@@ -1241,10 +1258,32 @@ class ClearanceRequestListView(generics.ListAPIView):
                 Q(cr_id__icontains=search_query) |
                 Q(rp_id__per__per_fname__icontains=search_query) |
                 Q(rp_id__per__per_lname__icontains=search_query) |
-                Q(req_type__icontains=search_query)
+                Q(req_type__icontains=search_query) |
+                Q(pr_id__pr_purpose__icontains=search_query) |
+                Q(cr_req_status__icontains=search_query) |
+                Q(cr_req_payment_status__icontains=search_query)
             )
+
+        # Status filter
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(cr_req_status=status_filter)
+
+        # Payment status filter
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(cr_req_payment_status=payment_status)
+
+        # Date range filters
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
         
-        return queryset
+        if start_date:
+            queryset = queryset.filter(cr_req_request_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(cr_req_request_date__lte=end_date)
+        
+        return queryset.order_by('-cr_req_request_date')
 
 
 class ClearanceRequestDetailView(generics.RetrieveAPIView):
@@ -1268,15 +1307,60 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_payment_status = instance.cr_req_payment_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         
         if serializer.is_valid():
-            instance.req_payment_status = serializer.validated_data['payment_status']
+            instance.cr_req_payment_status = serializer.validated_data['payment_status']
             instance.save()
+            
+            # Check if payment status changed to "Paid" and create automatic income entry
+            new_payment_status = instance.cr_req_payment_status
+            if old_payment_status != "Paid" and new_payment_status == "Paid":
+                try:
+                    from apps.treasurer.utils import create_automatic_income_entry
+                    
+                    # Get purpose from the certificate
+                    purpose = "Unknown"
+                    if instance.pr_id:
+                        purpose = instance.pr_id.pr_purpose
+                    
+                    # Get amount from purpose and rates
+                    amount = 0.0
+                    if instance.pr_id:
+                        amount = float(instance.pr_id.pr_rate)
+                    
+                    # Get staff from certificate record (primary source) or request data
+                    staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                    
+                    # Get invoice discount reason if available
+                    invoice_discount_reason = None
+                    try:
+                        from apps.treasurer.models import Invoice
+                        invoice = Invoice.objects.filter(cr_id=instance).first()
+                        if invoice:
+                            invoice_discount_reason = invoice.inv_discount_reason
+                    except Exception as e:
+                        logger.warning(f"Could not get invoice discount reason for certificate {instance.cr_id}: {str(e)}")
+                    
+                    # Create automatic income entry
+                    create_automatic_income_entry(
+                        request_type='CERT',
+                        request_id=instance.cr_id,
+                        purpose=purpose,
+                        amount=amount,
+                        staff_id=staff_id,
+                        discount_notes=getattr(instance, 'cr_discount_reason', None),
+                        invoice_discount_reason=invoice_discount_reason
+                    )
+                    logger.info(f"Created automatic income entry for certificate {instance.cr_id}")
+                except Exception as e:
+                    logger.error(f"Failed to create automatic income entry for certificate {instance.cr_id}: {str(e)}")
+                    # Don't fail the request if income tracking fails
 
             # --- AUTO CREATE RECEIPT FOR ANY PAID ---
             try:
-                if instance.req_payment_status == "Paid":
+                if instance.cr_req_payment_status == "Paid":
                     from apps.treasurer.models import Invoice
                     if not Invoice.objects.filter(cr_id=instance).exists():
                         # Generate next available inv_num

@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from .models import ActivityLog
 from .serializers import ActivityLogSerializer
 from operator import itemgetter
@@ -7,6 +8,7 @@ from operator import itemgetter
 
 class ActivityLogViewSet(viewsets.ModelViewSet):
     serializer_class = ActivityLogSerializer
+    permission_classes = [AllowAny]
     
     def list(self, request, *args, **kwargs):
         activity_logs = ActivityLog.objects.all()

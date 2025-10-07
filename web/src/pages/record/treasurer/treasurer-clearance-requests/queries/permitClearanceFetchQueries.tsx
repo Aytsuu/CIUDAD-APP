@@ -12,7 +12,11 @@ export type Businesses = {
     respondent: string;
     rp: string;
     address?: string; 
-    requestor?: string; 
+    requestor?: string;
+    br_id?: string | null;
+    rp_id?: string | null;
+    bus_status?: string;
+    staff_id?: string;
 }
 
 export type Address = {
@@ -69,7 +73,7 @@ export const useGetGrossSales = () => {
 export const useGetPermitClearances = () => {
     return useQuery<any[]>({
         queryKey: ["permitClearances"],
-        queryFn: getPermitClearances,
+        queryFn: () => getPermitClearances(),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -78,7 +82,7 @@ export const useGetPermitClearances = () => {
 export const useGetAnnualGrossSalesForPermit = () => {
     return useQuery<any[]>({
         queryKey: ["annualGrossSales"],
-        queryFn: getAnnualGrossSalesForPermit,
+        queryFn: () => getAnnualGrossSalesForPermit(),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -87,7 +91,7 @@ export const useGetAnnualGrossSalesForPermit = () => {
 export const useGetPurposesAndRates = () => {
     return useQuery<any[]>({
         queryKey: ["purposes"],
-        queryFn: getPurposesAndRates,
+        queryFn: () => getPurposesAndRates(),
         staleTime: 1000 * 60 * 30,
     });
 }
