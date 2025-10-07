@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Eye, Search, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
@@ -12,9 +11,7 @@ import {
   useArchiveAttendanceSheet,
   useRestoreAttendanceSheet,
 } from "../Calendar/queries/councilEventdelqueries";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
-// import Attendees from "./Attendees";
 import {
   useGetCouncilEvents,
   useGetAttendanceSheets,
@@ -30,110 +27,32 @@ import { HistoryTable } from "@/components/ui/table/history-table";
 import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatTableDate } from "@/helpers/dateHelper";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog/dialog";
+import { AttendanceDocumentCard } from "./AttendanceSuppDocsModal";
 
+// Updated ArchiveTabActions
 const ArchiveTabActions = ({
   row,
-  refetchEvents,
-  refetchSheets,
+  onView,
 }: {
   row: { original: AttendanceRecord };
-  refetchEvents: () => void;
-  refetchSheets: () => void;
+  onView: (record: AttendanceRecord) => void;
 }) => {
-  const restoreSheet = useRestoreAttendanceSheet();
-  const deleteSheet = useDeleteAttendanceSheet();
-
   return (
     <div className="flex justify-center gap-2">
       <TooltipLayout
         trigger={
-          <DialogLayout
-            trigger={
-              <div className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]">
-                <Eye size={16} className="text-black" />
-              </div>
-            }
-            className="max-w-[50%] h-2/3 flex flex-col overflow-y-auto"
-            title="Archived Attendance Sheets"
-            description="Here are the archived files related to the meeting."
-            mainContent={
-              <div className="w-full h-full">
-                {row.original.sheets.length > 0 ? (
-                  row.original.sheets.map((sheet, index) => (
-                    <div key={sheet.att_id} className="mb-4">
-                      {sheet.att_file_url ? (
-                        <div className="relative flex flex-row items-end gap-1">
-                          <div className="flex-1">
-                            <img
-                              src={sheet.att_file_url}
-                              alt={`Archived Event File ${index + 1}`}
-                              className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
-                              onError={(e) =>
-                                (e.currentTarget.src = "/placeholder-image.png")
-                              }
-                            />
-                          </div>
-                          <TooltipLayout
-                            trigger={
-                              <ConfirmationModal
-                                trigger={
-                                  <div className="cursor-pointer rounded text-white bg-green-500 p-1 transition-colors">
-                                    <ArchiveRestore size={16} />
-                                  </div>
-                                }
-                                title="Restore Attendance Sheet"
-                                description="Would you like to restore this attendance sheet?"
-                                actionLabel="Restore"
-                                onClick={() =>
-                                  restoreSheet.mutate(sheet.att_id, {
-                                    onSuccess: () => {
-                                      refetchSheets();
-                                      refetchEvents();
-                                    },
-                                  })
-                                }
-                              />
-                            }
-                            content="Restore this attendance sheet"
-                          />
-                          <TooltipLayout
-                            trigger={
-                              <ConfirmationModal
-                                trigger={
-                                  <div className="cursor-pointer rounded text-white bg-red-500 p-1 transition-colors">
-                                    <Trash2 size={16} />
-                                  </div>
-                                }
-                                title="Permanently Delete"
-                                description="This will permanently delete the attendance sheet. Continue?"
-                                actionLabel="Delete"
-                                onClick={() =>
-                                  deleteSheet.mutate(sheet.att_id, {
-                                    onSuccess: () => {
-                                      refetchSheets();
-                                      refetchEvents();
-                                    },
-                                  })
-                                }
-                              />
-                            }
-                            content="Delete this attendance sheet permanently"
-                          />
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-500">
-                          No file uploaded for Archived Attendance Sheet #
-                          {index + 1}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div>No archived attendance sheets for this meeting.</div>
-                )}
-              </div>
-            }
-          />
+          <div 
+            className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]"
+            onClick={() => onView(row.original)}
+          >
+            <Eye size={16} className="text-black" />
+          </div>
         }
         content="View"
       />
@@ -141,7 +60,8 @@ const ArchiveTabActions = ({
   );
 };
 
-export const columns: ColumnDef<AttendanceRecord>[] = [
+// Updated columns
+export const columns = (onViewRecord: (record: AttendanceRecord) => void): ColumnDef<AttendanceRecord>[] => [
   {
     accessorKey: "attMeetingDate",
     header: "Date",
@@ -188,28 +108,11 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
-      const ceId = row.original.ceId;
-      const { data: attendanceSheet, refetch: refetchSheets } =
-        useGetAttendanceSheets();
-      const { refetch: refetchEvents } = useGetCouncilEvents();
-      const sheets =
-        attendanceSheet?.filter(
-          (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
-        ) || [];
-      const archiveSheet = useArchiveAttendanceSheet();
-      // const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
-      // const [isEditMode, setIsEditMode] = useState(false);
-
-      // const handleSaveSuccess = () => {
-      //   setIsEditMode(false);
-      // };
-
       if (row.original.isArchived) {
         return (
           <ArchiveTabActions
             row={row}
-            refetchEvents={refetchEvents}
-            refetchSheets={refetchSheets}
+            onView={onViewRecord}
           />
         );
       }
@@ -218,106 +121,15 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
         <div className="flex justify-center gap-1">
           <TooltipLayout
             trigger={
-              <DialogLayout
-                trigger={
-                  <div className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]">
-                    <Eye size={16} className="text-black" />
-                  </div>
-                }
-                className="max-w-[50%] h-2/3 flex flex-col overflow-y-auto"
-                title="Attendance Sheets"
-                description="Here are the files related to the meeting."
-                mainContent={
-                  <div className="w-full h-full">
-                    {sheets.length > 0 ? (
-                      sheets.map((sheet, index) => (
-                        <div key={sheet.att_id} className="mb-4">
-                          {sheet.att_file_url ? (
-                            <div className="relative flex flex-row items-end gap-2">
-                              <div className="flex-1">
-                                <img
-                                  src={sheet.att_file_url}
-                                  alt={`Event File ${index + 1}`}
-                                  className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
-                                />
-                              </div>
-                              <TooltipLayout
-                                trigger={
-                                  <ConfirmationModal
-                                    trigger={
-                                      <div className="cursor-pointer rounded text-white bg-red-500 p-1 transition-colors">
-                                        <Archive size={16} />
-                                      </div>
-                                    }
-                                    title="Archive Attendance Sheet"
-                                    description="Are you sure you want to archive this attendance sheet?"
-                                    actionLabel="Archive"
-                                    onClick={() =>
-                                      archiveSheet.mutate(sheet.att_id, {
-                                        onSuccess: () => {
-                                          refetchSheets();
-                                          refetchEvents();
-                                        },
-                                      })
-                                    }
-                                  />
-                                }
-                                content="Archive this attendance sheet"
-                              />
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-500">
-                              No file uploaded for Attendance Sheet #{index + 1}
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div>
-                        No attendance sheets have been uploaded for this meeting
-                        yet.
-                      </div>
-                    )}
-                  </div>
-                }
-              />
+              <div 
+                className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]"
+                onClick={() => onViewRecord(row.original)}
+              >
+                <Eye size={16} className="text-black" />
+              </div>
             }
             content="View"
           />
-          {/* <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]">
-                    <Stamp size={16} className="text-black" />
-                  </div>
-                }
-                className="max-w-[700px] h-[400px] flex flex-col overflow-auto"
-                title={isEditMode ? "Edit" : "View"}
-                description={
-                  isEditMode
-                    ? "Edit participants attendance."
-                    : "View participants attendance."
-                }
-                isOpen={isAttendeesDialogOpen}
-                onOpenChange={(open) => {
-                  setIsAttendeesDialogOpen(open);
-                  if (!open) {
-                    setIsEditMode(false);
-                  }
-                }}
-                mainContent={ ''
-                  <Attendees
-                    ceId={ceId}
-                    isEditMode={isEditMode}
-                    onEditToggle={setIsEditMode}
-                    onSave={handleSaveSuccess}
-                  />
-                }
-              />
-            }
-            content={isEditMode ? "Save" : "Mark"}
-          /> */}
         </div>
       );
     },
@@ -327,13 +139,149 @@ export const columns: ColumnDef<AttendanceRecord>[] = [
   },
 ];
 
+// Attendance Sheets Dialog Component
+function AttendanceSheetsDialog({
+  attendanceRecord,
+  isOpen,
+  onOpenChange,
+  viewMode,
+}: {
+  attendanceRecord: AttendanceRecord | null;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  viewMode: "active" | "archive";
+}) {
+  const [filesTab, setFilesTab] = useState<"active" | "archived">(viewMode === "archive" ? "archived" : "active");
+  const { data: attendanceSheets = [], isLoading: isSheetsLoading, refetch: refetchSheets } = useGetAttendanceSheets();
+  const archiveSheet = useArchiveAttendanceSheet();
+  const restoreSheet = useRestoreAttendanceSheet();
+  const deleteSheet = useDeleteAttendanceSheet();
+  const { refetch: refetchEvents } = useGetCouncilEvents();
+
+  if (!attendanceRecord) return null;
+
+  const sheets = attendanceSheets.filter(
+    (sheet) => sheet.ce_id === attendanceRecord.ceId
+  );
+
+  const activeSheets = sheets.filter(sheet => !sheet.att_is_archive);
+  const archivedSheets = sheets.filter(sheet => sheet.att_is_archive);
+
+  const handleArchive = (attId: any) => {
+    archiveSheet.mutate(attId, {
+      onSuccess: () => {
+        refetchSheets();
+        refetchEvents();
+      },
+    });
+  };
+
+  const handleRestore = (attId: any) => {
+    restoreSheet.mutate(attId, {
+      onSuccess: () => {
+        refetchSheets();
+        refetchEvents();
+      },
+    });
+  };
+
+  const handleDelete = (attId: any) => {
+    deleteSheet.mutate(attId, {
+      onSuccess: () => {
+        refetchSheets();
+        refetchEvents();
+      },
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
+        <DialogHeader className="sticky top-0 z-10 pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              Attendance Sheets - {attendanceRecord.attMettingTitle}
+            </DialogTitle>
+          </div>
+        </DialogHeader>
+
+        <Tabs
+          value={filesTab}
+          onValueChange={(value) => setFilesTab(value as "active" | "archived")}
+          className="w-full flex-1 flex flex-col"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="archived">Archived</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {isSheetsLoading ? (
+                <div className="col-span-full flex items-center justify-center py-16 gap-2 text-gray-500">
+                  <Spinner size="lg" />
+                  Loading attendance sheets...
+                </div>
+              ) : activeSheets.length > 0 ? (
+                activeSheets.map((sheet, index) => (
+                  <AttendanceDocumentCard
+                    key={sheet.att_id}
+                    doc={sheet}
+                    index={index}
+                    showActions={viewMode === "active"}
+                    onArchive={() => handleArchive(sheet.att_id)}
+                    isArchived={false}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No active attendance sheets found.
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="archived" className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {isSheetsLoading ? (
+                <div className="col-span-full flex items-center justify-center py-16 gap-2 text-gray-500">
+                  <Spinner size="lg" />
+                  Loading archived sheets...
+                </div>
+              ) : archivedSheets.length > 0 ? (
+                archivedSheets.map((sheet, index) => (
+                  <AttendanceDocumentCard
+                    key={sheet.att_id}
+                    doc={sheet}
+                    index={index}
+                    showActions={true}
+                    onRestore={() => handleRestore(sheet.att_id)}
+                    onDelete={() => handleDelete(sheet.att_id)}
+                    isArchived={true}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No archived attendance sheets found.
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AttendancePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [filter, setFilter] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
+  const [activeTab] = useState<"active" | "archive">("active");
+  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { showLoading, hideLoading } = useLoading();
 
   // Fetch available years
@@ -404,6 +352,11 @@ function AttendancePage() {
     return data;
   }, [councilEvents, attendanceSheets, activeTab]);
 
+  const handleViewRecord = (record: AttendanceRecord) => {
+    setSelectedRecord(record);
+    setIsDialogOpen(true);
+  };
+
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(e.target.value) || 10;
     setPageSize(newSize);
@@ -424,10 +377,6 @@ function AttendancePage() {
     setCurrentPage(1);
   };
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as "active" | "archive");
-    setCurrentPage(1);
-  };
 
   // Create filter options
   const filterOptions = [
@@ -504,17 +453,6 @@ function AttendancePage() {
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="archive">
-                <div className="flex items-center gap-2">
-                  <Archive size={16} /> Archive
-                </div>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
 
         {isLoading ? (
@@ -526,10 +464,10 @@ function AttendancePage() {
           <>
             <Tabs value={activeTab}>
               <TabsContent value="active">
-                <DataTable columns={columns} data={tableData} />
+                <DataTable columns={columns(handleViewRecord)} data={tableData} />
               </TabsContent>
               <TabsContent value="archive">
-                <HistoryTable columns={columns} data={tableData} />
+                <HistoryTable columns={columns(handleViewRecord)} data={tableData} />
               </TabsContent>
             </Tabs>
 
@@ -554,7 +492,15 @@ function AttendancePage() {
           </>
         )}
       </div>
+
+      <AttendanceSheetsDialog
+        attendanceRecord={selectedRecord}
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        viewMode={activeTab}
+      />
     </div>
   );
 }
+
 export default AttendancePage;
