@@ -293,7 +293,7 @@ const IncomeExpenseMain = () => {
       }
     >
 
-      <View className="flex-1">
+      <View className="flex-1 px-2">
         {/* Search Bar */}
         <View className="px-4 mb-8">
           <View className="relative">

@@ -65,12 +65,20 @@ const ExpenseLogMain = () => {
     value: month.id
   }));
 
-  // Fetch data with search and filter parameters
-  const { data: fetchedData = [], isLoading } = useExpenseLog(
+  // Updated to handle paginated response
+  const { 
+    data: responseData = { results: [], count: 0 }, 
+    isLoading 
+  } = useExpenseLog(
+    1, // page
+    1000, // pageSize - large number to get all data
     year ? parseInt(year) : new Date().getFullYear(),
     debouncedSearchQuery,
     selectedMonth
   );
+
+  // Extract the actual data array
+  const fetchedData = responseData.results || [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -135,7 +143,7 @@ const ExpenseLogMain = () => {
             <Text>₱{actualAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
           </View>
           <View className="flex-row justify-between pb-2">
-            <Text className="text-gray-600">Return Amount:</Text>
+            <Text className="text-gray-600">Return/Excess Amount:</Text>
             <Text className={`font-semibold ${textColor}`}>
               ₱{returnAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
@@ -166,7 +174,7 @@ const ExpenseLogMain = () => {
         }    
         wrapScroll={false}
     >
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-6">
         {/* Search and Filters */}
         <View className="mb-4">
           <View className="flex-row items-center gap-2 mb-3">
@@ -174,7 +182,7 @@ const ExpenseLogMain = () => {
               <Search className="absolute left-3 top-3 text-gray-500" size={17} />
               <TextInput
                 placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
                 value={searchQuery}
                 onChangeText={handleSearchChange}
               />

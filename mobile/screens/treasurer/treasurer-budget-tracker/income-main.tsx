@@ -58,18 +58,31 @@ const IncomeTracking = () => {
   // Add debouncing for search
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Fetch data with search and filter parameters
-  const { data: fetchedData = [], isLoading, isError, refetch } = useIncomeData(
+  // Updated to handle paginated response with archive filtering
+  const { 
+    data: responseData = { results: [], count: 0 }, 
+    isLoading, 
+    isError, 
+    refetch 
+  } = useIncomeData(
+    1, // page
+    1000, // pageSize - large number to get all data
     year ? parseInt(year) : new Date().getFullYear(),
     debouncedSearchQuery,
-    selectedMonth
+    selectedMonth,
+    activeTab === 'archive' // Send archive status to backend
   );
+
+  // Extract the actual data array (backend already filtered it)
+  const fetchedData = responseData.results || [];
   
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreIncome();
   const { mutate: deleteIncome, isPending: isDeletePending } = useDeleteIncome();
-  const { data: mainCardData = [] } = useIncomeExpenseMainCard();
   
-  const matchedYearData = mainCardData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+
+  const { data: mainCardData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
+  
+  const matchedYearData = mainCardData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
   
   const trackingOptions = [
@@ -83,10 +96,8 @@ const IncomeTracking = () => {
     value: month.id
   }));
 
-  // Filter the data based only on archive status (search and month filtering now done in backend)
-  const filteredData = fetchedData.filter(row => 
-    activeTab === 'active' ? row.inc_is_archive === false : row.inc_is_archive === true
-  );
+  // No frontend filtering needed - backend already filtered based on activeTab
+  const filteredData = fetchedData;
 
   // Handle search input change
   const handleSearchChange = (text: string) => {
@@ -221,17 +232,17 @@ const IncomeTracking = () => {
         )}
       </CardHeader>
       <CardContent className="space-y-2">
-        <View className="flex-row justify-between">
+        <View className="flex-row justify-between pb-2">
           <Text className="text-gray-600">Particulars:</Text>
           <Text>{item.incp_item}</Text>
         </View>
-        <View className="flex-row justify-between">
+        <View className="flex-row justify-between pb-2">
           <Text className="text-gray-600">Amount:</Text>
           <Text className="font-semibold">
             ₱{Number(item.inc_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Text>
         </View>
-        <View className="flex-row justify-between">
+        <View className="flex-row justify-between pb-2">
           <Text className="text-gray-600">Assigned Staff:</Text>
           <Text>{item.staff_name || 'None'}</Text>
         </View>        
@@ -301,8 +312,9 @@ const IncomeTracking = () => {
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
       }
+      wrapScroll={false} 
     >
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-6">
         {/* Search and Filters */}
         <View className="mb-4">
           <View className="flex-row items-center gap-2 mb-2">
@@ -342,7 +354,7 @@ const IncomeTracking = () => {
           
           <Button
             onPress={handleCreate}
-            className="bg-primaryBlue mt-2"
+            className="bg-primaryBlue mt-2 rounded-xl"
           >
             <Text className="text-white text-[17px]">
               <Plus size={16} color="white" className="mr-2" /> Create
@@ -391,10 +403,11 @@ const IncomeTracking = () => {
               </View>
             ) : (
               <FlatList
-                data={filteredData.filter(item => !item.inc_is_archive)}
+                data={filteredData} 
                 renderItem={renderItem}
                 keyExtractor={item => item.inc_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
+                showsVerticalScrollIndicator={false} 
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No active entries found
@@ -417,10 +430,11 @@ const IncomeTracking = () => {
               </View>
             ) : (
               <FlatList
-                data={filteredData.filter(item => item.inc_is_archive)}
+                data={filteredData} 
                 renderItem={renderItem}
                 keyExtractor={item => item.inc_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
+                showsVerticalScrollIndicator={false} 
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No archived entries found

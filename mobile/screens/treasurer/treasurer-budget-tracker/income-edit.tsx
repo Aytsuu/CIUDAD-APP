@@ -60,9 +60,9 @@ function IncomeEditForm() {
 
 
   const { data: IncomeParticularItems = [] } = useIncomeParticular();
-  const { data: fetchedData = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-  const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
 
   console.log("TOTAL INCOME: ", totInc)
@@ -135,7 +135,7 @@ function IncomeEditForm() {
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -143,7 +143,7 @@ function IncomeEditForm() {
           ) : (
             <View className="flex-row gap-2">
               <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-md items-center"
+                className="flex-1 bg-white border border-primaryBlue py-4 rounded-xl items-center"
                 onPress={() => {
                   setIsEditing(false);
                   form.reset();
@@ -155,7 +155,7 @@ function IncomeEditForm() {
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-md items-center flex-row justify-center"
+                    className="flex-1 bg-primaryBlue py-4 rounded-xl items-center flex-row justify-center"
                     disabled={isPending}
                   >
                     {isPending ? (
@@ -179,7 +179,7 @@ function IncomeEditForm() {
       }
       stickyFooter={true}
     >
-      <View className="w-full px-4 pt-5">
+      <View className="w-full px-6 pt-5">
         {/* Date Input */}
         <View className="relative">
           <FormDateAndTimeInput
