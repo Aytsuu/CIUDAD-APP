@@ -3,6 +3,7 @@ import { useGetComplaint } from "../api-operations/queries/complaintGetQueries";
 import { complaintColumns } from "./ComplaintColumn";
 import { Complaint } from "../complaint-type";
 import { filterComplaints } from "./FilterComplaint";
+
 import ComplaintFilterBar from "./ComplaintFilterBar";
 import ComplaintTable from "../ComplaintTable";
 import ComplaintPagination from "./ComplaintPagination";
