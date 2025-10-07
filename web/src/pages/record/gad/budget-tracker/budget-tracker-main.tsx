@@ -76,8 +76,9 @@ function GADBudgetTrackerMain() {
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {isLoading ? (
-          <div className="col-span-2 flex items-center justify-center py-16">
+          <div className="col-span-2 flex items-center justify-center py-16 gap-2 text-gray-500">
             <Spinner size="lg" />
+            Loading records...
           </div>
         ) : sortedYears.length > 0 ? (
           sortedYears.map((tracker) => {

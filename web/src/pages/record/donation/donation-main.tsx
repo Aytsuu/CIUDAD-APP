@@ -280,8 +280,9 @@ function DonationTracker() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
+          <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
             <Spinner size="lg" />
+            Loading donation records...
           </div>
         ) : (
           <>

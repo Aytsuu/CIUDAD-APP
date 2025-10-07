@@ -349,8 +349,9 @@ function TreasurerDisbursementVouchers() {
 
       <div className="flex flex-col gap-4">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
+          <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
             <Spinner size="lg" />
+            Loading records...
           </div>
         ) : disbursements.length === 0 ? ( // FIXED: changed from paginatedDisbursements to disbursements
           <div className="text-center py-8 text-gray-500">

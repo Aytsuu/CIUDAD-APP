@@ -556,8 +556,9 @@ function BudgetTracker() {
 
         <div className="overflow-x-auto min-h-[400px] relative">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
+            <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
               <Spinner size="lg" />
+              Loading records...
             </div>
           ) : activeTab === "active" ? (
             <DataTable columns={columns} data={budgetEntries} />
