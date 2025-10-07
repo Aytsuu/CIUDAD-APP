@@ -42,6 +42,7 @@ import { GADBudgetEntry } from "./budget-tracker-types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext"; 
+import {BudgetYear} from "./budget-tracker-types";
 
 function BudgetTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,6 +58,11 @@ function BudgetTracker() {
   const { mutate: permanentDeleteEntry } = usePermanentDeleteGADBudget();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const { showLoading, hideLoading } = useLoading();
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
 
   const handleArchive = (gbud_num: number) => {
     archiveEntry(gbud_num, {
@@ -94,9 +100,9 @@ function BudgetTracker() {
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === gbudy_year
-  )?.gbudy_budget;
+const currentYearBudget = yearBudgets?.results?.find(
+  (budget: BudgetYear) => budget.gbudy_year === gbudy_year
+)?.gbudy_budget;
 
   const formattedBudget = currentYearBudget
     ? Number(currentYearBudget).toFixed(2)
@@ -185,27 +191,37 @@ function BudgetTracker() {
     return balance;
   };
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Handle search change
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    setCurrentPage(1); // Reset to first page on search
+    setCurrentPage(1); 
   };
 
-  // Handle month filter change
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
-    setCurrentPage(1); // Reset to first page on filter
+    setCurrentPage(1); 
   };
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setCurrentPage(1); // Reset to first page on tab change
+    setCurrentPage(1); 
+  };
+
+  const handleImageClick = (file: { gbf_url: string; gbf_name: string }) => {
+    setSelectedImage({
+      url: file.gbf_url,
+      name: file.gbf_name || "Supporting Document"
+    });
+    setIsImageModalOpen(true);
+  };
+
+  const handleDocumentClick = (file: { gbf_url: string; gbf_name: string }) => {
+    if (file.gbf_url) {
+      window.open(file.gbf_url, "_blank");
+    }
   };
 
   const columns: ColumnDef<GADBudgetEntry>[] = [
@@ -269,7 +285,9 @@ function BudgetTracker() {
           displayParticulars = "No particulars";
         }
 
-        return <div>{displayParticulars}</div>;
+        return <div className="flex-row items-center bg-blue-50 px-2 py-0.5 rounded-full border border-primary">
+              <div className="text-primary text-sm font-medium">{displayParticulars}</div>
+            </div>;
       },
     },
     {
@@ -455,13 +473,13 @@ function BudgetTracker() {
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Remaining Balance:</Label>
           <Label className="text-green-600 text-md font-bold">
-            Php {getLatestRemainingBalance()}
+            Php {getLatestRemainingBalance().toFixed(2)}
           </Label>
         </div>
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Pending Expenses:</Label>
           <Label className="text-red-500 text-md font-bold">
-            Php {calculateTotalProposedWithoutActual()}
+            Php {calculateTotalProposedWithoutActual().toFixed(2)}
           </Label>
         </div>
       </div>
@@ -608,18 +626,16 @@ function BudgetTracker() {
                   return (
                     <div
                       key={file.gbf_id}
-                      className="border border-gray-200 rounded-lg overflow-hidden bg-white cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() =>
-                        file.gbf_url && window.open(file.gbf_url, "_blank")
-                      }
+                      className="flex flex-col items-center p-4"
                     >
-                      {/* Document Preview */}
-                      <div className="h-40 bg-gray-50 flex items-center justify-center">
+                      <div className="relative w-full h-40 flex justify-center items-center">
                         {isImage && file.gbf_url ? (
+                          // Image - opens in modal
                           <img
                             src={file.gbf_url}
                             alt={fileName}
-                            className="h-full w-full object-cover"
+                            className="w-full h-full object-contain rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => handleImageClick(file)}
                             onError={(e) => {
                               console.error("Image load failed:", file.gbf_url);
                               (e.target as HTMLImageElement).src =
@@ -627,18 +643,19 @@ function BudgetTracker() {
                             }}
                           />
                         ) : (
-                          <FileText
-                            size={32}
-                            className={isPDF ? "text-red-500" : "text-gray-400"}
-                          />
+                          // PDF or other files - opens in new tab
+                          <div 
+                            className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md cursor-pointer hover:bg-gray-200 p-4"
+                            onClick={() => handleDocumentClick(file)}
+                          >
+                            <p className="mt-2 text-sm text-gray-600">
+                              {isPDF ? "PDF Document" : fileName}
+                            </p>
+                            <p className="mt-2 text-blue-600 hover:underline">
+                              {isPDF ? "View PDF" : "View Document"}
+                            </p>
+                          </div>
                         )}
-                      </div>
-
-                      {/* Document Info */}
-                      <div className="p-3">
-                        <p className="text-xs text-gray-500 mt-1">
-                          {isPDF ? "PDF Document" : "Image Document"}
-                        </p>
                       </div>
                     </div>
                   );
@@ -651,6 +668,25 @@ function BudgetTracker() {
                   No supporting documents available
                 </p>
               </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Modal */}
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogContent className="max-w-[95vw] w-auto max-h-[95vh] h-auto p-0 bg-transparent border-none shadow-none">
+          <div className="relative">
+            {selectedImage && (
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.name}
+                className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                onError={(e) => {
+                  console.error(`Failed to load image: ${selectedImage.url}`);
+                  (e.target as HTMLImageElement).src = "/placeholder-image.png";
+                }}
+              />
             )}
           </div>
         </DialogContent>

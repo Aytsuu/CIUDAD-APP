@@ -141,6 +141,7 @@ class GAD_Budget_YearView(generics.ListCreateAPIView):
     queryset = GAD_Budget_Year.objects.all()
     serializer_class = GADBudgetYearSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         queryset = GAD_Budget_Year.objects.all()
