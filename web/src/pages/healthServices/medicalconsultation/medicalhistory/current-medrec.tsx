@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Printer,Stethoscope } from "lucide-react";
+import { Printer, Stethoscope } from "lucide-react";
 import { usePhysicalExamQueries } from "../../doctor/medical-con/queries.tsx/fetch";
 import PhysicalExamTable from "./philhealth-display";
 import { useMedConPHHistory, useFamHistory } from "../queries/fetch";
@@ -26,24 +26,12 @@ const formatDate = (dateString: string) => {
 
 // Tab component
 const TabButton = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-      active
-        ? "border-blue-600 text-blue-600"
-        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-    }`}
-  >
+  <button onClick={onClick} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${active ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
     {children}
   </button>
 );
 
-export default function CurrentConsultationCard({ 
-  consultation, 
-  patientData, 
-  currentConsultationId,
-  className = "" 
-}: CurrentConsultationCardProps) {
+export default function CurrentConsultationCard({ consultation, patientData, currentConsultationId, className = "" }: CurrentConsultationCardProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"medical" | "philhealth" | "history">("medical");
   const bhw = `${consultation?.staff_details?.rp?.per?.per_fname || ""} ${consultation?.staff_details?.rp?.per?.per_lname || ""} ${consultation?.staff_details?.rp?.per?.per_mname || ""} ${consultation?.staff_details?.rp?.per?.per_suffix || ""}`;
@@ -566,16 +554,7 @@ export default function CurrentConsultationCard({
   // PhilHealth Content
   const PhilHealthContent = () => (
     <div>
-      <PhysicalExamTable 
-        consultation={consultation} 
-        patientData={patientData} 
-        examSections={examSections} 
-        isPhysicalExamLoading={isPhysicalExamLoading} 
-        phHistoryData={phHistoryData} 
-        famHistoryData={famHistoryData}
-        isLoading={!phHistoryData} 
-        isError={false} 
-      />
+      <PhysicalExamTable consultation={consultation} patientData={patientData} examSections={examSections} isPhysicalExamLoading={isPhysicalExamLoading} phHistoryData={phHistoryData} famHistoryData={famHistoryData} isLoading={!phHistoryData} isError={false} />
     </div>
   );
 
@@ -592,10 +571,7 @@ export default function CurrentConsultationCard({
         </div>
       </div>
 
-      <ConsultationHistoryTable 
-        patientId={patientData?.pat_id}
-        currentConsultationId={currentConsultationId}
-      />
+      <ConsultationHistoryTable patientId={patientData?.pat_id} currentConsultationId={currentConsultationId} />
     </div>
   );
 
@@ -603,52 +579,49 @@ export default function CurrentConsultationCard({
     <div className={`bg-white ${className}`}>
       {/* Tabs Navigation */}
       <div className="tabs-container no-print border-b border-gray-200 mb-6">
-        <div className="flex space-x-4">
-          <TabButton 
-            active={activeTab === "medical"} 
-            onClick={() => setActiveTab("medical")}
-          >
-            Current Medical Consultation
-          </TabButton>
-          <TabButton 
-            active={activeTab === "philhealth"} 
-            onClick={() => setActiveTab("philhealth")}
-          >
-            PhilHealth
-          </TabButton>
-          <TabButton 
-            active={activeTab === "history"} 
-            onClick={() => setActiveTab("history")}
-          >
-            Consultation History
-          </TabButton>
-        </div>
+      <div className="flex space-x-4">
+        <TabButton active={activeTab === "medical"} onClick={() => setActiveTab("medical")}>
+        Current Medical Consultation
+        </TabButton>
+        {consultation.is_phrecord === true && (
+        <TabButton active={activeTab === "philhealth"} onClick={() => setActiveTab("philhealth")}>
+          PhilHealth
+        </TabButton>
+        )}
+        <TabButton active={activeTab === "history"} onClick={() => setActiveTab("history")}>
+        Consultation History
+        </TabButton>
+      </div>
       </div>
 
       {/* Content to be printed */}
       <div ref={printRef}>
-        {/* Tab Content */}
-        <div className="print-section">
-          {activeTab === "medical" && <MedicalConsultationContent />}
-          {activeTab === "philhealth" && <PhilHealthContent />}
-          {activeTab === "history" && <ConsultationHistoryContent />}
+      {/* Tab Content */}
+      <div className="print-section">
+        {activeTab === "medical" && <MedicalConsultationContent />}
+        {activeTab === "philhealth" && consultation.is_phrecord === true && <PhilHealthContent />}
+        {activeTab === "history" && <ConsultationHistoryContent />}
+      </div>
+
+      {/* Print version shows all sections */}
+      <div className="hidden print:block">
+        <div className="mb-8">
+        <h4 className="font-bold text-lg mb-4">Current Medical Consultation</h4>
+        <MedicalConsultationContent />
         </div>
 
-        {/* Print version shows all sections */}
-        <div className="hidden print:block">
-          <div className="mb-8">
-            <h4 className="font-bold text-lg mb-4">Current Medical Consultation</h4>
-            <MedicalConsultationContent />
-          </div>
-          <div className="mb-8">
-            <h4 className="font-bold text-lg mb-4">PhilHealth</h4>
-            <PhilHealthContent />
-          </div>
-          <div>
-            <h4 className="font-bold text-lg mb-4">Consultation History</h4>
-            <ConsultationHistoryContent />
-          </div>
+        {consultation.is_phrecord === true && (
+        <div className="mb-8">
+          <h4 className="font-bold text-lg mb-4">PhilHealth</h4>
+          <PhilHealthContent />
         </div>
+        )}
+
+        <div>
+        <h4 className="font-bold text-lg mb-4">Consultation History</h4>
+        <ConsultationHistoryContent />
+        </div>
+      </div>
       </div>
     </div>
   );

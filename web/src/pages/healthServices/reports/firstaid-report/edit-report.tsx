@@ -7,7 +7,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import {useUpdateMonthlyRecipientList} from "@/pages/healthServices/reports/firstaid-report/queries/post";
+import { useUpdateMonthlyRecipientList } from "./queries/post";
 
 export default function EditMonthlyRecipientList() {
   const location = useLocation();

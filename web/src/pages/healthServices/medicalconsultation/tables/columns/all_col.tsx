@@ -11,7 +11,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "pat_id",
       header: "Patient ID",
-      cell: ({ row }) => <div className="flex justify-center ">{row.original.pat_id}</div>
+      cell: ({ row }) => <div className="flex justify-center">{row.original.pat_id}</div>
     },
     {
       accessorKey: "patient",
@@ -80,26 +80,31 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => {
+        // Safely construct patientData with proper fallbacks
         const patientData = {
-          pat_id: row.original.pat_id,
-          pat_type: row.original.pat_type,
-          age: row.original.age,
+          pat_id: row.original.pat_id || "",
+          pat_type: row.original.pat_type || "",
+          age: row.original.age || "",
           addressFull: row.original.address || "No address provided",
           address: {
-            add_street: row.original.street,
-            add_barangay: row.original.barangay,
-            add_city: row.original.city,
-            add_province: row.original.province,
-            add_sitio: row.original.sitio
+            add_street: row.original.street || "",
+            add_barangay: row.original.barangay || "",
+            add_city: row.original.city || "",
+            add_province: row.original.province || "",
+            add_sitio: row.original.sitio || ""
           },
-          households: [{ hh_id: row.original.householdno }],
+          households: [{ hh_id: row.original.householdno || "" }],
           personal_info: {
-            per_fname: row.original.fname,
-            per_mname: row.original.mname,
-            per_lname: row.original.lname,
-            per_dob: row.original.dob,
-            per_sex: row.original.sex,
-            per_contact: row.original.contact
+            per_fname: row.original.fname || "",
+            per_mname: row.original.mname || "",
+            per_lname: row.original.lname || "",
+            per_dob: row.original.dob || "",
+            per_sex: row.original.sex || "",
+            per_contact: row.original.contact || "",
+            per_status: row.original.per_status || "" // Safe access
+          },
+          additional_info: {
+            philhealth_id: row.original.philhealth_id || "", // Safe access
           }
         };
 
@@ -120,6 +125,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     }
   ];
 };
+
 
 export const exportColumns = [
   {

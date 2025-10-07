@@ -73,7 +73,7 @@ class ObstetricalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obstetrical_History
         fields = ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 'obs_still_birth', 'obs_lg_babies',
-                  'obs_lg_babies_str', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm', 'obs_record_from']
+                  'obs_lg_babies_str', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm']
 # end of serializer for models not in maternal
 
 class PreviousHospitalizationCreateSerializer(serializers.ModelSerializer):

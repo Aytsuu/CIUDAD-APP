@@ -125,6 +125,7 @@ export default function AllMedicalConsRecord() {
       const addressString = [address.add_street || info.per_address || "", address.add_barangay || "", address.add_city || "", address.add_province || ""].filter((part) => part.trim().length > 0).join(", ") || "";
 
       return {
+        
         rp_id: record.rp_id || null,
         pat_id: record.pat_id,
         fname,
@@ -142,7 +143,9 @@ export default function AllMedicalConsRecord() {
         pat_type: record.pat_type || details.pat_type || "",
         address: addressString,
         medicalrec_count: record.medicalrec_count || 0,
-        contact: info.per_contact || ""
+        contact: info.per_contact || "",
+        per_status: info.per_status || "",
+        philhealth_id: details.additional_info?.philhealth_id || "",
       };
     });
   }, [medicalRecords]);

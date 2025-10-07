@@ -31,9 +31,12 @@ import { ttStatusOptions } from "./options";
 import { usePrenatalPatientObsHistory } from "../../maternal/queries/maternalFetchQueries";
 
 export const civilStatusOptions = [
-  { id: "single", name: "Single" },
-  { id: "married", name: "Married" },
-  { id: "widowed", name: "Widowed" }
+  { id: "SINGLE", name: "Single" },
+  { id: "MARRIEED", name: "Married" },
+  { id: "WIDOWED", name: "Widowed" },
+  { id: "SEPARATED", name: "Separated" },
+  { id: "DIVORCED", name: "Divorced" }
+
 ];
 
 export default function MedicalConsultationForm() {
@@ -63,35 +66,35 @@ export default function MedicalConsultationForm() {
       vital_bp_systolic: undefined,
       vital_bp_diastolic: undefined,
       vital_RR: undefined,
+      vital_o2:undefined,
       height: undefined,
       weight: undefined,
       medrec_chief_complaint: "",
       staff: staff || null,
-
       is_phrecord: false, // Default to false
       phil_pin: undefined,
+      civil_status: "",
+
       iswith_atc: false,
       dependent_or_member: "",
-      obs_abortions: "",
-      obs_ch_born_alive: "",
-      obs_fullterm: "",
-      obs_gravida: "",
+      obs_abortions: 0,
+      obs_ch_born_alive: 0,
+      obs_fullterm: 0,
+      obs_gravida: 0,
       obs_id: "",
       obs_lg_babies: "",
-      obs_lg_babies_str: false,
-      obs_para: "",
-      obs_preterm: "",
-      obs_still_births: "",
+      obs_lg_babies_str: "",
+      obs_para: 0,
+      obs_preterm: 0,
+      obs_still_birth: 0,
       obs_lmp: "",
-
-      tt_status: "",
+      tts_status: "",
       ogtt_result: "",
       contraceptive_used: "",
       smk_sticks_per_day: "",
       smk_years: "",
       is_passive_smoker: false,
       alcohol_bottles_per_day: "",
-
       selectedDoctorStaffId: ""
     }
   });
@@ -100,12 +103,15 @@ export default function MedicalConsultationForm() {
   const isPhilhealthRecord = watch("is_phrecord"); // Watch the checkbox value
 
   useEffect(() => {
+
+    console.log(patientData,"---------------------")
     if (latestVitals) {
       form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
       form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
       form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
       form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
       form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
+      form.setValue("vital_o2", latestVitals.oxygen_saturation?.toString() ?? "");
     }
     if (previousMeasurements) {
       form.setValue("height", previousMeasurements.height ?? 0);
@@ -114,21 +120,45 @@ export default function MedicalConsultationForm() {
     if (selectedPatientData) {
       // Corrected line - removed the duplicate fallback that doesn't exist
       form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
+      form.setValue("civil_status", selectedPatientData?.personal_info?.per_status || "");
       // form.setValue("tt_status", selectedPatientData?.additional_info?.mother_tt_status || "");
       console.log("Selected Patient Data:", selectedPatientData);
       console.log("PhilHealth ID:", selectedPatientData?.additional_info?.philhealth_id); // Debug log
     }
     if (obsHistoryData) {
       form.setValue("obs_lmp", obsHistoryData?.obstetrical_history?.obs_lmp ? format(new Date(obsHistoryData?.obstetrical_history?.obs_lmp), "yyyy-MM-dd") : "");
-      form.setValue("obs_gravida", obsHistoryData?.obstetrical_history?.obs_gravida ?? "");
-      form.setValue("obs_para", obsHistoryData?.obstetrical_history?.obs_para ?? "");
+      form.setValue("obs_gravida", obsHistoryData?.obstetrical_history?.obs_gravida ?? 0);
+      form.setValue("obs_para", obsHistoryData?.obstetrical_history?.obs_para ?? 0);
       form.setValue("obs_id", obsHistoryData?.obstetrical_history?.obs_id ?? "");
-      form.setValue("obs_fullterm", obsHistoryData?.obstetrical_history?.obs_fullterm ?? "");
-      form.setValue("obs_preterm", obsHistoryData?.obstetrical_history?.obs_preterm ?? "");
-      form.setValue("obs_abortions", obsHistoryData?.obstetrical_history?.obs_abortions ?? "");
-      form.setValue("obs_living_ch", obsHistoryData?.obstetrical_history?.obs_living_ch ?? "");
+      form.setValue("obs_fullterm", obsHistoryData?.obstetrical_history?.obs_fullterm ?? 0);
+      form.setValue("obs_preterm", obsHistoryData?.obstetrical_history?.obs_preterm ?? 0);
+      form.setValue("obs_abortions", obsHistoryData?.obstetrical_history?.obs_abortions ?? 0);
+      form.setValue("obs_living_ch", obsHistoryData?.obstetrical_history?.obs_living_ch ?? 0);
+      form.setValue("obs_ch_born_alive", obsHistoryData?.obstetrical_history?.obs_ch_born_alive ?? 0);
+      form.setValue("obs_still_birth", obsHistoryData?.obstetrical_history?.obs_still_birth ?? 0);
+      form.setValue("obs_lg_babies", obsHistoryData?.obstetrical_history?.obs_lg_babies ?? 0);
+      form.setValue("obs_lg_babies_str", obsHistoryData?.obstetrical_history?.obs_lg_babies_str ?? "");
+
     }
   }, [latestVitals, previousMeasurements, form, selectedPatientData, obsHistoryData]);
+// Add proper date formatting and validation
+useEffect(() => {
+  if (obsHistoryData?.obstetrical_history?.obs_lmp) {
+    // Ensure the date is properly formatted for HTML date input
+    const lmpDate = new Date(obsHistoryData.obstetrical_history.obs_lmp);
+    const formattedDate = format(lmpDate, "yyyy-MM-dd");
+    form.setValue("obs_lmp", formattedDate);
+  }
+}, [obsHistoryData, form]);
+
+
+// Add this to your component to see real-time validation errors
+useEffect(() => {
+  console.log('Form Errors:', form.formState.errors);
+  console.log('Is Form Valid:', form.formState.isValid);
+  console.log('Form Values:', form.getValues());
+}, [form.formState.errors, form.formState.isValid]);
+
 
   const handlePatientSelect = async (patient: any, patientId: string) => {
     setSelectedPatientId(patientId);
@@ -141,13 +171,25 @@ export default function MedicalConsultationForm() {
     console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
   };
 
-  const onSubmit = async (data: nonPhilHealthType) => {
-    if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData)) {
-      showErrorToast("Please select a patient first");
-      return;
-    }
-    non_membersubmit.mutate({ data });
-  };
+
+  // Update your onSubmit to log more details
+const onSubmit = async (data: nonPhilHealthType) => {
+  console.log('🟢 Attempting submission with data:', data);
+  
+  if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData)) {
+    showErrorToast("Please select a patient first");
+    return;
+  }
+  
+  // Check if form is valid before submitting
+  if (!form.formState.isValid) {
+    console.log('🔴 Form is invalid, cannot submit');
+    showErrorToast("Please fix form errors before submitting");
+    return;
+  }
+  
+  non_membersubmit.mutate({ data });
+};
 
   return (
     <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
@@ -229,6 +271,16 @@ export default function MedicalConsultationForm() {
                           placeholder="Select type"
                         />
                       </div>
+
+                      <div className="md:col-span-1">
+                        <FormSelect
+                          control={form.control}
+                          name="civil_status"
+                          label="Civil Status"
+                          options={civilStatusOptions}
+                          placeholder="Select type"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -240,7 +292,7 @@ export default function MedicalConsultationForm() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormDateTimeInput control={form.control} name="lmp" label="Last Menstrual Period (LMP)" type="date" />
+                          <FormDateTimeInput control={form.control} name="obs_lmp" label="Last Menstrual Period (LMP)" type="date" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -256,7 +308,7 @@ export default function MedicalConsultationForm() {
                           <FormInput control={form.control} name="obs_living_ch" label="Living Children"  type="number" step={1} maxLength={2}  placeholder="No. of living children" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormSelect control={form.control} name="tt_status" label="Tetanus Toxoid Status" options={ttStatusOptions} placeholder="Select status" />
+                          <FormSelect control={form.control} name="tts_status" label="Tetanus Toxoid Status" options={ttStatusOptions} placeholder="Select status" />
                           <FormDateTimeInput control={form.control} name="tts_date_given" label="TT date given" type="date" />
                         </div>
                         <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Result" />
