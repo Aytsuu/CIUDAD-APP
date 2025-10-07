@@ -10,8 +10,7 @@ import EditEventForm from "./councilEventEdit.tsx";
 import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/councilEventdelqueries.tsx";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries.tsx";
-import { wasteColColumns, councilEventColumns } from "./council-event-cols.tsx";
+import { councilEventColumns } from "./council-event-cols.tsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
@@ -48,19 +47,9 @@ function CalendarPage() {
 
 
   const calendarEvents = councilEvents.filter((event: CouncilEvent) => !event.ce_is_archive);
-  const { data: wasteCollectionData = [], isLoading: isWasteColLoading } = useGetWasteCollectionSchedFull();
   const { showLoading, hideLoading } = useLoading();
   
   const calendarSources = [
-    {
-      name: "Waste Collection",
-      data: wasteCollectionData,
-      columns: wasteColColumns,
-      titleAccessor: "collectors_names",
-      dateAccessor: "wc_date",
-      timeAccessor: "wc_time",
-      defaultColor: "#10b981", // emerald
-    },
     {
       name: "Council Events",
       data: calendarEvents,
@@ -103,7 +92,7 @@ function CalendarPage() {
     });
   };
 
-  const isLoading = (activeTab === "calendar" ? isActiveEventsLoading : isArchivedEventsLoading) || isWasteColLoading;
+  const isLoading = (activeTab === "calendar" ? isActiveEventsLoading : isArchivedEventsLoading);
   
   useEffect(() => {
     if (isLoading) {
@@ -153,7 +142,7 @@ function CalendarPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
-                Loading council event records...
+                Loading council calendar...
               </div>
             ) : (
               <EventCalendar
@@ -171,7 +160,7 @@ function CalendarPage() {
             {isArchivedEventsLoading ? (
               <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
-                Loading council event records...
+                Loading council calendar...
               </div>
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-custom">

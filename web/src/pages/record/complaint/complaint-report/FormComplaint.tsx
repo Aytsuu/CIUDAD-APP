@@ -5,60 +5,69 @@ import {
   type ComplaintFormData,
   complaintFormSchema,
 } from "@/form-schema/complaint-schema";
-import { ReviewInfo } from "./Review";
-import { ComplainantInfo } from "./Complainant";
-import { AccusedInfo } from "./Accused";
-import { IncidentInfo } from "./Incident";
+import { ComplainantInfo } from "./complainant";
+import { AccusedInfo } from "./accused";
+import { IncidentInfo } from "./incident";
 import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   ChevronLeft,
   ChevronRight,
-  Send,
   FileText,
   AlertTriangle,
   User,
   Users,
   MapPin,
-  Eye,
-  Info,
 } from "lucide-react";
-import { BsChevronLeft } from "react-icons/bs";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { useNotifications } from "@/context/NotificationContext";
+import { useNavigate } from "react-router-dom";
+// import { useAuth } from "@/context/AuthContext";
+// import { useNotifications } from "@/context/NotificationContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export const ComplaintForm = () => {
   const [step, setStep] = useState(1);
   const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showIntroModal, setShowIntroModal] = useState(() => {
-    return localStorage.getItem("hideIntroDialog") !== "true";
-  });
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-
-  const { user } = useAuth();
-  const { send } = useNotifications();
+  // const { user } = useAuth();
+  // const { send } = useNotifications();
   const navigate = useNavigate();
 
   const methods = useForm<ComplaintFormData>({
     resolver: zodResolver(complaintFormSchema),
     defaultValues: {
-      complainant: [],
-      accused: [],
+      complainant: [
+        {
+          // type: "manual",
+          rp_id: null,
+          cpnt_name: "",
+          cpnt_gender: "",
+          cpnt_age: "",
+          cpnt_relation_to_respondent: "",
+          cpnt_number: "",
+          cpnt_address: "",
+        },
+      ],
+      accused: [
+        {
+          rp_id: null,
+          acsd_name: "",
+          acsd_age: "",
+          acsd_address: "",
+          acsd_gender: "",
+          acsd_description: "",
+        },
+      ],
       incident: {
-        location: "",
-        type: "Other",
-        description: "",
-        date: "",
-        time: "",
+        comp_location: "",
+        comp_incident_type: "Other",
+        comp_allegation: "",
+        comp_datetime: "",
       },
-      documents: [],
+      files: [],
     },
   });
 
@@ -67,9 +76,9 @@ export const ComplaintForm = () => {
     const isValid = await methods.trigger(fields as any);
 
     if (isValid) {
-      setStep((prev) => Math.min(prev + 1, 5));
+      setStep((prev) => Math.min(prev + 1, 3));
     } else {
-      if (step === 4 && methods.formState.errors) {
+      if (step === 3 && methods.formState.errors) {
         toast.error("Please check your uploaded files for errors");
       }
     }
@@ -79,117 +88,53 @@ export const ComplaintForm = () => {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSubmitClick = async () => {
-    const isValid = await methods.trigger();
-    if (isValid) {
-      setShowConfirmModal(true);
-    } else {
-      toast.error("Please fix all validation errors before submitting");
-    }
+  const handleSubmitClick = () => {
+    setShowConfirmModal(true);
   };
 
   const onSubmit = async (data: ComplaintFormData) => {
     try {
       setIsSubmitting(true);
 
-      const formData = new FormData();
+      // Create the payload object directly
+      const payload = {
+        complainant: data.complainant,
+        accused: data.accused,
+        comp_incident_type: data.incident.comp_incident_type,
+        comp_allegation: data.incident.comp_allegation,
+        comp_location: data.incident.comp_location,
+        comp_datetime: data.incident.comp_datetime,
+        files: data.files || [],
+      };
 
-      const complainantData = data.complainant?.map((comp) => {
-        const fullAddress = [
-          comp.address?.street,
-          comp.address?.barangay,
-          comp.address?.city,
-          comp.address?.province,
-        ]
-          .filter(Boolean)
-          .join(", ")
-          .toUpperCase();
+      console.log("Payload to submit:", payload);
 
-        return {
-          cpnt_name: comp.fullName,
-          cpnt_gender: comp.genderInput || comp.gender,
-          cpnt_number: comp.contactNumber,
-          cpnt_age: comp.age,
-          cpnt_relation_to_respondent: comp.relation_to_respondent,
-          cpnt_address: fullAddress,
-          rp_id: comp.rp_id || null, // Optional resident profile ID
-        };
-      });
-      formData.append("complainant", JSON.stringify(complainantData));
-
-      const accusedData = data.accused?.map((acc) => {
-        const fullAddress = [
-          acc.address?.street,
-          acc.address?.barangay,
-          acc.address?.city,
-          acc.address?.province,
-        ]
-          .filter(Boolean)
-          .join(", ")
-          .toUpperCase();
-
-        return {
-          acsd_name: acc.alias, // Using alias as name
-          acsd_age: acc.age,
-          acsd_gender: acc.genderInput || acc.gender,
-          acsd_description: acc.description,
-          acsd_address: fullAddress,
-          rp_id: acc.rp_id || null, // Optional resident profile ID
-        };
-      });
-      formData.append("accused_persons", JSON.stringify(accusedData));
-
-      formData.append("comp_incident_type", data.incident?.type as any);
-      formData.append("comp_allegation", data.incident?.description as any);
-      formData.append("comp_location", data.incident?.location ?? "");
-
-      // DateTime - backend expects string format
-      const dateTimeString = `${data.incident?.date}T${data.incident?.time}`;
-      const dateTime = new Date(dateTimeString);
-      if (isNaN(dateTime.getTime())) {
-        throw new Error("Invalid date or time format");
-      }
-      formData.append("comp_datetime", dateTimeString);
-
-      if (data.documents && data.documents.length > 0) {
-        const uploadedFiles = data.documents.filter(
-          (fileData: any) =>
-            fileData.status === "uploaded" && fileData.publicUrl
-        );
-
-        if (uploadedFiles.length > 0) {
-          const fileDataForBackend = uploadedFiles.map((fileData: any) => ({
-            cf_filename: fileData.name,
-            cf_size: fileData.size,
-            cf_type: fileData.type || "document",
-            cf_path: fileData.publicUrl,
-            cf_storage_path: fileData.storagePath,
-          }));
-
-          formData.append("complaint_files", JSON.stringify(fileDataForBackend));
-        }
+      // If you need to log files specifically
+      if (payload.files.length > 0) {
+        console.log("Files to upload:", payload.files);
+        payload.files.forEach((fileItem: any, index: number) => {
+          if (fileItem && fileItem.file) {
+            console.log(
+              `File ${index}:`,
+              fileItem.file.name,
+              fileItem.file.type,
+              fileItem.file.size
+            );
+          } else {
+            console.warn(`File ${index} is not a File object:`, fileItem);
+          }
+        });
       }
 
-      console.log("Submitting complaint with data:", {
-        complainant: complainantData,
-        accused_persons: accusedData,
-        comp_incident_type: data.incident?.type,
-        comp_allegation: data.incident?.description,
-        comp_location: data.incident?.location,
-        comp_datetime: dateTimeString,
-      });
-
-      const response = await postComplaint.mutateAsync(formData);
+      const response = await postComplaint.mutateAsync(payload);
 
       if (response) {
-        await handleSendAlert();
-
+        // await handleSendAlert();
         const successMessage = response.comp_id
           ? `Complaint #${response.comp_id} submitted successfully`
           : "Complaint submitted successfully";
 
         toast.success(successMessage);
-
         methods.reset();
         setStep(1);
         setShowConfirmModal(false);
@@ -206,34 +151,22 @@ export const ComplaintForm = () => {
     }
   };
 
-  const handleDismissIntro = () => {
-    if (dontShowAgain) {
-      localStorage.setItem("hideIntroDialog", "true");
-    }
-    setShowIntroModal(false);
-  };
-
-  const showIntroManually = () => {
-    setShowIntroModal(true);
-  };
-
-  const handleSendAlert = async () => {
-    try {
-      await send({
-        title: "Complaint Report Filed",
-        message: "Your complaint has been submitted and is now being processed",
-        recipient_ids: [user?.acc_id || ""],
-        metadata: {
-          action_url: "/complaint",
-          sender_name: "Barangay System",
-          sender_avatar: `${user?.profile_image}` || "",
-        },
-      });
-    } catch (error) {
-      console.error("Error sending notification:", error);
-      // Don't throw error here as complaint was already submitted successfully
-    }
-  };
+  // const handleSendAlert = async () => {
+  //   try {
+  //     await send({
+  //       title: "Complaint Report Filed",
+  //       message: "Your complaint has been submitted and is now being processed",
+  //       recipient_ids: [user?.acc_id || ""],
+  //       metadata: {
+  //         action_url: `complaint/${user?.acc_id}/`,
+  //         sender_name: "Barangay System",
+  //         sender_avatar: `${user?.profile_image}` || "",
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error("Error sending notification:", error);
+  //   }
+  // };
 
   const confirmSubmit = () => {
     const formData = methods.getValues();
@@ -243,192 +176,85 @@ export const ComplaintForm = () => {
   const stepFields: Record<number, string[]> = {
     1: ["complainant"],
     2: ["accused"],
-    3: ["incident"],
-    4: ["review"],
+    3: [
+      "incident.comp_location",
+      "incident.comp_incident_type",
+      "incident.comp_allegation",
+      "incident.comp_datetime",
+    ],
   };
 
   const steps = [
     {
       number: 1,
       title: "Complainant",
-      description: "Nagrereklamo",
+      description: "Person filing",
       icon: User,
     },
-    { number: 2, title: "Respondent", description: "Isinasakdal", icon: Users },
+    {
+      number: 2,
+      title: "Respondent",
+      description: "Person accused",
+      icon: Users,
+    },
     {
       number: 3,
       title: "Incident",
-      description: "Detalye ng Reklamo",
+      description: "Case details",
       icon: MapPin,
-    },
-    {
-      number: 4,
-      title: "Review",
-      description: "Confirm the accuracy of your complaint details",
-      icon: Eye,
     },
   ];
 
   return (
-    <div className="max-h-screen">
-      <div className="flex-1">
-        <Card className="overflow-hidden h-full border-none p-0 m-0">
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <div className="flex items-center gap-2">
+    <LayoutWithBack
+      title={"Blotter Form"}
+      description="Ensure all complaint details are complete and accurate to facilitate proper action by the barangay."
+    >
+      <ProgressBar steps={steps} currentStep={step} showDescription={true} />
+
+      <FormProvider {...methods}>
+        <div className="mb-8 mt-4 px-32">
+          {step === 1 && <ComplainantInfo />}
+          {step === 2 && <AccusedInfo />}
+          {step === 3 && (
+            <IncidentInfo
+              onSubmit={handleSubmitClick}
+              isSubmitting={isSubmitting}
+            />
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t gap-4">
+          <div className="w-full sm:w-auto">
+            {step > 1 && (
               <Button
-                className="text-black p-2 flex items-center justify-center"
-                variant="outline"
+                type="button"
+                variant="secondary"
+                onClick={prevStep}
+                className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+                disabled={isSubmitting}
               >
-                <Link to="/complaint">
-                  <BsChevronLeft />
-                </Link>
+                <ChevronLeft className="w-4 h-4" /> Previous
               </Button>
-              <div>
-                <div className="flex items-center gap-x-2">
-                  <h2 className="text-2xl font-bold text-darkBlue2">
-                    Barangay Complaint Form
-                  </h2>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={showIntroManually}
-                    className="p-0 h-auto w-auto 
-                                  rounded-full
-                               text-blue-500 
-                               hover:text-white 
-                               hover:bg-blue-500 
-                               transition-colors duration-200"
-                  >
-                    <Info />
-                  </Button>
-                </div>
-                <p className="text-black/70 font-normal text-sm">
-                  Ensure all complaint details are complete and accurate to
-                  facilitate proper action by the barangay.
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-
-          <ProgressBar
-            steps={steps}
-            currentStep={step}
-            showDescription={true}
-          />
-
-          <CardContent className="mt-4">
-            <FormProvider {...methods}>
-              <div className="mb-8">
-                {step === 1 && <ComplainantInfo />}
-                {step === 2 && <AccusedInfo />}
-                {step === 3 && <IncidentInfo />}
-                {step === 4 && <ReviewInfo />}
-              </div>
-
-              <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t gap-4">
-                <div className="w-full sm:w-auto">
-                  {step > 1 && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={prevStep}
-                      className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
-                      disabled={isSubmitting}
-                    >
-                      <ChevronLeft className="w-4 h-4" /> Previous
-                    </Button>
-                  )}
-                </div>
-
-                <div className="w-full sm:w-auto">
-                  {step < 4 ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={nextStep}
-                      className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
-                      disabled={isSubmitting}
-                    >
-                      Next <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleSubmitClick}
-                      className="w-full sm:w-auto flex items-center gap-2 text-darkGray"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" /> Submit Complaint
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </FormProvider>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Intro Dialog */}
-      <DialogLayout
-        isOpen={showIntroModal}
-        onOpenChange={setShowIntroModal}
-        title="Barangay Complaint Report"
-        description={
-          <p className="text-left">
-            This form is used to submit barangay blotter reports. Please review
-            the process carefully before proceeding.
-          </p>
-        }
-        className="sm:max-w-lg"
-        mainContent={
-          <div className="space-y-4 text-sm text-gray-700">
-            <div className="mt-4 p-2 mx-4 rounded-md border border-blue-200 bg-blue-50 text-blue-900 flex items-start gap-3">
-              <FileText className="w-5 h-5 mt-1 text-blue-600 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-sm">
-                  Confidentiality Acknowledgment
-                </p>
-                <p className="text-sm mt-1">
-                  All information provided in this report will be treated with
-                  the utmost confidentiality and will only be used for official
-                  and lawful purposes.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-4 border-t">
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="dontShowAgain"
-                  checked={dontShowAgain}
-                  onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="dontShowAgain"
-                  className="text-sm text-gray-700"
-                >
-                  Don't show this again
-                </label>
-              </div>
-              <Button onClick={handleDismissIntro}>Continue</Button>
-            </div>
+            )}
           </div>
-        }
-      />
 
-      {/* Confirm Submit Dialog */}
+          <div className="w-full sm:w-auto">
+            {step < 3 ? (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={nextStep}
+                className="w-full sm:w-auto flex items-center gap-2 text-darkGray hover:bg-blue-500 hover:text-white"
+                disabled={isSubmitting}
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </FormProvider>
+
       <DialogLayout
         isOpen={showConfirmModal}
         onOpenChange={setShowConfirmModal}
@@ -482,6 +308,6 @@ export const ComplaintForm = () => {
           </>
         }
       />
-    </div>
+    </LayoutWithBack>
   );
 };

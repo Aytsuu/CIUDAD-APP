@@ -3,50 +3,24 @@ import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { usePostArchiveComplaint } from "../api-operations/queries/complaintPostQueries";
-import {
-  UserCheck2,
-  ArrowUpDown,
-  MoreHorizontal,
-  File,
-  ArchiveIcon,
-} from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, File, ArchiveIcon } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { RaiseIssueDialog } from "../RaiseIssueDialog";
 
-const getStatusBadgeProps = (status: string) => {
+const getStatusBadgeVariant = (status: string) => {
   switch (status?.toLowerCase()) {
-    case 'pending':
-      return {
-        className: "bg-red-100 text-red-800 hover:bg-red-200 border-red-300",
-        variant: "secondary" as const
-      };
-    case 'filed':
-      return {
-        className: "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-300",
-        variant: "secondary" as const
-      };
-    case 'raised':
-      return {
-        className: "bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-300",
-        variant: "secondary" as const
-      };
-    case 'processing':
-      return {
-        className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300",
-        variant: "secondary" as const
-      };
-    case 'settled':
-      return {
-        className: "bg-green-100 text-green-800 hover:bg-green-200 border-green-300",
-        variant: "secondary" as const
-      };
+    case "pending":
+      return "destructive" as const;
+    case "filed":
+      return "default" as const;
+    case "raised":
+      return "secondary" as const;
+    case "processing":
+      return "outline" as const;
     default:
-      return {
-        className: "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300",
-        variant: "secondary" as const
-      };
+      return "secondary" as const;
   }
 };
 
@@ -55,7 +29,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
     id: "select",
     header: ({ table }) => {
       return (
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center">
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
             onCheckedChange={(value) =>
@@ -64,7 +38,6 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
             aria-label="Select all"
             className="border-gray"
           />
-          
         </div>
       );
     },
@@ -86,30 +59,15 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
   },
   {
     accessorKey: "comp_id",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Complaint Id
-        <ArrowUpDown size={14} />
+    header: () => (
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+        ID
       </div>
     ),
     cell: ({ row }) => {
       return (
-        <div className="relative flex items-center justify-center h-full">
-          {/* Icon on the far left */}
-          <div className="absolute left-2">
-            <TooltipLayout
-              trigger={<UserCheck2 className="text-green-500" size={20} />}
-              content="Filed"
-            />
-          </div>
-
-          {/* Badge centered */}
-          <Badge variant="outline" className="font-medium">
-            {row.original.comp_id}
-          </Badge>
+        <div className="relative flex items-center justify-center h-full font-medium text-black/70">
+          {row.original.comp_id}
         </div>
       );
     },
@@ -139,11 +97,11 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
       const remainingCount = complainants.length - 1;
 
       return (
-        <div className="font-normal text-gray-900">
+        <div className="font-normal text-gray-900 whitespace-nowrap">
           {firstComplainant}
           {remainingCount > 0 && (
             <Badge className="bg-white text-black hover:bg-slate-100">
-              +{remainingCount} more
+              +{remainingCount}
             </Badge>
           )}
         </div>
@@ -158,12 +116,12 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Accused
+        Respondent
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => {
-      const accusedPersons = row.original.accused_persons;
+      const accusedPersons = row.original.accused;
       if (!accusedPersons || accusedPersons.length === 0) {
         return <div className="text-gray-500">No accused persons</div>;
       }
@@ -174,7 +132,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
       const remainingCount = accusedPersons.length - 1;
 
       return (
-        <div className="font-normal text-gray-900">
+        <div className="font-normal text-gray-900 whitespace-nowrap">
           {firstAccused}
           {remainingCount > 0 && (
             <TooltipLayout
@@ -200,23 +158,34 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
     ),
   },
   {
+    accessorKey: "comp_datetime",
+    header: "Date Submitted",
+    cell: ({ row }) => {
+      const data = row.getValue("comp_datetime") as string | number | Date;
+      const formattedDate = new Date(data).toLocaleString([], {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+
+      return <div className="font-normal text-gray-900 whitespace-nowrap">{formattedDate}</div>;
+    },
+  },
+  {
     accessorKey: "comp_status",
     header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("comp_status") as string;
-      const badgeProps = getStatusBadgeProps(status);
-      
+      const variant = getStatusBadgeVariant(status);
+
       return (
         <div className="flex justify-center">
-          <Badge 
-            variant={badgeProps.variant}
-            className={`font-medium ${badgeProps.className}`}
-          >
-            {status}
-          </Badge>
+          <Badge variant={variant}>{status}</Badge>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "actions",
@@ -230,8 +199,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
           id: "view",
           name: (
             <Link
-              to={`/complaint/${complaint.comp_id}`}
-              state={{ complaint }}
+              to={`/complaint/view/`}
               className="w-full h-full flex items-center gap-2"
             >
               <File size={16} className="text-darkGray" />
@@ -256,7 +224,7 @@ export const complaintColumns = (): ColumnDef<Complaint>[] => [
 
       const handleSelect = (id: string) => {
         if (id === "archive") {
-          archiveComplaint.mutateAsync(String(complaint.comp_id))
+          archiveComplaint.mutateAsync(String(complaint.comp_id));
           console.log("Archive:", complaint.comp_id);
         }
       };

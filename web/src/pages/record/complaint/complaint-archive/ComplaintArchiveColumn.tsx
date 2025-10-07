@@ -4,7 +4,6 @@ import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import ViewButton from "@/components/ui/view-button";
 import { ArrowUpDown } from "lucide-react";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const getStatusBadgeProps = (status: string) => {
@@ -130,51 +129,51 @@ export const archiveComplaintColumns = (): ColumnDef<Complaint>[] => [
           {firstComplainant}
           {remainingCount > 0 && (
             <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 ml-2">
-              +{remainingCount} more
+              +{remainingCount}
             </Badge>
           )}
         </div>
       );
     },
   },
-  {
-    accessorKey: "accused_persons",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Accused
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const accusedPersons = row.original.accused_persons;
-      if (!accusedPersons || accusedPersons.length === 0) {
-        return <div className="text-gray-500">No accused persons</div>;
-      }
+  // {
+  //   accessorKey: "accused_persons",
+  //   header: ({ column }) => (
+  //     <div
+  //       className="flex w-full justify-center items-center gap-2 cursor-pointer"
+  //       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+  //     >
+  //       Accused
+  //       <ArrowUpDown size={14} />
+  //     </div>
+  //   ),
+  //   cell: ({ row }) => {
+  //     const accusedPersons = row.original.accused_persons;
+  //     if (!accusedPersons || accusedPersons.length === 0) {
+  //       return <div className="text-gray-500">No accused persons</div>;
+  //     }
 
-      const name = accusedPersons[0].acsd_name;
-      const firstAccused = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-      const remainingCount = accusedPersons.length - 1;
+  //     const name = accusedPersons[0].acsd_name;
+  //     const firstAccused = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  //     const remainingCount = accusedPersons.length - 1;
 
-      return (
-        <div className="font-normal text-gray-700">
-          {firstAccused}
-          {remainingCount > 0 && (
-            <TooltipLayout
-              trigger={
-                <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 ml-2">
-                  +{remainingCount}
-                </Badge>
-              }
-              content="...more"
-            />
-          )}
-        </div>
-      );
-    },
-  },
+  //     return (
+  //       <div className="font-normal text-gray-700">
+  //         {firstAccused}
+  //         {remainingCount > 0 && (
+  //           <TooltipLayout
+  //             trigger={
+  //               <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 ml-2">
+  //                 +{remainingCount}
+  //               </Badge>
+  //             }
+  //             content="...more"
+  //           />
+  //         )}
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "comp_incident_type",
     header: "Incident Type",
