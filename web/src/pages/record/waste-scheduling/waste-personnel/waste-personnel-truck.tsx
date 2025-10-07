@@ -289,8 +289,9 @@ const operationalTrucksCount = operationalTrucksData?.count || 0;
 
         <div className="p-4">
           {isPersonnelLoading || (activeTab === "Trucks" && isTrucksLoading) ? (
-            <div className="flex items-center justify-center py-16">
+            <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
               <Spinner size="lg" />
+              Loading records...
             </div>
           ) : (
             <>

@@ -183,11 +183,6 @@ function GADBudgetLogTable() {
                 setCurrentPage(1); // Reset to first page when searching
               }}
             />
-            {isFetching && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Spinner size="sm" />
-              </div>
-            )}
           </div>
         </div>
 
@@ -211,8 +206,9 @@ function GADBudgetLogTable() {
 
           <div className="overflow-x-auto min-h-[400px] relative">
             {isLoading ? (
-              <div className="flex items-center justify-center py-16">
+              <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
+                Loading records...
               </div>
             ) : (
               <>
@@ -221,8 +217,9 @@ function GADBudgetLogTable() {
                   data={logs} 
                 />
                 {isFetching && (
-                  <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center gap-2 text-gray-500">
                     <Spinner size="lg" />
+                    Loading records...
                   </div>
                 )}
               </>

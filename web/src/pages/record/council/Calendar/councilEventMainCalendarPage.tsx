@@ -151,8 +151,9 @@ function CalendarPage() {
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "calendar" | "archive")}>
           <TabsContent value="calendar">
             {isLoading ? (
-              <div className="flex items-center justify-center py-16">
+              <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
+                Loading council event records...
               </div>
             ) : (
               <EventCalendar
@@ -168,8 +169,9 @@ function CalendarPage() {
 
           <TabsContent value="archive">
             {isArchivedEventsLoading ? (
-              <div className="flex items-center justify-center py-16">
+              <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
                 <Spinner size="lg" />
+                Loading council event records...
               </div>
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-custom">
