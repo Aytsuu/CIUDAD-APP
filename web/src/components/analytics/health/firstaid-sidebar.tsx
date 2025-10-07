@@ -1,7 +1,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, BarChart3, ChevronDown } from "lucide-react";
+import { AlertCircle, Loader2, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useFirstAidChart } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { useState } from "react";
 import { FaFirstAid } from "react-icons/fa";
