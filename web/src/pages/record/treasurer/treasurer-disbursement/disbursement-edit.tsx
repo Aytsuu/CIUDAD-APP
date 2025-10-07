@@ -345,11 +345,6 @@ export const EditDisbursementVoucher: React.FC<
               </div>
             )}
 
-            {/* Display voucher ID for debugging */}
-            <div className="p-3 bg-gray-100 border border-gray-300 text-gray-700 rounded-lg text-sm">
-              <strong>Editing Voucher ID:</strong> {voucherId}
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormInput
                 control={control}

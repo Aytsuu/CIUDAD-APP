@@ -29,6 +29,7 @@ function ExpenseEdit() {
   const {
     iet_num,
     iet_serial_num,
+    iet_check_num,
     iet_datetime,
     iet_entryType,
     iet_particular_id,
@@ -62,11 +63,11 @@ function ExpenseEdit() {
   console.log("PARTICULARRRR ID:", iet_particular_id)
   console.log("PARTICULARRRR NAME:", iet_particulars_name)   
 
-  const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
   const { data: budgetItems = [] } = useBudgetItems(years);
 
-  const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
 
@@ -88,6 +89,7 @@ function ExpenseEdit() {
     resolver: zodResolver(IncomeExpenseFormSchema),
     defaultValues: {
       iet_serial_num: String(iet_serial_num),
+      iet_check_num: String(iet_check_num),
       iet_datetime: String(iet_datetime),
       iet_entryType: String(iet_entryType),
       iet_particulars: `${iet_particular_id} ${iet_particulars_name}`,
@@ -319,11 +321,12 @@ function ExpenseEdit() {
       contentPadding="medium"
       loading={isPending}
       loadingMessage="Updating expense entry..."
+      stickyFooter={true}
       footer={
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -331,7 +334,7 @@ function ExpenseEdit() {
           ) : (
             <View className="flex-row gap-2">
               <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-md items-center"
+                className="flex-1 bg-white border border-primaryBlue py-4 rounded-xl items-center"
                 onPress={() => {
                   setIsEditing(false);
                   form.reset();
@@ -343,7 +346,7 @@ function ExpenseEdit() {
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-md items-center flex-row justify-center"
+                    className="flex-1 bg-primaryBlue py-4 rounded-xl items-center flex-row justify-center"
                     disabled={isPending}
                   >
                     {isPending ? (
@@ -365,7 +368,6 @@ function ExpenseEdit() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
       <View className="px-4">
         {selectedParticular && (
@@ -392,6 +394,23 @@ function ExpenseEdit() {
                 />
             )}
         </View>
+
+        <View className="relative">
+            <FormInput
+                control={form.control}
+                name="iet_check_num"
+                label="Check No."
+                placeholder="Enter check number"
+            />
+            {!isEditing && (
+                <TouchableOpacity
+                    className="absolute top-0 left-0 right-0 bottom-0"
+                    activeOpacity={1}
+                    onPress={() => {}}
+                    style={{ backgroundColor: 'transparent', zIndex: 10 }}
+                />
+            )}
+        </View>        
 
         <View className="relative">
             <FormDateAndTimeInput

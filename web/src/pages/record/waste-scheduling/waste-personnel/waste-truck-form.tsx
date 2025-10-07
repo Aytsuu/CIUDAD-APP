@@ -85,8 +85,8 @@ const TruckManagement = ({
       accessorKey: "truck_plate_num",
       header: "Plate Number",
       cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.getValue("truck_plate_num")}
+        <div className="flex-row items-center bg-blue-50 px-2.5 py-0.5 rounded-full border border-primary">
+          <div className="text-primary text-sm font-medium">{row.getValue("truck_plate_num")}</div>
         </div>
       ),
       size: 120,

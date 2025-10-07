@@ -338,7 +338,7 @@ function TreasurerDisbursementVouchers() {
         >
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="archived"> {/* FIXED: changed from "archive" to "archived" */}
+            <TabsTrigger value="archived"> 
               <div className="flex items-center gap-2">
                 <Archive size={16} /> Archive
               </div>
@@ -353,14 +353,14 @@ function TreasurerDisbursementVouchers() {
             <Spinner size="lg" />
             Loading records...
           </div>
-        ) : disbursements.length === 0 ? ( // FIXED: changed from paginatedDisbursements to disbursements
+        ) : disbursements.length === 0 ? ( 
           <div className="text-center py-8 text-gray-500">
             No {viewMode === "active" ? "active" : "archived"} disbursement
             vouchers found.
           </div>
         ) : (
           <>
-            {disbursements.map( // FIXED: changed from paginatedDisbursements to disbursements
+            {disbursements.map( 
               (disbursement: DisbursementVoucher, index: number) => {
                 return (
                   <CardLayout
@@ -468,9 +468,9 @@ function TreasurerDisbursementVouchers() {
             <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
               <p className="text-xs sm:text-sm text-darkGray">
                 Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows {/* FIXED: changed from filteredDisbursements.length to totalCount */}
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows 
               </p>
-              {disbursements.length > 0 && ( // FIXED: changed from filteredDisbursements to disbursements
+              {disbursements.length > 0 && ( 
                 <PaginationLayout
                   currentPage={currentPage}
                   totalPages={totalPages}
