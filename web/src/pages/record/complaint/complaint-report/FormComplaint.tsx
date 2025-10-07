@@ -5,9 +5,9 @@ import {
   type ComplaintFormData,
   complaintFormSchema,
 } from "@/form-schema/complaint-schema";
-import { ComplainantInfo } from "./Complainant";
-import { AccusedInfo } from "./Accused";
-import { IncidentInfo } from "./Incident";
+import { ComplainantInfo } from "./complainant";
+import { AccusedInfo } from "./accused";
+import { IncidentInfo } from "./incident";
 import { ProgressBar } from "@/components/progress-bar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
@@ -21,7 +21,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+// import { useAuth } from "@/context/AuthContext";
 // import { useNotifications } from "@/context/NotificationContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -32,7 +32,7 @@ export const ComplaintForm = () => {
   const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  // const { user } = useAuth();
   // const { send } = useNotifications();
   const navigate = useNavigate();
 
