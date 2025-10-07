@@ -58,15 +58,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
-
-  const { data: budgetData, isLoading } = useGADBudgets();
-  const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
+  const { data: budgetData, isLoading } =  useGADBudgets(currentYear);
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const currentYearBudget = yearBudgetsArray.find(
+    (budget: any) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
   
-
   const latestExpenseWithBalance = budgetData?.results
     ?.filter((entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
     ?.sort(

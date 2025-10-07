@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 import { createGADBudget, createGADBudgetFile } from "../requestAPI/BTPostRequest";
 import { MediaUploadType } from "@/components/ui/media-upload";
@@ -60,16 +59,11 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: Bu
         queryKey: ['gad-budget-files', data.gbud_num],
       });
 
-      toast.success('Budget entry created successfully', {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
+      showSuccessToast('Budget entry created successfully');
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
     },
-    onError: (error: any) => {
-      toast.error('Failed to create budget entry', {
-        description: error.message || JSON.stringify(error.response?.data),
-      });
+    onError: (_error: any) => {
+      showErrorToast('Failed to create budget entry');
     },
   });
 };

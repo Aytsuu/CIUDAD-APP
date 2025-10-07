@@ -36,11 +36,12 @@ export const EditProjectProposalForm: React.FC<
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const [selectedDevProject] = useState<any>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { data: budgetData, isLoading } = useGADBudgets();
-  const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
+  const { data: budgetData, isLoading } =  useGADBudgets(currentYear);
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const currentYearBudget = yearBudgetsArray.find(
+    (budget: any) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
 
   const latestExpenseWithBalance = budgetData?.results

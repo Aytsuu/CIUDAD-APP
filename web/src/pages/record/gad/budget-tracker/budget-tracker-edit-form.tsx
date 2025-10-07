@@ -18,11 +18,11 @@ import { useUpdateGADBudget } from "./queries/BTUpdateQueries";
 import GADAddEntrySchema, {
   FormValues,
 } from "@/form-schema/gad-budget-track-create-form-schema";
-import { GADEditEntryFormProps } from "./budget-tracker-types";
+import { GADEditEntryFormProps, BudgetYear } from "./budget-tracker-types";
 import { DateTimePicker } from "@/components/ui/form/form-datetime-picker";
 
 function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
-  const { year } = useParams<{ year: string }>();
+  const { year: gbudy_year } = useParams<{ year: string }>(); 
   const [isEditing, setIsEditing] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>(() => []);
   const [selectedBudgetItems, setSelectedBudgetItems] = useState<
@@ -37,14 +37,21 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
     useGetGADYearBudgets();
   const { data: budgetEntry, isLoading: entryLoading } =
     useGADBudgetEntry(gbud_num);
-  const { data: projectProposals } = useProjectProposalsAvailability(year);
-  const { mutate: updateBudget, isPending } = useUpdateGADBudget(
-    yearBudgets || []
-  );
+  const { data: projectProposals } =
+    useProjectProposalsAvailability(gbudy_year);
+  const yearBudgetsArray = yearBudgets?.results || [];
+
+  const { mutate: updateBudget, isPending } =
+    useUpdateGADBudget(yearBudgetsArray);
 
   const calculateRemainingBalance = (): number => {
-    if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    if (!yearBudgets || !gbudy_year) return 0;
+
+    // Access the results array from the paginated response
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === gbudy_year
+    );
+
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -116,7 +123,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
         gbud_remaining_bal: budgetEntry.gbud_remaining_bal
           ? Number(budgetEntry.gbud_remaining_bal)
           : 0,
-        gbudy: yearBudgets?.find((b) => b.gbudy_year === year)?.gbudy_num || 0,
+        gbudy:
+          yearBudgets?.results?.find(
+            (b: BudgetYear) => b.gbudy_year === gbudy_year
+          )?.gbudy_num || 0,
         dev: budgetEntry.dev || 0,
         gbud_project_index: budgetEntry.gbud_project_index || 0,
       };
@@ -136,46 +146,48 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
       setSelectedBudgetItems(recordedItems);
       setRecordedBudgetItems(recordedItems);
     }
-  }, [budgetEntry, yearBudgets, year, projectProposals]);
+  }, [budgetEntry, yearBudgets, gbudy_year, projectProposals]);
 
   const handleConfirmSave = (values: FormValues) => {
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
-    if (inputYear !== year) {
+    if (inputYear !== gbudy_year) {
       form.setError("gbud_datetime", {
         type: "manual",
-        message: `Date must be in ${year}`,
+        message: `Date must be in ${gbudy_year}`,
       });
       return;
     }
 
     // Get the current actual expense from the form
-  const currentActualExpense = Number(values.gbud_actual_expense) || 0;
-  
-  // Get the original actual expense from the budget entry
-  const originalActualExpense = budgetEntry?.gbud_actual_expense 
-    ? Number(budgetEntry.gbud_actual_expense) 
-    : 0;
+    const currentActualExpense = Number(values.gbud_actual_expense) || 0;
 
-  // Only validate if the actual expense has been CHANGED (increased)
-  if (currentActualExpense !== originalActualExpense) {
-    if (currentActualExpense > remainingBalance + originalActualExpense) {
-      form.setError("gbud_actual_expense", {
-        type: "manual",
-        message: `Actual expense exceeds available balance. Maximum allowed: ₱${(remainingBalance + originalActualExpense).toLocaleString()}`,
-      });
-      return;
+    // Get the original actual expense from the budget entry
+    const originalActualExpense = budgetEntry?.gbud_actual_expense
+      ? Number(budgetEntry.gbud_actual_expense)
+      : 0;
+
+    // Only validate if the actual expense has been CHANGED (increased)
+    if (currentActualExpense !== originalActualExpense) {
+      if (currentActualExpense > remainingBalance + originalActualExpense) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense exceeds available balance. Maximum allowed: ₱${(
+            remainingBalance + originalActualExpense
+          ).toLocaleString()}`,
+        });
+        return;
+      }
+
+      if (currentActualExpense < 0) {
+        form.setError("gbud_actual_expense", {
+          type: "manual",
+          message: `Actual expense cannot be negative`,
+        });
+        return;
+      }
     }
-    
-    if (currentActualExpense < 0) {
-      form.setError("gbud_actual_expense", {
-        type: "manual",
-        message: `Actual expense cannot be negative`,
-      });
-      return;
-    }
-  }
 
     const budgetData = {
       gbud_datetime: new Date(values.gbud_datetime).toISOString(),
@@ -234,7 +246,10 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
   if (!budgetEntry)
     return <div className="text-center py-8">No budget entry found.</div>;
 
-  const currentYearBudget = yearBudgets?.find((b) => b.gbudy_year === year);
+  const currentYearBudget = yearBudgets?.results?.find(
+    (budget: BudgetYear) => budget.gbudy_year === gbudy_year
+  );
+
   const selectedProject = projectProposals?.find(
     (p) =>
       p.dev_id === budgetEntry.dev &&
@@ -254,7 +269,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                 <DateTimePicker
                   control={form.control}
                   name="gbud_datetime"
-                  label={`Date (${year} only)`}
+                  label={`Date (${gbudy_year} only)`}
                   readOnly={!isEditing}
                 />
               </div>
@@ -391,6 +406,7 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                     activeVideoId={activeVideoId}
                     setActiveVideoId={setActiveVideoId}
                     hideRemoveButton={true}
+                    readOnly={true}
                   />
                 )}
               </>
@@ -401,13 +417,16 @@ function GADEditEntryForm({ gbud_num, onSaveSuccess }: GADEditEntryFormProps) {
                 <div className="flex justify-between">
                   <span className="font-medium">Current Budget:</span>
                   <span>
-                    ₱{currentYearBudget.gbudy_budget?.toLocaleString()}
+                    ₱{Number(currentYearBudget.gbudy_budget)?.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Total Expenses:</span>
                   <span>
-                    ₱{(currentYearBudget.gbudy_expenses || 0).toLocaleString()}
+                    ₱
+                    {Number(
+                      currentYearBudget.gbudy_expenses || 0
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between font-bold">

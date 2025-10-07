@@ -22,10 +22,11 @@ import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { removeLeadingZeros } from "@/helpers/removeLeadingZeros";
 import { DateTimePicker } from "@/components/ui/form/form-datetime-picker";
 import { useAuth } from "@/context/AuthContext";
+import { BudgetYear } from "./budget-tracker-types";
 
 function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   const { user } = useAuth();
-  const { year } = useParams<{ year: string }>();
+  const { year: gbudy_year } = useParams<{ year: string }>();
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [selectedBudgetItems, setSelectedBudgetItems] = useState<
     { name: string; pax: string; amount: number }[]
@@ -38,21 +39,24 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     isLoading: yearBudgetsLoading,
     refetch: refetchYearBudgets,
   } = useGetGADYearBudgets();
-  const { data: budgetEntriesData } = useGADBudgets(year || "");
+  const { data: budgetEntriesData } = useGADBudgets(gbudy_year || "");
   const budgetEntries = budgetEntriesData?.results || [];
   const { data: projectProposals, isLoading: projectProposalsLoading } =
-    useProjectProposalsAvailability(year);
+    useProjectProposalsAvailability(gbudy_year);
+  const yearBudgetsArray = yearBudgets?.results || [];
   const {
     mutate: createBudget,
     isPending,
     error: _createError,
-  } = useCreateGADBudget(yearBudgets || [], budgetEntries);
+  } = useCreateGADBudget(yearBudgetsArray, budgetEntries);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
 
   // Calculate remaining balance
   const calculateRemainingBalance = (): number => {
-    if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    if (!yearBudgets || !gbudy_year) return 0;
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === gbudy_year
+    );
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -99,7 +103,9 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   // Set year budget
   useEffect(() => {
     if (yearBudgets && !yearBudgetsLoading) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === gbudy_year
+    );
       if (currentYearBudget) {
         form.setValue("gbudy", currentYearBudget.gbudy_num);
         form.setValue("gbud_remaining_bal", calculateRemainingBalance());
@@ -111,7 +117,7 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
       }
       form.trigger();
     }
-  }, [yearBudgets, yearBudgetsLoading, year, form]);
+  }, [yearBudgets, yearBudgetsLoading, gbudy_year, form]);
 
   // Update budget items when project is selected
   useEffect(() => {
@@ -188,10 +194,10 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     const inputDate = new Date(values.gbud_datetime);
     const inputYear = inputDate.getFullYear().toString();
 
-    if (inputYear !== year) {
+    if (inputYear !== gbudy_year) {
       form.setError("gbud_datetime", {
         type: "manual",
-        message: `Date must be in ${year}`,
+        message: `Date must be in ${gbudy_year}`,
       });
       return;
     }
@@ -268,7 +274,10 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     );
   };
 
-  const currentYearBudget = yearBudgets?.find((b) => b.gbudy_year === year);
+  const currentYearBudget = yearBudgets?.results?.find(
+      (budget: BudgetYear) => budget.gbudy_year === gbudy_year
+    );
+  
   const selectedProject = projectProposals?.find(
     (p) => p.gpr_title === projectWatch
   );
@@ -286,8 +295,8 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                 <DateTimePicker
                   control={form.control}
                   name="gbud_datetime"
-                  label={`Date (${year} only)`}
-                  year={year}
+                  label={`Date (${gbudy_year} only)`}
+                  year={gbudy_year}
                 />
               </div>
               <div>
