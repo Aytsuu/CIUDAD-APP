@@ -38,7 +38,7 @@ const CertPermit: React.FC = () => {
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    user?.resident?.rp_id || ""
+    user?.rp || ""
   );
   const businessData = businessResponse?.results || [];
 
@@ -48,7 +48,7 @@ const CertPermit: React.FC = () => {
       const business = businessData[0];
 
       setBusinessName(prev => prev || business.bus_name || "");
-      setBusinessAddress(prev => prev || business.bus_location || "Address not available");
+      setBusinessAddress(prev => prev || `${business.bus_street}, ${business.sitio}` || "Address not available");
       setGrossSales(prev => prev || business.bus_gross_sales?.toString() || "");
       setIsBusinessOld(!!business.bus_date_verified);
     }
@@ -183,14 +183,21 @@ const CertPermit: React.FC = () => {
       return;
     }
 
-    // Validate required images (only for non-Business Clearance)
+    // Validate required images
     if (permitType !== 'Business Clearance') {
+      // For permit types other than Business Clearance
       if (isBusinessOld && !previousPermitImage) {
         setError("Previous permit image is required for existing businesses");
         return;
       }
       if (!assessmentImage) {
         setError("Assessment image is required");
+        return;
+      }
+    } else if (permitType === 'Business Clearance' && businessData.length === 0) {
+      // For new businesses requesting Business Clearance
+      if (!assessmentImage) {
+        setError("Assessment document is required for new businesses");
         return;
       }
     }
@@ -200,7 +207,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: user?.resident?.rp_id || "",
+      rp_id: user?.rp || "",
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
@@ -247,13 +254,13 @@ const CertPermit: React.FC = () => {
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: selectedPurpose?.pr_id,
-      rp_id: rp,
+      rp_id: user?.rp || "",
       req_amount: reqAmount,
       ags_id: agsId || undefined,
     };
 
     // Handle file uploads if images are provided
-    if ((previousPermitImage || assessmentImage) && permitType !== 'Business Clearance') {
+    if ((previousPermitImage || assessmentImage) && (permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0))) {
       try {
         setIsUploadingFiles(true);
         setUploadProgress("Preparing files for upload...");
@@ -473,11 +480,7 @@ const CertPermit: React.FC = () => {
                 editable={false}
               />
             )}
-
-            {/* Claim Date removed */}
-
-            {/* Image Upload Section - Only show for non-Business Clearance */}
-            {permitType !== 'Business Clearance' && (
+            {(permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0)) && (
               <View className="mb-4">
                 <Text className="text-sm font-medium text-gray-700 mb-3">Required Documents</Text>
                 
@@ -487,7 +490,7 @@ const CertPermit: React.FC = () => {
                     {isBusinessOld ? 'Existing Business' : 'New Business'}
                   </Text>
                   <Text className={`text-xs ${isBusinessOld ? 'text-blue-600' : 'text-green-600'} mt-1`}>
-                    {isBusinessOld ? 'Previous permit and assessment required' : 'Assessment only required'}
+                    {isBusinessOld ? 'Previous permit and assessment required' : 'Assessment document required for new businesses'}
                   </Text>
                 </View>
 
@@ -544,7 +547,12 @@ const CertPermit: React.FC = () => {
                     >
                       <Ionicons name="document-outline" size={32} color="#888" />
                       <Text className="text-gray-600 text-sm mt-2">Upload Assessment</Text>
-                      <Text className="text-gray-400 text-xs mt-1">Required for all businesses</Text>
+                      <Text className="text-gray-400 text-xs mt-1">
+                        {permitType === 'Business Clearance' && businessData.length === 0 
+                          ? 'Required for new businesses' 
+                          : 'Required for all businesses'
+                        }
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
