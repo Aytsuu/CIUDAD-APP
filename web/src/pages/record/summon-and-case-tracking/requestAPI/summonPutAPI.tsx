@@ -1,10 +1,10 @@
 import { api } from "@/api/api";
 
-export const resolveCase = async (sr_id: string) => {
+export const resolveCase = async (sc_id: string) => {
     try{
-        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
-            sr_case_status: "Resolved",
-            sr_date_marked: new Date().toISOString(),
+        const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
+            sc_case_status: "Resolved",
+            sc_date_marked: new Date().toISOString(),
         })
         return res.data
     }catch(err){

@@ -421,7 +421,7 @@ function SummonCases(){
                                     state={{ 
                                         sc_id: item.sc_id, 
                                         incident_type: item.incident_type,
-                                        isResident: hasResidentComplainant(item),
+                                        hasResident: hasResidentComplainant(item),
                                         comp_names: Array.isArray(item.complainant_names) 
                                             ? item.complainant_names 
                                             : [item.complainant_names || "N/A"],

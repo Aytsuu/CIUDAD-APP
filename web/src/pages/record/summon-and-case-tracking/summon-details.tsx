@@ -49,7 +49,7 @@ export default function SummonDetails() {
     incident_type, 
     comp_names = [], 
     acc_names = [] ,
-    isResident = false,
+    hasResident = false,
   } = location.state || {}
 
   console.log('sc_id', sc_id)
@@ -83,9 +83,6 @@ export default function SummonDetails() {
     hearing_schedules = [],
   } = caseDetails || {}
 
-  // Use the fetched names from location.state instead of complaint data
-  const hasNonResidentComplainant = comp_names.length > 0
-
   const isCaseClosed = case_status === "Resolved" || case_status === "Escalated"
   
   const lastScheduleIsRescheduled = hearing_schedules.length > 0 
@@ -106,7 +103,7 @@ export default function SummonDetails() {
 
   // Determine if Create button should be shown
   const shouldShowCreateButton = !isCaseClosed && 
-                                hasNonResidentComplainant && 
+                                !hasResident && 
                                 (hearing_schedules.length === 0 || lastScheduleIsRescheduled) &&
                                 !isThirdMediationLevel;
 
@@ -328,7 +325,7 @@ export default function SummonDetails() {
                             className="flex items-center text-lg font-medium text-gray-800"
                           >
                             {name}
-                            <ResidentBadge hasRpId={isResident} />
+                            <ResidentBadge hasRpId={hasResident} />
                           </div>
                         ))
                       ) : (

@@ -7,13 +7,13 @@ export const useResolveCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
 
      return useMutation({
-        mutationFn: (sr_id: string) => resolveCase(sr_id),
+        mutationFn: (sc_id: string) => resolveCase(sc_id),
         onMutate: () =>{
             toast.loading("Marking case...", { id: "resolveCase" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] })
             queryClient.invalidateQueries({ queryKey: ['summonCases'] })
+            queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
             toast.success('Case marked as resolved', {
                 id: "resolveCase",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

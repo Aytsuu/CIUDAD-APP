@@ -53,6 +53,11 @@ class RemarkSuppDocSerializer(serializers.ModelSerializer):
         model = RemarkSuppDocs
         fields = '__all__'
 
+class SummonCaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        models = SummonCase
+        fields = '__all__'  
+
 class SummonCasesSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     complainant_addresses = serializers.SerializerMethodField()
@@ -62,7 +67,7 @@ class SummonCasesSerializer(serializers.ModelSerializer):
     accused_addresses = serializers.SerializerMethodField()
     
     class Meta:
-        model = SummonCases
+        model = SummonCase
         fields = [
             'sc_id', 
             'sc_code',
@@ -192,7 +197,7 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
     hearing_schedules = serializers.SerializerMethodField()
     
     class Meta:
-        model = SummonCases
+        model = SummonCase
         fields = [
             'sc_id', 
             'sc_code',

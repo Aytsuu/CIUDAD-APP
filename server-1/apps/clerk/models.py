@@ -267,7 +267,7 @@ class ServiceChargePaymentRequest(models.Model):
         db_table = 'service_charge_payment_request'
 
 
-class SummonCases(models.Model):
+class SummonCase(models.Model):
     sc_id = models.BigAutoField(primary_key=True)
     sc_code = models.CharField(max_length=200)
     sc_case_status = models.CharField(max_length=500)
@@ -276,7 +276,7 @@ class SummonCases(models.Model):
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
 
     class Meta:
-        db_table = 'summon_cases'
+        db_table = 'summon_case'
 
 
 class HearingSchedule(models.Model):

@@ -11,7 +11,7 @@ class SummonCasesView(generics.ListAPIView):
     serializer_class = SummonCasesSerializer
 
     def get_queryset(self):
-        queryset = SummonCases.objects.all().select_related(
+        queryset = SummonCase.objects.all().select_related(
             'comp_id'
         ).prefetch_related(
             Prefetch('comp_id__complaintcomplainant_set__cpnt'),
@@ -24,7 +24,7 @@ class SummonCasesView(generics.ListAPIView):
 class SummonCaseDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCaseDetailSerializer
-    queryset = SummonCases.objects.all().prefetch_related(
+    queryset = SummonCase.objects.all().prefetch_related(
         'hearingschedule_set',  # This should be the correct reverse relation name
         'hearingschedule_set__remark_set',
         'hearingschedule_set__remark_set__remarksuppdocs_set',
@@ -34,6 +34,19 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
     )
     lookup_field = 'sc_id'
     lookup_url_kwarg = 'sc_id'
+
+class UpdateSummonCaseView(generics.UpdateAPIView):
+    serializer_class = SummonCaseSerializer
+    queryset = SummonCase.objects.all()
+    lookup_field = 'sc_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # ======================== SUMMON DATE AND TIME ========================
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
