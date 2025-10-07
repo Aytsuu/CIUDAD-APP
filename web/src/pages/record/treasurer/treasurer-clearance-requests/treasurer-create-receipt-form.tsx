@@ -4,335 +4,297 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
-import { Card, CardContent } from "@/components/ui/card";
-import { createReceiptSchema } from "@/form-schema/receipt-schema";
-import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClearanceUpdateQueries";
-import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
-import { useMemo } from "react";
-import { useAuth } from '@/context/AuthContext';
-import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate } from "./queries/serviceChargeQueries";
+import { api } from "@/api/api";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAddReceipt } from "@/pages/record/treasurer/Receipts/queries/receipts-insertQueries";
+import ReceiptSchema from "@/form-schema/receipt-schema";
+import { useAuth } from "@/context/AuthContext";
 
-// function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
-   function ReceiptForm({
-    id,
-    purpose,
-    rate,
-    requester,
-    pay_status,
-    nat_col,
-    is_resident,
-    voter_id,
-    isSeniorEligible,
-    hasDisabilityEligible,
-    onComplete,
-    onRequestDiscount,
-    discountedAmount,
-    discountReason
-}: {
-    id: string;
-    purpose: string | undefined;
-    rate: string | undefined;
-    requester: string;
-    pay_status: string;
-    nat_col: string;
-    is_resident: boolean;
-    voter_id?: string | number | null;
-    isSeniorEligible?: boolean;
-    hasDisabilityEligible?: boolean;
-    onComplete: () => void;
-    onRequestDiscount: () => void;
-    discountedAmount?: string;
-    discountReason?: string;
-}){
-   const { user } = useAuth();
-    const staffId = user?.staff?.staff_id;
-   const { mutate: receipt, isPending} = useAddPersonalReceipt(onComplete)
-    const { mutate: acceptReq, isPending: isAcceptPending} = useAcceptRequest()
-    const { mutate: acceptNonResReq, isPending: isAcceptNonResPending} = useAcceptNonResRequest()
-    const { data: scRate } = useServiceChargeRate();
-    const { mutateAsync: createScPayReq } = useCreateServiceChargePaymentRequest();
-    const { mutateAsync: acceptSummon } = useAcceptSummonRequest();
 
-   console.log('stat', pay_status, 'staffId', staffId)
-   // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
-   const effectiveIsResident = Boolean(is_resident || (nat_col === 'Certificate' && voter_id === null));
-   console.log('DEBUG voter_id value:', voter_id, 'type:', typeof voter_id, 'is_resident (prop):', is_resident, 'effectiveIsResident:', effectiveIsResident)
-   const isFree = Boolean(
-     effectiveIsResident && (
-       voter_id !== null && voter_id !== undefined ||
-       isSeniorEligible ||
-       hasDisabilityEligible
-     )
-   );
+type CertificateRequest = {
+    cr_id: string;
+    req_type: string;
+    req_purpose: string;
+    resident_details: {
+        per_fname: string;
+        per_lname: string;
+    };
+    req_payment_status: string;
+    pr_id?: number; // Purpose and Rate ID
+    business_name?: string; // Business name for permit clearances
+    req_amount?: number; // Add req_amount field for business clearance
+    // req_sales_proof field removed
+};
+
+
+type PurposeAndRate = {
+    pr_id: number;
+    pr_purpose: string;
+    pr_rate: number;
+    pr_category: string;
+    pr_date: string;
+    pr_is_archive: boolean;
+};
+
+
+interface ReceiptFormProps {    
+    certificateRequest: CertificateRequest;
+    onSuccess: () => void;
+    onCancel?: () => void;
+}
+
+
+
+
+function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
+
+    const { mutate: receipt, isPending} = useAddReceipt(onSuccess)
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id as string | undefined;
+
+    // Debug logging
+    console.log('ReceiptForm - certificateRequest:', certificateRequest);
+    console.log('ReceiptForm - business_name:', certificateRequest.business_name);
+    console.log('ReceiptForm - req_amount:', certificateRequest.req_amount);
+
    
-   // Check if resident is eligible for free service (voter_id, senior, or disabled)
-   // These residents don't need discounts since they already get free service
-   const isEligibleForFreeService = Boolean(
-     effectiveIsResident && (
-       voter_id !== null && voter_id !== undefined ||
-       isSeniorEligible ||
-       hasDisabilityEligible
-     )
-   );
-    const ReceiptSchema = useMemo(() => {
-        return createReceiptSchema(discountedAmount || rate);
-    }, [discountedAmount, rate]);
+    const { data: purposeAndRates = [] } = useQuery<PurposeAndRate[]>({
+        queryKey: ["purpose-and-rates"],
+        queryFn: async () => {
+            const response = await api.get('treasurer/purpose-and-rate/');
+            return response.data;
+        },
+    });
 
+    // Get purpose and rate details for the certificate request
+    const selectedPurposeRate = certificateRequest?.pr_id ? 
+        purposeAndRates.find(rate => rate.pr_id === certificateRequest.pr_id) : 
+        purposeAndRates.find(rate => 
+            rate.pr_purpose.toLowerCase() === certificateRequest.req_purpose.toLowerCase()
+        ) || 
+        purposeAndRates.find(rate => 
+            rate.pr_category.toLowerCase() === 'permit clearance' &&
+            rate.pr_purpose.toLowerCase().includes(certificateRequest.req_purpose.toLowerCase())
+        );
+
+    // Debug logging
+    console.log('Certificate Request Purpose:', certificateRequest.req_purpose);
+    console.log('Available Purpose and Rates:', purposeAndRates);
+    console.log('Selected Purpose Rate:', selectedPurposeRate);
 
     const form = useForm<z.infer<typeof ReceiptSchema>>({
         resolver: zodResolver(ReceiptSchema),
         defaultValues: {
-            inv_serial_num: (effectiveIsResident && isEligibleForFreeService) ? "N/A" : "", 
-            inv_amount: (effectiveIsResident && isEligibleForFreeService) ? "0" : (rate || ""),
-            inv_nat_of_collection: nat_col,
-            id: id.toString(), 
-            cr_id: effectiveIsResident ? id.toString() : undefined,
-            nrc_id: !effectiveIsResident ? id.toString() : undefined,
+            inv_serial_num: "", 
+            inv_amount: certificateRequest.req_amount && certificateRequest.req_amount > 0 ? certificateRequest.req_amount.toString() : "0.00",
+            inv_nat_of_collection: "Permit Clearance", 
         }
     });
 
-    const onSubmit = async () => {
-        
-        try {
-            console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
-            
-            if (nat_col === 'Service Charge'){
-                const prId = scRate?.pr_id;
-                const amount = scRate?.pr_rate != null ? Number(scRate.pr_rate) : undefined;
-                if (prId == null){
-                    console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
-                } else {
-                    console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
-                    await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
-                    // Auto-mark summon as Accepted
-                    await acceptSummon(id.toString());
-                }
-            } else {
-                // Certificate flow
-                if (effectiveIsResident){
-                    console.log('[Receipt onSubmit] calling acceptReq (resident) with cr_id:', id);
-                    await acceptReq(id)
-                } else {
-                    // For non-resident requests, use the acceptNonResReq mutation
-                    console.log('[Receipt onSubmit] calling acceptNonResReq (non-resident) with nrc_id:', id, 'discountReason:', discountReason);
-                    await acceptNonResReq({nrc_id: id, discountReason: discountReason})
-                }
-            }
-            // Create invoice after status update
-            const values = form.getValues();
-            const payload: any = {
-                inv_date: new Date().toISOString(),
-                inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
-                inv_nat_of_collection: values.inv_nat_of_collection,
-                inv_serial_num: values.inv_serial_num || 'N/A',
-                cr_id: nat_col !== 'Service Charge' && effectiveIsResident ? id.toString() : undefined,
-                nrc_id: nat_col !== 'Service Charge' && !effectiveIsResident ? Number(id) : undefined,
-            };
-            Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
-            console.log('[Receipt onSubmit] creating invoice with payload:', payload);
-            await receipt(payload as any);
-
-            console.log('Receipt mutation called successfully');
-            
-            // Call onComplete callback to finish the flow
-            onComplete();
-        } catch (error) {
-            console.error('Error in onSubmit:', error);
+    
+    useEffect(() => {
+        if (certificateRequest.req_amount && certificateRequest.req_amount > 0) {
+            form.setValue('inv_amount', certificateRequest.req_amount.toString());
         }
-    };
+    }, [certificateRequest.req_amount, form]);
 
-  
-
-    const isAlreadyPaid = pay_status === "Paid";
-
-    const isAmountInsufficient = () => {
-        const amountPaid = form.watch("inv_amount");
-        if (!amountPaid) return false;
-        const amount = Number(amountPaid);
+    const onSubmit = (values: z.infer<typeof ReceiptSchema>) => {
+        if (!staffId) {
+            console.error("Missing staff ID. Please re-login and try again.");
+            return;
+        }
+        console.log('=== RECEIPT FORM SUBMISSION ===');
+        console.log('Form values:', values);
+        console.log('certificateRequest:', certificateRequest);
+        console.log('certificateRequest.cr_id:', certificateRequest.cr_id);
+        console.log('certificateRequest.cr_id type:', typeof certificateRequest.cr_id);
+        console.log('================================');
         
-        const targetAmount = discountedAmount ? parseFloat(discountedAmount) : parseFloat(rate || "0");
-        return amount > 0 && amount < targetAmount;
+        // Add additional fields needed for business clearance
+        const receiptData = {
+            ...values,
+            inv_nat_of_collection: "Permit Clearance", // Ensure this is set correctly
+            bpr_id: certificateRequest.cr_id, // Use cr_id as bpr_id for business clearance
+            nrc_id: "", // Set to empty string for business clearance (schema expects string)
+            staff_id: staffId,
+        };
+        
+        console.log('Receipt data with business clearance fields:', receiptData);
+        receipt(receiptData);
     };
+
+    // Check if request is already paid
+    const isAlreadyPaid = certificateRequest.req_payment_status === "Paid";
+    
+    // Check if request is incomplete (no business linked or no amount)
+    const isIncomplete = !certificateRequest.req_amount || certificateRequest.req_amount <= 0;
 
     return(
-        <>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
-            
-                {/* Warning message if already paid */}
-                {isAlreadyPaid && (
-                <Card className="border-orange-200 bg-orange-50">
-                    <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 text-orange-800">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <p className="font-medium">This request is already paid..</p>
-                    </div>
-                    </CardContent>
-                </Card>
-                )}
-
-                {/* Certificate details */}
-                <Card>
-                <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-2">
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Resident Name</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{requester}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Request Type</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{nat_col === 'Service Charge' ? 'Summon' : nat_col}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Purpose</label>
-                        <p className="text-base text-gray-900 font-medium mt-1">{purpose}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Payment Status</label>
-                        <p className="text-base text-green-600 font-semibold mt-1">{isFree ? 'Free (Registered Voter)' : pay_status}</p>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-600">Amount</label>
-                        <p className="text-base text-primary font-semibold mt-1">{`₱${isFree ? '0' : rate}`}</p>
-                    </div>
-                    </div>
-                </CardContent>
-                </Card>
-
-                {/* Amount and Discount Section */}
-                <div className="flex justify-between items-center">
-                    {/* Amount Display */}
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium">Final Amount:</span>
-                        <span className="text-lg font-semibold text-primary">
-                            ₱{discountedAmount || rate}
-                        </span>
-                        {discountedAmount && (
-                            <span className="text-sm text-muted-foreground line-through">₱{rate}</span>
-                        )}
-                    </div>
-                    
-                    {/* Discount Button (disabled for residents with free service eligibility) */}
-                    {!isAlreadyPaid && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            disabled={nat_col === "Service Charge" || isEligibleForFreeService}
-                            className={`
-                                flex items-center gap-2 border-green-500 
-                                ${nat_col === "Service Charge" || isEligibleForFreeService
-                                ? "text-gray-400 cursor-not-allowed disabled:opacity-100 disabled:pointer-events-auto" 
-                                : "text-green-600 hover:bg-green-50 hover:text-green-700"}
-                            `}
-                            onClick={onRequestDiscount}
-                            >
-                            Apply Discount
-                        </Button>
+                    {/* Warning message if already paid */}
+                    {isAlreadyPaid && (
+                        <Card className="border-orange-200 bg-orange-50">
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-2 text-orange-800">
+                                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                    <p className="font-medium">This request is already paid..</p>
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
-                </div>
 
-                {/* Show these fields if NOT resident OR if resident but not eligible for free service */}
-                {(!is_resident || (is_resident && !isEligibleForFreeService)) && (
-                <>
-                    <FormField
-                    control={form.control}
-                    name="inv_serial_num"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Serial No. <span className="text-red-500">*</span></FormLabel>
-                        <FormControl>
-                            <Input 
-                            {...field} 
-                            placeholder="Enter receipt serial number" 
-                            onChange={(e) => field.onChange(e.target.value)}
-                            disabled={isAlreadyPaid}
-                            readOnly={isAlreadyPaid}
-                            style={isAlreadyPaid ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
-                            />
-                        </FormControl>
-                        <FormMessage/>
-                        </FormItem>
+                    {/* Warning message if request is incomplete */}
+                    {isIncomplete && (
+                        <Card className="border-red-200 bg-red-50">
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-2 text-red-800">
+                                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    <p className="font-medium">This permit clearance request is incomplete. No business is linked and no amount is calculated. Please complete the request first before creating a receipt.</p>
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
-                    />
 
-                    <FormField
-                    control={form.control}
-                    name="inv_amount"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Amount Paid (₱)</FormLabel>
-                        <FormControl>
-                            <Input 
-                            {...field} 
-                            type="number"                                         
-                            placeholder="Enter amount" 
-                            className="w-full"
-                            onChange={(e) => {
-                                field.onChange(e.target.value);
-                            }}
-                            />
-                        </FormControl>
-                        <FormMessage/>
-
-                        {isAmountInsufficient() && (
-                            <div className="text-sm text-red-600 mt-1">
-                            Amount paid (₱{form.watch("inv_amount")}) is less than required amount (₱{discountedAmount || rate})
+                    {/* Display certificate details */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Certificate Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-2">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Business Name</label>
+                                    <p className="text-base text-gray-900 font-medium mt-1">
+                                        {certificateRequest.business_name && 
+                                         certificateRequest.business_name !== "N/A" && 
+                                         certificateRequest.business_name !== "Unknown Business" &&
+                                         certificateRequest.business_name !== "No Business Linked"
+                                            ? certificateRequest.business_name 
+                                            : "No Business Linked - Please link a business first"
+                                        }
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Purpose</label>
+                                    <p className="text-base text-gray-900 font-medium mt-1">
+                                        {selectedPurposeRate ? selectedPurposeRate.pr_purpose : certificateRequest.req_purpose || 'General'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Payment Status</label>
+                                    <p className="text-base text-green-600 font-semibold mt-1">{certificateRequest.req_payment_status}</p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-600">Amount</label>
+                                    <p className="text-base text-blue-600 font-semibold mt-1">
+                                        {certificateRequest.req_amount && certificateRequest.req_amount > 0 
+                                            ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                            : "No amount calculated - Business not linked or purpose not selected"
+                                        }
+                                    </p>
+                                </div>
+                                
                             </div>
+                        </CardContent>
+                    </Card>    
+
+                    <FormField
+                        control={form.control}
+                        name="inv_serial_num"
+                        render={({field})=>(
+                            <FormItem>
+                                <FormLabel>Serial No. <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        {...field} 
+                                        type="text"
+                                        placeholder="Enter receipt serial number" 
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        className="font-mono"
+                                        disabled={isAlreadyPaid || isIncomplete}
+                                        readOnly={isAlreadyPaid || isIncomplete}
+                                        style={isAlreadyPaid || isIncomplete ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                                    />
+                                </FormControl>
+                             
+                                <FormMessage/>
+                            </FormItem>
                         )}
-                        </FormItem>
-                    )}
                     />
 
-                    {purpose && (discountedAmount || rate) && Number(form.watch("inv_amount")) > 0 && 
-                    Number(form.watch("inv_amount")) > parseFloat(discountedAmount || rate || "0") && (
-                    <div className="space-y-2 p-3 bg-gray-50 rounded-md">
-                        <div className="flex justify-between text-sm border-t pt-2">
-                        <span className="font-semibold">Change:</span>
-                        <span className="text-green-600 font-semibold">
-                            ₱{(
-                            (Number(form.watch("inv_amount")) || 0) - 
-                            parseFloat(discountedAmount || rate || "0")
-                            ).toLocaleString('en-US', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                            })}
-                        </span>
-                        </div>
+                    {/* Hidden field for inv_nat_of_collection */}
+                    <FormField
+                        control={form.control}
+                        name="inv_nat_of_collection"
+                        render={({field})=>(
+                            <FormItem className="hidden">
+                                <FormControl>
+                                    <Input 
+                                        {...field} 
+                                        type="hidden"
+                                        value="Permit Clearance"
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+
+                     <FormField
+                        control={form.control}
+                        name="inv_amount"
+                        render={({field})=>(
+                            <FormItem>
+                                <FormLabel>Amount Paid (₱)</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        {...field} 
+                                        type="number" 
+                                        step="0.01" 
+                                        
+                                        placeholder="Enter amount" 
+                                        className="w-full"
+                                        disabled={isAlreadyPaid || isIncomplete}
+                                        onChange={(e) => {
+                                            const amountPaid = parseFloat(e.target.value);
+                                            field.onChange(amountPaid);
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+
+                {/* Display amount details (only when paid >= rate) */}
+                     {certificateRequest.req_amount && Number(form.watch("inv_amount")) >= certificateRequest.req_amount && (
+                         <div className="space-y-2 p-3 bg-gray-50 rounded-md">
+                             <div className="flex justify-between text-sm border-t pt-2">
+                                 <span className="font-semibold">Change:</span>
+                                 <span className={`font-semibold ${(Number(form.watch("inv_amount")) || 0) - certificateRequest.req_amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                     ₱{((Number(form.watch("inv_amount")) || 0) - certificateRequest.req_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                 </span>
+                             </div>
+                         </div>
+                     )}
+
+                    
+
+                    <div className="flex justify-end gap-3 mt-6">
+        
+                                                 <Button 
+                             type="submit" 
+                             disabled={isPending || isAlreadyPaid || isIncomplete}
+                             className={isAlreadyPaid || isIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                         >
+                             {isPending ? "Creating..." : isAlreadyPaid ? "Cannot Create Receipt" : isIncomplete ? "Request Incomplete" : "Create Receipt"}
+                         </Button>
                     </div>
-                    )}
-                </>
-                )}
-
-                {/* Button */}
-                <div className="flex justify-end gap-3 mt-6">
-                <Button 
-                    type="submit" 
-                    disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || ((!is_resident || (is_resident && !isEligibleForFreeService)) && isAmountInsufficient())}
-                    className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
-                >
-                    {isPending || isAcceptPending || isAcceptNonResPending ? (
-                        <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Processing...</span>
-                        </div>
-                    ) : isAlreadyPaid ? (
-                        "Cannot Proceed"
-                    ) : (is_resident && isEligibleForFreeService) ? (
-                        "Accept"
-                    ) : (
-                        "Create Receipt"
-                    )}
-                </Button>
-                </div>
-            </form>
+                </form>
             </Form>
-
-        </>
     )
 }
 
 export default ReceiptForm;
-
-
-
