@@ -216,7 +216,7 @@ import { Search, Calendar, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import PageLayout from '@/screens/_PageLayout';
-import { useDebounce } from '@/hooks/use-debounce'; // Make sure you have this hook
+import { useDebounce } from '@/hooks/use-debounce';
 
 const IncomeExpenseMain = () => {
   const router = useRouter();
@@ -226,11 +226,14 @@ const IncomeExpenseMain = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const {
-    data: fetchedData = [],
+    data: responseData = { results: [], count: 0 }, // Default to paginated structure
     isLoading,
     isError,
     refetch
   } = useIncomeExpenseMainCard(debouncedSearchQuery);
+
+  // Extract the actual data array from the paginated response
+  const fetchedData = responseData.results || [];
 
   const handleCardClick = (year: string, totalBud: number, totalExp: number, totalInc: number) => {
     router.push({
@@ -303,6 +306,15 @@ const IncomeExpenseMain = () => {
             />
           </View>
         </View>
+
+        {/* Optional: Show total count - placeholder for future pagination */}
+        {fetchedData.length > 0 && (
+          <View className="px-4 mb-2">
+            <Text className="text-xs text-gray-500">
+              Showing {fetchedData.length} of {responseData.count} records
+            </Text>
+          </View>
+        )}
 
         {/* Budget Cards */}
         <View className="px-4 space-y-4 pb-4">

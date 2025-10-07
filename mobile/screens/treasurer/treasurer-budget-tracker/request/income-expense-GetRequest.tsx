@@ -1,17 +1,35 @@
 import { api } from "@/api/api";
+import { IncomeExpenseCard } from "../queries/income-expense-FetchQueries";
 
 
 // MAIN CARD FOR INCOME and EXPENSE
-export const getIncomeExpenseMainCard = async (searchQuery?: string) => {
+export const getIncomeExpenseMainCard = async (
+    page: number = 1, 
+    pageSize: number = 10,
+    searchQuery?: string
+): Promise<{ results: IncomeExpenseCard[]; count: number }> => {
     try {
-        const params: any = {};
+        const params: any = { page, page_size: pageSize };
         if (searchQuery) params.search = searchQuery;
         
         const res = await api.get('treasurer/income-expense-main/', { params });
-        return res.data;
+        
+        // Handle paginated response
+        if (res.data.results !== undefined) {
+            return {
+                results: res.data.results || [],
+                count: res.data.count || 0
+            };
+        }
+        
+        // Fallback for non-paginated response
+        return {
+            results: Array.isArray(res.data) ? res.data : [],
+            count: Array.isArray(res.data) ? res.data.length : 0
+        };
     } catch (err) {
         console.error(err);
-        throw err;
+        return { results: [], count: 0 };
     }
 };
 

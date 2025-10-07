@@ -16,13 +16,18 @@ export type IncomeExpenseCard = {
 };
 
 
-export const useIncomeExpenseMainCard = (searchQuery?: string) => {
-    return useQuery({
-        queryKey: ["income_expense_card", searchQuery],
-        queryFn: () => getIncomeExpenseMainCard(searchQuery),
-        staleTime: 1000 * 60 * 30, // 30 minutes stale time
+export const useIncomeExpenseMainCard = (
+    searchQuery?: string,
+    page: number = 1,
+    pageSize: number = 10
+) => {
+    return useQuery<{ results: IncomeExpenseCard[]; count: number }>({
+        queryKey: ["income_expense_card", page, pageSize, searchQuery],
+        queryFn: () => getIncomeExpenseMainCard(page, pageSize, searchQuery),
+        staleTime: 1000 * 60 * 30,
     });
 };
+
 
 
 
