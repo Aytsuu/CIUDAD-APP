@@ -1,241 +1,776 @@
-import { api } from "@/api/api";
-import { AxiosError } from "axios";
-import { useQuery } from "@tanstack/react-query";
-import { getStaffList } from "./restful-api/certificateGetAPI";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, CheckCircle , Eye } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ArrowUpDown } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Button } from "@/components/ui/button/button";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
+import TemplateMainPage from "../council/templates/template-main";
+import { calculateAge } from '@/helpers/ageCalculator';
+import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
+import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Combobox } from "@/components/ui/combobox";
+import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
+import { useAuth } from "@/context/AuthContext";
+import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { useEffect } from "react";
 
-export type Certificate = {
-  cr_id: string;
-  resident_details: {
-    per_fname: string;
-    per_lname: string;
-    per_dob?: string;
-    per_address?: string;
-  } | null;
-  req_pay_method: string;
-  req_request_date: string;
-  req_claim_date: string;
-  req_type: string;
-  req_purpose: string;
-  req_payment_status: string;
-  req_transac_id: string;
-  is_nonresident?: boolean;
-  nrc_id?: string; // For non-resident certificates
-  nrc_requester?: string; // Non-resident requester name
-  nrc_address?: string; // Non-resident address
-  nrc_birthdate?: string; // Non-resident birthdate
-  invoice?: {
-    inv_num: string;
-    inv_serial_num: string;
-    inv_date: string;
-    inv_amount: string;
-    inv_nat_of_collection: string;
-  };
-};
+interface ExtendedCertificate extends Certificate {
+  AsignatoryStaff?: string;
+  SpecificPurpose?: string;
+  custodyChildren?: string[];
+  // BURIAL props
+  deceasedName?: string;
+  deceasedAge?: string;
+  deceasedBirthdate?: string;
+  deceasedAddress?: string;
+  // FIRE VICTIM props
+  dateOfConflagration?: string;
+  // DWUP props
+  dateDemolished?: string;
+  // COHABITATION/MARRIAGE props
+  partnerName?: string;
+  liveInYears?: number;
+  // Indigency (for minors) props
+  childName?: string;
+  childAge?: string;
+  childBirtdate?: string;
+}
 
-export type ServiceCharge = {
-  sr_id: string;
-  sr_code: string;
-  sr_req_date: string;
-  req_payment_status: string;
-  complainant_name?: string;
-  invoice?: {
-    inv_num: string;
-    inv_serial_num: string;
-    inv_date: string;
-    inv_amount: string;
-    inv_nat_of_collection: string;
-  };
-  complainant_names?: string[];
-  complainant_addresses?: string[];
-  accused_names?: string[];
-  accused_addresses?: string[];
-};
+function CertificatePage() {
+  // const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filterType, setFilterType] = useState("all");
+  const [filterPurpose, setFilterPurpose] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const {mutate: updateStatus} = useUpdateCertStatus()
+  const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
+  
+  const { data: staffList = []} = useGetStaffList();
+  const { data: residentsList = [] } = useResidentsList();
 
-export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
-  try {
-    // Fetch directly from the Paid list endpoint (includes sr_code and names/addresses)
-    const res = await api.get('/clerk/summon-case-list/');
-    const list = (res.data ?? []) as any[];
+  const [isDialogOpen, setIsDialogOpen] = useState(false); 
+  const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
+  const [selectedCertificate, setSelectedCertificate] = useState<ExtendedCertificate | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState(""); 
+  const [custody, setCustody] = useState<string[]>([]);
+  const [purposeInput, setPurposeInput] = useState("");
+  
+  // BURIAL fields
+  const [deceasedName, setDeceasedName] = useState("");
+  const [deceasedAge, setDeceasedAge] = useState("");
+  const [deceasedBirthdate, setDeceasedBirthdate] = useState("");
+  const [deceasedAddress, setDeceasedAddress] = useState("");
+  
+  // FIRE VICTIM fields
+  const [dateOfConflagration, setDateOfConflagration] = useState("");
+  
+  // COHABITATION/MARRIAGE fields
+  const [partnerName, setPartnerName] = useState("");
+  const [liveInYears, setLiveInYears] = useState("");
+  
+  // DWUP fields
+  const [dateDemolished, setDateDemolished] = useState("");
+  
+  // Indigency (for minors) fields
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [childBirthdate, setChildBirthdate] = useState("");
 
-    const merged: ServiceCharge[] = (list || [])
-      .map((sr: any) => ({
-        sr_id: String(sr.sr_id),
-        sr_code: sr.sr_code ?? null,
-        sr_req_date: sr.sr_req_date ?? '',
-        req_payment_status: sr.payment_status ?? 'Paid',
-        complainant_name: Array.isArray(sr.complainant_names) && sr.complainant_names.length ? sr.complainant_names[0] : undefined,
-        complainant_names: sr.complainant_names ?? [],
-        complainant_addresses: sr.complainant_addresses ?? [],
-        accused_names: sr.accused_names ?? [],
-        accused_addresses: sr.accused_addresses ?? [],
-        invoice: undefined,
-      }));
+  const staffOptions = useMemo(() => {
+    return staffList.map((staff) => ({
+      id: staff.staff_id,
+      name: staff.full_name,
+    }));
+  }, [staffList]);
 
-    merged.sort((a, b) => new Date(b.sr_req_date).getTime() - new Date(a.sr_req_date).getTime());
-
-    return merged;
-  } catch (err) {
-    const error = err as AxiosError;
-    console.error('Error fetching service charges:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-export type NonResidentCertificate = {
-  nrc_id: string;
-  nrc_req_date: string;
-  nrc_req_status: string;
-  nrc_req_payment_status: string;
-  nrc_pay_date: string | null;
-  nrc_requester: string;
-  nrc_address: string;
-  nrc_birthdate: string;
-  pr_id: number;
-  purpose: {
-    pr_purpose: string;
-    pr_rate: string;
-  } | null;
-  amount: string;
-};
-
-export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
-  try {
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (page) params.append('page', page.toString());
-    if (pageSize) params.append('page_size', pageSize.toString());
-    if (status) params.append('status', status);
-    if (paymentStatus) params.append('payment_status', paymentStatus);
+  const residentOptions = useMemo(() => {
+    if (!residentsList || residentsList.length === 0) return [];
     
-    const queryString = params.toString();
-    const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
     
-    // Fetch resident certificates with pagination
-    const residentRes = await api.get(url);
-    const residentData = residentRes.data;
-    
-    // Handle both paginated and non-paginated responses
-    const residentRaw = residentData.results || residentData;
-    const residentCount = residentData.count || residentRaw.length;
-    const residentNext = residentData.next || null;
-    const residentPrevious = residentData.previous || null;
-    
-    // For now, we'll only return resident certificates with pagination
-    // Non-resident certificates can be added later if needed
-    const residentCertificates: Certificate[] = (residentRaw || []).map((item: any) => {
+    const filteredResidents = residentsList.filter((resident: any) => {
+      if (!resident.personal_info?.per_dob) return false;
       
-      return {
-        cr_id: item.cr_id,
-        resident_details: item.resident_details ? {
-          per_fname: item.resident_details.per_fname,
-          per_lname: item.resident_details.per_lname,
-          per_dob: item.resident_details.per_dob,
-          per_address: item.resident_details.per_address,
-        } : null,
-        req_pay_method: item.req_pay_method || 'Walk-in',
-        req_request_date: item.cr_req_request_date,
-        req_type: item.purpose?.pr_purpose || item.req_type || '',
-        req_purpose: item.purpose?.pr_purpose || '',
-        req_payment_status: item.cr_req_payment_status,
-        req_transac_id: item.req_transac_id || '',
-        is_nonresident: false,
-        invoice: item.invoice
-          ? {
-              inv_num: item.invoice.inv_num,
-              inv_serial_num: item.invoice.inv_serial_num,
-              inv_date: item.invoice.inv_date,
-              inv_amount: item.invoice.inv_amount,
-              inv_nat_of_collection: item.invoice.inv_nat_of_collection,
-            }
-          : undefined,
-      } as Certificate;
-    });
-
-    // For now, we'll only return resident certificates with pagination
-    // Non-resident certificates can be added later if needed
-    return {
-      results: residentCertificates,
-      count: residentCount,
-      next: residentNext,
-      previous: residentPrevious
-    };
-  } catch (err) {
-    const error = err as AxiosError;
-    console.error('Error fetching certificates:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-export type MarkCertificateVariables = {
-  cr_id: string;
-  nrc_id?: string;
-  file_url?: string;
-  staff_id?: string;
-  is_nonresident?: boolean;
-};
-
-export const markCertificateAsIssued = async (certificateData: MarkCertificateVariables) => {
-  try {
-    // Use different endpoint for non-resident certificates if needed
-    if (certificateData.is_nonresident && certificateData.nrc_id) {
-      // For now, using the same endpoint, but you might need different logic
-      // You may need to create a separate endpoint for non-resident certificates
-      // Update the non-resident certificate status first
-      await api.patch(`/clerk/update-personal-req-status/${certificateData.nrc_id}/`, {
-        nrc_req_status: 'Completed'
-      });
+      const birthdate = new Date(resident.personal_info.per_dob);
+      const today = new Date();
+      const age = today.getFullYear() - birthdate.getFullYear();
+      const monthDiff = today.getMonth() - birthdate.getMonth();
       
-      return { success: true, message: "Non-resident certificate marked as issued" };
-    } else {
-      // Always omit staff_id to avoid backend staff creation with null pos_id
-      const payload = { cr_id: certificateData.cr_id };
-      console.log('Mark issued payload (resident):', payload);
-      const res = await api.post('/clerk/mark-certificate-issued/', payload);
-      // Also update resident certificate status to Issued
-      try {
-        await api.put(`/clerk/certificate-update-status/${certificateData.cr_id}/`, {
-          cr_req_status: 'Completed',
-          cr_date_completed: new Date().toISOString(),
-        });
-      } catch (err) {
-        console.warn('Failed to set resident certificate status to Issued (non-fatal):', (err as any)?.response?.data || (err as any)?.message);
-      }
-      return res.data;
-    }
-  } catch (err) {
-    const error = err as AxiosError;
-    console.error('Error marking certificate as issued:', error.response?.data || error.message);
-    throw error;
-  }
-};
-
-// Mark service charge as issued/printed
-export const markServiceChargeAsIssued = async (serviceChargeData: { sr_id: string }) => {
-  try {
-    console.log('Marking service charge as issued:', serviceChargeData);
-    // Use the proper service charge endpoint
-    const res = await api.patch(`/clerk/update-service-charge-request/${serviceChargeData.sr_id}/`, {
-      sr_req_status: 'Completed',
-      sr_date_marked: new Date().toISOString(),
+      
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate()) 
+        ? age - 1 
+        : age;
+      
+      return actualAge < 18;
     });
-    return res.data;
-  } catch (err) {
-    const error = err as AxiosError;
-    console.error('Error marking service charge as issued:', error.response?.data || error.message);
-    throw error;
-  }
-};
+    
+    
+    return filteredResidents.map((resident: any) => ({
+      id: `${resident.rp_id} ${resident.name}`,
+      name: (
+        <div className="flex gap-4 items-center">
+          <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+            #{resident.rp_id}
+          </span>
+          {resident.name}
+        </div>
+      ),
+      displayName: resident.name, // Add plain text name for extraction
+      per_id: resident.personal_info.per_id
+    }));
+  }, [residentsList]);
 
 
-export type Staff = {
-  staff_id: string;
-  full_name: string;
-  position_title: string;
-};
-
-export const useGetStaffList = () =>
-  useQuery<Staff[], Error>({
-    queryKey: ["staffList"],
-    queryFn: getStaffList,
+  const { data: certificatesData, isLoading, error } = useQuery({
+    queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
+    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, undefined),
   });
+
+  // Handle loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  const certificates = certificatesData?.results || [];
+  const totalCount = certificatesData?.count || 0;
+  const totalPages = Math.ceil(totalCount / 10);
+
+
+  // Since we're now using backend filtering, we don't need frontend filtering
+  const filteredCertificates = certificates;
+
+  const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
+    mutationFn: markCertificateAsIssued,
+    onSuccess: async (_data, variables) => {
+      const certificateType = variables.is_nonresident ? 'Non-resident certificate' : 'Certificate';
+      const certificateId = variables.is_nonresident ? variables.nrc_id : variables.cr_id;
+      
+      showSuccessToast(`${certificateType} ${certificateId} marked as printed successfully!`);
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      
+      try {
+        // Only call updateStatus for resident certificates
+        if (!variables.is_nonresident) {
+          await updateStatus(variables.cr_id);
+        }
+        else{
+          await updateNonResStatus(Number(variables.nrc_id))
+        }
+
+        setSelectedCertificate(null);
+      } catch (error) {
+        showErrorToast("First mutation succeeded but second failed");
+      }
+    },
+    onError: (error: any) => {
+      showErrorToast(error.response?.data?.error || "Failed to mark certificate as printed");
+    },
+  });
+
+  const handleMarkAsPrinted = (certificate: Certificate) => {
+    const markData: MarkCertificateVariables = {
+      cr_id: certificate.cr_id,
+      // Include staff_id if available and valid (backend now strictly validates; no upsert)
+      staff_id: staffId,
+      is_nonresident: certificate.is_nonresident || false,
+    };
+
+    if (certificate.is_nonresident && certificate.nrc_id) {
+      markData.nrc_id = certificate.nrc_id;
+    }
+
+    console.log("Mark as Printed payload:", {
+      staffId,
+      is_nonresident: markData.is_nonresident,
+      cr_id: markData.cr_id,
+      nrc_id: markData.nrc_id,
+    });
+
+    markAsIssuedMutation.mutate(markData);
+  };
+
+  const handleViewFile = (certificate: Certificate) => {
+    setSelectedCertificate(null); // previous selection
+    setViewingCertificate(certificate);
+    setSelectedStaffId(""); // Reset selected staff every time
+    setPurposeInput("");
+    // Reset all certificate-specific fields
+    setDeceasedName("");
+    setDeceasedAge("");
+    setDeceasedBirthdate("");
+    setDeceasedAddress("");
+    setDateOfConflagration("");
+    setPartnerName("");
+    setLiveInYears("");
+    setDateDemolished("");
+    setChildName("");
+    setChildAge("");
+    setChildBirthdate("");
+    setCustody([]);
+    setIsDialogOpen(true);
+  }
+
+  const handleViewFile2 = () => {
+    setIsDialogOpen(false); 
+
+    if (viewingCertificate && selectedStaffId) {
+      const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+      const custodies = custody
+        .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
+        .filter(Boolean) as string[];
+      
+      // Create certificate details with both certificate and staff data
+      const certDetails: ExtendedCertificate = {
+        ...viewingCertificate,
+        AsignatoryStaff: selectedStaff?.name,
+        SpecificPurpose: purposeInput,
+        custodyChildren: custodies,
+        // BURIAL fields
+        deceasedName: deceasedName || undefined,
+        deceasedAge: deceasedAge || undefined,
+        deceasedBirthdate: deceasedBirthdate || undefined,
+        deceasedAddress: deceasedAddress || undefined,
+        // FIRE VICTIM fields
+        dateOfConflagration: dateOfConflagration || undefined,
+        // COHABITATION/MARRIAGE fields
+        partnerName: partnerName || undefined,
+        liveInYears: liveInYears ? Number(liveInYears) : undefined,
+        // DWUP fields
+        dateDemolished: dateDemolished || undefined,
+        // Indigency (for minors) fields
+        childName: childName || undefined,
+        childAge: childAge || undefined,
+        childBirtdate: childBirthdate || undefined,
+      };
+      
+      setSelectedCertificate(certDetails);
+      
+      // Reset for next use
+      setCustody([]);
+      setDeceasedName("");
+      setDeceasedAge("");
+      setDeceasedBirthdate("");
+      setDeceasedAddress("");
+      setDateOfConflagration("");
+      setPartnerName("");
+      setLiveInYears("");
+      setDateDemolished("");
+      setChildName("");
+      setChildAge("");
+      setChildBirthdate("");
+    }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // const handleRowClick = (row: Certificate) => {
+  //   const fullName = `${row.resident_details?.per_fname || ''} ${row.resident_details?.per_lname || ''}`.trim();
+  //   navigate(`/record/clearances/ViewDocument/${row.cr_id}`, {
+  //     state: {
+  //       name: fullName || row.cr_id,
+  //       purpose: row.req_purpose || row.req_type,
+  //       date: row.req_claim_date,
+  //       requestId: row.cr_id,
+  //       requestDate: row.req_request_date,
+  //       paymentMethod: row.req_pay_method,
+  //       isNonResident: row.is_nonresident,
+  //       nonResidentData: row.is_nonresident ? {
+  //         requester: row.nrc_requester,
+  //         address: row.nrc_address,
+  //         birthdate: row.nrc_birthdate,
+  //       } : undefined,
+  //     },
+  //   });
+  // };
+
+  const columns: ColumnDef<Certificate>[] = [
+    {
+      accessorKey: "cr_id",
+      header: ({ column }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Request No.
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="capitalize flex justify-center items-center gap-2">
+          {row.original.is_nonresident && (
+            <TooltipLayout 
+              trigger={''} 
+              content="Non-resident" 
+            />
+          )}
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("cr_id")}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "resident_details.per_fname",
+      header: "First Name",
+      cell: ({ row }) => <div>{row.original.resident_details?.per_fname || row.original.nrc_requester || 'N/A'}</div>,
+    },
+    {
+      accessorKey: "resident_details.per_lname",
+      header: "Last Name",
+      cell: ({ row }) => <div>{row.original.resident_details?.per_lname || 'N/A'}</div>,
+    },
+    {
+      accessorKey: "req_request_date",
+      header: "Date Requested",
+      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
+    },
+    {
+      accessorKey: "req_purpose",
+      header: "Purpose",
+      cell: ({ row }) => {
+        const value = (row.getValue("req_purpose") as string) || (row.getValue("req_type") as string);
+        const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        let bg = "bg-[#eaf4ff]";
+        let text = "text-[#2563eb]";
+        let border = "border border-[#b6d6f7]";
+        
+        if (capitalizedValue === "Employment") {
+          // blue (default)
+        } else if (capitalizedValue === "Bir") {
+          bg = "bg-[#fffbe6]";
+          text = "text-[#b59f00]";
+          border = "border border-[#f7e7b6]";
+        } else {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
+        }
+        
+        return (
+          <span
+            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+          >
+            {capitalizedValue}
+          </span>
+        );
+      },
+    },
+    {
+      id: "certificate_type",
+      header: "Type",
+      cell: ({ row }) => {
+        const isNonResident = row.original.is_nonresident;
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              isNonResident 
+                ? "bg-purple-100 text-purple-700 border border-purple-200" 
+                : "bg-green-100 text-green-700 border border-green-200"
+            }`}
+          >
+            {isNonResident ? "Non-resident" : "Resident"}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: () => (
+        <div className="w-full h-full flex justify-center items-center">
+          Actions
+        </div>
+      ),
+      cell: ({ row }) => {
+        const certificate = row.original;
+        return (
+          <div className="flex justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <TooltipLayout
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewFile(certificate)}
+                >
+                  <Eye size={16} />
+                </Button> 
+              }
+              content="View File"
+            />
+
+            <ConfirmationModal
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 hover:text-white hover:bg-green-600 border-green-600"
+                >
+                  <CheckCircle size={16} className="mr-1" />
+                  Mark as Printed
+                </Button>
+              }
+              title="Mark Certificate as Printed"
+              description={`Are you sure you want to mark ${certificate.is_nonresident ? 'non-resident ' : ''}certificate ${certificate.cr_id} as printed? This will move it to the Issued Certificates page.`}
+              actionLabel="Mark as Printed"
+              onClick={() => handleMarkAsPrinted(certificate)}
+            />        
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="w-full h-full flex flex-col">
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Certification Request</h1>
+        <p className="text-xs sm:text-sm text-darkGray">Manage and view paid certification requests (residents and non-residents)</p>
+      </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
+
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        <div className="flex gap-x-2 items-center">
+          <div className="relative flex-1 bg-white">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input 
+              placeholder="Search..." 
+              className="pl-10 w-72" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <SelectLayout
+            placeholder="Filter by type"
+            label=""
+            className="bg-white"
+            options={[
+              { id: "all", name: "All Types" },
+              { id: "resident", name: "Residents" },
+              { id: "nonresident", name: "Non-residents" },
+            ]}
+            value={filterType}
+            onChange={(value) => setFilterType(value)}
+          />
+          <SelectLayout
+            placeholder="Filter by purpose"
+            label=""
+            className="bg-white"
+            options={[
+              { id: "all", name: "All Purposes" },
+              { id: "employment", name: "Employment" },
+              { id: "bir", name: "BIR" },
+            ]}
+            value={filterPurpose}
+            onChange={(value) => setFilterPurpose(value)}
+          />
+        </div>
+      </div>
+
+      <div className="w-full flex flex-col">
+        <div className="w-full h-auto bg-white p-3">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+        </div>
+
+        <div className="bg-white w-full overflow-x-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Spinner size="lg" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-5 text-red-500">Error loading data</div>
+          ) : (
+            <DataTable 
+              columns={columns} 
+              data={filteredCertificates} 
+              header={true} 
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} rows
+        </p>
+
+        <div className="w-full sm:w-auto flex justify-center">
+          <PaginationLayout
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </div>
+
+      {/* Render TemplateMainPage when a certificate is selected */}
+      {selectedCertificate && (
+        <TemplateMainPage
+          key={selectedCertificate.cr_id + Date.now()}
+          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
+          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
+          age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
+          birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
+          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
+          purpose={selectedCertificate.req_purpose}
+          Signatory={selectedCertificate.AsignatoryStaff}
+          Custodies={selectedCertificate.custodyChildren}
+          specificPurpose={selectedCertificate.SpecificPurpose}
+          issuedDate={new Date().toISOString()}
+          isNonResident={selectedCertificate.is_nonresident}
+          deceasedName={selectedCertificate.deceasedName}
+          deceasedAge={selectedCertificate.deceasedAge}
+          deceasedBirthdate={selectedCertificate.deceasedBirthdate}
+          deceasedAddress={selectedCertificate.deceasedAddress}
+          dateOfConflagration={selectedCertificate.dateOfConflagration}
+          dateDemolished={selectedCertificate.dateDemolished}
+          partnerName={selectedCertificate.partnerName}
+          liveInYears={selectedCertificate.liveInYears}
+          childName={selectedCertificate.childName}
+          childAge={selectedCertificate.childAge}
+          childBirtdate={selectedCertificate.childBirtdate}
+          showAddDetails={false} 
+        />
+      )}
+
+
+      <DialogLayout
+        isOpen={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setCustody([]);
+            setDeceasedName("");
+            setDeceasedAge("");
+            setDeceasedBirthdate("");
+            setDeceasedAddress("");
+            setDateOfConflagration("");
+            setPartnerName("");
+            setLiveInYears("");
+            setDateDemolished("");
+            setChildName("");
+            setChildAge("");
+            setChildBirthdate("");
+          }
+        }}
+        className="max-w-[35%] max-h-[85vh] flex flex-col overflow-auto scrollbar-custom"
+        title="Additional Details"
+        description={`Please provide the needed details for the certificate.`}
+        mainContent={
+          <div>
+            {viewingCertificate ? (
+              <div className="space-y-3">
+                <Label className="pb-1">Signatory</Label>               
+                <div className="w-full pb-3">
+                  <Combobox
+                    options={staffOptions}
+                    value={selectedStaffId}
+                    onChange={(value) => setSelectedStaffId(value || "")}
+                    placeholder="Select signatory staff member"
+                    emptyMessage="No staff found"
+                    triggerClassName="w-full"
+                    contentClassName="w-full"
+                  />   
+                </div>      
+
+                <Label className="pb-1">Purpose</Label>           
+                <div className="w-full pb-3">
+                  <Input 
+                    placeholder="Specify Purpose"
+                    value={purposeInput} 
+                    onChange={(e) => setPurposeInput(e.target.value)}
+                  />
+                </div>
+
+               
+                {/* BURIAL FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "burial" && (
+                  <>
+                    <Label className="pb-1">Deceased Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter deceased name"
+                        value={deceasedName}
+                        onChange={(e) => setDeceasedName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Deceased Age</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter deceased age"
+                        value={deceasedAge}
+                        onChange={(e) => setDeceasedAge(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Deceased Birthdate</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter deceased birthdate"
+                        value={deceasedBirthdate}
+                        onChange={(e) => setDeceasedBirthdate(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Deceased Address</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter deceased address"
+                        value={deceasedAddress}
+                        onChange={(e) => setDeceasedAddress(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* FIRE VICTIM FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "fire victim" && (
+                  <>
+                    <Label className="pb-1">Date of Conflagration</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter date of conflagration"
+                        value={dateOfConflagration}
+                        onChange={(e) => setDateOfConflagration(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* COHABITATION/MARRIAGE FIELDS */}
+                {(viewingCertificate?.req_purpose?.toLowerCase() === "cohabitation" || 
+                  viewingCertificate?.req_purpose?.toLowerCase().includes("marriage")) && (
+                  <>
+                    <Label className="pb-1">Partner Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter partner name"
+                        value={partnerName}
+                        onChange={(e) => setPartnerName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Live in Years</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="number"
+                        placeholder="Enter years living together"
+                        value={liveInYears}
+                        onChange={(e) => setLiveInYears(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* DWUP FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "dwup" && (
+                  <>
+                    <Label className="pb-1">Date Demolished</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter date demolished"
+                        value={dateDemolished}
+                        onChange={(e) => setDateDemolished(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* INDIGENCY (FOR MINORS) FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase().includes("indigency for minors") && (
+                  <>
+                    <Label className="pb-1">Child Name</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter child name"
+                        value={childName}
+                        onChange={(e) => setChildName(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Child Age</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        placeholder="Enter child age"
+                        value={childAge}
+                        onChange={(e) => setChildAge(e.target.value)}
+                      />
+                    </div>
+
+                    <Label className="pb-1">Child Birthdate</Label>
+                    <div className="w-full pb-3">
+                      <Input 
+                        type="date"
+                        placeholder="Enter child birthdate"
+                        value={childBirthdate}
+                        onChange={(e) => setChildBirthdate(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* PROOF OF CUSTODY FIELDS */}
+                {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
+                  <div className="w-full pb-3">
+                    <ComboCheckboxStandalone
+                      value={custody}
+                      onChange={setCustody}
+                      label="Custodies"
+                      options={residentOptions}
+                      placeholder="Select child/children"
+                      showBadges={true}
+                      maxDisplayValues={2}
+                    />
+                  </div>
+                )}                  
+
+                <div className="flex justify-end">
+                  <Button 
+                    type="button" 
+                    onClick={handleViewFile2} 
+                    disabled={!selectedStaffId || !purposeInput} 
+                  >
+                    Proceed
+                  </Button>
+                </div>                       
+              </div>
+            ) : (
+              <p>No certificate selected</p>
+            )}
+          </div>
+        }
+      />
+    </div>
+  );
+}
+
+export default CertificatePage;
