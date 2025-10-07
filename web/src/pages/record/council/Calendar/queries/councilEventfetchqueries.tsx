@@ -47,8 +47,8 @@ export const useGetAttendanceSheets = (isArchived?: boolean) => {
   });
 };
 
-export const useGetStaffList = () =>
-  useQuery<Staff[], Error>({
-    queryKey: ["staffList"],
-    queryFn: getStaffList,
-  });
+// export const useGetStaffList = () =>
+//   useQuery<Staff[], Error>({
+//     queryKey: ["staffList"],
+//     queryFn: getStaffList,
+//   });

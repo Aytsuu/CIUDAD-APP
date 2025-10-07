@@ -1,8 +1,10 @@
 from utils.supabase_client import upload_to_storage
 from rest_framework import serializers
+from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
+from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
 from .models import *
 import json
-from django.utils import timezone
+# from django.utils import timezone
 
 class AccusedSerializer(serializers.ModelSerializer):
     res_profile = ResidentProfileBaseSerializer(source='rp_id', read_only=True)  
@@ -11,13 +13,21 @@ class AccusedSerializer(serializers.ModelSerializer):
         model = Accused
         fields = '__all__'
 
-class ComplainantSerializer(serializers.ModelSerializer):
-    add = AddressBaseSerializer(read_only=True)
+    def get_res_profile(self, obj):
+        if obj.rp_id:
+            return ResidentProfileBaseSerializer(obj.rp_id).data
+        return None
     
+class ComplainantSerializer(serializers.ModelSerializer):
+    res_profile = ResidentProfileBaseSerializer(source='rp_id', read_only=True) 
     class Meta:
         model = Complainant
         fields = '__all__'
-
+    def get_res_profile(self, obj):
+        if obj.rp_id:
+            return ResidentProfileBaseSerializer(obj.rp_id).data
+        return None
+    
 class ComplaintFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complaint_File
@@ -100,6 +110,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'accused',      
             'complaint_files',
             'comp_status',
+            'staff',
         ]
         read_only_fields = ['comp_id', 'comp_created_at', 'complainant', 'accused_persons', 'complaint_files', 'staff']
     

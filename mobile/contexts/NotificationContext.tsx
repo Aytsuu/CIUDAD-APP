@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { NotificationService } from '@/services/notification_services';
 import { useAuth } from './AuthContext';
-import { NotificationContextType, Notification, CreateNotificationPayload } from './notif-types';
+import { NotificationContextType, Notification, CreateNotificationPayload } from './auth-types';
 
 const NotificationContext = createContext<NotificationContextType>({
   notifications: [],

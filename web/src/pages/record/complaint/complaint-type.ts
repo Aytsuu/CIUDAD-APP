@@ -14,7 +14,7 @@ export interface Complainant {
   cpnt_age: string;
   cpnt_number: string;
   cpnt_relation_to_respondent: string;
-  address: Address;
+  add: Address;
   rp_id: string;
 }
 
@@ -24,7 +24,7 @@ export interface Accused {
   acsd_age: string;
   acsd_gender: string;
   acsd_description: string;
-  address: Address;
+  add: Address;
   rp_id: string;
 }
 
@@ -37,7 +37,6 @@ export interface ComplaintFile {
 
 export interface Complaint {
   comp_id: number;
-  comp_location: string;
   comp_incident_type: string;
   comp_datetime: string;
   comp_allegation: string;
@@ -45,8 +44,8 @@ export interface Complaint {
   comp_created_at: string;
   comp_is_archive: boolean;
   comp_status: string;
-  staff: Record<string,any>;
   complainant: Complainant[];
-  accused: Accused[];
-  comp_file?: ComplaintFile[];
+  accused_persons: Accused[];
+  complaint_file?: ComplaintFile[];
+  
 }

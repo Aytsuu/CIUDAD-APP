@@ -3,10 +3,6 @@ export const formatDate = (date: string | Date, type?: string) => {
   if (!date) return null;
   const d = new Date(date);
 
-export const formatDate = (date: string | Date, type?: string) => {
-  if (!date) return null;
-  const d = new Date(date);
-
   switch (type) {
     case 'short':
       return d.toLocaleDateString("en-PH", {
@@ -124,8 +120,6 @@ export const formatSupplementDate = (dateString: string | null) => {
   });
 };
 
-
-
 export const formatMnpDates = (dates: string[]) => {
   if (!dates || dates.length === 0) return "-";
   return dates.map((date) => formatSupplementDate(date)).join(", ");
@@ -182,6 +176,7 @@ export const getRangeOfDaysInWeek = (
   if(onlyNumber) return { start_day: startDate, end_day: endDate }
   return `${month.toUpperCase()} ${startDate}-${endDate}, ${year}`;
 };
+
 // Get month in number based on a given month in text
 export const monthNameToNumber = (month: string) => {
   const months = [
@@ -230,16 +225,15 @@ export const getAllWeeksInMonth = (monthName: string, year?: number) => {
 // Helper function to check if a week has passed
 export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
   const currentDate = new Date()
-  const targetYear = year || new Date().getFullYear()
+  const targetYear = year || currentDate.getFullYear()
   const currentYear = currentDate.getFullYear()
 
-  // If the target year is in the past, all weeks have passed
+  // Past year: all weeks have passed
   if (targetYear < currentYear) return true
 
-  // If the target year is in the future, no weeks have passed
+  // Future year: no weeks have passed
   if (targetYear > currentYear) return false
 
-  // For the current year, check if the specific week has passed
   const monthNames = getMonths
   const monthIndex = monthNames.indexOf(month)
 
@@ -250,7 +244,7 @@ export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
   const weekEndDate = new Date(weekStartDate)
   weekEndDate.setDate(weekStartDate.getDate() + 6)
 
-  return weekEndDate > currentDate
+  return currentDate > weekEndDate
 }
 
 export const formatTableDate = (dateString: string | null | undefined): string => {
@@ -267,5 +261,4 @@ export const formatTableDate = (dateString: string | null | undefined): string =
     return "Invalid Date";
   }
 };
-
 

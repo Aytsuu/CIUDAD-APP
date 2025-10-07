@@ -38,6 +38,8 @@ import { clearances_router } from './clearances-router';
 import { team_router } from "./team_router";
 import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
+import { healthreports_router } from "./health-reports-router";
+import { medicalConsultation } from "./med-consultation";
 
 export const main_router: RouteObject[] = [
   {

@@ -3,6 +3,7 @@ import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import {
+  UserCheck2,
   ArrowUpDown,
   MoreHorizontal,
   File,
@@ -111,13 +112,22 @@ export const requestComplaintColumns = ({
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        ID
+        Complaint Id
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => {
       return (
         <div className="relative flex items-center justify-center h-full">
+          {/* Icon on the far left */}
+          <div className="absolute left-2">
+            <TooltipLayout
+              trigger={<UserCheck2 className="text-orange-500" size={20} />}
+              content="Pending"
+            />
+          </div>
+
+          {/* Badge centered */}
           <Badge variant="outline" className="font-medium">
             {row.original.comp_id}
           </Badge>
@@ -173,7 +183,7 @@ export const requestComplaintColumns = ({
       </div>
     ),
     cell: ({ row }) => {
-      const accusedPersons = row.original.accused;
+      const accusedPersons = row.original.accused_persons;
       if (!accusedPersons || accusedPersons.length === 0) {
         return <div className="text-gray-500">No accused persons</div>;
       }

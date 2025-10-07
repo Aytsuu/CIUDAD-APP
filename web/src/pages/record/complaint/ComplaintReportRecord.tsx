@@ -1,520 +1,379 @@
-import { useState, useEffect } from "react";
+import { SetStateAction, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLocation, useParams } from "react-router-dom";
+import { BsChevronLeft } from "react-icons/bs";
+import { Link, useLocation } from "react-router-dom";
+import { Complaint } from "./complaint-type";
 import {
   User,
-  AlertCircle,
+  AlertTriangle,
+  FolderOpen,
   Calendar,
   MapPin,
+  Hash,
   Clock,
-  Edit2,
-  Forward,
+  UserCheck,
+  UserX,
   Phone,
-  FileText,
-  Download,
+  Mail,
 } from "lucide-react";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { getComplaintById } from "./api-operations/restful-api/complaint-api";
-import { Printer } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-
-// Type definitions
-interface Address {
-  street: string;
-  barangay: string;
-  city: string;
-  province: string;
-  sitio?: string;
-}
-
-interface Complainant {
-  rp_id?: string | null;
-  cpnt_id?: string | number;
-  cpnt_name: string;
-  cpnt_age: string;
-  cpnt_gender: string;
-  genderInput?: string;
-  cpnt_number: string;
-  cpnt_email?: string;
-  cpnt_address?: string;
-  address?: Address;
-  cpnt_relation_to_respondent: string;
-}
-
-interface Accused {
-  rp_id?: string | null;
-  acsd_id?: string | number;
-  acsd_name: string;
-  acsd_age: string;
-  acsd_gender: string;
-  genderInput?: string;
-  acsd_description: string;
-  acsd_address?: string;
-  address?: Address;
-}
-
-interface SupportingDocument {
-  doc_id: string | number;
-  doc_name: string;
-  doc_type: string;
-  doc_url: string;
-  doc_size?: number;
-  doc_uploaded_at?: string;
-}
-
-interface ComplaintData {
-  comp_id: string | number;
-  comp_incident_type: string;
-  comp_datetime: string;
-  comp_created_at: string;
-  comp_location: string;
-  comp_allegation: string;
-  comp_status: string;
-  complainant: Complainant[];
-  accused?: Accused[];
-  supporting_documents?: SupportingDocument[];
-}
-
-interface LocationState {
-  complaint?: ComplaintData;
-}
-
-type ActiveSection = "details" | "initiation" | "resolution";
-
-const formatAddress = (address?: Address, fallbackAddress?: string): string => {
-  if (address) {
-    const parts = [
-      address.sitio,
-      address.street,
-      address.barangay,
-      address.city,
-      address.province,
-    ].filter(Boolean);
-    return parts.join(", ");
-  }
-  return fallbackAddress || "N/A";
-};
-
-const formatFileSize = (bytes?: number): string => {
-  if (!bytes) return "Unknown size";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-};
+import { toast } from "sonner";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { archiveComplaint, raiseIssue } from "./api-operations/restful-api/complaint-api";
+import { useAuth } from "@/context/AuthContext";
+import { useNotifications } from "@/context/NotificationContext";
 
 export function ComplaintViewRecord() {
-  const { comp_id } = useParams<{ comp_id: string }>();
-  const { state } = useLocation() as { state: LocationState | null };
-  const [complaintData, setComplaintData] = useState<ComplaintData | null>(
-    state?.complaint || null
-  );
-  const [activeSection, setActiveSection] = useState<ActiveSection>("details");
+  const { state } = useLocation();
+  const { user } = useAuth();
+  const complaintData = state?.complaint as Complaint;
+  const [isRaiseIssueDialogOpen, setIsRaiseIssueDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { send } = useNotifications();
+  const [complaintStatus, setComplaintStatus] = useState({
+    isArchived: complaintData?.comp_is_archive || false,
+    isRaised: false,
+  });
 
-  useEffect(() => {
-    if (!complaintData && comp_id) {
-      getComplaintById().then((res) => setComplaintData(res.data));
-    }
-  }, [comp_id, complaintData]);
+  // Tab states
+  const [activeComplainantTab, setActiveComplainantTab] = useState(0);
+  const [activeAccusedTab, setActiveAccusedTab] = useState(0);
 
-  const renderContent = () => {
-    if (!complaintData) return null;
+  const handleRaiseIssue = async () => {
+    setIsSubmitting(true);
+    try {
+      console.log("Raising issue for comp_id:", complaintData.comp_id);
 
-    switch (activeSection) {
-      case "details":
-        return (
-          <div className="">
-            {/* Main Section */}
-            <div className="flex justify-between items-center bg-blue-500 w-full h-16 rounded-lg px-4">
-              <div className="">
-                <p className="text-white font-normal text-sm">Confirmed by: </p>
-              </div>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  className="gap-2 bg-transparent text-white"
-                >
-                  <Forward className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2 bg-transparent text-white"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2 bg-transparent text-white"
-                >
-                  <Printer className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Blotter Details */}
-            <div className="p-2">
-              {/* Allegation */}
-              <section className="p-4">
-                <h2 className="font-semibold text-[20px] text-gray-500">
-                  Allegation
-                </h2>
-                <p className="text-gray-600 text-sm mb-4">Case details</p>
-                <Card>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">
-                          Incident Type
-                        </p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {complaintData.comp_incident_type}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">
-                          Date & Time
-                        </p>
-                        <p className="text-gray-900 flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          {new Date(
-                            complaintData.comp_datetime
-                          ).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-500">
-                          Filed On
-                        </p>
-                        <p className="text-gray-900 flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          {new Date(
-                            complaintData.comp_created_at
-                          ).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-500">
-                        Location
-                      </p>
-                      <p className="text-gray-900 flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                        {complaintData.comp_location}
-                      </p>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-gray-500">
-                        Allegation Details
-                      </p>
-                      <div className="p-4 bg-gray-50 rounded-lg border">
-                        <p className="text-gray-800 leading-relaxed">
-                          {complaintData.comp_allegation}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </section>
-
-              {/* Complainants Section */}
-              <section className="p-4 ">
-                <Card>
-                  <CardContent className="space-y-6">
-                    {complaintData.complainant.map((person, index) => (
-                      <div key={person.cpnt_id || index}>
-                        {index > 0 && <Separator />}
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Name
-                              </p>
-                              <p className="text-gray-900 flex items-center gap-2">
-                                <User className="w-4 h-4 text-gray-400" />
-                                {person.cpnt_name.toUpperCase()}
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Age
-                              </p>
-                              <p className="text-gray-900 flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-gray-400" />
-                                {person.cpnt_age}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Gender
-                              </p>
-                              <p className="text-gray-900 flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-gray-400" />
-                                {person.cpnt_gender.toUpperCase()}
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Contact Number
-                              </p>
-                              <p className="text-gray-900 flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-gray-400" />
-                                {person.cpnt_number}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-500">
-                              Address
-                            </p>
-                            <p className="text-gray-900 flex items-start gap-2">
-                              <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                              {formatAddress(
-                                person.address,
-                                person.cpnt_address
-                              )}
-                            </p>
-                          </div>
-
-                          {person.cpnt_relation_to_respondent && (
-                            <div className="">
-                              <div className="">
-                                <p className="text-sm font-medium text-gray-500 mb-1">
-                                  Relationship to Respondent
-                                </p>
-                                <p className="text-gray-600 font-medium">
-                                  {person.cpnt_relation_to_respondent.toUpperCase()}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </section>
-
-              {/* Accused Section */}
-              {complaintData.accused && complaintData.accused.length > 0 && (
-                <section className="p-4">
-                  <Card>
-                    <CardContent className="space-y-6">
-                      {complaintData.accused.map((person, index) => (
-                        <div key={person.acsd_id || index}>
-                          {index > 0 && <Separator />}
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                  {person.acsd_name}
-                                </h3>
-                                <p className="text-gray-600 text-sm">
-                                  {person.acsd_age} years old,{" "}
-                                  {person.acsd_gender}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-gray-500">
-                                Address
-                              </p>
-                              <p className="text-gray-900 flex items-start gap-2">
-                                <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                                {formatAddress(
-                                  person.address,
-                                  person.acsd_address
-                                )}
-                              </p>
-                            </div>
-
-                            <div className="">
-                              <div className="">
-                                <p className="text-sm font-medium text-gray-500 mb-1">
-                                  Description
-                                </p>
-                                <p className="text-gray-800 leading-relaxed">
-                                  {person.acsd_description}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </section>
-              )}
-
-              {/* Supporting Documents Section */}
-              {complaintData.supporting_documents &&
-                complaintData.supporting_documents.length > 0 && (
-                  <section className="p-4">
-                    <h2 className="font-semibold text-[20px] text-gray-500">
-                      Supporting Documents
-                    </h2>
-                    <p className="text-gray-600 text-sm mb-4">
-                      Attached files and evidence
-                    </p>
-                    <Card>
-                      <CardContent className="space-y-4">
-                        {complaintData.supporting_documents.map(
-                          (doc, index) => (
-                            <div key={doc.doc_id || index}>
-                              {index > 0 && <Separator />}
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
-                                  <div className="space-y-1">
-                                    <h3 className="text-base font-semibold text-gray-900">
-                                      {doc.doc_name}
-                                    </h3>
-                                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                                      <span>{doc.doc_type}</span>
-                                      <span>•</span>
-                                      <span>
-                                        {formatFileSize(doc.doc_size)}
-                                      </span>
-                                      {doc.doc_uploaded_at && (
-                                        <>
-                                          <span>•</span>
-                                          <span className="flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {new Date(
-                                              doc.doc_uploaded_at
-                                            ).toLocaleDateString()}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-2"
-                                  onClick={() =>
-                                    window.open(doc.doc_url, "_blank")
-                                  }
-                                >
-                                  <Download className="w-4 h-4" />
-                                  View
-                                </Button>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </CardContent>
-                    </Card>
-                  </section>
-                )}
-            </div>
-          </div>
-        );
-      case "initiation":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Initiation
-              </h2>
-              <p className="text-gray-600">
-                Initial proceedings and actions taken
-              </p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <p className="text-gray-500">Initiation content goes here</p>
-            </div>
-          </div>
-        );
-      case "resolution":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Resolution
-              </h2>
-              <p className="text-gray-600">Final resolution and outcome</p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <p className="text-gray-500">Resolution content goes here</p>
-            </div>
-          </div>
-        );
-      default:
-        return null;
+      await raiseIssue(complaintData.comp_id);
+      await handleSendAlert();
+      await archiveComplaint(complaintData.comp_id.toString());
+      setComplaintStatus((prev) => ({ ...prev, isRaised: true, isArchived: true }));
+      toast.success("Issue raised successfully", {
+        description: `Service Request created for Complaint ID: ${complaintData.comp_id}`,
+        action: {
+          label: "View",
+          onClick: () => console.log("View action clicked"),
+        },
+      });
+    } catch (error) {
+      toast.error("Failed to raise issue", {
+        description: "Please try again later",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsRaiseIssueDialogOpen(false);
     }
   };
 
-  return (
-    <LayoutWithBack
-      title={`Complaint Details`}
-      description={`Review and manage complaint record information`}
-    >
-      <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <div className="w-56 bg-white border border-gray-200 rounded-lg h-fit p-1">
-          {/* Status Badge */}
-          <div className="text-center items-center bg-blue-500 rounded-lg pb-2">
-            <h2 className="font-medium text-white">Status</h2>
-            <p className="text-white font-semibold">
-              {complaintData?.comp_status}
-            </p>
+  const handleSendAlert = async () => {
+    await send({
+      title: "Complaint Report Filed",
+      message: "Your request has been processed",
+      recipient_ids: [user?.acc_id || "", "13"],
+      metadata: {
+        action_url: "/home",
+        sender_name: "System",
+        sender_avatar: user?.profile_image || "",
+      },
+    });
+  };
+
+  const getStatusDisplay = () => {
+    if (complaintStatus.isRaised) {
+      return { text: "Raised", class: "bg-orange-100 text-orange-700 border-orange-200" };
+    } else if (complaintStatus.isArchived) {
+      return { text: "Archived", class: "bg-yellow-100 text-yellow-700 border-yellow-200" };
+    } else {
+      return { text: "Active", class: "bg-green-100 text-green-700 border-green-200" };
+    }
+  };
+
+  const renderPersonTabs = (persons: any[], activeTab: number, setActiveTab: { (value: SetStateAction<number>): void; (value: SetStateAction<number>): void; (arg0: any): void; }, type: string) => {
+    const Icon = type === 'complainant' ? UserCheck : UserX;
+    const title = type === 'complainant' ? 'Complainant' : 'Accused Person';
+    const emptyMessage = type === 'complainant' ? 'No complainant listed' : 'No accused persons listed';
+    
+    if (!persons || persons.length === 0) {
+      return (
+        <div className="border rounded-lg p-6 bg-white shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <Icon className="w-5 h-5 text-slate-600" />
+            <h3 className="font-semibold text-lg text-slate-800">{title}</h3>
           </div>
+          <div className="text-center py-8">
+            <Icon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">{emptyMessage}</p>
+          </div>
+        </div>
+      );
+    }
 
-          {/* Navigation */}
-          <nav className="space-y-1 p-2">
-            <button
-              onClick={() => setActiveSection("details")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                activeSection === "details"
-                  ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <AlertCircle className="w-5 h-5" />
-              <span className="font-medium">Blotter Details</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSection("initiation")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                activeSection === "initiation"
-                  ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <User className="w-5 h-5" />
-              <span className="font-medium">Initiation</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSection("resolution")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
-                activeSection === "resolution"
-                  ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <User className="w-5 h-5" />
-              <span className="font-medium">Resolution</span>
-            </button>
-          </nav>
+    return (
+      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 p-4 border-b bg-slate-50">
+          <Icon className="w-5 h-5 text-slate-600" />
+          <h3 className="font-semibold text-lg text-slate-800">{title}</h3>
+          <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs font-medium">
+            {persons.length} {persons.length === 1 ? 'person' : 'people'}
+          </span>
+        </div>
+        
+        {/* Tab Navigation */}
+        <div className="flex border-b bg-slate-50">
+          <div className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+            {persons.map((person, index) => (
+              <button
+                key={person.cpnt_id || person.acsd_id || index}
+                onClick={() => setActiveTab(index)}
+                className={`
+                  flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200
+                  ${activeTab === index 
+                    ? 'border-blue-500 text-blue-600 bg-white' 
+                    : 'border-transparent text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${activeTab === index ? 'bg-blue-500' : 'bg-slate-400'}`} />
+                  {person.cpnt_name || person.acsd_name || `Person ${index + 1}`}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto p-1 bg-white  rounded-lg mx-2 border border-gray-200">
-          {renderContent()}
+        {/* Tab Content */}
+        <div className="p-6">
+          {persons[activeTab] && (
+            <div className="space-y-6">
+              {/* Name Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Full Name
+                  </label>
+                  <p className="text-base text-slate-900 font-medium bg-slate-50 p-3 rounded-md">
+                    {persons[activeTab].cpnt_name || persons[activeTab].acsd_name || "N/A"}
+                  </p>
+                </div>
+                
+                {/* Contact Info if available */}
+                {(persons[activeTab].cpnt_phone || persons[activeTab].acsd_phone) && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      Contact Number
+                    </label>
+                    <p className="text-base text-slate-900 bg-slate-50 p-3 rounded-md">
+                      {persons[activeTab].cpnt_phone || persons[activeTab].acsd_phone || "N/A"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Address Section */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Address
+                </label>
+                <div className="bg-slate-50 p-4 rounded-md">
+                  <p className="text-base text-slate-900 leading-relaxed">
+                    {persons[activeTab].add
+                      ? `${persons[activeTab].add.add_street || ""} ${persons[activeTab].add.add_barangay}, ${persons[activeTab].add.add_city}, ${persons[activeTab].add.add_province}`.trim()
+                      : "No address provided"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Additional Info if available */}
+              {(persons[activeTab].cpnt_email || persons[activeTab].acsd_email) && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Email Address
+                  </label>
+                  <p className="text-base text-slate-900 bg-slate-50 p-3 rounded-md">
+                    {persons[activeTab].cpnt_email || persons[activeTab].acsd_email || "N/A"}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  if (!complaintData) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <p className="text-slate-500">No complaint data available</p>
+      </div>
+    );
+  }
+
+  const statusDisplay = getStatusDisplay();
+
+  return (
+     <div className="w-full min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <div className="flex flex-row mb-4 sm:mb-0">
+            <div className="flex items-center mr-4">
+              <Button className="text-slate-700 p-2 self-start hover:bg-slate-100" variant="outline">
+                <Link to="/complaint">
+                  <BsChevronLeft />
+                </Link>
+              </Button>
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="flex flex-row font-semibold text-xl sm:text-2xl text-darkBlue2 items-center">
+                  Complaint Record Details
+                </h1>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusDisplay.class}`}>
+                  {statusDisplay.text}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-sm text-slate-600">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    Filed: {complaintData.comp_created_at
+                      ? new Date(complaintData.comp_created_at).toLocaleString()
+                      : "N/A"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Hash className="w-4 h-4" />
+                  <span>Case No: {complaintData.comp_id || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Raise Issue Button */}
+          <div className="flex justify-end gap-4">
+            <DialogLayout
+              isOpen={isRaiseIssueDialogOpen}
+              onOpenChange={setIsRaiseIssueDialogOpen}
+              trigger={
+                <Button
+                  className={`${
+                    complaintStatus.isRaised
+                      ? "bg-orange-600 hover:bg-orange-700 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  } shadow-sm`}
+                  disabled={complaintStatus.isRaised || isSubmitting}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  {complaintStatus.isRaised ? "Issue Raised" : "Raise Issue"}
+                </Button>
+              }
+              title="Confirm Issue Raising"
+              description="Are you sure you want to raise an issue for this complaint report?"
+              mainContent={
+                <>
+                  <div className="mt-4 p-4 bg-slate-50 rounded-lg">
+                    <p className="text-sm text-slate-600 mb-2">
+                      Complaint ID: <span className="font-medium text-slate-800">{complaintData.comp_id}</span>
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      This action will notify the concerned authorities and automatically archive the complaint.
+                    </p>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-6">
+                    <Button variant="outline" onClick={() => setIsRaiseIssueDialogOpen(false)} disabled={isSubmitting}>
+                      Cancel
+                    </Button>
+                    <Button className="bg-red-600 hover:bg-red-700" onClick={handleRaiseIssue} disabled={isSubmitting}>
+                      {isSubmitting ? "Processing..." : "Confirm"}
+                    </Button>
+                  </div>
+                </>
+              }
+            />
+          </div>
+        </div>
+
+        {/* Person Details with Tabs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Complainant Tabs */}
+          {renderPersonTabs(
+            complaintData.complainant, 
+            activeComplainantTab, 
+            setActiveComplainantTab, 
+            'complainant'
+          )}
+
+          {/* Accused Tabs */}
+          {renderPersonTabs(
+            complaintData.accused_persons, 
+            activeAccusedTab, 
+            setActiveAccusedTab, 
+            'accused'
+          )}
+        </div>
+
+        {/* Incident Details */}
+        <div className="border rounded-lg p-6 bg-white shadow-sm mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            </div>
+            <h2 className="font-semibold text-lg text-slate-800">Incident Details</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-600">Category</label>
+              <p className="text-base text-slate-900 font-medium bg-slate-50 p-3 rounded-md">
+                {complaintData.comp_incident_type || "N/A"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-600">Priority Level</label>
+              <p className="text-base text-slate-900 font-medium bg-slate-50 p-3 rounded-md">
+                {complaintData.comp_category || "N/A"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Date of Incident
+              </label>
+              <p className="text-base text-slate-900 bg-slate-50 p-3 rounded-md">
+                {complaintData.comp_datetime
+                  ? new Date(complaintData.comp_datetime).toLocaleString()
+                  : "N/A"}
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-600">Incident Description</label>
+            <div className="bg-slate-50 p-4 rounded-md border">
+              <p className="text-base text-slate-900 whitespace-pre-line leading-relaxed">
+                {complaintData.comp_allegation || "No description provided"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Supporting Documents */}
+        <div className="border rounded-lg p-6 bg-white shadow-sm mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <FolderOpen className="w-5 h-5 text-purple-600" />
+            </div>
+            <h2 className="font-semibold text-lg text-slate-800">Supporting Documents</h2>
+          </div>
+          <div className="text-center py-8">
+            <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">No documents uploaded</p>
+          </div>
         </div>
       </div>
     </div>

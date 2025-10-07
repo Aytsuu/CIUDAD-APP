@@ -167,7 +167,7 @@ export default function ComplaintRequest() {
             </h1>
           </div>
           <p className="text-darkGray text-sm">
-            Manage and view pending blotter requests
+            Manage and view pending blotter requests ({pendingComplaints.length} pending)
           </p>
         </div>
       </div>

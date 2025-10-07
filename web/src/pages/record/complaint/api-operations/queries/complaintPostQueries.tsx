@@ -1,23 +1,10 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import {archiveComplaint, raiseIssue} from "../restful-api/complaint-api";
-import { ComplaintFormData } from "@/form-schema/complaint-schema";
-import api from "@/api/api";
-
-type ComplaintSubmissionPayload = Omit<ComplaintFormData, 'incident'> & {
-  comp_incident_type: string;
-  comp_allegation: string;
-  comp_location: string;
-  comp_datetime: string;
-};
+import {archiveComplaint, raiseIssue,submitComplaint} from "../restful-api/complaint-api";
 
 export const usePostComplaint = () => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: async (payload: ComplaintSubmissionPayload) => {
-      const response = await api.post("complaint/create/", payload);
-      return response.data;
-    },
+    mutationFn: (formData: FormData) => submitComplaint(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["complaints"] });
     },

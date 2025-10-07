@@ -10,9 +10,6 @@ import {
   Phone,
   ChevronDown,
   ChevronUp,
-  FileText,
-  File,
-  Video,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -30,7 +27,7 @@ export const ReviewInfo = () => {
     complainant: true,
     accused: true,
     incident: true,
-    files: true
+    documents: true
   })
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -41,7 +38,7 @@ export const ReviewInfo = () => {
   }
 
   const formatFileSize = (bytes: number) => {
-    if (!bytes || bytes === 0) return "Size unknown"
+    if (bytes === 0) return "0 Bytes"
     const k = 1024
     const sizes = ["Bytes", "KB", "MB", "GB"]
     const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -49,37 +46,10 @@ export const ReviewInfo = () => {
   }
 
   const getFileIcon = (fileType: string) => {
-    if (!fileType) return <File className="h-4 w-4 text-gray-500" />
-    
     if (fileType.startsWith("image/")) return <ImageIcon className="h-4 w-4 text-blue-500" />
-    if (fileType === "application/pdf") return <FileText className="h-4 w-4 text-red-500" />
-    if (fileType.startsWith("video/")) return <Video className="h-4 w-4 text-purple-500" />
-    if (fileType.startsWith("audio/")) return <FileText className="h-4 w-4 text-green-500" />
-    return <FileText className="h-4 w-4 text-gray-500" />
-  }
-
-  const getFileTypeDisplay = (fileType: string) => {
-    if (!fileType) return "FILE"
-    
-    if (fileType.startsWith("image/")) return "IMAGE"
-    if (fileType === "application/pdf") return "PDF"
-    if (fileType.startsWith("video/")) return "VIDEO"
-    if (fileType.startsWith("audio/")) return "AUDIO"
-    if (fileType.startsWith("text/")) return "TEXT"
-    
-    const parts = fileType.split("/")
-    return parts.length > 1 ? parts[1].toUpperCase() : "FILE"
-  }
-
-  const getFileProperties = (file: any) => {
-    return {
-      // Use schema property names
-      name: file.comp_file_name || file.name || "Unknown file",
-      type: file.comp_file_type || file.type || "document",
-      size: file.size || 0,
-      status: file.status || "unknown",
-      url: file.comp_file_url || file.url || ""
-    }
+    if (fileType === "application/pdf") return <ImageIcon className="h-4 w-4 text-red-500" />
+    if (fileType.startsWith("video/")) return <ImageIcon className="h-4 w-4 text-purple-500" />
+    return <ImageIcon className="h-4 w-4 text-gray-500" />
   }
 
   const formatAddress = (address: any) => {
@@ -127,12 +97,7 @@ export const ReviewInfo = () => {
         <p className="text-sm font-medium text-muted-foreground">Address</p>
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-muted-foreground" />
-          <p className="text-base font-medium text-foreground">
-            {type === 'complainant' ? 
-              (person.cpnt_address || formatAddress(person.address) || "Not provided") : 
-              (person.acsd_address || formatAddress(person.address) || "Not provided")
-            }
-          </p>
+          <p className="text-base font-medium text-foreground">{formatAddress(person.address)}</p>
         </div>
       </div>
     </div>
@@ -165,23 +130,6 @@ export const ReviewInfo = () => {
     )
   }
 
-  const formatDateTime = (dateTimeString: string) => {
-    if (!dateTimeString) return { date: "N/A", time: "N/A" };
-    
-    try {
-      const date = new Date(dateTimeString);
-      const formattedDate = date.toLocaleDateString();
-      const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      return { date: formattedDate, time: formattedTime };
-    } catch (error) {
-      return { date: "Invalid date", time: "Invalid time" };
-    }
-  };
-
-  const { date: incidentDate, time: incidentTime } = formatDateTime(data.incident?.comp_datetime);
-
-  const documents = Array.isArray(data.documents) ? data.documents : [];
-
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       {/* Complainant Info */}
@@ -192,7 +140,7 @@ export const ReviewInfo = () => {
               <Phone className="h-5 w-5 text-muted-foreground" />
               <span>Complainant Information</span>
               <Badge variant="secondary" className="ml-2">
-                {Array.isArray(data.complainant) ? data.complainant.length : 0}
+                {data.complainant?.length || 0}
               </Badge>
             </CardTitle>
             <Button 
@@ -227,7 +175,7 @@ export const ReviewInfo = () => {
               <Users className="h-5 w-5 text-muted-foreground" />
               <span>Accused Persons</span>
               <Badge variant="secondary" className="ml-2">
-                {Array.isArray(data.accused) ? data.accused.length : 0}
+                {data.accused?.length || 0}
               </Badge>
             </CardTitle>
             <Button 
@@ -312,7 +260,7 @@ export const ReviewInfo = () => {
         )}
       </Card>
 
-      {/* Documents - FIXED */}
+      {/* Documents */}
       <Card className="border">
         <CardHeader className="p-4 border-b">
           <div className="flex items-center justify-between">
@@ -320,53 +268,38 @@ export const ReviewInfo = () => {
               <FolderOpen className="h-5 w-5 text-muted-foreground" />
               <span>Supporting Documents</span>
               <Badge variant="secondary" className="ml-2">
-                {documents.length}
+                {data.documents?.length || 0}
               </Badge>
             </CardTitle>
             <Button 
               variant="ghost" 
               size="sm" 
               className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
-              onClick={() => toggleSection('files')}
+              onClick={() => toggleSection('documents')}
             >
-              {expandedSections.files ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {expandedSections.documents ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
           </div>
         </CardHeader>
-        {expandedSections.files && (
+        {expandedSections.documents && (
           <CardContent className="p-6">
-            {documents.length > 0 ? (
+            {data.documents?.length > 0 ? (
               <div className="grid gap-3">
-                {documents.map((file: any, index: number) => {
-                  const fileProps = getFileProperties(file);
-                  
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex-shrink-0">
-                        {getFileIcon(fileProps.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {fileProps.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatFileSize(fileProps.size)} • {fileProps.status.toUpperCase()}
-                        </p>
-                        {fileProps.url && (
-                          <p className="text-xs text-blue-600 truncate mt-1">
-                            {fileProps.url.substring(0, 50)}...
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {getFileTypeDisplay(fileProps.type)}
-                      </Badge>
+                {data.documents.map((file: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-shrink-0">{getFileIcon(file.type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                     </div>
-                  )
-                })}
+                    <Badge variant="outline" className="text-xs">
+                      {file.type.split("/")[1]?.toUpperCase() || file.type}
+                    </Badge>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-4">
