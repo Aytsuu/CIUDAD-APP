@@ -42,7 +42,8 @@ export default function IndividualScan() {
               ...acc,
               ...(email !== "" && {email: email})
             },
-          ],
+            role: "Independent",
+          }],
         },
         {
           onSuccess: (data) => {

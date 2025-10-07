@@ -3,13 +3,13 @@
 //   View,
 //   Text,
 //   TouchableOpacity,
-//   FlatList,
 //   ActivityIndicator,
-//   Dimensions,
+//   SectionList,
+//   TextInput,
 // } from 'react-native';
 // import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
 // import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from './queries/waste-col-delete-queries';
-// import { Plus, Trash, Archive, ArchiveRestore, Eye, Edit3 } from 'lucide-react-native';
+// import { Plus, Trash, Archive, ArchiveRestore, Edit3, Search, ChevronLeft } from 'lucide-react-native';
 // import { useRouter } from 'expo-router';
 // import { formatTime } from '@/helpers/timeFormatter';
 // import { SelectLayout } from '@/components/ui/select-layout';
@@ -125,7 +125,7 @@
 //       pathname: '/(waste)/waste-collection/waste-col-edit',
 //       params: {
 //         wc_num: item.wc_num.toString(),
-//         date: item.wc_date,
+//         day: item.wc_day,
 //         time: item.wc_time,
 //         info: item.wc_add_info,
 //         sitio: item.sitio,
@@ -133,8 +133,8 @@
 //         driver: item.wstp,
 //         collectors_id: JSON.stringify(item.collectors_wstp_ids)
 //       }
-//     })
-//   }
+//     });
+//   };
 
 //   const handleDelete = (wc_num: number) => {
 //     deleteWasteSchedCol(wc_num);
@@ -149,12 +149,12 @@
 //   };
 
 //   const renderItem = ({ item }: { item: WasteCollectionSchedFull }) => (
-//     <View className="bg-white shadow-sm rounded-lg p-4 mb-3 mx-2  border border-gray-200">
+//     <View className="bg-white shadow-sm rounded-lg p-4 mb-3 mx-2 border border-gray-200">
 //       {/* First row with sitio name and action icons */}
 //       <View className="flex-row justify-between items-center mb-1">
 //         <Text className="text-gray-800 font-semibold text-base">{item.sitio_name}</Text>
 //         <View className="flex-row gap-1">
-//           {viewMode === 'active' ? (
+//           {activeTab === 'active' ? (
 //             <>
 //               <TouchableOpacity
 //                 className="bg-blue-50 rounded py-1 px-1"
@@ -166,11 +166,11 @@
 //               <ConfirmationModal
 //                 trigger={
 //                   <TouchableOpacity className="bg-red-50 rounded py-1 px-1.5">
-//                     <Archive size={16} color="#dc2626"/>
+//                     <Archive size={16} color="#dc2626" />
 //                   </TouchableOpacity>
 //                 }
 //                 title="Archive Schedule"
-//                 description="This schedule will be moved to archive. Are you sure?"
+//                 description="This schedule will be archived. Are you sure?"
 //                 actionLabel="Archive"
 //                 onPress={() => handleArchive(item.wc_num)}
 //               />
@@ -179,12 +179,12 @@
 //             <>
 //               <ConfirmationModal
 //                 trigger={
-//                   <TouchableOpacity className="bg-green-50 rounded py-1 px-1.5">    
+//                   <TouchableOpacity className="bg-green-50 rounded py-1 px-1.5">
 //                     <ArchiveRestore size={16} color="#15803d" />
 //                   </TouchableOpacity>
 //                 }
 //                 title="Restore Schedule"
-//                 description="This schedule will be restored to active list. Are you sure?"
+//                 description="This schedule will be restored. Are you sure?"
 //                 actionLabel="Restore"
 //                 onPress={() => handleRestore(item.wc_num)}
 //               />
@@ -192,7 +192,7 @@
 //               <ConfirmationModal
 //                 trigger={
 //                   <TouchableOpacity className="bg-red-50 rounded py-1 px-1.5">
-//                       <Trash size={16} color="#dc2626" />
+//                     <Trash size={16} color="#dc2626" />
 //                   </TouchableOpacity>
 //                 }
 //                 title="Delete Schedule"
@@ -205,7 +205,7 @@
 //         </View>
 //       </View>
 
-//       {/* Date row */}
+//       {/* Time row */}
 //       <View className="mb-1">
 //         <Text className="text-gray-500">{formatTime(item.wc_time)}</Text>
 //       </View>
@@ -385,20 +385,15 @@ import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
-  Dimensions,
+  SectionList,
+  TextInput,
 } from 'react-native';
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
 import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from './queries/waste-col-delete-queries';
-import { Plus, Trash, Archive, ArchiveRestore, Eye, Edit3 } from 'lucide-react-native';
+import { Plus, Trash, Archive, ArchiveRestore, Edit3, Search, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useQueryClient } from '@tanstack/react-query';
-import { format, parseISO, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import { formatTime } from '@/helpers/timeFormatter';
-import ScreenLayout from '@/screens/_ScreenLayout';
-import { Input } from '@/components/ui/input';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { sortWasteCollectionData } from '@/helpers/wasteCollectionHelper';
@@ -420,11 +415,8 @@ const dayOptions = [
 
 const WasteCollectionMain = () => {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'active' | 'archive'>('active');
-  const [selectedSitio, setSelectedSitio] = useState('0');
+  const [activeTab, setActiveTab] = useState<string>('active');
+  const [selectedDay, setSelectedDay] = useState('0');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Add debouncing for search
@@ -506,24 +498,15 @@ const WasteCollectionMain = () => {
     return result;
   };
 
-  // Filter data based on selected date, sitio, and search query
-  const filteredData = formattedSchedules
-    .filter(item => {
-      const matchesDate = isSameDay(item.rawDate, selectedDate);
-      const matchesSitio = selectedSitio === '0' || item.sitio_name === selectedSitio;
-      const matchesSearch = item.wc_add_info?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            item.sitio_name?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesDate && matchesSitio && matchesSearch;
-    })
-    .sort((a, b) => a.wc_time.localeCompare(b.wc_time));
-
+  const activeGroupedData = useMemo(() => groupByDay(activeFilteredData), [activeFilteredData]);
+  const archivedGroupedData = useMemo(() => groupByDay(archivedFilteredData), [archivedFilteredData]);
 
   const handleEdit = (item: any) => {
     router.push({
       pathname: '/(waste)/waste-collection/waste-col-edit',
-      params: { 
+      params: {
         wc_num: item.wc_num.toString(),
-        date: item.wc_date,
+        day: item.wc_day,
         time: item.wc_time,
         info: item.wc_add_info,
         sitio: item.sitio,
@@ -531,8 +514,8 @@ const WasteCollectionMain = () => {
         driver: item.wstp,
         collectors_id: JSON.stringify(item.collectors_wstp_ids)
       }
-    })
-  }
+    });
+  };
 
   const handleDelete = (wc_num: number) => {
     deleteWasteSchedCol(wc_num);
@@ -547,38 +530,50 @@ const WasteCollectionMain = () => {
   };
 
   const renderItem = ({ item }: { item: WasteCollectionSchedFull }) => (
-    <View className="bg-white shadow-sm rounded-lg p-4 mb-3 mx-2  border border-gray-200">
+    <View className="bg-white shadow-sm rounded-lg p-4 mb-3 mx-2 border border-gray-200">
       {/* First row with sitio name and action icons */}
       <View className="flex-row justify-between items-center mb-1">
         <Text className="text-gray-800 font-semibold text-base">{item.sitio_name}</Text>
         <View className="flex-row gap-1">
-          {viewMode === 'active' ? (
+          {activeTab === 'active' ? (
             <>
-              <TouchableOpacity 
+              <TouchableOpacity
                 className="bg-blue-50 rounded py-1 px-1"
                 onPress={() => handleEdit(item)}
               >
-                <Edit3 size={16} color="#00A8F0"/>
+                <Edit3 size={16} color="#00A8F0" />
               </TouchableOpacity>
-              
+
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity className="bg-red-50 rounded py-1 px-1.5">
-                      <Trash size={16} color="#dc2626" />
+                    <Archive size={16} color="#dc2626" />
                   </TouchableOpacity>
                 }
-                title="Delete Schedule"
-                description="This schedule will be permanently deleted. Are you sure?"
-                actionLabel="Delete"
-                onPress={() => handleDelete(item.wc_num)}
+                title="Archive Schedule"
+                description="This schedule will be archived. Are you sure?"
+                actionLabel="Archive"
+                onPress={() => handleArchive(item.wc_num)}
               />
             </>
           ) : (
-            <>              
+            <>
+              <ConfirmationModal
+                trigger={
+                  <TouchableOpacity className="bg-green-50 rounded py-1 px-1.5">
+                    <ArchiveRestore size={16} color="#15803d" />
+                  </TouchableOpacity>
+                }
+                title="Restore Schedule"
+                description="This schedule will be restored. Are you sure?"
+                actionLabel="Restore"
+                onPress={() => handleRestore(item.wc_num)}
+              />
+
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity className="bg-red-50 rounded py-1 px-1.5">
-                      <Trash size={16} color="#dc2626" />
+                    <Trash size={16} color="#dc2626" />
                   </TouchableOpacity>
                 }
                 title="Delete Schedule"
@@ -591,18 +586,13 @@ const WasteCollectionMain = () => {
         </View>
       </View>
 
-      {/* Date row */}
-      <View className="mb-1">
-        <Text className="text-gray-500">{item.wc_date}</Text>
-      </View>
-
       {/* Time row */}
       <View className="mb-1">
         <Text className="text-gray-500">{formatTime(item.wc_time)}</Text>
       </View>
 
       {/* Additional info if exists */}
-      {item.wc_add_info && (
+      {item.wc_add_info && item.wc_add_info !== "None" && (
         <View className="mt-1">
           <Text className="text-gray-600">{item.wc_add_info}</Text>
         </View>
@@ -610,20 +600,12 @@ const WasteCollectionMain = () => {
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <ScreenLayout
-        header="Waste Collection Schedules"
-        description="Manage waste collection schedules"
-        showBackButton={false}
-        showExitButton={false}
-      >
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" className="text-blue-500" />
-        </View>
-      </ScreenLayout>
-    );
-  }
+  const renderSectionHeader = ({ section }: { section: { title: string } }) => (
+    <View className="bg-blue-50 py-3 px-4 rounded-md mb-3 mt-3">
+      <Text className="text-lg font-bold text-primaryBlue">{section.title}</Text>
+    </View>
+  );
+
 
   return (
     <PageLayout
