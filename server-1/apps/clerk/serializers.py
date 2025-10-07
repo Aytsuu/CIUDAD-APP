@@ -714,33 +714,27 @@ class SummonRequestAcceptedListSerializer(serializers.ModelSerializer):
             return None
         
 
-class SummonCaseListSerializer(serializers.ModelSerializer):
+class SummonCasesSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     complainant_addresses = serializers.SerializerMethodField()
     incident_type = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
     accused_addresses = serializers.SerializerMethodField()
-    decision_date = serializers.SerializerMethodField()
-    payment_status = serializers.SerializerMethodField()
     
     class Meta:
-        model = ServiceChargeRequest
+        model = SummonCases
         fields = [
-            'sr_id', 
-            'sr_code',
-            'sr_type', 
-            'sr_req_date', 
-            'sr_req_status', 
-            'sr_case_status', 
+            'sc_id', 
+            'sc_code',
+            'sc_case_status', 
+            'sc_date_marked', 
+            'sc_reason', 
             'comp_id', 
-            'staff_id', 
             'complainant_names', 
             'complainant_addresses',
             'incident_type', 
             'accused_names',
-            'accused_addresses',
-            'decision_date',
-            'payment_status'
+            'accused_addresses'
         ]
     
     def get_complainant_names(self, obj):
@@ -787,24 +781,6 @@ class SummonCaseListSerializer(serializers.ModelSerializer):
                 print(f"Error getting accused addresses: {e}")
                 return []
         return []
-    
-    def get_decision_date(self, obj):
-        try:
-            if hasattr(obj, 'servicechargedecision'):
-                return obj.servicechargedecision.scd_decision_date
-            return None
-        except Exception as e:
-            print(f"Error getting decision date: {e}")
-            return None
-            
-    def get_payment_status(self, obj):
-        try:
-            if hasattr(obj, 'servicechargepaymentrequest'):
-                return obj.servicechargepaymentrequest.spay_status
-            return None
-        except Exception as e:
-            print(f"Error getting payment status: {e}")
-            return None
         
 class SummonSuppDocCreateSerializer(serializers.ModelSerializer):
     files = FileInputSerializer(write_only=True, required=False, many=True)
@@ -1015,6 +991,7 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
             return None
         
 
+# SUMMON CASE SERIALIZER FOR COMPLAINANT TRACKING MOBILE
 class CaseTrackingSerializer(serializers.ModelSerializer):
     decision = serializers.SerializerMethodField()
     payment = serializers.SerializerMethodField()

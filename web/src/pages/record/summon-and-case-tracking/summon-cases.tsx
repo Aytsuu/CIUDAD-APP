@@ -51,14 +51,14 @@ function SummonCases(){
 
     // Filter data based on selected filter and search term
     const filteredData = fetchedData.filter(item => {
-        const matchesFilter = selectedFilter === "All" || item.sr_case_status === selectedFilter;
+        const matchesFilter = selectedFilter === "All" || item.sc_case_status === selectedFilter;
         
         if (searchTerm === "") return matchesFilter;
         
         const searchTermLower = searchTerm.toLowerCase();
         
         // Safe search across all fields
-        const matchesCode = String(item.sr_code || '').toLowerCase().includes(searchTermLower);
+        const matchesCode = String(item.sc_code || '').toLowerCase().includes(searchTermLower);
         const matchesComplainant = String(item.complainant_names || '').toLowerCase().includes(searchTermLower);
         const matchesIncidentType = String(item.incident_type || '').toLowerCase().includes(searchTermLower);
         
@@ -158,9 +158,9 @@ function SummonCases(){
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6"> 
                             {filteredData.map((item: SummonCaseList) => (
                                 <Link 
-                                    key={item.sr_id}
+                                    key={item.sc_id}
                                     to='/view-case'  
-                                    state={{ sr_id: item.sr_id,
+                                    state={{ sr_id: item.sc_id,
                                         complainant_addresses: Array.isArray(item.complainant_addresses) 
                                         ? item.complainant_addresses 
                                         : [item.complainant_addresses || "N/A"],
@@ -175,7 +175,7 @@ function SummonCases(){
                                             <div className="flex flex-row">
                                                 <div className="flex justify-between items-center w-full">
                                                     <p className="text-primary flex items-center font-semibold text-xl mb-2">
-                                                        Case No. {item.sr_code}
+                                                        Case No. {item.sc_code}
                                                     </p>
                                                 </div>
                                             </div>
@@ -207,8 +207,8 @@ function SummonCases(){
 
                                                 <div className={styles.cardInfoRow}>
                                                     <p className={styles.cardContent}>Status: </p>
-                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.sr_case_status)}`}>
-                                                        {item.sr_case_status || "Unknown"}
+                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.sc_case_status)}`}>
+                                                        {item.sc_case_status || "Unknown"}
                                                     </p>
                                                 </div>
 

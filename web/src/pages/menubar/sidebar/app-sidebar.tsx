@@ -193,10 +193,9 @@ export function AppSidebar() {
     ...(featureValidator("summon & case tracker")
       ? [
           {
-            title: "Summon & Case Tracker",
+            title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Request List", url: "/request-list" },
               { title: "Summon Calendar", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],

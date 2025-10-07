@@ -3,14 +3,14 @@ import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getServiceC
     getSummonTimeSlots, getSummonReqPendingList, getComplaintDetails, getSummonReqRejectedList, getSummonReqAcceptedList} from "../requestAPI/summonGetAPI";
 
 export type SummonCaseList = {
-    sr_id: string;
-    sr_code: string;
+    sc_id: string;
+    sc_code: string;
     complainant_names: string[];
     accused_names: string[];
     accused_addresses: string[],
     complainant_addresses: string[];
     incident_type: string;
-    sr_case_status: string;
+    sc_case_status: string;
     decision_date: string;
     comp_id: string;
 }
