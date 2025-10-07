@@ -53,3 +53,12 @@ export const useGetSupportDocs = (proposalId: number, options = {}) => {
     ...options
   });
 };
+
+export const useGetAllProposalLogs = (options = {}) => {
+  return useQuery<ProposalLog[], Error>({
+    queryKey: ["allProjectProposalLogs"],
+    queryFn: getAllProposalLogs,
+    staleTime: 1000 * 60 * 60,
+    ...options,
+  });
+};

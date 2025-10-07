@@ -1,6 +1,7 @@
 import { Text, View, TouchableOpacity } from "react-native"
 import ScreenLayout from "../_ScreenLayout"
 import { useRouter } from "expo-router";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import {ChevronRight} from "@/lib/icons/ChevronRight"
 
 export default () => {
@@ -15,17 +16,12 @@ export default () => {
   {
     title: "Certification Request",
      description: "Request official certification documents for personal or legal use.",
-     route: "/(my-request)/certification-tracking/cert-choices-tracking"
-  },
-  {
-    title: "Blotter Request",
-    description: "Monitor blotter request",
-    route: "/(my-request)/complaint-tracking/compMainReq"
+     route: "/(my-request)/certification-tracking/certificate-request-tracker"
   },
   {
     title: "Medicine Request",
-     description: "",
-     route: ""
+     description: "Monitor your medicine requests.",
+     route: "/(health)/medicine-request/my-requests"
   },
   {
     title: "Maternal Appointment",

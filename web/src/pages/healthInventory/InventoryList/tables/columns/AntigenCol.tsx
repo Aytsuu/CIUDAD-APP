@@ -1,7 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
-import { Link } from "react-router";
 
 export type VaccineRecords = {
   id: number;
@@ -11,7 +10,7 @@ export type VaccineRecords = {
   doses: number | string;
   schedule: string;
   category: string;
-  agegrp_id:string,
+  agegrp_id: string;
   noOfDoses?: number | string;
   doseDetails: {
     doseNumber: number;
@@ -19,66 +18,43 @@ export type VaccineRecords = {
     unit?: string;
   }[];
 };
+
+// Columns for Vaccines Tab
 export const VaccineColumns = (
   setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
-  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>
+  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  setSelectedVaccine: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
+  setModalMode: React.Dispatch<React.SetStateAction<"add" | "edit">>,
+  setShowVaccineModal: React.Dispatch<React.SetStateAction<boolean>>,
+  setShowSupplyModal: React.Dispatch<React.SetStateAction<boolean>>
 ): ColumnDef<VaccineRecords>[] => [
   {
     accessorKey: "vaccineName",
     header: "Vaccine Name",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("vaccineName")}</div>
-    ),
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("category")}</div>
-    ),
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
   },
   {
     accessorKey: "vaccineType",
     header: "Type",
     cell: ({ row }) => {
       const value = row.getValue("vaccineType");
-      return (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            value === "Routine"
-              ? "bg-blue-100 text-blue-800"
-              : value === "Primary Series"
-              ? "bg-purple-100 text-purple-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {String(value)}
-        </span>
-      );
-    },
+      if (value === "N/A") return <div className="text-gray-500">N/A</div>;
+
+      return <span className={`px-2 py-1 rounded-full text-xs ${value === "Routine" ? "bg-blue-100 text-blue-800" : value === "Primary Series" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}`}>{String(value)}</span>;
+    }
   },
   {
     accessorKey: "ageGroup",
     header: "Age Group",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("ageGroup") || "N/A"}</div>
-    ),
+    cell: ({ row }) => <div className="text-sm">{row.getValue("ageGroup") || "N/A"}</div>
   },
   {
     accessorKey: "doses",
     header: "Total Doses",
     cell: ({ row }) => {
       const value = row.getValue("doses");
-      return (
-        <div className="text-center">
-          {value === "N/A" ? (
-            <span className="text-gray-500">N/A</span>
-          ) : (
-            String(value)
-          )}
-        </div>
-      );
-    },
+      return <div className="text-center">{value === "N/A" ? <span className="text-gray-500">N/A</span> : String(value)}</div>;
+    }
   },
   {
     accessorKey: "doseDetails",
@@ -99,9 +75,7 @@ export const VaccineColumns = (
             </div>
           ) : (
             <>
-              <div className="text-sm">
-                Dose 1: Starts at {vaccine.ageGroup}
-              </div>
+              <div className="text-sm">Dose 1: Starts at {vaccine.ageGroup}</div>
               {doseDetails
                 .filter((dose) => dose.doseNumber > 1)
                 .map((dose, index) => (
@@ -113,45 +87,27 @@ export const VaccineColumns = (
           )}
         </div>
       );
-    },
+    }
   },
   {
     accessorKey: "action",
-    header: "Action",
+    header: "Actions",
     cell: ({ row }) => {
-      const vaccine = row.original;
-      const category = String(vaccine.category).toLowerCase().trim();
-      const isVaccine = category === "vaccine";
-     
+      const record = row.original;
+
       return (
         <div className="flex justify-center gap-2">
-          {/* <DialogLayout
-            trigger={
-              <Button variant="outline">
-                <Edit size={16} />
-              </Button>
-            }
-            mainContent={
-              isVaccine ? (
-                <EditVaccineListModal
-                  vaccineData={vaccine}
-                  setIsDialog={setIsDialog}
-                />
-              ) : (
-                <EditImmunizationSupplies
-                  initialData={vaccine}
-                  setIsDialog={setIsDialog}
-                />
-              )
-            }
-          /> */}
-          <Button variant="outline" asChild>
-            <Link
-              to={isVaccine ? "/editVaccineModal" : "/editImmunizationSupplies"}
-              state={{ initialData: vaccine }}
-            >
-              <Edit size={16} />
-            </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedVaccine(record);
+              setModalMode("edit");
+              setShowVaccineModal(true);
+              setShowSupplyModal(false);
+            }}
+          >
+            <Edit size={16} />
           </Button>
 
           <Button
@@ -162,10 +118,62 @@ export const VaccineColumns = (
               setIsDeleteConfirmationOpen(true);
             }}
           >
-            <Trash />
+            <Trash size={16} />
           </Button>
         </div>
       );
-    },
+    }
+  }
+];
+
+// Columns for Supplies Tab
+export const SupplyColumns = (
+  setVaccineToDelete: React.Dispatch<React.SetStateAction<number | null>>,
+  setIsDeleteConfirmationOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  setModalMode: React.Dispatch<React.SetStateAction<"add" | "edit">>,
+  setShowVaccineModal: React.Dispatch<React.SetStateAction<boolean>>,
+  setSelectedSupply: React.Dispatch<React.SetStateAction<VaccineRecords | null>>,
+  setShowSupplyModal: React.Dispatch<React.SetStateAction<boolean>>
+): ColumnDef<VaccineRecords>[] => [
+  {
+    accessorKey: "vaccineName",
+    header: "Supply Name",
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
   },
+
+  {
+    accessorKey: "action",
+    header: "Actions",
+    cell: ({ row }) => {
+      const record = row.original;
+
+      return (
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedSupply(record);
+              setModalMode("edit");
+              setShowSupplyModal(true);
+              setShowVaccineModal(false);
+            }}
+          >
+            <Edit size={16} />
+          </Button>
+
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              setVaccineToDelete(row.original.id);
+              setIsDeleteConfirmationOpen(true);
+            }}
+          >
+            <Trash size={16} />
+          </Button>
+        </div>
+      );
+    }
+  }
 ];

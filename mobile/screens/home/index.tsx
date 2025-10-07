@@ -95,14 +95,14 @@ export default function HomeScreen() {
 
     const INITIAL_FEATURES_COUNT = 5;
 
-    if (features.length <= 6) {
+    if (myFeatures.length <= 6) {
       // Show all features, no Show More/Less button
-      return features.map((feature, index) => renderFeatureItem(feature, index));
+      return myFeatures.map((feature, index) => renderFeatureItem(feature, index));
     }
 
     if (!showMoreFeatures) {
       // Show first 5 features + Show More button
-      const visibleFeatures = features.slice(0, INITIAL_FEATURES_COUNT);
+      const visibleFeatures = myFeatures.slice(0, INITIAL_FEATURES_COUNT);
       const items = [
         ...visibleFeatures.map((feature, index) => renderFeatureItem(feature, index)),
         renderFeatureItem({}, INITIAL_FEATURES_COUNT, true) // Show More button
@@ -110,11 +110,11 @@ export default function HomeScreen() {
       return items;
     } else {
       // Show all features + Show Less button
-      const allFeatureItems = features.map((feature, index) => 
+      const allFeatureItems = myFeatures.map((feature, index) => 
         renderFeatureItem(feature, index)
       );
       // Add Show Less button
-      allFeatureItems.push(renderFeatureItem({}, features.length, true));
+      allFeatureItems.push(renderFeatureItem({}, myFeatures.length, true));
       return allFeatureItems;
     }
   };
@@ -288,7 +288,10 @@ export default function HomeScreen() {
   ))  
 
   return (
-    <PageLayout showHeader={false}>
+    <PageLayout
+      showHeader={false}
+      wrapScroll={false}
+    >
       <FlatList 
         maxToRenderPerBatch={1}
         showsVerticalScrollIndicator={false}

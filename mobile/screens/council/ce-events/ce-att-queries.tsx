@@ -2,19 +2,24 @@ import { useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   postCouncilEvent,
+  postAttendee,
   addAttendanceSheets,
   delCouncilEvent,
+  delAttendee,
   delAttendanceSheet,
   restoreAttendanceSheet,
   putAttendanceSheet,
+  putAttendee,
   putCouncilEvent,
+  updateAttendees,
   getAttendanceSheets,
+  getAttendees,
   getCouncilEvents,
   restoreCouncilEvent,
   getCouncilEventYears
 } from "./ce-att-requests";
 import { useToastContext } from "@/components/ui/toast";
-import { CouncilEventInput,  AttendanceSheetInput, CouncilEvent, AttendanceSheet, UploadFile } from "./ce-att-typeFile";
+import { CouncilEventInput, AttendeeInput, AttendanceSheetInput, CouncilEvent, AttendanceSheet, Attendee, Staff, UploadFile } from "./ce-att-typeFile";
 import { MediaItem} from "@/components/ui/media-picker";
 
 
@@ -31,6 +36,23 @@ export const useAddCouncilEvent = (onSuccess?: () => void) => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to add council event');
+    },
+  });
+};
+
+export const useAddAttendee = (onSuccess?: () => void) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: (attendeeData: AttendeeInput) => postAttendee(attendeeData),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["attendees", data.ce_id] });
+      toast.success('Attendee added successfully');
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to add attendee');
     },
   });
 };
@@ -141,6 +163,22 @@ export const useRestoreCouncilEvent = () => {
   });
 };
 
+export const useDeleteAttendee = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: (atn_id: number) => delAttendee(atn_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+      toast.success('Attendee deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete attendee');
+    },
+  });
+};
+
 export const useArchiveAttendanceSheet = () => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
@@ -222,6 +260,14 @@ export const useGetAttendanceSheets = (isArchived?: boolean) => {
   });
 };
 
+export const useGetStaffList = () => {
+  return useQuery<Staff[], Error>({
+    queryKey: ["staffList"],
+    queryFn: getStaffList,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
 export const useUpdateCouncilEvent = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
@@ -254,6 +300,62 @@ export const useUpdateAttendanceSheet = (onSuccess?: () => void) => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to update attendance sheet');
+    },
+  });
+};
+
+export const useUpdateAttendees = (onSuccess?: () => void) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+
+  return useMutation({
+    mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[] }) => {
+      return updateAttendees(ce_id, attendees);
+    },
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) =>
+        variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendees", variables.ce_id] });
+      toast.success('Attendees updated successfully');
+      onSuccess?.();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update attendees');
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["attendees", variables.ce_id] });
+      const previousAttendees = queryClient.getQueryData(["attendees", variables.ce_id]);
+      queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) =>
+        variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
+      );
+      return { previousAttendees };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    },
+  });
+};
+
+export const useUpdateAttendee = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToastContext();
+  const pendingUpdates = useRef(0);
+
+  return useMutation({
+    mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: { atn_present_or_absent: string } }) => {
+      pendingUpdates.current += 1;
+      return putAttendee(atn_id, attendeeInfo);
+    },
+    onSuccess: () => {
+      if (pendingUpdates.current > 0) {
+        toast.success(`${pendingUpdates.current} attendees updated successfully`);
+        pendingUpdates.current = 0;
+      }
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update attendee');
     },
   });
 };

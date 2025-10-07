@@ -21,4 +21,5 @@ class ActivityLog(models.Model):
         managed = True
 
     def __str__(self):
-        return f"{self.act_module} - {self.act_type} at {self.act_timestamp}" 
+        return f"{self.act_module} - {self.act_type} at {self.act_timestamp}"  
+ 

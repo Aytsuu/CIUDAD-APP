@@ -2,7 +2,7 @@
 import { NutritionalStatusCalculator } from "@/components/ui/nutritional-status-calculator";
 import { AlertTriangle } from "lucide-react";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { edemaSeverityOptions } from "../muti-step-form/options";
+import { edemaSeverityOptions } from "../multi-step-form/options";
 
 interface NutritionalStatusSectionProps {
   weight?: number;

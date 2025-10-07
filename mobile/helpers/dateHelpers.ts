@@ -1,8 +1,9 @@
 // Format date (YYYY-MM-DD) or (July 10, 2025)
 export const formatDate = (date: string | Date, type?: string) => {
-  if(!date) return null;
-  
-  switch(type) {
+  if (!date) return null;
+  const d = new Date(date);
+
+  switch (type) {
     case 'short':
       return d.toLocaleDateString("en-US", {
         year: "numeric",
@@ -16,18 +17,20 @@ export const formatDate = (date: string | Date, type?: string) => {
         day: "numeric",
       });
     default:
-      return new Date(date).toISOString().split('T')[0]
+      // Format YYYY-MM-DD in local time
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
   }
-}
+};
 
 // Get week number based on a given date format (YYYY-MM-DD)
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-  return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
+  return Math.ceil(dayOfMonth / 7);
 };
 
 // Get month in text based on a given date format (YYYY-MM-DD)

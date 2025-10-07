@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q, Count
 from apps.pagination import StandardResultsPagination
+from apps.account.serializers import UserAccountSerializer
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 from rest_framework.permissions import AllowAny
@@ -67,7 +68,7 @@ class RequestCreateView(APIView):
           account = Account.objects.create_user(
               email=acc.get('email', None),
               phone=acc.get('phone', None),
-              username=acc['username'],
+              username=acc.get('phone', None),
               password=acc['password']
           )
 

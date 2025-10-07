@@ -16,6 +16,7 @@ class StaffAccountSerializer(serializers.ModelSerializer):
   pos = serializers.CharField(source="pos.pos_title")
   assignments = serializers.SerializerMethodField()
 
+
   class Meta:
     model = Staff
     fields = ['staff_id', 'staff_type', 'pos', 'assignments']
@@ -76,6 +77,17 @@ class StaffCreateSerializer(serializers.ModelSerializer):
     if len(holders) < max_holders:
       register = Staff(**validated_data)
       register.save()
+
+      # Perform double query
+      request = self.context.get("request")
+      double_queries = PostQueries()
+      response = double_queries.staff(request.data)
+      if not response.ok:
+        try:
+            error_detail = response.json()
+        except ValueError:
+            error_detail = response.text
+        raise serializers.ValidationError({"error": error_detail})
       return register
 
     return None

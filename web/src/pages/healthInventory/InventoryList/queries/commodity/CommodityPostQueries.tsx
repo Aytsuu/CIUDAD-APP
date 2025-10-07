@@ -1,34 +1,24 @@
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { addCommodity } from "../../restful-api/commodity/CommodityPostAPI";
+import { addCommodity } from "../../restful-api/commodity/post-api";
 import { CommodityType } from "@/form-schema/inventory/lists/inventoryListSchema";
-import { toast } from "sonner";
-import { useNavigate } from "react-router";
+import {showSuccessToast } from "@/components/ui/toast";
 
 export const useAddCommodity = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   return useMutation({
     mutationFn: async (data: CommodityType) => {
-      console.log("Adding commodity with data:", data);
-      const response = await addCommodity(data); // actual post call
-      console.log("Response from addCommodity:", response);
-      queryClient.invalidateQueries({ queryKey: ["commodities"] });
-
-      return response;
+      return await addCommodity(data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+      queryClient.invalidateQueries({ queryKey: ["commoditylistcount"] });
+      showSuccessToast("Commodity added successfully!");
 
-      navigate(-1)
-      toast.success("Commodity added successfully", {
-        description: "The commodity has been added to the inventory list.",
-      });
     },
     onError: (error: any) => {
-      console.error("Error from mutation:", error?.response?.data || error);
-      toast.error("Failed to add commodity", {
-        description: "An error occurred while adding the commodity. Please try again.",
-      });
+      console.error("Error adding commodity:", error);
+      throw error; // Re-throw to be caught in the component
     },
   });
 };

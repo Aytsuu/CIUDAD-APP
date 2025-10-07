@@ -3,22 +3,19 @@
 // import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 // import { useRouter, useLocalSearchParams } from "expo-router";
 // import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide-react-native";
-// import { Input } from "@/components/ui/input";
 // import { Card, CardContent, CardHeader } from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge";
 // import { Button } from "@/components/ui/button";
 // import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
 // import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
 // import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
-// import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
+// // import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
 
 // // Hooks and types
-// import { useChildHealthHistory } from "../forms/queries/fetchQueries";
 // import { ChrRecords } from "./types";
 // import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
-// import { HorizontalDataTable } from "@/components/healthcomponents/data-table";
-// import { getChildHealthColumns } from "./columns/indiv_col";
-// import { LoadingContext } from "@/contexts/loadingContext";
+// // import { LoadingContext } from "@/contexts/LoadingContext";
+// // import { getChildHealthColumns } from "./columns/indiv_col";
+// import { useChildHealthHistory } from "../queries/fetchQueries";
 
 // export default function InvChildHealthRecords() {
 //   const router = useRouter();
@@ -26,14 +23,6 @@
 //   console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
 //   console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
 
-//   const loadingContext = useContext(LoadingContext);
-//   const { isLoading: globalLoading, showLoading, hideLoading } = loadingContext || {
-//     isLoading: false,
-//     showLoading: () => console.warn("LoadingProvider not found"),
-//     hideLoading: () => console.warn("LoadingProvider not found"),
-//   };
-
-//   // Parse ChildHealthRecord with robust validation
 //   let ChildHealthRecord = null;
 //   try {
 //     if (!params || !params.ChildHealthRecord) {
@@ -60,7 +49,7 @@
 //   const [searchQuery, setSearchQuery] = useState("");
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const recordsPerPage = 5;
-//  const columns = useMemo(() => getChildHealthColumns(childData), [childData]);
+// //  const columns = useMemo(() => getChildHealthColumns(childData), [childData]);
 //   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } =
 //     useUnvaccinatedVaccines(childData?.pat_id, childData?.dob);
 //   const { data: followUps = [], isLoading: followupLoading } =
@@ -86,13 +75,13 @@
 //     }
 //   }, [childData]);
 
-//   useEffect(() => {
-//     if (combinedLoading) {
-//       showLoading();
-//     } else {
-//       hideLoading();
-//     }
-//   }, [combinedLoading, showLoading, hideLoading]);
+//   // useEffect(() => {
+//   //   if (combinedLoading) {
+//   //     showLoading();
+//   //   } else {
+//   //     hideLoading();
+//   //   }
+//   // }, [combinedLoading, showLoading, hideLoading]);
 
 //   if (!childData || !childData.chrec_id || !childData.pat_id || !childData.dob) {
 //     return (
@@ -334,9 +323,7 @@
 //       <View className="p-4 space-y-6 gap-4">
 //         <ChildHealthRecordCard child={childData} />
 
-//         {globalLoading ? (
-//           <VaccinationStatusCardsSkeleton />
-//         ) : (
+       
 //           <View className="space-y-4 mb-5">
 //             <VaccinationStatusCards
 //               unvaccinatedVaccines={unvaccinatedVaccines}
@@ -345,10 +332,9 @@
 //             <View className="mt-5">
 //               <FollowUpsCard childHealthFollowups={followUps} />
 //             </View>
-//             <HorizontalDataTable columns={columns} data={currentData} />
+//             {/* <HorizontalDataTable columns={columns} data={currentData} /> */}
 //           </View>
-//         )}
-        
+       
 //       </View>
 //     </ScrollView>
 //   );

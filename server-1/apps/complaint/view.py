@@ -17,12 +17,6 @@ import uuid
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from datetime import date
-from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
-from apps.administration.models import Staff
-from utils.supabase_client import upload_to_storage
-from django.db.models import Q, F, ExpressionWrapper, fields
-from django.db.models.functions import ExtractYear, Now
-from datetime import date
 
 logger = logging.getLogger(__name__)
             
@@ -48,7 +42,17 @@ class ComplaintListView(generics.ListAPIView):
         except Exception as e:
             logger.error(f"Error in ComplaintListView queryset: {str(e)}")
             return Complaint.objects.none()
-            
+
+    def list(self, request, *args, **kwargs):
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in ComplaintListView list: {str(e)}")
+            return Response({
+                'error': 'An error occurred while fetching complaints',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ComplaintSerializer
     lookup_field = 'comp_id'

@@ -1,23 +1,62 @@
+import { api2 } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
-// import { getRiskSti } from "../request-db/GetRequest";   
-import { api } from "@/api/api";
 
-// export const useFPRecord = () => {
-//     return useQuery({
-//         queryKey: ["fp"],
-//         queryFn: getFP,
-//         staleTime: 60*30
-//     });
-//     };
 
 export const useRiskStiData = (patientId: string | number | undefined) => {
     return useQuery({
         queryKey: ["risk-sti", patientId],
         queryFn: async () => {
-            const {data} = await api.get(`family-planning/risk_sti/${patientId}`);
+            const {data} = await api2.get(`family-planning/risk_sti/${patientId}`);
             return data;
         },
         enabled: !!patientId,
-        staleTime: 60 * 30
+        staleTime: 5000
     });
 }
+
+export const useObstetricalHistoryData = (patientId: string | undefined) => {
+  return useQuery({
+    queryKey: ['obstetricalHistory', patientId],
+    queryFn: async () => {
+      if (!patientId) return null;
+      const response = await api2.get(`familyplanning/obstetrical-history/${patientId}/`);
+      return response.data;
+    },
+    enabled: !!patientId,
+  });
+  
+};
+
+interface Commodity {
+  com_id: string;
+  com_name: string;
+  user_type: string;
+}
+const fetchCommodityList = async (): Promise<Commodity[]> => {
+  const response = await api2.get<Commodity[]>('inventory/commoditylist/');
+  return response.data;
+};
+
+export const useCommodityList = () => {
+  return useQuery<Commodity[], Error>({
+    queryKey: ['commodityList'],
+    queryFn: fetchCommodityList,
+    staleTime: 5000,
+    });
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

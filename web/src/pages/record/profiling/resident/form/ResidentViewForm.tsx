@@ -34,6 +34,7 @@ import { Spinner } from "@/components/ui/spinner"
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION =============== 
   const currentPath = location.pathname.split("/").pop() as string
+  console.log("current path:", currentPath)
   const navigate = useNavigate();
   const { user } = useAuth()
   const { showLoading, hideLoading } = useLoading()

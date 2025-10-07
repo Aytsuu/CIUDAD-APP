@@ -1,4 +1,5 @@
 import { api } from '@/api/api';
+import { formatDate } from '@/helpers/dateHelper';
 
 
 
@@ -6,7 +7,7 @@ import { api } from '@/api/api';
 export const wasteColData = async (collectionInfo: Record<string, any>) => {
     try {
         console.log({
-            wc_day: collectionInfo.day,
+            wc_date: formatDate(collectionInfo.date),
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions,
             wc_is_archive: false,
@@ -17,7 +18,7 @@ export const wasteColData = async (collectionInfo: Record<string, any>) => {
         });
 
         const res = await api.post('waste/waste-collection-sched/', {
-            wc_day: collectionInfo.day,
+            wc_date: formatDate(collectionInfo.date),
             wc_time: collectionInfo.time,
             wc_add_info: collectionInfo.additionalInstructions || "None",
             wc_is_archive: false,

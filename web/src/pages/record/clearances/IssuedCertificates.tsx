@@ -35,8 +35,9 @@ function IssuedCertificates() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterValue, setFilterValue] = useState("All");
   const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits">("certificates");
+  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits">("certificates");
   
-  
+  // Business permit states
   const [businessSearchQuery, setBusinessSearchQuery] = useState("");
   const [businessFilterValue, setBusinessFilterValue] = useState("All");
   
@@ -48,7 +49,7 @@ function IssuedCertificates() {
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [purposeInput, setPurposeInput] = useState("");
 
-  
+  // Fetch staff for signatory selection
   const { data: staffList = [] } = useGetStaffList();
   const staffOptions = useMemo(() => {
     return staffList.map((staff: any) => ({
@@ -67,16 +68,6 @@ function IssuedCertificates() {
     setSelectedStaffId("");
     setPurposeInput("");
     setIsDialogOpen(true);
-  };
-
-  const handleViewServiceChargeFile = (serviceCharge: ServiceCharge) => {
-    
-    const extended: ExtendedIssuedCertificate = {
-      ...serviceCharge as any,
-      AsignatoryStaff: "Default Signatory", 
-      SpecificPurpose: "File Action", 
-    };
-    setSelectedCertificate(extended);
   };
 
   const handleProceedToTemplate = () => {
@@ -374,13 +365,6 @@ function IssuedCertificates() {
     return matchesSearch && matchesFilter;
   });
 
-  const filteredServiceCharges = serviceCharges?.filter((sc: ServiceCharge) => {
-    const matchesSearch = sc.sr_id?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase()) ||
-                         sc.sr_code?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase()) ||
-                         sc.complainant_name?.toLowerCase().includes(serviceChargeSearchQuery.toLowerCase());
-    return matchesSearch;
-  });
-
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex-col items-center mb-4">
@@ -522,11 +506,7 @@ function IssuedCertificates() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {
-            activeTab === "certificates" ? (filteredCertificates?.length || 0) : 
-            activeTab === "businessPermits" ? (filteredBusinessPermits?.length || 0) :
-            (filteredServiceCharges?.length || 0)
-          } rows
+          Showing 1-10 of {activeTab === "certificates" ? (filteredCertificates?.length || 0) : (filteredBusinessPermits?.length || 0)} rows
         </p>
       </div>
 

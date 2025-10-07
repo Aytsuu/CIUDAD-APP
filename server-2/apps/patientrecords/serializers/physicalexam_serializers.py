@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from ..models import *
 from datetime import date
-from .findings_serializers import FindingSerializer
+
 
 class PESectionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,10 +15,14 @@ class PEOptionSerializer(serializers.ModelSerializer):
         model=PEOption
         fields='__all__'
         
+
+        
 class PEResultSerializer(serializers.ModelSerializer):
-    pe_option_details = PEOptionSerializer(source="pe_option",read_only=True)
-    find_details = FindingSerializer(source="find", read_only = True)
+    pe_option_details = PEOptionSerializer(source="pe_option", read_only=True) 
     
-    class Meta:
-        model = PEResult
+
+    class Meta:  
+        model = PEResult  
         fields = '__all__'
+
+         

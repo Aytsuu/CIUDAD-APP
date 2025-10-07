@@ -20,8 +20,6 @@ class ARFileBaseSerializer(serializers.ModelSerializer):
 
 class ARTableSerializer(serializers.ModelSerializer):
   id = serializers.IntegerField(source='ar_id')
-  ar_sitio = serializers.CharField(source="add.sitio.sitio_name")
-  ar_street = serializers.CharField(source="add.add_street")
   status = serializers.CharField(source='ar_status')
   date = serializers.DateField(source='ar_created_at')
   ar_files = serializers.SerializerMethodField()
@@ -31,7 +29,7 @@ class ARTableSerializer(serializers.ModelSerializer):
   class Meta:
     model = AcknowledgementReport
     fields = ['id', 'ar_title', 'ar_action_taken', 'ar_date_started', 'ar_time_started', 'ar_date_completed',
-              'ar_time_completed', 'ar_sitio', 'ar_street', 'date', 'ar_files', 'status', 'ar_result']
+              'ar_time_completed', 'ar_area', 'date', 'ar_files', 'status', 'ar_result']
   
   def get_ar_time_started(self, obj):
     if obj.ar_time_started:
@@ -49,6 +47,7 @@ class ARTableSerializer(serializers.ModelSerializer):
 
 class ARCreateSerializer(serializers.ModelSerializer):
   ir = serializers.PrimaryKeyRelatedField(queryset=IncidentReport.objects.all(), write_only=True, required=False)
+  rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), write_only=True, required=False)
   files = FileInputSerializer(write_only=True, required=False, many=True)
 
   class Meta:

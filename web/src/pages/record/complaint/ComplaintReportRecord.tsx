@@ -517,6 +517,6 @@ export function ComplaintViewRecord() {
           {renderContent()}
         </div>
       </div>
-    </LayoutWithBack>
+    </div>
   );
 }

@@ -274,7 +274,6 @@ function ResolutionPage() {
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
       }
-      wrapScroll={false}
     >
       <View className="flex-1 px-4">
         {/* Search and Filters */}

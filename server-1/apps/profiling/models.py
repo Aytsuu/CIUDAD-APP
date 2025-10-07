@@ -4,24 +4,6 @@ from datetime import date
 from simple_history.models import HistoricalRecords
 from abstract_classes import AbstractModels
 
-class ProfilingAbstractModel(models.Model):
-    class Meta:
-        abstract = True
-    
-    def save(self, *args, **kwargs):
-        for field in self._meta.fields:
-            if(
-                isinstance(field, (models.CharField, models.TextField))
-                and not field.primary_key
-                and field.editable
-            ):
-                val = getattr(self, field.name)
-                if isinstance(val, str):
-                    setattr(self, field.name, val.upper())
-        super().save(*args, **kwargs)
-
-
-
 class Voter(models.Model):
     voter_id = models.BigAutoField(primary_key=True)
     voter_name = models.CharField(max_length=200)
@@ -42,7 +24,7 @@ class Sitio(AbstractModels):
     def __str__(self):
         return self.sitio_name
 
-class Address(ProfilingAbstractModel):
+class Address(AbstractModels):
     add_id = models.BigAutoField(primary_key=True)  
     add_province = models.CharField(max_length=50)
     add_city = models.CharField(max_length=50)
@@ -60,7 +42,7 @@ class Address(ProfilingAbstractModel):
     def __str__(self):
         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
     
-class Personal(ProfilingAbstractModel):
+class Personal(AbstractModels):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
@@ -164,7 +146,7 @@ class ResidentProfile(models.Model):
         return f"{self.per} (ID: {self.rp_id})"
 
 
-class Household(ProfilingAbstractModel):
+class Household(AbstractModels):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
     hh_date_registered = models.DateField(auto_now_add=True)
@@ -178,7 +160,7 @@ class Household(ProfilingAbstractModel):
     def __str__(self):
         return f"Household {self.hh_id} - {self.rp} in {self.add}"
 
-class Family(ProfilingAbstractModel):
+class Family(AbstractModels):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
@@ -192,7 +174,7 @@ class Family(ProfilingAbstractModel):
     def __str__(self):
         return f"Family {self.fam_id}"
 
-class FamilyComposition(ProfilingAbstractModel):
+class FamilyComposition(AbstractModels):
     fc_id = models.BigAutoField(primary_key=True)
     fc_role = models.CharField(max_length=50)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family_compositions')
@@ -212,7 +194,7 @@ class RequestRegistration(models.Model):
     class Meta: 
         db_table = 'request_registration'
 
-class RequestRegistrationComposition(ProfilingAbstractModel):
+class RequestRegistrationComposition(AbstractModels):
     rrc_id = models.BigAutoField(primary_key=True)
     rrc_fam_role = models.CharField(max_length=50)
     req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name="request_composition")
@@ -235,7 +217,6 @@ class BusinessRespondent(AbstractModels):
 
     class Meta:
         db_table = 'business_respondent'
-       
 
 class Business(AbstractModels):
     bus_id = models.CharField(max_length=100,primary_key=True)
@@ -258,9 +239,8 @@ class Business(AbstractModels):
 
     class Meta:
         db_table = 'business'
-        
 
-class BusinessModification(ProfilingAbstractModel):
+class BusinessModification(AbstractModels):
     bm_id = models.BigAutoField(primary_key=True)
     bm_updated_name = models.CharField(max_length=100, null=True)
     bm_updated_gs = models.FloatField(null=True)

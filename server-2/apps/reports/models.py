@@ -15,6 +15,7 @@ from apps.administration.models import Staff  # Adjust the import based on your 
 #     class Meta:
 #         db_table = 'header_recipient_list_report_template'
 
+
 class MonthlyRecipientListReport(models.Model):
     monthlyrcplist_id = models.AutoField(primary_key=True)
     month_year = models.CharField(max_length=7)  # Format: YYYY-MM
@@ -32,8 +33,8 @@ class MonthlyRecipientListReport(models.Model):
         ]
     )
     logo = models.URLField(null=True)
-    contact_number = models.CharField(max_length=100,default='Unknown Contact Number')
-    location = models.CharField(max_length=255,default='Unknown Location')
+    contact_number = models.CharField(max_length=100,default='09705678765')
+    location = models.CharField(max_length=255,default='San Roque, Cebu City')
     department = models.CharField(max_length=255,default='Cebu City Health Department')
 
     unique_together = ('month_year', 'rcp_type')  # Prevent duplicates per month+type

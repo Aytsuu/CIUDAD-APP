@@ -16,7 +16,6 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
             // iet_date: formatDate(new Date().toISOString().split('T')[0]),
             iet_datetime: incomeExpenseInfo.iet_datetime,
             iet_serial_num: incomeExpenseInfo.iet_serial_num,
-            iet_check_num: incomeExpenseInfo.iet_check_num,            
             iet_entryType: entry,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
             iet_actual_amount: parseFloatSafe(incomeExpenseInfo.iet_actual_amount),

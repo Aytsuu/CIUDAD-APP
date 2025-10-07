@@ -41,12 +41,15 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
     )
   },
   {
-    accessorKey: "ir_time",
-    header: "Time",
-  },
-  {
     accessorKey: "ir_date",
     header: "Date",
+    cell: ({ row }) => (
+      formatDate(row.original.ir_date, "short")
+    )
+  },
+  {
+    accessorKey: "ir_time",
+    header: "Time",
   },
   {
     accessorKey: "action",
@@ -152,6 +155,7 @@ export const ARColumns = (
         );
       }
     },
+    size: 30,
     enableSorting: false,
     enableHiding: false,
   },
@@ -164,14 +168,8 @@ export const ARColumns = (
     header: "Incident/Activity",
   },
   {
-    accessorKey: "ar_location",
-    header: "Location",
-    cell: ({ row }) => {
-      const sitio = row.original.ar_sitio;
-      const street = row.original.ar_street;
-
-      return `Sitio ${sitio}, ${street} `;
-    },
+    accessorKey: "ar_area",
+    header: "Area",
   },
   {
     accessorKey: "date",

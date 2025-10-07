@@ -1,17 +1,19 @@
 // "use client"
 
-// import React, { useMemo } from "react"
-// import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-// import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
-// import { Text } from "@/components/ui/text"
-// import { router } from "expo-router"
-// import { format } from "date-fns"
-// import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
-// import { getPatientRecordsByPatId } from "./api/get-api"
-// import { useQuery, useQueryClient } from "@tanstack/react-query"
-// import PageLayout from "@/screens/_PageLayout"
-// import { useAuth } from "@/contexts/AuthContext"
-// import { LoadingState } from "@/components/ui/loading-state"
+import React, { useMemo } from "react"
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
+import { User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft, ChevronLeft } from "lucide-react-native"
+import { Text } from "@/components/ui/text"
+import { router, useLocalSearchParams } from "expo-router"
+import { format } from "date-fns"
+import { useAnimalBitePatientHistory, useAnimalBitePatientSummary } from "./db-request/get-query"
+import { getPatientByResidentId, getPatientRecordsByPatId } from "./api/get-api"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import PageLayout from "@/screens/_PageLayout"
+import { useAuth } from "@/contexts/AuthContext"
+import { LoadingState } from "@/components/ui/loading-state"
+import { getPatientById } from "../admin/admin-animalbites/api/get-api"
+import { calculateAge } from "@/helpers/ageCalculator"
 
 // // Remove the mock API function and use your actual API call
 // type PatientRecordDetail = {
@@ -36,48 +38,83 @@
 //   record_created_at: string
 // }
 
-// export default function MyAnimalBiteRecordsScreen() {
-//   const { user } = useAuth()
-//   const rp_id = user?.resident?.rp_id
-//   const queryClient = useQueryClient()
+export default function MyAnimalBiteRecordsScreen() {
+  const params = useLocalSearchParams<{ pat_id?: string }>();
+  const patIdFromParams = params.pat_id;
+  const { user } = useAuth();
+  const rp_id = user?.rp;
 
-//   const { 
-//     data: records = [], 
-//     isLoading, 
-//     isError, 
-//     error, 
-//     refetch, 
-//   } = useQuery<PatientRecordDetail[],Error>({
-//     queryKey: ["myAnimalbiteRecord", rp_id],
-//     queryFn: () => getPatientRecordsByPatId(rp_id),
-//     enabled: !!rp_id,
-//   })
+  // NEW: Debug logs to verify params
+  console.log("[DEBUG] patIdFromParams:", patIdFromParams);
+  console.log("[DEBUG] rp_id from auth:", rp_id);
+  console.log("[DEBUG] user:", user);
 
-//   const [refreshing, setRefreshing] = React.useState(false)
+  // Fetch patient data
+  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = useQuery({
+    queryKey: ["patientDetails", patIdFromParams || rp_id],
+    queryFn: async () => {
+      if (patIdFromParams) {
+        console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams);
+        return await getPatientById(patIdFromParams);
+      } else if (rp_id) {
+        console.log("[DEBUG] Fetching patient with rp_id:", rp_id);
+        return await getPatientByResidentId(rp_id);
+      }
+      return null;
+    },
+    enabled: !!(patIdFromParams || rp_id),
+  });
 
-//   const patientInfo = useMemo(() => {
-//     if (records && records.length > 0) {
-//       const firstRecord = records[0]
-//       return {
-//         patient_fname: firstRecord.patient_fname,
-//         patient_lname: firstRecord.patient_lname,
-//         patient_mname: firstRecord.patient_mname,
-//         patient_sex: firstRecord.patient_sex,
-//         patient_age: firstRecord.patient_age,
-//         patient_address: firstRecord.patient_address,
-//         patient_id: firstRecord.patient_id,
-//         patient_type: firstRecord.patient_type,
-//       }
-//     }
-    
-//     return null
-//   }, [records, user])
+  const patient_id = patIdFromParams || patientData?.pat_id;
+  console.log("[DEBUG] patient_id used for records:", patient_id);
 
-//   const onRefresh = React.useCallback(async () => {
-//     setRefreshing(true)
-//     await refetch()
-//     setRefreshing(false)
-//   }, [refetch])
+  const {
+    data: records = [],
+    isLoading: isLoadingRecords,
+    isError: isErrorRecords,
+    error: errorRecords,
+    refetch,
+  } = useQuery<PatientRecordDetail[], Error>({
+    queryKey: ["myAnimalbiteRecord", patient_id],
+    queryFn: () => getPatientRecordsByPatId(patient_id),
+    enabled: !!patient_id,
+  });
+
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const patientInfo = useMemo(() => {
+    if (patientData) {
+      return {
+        patient_fname: patientData.personal_info?.per_fname,
+        patient_lname: patientData.personal_info?.per_lname,
+        patient_mname: patientData.personal_info?.per_mname,
+        patient_sex: patientData.personal_info?.per_sex,
+        patient_age: calculateAge(patientData.personal_info?.per_dob),
+        patient_address: `${patientData.address?.add_street ?? ''} ${patientData.address?.add_barangay ?? ''} ${patientData.address?.add_city ?? ''} ${patientData.address?.add_province ?? ''}`.trim() || 'N/A',
+        patient_id: patientData.pat_id,
+        patient_type: patientData.pat_type,
+      };
+    } else if (records.length > 0) {
+      const firstRecord = records[0];
+      return {
+        patient_fname: firstRecord.patient_fname,
+        patient_lname: firstRecord.patient_lname,
+        patient_mname: firstRecord.patient_mname,
+        patient_sex: firstRecord.patient_sex,
+        patient_age: firstRecord.patient_age,
+        patient_address: firstRecord.patient_address,
+        patient_id: firstRecord.patient_id,
+        patient_type: firstRecord.patient_type,
+      };
+    }
+    return null;
+  }, [patientData, records]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
 //   const formatDateSafely = (dateString: string) => {
 //     if (!dateString) return "N/A"
@@ -115,37 +152,17 @@
 //     }
 //   }
 
-//  if (isLoading) {
-//     return <LoadingState/>}
-
-//   if (isError) {
-//     return (
-//       <View className="flex-1 justify-center items-center p-4 bg-red-50">
-//         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
-//           <AlertCircle size={48} color="#EF4444" />
-//           <Text className="text-red-500 text-xl font-bold mb-2 mt-4">Error</Text>
-//           <Text className="text-gray-700 text-center leading-6">
-//             Failed to load your records. {error?.message || "Please try again later."}
-//           </Text>
-//           <TouchableOpacity className="mt-6 px-6 py-3 bg-red-500 rounded-xl" onPress={() => refetch()}>
-//             <Text className="text-white font-semibold">Retry</Text>
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     )
-//   }
-
-//   if (!rp_id) {
-//     return (
-//       <View className="flex-1 justify-center items-center p-4 bg-gray-50">
-//         <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
-//           <Package size={48} color="#9CA3AF" />
-//           <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">Authentication Required</Text>
-//           <Text className="text-gray-500 text-center leading-6">Please log in to view your animal bite records.</Text>
-//         </View>
-//       </View>
-//     )
-//   }
+ if (!patient_id && !user) {
+    return (
+      <View className="flex-1 justify-center items-center p-4 bg-gray-50">
+        <View className="bg-white p-8 rounded-2xl shadow-lg items-center max-w-sm">
+          <Package size={48} color="#9CA3AF" />
+          <Text className="text-gray-600 text-xl font-bold mb-2 mt-4">Authentication Required</Text>
+          <Text className="text-gray-500 text-center leading-6">Please log in to view animal bite records.</Text>
+        </View>
+      </View>
+    );
+  }
 
 //   return (
 //        <PageLayout

@@ -740,7 +740,7 @@ class SitioListView(ActivityLogMixin, generics.ListCreateAPIView):
 class WatchmanView(generics.GenericAPIView): 
     def get(self, request, *args, **kwargs):
         watchmen = WastePersonnel.objects.filter(
-            staff_id__pos__pos_title="WATCHMAN"  
+            staff_id__pos__pos_title="Watchman"  
         ).select_related(
             'staff__pos',
             'staff__rp__per'

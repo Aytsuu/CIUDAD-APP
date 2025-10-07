@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VaccinationRecord } from "@/pages/healthServices/vaccination/tables/columns/types";
-
-
-
+import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 export type VaccinationHistory = {
   vachist_id: string;
   vachist_doseNo: number;
@@ -34,11 +32,13 @@ export type VaccinationHistory = {
   } | null;
   vachist_age: string;
   vacrec_id: number;
+  signature?: string;
 };
 
 type VaccinationHistoryProps = {
   relevantHistory: VaccinationRecord[];
   currentVaccinationId?: string;
+  patientDob?: string; 
   loading?: boolean;
   error?: string | null;
 };
@@ -46,12 +46,13 @@ type VaccinationHistoryProps = {
 export function VaccinationHistoryRecord({
   relevantHistory,
   currentVaccinationId,
+  patientDob,
   loading = false,
   error = null,
 }: VaccinationHistoryProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 4;
-
+console.log("patientDob", patientDob);
   const hasHistory = useMemo(() => {
     return relevantHistory.length > 0;
   }, [relevantHistory]);
@@ -69,6 +70,7 @@ export function VaccinationHistoryRecord({
       { attribute: "Temperature", type: "data" },
       { attribute: "Pulse Rate", type: "data" },
       { attribute: "Oxygen Saturation", type: "data" },
+      { attribute: "Signature", type: "data" }
     ];
 
     return tableRows.map((row) => {
@@ -82,7 +84,7 @@ export function VaccinationHistoryRecord({
 
         if (row.attribute === "Date") {
           rowData[recordId] = format(
-            new Date(record.created_at ),
+            new Date(record.created_at),
             "MMM d, yyyy"
           );
         } else if (row.attribute === "Vaccine Name") {
@@ -99,17 +101,27 @@ export function VaccinationHistoryRecord({
         } else if (row.attribute === "Status") {
           rowData[recordId] = record.vachist_status;
         } else if (row.attribute === "Age at Vaccination") {
-          rowData[recordId] = record.vachist_age;
+            rowData[recordId] = patientDob 
+              ? calculateAgeFromDOB(patientDob, record.created_at).years || "" 
+              : "";
         } else if (row.attribute === "Blood Pressure") {
-          rowData[
-            recordId
-          ] = `${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} mmHg`;
+          const bpSystolic = record.vital_signs?.vital_bp_systolic || "";
+          const bpDiastolic = record.vital_signs?.vital_bp_diastolic || "";
+          rowData[recordId] = bpSystolic && bpDiastolic 
+            ? `${bpSystolic}/${bpDiastolic} mmHg` 
+            : "";
         } else if (row.attribute === "Temperature") {
-          rowData[recordId] = `${record.vital_signs.vital_temp} °C`;
+          rowData[recordId] = record.vital_signs?.vital_temp 
+            ? `${record.vital_signs.vital_temp} °C` 
+            : "";
         } else if (row.attribute === "Pulse Rate") {
-          rowData[recordId] = record.vital_signs.vital_pulse;
+          rowData[recordId] = record.vital_signs?.vital_pulse || "";
         } else if (row.attribute === "Oxygen Saturation") {
-          rowData[recordId] = `${record.vital_signs.vital_o2}%`;
+          rowData[recordId] = record.vital_signs?.vital_o2 
+            ? `${record.vital_signs.vital_o2}%` 
+            : "";
+        } else if (row.attribute === "Signature") {
+          rowData[recordId] = record.signature || "";
         }
       });
 
@@ -148,9 +160,9 @@ export function VaccinationHistoryRecord({
           accessorKey: recordId,
           header: () => {
             return (
-              <div className=" text-black font-bold px-3 py-2 rounded-lg text-sm ">
+              <div className="text-black font-bold px-3 py-2 rounded-lg text-sm">
                 {isCurrent ? (
-                  <span className=" text-black font-bold px-3 py-2 rounded-lg text-sm ">
+                  <span className="text-black font-bold px-3 py-2 rounded-lg text-sm">
                     Current
                   </span>
                 ) : (
@@ -164,16 +176,25 @@ export function VaccinationHistoryRecord({
             const rowData = row.original;
 
             if (rowData.attribute === "Status") {
-              const statusClass = value === "completed";
-
+              const statusClass = value === "completed" ? "text-green-600" : "text-gray-600";
               return (
-                <span className={`  text-sm  text-gray-600 ${statusClass}`}>
+                <span className={`text-sm ${statusClass}`}>
                   {value}
                 </span>
               );
+            } else if (rowData.attribute === "Signature" && value) {
+              return (
+                <div className="w-auto h-20 flex items-center justify-center">
+                  <img 
+                    src={`data:image/png;base64,${value}`} 
+                    alt="Signature" 
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              );
             }
 
-            return <div className="text-base">{value || "N/A"}</div>;
+            return <div className="text-base">{value || ""}</div>;
           },
         });
       });
@@ -213,19 +234,14 @@ export function VaccinationHistoryRecord({
 
       {loading ? (
         <div className="space-y-4">
-       
-  
-          {/* Table row skeletons */}
           {[...Array(8)].map((_, i) => (
             <div key={i} className="flex gap-4 w-full">
-              <Skeleton className="h-6  w-24" />
+              <Skeleton className="h-6 w-24" />
               {[...Array(4)].map((_, j) => (
                 <Skeleton key={j} className="h-6 w-full" />
               ))}
             </div>
           ))}
-          
-          
         </div>
       ) : error ? (
         <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
@@ -282,9 +298,9 @@ export function VaccinationHistoryRecord({
           )}
         </div>
       ) : (
-        <div className="text-center p-8 bg-gray-50 rounded-xl border border-gray-300">
+        <div className="text-center p-8 rounded-sm border border-gray-300">
           <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-xl text-gray-600 font-medium">
+          <p className="text-sm text-gray-600 font-medium">
             No previous vaccination history found for this vaccine.
           </p>
         </div>

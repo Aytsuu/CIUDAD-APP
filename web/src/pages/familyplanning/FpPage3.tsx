@@ -1,24 +1,21 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
-import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page3Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Form, FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
 import { useRiskStiData } from "./queries/fpFetchQuery"
-
-// Extract only the fields needed for this page
-const page3Schema = FamilyPlanningSchema.pick({
-  sexuallyTransmittedInfections: true,
-  violenceAgainstWomen: true,
-})
+import { zodResolver } from "@hookform/resolvers/zod"
 
 type Page3Props = {
   onPrevious2: () => void
   onNext4: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
+  mode?: "create" | "edit" | "view"
+  patientGender?: string
 }
 
 const referralOptions = {
@@ -29,13 +26,14 @@ const referralOptions = {
 }
 
 const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }: Page3Props) => {
+  // const isReadOnly = mode === "view"
   const form = useForm<FormData>({
-    //  resolver: zodResolver(page3Schema),
+    resolver: zodResolver(page3Schema),
     defaultValues: formData,
     values: formData,
   })
 
-  const patientId = formData?.pat_id // Assuming you stored it earlier
+  const patientId = formData?.pat_id
   const { data: riskStiData } = useRiskStiData(patientId)
 
   useEffect(() => {
@@ -56,12 +54,17 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
   }, [riskStiData])
 
   const abnormalDischarge = form.watch("sexuallyTransmittedInfections.abnormalDischarge")
-
+  const patientGender = formData.gender
+  console.log("Gender: ", patientGender)
   useEffect(() => {
     if (!abnormalDischarge) {
       form.setValue("sexuallyTransmittedInfections.dischargeFrom", undefined)
+    } else if (abnormalDischarge && patientGender) {
+      // Automatically set discharge location based on gender
+      const dischargeLocation = patientGender.toLowerCase() === "female" ? "Vagina" : "Penis"
+      form.setValue("sexuallyTransmittedInfections.dischargeFrom", dischargeLocation)
     }
-  }, [abnormalDischarge, form])
+  }, [abnormalDischarge, form, patientGender])
 
   const onSubmit = (data: FormData) => {
     if (!data.sexuallyTransmittedInfections.abnormalDischarge) {
@@ -81,6 +84,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
+            {/* <h5 className="text-lg text-right font-semibold mb-2 ">Page 3</h5> */}
             <div className="grid md:grid-cols-2 gap-8">
               {/* RISKS FOR STI */}
               <div className="space-y-6 border-r-0 md:border-r pr-0 md:pr-8">
@@ -130,16 +134,23 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                   value={location}
                                   checked={field.value === location}
                                   onChange={(e) => field.onChange(e.target.value)}
+                                  disabled={!!(abnormalDischarge && patientGender)}
                                 />
                                 <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
                               </div>
                             ))}
                           </div>
                         </FormControl>
+                        {/* {abnormalDischarge && patientGender && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Automatically set based on patient's gender ({patientGender})
+                          </p>
+                        )} */}
                       </FormItem>
                     )}
                   />
                 )}
+
 
                 {[
                   { key: "sores", label: "Sores or ulcers in the genital area" },
@@ -211,13 +222,13 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                 type="radio"
                                 id={`referral-${option}`}
                                 value={option}
-                                checked={field.value === option || (option === "Others" && !["DSWD", "WCPU", "NGOs"].includes(field.value))}
+                                checked={field.value === option || (option === "Others" && !["DSWD", "WCPU", "NGOs"].includes(field.value ?? ""))}
                                 onChange={() => field.onChange(option)}
                               />
                               <label htmlFor={`referral-${option}`}>{option}</label>
                             </div>
                           ))}
-                          {(field.value === "Others" || !["DSWD", "WCPU", "NGOs"].includes(field.value)) && (
+                          {(field.value === "Others" || !["DSWD", "WCPU", "NGOs"].includes(field.value ?? "")) && (
                             <div className="ml-6 mt-2">
                               <FormLabel>Specify:</FormLabel>
                               <Input

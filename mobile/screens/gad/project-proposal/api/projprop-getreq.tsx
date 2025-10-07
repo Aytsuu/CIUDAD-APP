@@ -125,8 +125,20 @@ const transformProposalWithData = (proposal: any, suppDocs: any[]) => {
     headerImage: proposal.gprHeaderImage ?? proposal.gprHeaderImg ?? proposal.gpr_header_img ?? null,
     gprDateCreated: proposal.gprCreated ?? proposal.gpr_created ?? new Date().toISOString(),
     gprIsArchive: proposal.gprIsArchive ?? proposal.gpr_is_archive ?? false,
+    status: proposal.status ? 
+      proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1).toLowerCase() : 'Pending',
+    statusReason: null,
+    statusDate: proposal.statusDate ?? proposal.date_approved_rejected ?? null,
     staffId: proposal.staffId ?? proposal.staff ?? null,
     staffName: proposal.staffName ?? proposal.staff_name ?? 'Unknown',
+    logs: (logs || []).map(log => ({
+      gprlId: log.gprl_id,
+      gprlDateApprovedRejected: log.gprl_date_approved_rejected,
+      gprlReason: log.gprl_reason,
+      gprlDateSubmitted: log.gprl_date_submitted,
+      gprlStatus: log.gprl_status,
+      staffId: log.staff
+    })),
     supportDocs: (suppDocs || []).map(doc => {
       return {
         psd_id: doc.psd_id ?? 0,
@@ -153,3 +165,12 @@ const transformProposalWithData = (proposal: any, suppDocs: any[]) => {
   return transformed;
 };
 
+export const getAllProposalLogs = async () => {
+  try {
+    const res = await api.get(`gad/project-proposal-logs/all/`);
+    return res.data?.data ?? res.data ?? [];
+  } catch (err) {
+    console.error('API error:', err);
+    return [];
+  }
+};

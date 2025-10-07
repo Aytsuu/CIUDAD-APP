@@ -9,8 +9,8 @@ export const AgeGroupSchema = z
       .min(2, "Age group name must be at least 2 characters")
       .max(50, "Age group name must be less than 50 characters")
       .trim(),
-    min_age: 
-    positiveNumberSchema    ,  
+    min_age:
+      positiveNumberSchema,
     max_age: positiveNumberSchema,
     time_unit: z.string().min(1, "Time unit is required"),
   })
@@ -47,45 +47,3 @@ export interface AgeGroupWithId extends AgeGroupType {
 export const formatAgeRange = (ageGroup: AgeGroupWithId): string => {
   return `${ageGroup.min_age} - ${ageGroup.max_age} ${ageGroup.time_unit}`;
 };
-
-// // Mock API functions - replace with actual API calls
-// const mockApiDelay = () => new Promise((resolve) => setTimeout(resolve, 1000));
-
-// export const addAgeGroupAPI = async (data: AgeGroupType): Promise<AgeGroupWithId> => {
-//   try {
-//     await mockApiDelay();
-//     return {
-//       ...data,
-//       id: Date.now().toString(),
-//       createdAt: new Date(),
-//     };
-//   } catch (error) {
-//     throw new Error("Failed to add age group");
-//   }
-// };
-
-// export const updateAgeGroupAPI = async (
-//   id: string,
-//   data: AgeGroupType
-// ): Promise<AgeGroupWithId> => {
-//   try {
-//     await mockApiDelay();
-//     return {
-//       ...data,
-//       id,
-//       createdAt: new Date(), // In real app, keep original createdAt
-//       updatedAt: new Date(),
-//     };
-//   } catch (error) {
-//     throw new Error("Failed to update age group");
-//   }
-// };
-
-// export const deleteAgeGroupAPI = async (id: string): Promise<void> => {
-//   try {
-//     await mockApiDelay();
-//     // In real app, make DELETE request to your API
-//   } catch (error) {
-//     throw new Error("Failed to delete age group");
-//   }
-// };

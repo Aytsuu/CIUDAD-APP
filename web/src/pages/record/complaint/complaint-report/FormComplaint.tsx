@@ -62,10 +62,11 @@ export const ComplaintForm = () => {
         },
       ],
       incident: {
-        comp_location: "",
-        comp_incident_type: "Other",
-        comp_allegation: "",
-        comp_datetime: "",
+        location: "",
+        type: "Other",
+        description: "",
+        date: "",
+        time: "",
       },
       files: [],
     },
@@ -144,8 +145,9 @@ export const ComplaintForm = () => {
         }, 1000);
       }
     } catch (error) {
-      console.error("Error submitting complaint:", error);
-      toast.error("Failed to submit complaint");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to submit complaint";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

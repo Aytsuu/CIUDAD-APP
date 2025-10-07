@@ -1,34 +1,56 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
+import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import {
   useUpdateCouncilEvent,
+  useUpdateAttendees,
 } from "./queries/councilEventupdatequeries";
-import { EditEventFormProps } from "./councilEventTypes";
+import { useGetStaffList, useGetAttendees } from "./queries/councilEventfetchqueries";
+import { Staff, EditEventFormProps } from "./councilEventTypes";
 import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/councilEventdelqueries";
 import { Archive } from "lucide-react";
 
+const normalizeString = (str: string) => str.trim().toLowerCase();
+
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const isArchived = initialValues.ce_is_archive || false;
   const [isEditMode, setIsEditMode] = useState(false && !isArchived);
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string; present_or_absent?: string }[]>(initialValues.attendees || []);
-  const [numberOfRows, setNumberOfRows] = useState<number>(initialValues.ce_rows || initialValues.attendees?.length || 0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
   const ceId = useMemo(() => initialValues?.ce_id, [initialValues]);
-  const { mutate: updateEvent, isPending: isUpdating } = useUpdateCouncilEvent();
-  const { mutate: deleteCouncilEvent, isPending: isArchiving } = useDeleteCouncilEvent();
+  const { mutate: updateEvent, isPending: isUpdating } =useUpdateCouncilEvent();
+  const { mutate: updateAttendees } = useUpdateAttendees();
+  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
+  const { data: attendees = [], isLoading: isAttendeesLoading } =useGetAttendees(ceId);
+  const { mutate: deleteCouncilEvent, isPending: isArchiving } =useDeleteCouncilEvent();
+  const initialStaffIds = useMemo(() => {
+    if (!attendees.length || !staffList.length) return [];
+    return attendees
+      .map((attendee) => {
+        const staff = staffList.find(
+          (s) =>
+            normalizeString(s.full_name) ===
+              normalizeString(attendee.atn_name) &&
+            normalizeString(s.position_title) ===
+              normalizeString(attendee.atn_designation)
+        );
+        return staff?.staff_id;
+      })
+      .filter((id): id is string => id !== undefined);
+  }, [attendees, staffList]);
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -38,8 +60,73 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       roomPlace: initialValues.ce_place || "",
       eventTime: initialValues.ce_time || "",
       eventDescription: initialValues.ce_description || "",
+      staffAttendees: [],
     },
   });
+
+  useEffect(() => {
+    if (!isStaffLoading && !isAttendeesLoading) {
+      form.reset({
+        ...form.getValues(),
+        staffAttendees: initialStaffIds,
+      });
+    }
+  }, [initialStaffIds, isStaffLoading, isAttendeesLoading, form]);
+
+  const staffAttendees = useWatch({control: form.control, name: "staffAttendees"});
+
+  const staffOptions = useMemo(() => {
+    return staffList.map((staff) => ({
+      id: staff.staff_id,
+      name: `${staff.full_name} (${staff.position_title})`,
+      original: staff,
+    }));
+  }, [staffList]);
+
+  const selectedAttendeeDetails = useMemo(() => {
+    return attendees.map((attendee) => ({
+      name: attendee.atn_name,
+      designation: attendee.atn_designation,
+      present_or_absent: attendee.atn_present_or_absent,
+    }));
+  }, [attendees]);
+
+  const getStaffById = (id: string): Staff | undefined => {
+    const normalizedId = String(id).toUpperCase().trim();
+    return staffList.find((s) => s.staff_id === normalizedId);
+  };
+
+  useEffect(() => {
+    if (isEditMode) {
+      const newAttendees = staffAttendees
+        .map((id) => {
+          const staff = getStaffById(id);
+          if (!staff) {
+            return null;
+          }
+          const existingAttendee = selectedAttendeeDetails.find(
+            (a) =>
+              normalizeString(a.name) === normalizeString(staff.full_name) &&
+              normalizeString(a.designation) ===
+                normalizeString(staff.position_title)
+          );
+          return {
+            name: staff.full_name,
+            designation: staff.position_title || "No Designation",
+            present_or_absent: existingAttendee?.present_or_absent,
+          };
+        })
+        .filter((item) => item !== null) as {
+        name: string;
+        designation: string;
+        present_or_absent: string | undefined;
+      }[];
+
+      setSelectedAttendees(newAttendees);
+    } else {
+      setSelectedAttendees(selectedAttendeeDetails);
+    }
+  }, [staffAttendees, staffList, isEditMode, selectedAttendeeDetails]);
 
   function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
     const [hour, minute] = values.eventTime.split(":");
@@ -58,13 +145,34 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       ce_time: formattedTime,
       ce_description: values.eventDescription.trim(),
       ce_is_archive: false,
-      ce_rows: numberOfRows,
+      ...(values.staffAttendees[0] && { staff_id: values.staffAttendees[0] }),
     };
 
     updateEvent(
       { ce_id: ceId, eventInfo },
       {
         onSuccess: () => {
+          if (staffAttendees.length) {
+            updateAttendees({
+              ce_id: ceId,
+              attendees: staffAttendees.map((id) => {
+                const staff = getStaffById(id);
+                return {
+                  atn_name: staff?.full_name || "Unknown",
+                  atn_designation: staff?.position_title || "No Designation",
+                  atn_present_or_absent:
+                    selectedAttendees.find(
+                      (a) =>
+                        normalizeString(a.name) ===
+                          normalizeString(staff?.full_name || "") &&
+                        normalizeString(a.designation) ===
+                          normalizeString(staff?.position_title || "")
+                    )?.present_or_absent || "Present",
+                  ce_id: ceId,
+                };
+              }),
+            });
+          }
           setIsEditMode(false);
           if (onClose) onClose();
         },
@@ -120,30 +228,8 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       roomPlace: initialValues.ce_place || "",
       eventTime: initialValues.ce_time || "",
       eventDescription: initialValues.ce_description || "",
+      staffAttendees: initialStaffIds,
     });
-    // Reset to the original values from the database
-    const originalRows = initialValues.ce_rows || initialValues.attendees?.length || 0;
-    setNumberOfRows(originalRows);
-    setSelectedAttendees(initialValues.attendees || []);
-  };
-
-  const handleNumberOfRowsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 0;
-    setNumberOfRows(value);
-    
-    // Generate empty/placeholder attendees based on the number of rows
-    if (value > selectedAttendees.length) {
-      const additionalAttendees = Array.from(
-        { length: value - selectedAttendees.length }, 
-        (_, index) => ({
-          name: `Attendee ${selectedAttendees.length + index + 1}`,
-          designation: "To be filled",
-        })
-      );
-      setSelectedAttendees([...selectedAttendees, ...additionalAttendees]);
-    } else if (value < selectedAttendees.length) {
-      setSelectedAttendees(selectedAttendees.slice(0, value));
-    }
   };
 
   return (
@@ -202,35 +288,42 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
               readOnly={!isEditMode || isArchived}
             />
 
+            {/* Always show attendees section */}
             <div>
+              <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
+                ATTENDEES
+              </h1>
               {isEditMode && !isArchived ? (
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Expected number of attendees
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={numberOfRows}
-                    onChange={handleNumberOfRowsChange}
-                    className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter number of rows needed"
-                  />
-                  <p className="text-sm text-gray-500">
-                    This will create rows for attendees to fill out manually
-                  </p>
-                </div>
+                isStaffLoading || isAttendeesLoading ? (
+                  <div>Loading attendees...</div>
+                ) : (
+                  <div>
+                    <FormComboCheckbox
+                      control={form.control}
+                      name="staffAttendees"
+                      label="BARANGAY STAFF"
+                      options={staffOptions}
+                      readOnly={!isEditMode || isArchived}
+                      maxDisplayValues={2}
+                    />
+                  </div>
+                )
               ) : (
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Expected Attendees
+                    Barangay Staff
                   </label>
                   <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
-                    {numberOfRows > 0 ? (
-                      <p className="font-medium">{numberOfRows}</p>
+                    {selectedAttendees.length > 0 ? (
+                      <ul className="list-disc pl-5">
+                        {selectedAttendees.map((attendee, index) => (
+                          <li key={index}>
+                            {attendee.name} ({attendee.designation})
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
-                      "No attendees expected"
+                      "No attendees selected"
                     )}
                   </div>
                 </div>

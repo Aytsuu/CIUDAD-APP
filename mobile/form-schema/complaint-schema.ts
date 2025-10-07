@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 const phoneRegex = /^09\d{9}$/;
 
@@ -71,9 +71,9 @@ export const accused = z.object({
   acsd_address: z.string().min(1, "Address is required"),
   rp_id: z.string().optional().nullable(),
 }).refine(
-  (data) => data.acsd_gender !== "Other" || (data.acsd_custom_gender && data.acsd_custom_gender.trim().length > 0),
+  (data) => data.gender !== "Other" || (data.genderInput && data.genderInput.trim().length > 0),
   {
-    path: ["acsd_custom_gender"],
+    path: ["genderInput"],
     message: "Please specify gender when 'Other' is selected",
   }
 );

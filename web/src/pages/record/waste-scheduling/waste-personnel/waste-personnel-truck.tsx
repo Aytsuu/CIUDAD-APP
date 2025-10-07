@@ -355,3 +355,4 @@ const operationalTrucksCount = operationalTrucksData?.count || 0;
 };
 
 export default WastePersonnelDashboard;
+

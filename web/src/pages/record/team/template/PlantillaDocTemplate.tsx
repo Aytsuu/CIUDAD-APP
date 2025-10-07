@@ -289,7 +289,6 @@ export const PlantillaDocTemplate = ({
               }))}
               onChange={(value: string) => setMonth(value)}
               placeholder={month}
-              withRest={false}
             />
           </div>
         </div>

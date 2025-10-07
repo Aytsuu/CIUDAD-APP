@@ -1,26 +1,65 @@
-"use client"
-
-import { useEffect } from "react"
+// FpPage2.tsx
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { FormData, page2Schema } from "@/form-schema/FamilyPlanningSchema"
+import { api2 } from "@/api/api"
 
-// Fix the props type to use FormData from the schema
+// NEW: Interface for illness data
+interface Illness {
+  ill_id: number
+  illname: string
+  ill_description: string
+  ill_code: string
+}
+
+// NEW: Function to fetch illnesses from database
+const fetchIllnesses = async (illCodePrefix?: string): Promise<Illness[]> => {
+  try {
+    const params = illCodePrefix ? { params: { ill_code_prefix: illCodePrefix } } : {};
+    const response = await api2.get("/familyplanning/illnesses/", params);
+    return response.data
+  } catch (error) {
+    console.error("Error fetching illnesses:", error)
+    throw error
+  }
+}
+
 type Page2Props = {
   onPrevious1: () => void
   onNext3: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
+  mode?: "create" | "edit" | "view"
 }
 
-// Fix the component props to match the expected props
-export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormData, formData }: Page2Props) {
+export default function FamilyPlanningForm2({
+  onPrevious1,
+  onNext3,
+  updateFormData,
+  formData,
+  mode = "create",
+}: Page2Props) {
+  const isReadOnly = mode === "view"
+  const isFemale = formData.gender === "FEMALE"
+
+  // NEW: State for selected illnesses
+  const [selectedIllnesses, setSelectedIllnesses] = useState<number[]>([])
+
+  // NEW: Fetch illnesses from database
+  const { data: illnesses = [], isLoading: isLoadingIllnesses } = useQuery<Illness[]>({
+    queryKey: ["illnesses"],
+    queryFn: () => fetchIllnesses("FP")
+  })
+
   const form = useForm<FormData>({
-    // resolver: zodResolver(page2Schema),
+    resolver: zodResolver(page2Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",
@@ -30,32 +69,186 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
     form.reset(formData)
   }, [form, formData])
 
-  const medicalHistoryOptions = [
-    { name: "severeHeadaches", label: "Severe headaches / migraine" },
-    { name: "strokeHeartAttackHypertension", label: "History of stroke / heart attack / hypertension" },
-    { name: "hematomaBruisingBleeding", label: "Non-traumatic hematoma / frequent bruising or gum bleeding" },
-    { name: "breastCancerHistory", label: "Current or history of breast cancer / breast mass" },
-    { name: "severeChestPain", label: "Severe chest pain" },
-    { name: "cough", label: "Cough for more than 14 days" },
-    { name: "jaundice", label: "Jaundice" },
-    { name: "unexplainedVaginalBleeding", label: "Unexplained vaginal bleeding" },
-    { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
-    { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
-    { name: "smoker", label: "Is this client a SMOKER?" },
-    { name: "disability", label: "With Disability/Others" },
-  ]
+  useEffect(() => {
+    if (formData.pat_id) {
+      // Fetch last pregnancy data when patient ID is available
+      api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
+        .then(response => {
+          const { last_delivery_date, last_delivery_type } = response.data;
 
+          // Set the values in your form
+          if (last_delivery_date) {
+            form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date);
+          }
+          if (last_delivery_type) {
+            form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type);
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching last pregnancy data:", error);
+        });
+    }
+  }, [formData.pat_id, form]);
+
+  // NEW: Convert the old boolean medical history to selected illness IDs
+  useEffect(() => {
+    if (illnesses.length > 0 && formData.medicalHistory) {
+      const selected: number[] = []
+      // const medicalHistoryData = formData.medicalHistory
+
+      // First, check for any existing selected illness IDs from the backend
+      if (formData.selectedIllnessIds) {
+        const idsFromBackend = typeof formData.selectedIllnessIds === 'string'
+          ? formData.selectedIllnessIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+          : Array.isArray(formData.selectedIllnessIds)
+            ? formData.selectedIllnessIds
+            : []
+
+        selected.push(...idsFromBackend)
+      }
+      // Map the old boolean fields to illness IDs
+      const medicalHistoryMapping: Record<string, string> = {
+        severeHeadaches: "Severe headaches / migraine",
+        strokeHeartAttackHypertension: "History of stroke / heart attack / hypertension",
+        hematomaBruisingBleeding: "Non-traumatic hematoma / frequent bruising or gum bleeding",
+        breastCancerHistory: "Current or history of breast cancer / breast mass",
+        severeChestPain: "Severe chest pain",
+        cough: "Cough for more than 14 days",
+        jaundice: "Jaundice",
+        unexplainedVaginalBleeding: "Unexplained vaginal bleeding",
+        abnormalVaginalDischarge: "Abnormal vaginal discharge",
+        phenobarbitalOrRifampicin: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)",
+        smoker: "Is this client a SMOKER?",
+        disability: "Others",
+      }
+
+      Object.entries(formData.medicalHistory).forEach(([key, value]) => {
+        if (value === true && medicalHistoryMapping[key]) {
+          const illness = illnesses.find((ill) => ill.illname === medicalHistoryMapping[key])
+          if (illness) {
+            selected.push(illness.ill_id)
+          }
+        }
+      })
+
+      setSelectedIllnesses(selected)
+    }
+  }, [illnesses, formData.medicalHistory, formData.selectedIllnessIds])
+
+  // NEW: Handle illness selection toggle
+  const handleIllnessToggle = (illnessId: number, checked: boolean) => {
+    setSelectedIllnesses((prev) => {
+      if (checked) {
+        return [...prev, illnessId]
+      } else {
+        return prev.filter((id) => id !== illnessId)
+      }
+    })
+  }
   const onSubmit = async (data: FormData) => {
-    console.log("PAGE 2 Data:", data)
-    updateFormData(data) // Save form data
-    onNext3() // Move to the next page
+
+    // let customDisabilityIllnessId: number | null = null;
+    if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
+      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
+      if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
+        selectedIllnesses.push(disabilityIllness.ill_id);
+      }
+    } else {
+      // If disability is unchecked or details are empty, ensure the "Others" illness is not selected
+      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
+      if (disabilityIllness) {
+        setSelectedIllnesses(prev => prev.filter(id => id !== disabilityIllness.ill_id));
+      }
+    }
+    const medicalHistory = {
+      severeHeadaches: false,
+      strokeHeartAttackHypertension: false,
+      hematomaBruisingBleeding: false,
+      breastCancerHistory: false,
+      severeChestPain: false,
+      cough: false,
+      jaundice: false,
+      unexplainedVaginalBleeding: false,
+      abnormalVaginalDischarge: false,
+      phenobarbitalOrRifampicin: false,
+      smoker: false,
+      disability: false,
+      disabilityDetails: data.medicalHistory?.disabilityDetails || "",
+    }
+
+    // NEW: Map selected illnesses back to boolean fields
+    selectedIllnesses.forEach((illnessId) => {
+      const illness = illnesses.find((ill) => ill.ill_id === illnessId)
+      if (illness) {
+        switch (illness.illname) {
+          case "Severe headaches / migraine":
+            medicalHistory.severeHeadaches = true
+            break
+          case "History of stroke / heart attack / hypertension":
+            medicalHistory.strokeHeartAttackHypertension = true
+            break
+          case "Non-traumatic hematoma / frequent bruising or gum bleeding":
+            medicalHistory.hematomaBruisingBleeding = true
+            break
+          case "Current or history of breast cancer / breast mass":
+            medicalHistory.breastCancerHistory = true
+            break
+          case "Severe chest pain":
+            medicalHistory.severeChestPain = true
+            break
+          case "Cough for more than 14 days":
+            medicalHistory.cough = true
+            break
+          case "Jaundice":
+            medicalHistory.jaundice = true
+            break
+          case "Unexplained vaginal bleeding":
+            medicalHistory.unexplainedVaginalBleeding = true
+            break
+          case "Abnormal vaginal discharge":
+            medicalHistory.abnormalVaginalDischarge = true
+            break
+          case "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)":
+            medicalHistory.phenobarbitalOrRifampicin = true
+            break
+          case "Is this client a SMOKER?":
+            medicalHistory.smoker = true
+            break
+          case "Others":
+            medicalHistory.disability = true
+            break
+        }
+      }
+    })
+
+    const updatedData = {
+      ...data,
+      medicalHistory,
+      selectedIllnessIds: selectedIllnesses.join(","),
+      customDisabilityDetails: data.medicalHistory?.disabilityDetails || null,
+    }
+
+    console.log("PAGE 2 Data:", updatedData)
+    updateFormData(updatedData)
+    onNext3()
   }
 
-  // Add a function to save data without navigating
   const saveFormData = () => {
     const currentValues = form.getValues()
-    console.log("Saving current form data:", currentValues)
-    updateFormData(currentValues)
+
+    // NEW: Include selected illness IDs when saving
+    const dataToSave = {
+      ...currentValues,
+      selectedIllnessIds: selectedIllnesses.join(',')
+    }
+
+    console.log("Saving current form data:", dataToSave)
+    updateFormData(dataToSave)
+  }
+
+  // NEW: Show loading state while fetching illnesses
+  if (isLoadingIllnesses) {
+    return <div className="text-center py-8">Loading medical conditions...</div>
   }
 
   return (
@@ -63,47 +256,72 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
       <div className="rounded-lg w-full p-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* <h5 className="text-lg text-right font-semibold mb-2 ">Page 2</h5> */}
             <div className="grid grid-cols-2 gap-6">
               {/* Medical History Section */}
               <div className="p-1">
                 <Label className="text-lg font-bold mb-3">I. MEDICAL HISTORY</Label>
                 <p className="text-sm mb-3">Does the client have any of the following?</p>
 
-                {medicalHistoryOptions.map((item) => (
-                  <FormField
-                    key={item.name}
-                    control={form.control}
-                    name={`medicalHistory.${item.name}`}
-                    render={({ field }) => (
-                      <FormItem className="flex justify-between items-center">
-                        <Label className="mt-6">■  {item.label}</Label>
-                        <div className="flex space-x-7">
-                          <div className="flex items-center space-x-2">
-                            <FormControl>
-                              <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                            <Label>Yes</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <FormControl>
-                              <Checkbox checked={!field.value} onCheckedChange={() => field.onChange(false)} />
-                            </FormControl>
-                            <Label>No</Label>
-                          </div>
+                {/* NEW: Use database illnesses if available, otherwise use hardcoded options */}
+                {illnesses.length > 0
+                  ? // NEW: Render illnesses from database
+                  illnesses.map((illness) => (
+                    <div key={illness.ill_id} className="flex justify-between items-center mb-4">
+                      <Label className="flex-1">■ {illness.illname}</Label>
+                      <div className="flex space-x-7">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={selectedIllnesses.includes(illness.ill_id)}
+                            onCheckedChange={(checked) => handleIllnessToggle(illness.ill_id, checked as boolean)}
+                            disabled={isReadOnly}
+                          />
+                          <Label>Yes</Label>
                         </div>
-                      </FormItem>
-                    )}
-                  />
-                ))}
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={!selectedIllnesses.includes(illness.ill_id)}
+                            onCheckedChange={() => handleIllnessToggle(illness.ill_id, false)}
+                            disabled={isReadOnly}
+                          />
+                          <Label>No</Label>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                  : " "}
 
-                {/* If YES, specify disability */}
+                {/* <div className="flex justify-between items-center mb-4">
+                  <Label className="flex-1">■ Others</Label>
+                  <div className="flex space-x-7">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={form.watch("medicalHistory.disability")}
+                        onCheckedChange={(checked) => form.setValue("medicalHistory.disability", checked as boolean)}
+                        disabled={isReadOnly}
+                      />
+                      <Label>Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={!form.watch("medicalHistory.disability")}
+                        onCheckedChange={() => form.setValue("medicalHistory.disability", false)}
+                        disabled={isReadOnly}
+                      />
+                      <Label>No</Label>
+                    </div>
+                  </div>
+                </div> */}
+
                 {form.watch("medicalHistory.disability") && (
-                  <FormField control={form.control} name="medicalHistory.disabilityDetails"
+                  <FormField
+                    control={form.control}
+                    name="medicalHistory.disabilityDetails"
                     render={({ field }) => (
                       <FormItem className="mt-5">
                         <Label>If YES, please specify:</Label>
                         <FormControl>
-                          <Input {...field} className="border border-black w-full mt-2" />
+                          <Input {...field} className="border border-black w-full mt-2" readOnly={isReadOnly} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -112,10 +330,9 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                 )}
               </div>
 
-              {/* Obstetrical History Section */}
-              <div className="border-l-4 pl-5">
+              <div className={`border-l-4 pl-5 ${!isFemale && "opacity-50 pointer-events-none"}`}>
                 <Label className="text-lg font-bold mb-3">II. OBSTETRICAL HISTORY</Label>
-
+                {/* All the fields within this div will now be disabled */}
                 {/* Number of Pregnancies */}
                 <div className="grid grid-cols-6 mt-5">
                   <FormField
@@ -125,9 +342,15 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label className="flex w-[150px] mb-4">Number of pregnancies</Label>
                         <FormControl>
-                          <Input {...field} placeholder="G" className="w-[90px]" type="number" 
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                          value={field.value || ""} />
+                          <Input
+                            {...field}
+                            placeholder="G"
+                            className="w-[90px]"
+                            type="number"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ""}
+                            readOnly={isReadOnly || !isFemale}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -140,51 +363,14 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input {...field} placeholder="P" className=" w-20 mt-8" type="number"
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField control={form.control} name="obstetricalHistory.fullTerm"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Label>Full term</Label>
-                        <FormControl>
-                          <Input {...field} type="number" className=" w-[90px]"
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField control={form.control} name="obstetricalHistory.premature"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Label>Premature</Label>
-                        <FormControl>
-                          <Input {...field} type="number" className=" w-[90px]"
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField control={form.control} name="obstetricalHistory.abortion"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Label>Abortion</Label>
-                        <FormControl>
-                          <Input {...field} type="number" className="w-[90px]"
+                          <Input
+                            {...field}
+                            placeholder="P"
+                            className=" w-20 mt-8"
+                            type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
+                            readOnly={isReadOnly || !isFemale}
                           />
                         </FormControl>
                         <FormMessage />
@@ -192,13 +378,84 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                     )}
                   />
 
-                  <FormField control={form.control} name="obstetricalHistory.livingChildren"
+                  <FormField
+                    control={form.control}
+                    name="obstetricalHistory.fullTerm"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>Full term</Label>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            className=" w-[80px]"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ""}
+                            readOnly={isReadOnly || !isFemale}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="obstetricalHistory.premature"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>Premature</Label>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            className=" w-[80px]"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ""}
+                            readOnly={isReadOnly || !isFemale}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="obstetricalHistory.abortion"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>Abortion</Label>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            className="w-[80px]"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ""}
+                            readOnly={isReadOnly || !isFemale}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="obstetricalHistory.numOfLivingChildren"
                     render={({ field }) => (
                       <FormItem>
                         <Label>Living Children</Label>
                         <FormControl>
-                          <Input {...field} type="number" className="w-[90px]" 
-                          onChange={(e) => field.onChange(Number(e.target.value))} value={field.value || ""} />
+                          <Input
+                            {...field}
+                            type="number"
+                            className="w-[80px]"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || ""}
+                            readOnly={isReadOnly || !isFemale}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -215,7 +472,8 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Date of last delivery</Label>
                         <FormControl>
-                          <Input {...field} type="date" className="w-[150px]" />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -231,17 +489,21 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                         <Label>Type of last delivery:</Label>
                         <div className="flex space-x-4">
                           <FormControl>
-                            <Checkbox checked={field.value === "Vaginal"}
+                            <Checkbox
+                              checked={field.value === "Vaginal"}
                               onCheckedChange={() => field.onChange("Vaginal")}
+                              disabled={isReadOnly || !isFemale}
                             />
                           </FormControl>
                           <Label>Vaginal</Label>
                           <FormControl>
-                            <Checkbox checked={field.value === "Cesarean"}
-                              onCheckedChange={() => field.onChange("Cesarean")}
+                            <Checkbox
+                              checked={field.value === "Cesarean section"}
+                              onCheckedChange={() => field.onChange("Cesarean section")}
+                              disabled={isReadOnly || !isFemale}
                             />
                           </FormControl>
-                          <Label>Cesarean section</Label>
+                          <Label>Cesarean Section</Label>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -258,7 +520,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Last menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" />
+                          <Input
+                            {...field}
+                            type="date"
+                            className=" w-[150px]"
+                            readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -272,7 +540,8 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Previous menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" />
+                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -283,7 +552,9 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                 {/* Menstrual Flow - Fixed for Radio Buttons */}
                 <div className="mt-5">
                   <Label>Menstrual Flow</Label>
-                  <FormField control={form.control} name="obstetricalHistory.menstrualFlow"
+                  <FormField
+                    control={form.control}
+                    name="obstetricalHistory.menstrualFlow"
                     render={({ field }) => (
                       <FormItem>
                         <div className="ml-10">
@@ -296,6 +567,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                                   checked={field.value === flow}
                                   onChange={() => field.onChange(flow)}
                                   className="w-4 h-4"
+                                  disabled={isReadOnly || !isFemale}
                                 />
                               </FormControl>
                               <Label htmlFor={`flow-${flow.toLowerCase()}`}>
@@ -313,11 +585,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                 </div>
 
                 {/* Additional Obstetrical History Fields */}
-                <FormField control={form.control} name="obstetricalHistory.dysmenorrhea"
+                <FormField
+                  control={form.control}
+                  name="obstetricalHistory.dysmenorrhea"
                   render={({ field }) => (
                     <FormItem className="mt-4">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
                       </FormControl>
                       <Label className="ml-2">Dysmenorrhea</Label>
                       <FormMessage />
@@ -325,11 +599,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   )}
                 />
 
-                <FormField control={form.control} name="obstetricalHistory.hydatidiformMole"
+                <FormField
+                  control={form.control}
+                  name="obstetricalHistory.hydatidiformMole"
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
                       </FormControl>
                       <Label className="ml-2">Hydatidiform mole (within the last 12 months)</Label>
                       <FormMessage />
@@ -337,11 +613,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   )}
                 />
 
-                <FormField control={form.control} name="obstetricalHistory.ectopicPregnancyHistory"
+                <FormField
+                  control={form.control}
+                  name="obstetricalHistory.ectopicPregnancyHistory"
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
                       </FormControl>
                       <Label className="ml-2">History of ectopic pregnancy</Label>
                       <FormMessage />
@@ -359,21 +637,27 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   saveFormData()
                   onPrevious1()
                 }}
+                disabled={isReadOnly}
               >
                 Previous
               </Button>
-              <Button type="button"
+              <Button
+                type="button"
                 onClick={async () => {
-                  // Validate the form
-                  const isValid = await form.trigger()
-                  if (isValid) {
-                    const currentValues = form.getValues()
-                    updateFormData(currentValues)
-                    onNext3()
-                  } else {
-                    console.error("Please fill in all required fields")
-                  }}} >
-                  Next </Button>
+                  const currentValues = form.getValues()
+                  // NEW: Include selected illness IDs when moving to next page
+                  const dataToUpdate = {
+                    ...currentValues,
+                    selectedIllnessIds: selectedIllnesses.join(','),
+                    customDisabilityDetails: currentValues.medicalHistory?.disabilityDetails || null,
+                  }
+                  updateFormData(dataToUpdate)
+                  onNext3()
+                }}
+              // disabled={isReadOnly}
+              >
+                Next{" "}
+              </Button>
             </div>
           </form>
         </Form>

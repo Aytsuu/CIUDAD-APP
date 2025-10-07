@@ -13,7 +13,32 @@ export function useMedConCount(patientId: string) {
     });
   }
 
+  export function useFamplanCount(patientId: string) {
+    return useQuery({
+      queryKey: ["fam-count"],
+      queryFn: async () => {
+        const response = await api2.get(`/familyplanning/count/${patientId}/`);
+        return response.data;
+      },
+      refetchOnMount: true,
+      staleTime: 0,
+    });
+  }
 
+
+  
+  export function useAnimalbitesCount(patientId: string) {
+    return useQuery({
+      queryKey: ["animalbites-count"],
+      queryFn: async () => {
+        const response = await api2.get(`/animalbites/count/${patientId}/`);
+        console.log("FUCK",response.data)
+        return response.data;
+      },
+      refetchOnMount: true,
+      staleTime: 0,
+    });
+  }
 
 export function useChildHealthRecordCount(patientId: string) {
     return useQuery({

@@ -76,9 +76,9 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
 # class CouncilAttendeesSerializer(serializers.ModelSerializer):
 #     atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])
 
-#     class Meta:
-#         model = CouncilAttendees
-#         fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
+    class Meta:
+        model = CouncilAttendees
+        fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
@@ -279,11 +279,17 @@ class ResolutionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class GADProposalSerializer(serializers.ModelSerializer):
-    dev_project = serializers.CharField(source='dev.dev_project', read_only=True)
-    
+    project_title = serializers.CharField(read_only=True)
+    gprl_id = serializers.SerializerMethodField()
+
     class Meta:
         model = ProjectProposal
-        fields = ['gpr_id', 'dev_project']
+        fields = ['gpr_id', 'project_title', 'gprl_id']
+
+    def get_gprl_id(self, obj):
+        # Get the latest approved log ID for this proposal
+        latest_approved_log = obj.logs.filter(gprl_status='Approved').order_by('-gprl_date_approved_rejected').first()
+        return latest_approved_log.gprl_id if latest_approved_log else None
 
 
 class PurposeRatesListViewSerializer(serializers.ModelSerializer):

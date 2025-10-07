@@ -3,6 +3,10 @@ export const formatDate = (date: string | Date, type?: string) => {
   if (!date) return null;
   const d = new Date(date);
 
+export const formatDate = (date: string | Date, type?: string) => {
+  if (!date) return null;
+  const d = new Date(date);
+
   switch (type) {
     case 'short':
       return d.toLocaleDateString("en-PH", {
@@ -120,6 +124,8 @@ export const formatSupplementDate = (dateString: string | null) => {
   });
 };
 
+
+
 export const formatMnpDates = (dates: string[]) => {
   if (!dates || dates.length === 0) return "-";
   return dates.map((date) => formatSupplementDate(date)).join(", ");
@@ -128,10 +134,8 @@ export const formatMnpDates = (dates: string[]) => {
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-  return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
+  return Math.ceil(dayOfMonth / 7);
 };
 
 // Get month in text based on a given date format (YYYY-MM-DD)
@@ -178,7 +182,6 @@ export const getRangeOfDaysInWeek = (
   if(onlyNumber) return { start_day: startDate, end_day: endDate }
   return `${month.toUpperCase()} ${startDate}-${endDate}, ${year}`;
 };
-
 // Get month in number based on a given month in text
 export const monthNameToNumber = (month: string) => {
   const months = [
@@ -227,15 +230,16 @@ export const getAllWeeksInMonth = (monthName: string, year?: number) => {
 // Helper function to check if a week has passed
 export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
   const currentDate = new Date()
-  const targetYear = year || currentDate.getFullYear()
+  const targetYear = year || new Date().getFullYear()
   const currentYear = currentDate.getFullYear()
 
-  // Past year: all weeks have passed
+  // If the target year is in the past, all weeks have passed
   if (targetYear < currentYear) return true
 
-  // Future year: no weeks have passed
+  // If the target year is in the future, no weeks have passed
   if (targetYear > currentYear) return false
 
+  // For the current year, check if the specific week has passed
   const monthNames = getMonths
   const monthIndex = monthNames.indexOf(month)
 

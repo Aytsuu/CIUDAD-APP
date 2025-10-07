@@ -3,7 +3,6 @@ from ..models import *
 from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.healthProfiling.models import ResidentProfile, FamilyComposition
-# from apps.account.models import Account
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -19,8 +18,8 @@ class StaffMinimalSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_rp(self, obj):
-        from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer 
-        return ResidentPersonalInfoSerializer(obj.rp).data
+        from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer 
+        return ResidentProfileMinimalSerializer(obj.rp).data
 
 class StaffTableSerializer(serializers.ModelSerializer):
   lname = serializers.CharField(source='rp.per.per_lname')
@@ -57,8 +56,8 @@ class StaffFullSerializer(serializers.ModelSerializer):
       fields = '__all__'
 
   def get_rp(self, obj):
-      from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
-      return ResidentPersonalInfoSerializer(obj.rp).data
+      from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer  # Lazy import inside the method
+      return ResidentProfileMinimalSerializer(obj.rp).data
   
 
 class StaffCreateSerializer(serializers.ModelSerializer):
@@ -75,25 +74,27 @@ class StaffCreateSerializer(serializers.ModelSerializer):
       register = Staff(**validated_data)
       register.save()
       return register
-
+    
     return None
+
+class HealthStaffComboboxSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source='staff_id')
+    name = serializers.SerializerMethodField()
+    position = serializers.CharField(source='pos.pos_title')
+
+    class Meta:
+        model = Staff
+        fields = ['id', 'name', 'position']
+
+    def get_name(self, obj):
+        per = obj.rp.per
+        full_name = f"{per.per_fname} {per.per_lname}"
+        if per.per_mname:
+            full_name = f"{per.per_fname} {per.per_mname} {per.per_lname}"
+        if per.per_suffix:
+            full_name += f" {per.per_suffix}"
+        return full_name
   
-class StaffLandingPageSerializer(serializers.ModelSerializer):
-  name = serializers.SerializerMethodField()
-  position = serializers.CharField(source='pos.pos_title')
-  assignments = AssignmentMinimalSerializer(many=True, read_only=True)
-  photo_url = serializers.SerializerMethodField()
+  
 
-  class Meta:
-    model = Staff
-    fields = ['photo_url', 'name', 'position', 'assignments']
-
-  def get_name(self, obj):
-    info = obj.rp.per
-    return f'{info.per_lname.upper()}, {info.per_fname.upper()}' \
-            f' {info.per_mname.upper() if info.per_mname else ""}'
-
-  # def get_photo_url(self, obj):
-  #   rp = obj.rp
-  #   account = Account.objects.filter(rp=rp).first()
-  #   return account.profile_image if account and account.profile_image else None
+  

@@ -13,6 +13,7 @@ import {
   ArchiveRestore,
   Trash,
   ChevronLeft,
+  ClipboardCheck
 } from "lucide-react-native";
 import {
   useGetProjectProposals,
@@ -35,6 +36,7 @@ import PageLayout from "@/screens/_PageLayout";
 const ProjectProposalList: React.FC = () => {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState("All");
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -83,19 +85,21 @@ const ProjectProposalList: React.FC = () => {
     if (!project.budgetItems || project.budgetItems.length === 0) return sum;
 
     const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount =
-        typeof item.amount === "string"
-          ? parseFloat(item.amount) || 0
-          : item.amount || 0;
-      const paxCount =
-        typeof item.pax === "string"
-          ? parseInt(item.pax.replace(/\D/g, "")) || 1
-          : 1;
-      return projectSum + paxCount * amount;
+      const amount = typeof item.amount === 'string' ? parseFloat(item.amount) || 0 : item.amount || 0;
+      const paxCount = typeof item.pax === 'string' 
+        ? parseInt(item.pax.replace(/\D/g, '')) || 1 
+        : 1;
+      return projectSum + (paxCount * amount);
     }, 0);
 
     return sum + projectTotal;
   }, 0);
+
+  const handleViewLogs = () => {
+    router.push({
+      pathname: "/gad/project-proposal/projprop-logs",
+    });
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);

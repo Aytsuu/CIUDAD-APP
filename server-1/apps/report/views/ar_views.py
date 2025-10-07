@@ -15,21 +15,7 @@ class ARTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = AcknowledgementReport.objects.select_related(
-      'add',
-    ).only(
-      'ar_id',
-      'ar_title',
-      'ar_date_started',
-      'ar_time_started',
-      'ar_date_completed',
-      'ar_time_completed',
-      'ar_created_at',
-      'ar_status',
-      'ar_result',
-      'add__sitio__sitio_name',
-      'add__add_street',
-    )
+    queryset = AcknowledgementReport.objects.all()
 
     search = self.request.query_params.get('search', '').strip()
     if search:
@@ -87,7 +73,7 @@ class ARByDateView(APIView):
     month = request.query_params.get('month')
     start_day = request.query_params.get('start_day')
     end_day = request.query_params.get('end_day')
-    ar_reports = AcknowledgementReport.objects.filter(ar_status='SIGNED')
+    ar_reports = AcknowledgementReport.objects.filter(ar_status='Signed')
 
     if year and month:
         ar_reports = ar_reports.filter(
@@ -97,7 +83,7 @@ class ARByDateView(APIView):
             ar_created_at__day__lte=end_day
         ).distinct()
 
-    return Response(ARTableSerializer(ar_reports, many=True).data, status=status.HTTP_200_OK)
+    return Response(ARTableSerializer(ar_reports, many=True).data)
 
 class ARFileDeleteView(generics.DestroyAPIView):
   serializer_class = ARFileBaseSerializer

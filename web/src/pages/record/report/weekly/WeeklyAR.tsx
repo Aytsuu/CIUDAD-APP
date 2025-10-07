@@ -7,6 +7,7 @@ import { Calendar, FileText, AlertCircle, MoveRight, CalendarDays, Plus } from "
 import { useGetWeeklyAR } from "../queries/reportFetch"
 import { getAllWeeksInMonth, getMonthName, getMonths, getRangeOfDaysInWeek, getWeekNumber, hasWeekPassed } from "@/helpers/dateHelper"
 import { Link, useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import RecentWeeklyAR from "./RecentWeeklyAR"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { Button } from "@/components/ui/button/button"
@@ -82,6 +83,7 @@ export default function WeeklyAR() {
           .sort((a, b) => a.weekNo - b.weekNo),
         missingWeeks: missingWeeks.sort((a, b) => a - b),
         missedWeeksPassed: missedWeeksPassed.length,
+        allWeeksInMonth: allWeeksInMonth,
         allWeeksInMonth: allWeeksInMonth,
         hasData: monthData.length > 0,
       }
@@ -172,6 +174,7 @@ export default function WeeklyAR() {
               ) : (
                 <Accordion type="single" collapsible className="w-full">
                   {organizedData.map(({ month, weeks, missedWeeksPassed, missingWeeks, allWeeksInMonth }) => (
+                  {organizedData.map(({ month, weeks, missedWeeksPassed, missingWeeks, allWeeksInMonth }) => (
                     <AccordionItem key={month} value={month} className="border-b last:border-b-0">
                       <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 hover:no-underline ">
                         <div className="flex items-center gap-3">
@@ -180,6 +183,7 @@ export default function WeeklyAR() {
                             {month} {selectedYear}
                           </span>
                           <Badge variant="outline" className="ml-2">
+                            {weeks.length} / {allWeeksInMonth.length} Weeks
                             {weeks.length} / {allWeeksInMonth.length} Weeks
                           </Badge>
                         </div>
@@ -274,7 +278,7 @@ export default function WeeklyAR() {
                               )
                             }
 
-                            if((missingWeeks.includes(week) && missedWeeksPassed >= week) || week == getWeekNumber(new Date().toDateString())) {
+                            if(missingWeeks.includes(week) && missedWeeksPassed >= week) {
                               return (
                                 <div className="flex items-center justify-between w-full mr-4">
                                   <div className="flex items-center gap-2">
@@ -380,6 +384,7 @@ export default function WeeklyAR() {
                               </AccordionContent>
                             </AccordionItem>
                           ))} */}
+                          ))} */}
                         </Accordion>
                       </AccordionContent>
                     </AccordionItem>
@@ -396,6 +401,7 @@ export default function WeeklyAR() {
           <RecentWeeklyAR recentReports={recentReports} />
 
           {/* Missed Weekly Reports */}
+          {/* <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} /> */}
           {/* <MissedWeeklyAR organizedData={organizedData} selectedYear={selectedYear} /> */}
         </div>
       </div>

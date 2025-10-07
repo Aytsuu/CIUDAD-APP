@@ -1,35 +1,13 @@
-// import React, { useState, useMemo } from 'react';
-// import {
-//   View,
-//   Text,
-//   TouchableOpacity,
-//   ScrollView,
-//   ActivityIndicator,
-//   RefreshControl,
-//   Alert,
-//   Modal,
-//   TextInput,
-//   FlatList,
-// } from 'react-native';
-// import { router } from 'expo-router';
-// import {
-//   ChevronLeft,
-//   XCircle,
-//   Package,
-//   RefreshCw,
-//   Trash2,
-//   Search,
-//   Pill,
-//   Calendar,
-//   Clock,
-//   FileText,
-//   AlertCircle,
-// } from 'lucide-react-native';
-// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-// import { api2 } from '@/api/api';
-// import PageLayout from '@/screens/_PageLayout';
-// import { useAuth } from '@/contexts/AuthContext';
-// import { LoadingState } from '@/components/ui/loading-state';
+import React, { useState, useMemo } from 'react';
+import { View,Text,TouchableOpacity,RefreshControl,Alert,Modal,TextInput,FlatList} from 'react-native';
+import { router } from 'expo-router';
+import { ChevronLeft,XCircle,Package,RefreshCw,Trash2,Search,Pill,Calendar,FileText,AlertCircle, } from 'lucide-react-native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api2 } from '@/api/api';
+import PageLayout from '@/screens/_PageLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoadingState } from '@/components/ui/loading-state';
+import { formatDate } from '@/helpers/dateHelpers';
 
 // // Types
 // interface MedicineRequestItem {
@@ -55,29 +33,31 @@
 
 // type TabType = "pending" | "cancelled" | "ready_for_pickup" | "completed";
 
-// // API Functions
-// const fetchUserAllMedicineItems = async (userId: string, isResident: boolean = true): Promise<MedicineRequestItem[]> => {
-//   const param = isResident ? `rp_id=${userId}&include_archived=true` : `pat_id=${userId}&include_archived=true`;
-//   const endpoint = isResident ? '/medicine/user-all-items/' : '/medicine/user-pending-items/';
-//   const response = await api2.get(`${endpoint}?${param}`);
-//   const results = response.data.results || [];
-//   console.log('API Response (All Items):', results); // Debug: Check all statuses
-//   return results.map((item: any) => ({
-//     medreqitem_id: item.medreqitem_id,
-//     medreqitem_qty: item.medreqitem_qty,
-//     reason: item.reason,
-//     status: item.status,
-//     archive_reason: item.archive_reason || null,
-//     med_details: item.med_details || (item.med?.med_name ? { 
-//       med_id: item.med?.med_id, 
-//       med_name: item.med?.med_name || item.med_details?.med_name, 
-//       med_type: item.med?.med_type 
-//     } : undefined),
-//     medreq_id: item.medreq_id || item.medreq_details?.medreq_id,
-//     requested_at: item.medreq_details?.requested_at || item.requested_at,
-//     mode: item.medreq_details?.mode || 'walk-in',
-//   }));
-// };
+// API Functions
+const fetchUserAllMedicineItems = async (userId: string, isResident: boolean = true): Promise<MedicineRequestItem[]> => {
+
+  const param = isResident ? `rp_id=${userId}&include_archived=true` : `pat_id=${userId}&include_archived=true`;
+  const endpoint = isResident ? '/medicine/user-all-items/' : '/medicine/user-pending-items/';
+  
+  const response = await api2.get(`${endpoint}?${param}`);
+  const results = response.data.results || [];
+  console.log('API Response (All Items):', results); // Debug: Check all statuses
+  return results.map((item: any) => ({
+    medreqitem_id: item.medreqitem_id,
+    medreqitem_qty: item.medreqitem_qty,
+    reason: item.reason,
+    status: item.status,
+    archive_reason: item.archive_reason || null,
+    med_details: item.med_details || (item.med?.med_name ? { 
+      med_id: item.med?.med_id, 
+      med_name: item.med?.med_name || item.med_details?.med_name, 
+      med_type: item.med?.med_type 
+    } : undefined),
+    medreq_id: item.medreq_id || item.medreq_details?.medreq_id,
+    requested_at: item.medreq_details?.requested_at || item.requested_at,
+    mode: item.medreq_details?.mode || 'walk-in',
+  }));
+};
 
 // const cancelMedicineRequestItem = async (medreqitem_id: number, reason: string): Promise<void> => {
 //   try {
@@ -88,62 +68,69 @@
 //   }
 // };
 
-// // Utility Functions
-// const getStatusConfig = (status: string) => {
-//   const lowerStatus = status.toLowerCase();
-//   switch (lowerStatus) {
-//     case 'pending':
-//       return { 
-//         color: 'text-yellow-700', 
-//         bgColor: 'bg-yellow-100', 
-//         borderColor: 'border-yellow-200', 
-//         label: 'Pending' 
-//       };
-//     case 'confirmed':
-//       return { 
-//         color: 'text-orange-700', 
-//         bgColor: 'bg-orange-100', 
-//         borderColor: 'border-orange-200', 
-//         label: 'Ready for Pickup' 
-//       };
-//     case 'referred_to_doctor':
-//       return { 
-//         color: 'text-blue-700', 
-//         bgColor: 'bg-blue-100', 
-//         borderColor: 'border-blue-200', 
-//         label: 'Referred to Doctor' 
-//       };
-//     case 'declined':
-//     case 'cancelled':
-//       return { 
-//         color: 'text-red-700', 
-//         bgColor: 'bg-red-100', 
-//         borderColor: 'border-red-200', 
-//         label: 'Cancelled' 
-//       };
-//     case 'ready_for_pickup':
-//       return { 
-//         color: 'text-orange-700', 
-//         bgColor: 'bg-orange-100', 
-//         borderColor: 'border-orange-200', 
-//         label: 'Ready for Pickup' 
-//       };
-//     case 'completed':
-//       return { 
-//         color: 'text-green-700', 
-//         bgColor: 'bg-green-100', 
-//         borderColor: 'border-green-200', 
-//         label: 'Completed' 
-//       };
-//     default:
-//       return { 
-//         color: 'text-gray-700', 
-//         bgColor: 'bg-gray-100', 
-//         borderColor: 'border-gray-200', 
-//         label: status 
-//       };
-//   }
-// };
+// Utility Functions
+const getStatusConfig = (status: string) => {
+  const lowerStatus = status.toLowerCase();
+  switch (lowerStatus) {
+    case 'pending':
+      return { 
+        color: 'text-yellow-700', 
+        bgColor: 'bg-yellow-100', 
+        borderColor: 'border-yellow-200', 
+        label: 'Pending' 
+      };
+       case 'rejected':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-red-200', 
+        label: 'Rejected' 
+      };
+    case 'confirmed':
+      return { 
+        color: 'text-orange-700', 
+        bgColor: 'bg-orange-100', 
+        borderColor: 'border-orange-200', 
+        label: 'Ready for Pickup' 
+      };
+    case 'referred_to_doctor':
+      return { 
+        color: 'text-blue-700', 
+        bgColor: 'bg-blue-100', 
+        borderColor: 'border-blue-200', 
+        label: 'Referred to Doctor' 
+      };
+    case 'declined':
+    case 'cancelled':
+      return { 
+        color: 'text-red-700', 
+        bgColor: 'bg-red-100', 
+        borderColor: 'border-red-200', 
+        label: 'Cancelled' 
+      };
+    case 'ready_for_pickup':
+      return { 
+        color: 'text-orange-700', 
+        bgColor: 'bg-orange-100', 
+        borderColor: 'border-orange-200', 
+        label: 'Ready for Pickup' 
+      };
+    case 'completed':
+      return { 
+        color: 'text-green-700', 
+        bgColor: 'bg-green-100', 
+        borderColor: 'border-green-200', 
+        label: 'Completed' 
+      };
+    default:
+      return { 
+        color: 'text-gray-700', 
+        bgColor: 'bg-gray-100', 
+        borderColor: 'border-gray-200', 
+        label: status 
+      };
+  }
+};
 
 // const formatDate = (dateString: string) => {
 //   if (!dateString) return "N/A";
@@ -214,40 +201,40 @@
 //   </View>
 // );
 
-// const MedicineRequestCard: React.FC<{
-//   item: MedicineRequestItem;
-//   onCancel: () => void;
-//   isCancelPending: boolean;
-// }> = ({ item, onCancel, isCancelPending }) => {
-//   const medicineName = item.med_details?.med_name || 'Unknown Medicine';
-//   const canCancel = item.status.toLowerCase() === 'pending';
-
-//   return (
-//     <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm">
-//       {/* Header */}
-//       <View className="p-4 border-b border-gray-100">
-//         <View className="flex-row items-start justify-between">
-//           <View className="flex-1 mr-3">
-//             <View className="flex-row items-center mb-1">
-//               <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-//                 <Pill color="white" size={20} />
-//               </View>
-//               <View className="flex-1">
-//                 <Text className="font-semibold text-lg text-gray-900">
-//                   {medicineName}
-//                 </Text>
-//                 {/* <Text className="text-gray-500 text-sm">Qty: {item.medreqitem_qty}</Text> */}
-//               </View>
-//             </View>
-//           </View>
-//           <View className="items-end">
-//             <StatusBadge status={item.status} />
-//             {/* <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2">
-//               <Text className="text-blue-700 font-bold text-xs">#{item.medreqitem_id}</Text>
-//             </View> */}
-//           </View>
-//         </View>
-//       </View>
+const MedicineRequestCard: React.FC<{
+  item: MedicineRequestItem;
+  onCancel: () => void;
+  isCancelPending: boolean;
+}> = ({ item, onCancel, isCancelPending }) => {
+  const medicineName = item.med_details?.med_name || 'Unknown Medicine';
+  const canCancel = item.status.toLowerCase() === 'pending';
+  
+  return (
+    <View className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm">
+      {/* Header */}
+      <View className="p-4 border-b border-gray-100">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <View className="flex-row items-center mb-1">
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
+                <Pill color="white" size={20} />
+              </View>
+              <View className="flex-1">
+                <Text className="font-semibold text-lg text-gray-900">
+                  {medicineName}
+                </Text>
+                {/* <Text className="text-gray-500 text-sm">Qty: {item.medreqitem_qty}</Text> */}
+              </View>
+            </View>
+          </View>
+          <View className="items-end">
+            <StatusBadge status={item.status} />
+            {/* <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2">
+              <Text className="text-blue-700 font-bold text-xs">#{item.medreqitem_id}</Text>
+            </View> */}
+          </View>
+        </View>
+      </View>
 
 //       {/* Details */}
 //       <View className="p-4 space-y-3">
@@ -302,49 +289,50 @@
 //   );
 // };
 
-// // Cancel Modal Component
-// const CancelModal: React.FC<{
-//   visible: boolean;
-//   item: MedicineRequestItem | null;
-//   cancellationReason: string;
-//   setCancellationReason: (reason: string) => void;
-//   onConfirm: () => void;
-//   onClose: () => void;
-//   isPending: boolean;
-// }> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending }) => {
-//   return (
-//     <Modal visible={visible} transparent animationType="slide">
-//       <View className="flex-1 justify-center items-center bg-black/50 p-4">
-//         <View className="bg-white rounded-lg w-full max-w-md p-6">
-//           <Text className="text-lg font-semibold text-gray-900 mb-2">Cancel Request</Text>
-//           <Text className="text-sm text-gray-600 mb-4">
-//             Are you sure you want to cancel "{item?.med_details?.med_name}"? Provide a reason:
-//           </Text>
-//           <TextInput
-//             value={cancellationReason}
-//             onChangeText={setCancellationReason}
-//             placeholder="Enter cancellation reason..."
-//             multiline
-//             className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-4 text-sm"
-//             style={{ height: 80, textAlignVertical: 'top' }}
-//           />
-//           <View className="flex-row justify-end space-x-2">
-//             <TouchableOpacity onPress={onClose} className="px-4 py-2">
-//               <Text className="text-gray-600 font-medium">Cancel</Text>
-//             </TouchableOpacity>
-//             <TouchableOpacity
-//               onPress={onConfirm}
-//               disabled={!cancellationReason.trim() || isPending}
-//               className="bg-red-500 px-4 py-2 rounded-md disabled:opacity-50"
-//             >
-//               <Text className="text-white font-medium">{isPending ? 'Cancelling...' : 'Confirm'}</Text>
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-//       </View>
-//     </Modal>
-//   );
-// };
+// Cancel Modal Component
+const CancelModal: React.FC<{
+  visible: boolean;
+  item: MedicineRequestItem | null;
+  cancellationReason: string;
+  setCancellationReason: (reason: string) => void;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}> = ({ visible, item, cancellationReason, setCancellationReason, onConfirm, onClose, isPending }) => {
+  return (
+    <Modal visible={visible} transparent>
+      <View className="flex-1 justify-center items-center bg-black/50 p-4">
+        <View className="bg-white rounded-lg w-full max-w-md p-6">
+          <Text className="text-lg font-semibold text-gray-900 mb-2">Cancel Request</Text>
+          <Text className="text-sm text-gray-600 mb-4">
+            Are you sure you want to cancel? 
+            <Text className="font-bold text-red-700"> This cannot be undone.</Text>
+          </Text>
+          <TextInput
+            value={cancellationReason}
+            onChangeText={setCancellationReason}
+            placeholder="Enter cancellation reason..."
+            multiline
+            className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-4 text-sm"
+            style={{ height: 80, textAlignVertical: 'top' }}
+          />
+          <View className="flex-row justify-end space-x-2">
+            <TouchableOpacity onPress={onClose} className="px-4 py-2">
+              <Text className="text-gray-600 font-medium">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onConfirm}
+              disabled={!cancellationReason.trim() || isPending}
+              className="bg-red-500 px-4 py-2 rounded-md disabled:opacity-50"
+            >
+              <Text className="text-white font-medium">{isPending ? 'Cancelling...' : 'Confirm'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 // // Main Component
 // const MedicineRequestTracker: React.FC = () => {
@@ -357,13 +345,15 @@
 //   const [refreshing, setRefreshing] = useState(false);
 //   const [searchQuery, setSearchQuery] = useState('');
 
-//   // Determine user type and ID
-//   const isResident = !!user?.resident?.rp_id;
-//   const userId = user?.resident?.rp_id || null;
-//   const isUserReady = isAuthenticated && !!userId;
+  // Determine user type and ID
+  const isResident = !!user?.rp;
+  const userId = user?.rp || null;
+  const isUserReady = isAuthenticated && !!userId;
+  const userdata = user?.personal;
 
-//   // Debug log
-//   // console.log('Auth State:', { isAuthenticated, userId, isUserReady, isResident });
+  console.log("userdata: ",userdata)
+  // Debug log
+  // console.log('Auth State:', { isAuthenticated, userId, isUserReady, isResident });
  
 //   // Query for all user items
 //   const {
@@ -455,23 +445,23 @@
 //     setRefreshing(false);
 //   }, [refetch]);
 
-//   // Auth Guard
-//   if (!isAuthenticated || !user) {
-//     return (
-//       <PageLayout
-//         leftAction={
-//           <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-//             <ChevronLeft size={24} color="#374151" />
-//           </TouchableOpacity>
-//         }
-//         headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Medicine Requests</Text>}
-//       >
-//         <View className="flex-1 justify-center items-center bg-gray-50">
-//           <Text className="text-gray-600">Please log in to view your medicine requests</Text>
-//         </View>
-//       </PageLayout>
-//     );
-//   }
+  // Auth Guard
+  if (!isAuthenticated || !user) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">My Medicine Requests</Text>}
+      >
+        <View className="flex-1 justify-center items-center mt-10">
+          <Text className="text-gray-600">Please log in to view your medicine requests</Text>
+        </View>
+      </PageLayout>
+    );
+  }
 
 //   // Combined Loading
 //   if (authLoading || dataLoading) {
@@ -529,8 +519,17 @@
 //           </View>
 //         </View>
 
-//         {/* Tab Bar */}
-//         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        {/* Tab Bar */}
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+
+        {activeTab === 'ready_for_pickup' && (
+  <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+    <Text className="text-blue-800 text-sm font-medium">
+      Reminder: Medicines are available for pickup at the Barangay Health Center 
+      every weekdays, 8:00 AM - 5:00 PM only.
+    </Text>
+  </View>
+)}
 
 //         {/* Requests List */}
 //         {requests.length === 0 ? (

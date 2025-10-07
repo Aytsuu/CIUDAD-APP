@@ -1,5 +1,4 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
+from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from ..models import Assignment
 from ..serializers.assignment_serializers import *
@@ -19,12 +18,6 @@ class AssignmentCreateView(generics.CreateAPIView):
     serializer_class = AssignmentBaseSerializer
     queryset = Assignment.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        return Response(data=AssignmentMinimalSerializer(instance).data, status=status.HTTP_200_OK)
-
 class AssignmentDeleteView(generics.DestroyAPIView):
     serializer_class = AssignmentBaseSerializer
     queryset = Assignment.objects.all()
@@ -35,15 +28,3 @@ class AssignmentDeleteView(generics.DestroyAPIView):
 
         obj = get_object_or_404(Assignment, feat_id=feat_id, pos_id=pos_id)
         return obj
-    
-class AssignmentUpdateView(generics.UpdateAPIView):
-    serializer_class = AssignmentBaseSerializer
-    queryset = Assignment.objects.all()
-    lookup_field = 'assi_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        return Response(data=AssignmentMinimalSerializer(instance).data,status=status.HTTP_200_OK)

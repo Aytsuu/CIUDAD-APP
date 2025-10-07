@@ -336,7 +336,6 @@ export const EditProjectProposalForm: React.FC<
         gpr_monitoring: data.monitoringEvaluation,
         gpr_signatories: data.signatories.filter((s) => s.name.trim() !== ""),
         gpr_header_img: headerImage,
-        // existingHeaderImageName: initialValues.headerImage,
         staffId: initialValues.staffId || null,
         gprIsArchive: initialValues.gprIsArchive || false,
         dev: data.selectedDevProject?.dev_id || initialValues.devId || 0,

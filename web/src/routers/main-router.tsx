@@ -215,7 +215,9 @@ export const main_router: RouteObject[] = [
       ...firstaid_router,
       ...health_schedule_routes,
       ...viewprofile_router,
-      ...template_router,  
+      ...template_router, 
+      ...healthreports_router,
+      ...medicalConsultation,
       ])
     }
 ]

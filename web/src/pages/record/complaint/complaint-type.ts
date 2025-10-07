@@ -35,7 +35,6 @@ export interface ComplaintFile {
   comp_file_url: string;
 }
 
-
 export interface Complaint {
   comp_id: number;
   comp_location: string;

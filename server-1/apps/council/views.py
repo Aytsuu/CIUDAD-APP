@@ -122,18 +122,21 @@ class CouncilSchedulingDetailView(ActivityLogMixin, generics.RetrieveUpdateDestr
     permission_classes = [AllowAny]
 
     def get_object(self):
+        # Use the lookup_field (ce_id) from URL kwargs
         queryset = self.get_queryset()
         lookup_value = self.kwargs[self.lookup_field]
         try:
             obj = queryset.get(pk=lookup_value)
         except CouncilScheduling.DoesNotExist:
-            raise status.HTTP_404_NOT_FOUND 
+            raise status.HTTP_404_NOT_FOUND  # Let Django handle 404
         return obj
 
     def get(self, request, *args, **kwargs):
+        # Already handled by RetrieveUpdateDestroyAPIView's default get
         return super().get(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
+        # Already handled by RetrieveUpdateDestroyAPIView's default put
         return super().put(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -182,45 +185,45 @@ class CouncilEventYearsView(APIView):
             logger.error(f"Error fetching council event years: {str(e)}")
             return Response([], status=status.HTTP_200_OK)
 
-# class AttendeesView(generics.ListCreateAPIView):
-#     serializer_class = CouncilAttendeesSerializer
-#     queryset = CouncilAttendees.objects.all()
-#     permission_classes = [AllowAny]
+class AttendeesView(generics.ListCreateAPIView):
+    serializer_class = CouncilAttendeesSerializer
+    queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
-# class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     serializer_class = CouncilAttendeesSerializer
-#     queryset = CouncilAttendees.objects.all()
-#     lookup_field = 'atn_id'
-#     permission_classes = [AllowAny]
+class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CouncilAttendeesSerializer
+    queryset = CouncilAttendees.objects.all()
+    lookup_field = 'atn_id'
+    permission_classes = [AllowAny]
 
-# class AttendeesBulkView(generics.GenericAPIView):
-#     serializer_class = CouncilAttendeesSerializer
-#     queryset = CouncilAttendees.objects.all()
-#     permission_classes = [AllowAny]
+class AttendeesBulkView(generics.GenericAPIView):
+    serializer_class = CouncilAttendeesSerializer
+    queryset = CouncilAttendees.objects.all()
+    permission_classes = [AllowAny]
 
-#     def post(self, request, *args, **kwargs):
-#         ce_id = request.data.get('ce_id')
-#         logger.debug(f"Received data: {request.data}")
-#         if not ce_id:
-#             return Response({"detail": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+        ce_id = request.data.get('ce_id')
+        logger.debug(f"Received data: {request.data}")
+        if not ce_id:
+            return Response({"detail": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         
-#         # Fetch the CouncilScheduling instance
-#         council_scheduling = get_object_or_404(CouncilScheduling, pk=ce_id)
+        # Fetch the CouncilScheduling instance
+        council_scheduling = get_object_or_404(CouncilScheduling, pk=ce_id)
         
-#         # Delete existing attendees for this ce_id
-#         CouncilAttendees.objects.filter(ce_id=council_scheduling).delete()
+        # Delete existing attendees for this ce_id
+        CouncilAttendees.objects.filter(ce_id=council_scheduling).delete()
         
-#         # Create new attendees
-#         attendees_data = request.data.get('attendees', [])
-#         if not attendees_data:
-#             return Response({"detail": "attendees array is required and cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+        # Create new attendees
+        attendees_data = request.data.get('attendees', [])
+        if not attendees_data:
+            return Response({"detail": "attendees array is required and cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
         
-#         serializer = self.get_serializer(data=attendees_data, many=True)
-#         if serializer.is_valid():
-#             serializer.save(ce_id=council_scheduling)
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         logger.error(f"Serializer errors: {serializer.errors}")
-#         return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
+        serializer = self.get_serializer(data=attendees_data, many=True)
+        if serializer.is_valid():
+            serializer.save(ce_id=council_scheduling)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error(f"Serializer errors: {serializer.errors}")
+        return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
 
 class AttendanceSheetListView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
@@ -290,29 +293,29 @@ class RestoreAttendanceView(generics.UpdateAPIView):
         return Response({"message": "Attendance sheet restored"},
                       status=status.HTTP_200_OK)
 
-# class StaffAttendanceRankingView(generics.ListAPIView):
-#     serializer_class = StaffAttendanceRankingSerializer
-#     permission_classes = [AllowAny]
+class StaffAttendanceRankingView(generics.ListAPIView):
+    serializer_class = StaffAttendanceRankingSerializer
+    permission_classes = [AllowAny]
 
-#     def get_queryset(self):
-#         # Aggregate present attendees by atn_name for non-archived events
-#         current_year = datetime.now().year
-#         return (
-#             CouncilAttendees.objects
-#             .filter(
-#                 atn_present_or_absent='Present',
-#                 ce_id__ce_is_archive=False,
-#                 ce_id__ce_date__year=current_year,
-#             )
-#             .values('atn_name', 'atn_designation')
-#             .annotate(attendance_count=Count('atn_id'))
-#             .order_by('-attendance_count')
-#         )
+    def get_queryset(self):
+        # Aggregate present attendees by atn_name for non-archived events
+        current_year = datetime.now().year
+        return (
+            CouncilAttendees.objects
+            .filter(
+                atn_present_or_absent='Present',
+                ce_id__ce_is_archive=False,
+                ce_id__ce_date__year=current_year,
+            )
+            .values('atn_name', 'atn_designation')
+            .annotate(attendance_count=Count('atn_id'))
+            .order_by('-attendance_count')
+        )
 
-#     def list(self, request, *args, **kwargs):
-#         queryset = self.get_queryset()
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response(serializer.data)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
@@ -586,12 +589,18 @@ class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
     lookup_field = 'rsd_id'     
 
 
-class GADProposalsView(generics.ListAPIView):
+class ApprovedGADProposalsView(generics.ListAPIView):
     serializer_class = GADProposalSerializer
     
     def get_queryset(self):
-        # Get all project proposals with their related development plan
-        return ProjectProposal.objects.all().select_related('dev')
+        # Get only approved proposals
+        approved_logs = ProjectProposalLog.objects.filter(
+            gprl_status='Approved'
+        ).select_related('gpr__dev')
+        
+        # Get unique approved proposals
+        approved_proposal_ids = approved_logs.values_list('gpr_id', flat=True).distinct()
+        return ProjectProposal.objects.filter(gpr_id__in=approved_proposal_ids)
 
 
 class PurposeRatesListView(generics.ListCreateAPIView):

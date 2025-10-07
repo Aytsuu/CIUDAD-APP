@@ -1,8 +1,5 @@
-
-
 import {  useQuery } from "@tanstack/react-query";
 import { getArchivedComplaints, getComplaintById, getComplaints } from "../restful-api/complaint-api";
-import api from "@/api/api";
 
 export const useGetComplaint = () => {
     return useQuery({

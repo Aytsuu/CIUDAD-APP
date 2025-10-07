@@ -1,10 +1,18 @@
 import { api2 } from "@/api/api"
 
+// interfaces
+export interface PatientFilters {
+  page?: number;
+	page_size?: number;
+	status?: string;
+	search?: string;
+}
+
 // fetch residents
 export const getResident = async () => {
 	 try {
-		  const res = await api2.get("/patientrecords/residents-available/")
-		  return res.data || [];
+		const res = await api2.get("/patientrecords/residents-available/")
+		return res.data || [];
 	 } catch (error) {
 		  console.error("Error fetching residents:", error);
         
@@ -18,13 +26,23 @@ export const getResident = async () => {
 
 
 // fetch patients
-export const getPatients = async () => {
+export const getPatients = async (filters: PatientFilters = {}) => {
     try {
-        const res = await api2.get("patientrecords/patient/");
-        return res.data || []; 
+		const params = new URLSearchParams();
+
+		if(filters.page) params.append('page', filters.page.toString());
+		if(filters.page_size) params.append('page_size', filters.page_size.toString());
+		if(filters.status && filters.status !== 'All') params.append('status', filters.status);
+		if(filters.search) params.append('search', filters.search);
+
+		const queryString = params.toString();
+		const url = queryString ? `/patientrecords/patient/view/create/?${queryString}` : "/patientrecords/patient/view/create/"
+
+        const res = await api2.get(url);
+        return res.data || {count: 0, next: null, previous: null, results: []}; 
     } catch (error) {
         console.error("Network Error:", error);
-        return []; 
+        return {count: 0, next: null, previous: null, results: []}; 
     }
 };
 
@@ -69,7 +87,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
 
 	const queryString = params.toString();
 	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}/` 
+		? `patientrecords/follow-up-visits-all/?${queryString}` 
 		: "patientrecords/follow-up-visits-all/";
 
     const res = await api2.get(url)
@@ -94,12 +112,45 @@ export const getAllTransientAddresses = async () => {
 
 
 
-export const getchilddata = async (pat_id: string) => {
+
+  export const checkPatientExistsGet = async (rp_id: string): Promise<boolean> => {
+    try {
+        const res = await api2.get(`medicine/check-patient-exists/${rp_id}/`);
+        if (res.status !== 200) {
+            throw new Error("Failed to check patient existence");
+        }
+        console.log(res);
+        return res.data; // Returns true or false
+    } catch (error) {
+        console.error("Error checking patient existence:", error);
+        throw error;
+    }
+}
+
+
+export const getChildData = async (id: any): Promise<any> => {
 	try {
-	  const childres = await api2.get(`/child-health/child-health-records/by-patient/${pat_id}`)
-	  return childres.data
+		const res = await api2.get(`/child-health/records/by-patient/${id}/`);
+		if (res.status !== 200) {
+			throw new Error("Failed to fetch child data");
+		}
+		console.log(res);
+		return res.data; // Returns child data
 	} catch (error) {
-	  console.error("Error fetching child health records:", error)
-	  throw new Error("Failed to fetch child health records. Please try again later.")
+		console.error("Error fetching child data:", error);
+		throw error;
 	}
-  }
+}
+
+
+
+export const getChildren = async (id:string) => {
+	try{
+		const res = await api2.get(`/patientrecords/parent-children/${id}/`);
+		return res.data || [];
+	}catch(error){
+		console.error("Error fetching children:", error);
+		throw error;
+	}
+}
+	

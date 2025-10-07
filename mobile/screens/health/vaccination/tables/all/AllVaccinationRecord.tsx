@@ -1,26 +1,26 @@
-// // src/features/vaccination/pages/AllVaccinationRecords.tsx
-// import React, { useState } from "react";
-// import { DataTable } from "@/components/ui/table/data-table";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { SelectLayout } from "@/components/ui/select/select-layout";
-// import { Search, FileInput, Users2, Loader2 } from "lucide-react";
-// import { Link } from "react-router-dom";
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuTrigger,
-//   DropdownMenuItem,
-// } from "@/components/ui/dropdown/dropdown-menu";
-// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-// import { useVaccinationRecords } from "../../queries/fetch";
-// import { calculateAge } from "@/helpers/ageCalculator";
-// import CardLayout from "@/components/ui/card/card-layout";
-// import { vaccinationColumns } from "../columns/all-vac-col";
-// import {
-//   BasicInfoVaccinationRecord,
-//   VaccinationCounts,
-// } from "../columns/types";
+// src/features/vaccination/pages/AllVaccinationRecords.tsx
+import React, { useState } from "react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Search, FileInput, Users2, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useVaccinationRecords } from "../../queries/fetch";
+import { calculateAge } from "@/helpers/ageCalculator";
+import CardLayout from "@/components/ui/card/card-layout";
+import { vaccinationColumns } from "../columns/all-vac-col";
+import {
+  BasicInfoVaccinationRecord,
+  VaccinationCounts,
+} from "../columns/types";
 
 // export default function AllVaccinationRecords() {
 //   const [searchQuery, setSearchQuery] = useState("");

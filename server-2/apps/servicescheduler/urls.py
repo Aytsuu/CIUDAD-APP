@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import ( 
-				ServiceSchedulerCreateView, ServiceSchedulerListView, 
-				ServiceListCreateView, ServiceDetailView, ServiceDeleteView, DayListCreateView, 
+				ServiceSchedulerCreateView, ServiceSchedulerListView, ServiceSchedulerUpdateView,
+				ServiceSchedulerDeleteView, ServiceListCreateView, ServiceDetailView, ServiceDeleteView, DayListCreateView, 
 				DayDetailView, DayDeleteView)
 
 
@@ -19,5 +19,7 @@ urlpatterns = [
 
 	# service scheduler endpoints
 	path('service-scheduler/create/', ServiceSchedulerCreateView.as_view(), name='service-scheduler-create'),
+	path('service-scheduler/<int:ss_id>/update/', ServiceSchedulerUpdateView.as_view(), name='service-scheduler-update'),
+	path('service-scheduler/<int:ss_id>/delete/', ServiceSchedulerDeleteView.as_view(), name='service-scheduler-delete'),
 	path('service-scheduler/', ServiceSchedulerListView.as_view(), name='service-scheduler-list'),
 ]

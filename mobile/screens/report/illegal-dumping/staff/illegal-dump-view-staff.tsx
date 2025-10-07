@@ -81,7 +81,7 @@ export default function WasteIllegalDumpingDetails() {
   
   //UPDATE MUTATION
 //   const { mutate: updateRep } = useUpdateWasteReport(Number(rep_id));
-  const { mutate: updateRep, isPending } = useUpdateWasteReport(String(rep_id), () => {
+  const { mutate: updateRep, isPending } = useUpdateWasteReport(Number(rep_id), () => {
       setTimeout(() => {
           router.back();
       }, 600);

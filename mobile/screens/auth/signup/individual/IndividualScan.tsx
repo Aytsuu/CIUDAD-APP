@@ -16,6 +16,7 @@ import { useDispatch } from "react-redux";
 import { setAuthData } from "@/redux/auth-redux/authSlice";
 
 export default function IndividualScan() {
+  const dispatch = useDispatch()
   const { getValues, reset } = useRegistrationFormContext();
   const { type } = useRegistrationTypeContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -44,7 +45,13 @@ export default function IndividualScan() {
           ],
         },
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            console.log(data)
+            dispatch(setAuthData({ 
+              accessToken: data.access_token, 
+              user: data.user,
+              refreshToken: data.refresh_token 
+            }));
             setShowFeedback(false);
             setTimeout(() => {
               setStatus("success");
@@ -68,16 +75,27 @@ export default function IndividualScan() {
     account: Record<string, any>
   ) => {
     try {
+      const {email, ...acc} = account;
       await addBusinessRespondent({
         ...respondent,
-        acc: account
+        acc: {
+          ...acc,
+          ...(email !== "" && {email: email})
+        }
+      }, {
+        onSuccess: (data) => {
+          dispatch(setAuthData({ 
+            accessToken: data.access_token, 
+            user: data.user,
+            refreshToken: data.refresh_token 
+          }));
+          setShowFeedback(false);
+          setTimeout(() => {
+            setStatus("success");
+            setShowFeedback(true); 
+          }, 0)
+        }
       });
-
-      setShowFeedback(false);
-      setTimeout(() => {
-        setStatus("success");
-        setShowFeedback(true); 
-      }, 0)
 
     } catch (error) {
       setShowFeedback(false);

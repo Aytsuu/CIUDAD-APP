@@ -1459,4 +1459,3 @@ class ServiceChargePaidListSerializer(serializers.ModelSerializer):
 #             'comp'
 #         ]
 
-

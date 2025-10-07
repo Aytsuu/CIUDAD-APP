@@ -3,19 +3,22 @@ import z from "zod"
 // positive number schema
 export const positiveNumberSchema = z
   .union([
-    z.string(),  // input as string
-    z.number(),  //  number input
-    z.null(),    // db null values
-    z.undefined(), // undefined values
+    z.string(),  
+    z.number(), 
+    z.null(),    
+    z.undefined(), 
   ])
   .transform((val, ctx) => {
-    // handle null, undefined, or empty string - all become undefined
     if (val === null || val === undefined || val === "") {
       return undefined
     }
     
     // If it's already a number, validate it
     if (typeof val === "number") {
+      if(!isFinite(val)){
+        return undefined
+      }
+
       if (val < 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -23,31 +26,20 @@ export const positiveNumberSchema = z
         })
         return z.NEVER
       }
-      if (isNaN(val)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Invalid number",
-        });
-        return z.NEVER;
-      }
+
       return val
     }
     
     // Handle string input
     if (typeof val === "string") {
-      // Empty string becomes undefined
       if (val.trim() === "") {
         return undefined
       }
       
       // Try to parse as number
       const num = Number.parseFloat(val)
-      if (isNaN(num)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Invalid number"
-        })
-        return z.NEVER
+      if (!isFinite(num)) {
+        return undefined
       }
       
       if (num < 0) {
@@ -61,26 +53,29 @@ export const positiveNumberSchema = z
       return num
     }
     
-    // If we get here, it's an unexpected type
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Invalid input type"
-    })
-    return z.NEVER
+    return undefined
   })
-
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD.");
+  
+  
+const dateSchema = z.preprocess((val) => {
+    if (val == "" || val === null || val === undefined) {
+      return undefined
+    }
+    return val
+  },
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD.").optional()
+);
 
 export const optionalDateSchema = z.preprocess(
-  (val) => (val === "" ? undefined : val), // Convert empty string to undefined
-  dateSchema.optional(), // Apply base date schema, then make optional
+  (val) => (val === "" ? undefined : val), 
+  dateSchema.optional(), 
 )
 
 export const PrenatalCareEntrySchema = z.object({
   date: dateSchema,
   aog: z.object({
     aogWeeks: positiveNumberSchema.optional(), 
-    aogDays: positiveNumberSchema.optional(), // Keep as string for form input, transform later if needed
+    aogDays: positiveNumberSchema.optional(), 
   }),
   wt: positiveNumberSchema, // Keep as string for form input, transform later if needed
   bp: z.object({
@@ -100,13 +95,14 @@ export const PrenatalCareEntrySchema = z.object({
 
 // mother's basic info
 export const PrenatalFormSchema = z.object({
+    pregnancy_id: z.string().optional(),
     pat_id: z.string().optional(),
     motherPersonalInfo: z.object({
         familyNo: z.string().optional(),
         motherLName: z.string().min(1, 'Last name is required'),
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional().default(''),
-        motherAge: positiveNumberSchema.refine((val) => val !== undefined && val >= 1, { message: "Value must be at least 1" }),
+        motherAge: z.string().optional(),
         motherDOB: dateSchema,
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
@@ -133,7 +129,8 @@ export const PrenatalFormSchema = z.object({
         noOfAbortion: positiveNumberSchema.optional(),
         noOfStillBirths: positiveNumberSchema.optional(),
         historyOfLBabies: positiveNumberSchema.optional(),
-        historyOfDiabetes: z.string().optional(),
+        historyOfLBabiesStr: z.boolean().default(false),
+        historyOfDiabetes: z.boolean().default(false),
     }).optional(),
 
     // medical history
@@ -142,10 +139,12 @@ export const PrenatalFormSchema = z.object({
         prevIllnessYr: positiveNumberSchema.optional(),
         prevHospitalization: z.string().optional(),
         prevHospitalizationYr: positiveNumberSchema.optional(),
+        previousComplications: z.string().optional(),
 
         prevIllnessData: z.array(z.object({
             prevIllness: z.string().default(''),
             prevIllnessYr: positiveNumberSchema.optional(),
+            ill_id: z.number().optional()
         })).optional(),
         prevHospitalizationData: z.array(z.object({
             prevHospitalization: z.string().default(''),
@@ -155,7 +154,7 @@ export const PrenatalFormSchema = z.object({
 
     // previous pregnancy
     previousPregnancy: z.object({
-        dateOfDelivery: dateSchema.optional(),
+        dateOfDelivery: dateSchema,
         outcome: z.string().optional(),
         typeOfDelivery: z.string().optional(),
         babysWt: positiveNumberSchema.default(0),
@@ -167,10 +166,18 @@ export const PrenatalFormSchema = z.object({
     // pregnant vaccine info
     prenatalVaccineInfo: z.object({
         vaccineType: z.string().optional(),
+        followv_date: dateSchema.optional(),
+        vacrec_totaldose: positiveNumberSchema.optional(),
+
         ttStatus: z.string().optional(),
         ttDateGiven: z.string().optional(),
-        fullyImmunized: z.boolean().optional(),
-        isTDAPAdministered: z.string().optional()
+        isTDAPAdministered: z.boolean().default(false),
+        ttRecordsHistory: z.array(z.object({
+          ttStatus: z.string().optional(),
+          ttDateGiven: z.string().optional(),
+          // isTDAPAdministered: z.boolean().optional().default(false),
+          vaccineType: z.string().optional(),
+        })).optional(),
     }),
 
     // present pregnancy
@@ -179,8 +186,8 @@ export const PrenatalFormSchema = z.object({
         para: positiveNumberSchema.optional(),
         fullterm: positiveNumberSchema.optional(),
         preterm: positiveNumberSchema.optional(),
-        pf_lmp: dateSchema.optional(),
-        pf_edc: dateSchema.optional(),
+        pf_lmp: dateSchema,
+        pf_edc: dateSchema,
     }),
 
   
@@ -201,7 +208,7 @@ export const PrenatalFormSchema = z.object({
           "ogct_100gms",
         ])
         .optional(),
-      resultDate: dateSchema.optional(),
+      resultDate: dateSchema,
       toBeFollowed: z.boolean().optional(),
       documentPath: z.string().optional(),
       labRemarks: z.string().optional(),
@@ -222,7 +229,7 @@ export const PrenatalFormSchema = z.object({
               "ogct_50gms",
               "ogct_100gms",
             ]),
-            resultDate: optionalDateSchema.optional(),
+            resultDate: dateSchema,
             toBeFollowed: z.boolean().optional(),
             documentPath: z.string().optional(),
             labRemarks: z.string().optional(),
@@ -243,33 +250,37 @@ export const PrenatalFormSchema = z.object({
 
     // follow-up schedule
     followUpSchedule: z.object({
-        followUpDate: dateSchema.optional(),
+        followUpDate: dateSchema,
         aogWeeks: positiveNumberSchema.optional(),
         aogDays: positiveNumberSchema.optional(),
     }),
 
     // guide for 4anc visits
     ancVisits: z.object({
-        firstTri: dateSchema.optional(),
-        secondTri: dateSchema.optional(),
-        thirdTriOne: dateSchema.optional(),
-        thirdTriTwo: dateSchema.optional()
+        firstTri: dateSchema,
+        firstTriTwo: dateSchema,
+        secondTri: dateSchema,
+        secondTriTwo: dateSchema,
+        thirdTriOne: dateSchema,
+        thirdTriTwo: dateSchema,
+        thirdTriThree: dateSchema,
+        thirdTriFour: dateSchema,
     }),
 
     // checklist
     assessmentChecklist: z.object({
-        increasedBP: z.boolean().optional(),
-        epigastricPain: z.boolean().optional(),
-        nausea: z.boolean().optional(),
-        blurringOfVision: z.boolean().optional(),
-        edema: z.boolean().optional(),
-        severeHeadache: z.boolean().optional(),
-        abnormalVaginalDischarges: z.boolean().optional(),
-        vaginalBleeding: z.boolean().optional(),
-        chillsFever: z.boolean().optional(),
-        diffInBreathing: z.boolean().optional(),
-        varicosities: z.boolean().optional(),
-        abdominalPain: z.boolean().optional()
+        increasedBP: z.boolean().default(false),
+        epigastricPain: z.boolean().default(false),
+        nausea: z.boolean().default(false),
+        blurringOfVision: z.boolean().default(false),
+        edema: z.boolean().default(false),
+        severeHeadache: z.boolean().default(false),
+        abnormalVaginalDischarges: z.boolean().default(false),
+        vaginalBleeding: z.boolean().default(false),
+        chillsFever: z.boolean().default(false),
+        diffInBreathing: z.boolean().default(false),
+        varicosities: z.boolean().default(false),
+        abdominalPain: z.boolean().default(false)
     }),
 
     // pregnancy plan
@@ -288,22 +299,23 @@ export const PrenatalFormSchema = z.object({
     // risk codes
     riskCodes: z.object({
         hasOneOrMoreOfTheFF: z.object({
-            prevCaesarian: z.boolean().optional(),
-            miscarriages: z.boolean().optional(),
-            postpartumHemorrhage: z.boolean().optional(),
+            prevCaesarian: z.boolean().default(false),
+            miscarriages: z.boolean().default(false),
+            postpartumHemorrhage: z.boolean().default(false),
         }),
         hasOneOrMoreOneConditions: z.object({
-            tuberculosis: z.boolean().optional(),
-            heartDisease: z.boolean().optional(),
-            diabetes: z.boolean().optional(),
-            bronchialAsthma: z.boolean().optional(),
-            goiter: z.boolean().optional()
+            tuberculosis: z.boolean().default(false),
+            heartDisease: z.boolean().default(false),
+            diabetes: z.boolean().default(false),
+            bronchialAsthma: z.boolean().default(false),
+            goiter: z.boolean().default(false)
         })
     }),
 
     // assessed by
     assessedBy: z.object({
-        assessedby: z.string().optional()
+        name: z.string().optional(),
+        id: z.string().optional()
     }),
 
     // prenatal care table

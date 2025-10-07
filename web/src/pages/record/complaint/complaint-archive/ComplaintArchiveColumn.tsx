@@ -130,7 +130,7 @@ export const archiveComplaintColumns = (): ColumnDef<Complaint>[] => [
           {firstComplainant}
           {remainingCount > 0 && (
             <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 ml-2">
-              +{remainingCount}
+              +{remainingCount} more
             </Badge>
           )}
         </div>

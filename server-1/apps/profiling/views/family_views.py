@@ -63,8 +63,6 @@ class FamilyTableView(generics.ListCreateAPIView):
                 ),
                 Value('')
             )
-        ).filter(
-           members__gt=0
         ).only(
             'fam_id',
             'fam_date_registered',
@@ -93,6 +91,7 @@ class FamilyTableView(generics.ListCreateAPIView):
 class FamilyDataView(generics.RetrieveAPIView):
   permission_classes = [AllowAny]
   serializer_class = FamilyTableSerializer # To be modified
+  queryset = Family.objects.all()
   lookup_field = 'fam_id'
   
 class FamilyDataResidentSpecificView(generics.GenericAPIView):
@@ -127,9 +126,7 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
   
   def get_queryset(self):
     household_no = self.kwargs['hh']
-    return Family.objects.annotate(
-       members=Count('family_compositions')
-    ).filter(hh=household_no, members__gt=0)
+    return Family.objects.filter(hh=household_no)
   
 class FamilyUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [AllowAny]
@@ -142,6 +139,7 @@ class FamilyUpdateView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -37,10 +37,10 @@ class SanitaryFacilitySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class FacilityDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FacilityDetails
-        fields = '__all__'
+# class FacilityDetailsSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FacilityDetails
+#         fields = '__all__'
 
 
 class NonCommunicableDiseaseSerializer(serializers.ModelSerializer):

@@ -109,7 +109,7 @@ export default function WasteIllegalDumping() {
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
       <View className="flex-row justify-between items-start mb-3">
-        <Text className="font-semibold text-xl text-primaryBlue">Report No. {item.rep_id}</Text>
+        <Text className="font-semibold text-xl">Report #{item.rep_id}</Text>
         <View className="flex-row items-center">
           {item.rep_status === "resolved" ? (
             <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
@@ -195,7 +195,6 @@ export default function WasteIllegalDumping() {
       }
       headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Illegal Dumping Reports</Text>}
       rightAction={<View className="w-10 h-10 rounded-full items-center justify-center" />}
-      wrapScroll={false}
     >
       <View className="flex-1 px-4">
         {/* Search and Filters */}

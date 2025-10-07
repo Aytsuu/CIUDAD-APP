@@ -75,7 +75,7 @@ export const FormDateAndTimeInput = ({
         return (
           <View className="mb-4">
             {label && (
-              <Text className="text-[12px] font-PoppinsRegular mb-2">{label}</Text>
+              <Text className="text-sm mb-2">{label}</Text>
             )}
             <View className="flex-row items-center gap-4">
               <TouchableOpacity

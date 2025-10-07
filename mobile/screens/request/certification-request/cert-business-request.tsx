@@ -37,9 +37,8 @@ const CertPermit: React.FC = () => {
   const addBusinessPermit = useAddBusinessPermit();
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
-  const rp = (user as any)?.rp ?? "";
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    rp
+    user?.resident?.rp_id || ""
   );
   const businessData = businessResponse?.results || [];
 
@@ -201,7 +200,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: rp,
+      rp_id: user?.resident?.rp_id || "",
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });

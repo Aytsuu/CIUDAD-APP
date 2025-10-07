@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
 import { useDebounce } from "@/hooks/use-debounce"
 
-export default function SoloFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
+export default function SoloFormLayout({ tab_params } : { tab_params?: Record<string, any> }) {
   // ================= STATE INITIALIZATION ==================
   const defaultValues = generateDefaultValues(demographicInfoSchema)
   const form = useForm<z.infer<typeof demographicInfoSchema>>({
@@ -89,6 +89,9 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
     const householdNo = tab_params?.isRegistrationTab ? tab_params?.form.watch("livingSoloSchema.householdNo") : form.watch("householdNo")?.split(" ")[0]
     const residentId = form.watch("id")?.split(" ")[0]
     let building = ""
+    console.log(residentId)
+    console.log(householdNo)
+    console.log(householdsList)
 
     if (householdNo && residentId && householdsList) {
       const ownedHouseholds = householdsList.filter((household: any) => {
@@ -96,8 +99,6 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
           return household.hh_id
         }
       })
-
-      console.log(ownedHouseholds)
 
       building = ownedHouseholds.some((household: any) => household.hh_id === householdNo) ? "owner" : ""
 
