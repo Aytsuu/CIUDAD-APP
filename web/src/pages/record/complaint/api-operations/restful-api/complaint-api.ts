@@ -4,9 +4,9 @@ export const getComplaints = () => {
   return api.get("/complaint/list/");
 };
 
-export const getComplaintById = () => {
-  return api.get(`/complaint/view/`);
-};
+// export const getComplaintById = () => {
+//   return api.get(`/complaint/view/`);
+// };
 
 export const archiveComplaint = (id: string) => {
   return api.patch(`/complaint/${id}/archive/`);

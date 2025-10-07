@@ -21,7 +21,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+// import { useAuth } from "@/context/AuthContext";
 // import { useNotifications } from "@/context/NotificationContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -32,7 +32,7 @@ export const ComplaintForm = () => {
   const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  // const { user } = useAuth();
   // const { send } = useNotifications();
   const navigate = useNavigate();
 

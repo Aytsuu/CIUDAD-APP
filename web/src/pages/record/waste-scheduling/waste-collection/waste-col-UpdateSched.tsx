@@ -22,13 +22,14 @@ import { useGetWasteTrucks, type Trucks  } from './queries/wasteColFetchQueries'
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
 import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
+import { useGetWasteCollectionSchedFull } from './queries/wasteColFetchQueries';
 import { useAuth } from "@/context/AuthContext";
 
 
 
 interface UpdateWasteColProps {
     wc_num: number;
-    wc_date: string;
+    wc_day: string;
     wc_time: string;
     wc_add_info: string;
     wc_is_archive: boolean;
@@ -50,7 +51,18 @@ const announcementOptions = [
 ];
 
 
-function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
+const dayOptions = [
+    { id: "Monday", name: "Monday" },
+    { id: "Tuesday", name: "Tuesday" },
+    { id: "Wednesday", name: "Wednesday" },
+    { id: "Thursday", name: "Thursday" },
+    { id: "Friday", name: "Friday" },
+    { id: "Saturday", name: "Saturday" },
+    { id: "Sunday", name: "Sunday" },
+]
+
+
+function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, truck_id, driver_id, collector_ids, onSuccess } : UpdateWasteColProps) {
     
     const { user } = useAuth();
 
@@ -59,8 +71,9 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
+    const { data: wasteCollectionData = [], isLoading: isLoadingWasteData } = useGetWasteCollectionSchedFull();
 
-    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
+    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
 
 
     //UPDATE QUERY MUTATIONS
@@ -94,7 +107,7 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
     const form = useForm<z.infer<typeof WasteColSchedSchema>>({
         resolver: zodResolver(WasteColSchedSchema),
         defaultValues: {
-            date: wc_date,
+            day: wc_day,
             time: wc_time,
             additionalInstructions: wc_add_info,
             selectedSitios: String(sitio_id),
@@ -113,6 +126,53 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
             const [hour, minute] = values.time.split(":");
             const formattedTime = `${hour}:${minute}:00`;
 
+            //checks for sitio with the same day
+            const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
+            
+            const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+                schedule.wc_day === values.day &&
+                schedule.sitio_name === selectedSitioName &&
+                schedule.wc_num !== Number(wc_num)          
+            );
+
+            //checks for overlapping day and time
+            const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+                schedule.wc_day === values.day && 
+                schedule.wc_time === formattedTime &&
+                schedule.wc_num !== Number(wc_num) 
+            );     
+            
+            //return if there is overlapping schedule
+            if (hasDuplicateSchedule) {
+                
+                form.setError("day", {
+                    type: "manual",
+                    message: `There is already a schedule for ${values.day} at ${values.time}.`,
+                });          
+                
+                form.setError("time", {
+                    type: "manual",
+                    message: `There is already a schedule for ${values.day} at ${values.time}.`,
+                });  
+
+                return; 
+            }           
+
+            //return if the sitio has already a schedule for that day
+            if (hasSameSitioSameDay) {
+                form.setError("day", {
+                    type: "manual",
+                    message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+                });
+
+                form.setError("selectedSitios", {
+                    type: "manual",
+                    message: `${selectedSitioName} already has a schedule on ${values.day}.`,
+                });
+                return;
+            }        
+      
+      
             if(!values.additionalInstructions){
                 values.additionalInstructions = "None";
             }
@@ -208,12 +268,11 @@ function UpdateWasteColSched({wc_num, wc_date, wc_time, wc_add_info, sitio_id, t
 
 
                     {/* Date and Time */}
-                    <FormDateTimeInput
+                    <FormSelect
                         control={form.control}
-                        name="date"
-                        type="date"
-                        label="Date"
-                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                        name="day"
+                        label="Collection Day"
+                        options={dayOptions}
                     />
 
                     <FormDateTimeInput

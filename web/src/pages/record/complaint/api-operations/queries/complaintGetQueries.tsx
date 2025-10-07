@@ -1,7 +1,7 @@
 
 
 import {  useQuery } from "@tanstack/react-query";
-import { getArchivedComplaints, getComplaintById, getComplaints } from "../restful-api/complaint-api";
+import { getArchivedComplaints, getComplaints } from "../restful-api/complaint-api";
 import api from "@/api/api";
 
 export const useGetComplaint = () => {
@@ -12,12 +12,20 @@ export const useGetComplaint = () => {
     })
 }
 
-export const useGetComplaintById = (comp_id: string) => 
-    useQuery({
-        queryKey: ["complaint", comp_id],
-        queryFn: () => getComplaintById(comp_id).then(res => res.data),
-        enabled: !!comp_id,
-    });
+export const useGetComplaintById = (comp_id: string) =>
+  useQuery({
+    queryKey: ["complaint", comp_id],
+    queryFn: async () => {
+      try {
+        const res = await api.post("complaint/view/", { comp_id });
+        console.log(res.data)
+        return res.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    enabled: !!comp_id,
+  });
 
 export const useGetArchivedComplaints = () =>
     useQuery({

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   User,
   AlertCircle,
@@ -9,16 +9,14 @@ import {
   Clock,
   Edit2,
   Forward,
-  Mail,
   Phone,
   FileText,
-  UserX,
   Download,
 } from "lucide-react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { getComplaintById } from "./api-operations/restful-api/complaint-api";
+// import { getComplaintById } from "./api-operations/restful-api/complaint-api";
 import { Printer } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 // Type definitions
@@ -106,18 +104,18 @@ const formatFileSize = (bytes?: number): string => {
 };
 
 export function ComplaintViewRecord() {
-  const { comp_id } = useParams<{ comp_id: string }>();
+  // const { comp_id } = useParams<{ comp_id: string }>();
   const { state } = useLocation() as { state: LocationState | null };
-  const [complaintData, setComplaintData] = useState<ComplaintData | null>(
+  const [complaintData, _setComplaintData] = useState<ComplaintData | null>(
     state?.complaint || null
   );
   const [activeSection, setActiveSection] = useState<ActiveSection>("details");
 
-  useEffect(() => {
-    if (!complaintData && comp_id) {
-      getComplaintById().then((res) => setComplaintData(res.data));
-    }
-  }, [comp_id, complaintData]);
+  // useEffect(() => {
+  //   if (!complaintData && comp_id) {
+  //     getComplaintById().then((res) => setComplaintData(res.data));
+  //   }
+  // }, [comp_id, complaintData]);
 
   const renderContent = () => {
     if (!complaintData) return null;
