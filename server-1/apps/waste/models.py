@@ -36,7 +36,7 @@ class WasteCollectionStaff(models.Model):
 
 
 class WasteReport(models.Model):
-    rep_id = models.BigAutoField(primary_key=True)
+    rep_id = models.CharField(primary_key=True, max_length=20, editable=False)
     rep_matter = models.CharField(default="none")
     rep_location = models.CharField(default="none")
     rep_add_details = models.CharField(max_length=200, null=True)
@@ -44,7 +44,7 @@ class WasteReport(models.Model):
     rep_anonymous = models.BooleanField(default=False)
     rep_contact = models.CharField(default="none")
     rep_status = models.CharField(max_length=100, default="pending")
-    rep_cancel_reason =  models.CharField(max_length=200, null=True)
+    rep_cancel_reason = models.CharField(max_length=200, null=True)
     rep_date = models.DateTimeField(null=True)
     rep_date_resolved = models.DateTimeField(null=True)
     rep_date_cancelled = models.DateTimeField(null=True)
@@ -73,12 +73,29 @@ class WasteReport(models.Model):
         db_column='staff_id'
     )
 
-
-
-
-    # ra_id = models.ForeignKey(ResidentAccount, on_delete=models.CASCADE)
-    # sitio_id = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
+    def save(self, *args, **kwargs):
+        if not self.rep_id:
+            # Get the current year's last two digits
+            year_suffix = datetime.now().strftime('%y')
+            
+            # Find the highest existing ID for this year
+            existing_ids = WasteReport.objects.filter(
+                rep_id__startswith=f'IDR',
+                rep_id__endswith=f'-{year_suffix}'
+            ).order_by('-rep_id')
+            
+            if existing_ids.exists():
+                # Extract the number part and increment
+                last_id = existing_ids.first().rep_id
+                number_part = int(last_id.split('IDR')[1].split('-')[0])
+                new_number = number_part + 1
+            else:
+                new_number = 1
+            
+            # Format the new ID with leading zeros
+            self.rep_id = f'IDR{new_number:04d}-{year_suffix}'
+        
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'waste_report'
@@ -200,8 +217,7 @@ class WasteTruck(models.Model):
 
 class WasteCollectionSched(models.Model):
     wc_num = models.BigAutoField(primary_key=True)
-    # wc_date = models.DateField(null=True)
-    wc_day = models.CharField(max_length=200, default="None")    
+    wc_date = models.DateField(null=True)
     wc_time = models.TimeField(null=True)
     wc_add_info = models.CharField(max_length=200, null=True)
     wc_is_archive = models.BooleanField(default=False)

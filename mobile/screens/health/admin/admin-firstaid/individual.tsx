@@ -12,7 +12,6 @@ import { FirstAidRecord } from "./types";
 import { calculateAge } from "@/helpers/ageCalculator";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
-import { StatsCard } from "@/components/healthcomponents/stats-card";
 
 const PatientInfoCard = ({ patientData }: { patientData: any }) => {
   const formatAddress = () => {

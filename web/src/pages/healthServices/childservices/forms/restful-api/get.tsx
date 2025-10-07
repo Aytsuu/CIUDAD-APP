@@ -72,9 +72,21 @@ export const getNextufc = async () => {
 export const getLatestVitals = async (id:any) => {
   try {
     const response = await api2.get(`/child-health/latest-vital-bm/${id}/`);
-    return response.data;
+    console.log("Latest Vitals Response:", response.data);
+    return response.data.data;
   } catch (err) {
     console.error("Error fetching next UFC number:", err);
     throw err;
   }
 };
+
+
+export const getChildnotesfollowup = async (chrec_id: any) => {
+  try {
+    const response = await api2.get(`/child-health/patients/${chrec_id}/pending-followups-with-notes/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+  }

@@ -131,8 +131,6 @@ export default function PrenatalFormSecPg({
   }, [labResults, form])
 
   const handleNext = async () => {
-    window.scrollTo(0, 0) 
-
     // validate lab results first
     const labValidation = validateLabResults(labResults)
     console.log("Lab validation result:", labValidation.isValid, "Errors:", labValidation.errors)

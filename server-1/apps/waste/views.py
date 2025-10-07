@@ -10,6 +10,7 @@ from apps.profiling.models import Sitio
 from rest_framework import generics
 from .signals import archive_completed_hotspots
 from rest_framework.permissions import AllowAny
+from apps.act_log.utils import ActivityLogMixin
 from django.db.models import OuterRef, Subquery
 from django.db.models import Q
 from datetime import date, timedelta
@@ -17,16 +18,16 @@ from datetime import date, timedelta
 # Create your views here.
 #KANI 3RD
 
-class WasteEventView(generics.ListCreateAPIView):
+class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteEventSerializer
     queryset = WasteEvent.objects.all()
 
-class WasteCollectionStaffView(generics.ListCreateAPIView):
+class WasteCollectionStaffView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
 # WASTE COLLECTION RETRIEVE / VIEW
-class WasteCollectionSchedView(generics.ListCreateAPIView):
+class WasteCollectionSchedView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectionSchedSerializer
     queryset = WasteCollectionSched.objects.all()
 
@@ -38,7 +39,7 @@ class WasteCollectionSchedView(generics.ListCreateAPIView):
 #     serializer_class = WasteCollectionAssignmentSerializer
 #     queryset = WasteCollectionAssignment.objects.all()
 
-class WasteCollectorView(generics.ListCreateAPIView):
+class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
 
@@ -87,7 +88,7 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
 #     serializer_class = WasteCollectionAssignmentSerializer
 #     queryset = WasteCollectionAssignment.objects.all()
 
-class WasteCollectorView(generics.ListCreateAPIView):
+class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
 
@@ -111,7 +112,7 @@ class WasteCollectionSchedFullDataView(generics.ListAPIView):
     queryset = WasteCollectionSched.objects.all()
 
 # WASTE COLLECTION UPDATE
-class WasteCollectionSchedUpdateView(generics.RetrieveUpdateAPIView):
+class WasteCollectionSchedUpdateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     queryset = WasteCollectionSched.objects.all()
     serializer_class = WasteCollectionSchedSerializer
     lookup_field = 'wc_num'
@@ -174,7 +175,7 @@ class UpcomingHotspotView(generics.ListAPIView):
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class WasteHotspotView(generics.ListCreateAPIView):
+class WasteHotspotView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
@@ -184,7 +185,7 @@ class WasteHotspotView(generics.ListCreateAPIView):
             'sitio_id'                   
         ).all().order_by('wh_date', 'wh_start_time', 'wh_end_time')
 
-class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
+class UpdateHotspotView(ActivityLogMixin, generics.RetrieveUpdateAPIView): 
     serializer_class = WasteHotspotSerializer
     queryset = WasteHotspot.objects.all()
     lookup_field = 'wh_num'
@@ -275,7 +276,7 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
 #     queryset = WasteReport.objects.all()
 
 
-class WasteReportView(generics.ListCreateAPIView):
+class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
     def get_queryset(self):
         queryset = WasteReport.objects.all()
@@ -288,7 +289,7 @@ class WasteReportView(generics.ListCreateAPIView):
         return queryset
     
 
-class UpdateWasteReportView(generics.RetrieveUpdateAPIView):
+class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()
     lookup_field = 'rep_id'
@@ -407,7 +408,7 @@ class WasteTruckView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class WasteTruckDetailView(generics.RetrieveUpdateDestroyAPIView):
+class WasteTruckDetailView(ActivityLogMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WasteTruckSerializer
     queryset = WasteTruck.objects.all()
     lookup_field = 'truck_id'
@@ -457,7 +458,7 @@ class WasteTruckDetailView(generics.RetrieveUpdateDestroyAPIView):
             
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class WasteTruckRestoreView(generics.UpdateAPIView):
+class WasteTruckRestoreView(ActivityLogMixin, generics.UpdateAPIView):
     queryset = WasteTruck.objects.filter(truck_is_archive=True)
     serializer_class = WasteTruckSerializer
     lookup_field = 'truck_id'
@@ -472,7 +473,7 @@ class WasteTruckRestoreView(generics.UpdateAPIView):
 # get Driver for garbage Collection Form
 class DriverPersonnelAPIView(APIView):
     def get(self, request, *args, **kwargs): 
-        allowed_positions = ["Waste Driver", "Truck Driver", "Driver"]  
+        allowed_positions = ["WASTE DRIVER", "TRUCK DRIVER", "DRIVER", "DRIVER LOADER"]  
         
         drivers = WastePersonnel.objects.filter(
             staff_id__pos__pos_title__in=allowed_positions
@@ -487,7 +488,7 @@ class DriverPersonnelAPIView(APIView):
 #get Collectors for garbage collection Form
 class CollectorPersonnelAPIView(APIView):
     def get(self, request, *args, **kwargs): 
-        allowed_positions = ["Waste Collector", "Collector"]  
+        allowed_positions = ["WASTE COLLECTOR", "COLLECTOR","LOADER"]  
         
         collectors = WastePersonnel.objects.filter( 
             staff_id__pos__pos_title__in=allowed_positions
@@ -500,12 +501,12 @@ class CollectorPersonnelAPIView(APIView):
         return Response(data)
     
 #get Sitio 
-class SitioListView(generics.ListCreateAPIView):
+class SitioListView(ActivityLogMixin, generics.ListCreateAPIView):
     # permission_classes = [AllowAny]
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
 
-class WasteCollectorView(generics.ListCreateAPIView):
+class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
 
@@ -653,7 +654,7 @@ class GarbagePickupCompletedByDriverView(generics.ListAPIView):
             'pickup_request_decision_set' 
         ).distinct()
 
-class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
+class UpdateGarbagePickupRequestStatusView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'
@@ -666,7 +667,7 @@ class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class UpdatePickupAssignmentView(generics.UpdateAPIView):
+class UpdatePickupAssignmentView(ActivityLogMixin, generics.UpdateAPIView):
     serializer_class = PickupAssignmentSerializer
     queryset = Pickup_Assignment.objects.all()
     lookup_field = 'pick_id'
@@ -679,24 +680,24 @@ class UpdatePickupAssignmentView(generics.UpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class PickupRequestDecisionView(generics.ListCreateAPIView):
+class PickupRequestDecisionView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
 
-class PickupAssignmentView(generics.ListCreateAPIView):
+class PickupAssignmentView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = PickupAssignmentSerializer
     queryset = Pickup_Assignment.objects.all()
 
-class AssignmentCollectorView(generics.ListCreateAPIView):
+class AssignmentCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = AssignmentCollectorSerializer
     queryset = Assignment_Collector.objects.all()
 
-class PickupConfirmationView(generics.ListCreateAPIView):
+class PickupConfirmationView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = PickupConfirmationSerializer
     queryset = Pickup_Confirmation.objects.all()
 
     
-class UpdatePickupConfirmationView(generics.RetrieveUpdateAPIView):
+class UpdatePickupConfirmationView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     serializer_class = PickupConfirmationSerializer
     queryset = Pickup_Confirmation.objects.all()
     lookup_field = 'garb_id'

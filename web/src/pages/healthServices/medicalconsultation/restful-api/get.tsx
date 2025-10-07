@@ -44,23 +44,22 @@ export const getMedicalRecord = async (params?: { page?: number; page_size?: num
     throw err;
   }
 };
-
-export const getConsultationHistory = async (patientId: string, page: number, pageSize: number): Promise<any> => {
+export const getConsultationHistory = async (patientId?: string, page?: number, pageSize?: number, searchQuery?: string): Promise<any> => {
   try {
     const params = new URLSearchParams();
-    params.append("page", page.toString());
-    params.append("page_size", pageSize.toString());
 
-    const response = await api2.get(`medical-consultation/view-medcon-record/${patientId}/?${params.toString()}`);
+    if (page !== undefined) params.append("page", page.toString());
+    if (pageSize !== undefined) params.append("page_size", pageSize.toString());
+    if (searchQuery?.trim()) params.append("search", searchQuery.trim());
+
+    const url = `medical-consultation/view-medcon-record/${patientId ?? ""}/?${params.toString()}`;
+    const response = await api2.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching consultation history:", error);
     throw error;
   }
 };
-
-
-
 export const getMedConPHHistory =async(pat_id:string)=>{
   try {
     const response = await api2.get(`patientrecords/patientPHIllnessCheck/${pat_id}/`);
@@ -70,3 +69,66 @@ export const getMedConPHHistory =async(pat_id:string)=>{
     throw error;
   }
 }
+
+
+export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
+  try {
+    const params = new URLSearchParams();
+    if (searchQuery) {
+      params.append('search', searchQuery);
+    }
+    
+    const url = `/medical-consultation/family-medhistory/${pat_id}/${searchQuery ? `?${params.toString()}` : ''}`;
+    const response = await api2.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching family history:", error);
+    throw error;
+  }
+};
+
+
+export const getpendingAppointments = async (page: number, pageSize: number, search: string = "", dateFilter: string = "all"): Promise<any> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("page_size", pageSize.toString());
+    if (search) {
+      params.append("search", search);
+    }
+    if (dateFilter && dateFilter !== "all") {
+      params.append("date_filter", dateFilter);
+    }
+
+    const response = await api2.get("/medical-consultation/pending-medicalcon-appointments/", { params: params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching processing medicine requests:", error);
+    throw error;
+  }
+};
+
+
+
+
+
+export const getconfirmedAppointments = async (page: number, pageSize: number, search: string = "", dateFilter: string = "all"): Promise<any> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("page_size", pageSize.toString());
+    if (search) {
+      params.append("search", search);
+    }
+    if (dateFilter && dateFilter !== "all") {
+      params.append("date_filter", dateFilter);
+    }
+
+    const response = await api2.get("/medical-consultation/confirmed-medicalcon-appointments/", { params: params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching processing medicine requests:", error);
+    throw error;
+  }
+};
+

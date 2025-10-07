@@ -498,4 +498,3 @@ def map_physical_exam_display_values(data):
 #             status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #         )
 
-

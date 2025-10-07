@@ -23,7 +23,7 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
           <div className="flex flex-col w-full">
             <div className="font-medium truncate">{fullName}</div>
             <div className="text-sm text-darkGray">
-              {row.original.sex}, {row.original.age} old
+              {row.original.sex}, {row.original.age} 
             </div>
           </div>
         </div>

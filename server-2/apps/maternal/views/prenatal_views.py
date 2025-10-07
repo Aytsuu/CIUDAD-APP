@@ -39,7 +39,6 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class PrenatalAppointmentRequestView(generics.ListAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
     queryset = PrenatalAppointmentRequest.objects.all()

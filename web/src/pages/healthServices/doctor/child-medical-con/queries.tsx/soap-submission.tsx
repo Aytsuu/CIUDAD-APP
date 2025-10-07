@@ -53,7 +53,7 @@ export const useSubmitSoapForm = () => {
       showSuccessToast("SOAP Form submitted successfully");
       queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
       queryClient.invalidateQueries({ queryKey: ["patientMedicalDetails"] });
-      queryClient.invalidateQueries({ queryKey: ["CombinedHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["MedicalRecord"] });
       queryClient.invalidateQueries({ queryKey: ["consultationHistory"] });
       queryClient.invalidateQueries({ queryKey: ["pendingSoapForms"] });
@@ -63,6 +63,7 @@ export const useSubmitSoapForm = () => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
       
       navigate(-1);
     },

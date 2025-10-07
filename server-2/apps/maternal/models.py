@@ -18,17 +18,18 @@ year = str(today.year)
 
 class PrenatalAppointmentRequest(models.Model):
     par_id = models.BigAutoField(primary_key=True)
-    requested_at = models.DateField(auto_now_add=True)
-    approved_at = models.DateField(null=True, blank=True)
-    cancelled_at = models.DateField(null=True, blank=True)
-    completed_at = models.DateField(null=True, blank=True)
-    rejected_at = models.DateField(null=True, blank=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    rejected_at = models.DateTimeField(null=True, blank=True)
     reason = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
+        ('completed', 'Completed'),
         ('rejected', 'Rejected'),
     ], default='pending')
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='pa_request')

@@ -1,12 +1,11 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, FileInput, ReceiptText, Search } from 'lucide-react';
+import { X, FileInput, Search } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import ReceiptForm from "./treasurer-create-receipt-form";
 import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
@@ -50,11 +49,11 @@ export const columns: ColumnDef<ServiceCharge>[] = [
     },
     { accessorKey: "action", 
         header: "Action",
-        cell: ({ row }) =>(
+        cell: ({  }) =>(
           <div className="flex justify-center gap-1">
-              <TooltipLayout
-              trigger={
-                  <DialogLayout
+              {/* <TooltipLayout
+                trigger={
+                    <DialogLayout
                     trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
                     className="flex flex-col"
                     title="Create Receipt"
@@ -77,7 +76,7 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                         })()
                     } 
                   />
-              } content="Create Receipt"/>
+              } content="Create Receipt"/> */}
               <TooltipLayout 
                trigger={
                   <DialogLayout

@@ -30,7 +30,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
 
   // Fetch combined records
   const { data: combinedData, isLoading: combinedLoading } = useQuery({
-    queryKey: ["CombinedHealthRecords", debouncedSearchQuery, recordTypeFilter, currentPage, pageSize],
+    queryKey: ["combinedHealthRecords", debouncedSearchQuery, recordTypeFilter, currentPage, pageSize],
     queryFn: async () => {
       const params = new URLSearchParams({
         search: debouncedSearchQuery,
@@ -244,7 +244,7 @@ export default function ForwardedCombinedHealthRecordsTable() {
           <div className="flex justify-center gap-2">
             <ViewButton
               onClick={() => {
-                navigate(row.original.record_type === "child-health" ? "/forwarded-records/medical-consultation/child" : "/forwarded-records/medical-consultation/adult", {
+                navigate(row.original.record_type === "child-health" ? "/referred-patients/child" : "/referred-patients/adult", {
                   state: {
                     patientData,
                     // Pass only the current row's data instead of combinedData
@@ -367,7 +367,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
               options={[
                 { id: "all", name: "All Types" },
                 { id: "child-health", name: "Child Health" },
-                { id: "medical-consultation", name: "Medical Consultation" }
+                { id: "medical-consultation", name: "Medical Consultation" },
+                { id: "prenatal", name: "Prenatal" }
               ]}
               value={recordTypeFilter}
               onChange={(value) => setRecordTypeFilter(value)}

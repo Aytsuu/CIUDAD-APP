@@ -21,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 interface IncomeandExpenseEditProps{
     iet_num: number;
     iet_serial_num: string;
+    iet_check_num: string;
     iet_datetime: string;
     iet_entryType: string;
     iet_particular_id: number;
@@ -42,7 +43,7 @@ interface IncomeandExpenseEditProps{
 
 
 
-function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_actual_amount, iet_additional_notes, year, files, onSuccess} : IncomeandExpenseEditProps) {    
+function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_check_num, iet_datetime, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_actual_amount, iet_additional_notes, year, files, onSuccess} : IncomeandExpenseEditProps) {    
     
     const { user } = useAuth();
     const inputCss = "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
@@ -86,6 +87,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_en
         resolver: zodResolver(IncomeExpenseEditFormSchema),
         defaultValues: {
             iet_serial_num: String(iet_serial_num),
+            iet_check_num: String(iet_check_num),
             iet_datetime: new Date(iet_datetime).toISOString().slice(0, 16),
             iet_entryType: iet_entryType === "Income" ? '0' : '1',
             iet_particulars: `${iet_particular_id} ${iet_particulars_name}`,
@@ -128,6 +130,19 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_en
 
 
         const particulars = form.getValues("iet_particulars");
+
+        if(!values.iet_serial_num && !values.iet_check_num){
+            form.setError('iet_serial_num', {
+                type: 'manual',
+                message: "Please enter a data either on this field"
+            });
+
+            form.setError('iet_check_num', {
+                type: 'manual',
+                message: "Please enter a data either on this field"
+            });
+            return; 
+        }        
     
         if (!values.iet_amount || !particulars) {
 
@@ -311,13 +326,29 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_datetime, iet_en
                             <FormItem>
                                 <FormLabel>Serial No.</FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="(e.g. 123456)" type="text" readOnly={!isEditing} />
+                                    <Input {...field} placeholder="(e.g. 11-231-12)" type="text" readOnly={!isEditing} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
                         )}
                     />
                 </div>
+
+                <div className="pb-5">
+                    <FormField
+                        control={form.control}
+                        name="iet_check_num"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Check No.</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="(e.g. 11-231-12)" type="text" readOnly={!isEditing} />
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+                </div>                
 
 
                 <div className="pb-5">

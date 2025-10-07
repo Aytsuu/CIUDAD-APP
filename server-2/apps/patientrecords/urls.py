@@ -21,6 +21,7 @@ urlpatterns = [
     path('patients/', PatientListView.as_view(), name='patient-list'),
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
@@ -49,6 +50,10 @@ urlpatterns = [
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
+    path('philhealth-formatted-illness/', PHIllnessAPIView.as_view(), name="philhealth-formatted-illness"),
+    path('patientPHIllnessCheck/<str:pat_id>/', PatientPHIllnessCheckSimpleAPIView.as_view(), name="patient-ph-illness-check-simple"),
+   
+   
    
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),

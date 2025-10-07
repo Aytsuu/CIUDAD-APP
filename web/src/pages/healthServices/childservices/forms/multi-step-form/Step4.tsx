@@ -1,4 +1,3 @@
-"use client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
@@ -15,17 +14,18 @@ import { NutritionalStatusCalculator } from "../../../../../components/ui/nutrit
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft, } from "lucide-react";
+import { Pill, Loader2, AlertTriangle, HeartPulse, ChevronLeft } from "lucide-react";
 import { useMemo, useEffect, useState } from "react";
 import { z } from "zod";
 import { createHistoricalSupplementStatusColumns } from "./columns";
 import { edemaSeverityOptions } from "./options";
-import { LastPageProps } from "./types";
 import { isToday } from "@/helpers/isToday";
 import { useChildLatestVitals } from "../queries/fetchQueries";
 import { VitalSignFormCard, VitalSignsCardView } from "./vitalsisgns-card";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Combobox } from "@/components/ui/combobox";
+import { LastPageProps } from "./types";
+import { PendingFollowupsSection } from "./followupPending";
 
 export default function LastPage({
   onPrevious,
@@ -38,7 +38,8 @@ export default function LastPage({
   isSubmitting,
   newVitalSigns,
   setNewVitalSigns,
-  status
+  passed_status,
+  chrecId
 }: LastPageProps) {
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingAnemiaIndex, setEditingAnemiaIndex] = useState<number | null>(null);
@@ -47,18 +48,29 @@ export default function LastPage({
   const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({ page: 1, pageSize: 10, search: "", is_temp: true });
   const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [allowNotesEdit, setAllowNotesEdit] = useState(false);
+
+  // Fixed logic: allow notes edit when passed_status is NOT immunization
+  useEffect(() => {
+    setAllowNotesEdit(passed_status !== "immunization");
+  }, [passed_status]);
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
   const { data: staffOptions, isLoading } = fetchStaffWithPositions();
 
+
+  
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
-    const todaysHistoricalRecord = historicalVitalSigns.find((vital) => isToday(vital.date));
-    return !todaysHistoricalRecord && newVitalSigns.length === 0;
+    const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
+    const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
+    return !hasTodaysHistoricalRecord && !hasTodaysNewRecord;
   });
 
   const medicineStocksOptions = medicineData?.medicines || [];
   const medicinePagination = medicineData?.pagination;
+
+
 
   const handleMedicineSearch = (searchTerm: string) => {
     setMedicineSearchParams((prev: any) => ({
@@ -108,6 +120,7 @@ export default function LastPage({
       status: formData.status || "recorded",
       nutritionalStatus: formData.nutritionalStatus || {},
       edemaSeverity: formData.edemaSeverity || "None",
+      passed_status: passed_status
     }
   });
 
@@ -116,9 +129,9 @@ export default function LastPage({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
-      wt: latestVitalsData?.data?.weight || undefined,
-      ht: latestVitalsData?.data?.height || undefined,
-      temp: latestVitalsData?.data?.vital_temp,
+      wt: latestVitalsData.weight || undefined,
+      ht: latestVitalsData.height || undefined,
+      temp: latestVitalsData.vital_temp,
       follov_description: "",
       followUpVisit: "",
       followv_status: "pending",
@@ -128,14 +141,15 @@ export default function LastPage({
     }
   });
 
+
   const editVitalSignForm = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
       date: "",
       age: "",
-      wt: undefined,
-      ht: undefined,
-      temp: undefined,
+      wt: latestVitalsData.weight || undefined,
+      ht: latestVitalsData.height || undefined,
+      temp: latestVitalsData.vital_temp,
       follov_description: "",
       followUpVisit: "",
       notes: "",
@@ -179,9 +193,15 @@ export default function LastPage({
     return sorted[0];
   };
 
-  const todaysHistoricalRecord = useMemo(() => {
-    return historicalVitalSigns.find((vital) => isToday(vital.date));
-  }, [historicalVitalSigns]);
+  // const todaysHistoricalRecord = useMemo(() => {
+  //   return historicalVitalSigns.find((vital) => isToday(vital.date));
+  // }, [historicalVitalSigns]);
+
+  const hasTodaysVitalSigns = useMemo(() => {
+    const hasTodaysHistorical = historicalVitalSigns.some((vital) => isToday(vital.date));
+    const hasTodaysNew = newVitalSigns.some((vital) => isToday(vital.date));
+    return hasTodaysHistorical || hasTodaysNew;
+  }, [historicalVitalSigns, newVitalSigns]);
 
   const combinedVitalSignsForTable = useMemo(() => {
     return newVitalSigns.map((vital, index) => ({
@@ -191,9 +211,9 @@ export default function LastPage({
     }));
   }, [newVitalSigns, currentAge]);
 
-  const shouldShowGeneralHealthSections = useMemo(() => {
-    return !todaysHistoricalRecord;
-  }, [todaysHistoricalRecord]);
+  // const shouldShowGeneralHealthSections = useMemo(() => {
+  //   return !hasTodaysVitalSigns;
+  // }, [hasTodaysVitalSigns]);
 
   const latestOverallVitalSign = useMemo(() => {
     if (newVitalSigns.length > 0) {
@@ -202,10 +222,13 @@ export default function LastPage({
     return getLatestVitalSigns(historicalVitalSigns);
   }, [newVitalSigns, historicalVitalSigns]);
 
+  // FIXED: Simplified nutritional calculator condition
   const shouldShowNutritionalStatusCalculator = useMemo(() => {
-    const hasAgeAndHeight = currentAge && latestOverallVitalSign?.ht;
-    return hasAgeAndHeight && ((newVitalSigns.length > 0 && !todaysHistoricalRecord) || (latestOverallVitalSign && !isToday(latestOverallVitalSign.date)));
-  }, [currentAge, latestOverallVitalSign, newVitalSigns.length, todaysHistoricalRecord]);
+    // Basic data check - show if we have age, weight, and height
+    const hasRequiredData = currentAge && latestOverallVitalSign?.wt !== undefined && latestOverallVitalSign?.ht !== undefined;
+    
+    return hasRequiredData;
+  }, [currentAge, latestOverallVitalSign?.wt, latestOverallVitalSign?.ht]);
 
   const hasSevereMalnutrition = useMemo(() => {
     if (!nutritionalStatus) return false;
@@ -214,8 +237,8 @@ export default function LastPage({
   }, [nutritionalStatus]);
 
   const shouldShowSevereMalnutritionWarning = useMemo(() => {
-    return hasSevereMalnutrition && !todaysHistoricalRecord;
-  }, [hasSevereMalnutrition, todaysHistoricalRecord]);
+    return hasSevereMalnutrition;
+  }, [hasSevereMalnutrition]);
 
   const canSubmit = useMemo(() => {
     return newVitalSigns && newVitalSigns.length > 0 && hasFormChanges;
@@ -280,6 +303,13 @@ export default function LastPage({
       updateFormData({ vitalSigns: updatedVitalSigns });
     }
   }, [newVitalSigns, currentAge, setValue, updateFormData, setNewVitalSigns]);
+
+  useEffect(() => {
+    const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
+    const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
+
+    setShowVitalSignsForm(!hasTodaysHistoricalRecord && !hasTodaysNewRecord);
+  }, [historicalVitalSigns, newVitalSigns]);
 
   useEffect(() => {
     if (status === "immunization") {
@@ -443,40 +473,11 @@ export default function LastPage({
             </div>
           )}
 
-          {/* {!canSubmit && !showVitalSignsForm && (
-            <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
-              <h4 className="font-medium text-yellow-800">⚠️ Required Information Missing</h4>
-              <p className="mt-1 text-sm text-yellow-700">{newVitalSigns.length === 0 ? "Please add at least one vital sign record before submitting the form." : !hasFormChanges ? "No changes detected. Please make changes to the form before submitting." : "Please complete all required fields."}</p>
-            </div>
-          )} */}
+          {/* Pending Followups Section */}
+          <PendingFollowupsSection chrecId={chrecId || ""} />
 
-          {showVitalSignsForm && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold">Add New Vital Signs</h3>
-              <Form {...vitalSignForm}>
-                <VitalSignFormCard 
-                  title="New Vital Signs" 
-                  control={vitalSignForm.control} 
-                  handleSubmit={vitalSignForm.handleSubmit} 
-                  onSubmit={handleAddVitalSign} 
-                  onCancel={() => setShowVitalSignsForm(false)} 
-                  submitButtonText="Add Vital Signs" 
-                  cancelButtonText="Cancel" 
-                  isReadOnly={false}
-                />
-              </Form>
-            </div>
-          )}
-
-          {!showVitalSignsForm && newVitalSigns.length === 0 && (
-            <div className="flex justify-end">
-              <Button type="button" onClick={() => setShowVitalSignsForm(true)}>
-                Add New Vital Signs
-              </Button>
-            </div>
-          )}
-
-          {newVitalSigns.length > 0 && (
+          {/* Always show today's vital signs if they exist */}
+          {hasTodaysVitalSigns && (
             <div className="pt-4">
               <div className="border-b border-gray-200 bg-white px-4 py-3">
                 <h3 className="text-sm font-semibold text-gray-700">Today's Entry</h3>
@@ -488,19 +489,48 @@ export default function LastPage({
                   editVitalSignFormControl={editVitalSignFormControl}
                   editVitalSignFormHandleSubmit={editVitalSignFormHandleSubmit}
                   onUpdateVitalSign={handleUpdateVitalSign}
-                  onStartEdit={(index: any) => {
+                  onStartEdit={(index: number, __) => {
                     setEditingRowIndex(index);
                   }}
                   onCancelEdit={() => {
                     setEditingRowIndex(null);
                   }}
                   editVitalSignFormReset={editVitalSignForm.reset}
+                  allowNotesEdit={allowNotesEdit}
                 />
               </Form>
             </div>
           )}
 
-          {shouldShowGeneralHealthSections && (
+          {/* Only show the form if no vital signs exist for today */}
+          {showVitalSignsForm && !hasTodaysVitalSigns && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold">Add New Vital Signs</h3>
+              <Form {...vitalSignForm}>
+                <VitalSignFormCard
+                  title="New Vital Signs"
+                  control={vitalSignForm.control}
+                  handleSubmit={vitalSignForm.handleSubmit}
+                  onSubmit={handleAddVitalSign}
+                  onCancel={() => setShowVitalSignsForm(false)}
+                  submitButtonText="Add Vital Signs"
+                  cancelButtonText="Cancel"
+                  isReadOnly={false}
+                  allowNotesEdit={allowNotesEdit}
+                />
+              </Form>
+            </div>
+          )}
+
+          {/* Show "Add New Vital Signs" button only when no today's record exists */}
+          {!showVitalSignsForm && !hasTodaysVitalSigns && (
+            <div className="flex justify-end">
+              <Button type="button" onClick={() => setShowVitalSignsForm(true)}>
+                Add New Vital Signs
+              </Button>
+            </div>
+          )}
+
             <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
               <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
                 <h3 className="text-lg font-semibold text-gray-900">Anemic and Birth Weight Status</h3>
@@ -535,31 +565,30 @@ export default function LastPage({
                   </div>
                 </div>
 
-                {latestOverallVitalSign &&
-                  latestOverallVitalSign.wt !== undefined &&
-                  Number(latestOverallVitalSign.wt) < 2.5 && (
-                    <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
-                      <div className="mb-4 flex items-center">
-                        <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
-                        <h4 className="text-base font-medium text-gray-700">Birth Weight Follow-up</h4>
-                        <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">Low Birth Weight: {latestOverallVitalSign.wt} kg</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
-                        <FormDateTimeInput control={control} name="birthwt.given_iron" label="Date Iron Given" type="date" />
-                      </div>
+                {latestOverallVitalSign && latestOverallVitalSign.wt !== undefined && Number(latestOverallVitalSign.wt) < 2.5 && (
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
+                    <div className="mb-4 flex items-center">
+                      <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
+                      <h4 className="text-base font-medium text-gray-700">Birth Weight Follow-up</h4>
+                      <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">Low Birth Weight: {latestOverallVitalSign.wt} kg</span>
                     </div>
-                  )}
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
+                      <FormDateTimeInput control={control} name="birthwt.given_iron" label="Date Iron Given" type="date" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          
 
+          {/* FIXED: Nutritional Status Calculator - now shows when data is available */}
           {shouldShowNutritionalStatusCalculator && (
-            <div className="mb-10 rounded-lg border  p-4">
+            <div className="mb-10 rounded-lg border p-4">
               <h3 className="mb-4 text-lg font-bold">Nutritional Status</h3>
               <NutritionalStatusCalculator
-                weight={newVitalSigns.length > 0 ? newVitalSigns[0].wt : latestOverallVitalSign?.wt}
-                height={newVitalSigns.length > 0 ? newVitalSigns[0].ht : latestOverallVitalSign?.ht}
+                weight={latestOverallVitalSign?.wt}
+                height={latestOverallVitalSign?.ht}
                 age={currentAge}
                 muac={watch("nutritionalStatus")?.muac}
                 onStatusChange={handleNutritionalStatusChange}
@@ -632,7 +661,7 @@ export default function LastPage({
             </div>
           </div>
 
-          {status !== "immunization" ? (
+          {passed_status !== "immunization" ? (
             <div className="mb-10 rounded-lg border bg-purple-50 p-4">
               <h3 className="mb-4 text-lg font-bold">Record Purpose & Status</h3>
               <FormField
@@ -668,7 +697,7 @@ export default function LastPage({
                 )}
               />
 
-              {(currentStatus === "check-up" || currentStatus === "immunization") && status !== "immunization" && (
+              {(currentStatus === "check-up" || currentStatus === "immunization") && passed_status !== "immunization" && (
                 <div className="mt-6">
                   <Label className="block mb-2">Forward To</Label>
                   <div className="relative">
@@ -703,18 +732,14 @@ export default function LastPage({
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button
-              type="submit"
-              className="flex items-center gap-2 px-6"
-              disabled={!canSubmit || isSubmitting || ((currentStatus === "check-up" || currentStatus === "immunization") && !selectedStaffId)}
-            >
+            <Button type="submit" className="flex items-center gap-2 px-6" disabled={!canSubmit}>
               {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Submitting...
-              </div>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </div>
               ) : (
-              "Submit"
+                "Submit"
               )}
             </Button>
           </div>

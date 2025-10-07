@@ -1,6 +1,5 @@
 
 import type {FormData, VitalSignType, NutritionalStatusType,} from "@/form-schema/chr-schema/chr-schema";
-import type { Patient } from "@/components/ui/patientSearch"; // Ensure this import is correct
 
 export interface ImmunizationTracking {
   imt_id: string;
@@ -195,7 +194,8 @@ mode: "newchildhealthrecord" | "addnewchildhealthrecord";
 isSubmitting: boolean;
 newVitalSigns: VitalSignType[];
 setNewVitalSigns: React.Dispatch<React.SetStateAction<VitalSignType[]>>;
-status: string;
+passed_status: string;
+chrecId: string;
 }
 
 
@@ -212,6 +212,7 @@ export type Page2Props = {
 onPrevious: () => void;
 onNext: () => void;
 updateFormData: (data: Partial<FormData>) => void;
+selectedPatient:any,
 formData: FormData;
 historicalBFChecks: BFCheck[];// Add this new prop
 mode: "newchildhealthrecord" | "addnewchildhealthrecord";
@@ -224,8 +225,8 @@ export type Page1Props = {
   updateFormData: (data: Partial<FormData>) => void;
   formData: FormData;
   mode: "newchildhealthrecord" | "addnewchildhealthrecord";
-  selectedPatient: Patient | null;
-  setSelectedPatient: (patient: Patient | null) => void;
+  selectedPatient: any | null;
+  setSelectedPatient: (patient: any | null) => void;
   selectedPatientId: string; // Add this prop
   setSelectedPatientId: (id: string) => void; // Add this prop
 };

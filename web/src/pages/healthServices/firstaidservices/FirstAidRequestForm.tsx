@@ -16,7 +16,6 @@ import { PatientSearch } from "@/components/ui/patientSearch";
 import { useAuth } from "@/context/AuthContext";
 import { FirstAidRequestSkeleton } from "../skeleton/firstmed-skeleton";
 import { FirstaidRequestArraySchema, FirstaidRequestArrayType } from "./firstaidschema";
-import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { FirstAidRequestError } from "./firstaid-error";
 import { SignatureFieldRef } from "../reports/firstaid-report/signature";
@@ -30,7 +29,7 @@ export default function FirstAidRequestForm() {
   const staff_id = user?.staff?.staff_id || null;
   const mode = location.state?.params?.mode || "fromallrecordtable";
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const { firstAidStocksOptions, isLoading: isFirstAidLoading } = fetchFirstaidsWithStock();
@@ -51,7 +50,7 @@ export default function FirstAidRequestForm() {
     }
   }, [location.state, mode]);
 
-  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+  const handlePatientSelect = (patient:any | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
     if (patient) {

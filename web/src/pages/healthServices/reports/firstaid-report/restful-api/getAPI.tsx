@@ -57,6 +57,15 @@ export const getStaffList = async () => {
   }
 };
 
+export const getDoctorList = async () => {
+  try {
+    const response = await api2.get("/administration/doctorstaff/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staff list:", error);
+    throw error;
+  }
+};
 
 
-// export  const getDoctorList = async () => { 
+

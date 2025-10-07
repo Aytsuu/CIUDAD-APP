@@ -113,8 +113,6 @@ export const getAllTransientAddresses = async () => {
 
 
 
-
-
   export const checkPatientExistsGet = async (rp_id: string): Promise<boolean> => {
     try {
         const res = await api2.get(`medicine/check-patient-exists/${rp_id}/`);
@@ -143,3 +141,16 @@ export const getChildData = async (id: any): Promise<any> => {
 		throw error;
 	}
 }
+
+
+
+export const getChildren = async (id:string) => {
+	try{
+		const res = await api2.get(`/patientrecords/parent-children/${id}/`);
+		return res.data || [];
+	}catch(error){
+		console.error("Error fetching children:", error);
+		throw error;
+	}
+}
+	

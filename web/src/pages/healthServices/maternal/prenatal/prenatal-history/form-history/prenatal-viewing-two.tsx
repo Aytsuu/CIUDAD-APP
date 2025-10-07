@@ -9,10 +9,18 @@ import { Loader2 } from "lucide-react";
 
 export default function PrenatalViewingTwo() {
    const location = useLocation()
-   const { patientData, pregnancyId } = location.state?.params || {};
+   const { patientData, pregnancyId, visitNumber } = location.state?.params || {};
 
    const { data: prenatalCareData, isLoading } = usePrenatalPatientPrenatalCare(patientData?.pat_id || "", pregnancyId || "")
-   const prenatalCare = prenatalCareData?.prenatal_records || [];
+   
+   // Limit the records to show based on visitNumber, similar to prenatalcare-history
+   const recordsToShow = prenatalCareData?.prenatal_records?.slice(0, visitNumber) || [];
+   
+   console.log("Patient Data: ", patientData)
+   console.log("Visit Number: ", visitNumber)
+   console.log("Records to show: ", recordsToShow.length)
+
+   // const {}
 
 
    if (isLoading) {
@@ -44,8 +52,8 @@ export default function PrenatalViewingTwo() {
                      </tr>
                   </thead>
                   <tbody>
-                     {prenatalCare && prenatalCare.length > 0 ? (
-                        prenatalCare.flatMap((record: any) => 
+                     {recordsToShow && recordsToShow.length > 0 ? (
+                        recordsToShow.flatMap((record: any) => 
                            record.prenatal_care_entries?.map((visit: any, index: number) => (
                               <tr key={`${record.pf_id}-${index}`}>
                                  <td className="border-b border-t border-r border-black p-2 text-sm">

@@ -65,7 +65,7 @@ def get_patient_address_and_sitio(pat_obj):
             trans = pat_obj.trans_id
             if hasattr(trans, 'tradd_id') and trans.tradd_id:
                 address = trans.tradd_id.tradd_street or "N/A"
-                sitio = trans.tradd_id.tradd_sitio or "N/A"
+                sitio = trans.tradd_id.tradd_sitio or "N/A" 
     
     except Exception as e:
         print(f"Error fetching address for patient {pat_obj.pat_id}: {str(e)}")
@@ -121,7 +121,6 @@ def apply_patient_search_filter(queryset, search_query):
         # Add this term's query to the combined OR query
         combined_query |= term_query
     
-    return queryset.filter(combined_query).distinct()
     return queryset.filter(combined_query).distinct()
 
 def apply_patient_type_filter(queryset, patient_type):

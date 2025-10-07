@@ -16,25 +16,82 @@ import { fetchMedicinesWithStock } from "../../restful-api/fetchAPI";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toast } from "sonner";
 import { useConfirmAllPendingItems } from "../queries/update";
+import { useCheckPatientExists } from "@/pages/record/health/patientsRecord/queries/fetch";
 
 export default function MedicineRequestPendingItems() {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get the medreqData from state params
   const medreq_id = location.state?.params?.medreq_id;
   const patientInfo = location.state?.params?.patientData;
-  
+
   const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [medicineDisplayPage, setMedicineDisplayPage] = useState(1);
   const [medicineSearchQuery, setMedicineSearchQuery] = useState("");
+  
+  // Improved patient ID logic
+  const [currentPatId, setCurrentPatId] = useState<string | null>(null);
+
+  // Check if patient exists using useCheckPatientExists
+  const { data: patientExists, isLoading: isCheckingLoading } = useCheckPatientExists(patientInfo?.pat_id);
+ 
+  console.log(patientInfo?.pat_id)
+  // Consolidated patient ID logic
+  useEffect(() => {
+    const patientData = patientExists as any;
+    
+    if (patientData?.exists && patientData?.pat_id) {
+      // Patient exists in system - use the registered patient ID
+      setCurrentPatId(patientData.pat_id);
+    } else if (patientInfo?.pat_id) {
+      // Use the patient ID from patientInfo if available
+      setCurrentPatId(patientInfo.pat_id);
+    } else {
+      // No patient ID available
+      setCurrentPatId(null);
+    }
+  }, [patientExists, patientInfo]);
+
+  // Helper function to get the final patient ID
+  const getFinalPatientId = () => {
+    return currentPatId || (patientExists as any)?.patient?.pat_id || patientInfo?.pat_id || null;
+  };
+
+  const patientData = useMemo(() => {
+    if (!patientInfo) return null;
+
+    const finalPatId = getFinalPatientId();
+
+    return {
+      pat_id: finalPatId, // Use the properly determined patient ID
+      pat_type: patientInfo.pat_type,
+      age: patientInfo.age,
+      addressFull: patientInfo.addressFull || "No address provided",
+      address: {
+        add_street: patientInfo.address?.add_street,
+        add_barangay: patientInfo.address?.add_barangay,
+        add_city: patientInfo.address?.add_city,
+        add_province: patientInfo.address?.add_province,
+        add_sitio: patientInfo.address?.add_sitio
+      },
+      households: patientInfo.households || [],
+      personal_info: {
+        per_fname: patientInfo.personal_info?.per_fname,
+        per_mname: patientInfo.personal_info?.per_mname,
+        per_lname: patientInfo.personal_info?.per_lname,
+        per_dob: patientInfo.personal_info?.per_dob,
+        per_sex: patientInfo.personal_info?.per_sex
+      }
+    };
+  }, [patientInfo, currentPatId, patientExists]); // Add dependencies
 
   // Use the existing fetchMedicinesWithStock function
   const { data: medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
-  
+
   // Use the new mutation hook instead of useCreateMedicineAllocation
   const { mutate: confirmAllPendingItems, isPending, error: confirmError, isSuccess } = useConfirmAllPendingItems();
 
@@ -74,17 +131,15 @@ export default function MedicineRequestPendingItems() {
   const createMedicineMapping = () => {
     if (!medicineStocksOptions || !medicineData.length) return [];
 
-    console.log('Medicine stocks options:', medicineStocksOptions);
-    console.log('Medicine data from API:', medicineData);
+    console.log("Medicine stocks options:", medicineStocksOptions);
+    console.log("Medicine data from API:", medicineData);
 
     const mappedMedicines: any = [];
 
     // For each pending medicine request
     medicineData.forEach((pendingMedicine: any) => {
       // Find all stock entries that match this medicine
-      const matchingStocks = Array.isArray(medicineStocksOptions?.medicines)
-        ? medicineStocksOptions.medicines.filter((stock: any) => String(stock.med_id) === String(pendingMedicine.med_id))
-        : [];
+      const matchingStocks = Array.isArray(medicineStocksOptions?.medicines) ? medicineStocksOptions.medicines.filter((stock: any) => String(stock.med_id) === String(pendingMedicine.med_id)) : [];
 
       console.log(`Matching stocks for medicine ${pendingMedicine.med_name}:`, matchingStocks);
 
@@ -113,7 +168,7 @@ export default function MedicineRequestPendingItems() {
       });
     });
 
-    console.log('Enhanced medicine stocks:', mappedMedicines);
+    console.log("Enhanced medicine stocks:", mappedMedicines);
     return mappedMedicines;
   };
 
@@ -127,14 +182,15 @@ export default function MedicineRequestPendingItems() {
     }
 
     const query = medicineSearchQuery.toLowerCase();
-    return enhancedMedicineStocks.filter((medicine: any) =>
-      medicine.name?.toLowerCase().includes(query) ||
-      medicine.med_name?.toLowerCase().includes(query) ||
-      medicine.dosage?.toLowerCase().includes(query) ||
-      medicine.form?.toLowerCase().includes(query) ||
-      medicine.med_type?.toLowerCase().includes(query) ||
-      medicine.inv_id?.toLowerCase().includes(query) ||
-      medicine.id?.toString().toLowerCase().includes(query)
+    return enhancedMedicineStocks.filter(
+      (medicine: any) =>
+        medicine.name?.toLowerCase().includes(query) ||
+        medicine.med_name?.toLowerCase().includes(query) ||
+        medicine.dosage?.toLowerCase().includes(query) ||
+        medicine.form?.toLowerCase().includes(query) ||
+        medicine.med_type?.toLowerCase().includes(query) ||
+        medicine.inv_id?.toLowerCase().includes(query) ||
+        medicine.id?.toString().toLowerCase().includes(query)
     );
   }, [enhancedMedicineStocks, medicineSearchQuery]);
 
@@ -229,7 +285,7 @@ export default function MedicineRequestPendingItems() {
 
         {/* Patient Information Card */}
         {patientInfo ? (
-          <PatientInfoCard patient={patientInfo} />
+          <PatientInfoCard patient={patientData} />
         ) : (
           <Card className="border-yellow-200 bg-yellow-50">
             <CardHeader>
@@ -253,21 +309,25 @@ export default function MedicineRequestPendingItems() {
               </CardTitle>
               <CardDescription>Review pending medicine request items before confirmation</CardDescription>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/IndivMedicineRecord"
-                state={{
-                  params: {
-                    patientData: location.state?.params?.patientData
-                  }
-                }}
-              >
-                <Button size="sm">
-                  <History className="h-4 w-4 mr-2" />
-                  View History
-                </Button>
-              </Link>
-            </div>
+            {isCheckingLoading ? (
+              <div>...</div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/services/medicine/records"
+                  state={{
+                    params: {
+                      patientData: patientData,
+                    },
+                  }}
+                >
+                  <Button size="sm">
+                    <History className="h-4 w-4 mr-2" />
+                    View History
+                  </Button>
+                </Link>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {/* Table Controls */}
@@ -353,12 +413,7 @@ export default function MedicineRequestPendingItems() {
 
         {/* Action Button */}
         <div className="flex justify-end">
-          <Button 
-            onClick={processMedicineAllocation} 
-            disabled={isPending || isSuccess || pendingItemsCount === 0} 
-            size="lg" 
-            className="min-w-[200px]"
-          >
+          <Button onClick={processMedicineAllocation} disabled={isPending || isSuccess || pendingItemsCount === 0} size="lg" className="min-w-[200px]">
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

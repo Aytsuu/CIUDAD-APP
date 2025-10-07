@@ -1,24 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  Plus,
-  FileInput,
-  ArrowUpDown,
-  Search,
-  Users,
-  Home,
-  UserCog,
-  ArrowUp,
-  ArrowDown,
-  Loader2,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { Plus, FileInput, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { Link } from "react-router";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -35,13 +19,17 @@ import { usePatients } from "./queries/fetch";
 
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+
 
 type Report = {
   id: string;
   sitio: string;
-  lastName: string;
-  firstName: string;
-  mi: string;
+  fullName?: {
+    lastName: string;
+    firstName: string;
+    mi: string;
+  }
   age: {
     ageNumber: number;
     ageUnit: string;
@@ -62,7 +50,6 @@ interface Patients {
     per_dob: string;
     philhealth_id?: string;
   };
-  philhealth_id?: string;
 
   address: {
     add_sitio?: string;
@@ -74,122 +61,84 @@ interface Patients {
 }
 
 const getPatType = (type: string) => {
-  switch(type.toLowerCase()){
+  switch (type.toLowerCase()) {
     case "resident":
       return 'bg-blue-500 w-24 rounded-md font-semibold text-white'
     case "transient":
       return 'border border-black/40 w-24 rounded-md font-semibold text-black'
     default:
-      return 'bg-gray-500 text-white'
+      return "bg-gray-500 text-white";
   }
-}
+};
 
 // Define the columns for the data table
 export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer "
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer " onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Patient No.
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
       <div className="flex w-full justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
+      </div>
     )
   },
   {
     accessorKey: "sitio",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Sitio
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("sitio")}
+        {capitalize(row.getValue("sitio"))}
       </div>
     ),
   },
   {
-    accessorKey: "lastName",
+    accessorKey: "fullName",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Last Name
         <ArrowUpDown size={14} />
       </div>
     ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {capitalize(row.getValue("lastName"))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "firstName",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        First Name
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {capitalize(row.getValue("firstName"))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "mi",
-    header: "Middle Name",
-    cell: ({ row }) => (
-      <div className="hidden xl:block">{capitalize(row.getValue("mi"))}</div>
-    ),
+    cell: ({ row }) => {
+      const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
+      return (
+        <div className="hidden lg:block max-w-xs truncate">
+          {fullNameObj ? `${capitalize(fullNameObj.lastName)}, ${capitalize(fullNameObj.firstName)} ${fullNameObj.mi ? fullNameObj.mi.charAt(0).toUpperCase() + "." : ""}` : "-"}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "age",
     header: "Age",
     cell: ({ row }) => {
       const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
-      return (
-        <div className="hidden xl:block">
-          {ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}
-        </div>
-      );
-    },
+      return <div className="hidden xl:block">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
+    }
   },
   {
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        <div className={getPatType(row.getValue("type"))}>
-          {row.getValue("type")}
-        </div>
+        <div className={getPatType(row.getValue("type"))}>{row.getValue("type")}</div>
       </div>
-    ),
+    )
   },
   {
     accessorKey: "noOfRecords",
     header: "No. of Records",
-    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />,
+    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />
   },
   {
     accessorKey: "action",
@@ -202,9 +151,7 @@ export const columns: ColumnDef<Report>[] = [
             patientData: {
               id: row.original.id,
               sitio: row.original.sitio,
-              lastName: row.original.lastName,
-              firstName: row.original.firstName,
-              mi: row.original.mi,
+              fullName: row.original.fullName,
               type: row.original.type,
               noOfRecords: row.original.noOfRecords,
               philhealthId: row.original.philhealthId 
@@ -215,8 +162,8 @@ export const columns: ColumnDef<Report>[] = [
       </Link>
     ),
     enableSorting: false,
-    enableHiding: false,
-  },
+    enableHiding: false
+  }
 ];
 
 function getBestAgeUnit(dob: string): { value: number; unit: string } {
@@ -235,47 +182,47 @@ function getBestAgeUnit(dob: string): { value: number; unit: string } {
 
 // main component
 export default function PatientsRecord() {
+
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const { data: patientData, isLoading } = usePatients({ 
-    page, 
-    page_size: pageSize, 
-    status: selectedFilter !== " All" ? selectedFilter : undefined, 
+  const { data: patientData, isLoading } = usePatients({
+    page,
+    page_size: pageSize,
+    status: selectedFilter !== " All" ? selectedFilter : undefined,
     search: searchTerm || undefined
   });
 
   const totalPages = Math.ceil((patientData?.count || 0) / pageSize);
 
-
-  // filter options 
+  // filter options
   const filter = [
     { id: "all", name: "All" },
     { id: "resident", name: "Resident" },
-    { id: "transient", name: "Transient" },
-  ]
+    { id: "transient", name: "Transient" }
+  ];
 
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
-    setPage(newPage)
-  }
+    setPage(newPage);
+  };
 
   const handleSearch = (search: string) => {
-    setSearchTerm(search)
-    setPage(1)
-  }
+    setSearchTerm(search);
+    setPage(1);
+  };
 
   const handleFilterChange = (filter: string) => {
-    setSelectedFilter(filter)
-    setPage(1) 
-  }
+    setSelectedFilter(filter);
+    setPage(1);
+  };
 
   const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize)
-    setPage(1) 
-  }
+    setPageSize(newPageSize);
+    setPage(1);
+  };
 
   const transformPatientsToReports = (patients: Patients[]): Report[] => {
     return patients.map((patient) => {
@@ -289,13 +236,15 @@ export default function PatientsRecord() {
       }
       return {
         id: patient.pat_id.toString(),
-        sitio: patient.address?.add_sitio || "Unknown",
-        lastName: patient.personal_info?.per_lname || "",
-        firstName: patient.personal_info?.per_fname || "",
-        mi: patient.personal_info?.per_mname || "",
+        sitio: patient.address?.add_sitio || "",
+        fullName: {
+          lastName: patient.personal_info?.per_lname || "",
+          firstName: patient.personal_info?.per_fname || "",
+          mi: patient.personal_info?.per_mname || "",
+        },
         age: { ageNumber: ageInfo, ageUnit: ageUnit},
         type: patient.pat_type || "Resident",
-        philhealth_id: philhealthId,
+        philhealthId: philhealthId,
       };
     });
   };
@@ -309,21 +258,14 @@ export default function PatientsRecord() {
 
   const totalPatients = patientDataset.length;
 
-  const residents = patientDataset.filter((patient) =>
-    patient.type.includes("Resident")
-  ).length;
-  const transients = patientDataset.filter((patient) =>
-    patient.type.includes("Transient")
-  ).length;
-  const residentPercentage =
-    totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
-  const transientPercentage =
-    totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
-
+  const residents = patientDataset.filter((patient) => patient.type.includes("Resident")).length;
+  const transients = patientDataset.filter((patient) => patient.type.includes("Transient")).length;
+  const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
+  const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
   return (
     <LayoutWithBack
-      title="Patients Records"
+      title="Patient Records"
       description="Manage and view patients information"
     >
       <div className="w-full ">
@@ -336,9 +278,7 @@ export default function PatientsRecord() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold">{totalPatients}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Total records
-                  </span>
+                  <span className="text-xs text-muted-foreground">Total records</span>
                 </div>
                 <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
                   <Users className="h-5 w-5 text-muted-foreground" />
@@ -358,11 +298,7 @@ export default function PatientsRecord() {
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold">{residents}</span>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    {residentPercentage > transientPercentage ? (
-                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
-                    )}
+                    {residentPercentage > transientPercentage ? <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> : <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />}
                     <span>{residentPercentage}% of total</span>
                   </div>
                 </div>
@@ -384,11 +320,7 @@ export default function PatientsRecord() {
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold">{transients}</span>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    {transientPercentage > residentPercentage ? (
-                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
-                    )}
+                    {transientPercentage > residentPercentage ? <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> : <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />}
                     <span>{transientPercentage}% of total</span>
                   </div>
                 </div>
@@ -407,37 +339,26 @@ export default function PatientsRecord() {
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
           <div className="flex w-full gap-x-2">
             <div className="relative flex-1 bg-white">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={20}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
+              <Input placeholder="Search..." className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
             </div>
             <div className="w-48">
-              <SelectLayout
-                placeholder="Filter by"
-                label=""
-                className="bg-white"
-                options={filter}
-                value={selectedFilter}
-                onChange={handleFilterChange}
-              />
+              <SelectLayout placeholder="Filter by" label="" className="bg-white" options={filter} value={selectedFilter} onChange={handleFilterChange} />
             </div>
           </div>
-          <div>
-            <div className="flex ml-2">
-              <Link to="/patientrecords/form">
-                <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-                  <Plus size={15} /> Create
-                </Button>
-              </Link>
+            
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div>
+              <div className="flex ml-2">
+                <Link to="/patientrecords/form">
+                  <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                    <Plus size={15} /> Create
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+            </ProtectedComponentButton>
+          
         </div>
 
         {/* Table Container */}
@@ -445,12 +366,7 @@ export default function PatientsRecord() {
           <div className="w-full bg-white flex flex-row justify-between p-3">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-14 h-6"
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              />
+              <Input type="number" className="w-14 h-6" value={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
@@ -481,7 +397,7 @@ export default function PatientsRecord() {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows
+              Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">

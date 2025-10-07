@@ -125,7 +125,7 @@ export const nonPhilHealthSchema = z.object({
   
   selectedDoctorStaffId: z.string().optional().default(""),
   is_phrecord: z.boolean().optional().default(false),
-  phil_pin:z.number().optional(),
+  phil_pin:z.string().optional(),
   iswith_atc: z.boolean().optional().default(false),
   dependent_or_member: z.string().optional().default(""),
   lmp: z.string().optional().default(""),

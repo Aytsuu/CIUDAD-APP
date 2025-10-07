@@ -42,7 +42,7 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: (mom_id: string) => archiveMinutesOfMeeting(mom_id),
         onMutate: () =>{
-            toast.loading("Deleting record ...", { id: "archiveMOM" });
+            toast.loading("Archiving record ...", { id: "archiveMOM" });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });

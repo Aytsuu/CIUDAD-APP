@@ -17,6 +17,7 @@ from ..utils import *
 from utils.supabase_client import upload_to_storage
 from ..utils import *
 from ..double_queries import PostQueries
+import copy
 
 class AllRecordTableView(generics.GenericAPIView):
   serializer_class = AllRecordTableSerializer
@@ -69,14 +70,14 @@ class CompleteRegistrationView(APIView):
 
   @transaction.atomic
   def post(self, request, *args, **kwargs):
-    personal = request.data.get("personal", None)
-    account = request.data.get("account", None)
-    houses = request.data.get("houses", [])
-    livingSolo = request.data.get("livingSolo", None)
-    family = request.data.get("family", None)
-    business = request.data.get("business", None)
-    staff = request.data.get("staff", None)
-    
+    data_copy = copy.deepcopy(request.data)
+    personal = data_copy.get("personal", None)
+    account = data_copy.get("account", None)
+    houses = data_copy.get("houses", [])
+    livingSolo = data_copy.get("livingSolo", None)
+    family = data_copy.get("family", None)
+    business = data_copy.get("business", None)
+    staff = data_copy.get("staff", None)
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
@@ -111,7 +112,6 @@ class CompleteRegistrationView(APIView):
 
     if family:
         self.join_family(family, rp)
-
 
     # Perform double query
     double_queries = PostQueries()
@@ -200,9 +200,11 @@ class CompleteRegistrationView(APIView):
         rp = rp,
         staff = staff
       ))
-    
-    if len(house_instances) > 0:
-      created_instances = Household.objects.bulk_create(house_instances)
+
+    created_instances = []
+    for house in house_instances:
+       house.save()
+       created_instances.append(house)
     
     return created_instances
   
@@ -219,7 +221,7 @@ class CompleteRegistrationView(APIView):
     )
 
     FamilyComposition.objects.create(
-      fc_role="Independent",
+      fc_role="INDEPENDENT",
       fam=fam,
       rp=rp
     )
@@ -237,6 +239,7 @@ class CompleteRegistrationView(APIView):
     files = business.get("files", [])
     
     business = Business(
+      bus_id=generate_business_no(),
       bus_name=business["bus_name"],
       bus_gross_sales=business["bus_gross_sales"],
       bus_location=business["bus_location"],

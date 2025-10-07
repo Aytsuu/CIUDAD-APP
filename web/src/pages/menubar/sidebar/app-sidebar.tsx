@@ -173,7 +173,7 @@ export function AppSidebar() {
                 title: "Weekly Accomplishment",
                 url: "/report/weekly-accomplishment",
               },
-              { title: "Securado", url: "/report/securado" },
+              // { title: "Securado", url: "/report/securado" },
             ],
           },
         ]
@@ -323,7 +323,7 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "Daily Notes", url: "/bhw/notes" }] : []),
     ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
     ...(featureValidator("forwarded records") ? [{
       title: "Forwarded Records",
@@ -337,6 +337,10 @@ export function AppSidebar() {
           title: "Vaccine Waitlist",
           url: "/forwarded-records/vaccine-waitlist",
         },
+        {
+          title: "Maternal",
+          url: "/",
+        },
       ],
     }] : []),
     ...(featureValidator("referred patients") ? [{
@@ -347,10 +351,10 @@ export function AppSidebar() {
       title: "Services",
       url: "/",
       items: [
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Animal Bites", url: "/services/animalbites" },
         { title: "Child Health", url: "/services/childhealthrecords" },
         { title: "Firstaid", url: "/services/firstaid" },
-        { title: "Family Planning", url: "/FamPlanning_table" },
+        { title: "Family Planning", url: "/services/familyplanning" },
         { title: "Maternal", url: "/services/maternalrecords" },
         {
           title: "Medical Consultation ",
@@ -368,8 +372,8 @@ export function AppSidebar() {
         { title: "Inventory Stocks", url: "/inventory/stocks" },
       ],
     }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
-    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
+    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),
+    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/health-services/scheduler" }] : []),
     ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
   ];
 
@@ -420,7 +424,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(user?.staff?.pos != "DOCTOR" && featureValidator() ? [{
+    ...(user?.staff?.pos != "DOCTOR" ? [{
       title: "Announcement",
       url: "/announcement",
     }] : []),

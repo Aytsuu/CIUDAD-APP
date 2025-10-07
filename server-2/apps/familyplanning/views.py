@@ -88,7 +88,7 @@ def get_fp_patient_counts(request):
         all_fp_patients = FP_Record.objects.select_related('pat').values('pat__pat_id', 'pat__pat_type').distinct()
         total_fp_patients = all_fp_patients.count()
         resident_fp_patients = all_fp_patients.filter(pat__pat_type='Resident').count()
-        transient_fp_patients = all_fp_patients.filter(pat__pat_type='Transient').count() # Count transients among FP patients
+        transient_fp_patients = all_fp_patients.filter(pat__pat_type='Transient').count() 
 
         # Count minor residents (under 18) among FP patients
         minor_resident_fp_patients = FP_Record.objects.filter(pat__pat_type='Resident',pat__rp_id__per__per_dob__gt=eighteen_years_ago).values('pat__pat_id').distinct().count()
@@ -171,18 +171,25 @@ def get_body_measurements(request, pat_id):
     try:
         # Fetch the patient
         patient = get_object_or_404(Patient, pat_id=pat_id)
-        
-        # Fetch the latest BodyMeasurement for the patient
         body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
         
         if body_measurement:
             body_measurement_data = BodyMeasurementSerializer(body_measurement).data
+            print("Body measruement data ",body_measurement_data)
             data = {
                 "patient": pat_id,
                 "body_measurement": {
                     "weight": str(body_measurement_data.get("weight", "0.00")),
                     "height": str(body_measurement_data.get("height", "0.00")),
-                    "created_at": body_measurement_data.get("created_at")
+                    "created_at": body_measurement_data.get("created_at"),
+                    "wfa": body_measurement_data.get("wfa"),
+                    "lhfa": body_measurement_data.get("lhfa"),
+                    "wfl": body_measurement_data.get("wfl"),
+                    "muac": body_measurement_data.get("muac"),
+                    "edemaSeverity": body_measurement_data.get("edemaSeverity"),
+                    "muac_status": body_measurement_data.get("muac_status"),
+                    "remarks": body_measurement_data.get("remarks"),
+                    "is_opt": body_measurement_data.get("is_opt"),
                 }
             }
         else:
@@ -246,36 +253,35 @@ def calculate_age_from_dob(dob_string):
 
     
 class PatientListForOverallTable(generics.ListAPIView):
-    serializer_class = OverallFPRecordSerializer  # Use the appropriate serializer
+    serializer_class = OverallFPRecordSerializer
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
-        # Start with all FP_Record objects
-        queryset = FP_Record.objects.select_related(
-            "pat",
-            "pat__rp_id__per",
-            "pat__trans_id",
-        ).prefetch_related(
-            'fp_type_set'  # Prefetch related FP_type instances
-        ).order_by("-created_at")  # Order by creation date descending
+        # Start with FP_type objects since that's where the main data is
+        queryset = FP_type.objects.select_related(
+            "fprecord",
+            "fprecord__pat",
+            "fprecord__pat__rp_id__per", 
+            "fprecord__pat__trans_id",
+        ).order_by("-fprecord__created_at")
         
         # Apply search filter if 'search' query parameter is present
         search_query = self.request.query_params.get('search', None)
         if search_query:
             queryset = queryset.filter(
-                Q(pat__rp_id__per__per_lname__icontains=search_query) |
-                Q(pat__rp_id__per__per_fname__icontains=search_query) |
-                Q(pat__trans_id__tran_lname__icontains=search_query) |
-                Q(pat__trans_id__tran_fname__icontains=search_query) |
-                Q(client_id__icontains=search_query) |
-                Q(fp_type_set__fpt_client_type__icontains=search_query) |
-                Q(fp_type_set__fpt_method_used__icontains=search_query)
+                Q(fprecord__pat__rp_id__per__per_lname__icontains=search_query) |
+                Q(fprecord__pat__rp_id__per__per_fname__icontains=search_query) |
+                Q(fprecord__pat__trans_id__tran_lname__icontains=search_query) |
+                Q(fprecord__pat__trans_id__tran_fname__icontains=search_query) |
+                Q(fprecord__client_id__icontains=search_query) |
+                Q(fpt_client_type__icontains=search_query) |
+                Q(fpt_method_used__icontains=search_query)
             ).distinct()
         
         # Apply client_type filter if 'client_type' query parameter is present
         client_type_filter = self.request.query_params.get('client_type', None)
         if client_type_filter and client_type_filter != "all":
-            queryset = queryset.filter(fp_type_set__fpt_client_type__iexact=client_type_filter).distinct()
+            queryset = queryset.filter(fpt_client_type__iexact=client_type_filter).distinct()
         
         return queryset
     
@@ -284,11 +290,13 @@ class PatientListForOverallTable(generics.ListAPIView):
         
         # Get distinct patients with their latest record
         patient_data_map = {}
-        for record in queryset:
+        for fp_type in queryset:
+            record = fp_type.fprecord
             patient_id = record.pat.pat_id
+            
+            # Only take the latest record per patient
             if patient_id not in patient_data_map:
-                # Build patient data structure
-                patient_entry = self._build_patient_entry(record)
+                patient_entry = self._build_patient_entry(record, fp_type)
                 patient_data_map[patient_id] = patient_entry
         
         # Convert to list for pagination
@@ -301,14 +309,12 @@ class PatientListForOverallTable(generics.ListAPIView):
         
         return Response(patient_list)
     
-    def _build_patient_entry(self, record):
+    def _build_patient_entry(self, record, fp_type):
         """Helper method to build patient entry data"""
         patient_id = record.pat.pat_id
         patient_type = record.pat.pat_type
         
-        # Get FP type info
-        fp_type_instance = record.fp_type_set.first()
-        raw_subtype = fp_type_instance.fpt_subtype if fp_type_instance else "N/A"
+        raw_subtype = fp_type.fpt_subtype if fp_type else "N/A"
         subtype = map_subtype_display(raw_subtype)
         
         # Build basic patient entry
@@ -317,10 +323,10 @@ class PatientListForOverallTable(generics.ListAPIView):
             "patient_name": "",
             "patient_age": None,
             "sex": "",
-            "client_type": map_client_type(fp_type_instance.fpt_client_type) if fp_type_instance else "N/A",
+            "client_type": map_client_type(fp_type.fpt_client_type) if fp_type else "N/A",
             "subtype": subtype,
             "patient_type": patient_type,
-            "method_used": fp_type_instance.fpt_method_used if fp_type_instance else "N/A",
+            "method_used": fp_type.fpt_method_used if fp_type else "N/A",
             "created_at": record.created_at.isoformat() if record.created_at else None,
             "fprecord_id": record.fprecord_id,
             "record_count": FP_Record.objects.filter(pat=record.pat).count(),
@@ -518,10 +524,8 @@ def get_patient_details_data(request, patient_id):
         serializer = PatientSerializer(patient)
         bodymeasure = BodyMeasurementReadSerializer(patient)
         latest_body = bodymeasure.data.get("body_measurement",{})
-        print("LATEST BODY: ",latest_body)
         patient_data = serializer.data
         personal_info = patient_data.get("personal_info", {})
-        print("PERSONAL:",personal_info)
         
         body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
         if body_measurement:
@@ -869,7 +873,7 @@ def get_complete_fp_record(request, fprecord_id):
 
                 if not address_found and patient.rp_id.per:
                     try:
-                        personal_addresses = patient.rp_id.per.personaladdress_set.select_related('add').all()
+                        personal_addresses = patient.rp_id.per.personal_addresses.select_related('add').all()
                         personal_address = personal_addresses.first()
                         if personal_address and personal_address.add:
                             address_info = personal_address.add
@@ -943,10 +947,7 @@ def get_complete_fp_record(request, fprecord_id):
                         if fp_obstetrical_history.fpob_last_delivery else None
                     ),
                     "typeOfLastDelivery": fp_obstetrical_history.fpob_type_last_delivery or "",
-                    "lastMenstrualPeriod": (
-                        fp_obstetrical_history.fpob_last_period.isoformat()
-                        if fp_obstetrical_history.fpob_last_period else ""
-                    ),
+                    "lastMenstrualPeriod": "",  # Initialize as empty string, will be updated from main obs
                     "previousMenstrualPeriod": (
                         fp_obstetrical_history.fpob_previous_period.isoformat()
                         if fp_obstetrical_history.fpob_previous_period else ""
@@ -956,9 +957,11 @@ def get_complete_fp_record(request, fprecord_id):
                     "hydatidiformMole": fp_obstetrical_history.fpob_hydatidiform or False,
                     "ectopicPregnancyHistory": fp_obstetrical_history.fpob_ectopic_pregnancy or False,
                 }
+                
                 if hasattr(fp_obstetrical_history, 'obs_id') and fp_obstetrical_history.obs_id:
                     try:
                         main_obs = Obstetrical_History.objects.get(obs_id=fp_obstetrical_history.obs_id)
+                        # UPDATE: Add obs_lmp to lastMenstrualPeriod
                         complete_data["obstetricalHistory"].update({
                             "g_pregnancies": main_obs.obs_gravida or 0,
                             "p_pregnancies": main_obs.obs_para or 0,
@@ -968,13 +971,25 @@ def get_complete_fp_record(request, fprecord_id):
                             "numOfLivingChildren": main_obs.obs_living_ch or 0,
                             "childrenBornAlive": main_obs.obs_ch_born_alive or 0,
                             "largeBabies": main_obs.obs_lg_babies or 0,
+                            "obs_lg_babies_str": main_obs.obs_lg_babies_str or "",
                             "stillBirth": main_obs.obs_still_birth or 0,
+                            "lastMenstrualPeriod": (
+                                main_obs.obs_lmp.isoformat()
+                                if main_obs.obs_lmp else ""
+                            ),  # ADD THIS LINE
                         })
                         complete_data["main_obstetrical_history"] = main_obs.obs_id
                     except Obstetrical_History.DoesNotExist:
                         complete_data["main_obstetrical_history"] = None
                 else:
                     complete_data["main_obstetrical_history"] = None
+                    
+                # If no main obs found but we have FP obs with z field, use that as fallback
+                if not complete_data["obstetricalHistory"]["lastMenstrualPeriod"] and hasattr(fp_obstetrical_history, 'z') and fp_obstetrical_history.z:
+                    complete_data["obstetricalHistory"]["lastMenstrualPeriod"] = (
+                        fp_obstetrical_history.z.isoformat()
+                        if fp_obstetrical_history.z else ""
+                    )
             else:
                 # complete_data["fp_obstetrical_history"] = None
                 complete_data["main_obstetrical_history"] = None
@@ -1345,7 +1360,7 @@ def get_complete_fp_record_data(request, fprecord_id):
             "pat__trans_id",
             "pat__trans_id__tradd_id"
         ).prefetch_related(
-            "pat__rp_id__per__personaladdress_set__add", 
+            "pat__rp_id__per__personal_addresses__add", 
             "pat__rp_id__household_set__add"
         ).get(fprecord_id=fprecord_id)
 
@@ -1398,6 +1413,7 @@ def get_complete_fp_record_data(request, fprecord_id):
             complete_data["pat_id"] = patient.pat_id
             complete_data["client_id"] = fp_record.client_id
             complete_data["fourps"] = fp_record.fourps
+            
             # Initialize default values (exclude occupation)
             complete_data.update({
                 "lastName": "", "givenName": "", "middleInitial": "",
@@ -1452,7 +1468,7 @@ def get_complete_fp_record_data(request, fprecord_id):
 
                 if not address_found and patient.rp_id.per:
                     try:
-                        personal_addresses = personal_info.personaladdress_set.select_related('add').all()
+                        personal_addresses = personal_info.personal_addresses.select_related('add').all()
                         personal_address = personal_addresses.first()
                         if personal_address and personal_address.add:
                             address_info = personal_address.add
@@ -1519,17 +1535,14 @@ def get_complete_fp_record_data(request, fprecord_id):
         try:
             fp_obstetrical_history = FP_Obstetrical_History.objects.filter(fprecord_id=fp_record).first()
             if fp_obstetrical_history:
-                complete_data["fp_obstetrical_history"] = FP_ObstetricalHistorySerializer(fp_obstetrical_history).data
+                # complete_data["fp_obstetrical_history"] = FP_ObstetricalHistorySerializer(fp_obstetrical_history).data
                 complete_data["obstetricalHistory"] = {
                     "lastDeliveryDate": (
                         fp_obstetrical_history.fpob_last_delivery.isoformat()
                         if fp_obstetrical_history.fpob_last_delivery else None
                     ),
                     "typeOfLastDelivery": fp_obstetrical_history.fpob_type_last_delivery or "",
-                    "lastMenstrualPeriod": (
-                        fp_obstetrical_history.fpob_last_period.isoformat()
-                        if fp_obstetrical_history.fpob_last_period else ""
-                    ),
+                    "lastMenstrualPeriod": "",  # Initialize as empty string, will be updated from main obs
                     "previousMenstrualPeriod": (
                         fp_obstetrical_history.fpob_previous_period.isoformat()
                         if fp_obstetrical_history.fpob_previous_period else ""
@@ -1539,9 +1552,11 @@ def get_complete_fp_record_data(request, fprecord_id):
                     "hydatidiformMole": fp_obstetrical_history.fpob_hydatidiform or False,
                     "ectopicPregnancyHistory": fp_obstetrical_history.fpob_ectopic_pregnancy or False,
                 }
+                
                 if hasattr(fp_obstetrical_history, 'obs_id') and fp_obstetrical_history.obs_id:
                     try:
                         main_obs = Obstetrical_History.objects.get(obs_id=fp_obstetrical_history.obs_id)
+                        # UPDATE: Add obs_lmp to lastMenstrualPeriod
                         complete_data["obstetricalHistory"].update({
                             "g_pregnancies": main_obs.obs_gravida or 0,
                             "p_pregnancies": main_obs.obs_para or 0,
@@ -1551,23 +1566,35 @@ def get_complete_fp_record_data(request, fprecord_id):
                             "numOfLivingChildren": main_obs.obs_living_ch or 0,
                             "childrenBornAlive": main_obs.obs_ch_born_alive or 0,
                             "largeBabies": main_obs.obs_lg_babies or 0,
+                            "obs_lg_babies_str": main_obs.obs_lg_babies_str or "",
                             "stillBirth": main_obs.obs_still_birth or 0,
+                            "lastMenstrualPeriod": (
+                                main_obs.obs_lmp.isoformat()
+                                if main_obs.obs_lmp else ""
+                            ),  # ADD THIS LINE
                         })
                         complete_data["main_obstetrical_history"] = main_obs.obs_id
                     except Obstetrical_History.DoesNotExist:
                         complete_data["main_obstetrical_history"] = None
                 else:
                     complete_data["main_obstetrical_history"] = None
+                    
+                # If no main obs found but we have FP obs with z field, use that as fallback
+                if not complete_data["obstetricalHistory"]["lastMenstrualPeriod"] and hasattr(fp_obstetrical_history, 'z') and fp_obstetrical_history.z:
+                    complete_data["obstetricalHistory"]["lastMenstrualPeriod"] = (
+                        fp_obstetrical_history.z.isoformat()
+                        if fp_obstetrical_history.z else ""
+                    )
             else:
-                complete_data["fp_obstetrical_history"] = None
+                # complete_data["fp_obstetrical_history"] = None
                 complete_data["main_obstetrical_history"] = None
                 complete_data["obstetricalHistory"] = {}
         except Exception as e:
             print(f"Error fetching FP Obstetrical History: {e}")
-            complete_data["fp_obstetrical_history"] = None
+            # complete_data["fp_obstetrical_history"] = None
             complete_data["main_obstetrical_history"] = None
             complete_data["obstetricalHistory"] = {}
-
+            
         # Fetch Risk STI
         try:
             risk_sti = FP_RiskSti.objects.get(fprecord_id=fp_record)
@@ -1614,9 +1641,11 @@ def get_complete_fp_record_data(request, fprecord_id):
 
             # Fetch the patient from fp_record
             patient = fp_record.pat
-
+            print("Patient ",patient)
             # Fetch the latest BodyMeasurement for the patient
             latest_body_measurement = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
+            print("latest_body_measurement",latest_body_measurement)
+            
             
             if latest_body_measurement:
                 body_measurement_data = BodyMeasurementSerializer(latest_body_measurement).data
@@ -1890,631 +1919,788 @@ def get_last_previous_pregnancy(request, patient_id):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def _are_dicts_equal(dict1, dict2, ignore_fields=None):
+    """Compare two dictionaries, ignoring specified fields"""
+    if ignore_fields is None:
+        ignore_fields = []
+    
+    keys1 = set(k for k in dict1.keys() if k not in ignore_fields)
+    keys2 = set(k for k in dict2.keys() if k not in ignore_fields)
+    
+    if keys1 != keys2:
+        return False
+    
+    for key in keys1:
+        if dict1.get(key) != dict2.get(key):
+            return False
+    
+    return True
+
+def _find_existing_record(model, filters, comparison_data=None, ignore_fields=None):
+    """
+    Find existing record and optionally compare data
+    Returns (existing_record, is_duplicate)
+    """
+    try:
+        existing_record = model.objects.filter(**filters).first()
+        if existing_record and comparison_data:
+            # Convert model instance to dict for comparison
+            existing_data = model.objects.filter(pk=existing_record.pk).values().first()
+            if existing_data and _are_dicts_equal(existing_data, comparison_data, ignore_fields):
+                return existing_record, True
+        return existing_record, False
+    except Exception as e:
+        logger.warning(f"Error checking existing record for {model.__name__}: {e}")
+        return None, False
+    
 def _create_fp_records_core(data, patient_record_instance, staff_id_from_request):
     patrec_id = patient_record_instance.patrec_id
     staff_id_from_request = data.get('staff_id')
-    # Get patient gender from the form data
     patient_gender = data.get("gender", "").lower()
     
-    # Determine spouse type based on patient gender
-    spouse_type = ""
-    if patient_gender == "female":
-        spouse_type = "Husband"
-    elif patient_gender == "male":
-        spouse_type = "Wife"
-    else:
-        # Default or handle other cases
-        spouse_type = "Spouse"
-        logger.info(f"Unknown patient gender '{patient_gender}', using default spouse type 'Spouse'")
+    # Track all created instances for rollback if needed
+    created_instances = {}
     
-    # Spouse
-    spouse_instance = None
-    spouse_data = data.get("spouse", {})
-    s_lname = spouse_data.get("s_lastName")
-    s_fname = spouse_data.get("s_givenName")
-    s_dob = spouse_data.get("s_dateOfBirth")
-    
-    if s_lname and s_fname and s_dob:
-        try:
-            spouse_instance = Spouse.objects.filter(
-                spouse_lname__iexact=s_lname,
-                spouse_fname__iexact=s_fname,
-                spouse_dob=s_dob
-            ).first()
+    try:
+        # 1. Handle Spouse with duplicate checking
+        spouse_instance = None
+        spouse_type = ""
+        if patient_gender == "female":
+            spouse_type = "Husband"
+        elif patient_gender == "male":
+            spouse_type = "Wife"
+        else:
+            spouse_type = "Spouse"
+
+        spouse_data = data.get("spouse", {})
+        s_lname = spouse_data.get("s_lastName")
+        s_fname = spouse_data.get("s_givenName")
+        s_dob = spouse_data.get("s_dateOfBirth")
+        
+        if s_lname and s_fname and s_dob:
+            spouse_comparison_data = {
+                "spouse_lname": s_lname,
+                "spouse_fname": s_fname,
+                "spouse_mname": spouse_data.get("s_middleInitial") or None,
+                "spouse_dob": s_dob,
+                "spouse_occupation": spouse_data.get("s_occupation") or None,
+                "spouse_type": spouse_type,
+            }
             
-            if spouse_instance:
-                logger.info(f"Found existing Spouse record with ID: {spouse_instance.pk}. Reusing it.")
-                # Update spouse type if it's different
-                if spouse_instance.spouse_type != spouse_type:
-                    spouse_instance.spouse_type = spouse_type
-                    spouse_instance.save()
-                    logger.info(f"Updated spouse type to '{spouse_type}' for existing spouse record.")
+            # Check for existing spouse with same data
+            existing_spouse, is_duplicate = _find_existing_record(
+                Spouse, 
+                {
+                    "spouse_lname__iexact": s_lname,
+                    "spouse_fname__iexact": s_fname,
+                    "spouse_dob": s_dob
+                },
+                spouse_comparison_data,
+                ignore_fields=['spouse_id']  # Ignore PK field
+            )
+            
+            if existing_spouse:
+                spouse_instance = existing_spouse
+                if is_duplicate:
+                    logger.info(f"Using existing duplicate Spouse record ID: {spouse_instance.pk}")
+                else:
+                    # Update spouse type if different
+                    if spouse_instance.spouse_type != spouse_type:
+                        spouse_instance.spouse_type = spouse_type
+                        spouse_instance.save()
+                        logger.info(f"Updated spouse type for existing spouse record ID: {spouse_instance.pk}")
             else:
-                logger.info("No existing Spouse record found with matching identifying details. Creating a new one.")
-                spouse_serializer = SpouseSerializer(data={
-                    "spouse_lname": s_lname,
-                    "spouse_fname": s_fname,
-                    "spouse_mname": spouse_data.get("s_middleInitial") or None,
-                    "spouse_dob": s_dob,
-                    "spouse_occupation": spouse_data.get("s_occupation") or None,
-                    "spouse_type": spouse_type,  # Add the spouse type here
-                })
+                spouse_serializer = SpouseSerializer(data=spouse_comparison_data)
                 spouse_serializer.is_valid(raise_exception=True)
                 spouse_instance = spouse_serializer.save()
-                logger.info(f"Created new Spouse record with ID: {spouse_instance.pk} and type: {spouse_type}")
-                
-        except Exception as e:
-            logger.error(f"Error processing spouse record (search or create): {str(e)}")
-            raise
-    else:
-        logger.info("Insufficient identifying Spouse data provided (missing last name, first name, or DOB). Skipping spouse creation/lookup.")
-        
-    fp_record_data = {
-        "spouse": spouse_instance.pk if spouse_instance else None,
-    }
-    
-    # 2. Create FP Record
-    fp_record_data = {
-        "client_id": data.get("client_id") or "",
-        "fourps": data.get("fourps") or False,
-        "plan_more_children": data.get("plan_more_children"),
-        "avg_monthly_income": data.get("avg_monthly_income") or "0",
-        "occupation": data.get("occupation") or None,
-        "pat": patient_record_instance.pat_id.pat_id, # Link to the Patient object from the PatientRecord
-        "hrd": data.get("hrd_id") or None, # This might need adjustment if HRD is linked to PatientRecord or Patient
-        "patrec": patrec_id,  # Use the determined patrec_id
-        "spouse": spouse_instance.pk if spouse_instance else None,
-    }
-    fp_record_serializer = FPRecordSerializer(data=fp_record_data)
-    fp_record_serializer.is_valid(raise_exception=True)
-    fp_record_instance = fp_record_serializer.save()
-    fprecord_id = fp_record_instance.fprecord_id
-    logger.info(f"Created FP Record with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
-    # print(f"DEBUG: FP Record created with ID: {fprecord_id} linked to patrec_id: {patrec_id}")
+                created_instances['spouse'] = spouse_instance
+                logger.info(f"Created new Spouse record with ID: {spouse_instance.pk}")
 
-   # 3. Create Medical History Records (ALWAYS CREATE NEW RECORDS FOR COMPLETE HISTORY)
-    # selected_illness_ids = data.get("selectedIllnessIds", [])
-    # custom_disability_details = data.get("customDisabilityDetails")
-    # print("Custom: ", custom_disability_details)
-
-    # # Handle case where selectedIllnessIds might be a comma-separated string
-    # if isinstance(selected_illness_ids, str):
-    #     try:
-    #         selected_illness_ids = [int(id_str.strip()) for id_str in selected_illness_ids.split(',') if id_str.strip()]
-    #     except ValueError:
-    #         selected_illness_ids = []
-    #         logger.warning("Failed to parse selectedIllnessIds as comma-separated integers")
-
-    # print("Selected illness IDs for this visit:", selected_illness_ids)
-
-    # # Handle custom disability
-    # if custom_disability_details:
-    #     custom_illness_description = f"User-specified disability: {custom_disability_details}"
-    #     custom_illness_instance = get_or_create_illness(
-    #         illname=custom_disability_details,
-    #         ill_description=custom_illness_description,
-    #         ill_code_prefix="FP"
-    #     )
-    #     if custom_illness_instance.ill_id not in selected_illness_ids:
-    #         selected_illness_ids.append(custom_illness_instance.ill_id)
-    #     logger.info(f"Handled custom disability: {custom_illness_instance.illname}")
-
-    # current_patient_record = PatientRecord.objects.get(patrec_id=fp_record_data["patrec"])
-
-    # # Get previous medical history for comparison
-    # previous_medical_histories = MedicalHistory.objects.filter(
-    #     patrec=current_patient_record
-    # ).order_by('-created_at')
-
-    # previous_illness_ids = set()
-    # for history in previous_medical_histories:
-    #     if history.ill_id not in previous_illness_ids:
-    #         previous_illness_ids.add(history.ill_id)
-
-    # # ALWAYS CREATE NEW RECORDS FOR ALL SELECTED ILLNESSES IN THIS VISIT
-    # for illness_id in selected_illness_ids:
-    #     illness_instance = get_object_or_404(Illness, ill_id=illness_id)
-    #     MedicalHistory.objects.create(
-    #         ill=illness_instance,
-    #         patrec=current_patient_record
-    #     )
-    #     logger.info(f"Created MedicalHistory record for illness ID: {illness_id}")
-
-    # # Log changes for tracking
-    # current_illness_set = set(selected_illness_ids)
-    # newly_added = current_illness_set - previous_illness_ids
-    # removed = previous_illness_ids - current_illness_set
-    # unchanged = current_illness_set.intersection(previous_illness_ids)
-
-    # logger.info(f"Medical History Changes - Added: {len(newly_added)}, Removed: {len(removed)}, Unchanged: {len(unchanged)}")
-    # if newly_added:
-    #     logger.info(f"Newly added illnesses: {newly_added}")
-    # if removed:
-    #     logger.info(f"Removed illnesses: {removed}")
-
-    current_fp_record = fp_record_instance
-    current_patient_record = patient_record_instance
-
-    # 3. Handle illnesses + snapshots
-    selected_illness_ids = data.get("selectedIllnessIds", [])
-    custom_disability_details = data.get("customDisabilityDetails")
-
-    if isinstance(selected_illness_ids, str):
-        try:
-            selected_illness_ids = [int(i.strip()) for i in selected_illness_ids.split(',') if i.strip()]
-        except ValueError:
-            selected_illness_ids = []
-            logger.warning("Failed to parse selectedIllnessIds as comma-separated integers")
-
-    if custom_disability_details:
-        custom_illness_description = f"User-specified disability: {custom_disability_details}"
-        custom_illness_instance = get_or_create_illness(
-            illname=custom_disability_details,
-            ill_description=custom_illness_description,
-            ill_code_prefix="FP"
-        )
-        if custom_illness_instance.ill_id not in selected_illness_ids:
-            selected_illness_ids.append(custom_illness_instance.ill_id)
-
-    existing_snapshot_medhist_ids = FP_MedicalHistory.objects.filter(
-        fprecord=current_fp_record
-    ).values_list("medhist_id", flat=True)
-
-    current_illness_set = set(
-        MedicalHistory.objects.filter(medhist_id__in=existing_snapshot_medhist_ids)
-        .values_list("ill_id", flat=True)
-    )
-
-    new_illness_set = set(selected_illness_ids)
-
-    newly_selected = new_illness_set - current_illness_set
-    removed_illnesses = current_illness_set - new_illness_set
-
-    for illness_id in newly_selected:
-        illness_instance = get_object_or_404(Illness, ill_id=illness_id)
-        medhist = MedicalHistory.objects.create(
-            ill=illness_instance,
-            patrec=current_patient_record
-        )
-        FP_MedicalHistory.objects.create(
-            fprecord=current_fp_record,
-            medhist=medhist
-        )
-
-    logger.info(f"Medical History Changes for FP Record {current_fp_record.fprecord_id} - Added: {len(newly_selected)}, Removed: {len(removed_illnesses)}")
-    if newly_selected:
-        logger.info(f"New illnesses added: {newly_selected}")
-    if removed_illnesses:
-        logger.info(f"Removed illnesses: {removed_illnesses}")
-
-    # return fp_record_instance
-
-
-    # 4. Create FP Type
-    fp_type_data = {
-        "fpt_client_type": data.get("typeOfClient") or "New Acceptor",
-        "fpt_subtype": data.get("subTypeOfClient") or None,
-        "fpt_reason_fp": data.get("reasonForFP") or None,
-        "fpt_reason": data.get("otherReasonForFP") or None,
-        "fpt_other_reason": data.get("otherReasonForFP") or None,
-        "fpt_method_used": data.get("methodCurrentlyUsed") or "None",
-        "fpt_other_method": data.get("otherMethod") or "",
-        "fprecord": fprecord_id,
-    }
-    fp_type_serializer = FPTypeSerializer(data=fp_type_data)
-    fp_type_serializer.is_valid(raise_exception=True)
-    fp_type_instance = fp_type_serializer.save()
-    fpt_id = fp_type_instance.fpt_id
-    logger.info(f"Created FP_type with ID: {fpt_id}")
-
-    # 5. Obstetrical History (Main Obstetrical Record)
-    main_obs_data_from_request = data.get("obstetricalHistory", {})
-    main_obs_instance = None
-
-    patient_id = patient_record_instance.pat_id.pat_id # Get patient ID from the determined PatientRecord
-    latest_existing_main_obs = Obstetrical_History.objects.filter(
-        patrec_id__pat_id=patient_id
-    ).order_by('-patrec_id__created_at').first()
-
-    main_obs_serializer_data = {
-        "obs_record_from": "Family Planning",
-        "patrec_id": patrec_id, # Link to the determined PatientRecord
-        "obs_living_ch": 0, "obs_abortion": 0, "obs_gravida": 0, "obs_para": 0,
-        "obs_fullterm": 0, "obs_preterm": 0, "obs_ch_born_alive": 0,
-        "obs_lg_babies": 0, "obs_still_birth": 0,
-    }
-
-    if latest_existing_main_obs:
-        main_obs_serializer_data.update({
-            "obs_living_ch": latest_existing_main_obs.obs_living_ch,
-            "obs_abortion": latest_existing_main_obs.obs_abortion,
-            "obs_gravida": latest_existing_main_obs.obs_gravida,
-            "obs_para": latest_existing_main_obs.obs_para,
-            "obs_fullterm": latest_existing_main_obs.obs_fullterm,
-            "obs_preterm": latest_existing_main_obs.obs_preterm,
-        })
-        if main_obs_data_from_request:
-            main_obs_serializer_data.update({
-                "obs_living_ch": main_obs_data_from_request.get("numOfLivingChildren", main_obs_serializer_data["obs_living_ch"]),
-                "obs_abortion": main_obs_data_from_request.get("abortion", main_obs_serializer_data["obs_abortion"]),
-                "obs_gravida": main_obs_data_from_request.get("g_pregnancies", main_obs_serializer_data["obs_gravida"]),
-                "obs_para": main_obs_data_from_request.get("p_pregnancies", main_obs_serializer_data["obs_para"]),
-                "obs_fullterm": main_obs_data_from_request.get("fullTerm", main_obs_serializer_data["obs_fullterm"]),
-                "obs_preterm": main_obs_data_from_request.get("premature", main_obs_serializer_data["obs_preterm"]),
-                "obs_ch_born_alive": main_obs_data_from_request.get("childrenBornAlive", main_obs_serializer_data["obs_ch_born_alive"]),
-                "obs_lg_babies": main_obs_data_from_request.get("largeBabies", main_obs_serializer_data["obs_lg_babies"]),
-                "obs_still_birth": main_obs_data_from_request.get("stillBirth", main_obs_serializer_data["obs_still_birth"]),
-            })
-    elif main_obs_data_from_request and any(main_obs_data_from_request.values()):
-        main_obs_serializer_data.update({
-            "obs_living_ch": main_obs_data_from_request.get("numOfLivingChildren") or 0,
-            "obs_abortion": main_obs_data_from_request.get("abortion") or 0,
-            "obs_gravida": main_obs_data_from_request.get("g_pregnancies") or 0,
-            "obs_para": main_obs_data_from_request.get("p_pregnancies") or 0,
-            "obs_fullterm": main_obs_data_from_request.get("fullTerm") or 0,
-            "obs_preterm": main_obs_data_from_request.get("premature") or 0,
-            "obs_ch_born_alive": main_obs_data_from_request.get("childrenBornAlive") or 0,
-            "obs_lg_babies": main_obs_data_from_request.get("largeBabies") or 0,
-            "obs_still_birth": main_obs_data_from_request.get("stillBirth") or 0,
-        })
-
-    main_obs_serializer = ObstetricalHistorySerializer(data=main_obs_serializer_data)
-    main_obs_serializer.is_valid(raise_exception=True)
-    main_obs_instance = main_obs_serializer.save()
-    logger.info(f"Created new Obstetrical_History with ID: {main_obs_instance.obs_id}")
-
-    # 6. Handle FP-specific Obstetrical History (ALWAYS NEW)
-    fp_obstetrical_history_data = data.get('obstetricalHistory', {})
-    if fp_obstetrical_history_data and fp_record_instance:
-        fpob_last_delivery_val = fp_obstetrical_history_data.get('lastDeliveryDate')
-        if fpob_last_delivery_val == "":
-            fpob_last_delivery_val = None
-
-        fpob_type_last_delivery_val = fp_obstetrical_history_data.get('typeOfLastDelivery')
-        if fpob_type_last_delivery_val == "":
-            fpob_type_last_delivery_val = None
-            
-        # Apply the same logic for menstrual period dates
-        last_period_val = fp_obstetrical_history_data.get('lastMenstrualPeriod')
-        if last_period_val == "":
-            last_period_val = None
-
-        previous_period_val = fp_obstetrical_history_data.get('previousMenstrualPeriod')
-        if previous_period_val == "":
-            previous_period_val = None
-
-        fp_obs_serializer_data = {
-            "fpob_last_delivery": fpob_last_delivery_val,
-            "fpob_type_last_delivery": fpob_type_last_delivery_val,
-            "fpob_last_period": last_period_val,
-            "fpob_previous_period": previous_period_val,
-            "fpob_mens_flow": fp_obstetrical_history_data.get('menstrualFlow') or "Normal",
-            "fpob_dysme": fp_obstetrical_history_data.get('dysmenorrhea') or False,
-            "fpob_hydatidiform": fp_obstetrical_history_data.get('hydatidiformMole') or False,
-            "fpob_ectopic_pregnancy": fp_obstetrical_history_data.get('ectopicPregnancyHistory') or False,
-            "fprecord": fprecord_id,
-            "obs": main_obs_instance.obs_id if main_obs_instance else None,
-        }
-
-        fp_obs_serializer = FP_ObstetricalHistorySerializer(data=fp_obs_serializer_data)
-        fp_obs_serializer.is_valid(raise_exception=True)
-        fp_obs_instance = fp_obs_serializer.save()
-        logger.info(f"Created new FP_Obstetrical_History with ID: {fp_obs_instance.fpob_id}")
-    else:
-        logger.info("No FP-specific obstetrical history data or FP_Record not available. Skipping FP_Obstetrical_History creation.")
-    
-    if fp_obstetrical_history_data:
-        last_delivery_date_for_prev_preg = fp_obstetrical_history_data.get('lastDeliveryDate')
-        type_of_last_delivery_for_prev_preg = fp_obstetrical_history_data.get('typeOfLastDelivery')
-
-        if last_delivery_date_for_prev_preg == "":
-            last_delivery_date_for_prev_preg = None
-        if type_of_last_delivery_for_prev_preg == "":
-            type_of_last_delivery_for_prev_preg = None
-
-        if last_delivery_date_for_prev_preg and type_of_last_delivery_for_prev_preg:
-            prev_pregnancy_data = {
-                "date_of_delivery": last_delivery_date_for_prev_preg,
-                "type_of_delivery": type_of_last_delivery_for_prev_preg,
-                "outcome": None, "babys_wt": None, "gender": None,
-                "ballard_score": None, "apgar_score": None,
-                "patrec_id": patrec_id, # Link to the determined patrec_id
-            }
-            prev_pregnancy_serializer = PreviousPregnancyCreateSerializer(data=prev_pregnancy_data)
-            if prev_pregnancy_serializer.is_valid():
-                prev_pregnancy_instance = prev_pregnancy_serializer.save()
-                logger.info(f"Created new Previous_Pregnancy record for last delivery: {prev_pregnancy_instance.pfpp_id}")
-            else:
-                logger.error(f"Error validating Previous_Pregnancy data: {prev_pregnancy_serializer.errors}")
-        else:
-            logger.info("Skipping Previous_Pregnancy creation: 'lastDeliveryDate' or 'typeOfLastDelivery' not valid or provided.")
-
-    # 7. Create Risk STI
-    risk_sti_data = data.get("sexuallyTransmittedInfections", {})
-    risk_sti_payload = {
-        "sti_abnormal_discharge": risk_sti_data.get("abnormalDischarge") or False,
-        "sti_discharge_from": risk_sti_data.get("dischargeFrom") if risk_sti_data.get("abnormalDischarge") else None,
-        "sti_sores": risk_sti_data.get("sores") or False,
-        "sti_pain": risk_sti_data.get("pain") or False,
-        "sti_history": risk_sti_data.get("history") or False,
-        "sti_hiv": risk_sti_data.get("hiv") or False,
-        "fprecord": fprecord_id,
-    }
-    risk_sti_serializer = FPRiskStiSerializer(data=risk_sti_payload)
-    risk_sti_serializer.is_valid(raise_exception=True)
-    risk_sti_serializer.save()
-    logger.info("Created FP_RiskSti.")
-
-    # 8. Create Risk VAW
-    risk_vaw_data = data.get("violenceAgainstWomen", {})
-    risk_vaw_payload = {
-        "vaw_unpleasant_rs": risk_vaw_data.get("unpleasantRelationship") or False,
-        "vaw_partner_disapproval": risk_vaw_data.get("partnerDisapproval") or False,
-        "vaw_domestic_violence": risk_vaw_data.get("domesticViolence") or False,
-        "vaw_referred_to": risk_vaw_data.get("referredTo") or None,
-        "fprecord": fprecord_id,
-    }
-    risk_vaw_serializer = FPRiskVawSerializer(data=risk_vaw_payload)
-    risk_vaw_serializer.is_valid(raise_exception=True)
-    risk_vaw_serializer.save()
-    logger.info("Created FP_RiskVaw.")
-
-    # 9. Handle Body Measurement (ALWAYS CREATE NEW RECORD FOR HISTORY)
-    bm_id = None
-    current_weight = data.get("weight")
-    current_height = data.get("height")
-    patient = patient_record_instance.pat_id
-    # Always create a new BodyMeasurement record for historical tracking
-    bm_data = {
-        "weight": float(current_weight) if current_weight is not None else 0,
-        "height": float(current_height) if current_height is not None else 0,
-        "age": data.get("age") or 0,
-        "staff": staff_id_from_request,
-        "pat": patient.pat_id,
-    }
-
-    print("BM data: ", bm_data)
-    bm_serializer = BodyMeasurementSerializer(data=bm_data)
-    bm_serializer.is_valid(raise_exception=True)
-    new_bm = bm_serializer.save()
-    bm_id = new_bm.bm_id
-
-    # Get previous measurement for comparison logging
-    previous_bm = BodyMeasurement.objects.filter(
-        pat=patient
-    ).exclude(bm_id=bm_id).order_by('-created_at').first()
-
-    if previous_bm:
-        weight_change = float(current_weight) - float(previous_bm.weight) if current_weight is not None else 0
-        height_change = float(current_height) - float(previous_bm.height) if current_height is not None else 0
-        logger.info(f"Created new BodyMeasurement with ID: {bm_id}. Previous: W={previous_bm.weight}, H={previous_bm.height}. Change: W={weight_change}, H={height_change}")
-    else:
-        logger.info(f"Created first BodyMeasurement with ID: {bm_id}")
-    
-    # 10. Create Vital Signs
-    vital_bp_systolic = "N/A"
-    vital_bp_diastolic = "N/A"
-    if data.get("bloodPressure") and isinstance(data["bloodPressure"], str):
-        bp_parts = data["bloodPressure"].split("/")
-        if len(bp_parts) == 2:
-            vital_bp_systolic = bp_parts[0].strip()
-            vital_bp_diastolic = bp_parts[1].strip()
-        else:
-            vital_bp_systolic = data["bloodPressure"].strip()
-
-    vital_signs_data = {
-        "vital_bp_systolic": vital_bp_systolic,
-        "vital_bp_diastolic": vital_bp_diastolic,
-        "vital_temp": data.get("temperature") or "N/A",
-        "vital_RR": data.get("respiratoryRate") or "N/A",
-        "vital_o2": data.get("oxygenSaturation") or "N/A",
-        "vital_pulse": data.get("pulseRate") or "N/A",
-        "staff": staff_id_from_request,
-        "patrec": patrec_id, # Link to the determined patrec_id
-    }
-    vital_signs_serializer = VitalSignsSerializer(data=vital_signs_data)
-    vital_signs_serializer.is_valid(raise_exception=True)
-    vital_signs_instance = vital_signs_serializer.save()
-    vital_id = vital_signs_instance.vital_id
-    logger.info(f"Created VitalSigns with ID: {vital_id}")
-
-    # 11. Create Physical Exam
-    physical_exam_data = {
-        "skin_exam": data.get("skinExamination") or "Normal",
-        "conjunctiva_exam": data.get("conjunctivaExamination") or "Normal",
-        "neck_exam": data.get("neckExamination") or "Normal",
-        "breast_exam": data.get("breastExamination") or "Normal",
-        "abdomen_exam": data.get("abdomenExamination") or "Normal",
-        "extremities_exam": data.get("extremitiesExamination") or "Normal",
-        "fprecord": fprecord_id,
-        "bm": bm_id,
-        "vital": vital_id,
-    }
-    physical_exam_serializer = FPPhysicalExamSerializer(data=physical_exam_data)
-    physical_exam_serializer.is_valid(raise_exception=True)
-    physical_exam_serializer.save()
-    logger.info("Created FP_Physical_Exam.")
-
-    # 12. Pelvic Exam (IUD method check)
-    is_iud_selected = "IUD" in (data.get("methodCurrentlyUsed") or "")
-    if is_iud_selected:
-        uterine_position = data.get("uterinePosition", "")
-        if uterine_position == "middle":
-            uterine_position = "Middle"
-        elif uterine_position == "anteflexed":
-            uterine_position = "Anteflexed"
-        elif uterine_position == "retroflexed":
-            uterine_position = "Retroflexed"
-        
-        pelvic_exam_data = {
-            "pelvic_exam": data.get("pelvicExamination") or "Normal",
-            "cervical_consistency": data.get("cervicalConsistency") or "Firm",
-            "cervical_tenderness": data.get("cervicalTenderness") or False,
-            "cervical_adnexal": data.get("cervicalAdnexal") or False,
-            "uterine_position": uterine_position,
-            "uterine_depth": data.get("uterineDepth") or "",
-            "fprecord": fprecord_id,
-        }
-        pelvic_exam_serializer = PelvicExamSerializer(data=pelvic_exam_data)
-        pelvic_exam_serializer.is_valid(raise_exception=True)
-        pelvic_exam_serializer.save()
-        logger.info("Created FP_Pelvic_Exam (IUD method).")
-    else:
-        logger.info("Skipping FP_Pelvic_Exam (not IUD method).")
-
-    # 13. Create Acknowledgement
-    acknowledgement_data = data.get("acknowledgement", {})
-    client_full_name = f"{data.get('lastName')}, {data.get('givenName')} {data.get('middleInitial') or ''}".strip()
-    acknowledgement_payload = {
-        "ack_client_signature": acknowledgement_data.get("clientSignature") or "",
-        "ack_client_signature_date": acknowledgement_data.get("clientSignatureDate") or date.today().isoformat(),
-        "ack_client_name": client_full_name,
-        "ack_guardian_signature": acknowledgement_data.get("guardianSignature") or "",
-        "ack_guardian_signature_date": acknowledgement_data.get("guardianSignatureDate") or None,
-        "fprecord": fprecord_id,
-        "fpt": fpt_id,
-    }
-    acknowledgement_serializer = AcknowledgementSerializer(data=acknowledgement_payload)
-    acknowledgement_serializer.is_valid(raise_exception=True)
-    acknowledgement_serializer.save()
-    logger.info("Created FP_Acknowledgement.")
-
-    # 14. Create Pregnancy Check
-    print("DEBUG: Preparing Pregnancy Check data...") # Debugging line
-    pregnancy_check_data = data.get("pregnancyCheck", {})
-    pregnancy_check_payload = {
-        "fp_pc_breastfeeding": pregnancy_check_data.get("breastfeeding") or False,
-        "fp_pc_abstained": pregnancy_check_data.get("abstained") or False,
-        "fp_pc_recent_baby": pregnancy_check_data.get("recent_baby") or False,
-        "fp_pc_recent_period": pregnancy_check_data.get("recent_period") or False,
-        "fp_pc_recent_abortion": pregnancy_check_data.get("recent_abortion") or False,
-        "fp_pc_using_contraceptive": pregnancy_check_data.get("using_contraceptive") or False,
-        "fprecord": fprecord_id,
-    }
-    pregnancy_check_serializer = FP_PregnancyCheckSerializer(data=pregnancy_check_payload)
-    print("DEBUG: Validating FP_PregnancyCheckSerializer...")
-    print("DATAS PREGNANCY CHECK: ",pregnancy_check_payload)
-    pregnancy_check_serializer.is_valid(raise_exception=True)
-    pregnancy_check_serializer.save()
-    logger.info("Created FP_pregnancy_check.")
-    print("DEBUG: FP_pregnancy_check created.")
-
-    # 15. Create Assessment and handle stock deduction
-    service_records = data.get("serviceProvisionRecords", [])
-    if service_records:
-        latest_record = service_records[-1]
-        method_accepted = latest_record.get('methodAccepted')
-        method_quantity_str = latest_record.get('methodQuantity')
-
-        method_quantity = 0
-        if method_quantity_str:
-            try:
-                method_quantity = int(method_quantity_str)
-            except (ValueError, TypeError):
-                logger.error(f"Invalid quantity provided: {method_quantity_str}. Defaulting to 0.")
-
-        last_follow_up_visit = FollowUpVisit.objects.filter(patrec=patient_record_instance).order_by('-created_at').first()
-        if last_follow_up_visit:
-            if last_follow_up_visit.followv_status == 'pending':
-                last_follow_up_visit.followv_status = 'completed'  # Update status to completed
-                last_follow_up_visit.completed_at = timezone.now().date()
-                last_follow_up_visit.save()  # Save the changes
-                logger.info(f"Updated last follow-up visit (ID: {last_follow_up_visit.followv_id}) status to 'completed'.")
-            else:
-                logger.info(f"Last follow-up visit (ID: {last_follow_up_visit.followv_id}) was already 'completed'. No update needed.")
-        else:
-            logger.info(f"No previous follow-up visit found for patrec_id: {patient_record_instance.patrec_id} to mark as completed.")
-        # Create the NEW Follow-up Visit for the current record
-        date_of_follow_up = latest_record.get("dateOfFollowUp")
-        if not date_of_follow_up or date_of_follow_up == "":
-            # Set a default date or handle differently
-            date_of_follow_up = timezone.now().date()  # Or use today's date as default
-
-        follow_up_data = {
+        # 2. Check for duplicate FP Record
+        fp_record_comparison_data = {
+            "client_id": data.get("client_id") or "",
+            "fourps": data.get("fourps") or False,
+            "plan_more_children": data.get("plan_more_children"),
+            "avg_monthly_income": data.get("avg_monthly_income") or "0",
+            "occupation": data.get("occupation") or None,
+            "pat": patient_record_instance.pat_id.pat_id,
             "patrec": patrec_id,
-            "followv_date": date_of_follow_up,
-            "followv_status": "pending",
-            "followv_description": "Family Planning Follow up",
+            "spouse": spouse_instance.pk if spouse_instance else None,
+            "num_of_children": data.get("numOfLivingChildren") or 0,
         }
-        follow_up_serializer = FollowUpVisitSerializer(data=follow_up_data)
-        follow_up_serializer.is_valid(raise_exception=True)
-        follow_up_instance = follow_up_serializer.save()
-        followv_id = follow_up_instance.followv_id
-        logger.info(f"Created NEW FollowUpVisit with ID: {followv_id}")
+        
+        # Check for existing FP Record with same data (within last 24 hours to avoid exact duplicates)
+        time_threshold = timezone.now() - timezone.timedelta(hours=24)
+        existing_fp_record, is_duplicate = _find_existing_record(
+            FP_Record,
+            {
+                "patrec": patrec_id,
+                "created_at__gte": time_threshold
+            },
+            fp_record_comparison_data,
+            ignore_fields=['fprecord_id', 'created_at', 'hrd']
+        )
+        
+        if existing_fp_record and is_duplicate:
+            logger.warning(f"Duplicate FP Record detected within 24 hours. Using existing record ID: {existing_fp_record.fprecord_id}")
+            return existing_fp_record.fprecord_id  # Return early, no need to create duplicates
+        
+        # Create FP Record if not duplicate
+        fp_record_serializer = FPRecordSerializer(data=fp_record_comparison_data)
+        fp_record_serializer.is_valid(raise_exception=True)
+        fp_record_instance = fp_record_serializer.save()
+        created_instances['fp_record'] = fp_record_instance
+        fprecord_id = fp_record_instance.fprecord_id
+        logger.info(f"Created FP Record with ID: {fprecord_id}")
 
-        # Deduct stock and log transaction if quantity > 0 and method is a commodity
-        if method_accepted and method_quantity > 0:
+        current_fp_record = fp_record_instance
+        current_patient_record = patient_record_instance
+
+        # 3. Handle illnesses + snapshots (with duplicate checking)
+        selected_illness_ids = data.get("selectedIllnessIds", [])
+        custom_disability_details = data.get("customDisabilityDetails")
+
+        if isinstance(selected_illness_ids, str):
             try:
-                print(f"DEBUG: Attempting stock deduction for {method_accepted} (qty: {method_quantity})...") # Debugging line
-                commodity = CommodityList.objects.get(com_name=method_accepted)
+                selected_illness_ids = [int(i.strip()) for i in selected_illness_ids.split(',') if i.strip()]
+            except ValueError:
+                selected_illness_ids = []
 
-                print(f"DEBUG: Looking for inventory for commodity {commodity.com_name} with at least {method_quantity} units")
-                all_items = CommodityInventory.objects.filter(com_id=commodity)
-                print(f"DEBUG: Found {all_items.count()} inventory items for commodity.")
+        if custom_disability_details:
+            custom_illness_instance = get_or_create_illness(
+                illname=custom_disability_details,
+                ill_description=f"User-specified disability: {custom_disability_details}",
+                ill_code_prefix="FP"
+            )
+            if custom_illness_instance.ill_id not in selected_illness_ids:
+                selected_illness_ids.append(custom_illness_instance.ill_id)
 
-                for item in all_items:
-                    print(f"Item: qty={item.cinv_qty_avail}, archived={item.inv_id.is_Archived}, expiry={item.inv_id.expiry_date}")
+        # Get current snapshots
+        existing_snapshot_medhist_ids = FP_MedicalHistory.objects.filter(
+            fprecord=current_fp_record
+        ).values_list("medhist_id", flat=True)
 
-                commodity_inventory_item = CommodityInventory.objects.filter(
-                    com_id=commodity,
-                    cinv_qty_avail__gte=method_quantity,
-                    inv_id__is_Archived=False
-                ).order_by('inv_id__expiry_date').first()
+        current_illness_set = set(
+            MedicalHistory.objects.filter(medhist_id__in=existing_snapshot_medhist_ids)
+            .values_list("ill_id", flat=True)
+        )
 
-                if not commodity_inventory_item:
-                    raise ValueError(f"Insufficient stock ({method_quantity}) for commodity '{method_accepted}' or no suitable inventory item found.")
+        new_illness_set = set(selected_illness_ids)
+        newly_selected = new_illness_set - current_illness_set
 
-                # Deduct the stock
-                commodity_inventory_item.cinv_qty_avail -= method_quantity
-                commodity_inventory_item.save()
-
-                original_unit = commodity_inventory_item.cinv_qty_unit
-                transaction_unit = original_unit
-
-                if original_unit == "boxes":
-                    transaction_unit = "pc/s"
-
-                final_comt_qty = f"{method_quantity} {transaction_unit}"
-                
-                CommodityTransaction.objects.create(
-                    cinv_id=commodity_inventory_item,
-                    comt_qty=final_comt_qty, # Use the new formatted string here
-                    comt_action="Deducted for FP Service",
-                    staff = staff_id_from_request or None
+        for illness_id in newly_selected:
+            illness_instance = get_object_or_404(Illness, ill_id=illness_id)
+            
+            # Check for existing medical history
+            existing_medhist = MedicalHistory.objects.filter(
+                ill=illness_instance,
+                patrec=current_patient_record
+            ).first()
+            
+            if existing_medhist:
+                medhist = existing_medhist
+                logger.info(f"Using existing MedicalHistory record {medhist.medhist_id}")
+            else:
+                medhist = MedicalHistory.objects.create(
+                    ill=illness_instance,
+                    patrec=current_patient_record
                 )
-                logger.info(f"Successfully deducted {method_quantity} of {method_accepted} and logged transaction.")
-                print(f"DEBUG: Stock deducted successfully for {method_accepted}. Transaction quantity logged as: {final_comt_qty}") # Debugging line
+                created_instances['medical_history'] = created_instances.get('medical_history', []) + [medhist]
+                logger.info(f"Created new MedicalHistory record {medhist.medhist_id}")
+            
+            # Check for duplicate FP medical history snapshot
+            existing_fp_medhist = FP_MedicalHistory.objects.filter(
+                fprecord=current_fp_record,
+                medhist=medhist
+            ).first()
+            
+            if not existing_fp_medhist:
+                fp_medhist = FP_MedicalHistory.objects.create(
+                    fprecord=current_fp_record,
+                    medhist=medhist
+                )
+                created_instances['fp_medical_history'] = created_instances.get('fp_medical_history', []) + [fp_medhist]
 
-            except CommodityList.DoesNotExist:
-                logger.warning(f"Commodity '{method_accepted}' not found in CommodityList. Stock not deducted.")
-                print(f"DEBUG: Commodity '{method_accepted}' not found for stock deduction.") # Debugging line
-                raise # Re-raise to trigger rollback if commodity not found
-            except ValueError as ve:
-                logger.error(f"Stock deduction error for {method_accepted}: {ve}", exc_info=True)
-                raise
-            except Exception as e:
-                logger.error(f"Unexpected error during stock deduction for {method_accepted}: {e}", exc_info=True)
-                raise
+        # 4. Check for duplicate FP Type
+        fp_type_comparison_data = {
+            "fpt_client_type": data.get("typeOfClient") or "New Acceptor",
+            "fpt_subtype": data.get("subTypeOfClient") or None,
+            "fpt_reason_fp": data.get("reasonForFP") or None,
+            "fpt_reason": data.get("otherReasonForFP") or None,
+            "fpt_other_reason": data.get("otherReasonForFP") or None,
+            "fpt_method_used": data.get("methodCurrentlyUsed") or "None",
+            "fpt_other_method": data.get("otherMethod") or "",
+            "fprecord": fprecord_id,
+        }
+        
+        existing_fp_type, is_duplicate = _find_existing_record(
+            FP_type,
+            {"fprecord": fprecord_id},
+            fp_type_comparison_data,
+            ignore_fields=['fpt_id']
+        )
+        
+        if existing_fp_type and is_duplicate:
+            fp_type_instance = existing_fp_type
+            logger.info(f"Using existing duplicate FP_type record ID: {fp_type_instance.fpt_id}")
+        else:
+            fp_type_serializer = FPTypeSerializer(data=fp_type_comparison_data)
+            fp_type_serializer.is_valid(raise_exception=True)
+            fp_type_instance = fp_type_serializer.save()
+            created_instances['fp_type'] = fp_type_instance
+            logger.info(f"Created FP_type with ID: {fp_type_instance.fpt_id}")
 
-        # Create FP Assessment
-        assessment_data = {
-            "quantity": method_quantity,
-            "as_provider_signature": latest_record.get("serviceProviderSignature") or "",
-            "as_provider_name": latest_record.get("nameOfServiceProvider") or "",
-            "as_findings": latest_record.get("medicalFindings") or "None",
-            "followv": followv_id,
+        fpt_id = fp_type_instance.fpt_id
+
+        # 5. Obstetrical History - Check for duplicates
+        main_obs_instance = None
+        if patient_gender != "male":
+            main_obs_data_from_request = data.get("obstetricalHistory", {})
+            patient_id = patient_record_instance.pat_id.pat_id
+            
+            # Check if obstetrical data has changed
+            latest_existing_main_obs = Obstetrical_History.objects.filter(
+                patrec_id__pat_id=patient_id
+            ).order_by('-patrec_id__created_at').first()
+            
+            last_menstrual_period = main_obs_data_from_request.get('lastMenstrualPeriod')
+            if last_menstrual_period == "":
+                last_menstrual_period = None
+            
+            main_obs_comparison_data = {
+                "patrec_id": patrec_id,
+                "obs_living_ch": main_obs_data_from_request.get("numOfLivingChildren") or 0,
+                "obs_abortion": main_obs_data_from_request.get("abortion") or 0,
+                "obs_gravida": main_obs_data_from_request.get("g_pregnancies") or 0,
+                "obs_para": main_obs_data_from_request.get("p_pregnancies") or 0,
+                "obs_fullterm": main_obs_data_from_request.get("fullTerm") or 0,
+                "obs_preterm": main_obs_data_from_request.get("premature") or 0,
+                "obs_ch_born_alive": main_obs_data_from_request.get("childrenBornAlive") or 0,
+                "obs_lg_babies": main_obs_data_from_request.get("largeBabies") or 0,
+                "obs_lg_babies_str": main_obs_data_from_request.get("obs_lg_babies_str") or False,
+                "obs_still_birth": main_obs_data_from_request.get("stillBirth") or 0,
+                "obs_lmp": last_menstrual_period,
+            }
+            
+            # Check if obstetrical data is different from latest
+            should_create_obs = True
+            if latest_existing_main_obs:
+                existing_obs_data = Obstetrical_History.objects.filter(
+                    pk=latest_existing_main_obs.pk
+                ).values().first()
+                
+                if existing_obs_data and _are_dicts_equal(
+                    existing_obs_data, 
+                    main_obs_comparison_data, 
+                    ignore_fields=['obs_id', 'patrec_id', 'created_at']
+                ):
+                    main_obs_instance = latest_existing_main_obs
+                    should_create_obs = False
+                    logger.info(f"Using existing Obstetrical_History record ID: {main_obs_instance.obs_id}")
+            
+            if should_create_obs:
+                main_obs_serializer = ObstetricalHistorySerializer(data=main_obs_comparison_data)
+                main_obs_serializer.is_valid(raise_exception=True)
+                main_obs_instance = main_obs_serializer.save()
+                created_instances['obstetrical_history'] = main_obs_instance
+                logger.info(f"Created new Obstetrical_History with ID: {main_obs_instance.obs_id}")
+
+        # 6. Handle FP-specific Obstetrical History with duplicate checking
+        fp_obstetrical_instance = None
+        if patient_gender != "male":
+            fp_obstetrical_history_data = data.get('obstetricalHistory', {})
+            if fp_obstetrical_history_data and fp_record_instance:
+                fpob_last_delivery_val = fp_obstetrical_history_data.get('lastDeliveryDate')
+                if fpob_last_delivery_val == "":
+                    fpob_last_delivery_val = None
+
+                fpob_type_last_delivery_val = fp_obstetrical_history_data.get('typeOfLastDelivery')
+                if fpob_type_last_delivery_val == "":
+                    fpob_type_last_delivery_val = None
+                    
+                last_period_val = fp_obstetrical_history_data.get('lastMenstrualPeriod')
+                if last_period_val == "":
+                    last_period_val = None
+
+                previous_period_val = fp_obstetrical_history_data.get('previousMenstrualPeriod')
+                if previous_period_val == "":
+                    previous_period_val = None
+
+                fp_obs_comparison_data = {
+                    "fpob_last_delivery": fpob_last_delivery_val,
+                    "fpob_type_last_delivery": fpob_type_last_delivery_val,
+                    "z": last_period_val,
+                    "fpob_previous_period": previous_period_val,
+                    "fpob_mens_flow": fp_obstetrical_history_data.get('menstrualFlow') or "Normal",
+                    "fpob_dysme": fp_obstetrical_history_data.get('dysmenorrhea') or False,
+                    "fpob_hydatidiform": fp_obstetrical_history_data.get('hydatidiformMole') or False,
+                    "fpob_ectopic_pregnancy": fp_obstetrical_history_data.get('ectopicPregnancyHistory') or False,
+                    "fprecord": fprecord_id,
+                    "obs": main_obs_instance.obs_id if main_obs_instance else None,
+                }
+
+                # Check for existing FP Obstetrical History
+                existing_fp_obs, is_duplicate = _find_existing_record(
+                    FP_Obstetrical_History,
+                    {"fprecord": fprecord_id},
+                    fp_obs_comparison_data,
+                    ignore_fields=['fpob_id']
+                )
+                
+                if existing_fp_obs and is_duplicate:
+                    fp_obstetrical_instance = existing_fp_obs
+                    logger.info(f"Using existing duplicate FP_Obstetrical_History record ID: {fp_obstetrical_instance.fpob_id}")
+                else:
+                    fp_obs_serializer = FP_ObstetricalHistorySerializer(data=fp_obs_comparison_data)
+                    fp_obs_serializer.is_valid(raise_exception=True)
+                    fp_obstetrical_instance = fp_obs_serializer.save()
+                    created_instances['fp_obstetrical_history'] = fp_obstetrical_instance
+                    logger.info(f"Created new FP_Obstetrical_History with ID: {fp_obstetrical_instance.fpob_id}")
+                
+                # Handle Previous Pregnancy with duplicate checking
+                if fp_obstetrical_history_data:
+                    last_delivery_date_for_prev_preg = fp_obstetrical_history_data.get('lastDeliveryDate')
+                    type_of_last_delivery_for_prev_preg = fp_obstetrical_history_data.get('typeOfLastDelivery')
+
+                    if last_delivery_date_for_prev_preg == "":
+                        last_delivery_date_for_prev_preg = None
+                    if type_of_last_delivery_for_prev_preg == "":
+                        type_of_last_delivery_for_prev_preg = None
+
+                    if last_delivery_date_for_prev_preg and type_of_last_delivery_for_prev_preg:
+                        prev_pregnancy_comparison_data = {
+                            "date_of_delivery": last_delivery_date_for_prev_preg,
+                            "type_of_delivery": type_of_last_delivery_for_prev_preg,
+                            "outcome": None, "babys_wt": None, "gender": None,
+                            "ballard_score": None, "apgar_score": None,
+                            "patrec_id": patrec_id, 
+                        }
+                        
+                        # Check for existing Previous Pregnancy
+                        existing_prev_pregnancy, is_duplicate = _find_existing_record(
+                            Previous_Pregnancy,
+                            {
+                                "patrec_id": patrec_id,
+                                "date_of_delivery": last_delivery_date_for_prev_preg
+                            },
+                            prev_pregnancy_comparison_data,
+                            ignore_fields=['pfpp_id']
+                        )
+                        
+                        if existing_prev_pregnancy and is_duplicate:
+                            logger.info(f"Using existing Previous_Pregnancy record ID: {existing_prev_pregnancy.pfpp_id}")
+                        else:
+                            prev_pregnancy_serializer = PreviousPregnancyCreateSerializer(data=prev_pregnancy_comparison_data)
+                            if prev_pregnancy_serializer.is_valid():
+                                prev_pregnancy_instance = prev_pregnancy_serializer.save()
+                                created_instances['previous_pregnancy'] = prev_pregnancy_instance
+                                logger.info(f"Created new Previous_Pregnancy record: {prev_pregnancy_instance.pfpp_id}")
+                            else:
+                                logger.error(f"Error validating Previous_Pregnancy data: {prev_pregnancy_serializer.errors}")
+
+        # 7. Create Risk STI with duplicate checking
+        risk_sti_data = data.get("sexuallyTransmittedInfections", {})
+        risk_sti_comparison_data = {
+            "sti_abnormal_discharge": risk_sti_data.get("abnormalDischarge") or False,
+            "sti_discharge_from": risk_sti_data.get("dischargeFrom") if risk_sti_data.get("abnormalDischarge") else None,
+            "sti_sores": risk_sti_data.get("sores") or False,
+            "sti_pain": risk_sti_data.get("pain") or False,
+            "sti_history": risk_sti_data.get("history") or False,
+            "sti_hiv": risk_sti_data.get("hiv") or False,
+            "fprecord": fprecord_id,
+        }
+        
+        existing_risk_sti, is_duplicate = _find_existing_record(
+            FP_RiskSti,
+            {"fprecord": fprecord_id},
+            risk_sti_comparison_data,
+            ignore_fields=['sti_id']
+        )
+        
+        if existing_risk_sti and is_duplicate:
+            logger.info(f"Using existing duplicate FP_RiskSti record ID: {existing_risk_sti.sti_id}")
+        else:
+            risk_sti_serializer = FPRiskStiSerializer(data=risk_sti_comparison_data)
+            risk_sti_serializer.is_valid(raise_exception=True)
+            risk_sti_instance = risk_sti_serializer.save()
+            created_instances['risk_sti'] = risk_sti_instance
+            logger.info("Created FP_RiskSti.")
+
+        # 8. Create Risk VAW with duplicate checking
+        risk_vaw_data = data.get("violenceAgainstWomen", {})
+        risk_vaw_comparison_data = {
+            "vaw_unpleasant_rs": risk_vaw_data.get("unpleasantRelationship") or False,
+            "vaw_partner_disapproval": risk_vaw_data.get("partnerDisapproval") or False,
+            "vaw_domestic_violence": risk_vaw_data.get("domesticViolence") or False,
+            "vaw_referred_to": risk_vaw_data.get("referredTo") or None,
+            "fprecord": fprecord_id,
+        }
+        
+        existing_risk_vaw, is_duplicate = _find_existing_record(
+            FP_RiskVaw,
+            {"fprecord": fprecord_id},
+            risk_vaw_comparison_data,
+            ignore_fields=['vaw_id']
+        )
+        
+        if existing_risk_vaw and is_duplicate:
+            logger.info(f"Using existing duplicate FP_RiskVaw record ID: {existing_risk_vaw.vaw_id}")
+        else:
+            risk_vaw_serializer = FPRiskVawSerializer(data=risk_vaw_comparison_data)
+            risk_vaw_serializer.is_valid(raise_exception=True)
+            risk_vaw_instance = risk_vaw_serializer.save()
+            created_instances['risk_vaw'] = risk_vaw_instance
+            logger.info("Created FP_RiskVaw.")
+
+        # 9. Create Body Measurement with duplicate checking
+        bm_id = None
+        current_weight = data.get("weight")
+        current_height = data.get("height")
+        patient = patient_record_instance.pat_id
+        
+        previous_bm = BodyMeasurement.objects.filter(pat=patient).order_by('-created_at').first()
+        bm_comparison_data = {
+            "weight": float(current_weight) if current_weight is not None else 0,
+            "height": float(current_height) if current_height is not None else 0,
+            "age": data.get("age") or 0,
+            "wfa": previous_bm.wfa if previous_bm else None,
+            "lhfa": previous_bm.lhfa if previous_bm else None,
+            "wfl": previous_bm.wfl if previous_bm else None,
+            "muac": previous_bm.muac if previous_bm else None,
+            "edemaSeverity": previous_bm.edemaSeverity if previous_bm else None,
+            "muac_status": previous_bm.muac_status if previous_bm else None,
+            "remarks": previous_bm.remarks if previous_bm else None,
+            "is_opt": previous_bm.is_opt if previous_bm else None,
+            "staff": staff_id_from_request,
+            "pat": patient.pat_id,
+        }
+
+        # Check if body measurement has changed significantly (more than 0.1 kg or 0.1 cm)
+        should_create_bm = True
+        if previous_bm:
+            weight_diff = abs(float(current_weight or 0) - float(previous_bm.weight or 0))
+            height_diff = abs(float(current_height or 0) - float(previous_bm.height or 0))
+            
+            if weight_diff < 0.1 and height_diff < 0.1:
+                bm_id = previous_bm.bm_id
+                should_create_bm = False
+                logger.info(f"Using existing BodyMeasurement record ID: {bm_id} (minimal changes)")
+
+        if should_create_bm:
+            bm_serializer = BodyMeasurementSerializer(data=bm_comparison_data)
+            bm_serializer.is_valid(raise_exception=True)
+            new_bm = bm_serializer.save()
+            bm_id = new_bm.bm_id
+            created_instances['body_measurement'] = new_bm
+            logger.info(f"Created new BodyMeasurement with ID: {bm_id}")
+
+        # 10. Create Vital Signs with duplicate checking
+        vital_bp_systolic = "N/A"
+        vital_bp_diastolic = "N/A"
+        if data.get("bloodPressure") and isinstance(data["bloodPressure"], str):
+            bp_parts = data["bloodPressure"].split("/")
+            if len(bp_parts) == 2:
+                vital_bp_systolic = bp_parts[0].strip()
+                vital_bp_diastolic = bp_parts[1].strip()
+            else:
+                vital_bp_systolic = data["bloodPressure"].strip()
+                
+        latest_vital = VitalSigns.objects.filter(patrec__pat_id=patient).order_by('-created_at').first()
+        vital_comparison_data = {
+            "vital_bp_systolic": vital_bp_systolic,
+            "vital_bp_diastolic": vital_bp_diastolic,
+            "vital_temp": latest_vital.vital_temp if latest_vital else "N/A",
+            "vital_RR": latest_vital.vital_RR if latest_vital else "N/A",
+            "vital_o2": latest_vital.vital_o2 if latest_vital else "N/A",
+            "vital_pulse": data.get("pulseRate") or "N/A",
+            "staff": staff_id_from_request,
+            "patrec": patrec_id, 
+        }
+        
+        # Check if vital signs are significantly different
+        should_create_vital = True
+        if latest_vital:
+            pulse_diff = abs(float(data.get("pulseRate") or 0) - float(latest_vital.vital_pulse or 0))
+            bp_same = (vital_bp_systolic == latest_vital.vital_bp_systolic and 
+                      vital_bp_diastolic == latest_vital.vital_bp_diastolic)
+            
+            if pulse_diff < 5 and bp_same:
+                vital_id = latest_vital.vital_id
+                should_create_vital = False
+                logger.info(f"Using existing VitalSigns record ID: {vital_id} (minimal changes)")
+
+        if should_create_vital:
+            vital_signs_serializer = VitalSignsSerializer(data=vital_comparison_data)
+            vital_signs_serializer.is_valid(raise_exception=True)
+            vital_signs_instance = vital_signs_serializer.save()
+            vital_id = vital_signs_instance.vital_id
+            created_instances['vital_signs'] = vital_signs_instance
+            logger.info(f"Created VitalSigns with ID: {vital_id}")
+
+        # 11. Create Physical Exam with duplicate checking
+        physical_exam_comparison_data = {
+            "skin_exam": data.get("skinExamination") or "Normal",
+            "conjunctiva_exam": data.get("conjunctivaExamination") or "Normal",
+            "neck_exam": data.get("neckExamination") or "Normal",
+            "breast_exam": data.get("breastExamination") or "Normal",
+            "abdomen_exam": data.get("abdomenExamination") or "Normal",
+            "extremities_exam": data.get("extremitiesExamination") or "Normal",
+            "fprecord": fprecord_id,
+            "bm": bm_id,
+            "vital": vital_id,
+        }
+        
+        existing_physical_exam, is_duplicate = _find_existing_record(
+            FP_Physical_Exam,
+            {"fprecord": fprecord_id},
+            physical_exam_comparison_data,
+            ignore_fields=['fp_pe_id']
+        )
+        
+        if existing_physical_exam and is_duplicate:
+            logger.info(f"Using existing duplicate FP_Physical_Exam record ID: {existing_physical_exam.fp_pe_id}")
+        else:
+            physical_exam_serializer = FPPhysicalExamSerializer(data=physical_exam_comparison_data)
+            physical_exam_serializer.is_valid(raise_exception=True)
+            physical_exam_instance = physical_exam_serializer.save()
+            created_instances['physical_exam'] = physical_exam_instance
+            logger.info("Created FP_Physical_Exam.")
+
+        # 12. Pelvic Exam with duplicate checking
+        if patient_gender != "male":
+            is_iud_selected = "IUD" in (data.get("methodCurrentlyUsed") or "")
+            if is_iud_selected:
+                uterine_position = data.get("uterinePosition", "")
+                if uterine_position == "middle":
+                    uterine_position = "Middle"
+                elif uterine_position == "anteflexed":
+                    uterine_position = "Anteflexed"
+                elif uterine_position == "retroflexed":
+                    uterine_position = "Retroflexed"
+                
+                pelvic_exam_comparison_data = {
+                    "pelvic_exam": data.get("pelvicExamination") or "Normal",
+                    "cervical_consistency": data.get("cervicalConsistency") or "Firm",
+                    "cervical_tenderness": data.get("cervicalTenderness") or False,
+                    "cervical_adnexal": data.get("cervicalAdnexal") or False,
+                    "uterine_position": uterine_position,
+                    "uterine_depth": data.get("uterineDepth") or "",
+                    "fprecord": fprecord_id,
+                }
+                
+                existing_pelvic_exam, is_duplicate = _find_existing_record(
+                    FP_Pelvic_Exam,
+                    {"fprecord": fprecord_id},
+                    pelvic_exam_comparison_data,
+                    ignore_fields=['pelvic_id']
+                )
+                
+                if existing_pelvic_exam and is_duplicate:
+                    logger.info(f"Using existing duplicate FP_Pelvic_Exam record ID: {existing_pelvic_exam.pelvic_id}")
+                else:
+                    pelvic_exam_serializer = PelvicExamSerializer(data=pelvic_exam_comparison_data)
+                    pelvic_exam_serializer.is_valid(raise_exception=True)
+                    pelvic_exam_instance = pelvic_exam_serializer.save()
+                    created_instances['pelvic_exam'] = pelvic_exam_instance
+                    logger.info("Created FP_Pelvic_Exam (IUD method).")
+
+        # 13. Create Acknowledgement with duplicate checking
+        acknowledgement_data = data.get("acknowledgement", {})
+        client_full_name = f"{data.get('lastName')}, {data.get('givenName')} {data.get('middleInitial') or ''}".strip()
+        acknowledgement_comparison_data = {
+            "ack_client_signature": acknowledgement_data.get("clientSignature") or "",
+            "ack_client_signature_date": acknowledgement_data.get("clientSignatureDate") or date.today().isoformat(),
+            "ack_client_name": client_full_name,
+            "ack_guardian_signature": acknowledgement_data.get("guardianSignature") or "",
+            "ack_guardian_signature_date": acknowledgement_data.get("guardianSignatureDate") or None,
             "fprecord": fprecord_id,
             "fpt": fpt_id,
-            "bm": bm_id,
         }
-        assessment_serializer = FPAssessmentSerializer(data=assessment_data)
-        assessment_serializer.is_valid(raise_exception=True)
-        assessment_serializer.save()
-        logger.info("Created FP_Assessment_Record.")
-    else:
-        logger.info("No service provision records found, skipping assessment and stock deduction.")
+        
+        existing_acknowledgement, is_duplicate = _find_existing_record(
+            FP_Acknowledgement,
+            {"fprecord": fprecord_id},
+            acknowledgement_comparison_data,
+            ignore_fields=['ack_id']
+        )
+        
+        if existing_acknowledgement and is_duplicate:
+            logger.info(f"Using existing duplicate FP_Acknowledgement record ID: {existing_acknowledgement.ack_id}")
+        else:
+            acknowledgement_serializer = AcknowledgementSerializer(data=acknowledgement_comparison_data)
+            acknowledgement_serializer.is_valid(raise_exception=True)
+            acknowledgement_instance = acknowledgement_serializer.save()
+            created_instances['acknowledgement'] = acknowledgement_instance
+            logger.info("Created FP_Acknowledgement.")
 
-    return fprecord_id # Return the created fprecord_id
+        # 14. Create Pregnancy Check with duplicate checking
+        if patient_gender != "male":
+            pregnancy_check_data = data.get("pregnancyCheck", {})
+            pregnancy_check_comparison_data = {
+                "fp_pc_breastfeeding": pregnancy_check_data.get("breastfeeding") or False,
+                "fp_pc_abstained": pregnancy_check_data.get("abstained") or False,
+                "fp_pc_recent_baby": pregnancy_check_data.get("recent_baby") or False,
+                "fp_pc_recent_period": pregnancy_check_data.get("recent_period") or False,
+                "fp_pc_recent_abortion": pregnancy_check_data.get("recent_abortion") or False,
+                "fp_pc_using_contraceptive": pregnancy_check_data.get("using_contraceptive") or False,
+                "fprecord": fprecord_id,
+            }
+            
+            existing_pregnancy_check, is_duplicate = _find_existing_record(
+                FP_pregnancy_check,
+                {"fprecord": fprecord_id},
+                pregnancy_check_comparison_data,
+                ignore_fields=['fp_pc_id']
+            )
+            
+            if existing_pregnancy_check and is_duplicate:
+                logger.info(f"Using existing duplicate FP_pregnancy_check record ID: {existing_pregnancy_check.fp_pc_id}")
+            else:
+                pregnancy_check_serializer = FP_PregnancyCheckSerializer(data=pregnancy_check_comparison_data)
+                pregnancy_check_serializer.is_valid(raise_exception=True)
+                pregnancy_check_instance = pregnancy_check_serializer.save()
+                created_instances['pregnancy_check'] = pregnancy_check_instance
+                logger.info("Created FP_pregnancy_check.")
+
+        # 15. Create Assessment and handle stock deduction with duplicate checking
+        service_records = data.get("serviceProvisionRecords", [])
+        if service_records:
+            latest_record = service_records[-1]
+            method_accepted = latest_record.get('methodAccepted')
+            method_quantity_str = latest_record.get('methodQuantity')
+
+            method_quantity = 0
+            if method_quantity_str:
+                try:
+                    method_quantity = int(method_quantity_str)
+                except (ValueError, TypeError):
+                    logger.error(f"Invalid quantity provided: {method_quantity_str}. Defaulting to 0.")
+
+            # Handle follow-up visit status update
+            last_follow_up_visit = FollowUpVisit.objects.filter(patrec=patient_record_instance).order_by('-created_at').first()
+            if last_follow_up_visit:
+                if last_follow_up_visit.followv_status == 'pending':
+                    last_follow_up_visit.followv_status = 'completed'
+                    last_follow_up_visit.completed_at = timezone.now().date()
+                    last_follow_up_visit.save()
+                    logger.info(f"Updated last follow-up visit status to 'completed'.")
+
+            # Create new Follow-up Visit
+            date_of_follow_up = latest_record.get("dateOfFollowUp")
+            if not date_of_follow_up or date_of_follow_up == "":
+                date_of_follow_up = timezone.now().date()
+
+            follow_up_comparison_data = {
+                "patrec": patrec_id,
+                "followv_date": date_of_follow_up,
+                "followv_status": "pending",
+                "followv_description": "Family Planning Follow up",
+            }
+            
+            existing_follow_up, is_duplicate = _find_existing_record(
+                FollowUpVisit,
+                {
+                    "patrec": patrec_id,
+                    "followv_date": date_of_follow_up
+                },
+                follow_up_comparison_data,
+                ignore_fields=['followv_id', 'created_at']
+            )
+            
+            if existing_follow_up and is_duplicate:
+                follow_up_instance = existing_follow_up
+                logger.info(f"Using existing duplicate FollowUpVisit record ID: {follow_up_instance.followv_id}")
+            else:
+                follow_up_serializer = FollowUpVisitSerializer(data=follow_up_comparison_data)
+                follow_up_serializer.is_valid(raise_exception=True)
+                follow_up_instance = follow_up_serializer.save()
+                created_instances['follow_up'] = follow_up_instance
+                logger.info(f"Created NEW FollowUpVisit with ID: {follow_up_instance.followv_id}")
+
+            followv_id = follow_up_instance.followv_id
+
+            # Handle stock deduction (no duplicate checking needed as it's transactional)
+            if method_accepted and method_quantity > 0:
+                try:
+                    commodity = CommodityList.objects.get(com_name=method_accepted)
+                    commodity_inventory_item = CommodityInventory.objects.filter(
+                        com_id=commodity,
+                        cinv_qty_avail__gte=method_quantity,
+                        inv_id__is_Archived=False
+                    ).order_by('inv_id__expiry_date').first()
+
+                    if commodity_inventory_item:
+                        commodity_inventory_item.cinv_qty_avail -= method_quantity
+                        commodity_inventory_item.save()
+
+                        original_unit = commodity_inventory_item.cinv_qty_unit
+                        transaction_unit = "pc/s" if original_unit == "boxes" else original_unit
+                        final_comt_qty = f"{method_quantity} {transaction_unit}"
+                        
+                        CommodityTransaction.objects.create(
+                            cinv_id=commodity_inventory_item,
+                            comt_qty=final_comt_qty,
+                            comt_action="Deducted for FP Service",
+                            staff=staff_id_from_request or None
+                        )
+                        logger.info(f"Successfully deducted {method_quantity} of {method_accepted}")
+
+                except (CommodityList.DoesNotExist, ValueError) as e:
+                    logger.error(f"Stock deduction error for {method_accepted}: {e}")
+                    raise
+
+            # Create Assessment with duplicate checking
+            assessment_comparison_data = {
+                "quantity": method_quantity,
+                "as_provider_signature": latest_record.get("serviceProviderSignature") or "",
+                "as_provider_name": latest_record.get("nameOfServiceProvider") or "",
+                "as_findings": latest_record.get("medicalFindings") or "None",
+                "followv": followv_id,
+                "fprecord": fprecord_id,
+                "fpt": fpt_id,
+                "bm": bm_id,
+            }
+            
+            existing_assessment, is_duplicate = _find_existing_record(
+                FP_Assessment_Record,
+                {
+                    "fprecord": fprecord_id,
+                    "followv": followv_id
+                },
+                assessment_comparison_data,
+                ignore_fields=['assessment_id']
+            )
+            
+            if existing_assessment and is_duplicate:
+                logger.info(f"Using existing duplicate FP_Assessment_Record ID: {existing_assessment.assessment_id}")
+            else:
+                assessment_serializer = FPAssessmentSerializer(data=assessment_comparison_data)
+                assessment_serializer.is_valid(raise_exception=True)
+                assessment_instance = assessment_serializer.save()
+                created_instances['assessment'] = assessment_instance
+                logger.info("Created FP_Assessment_Record.")
+
+        logger.info(f"Successfully completed FP record creation with ID: {fprecord_id}")
+        return fprecord_id
+    
+    except Exception as e:
+        # Rollback: Delete any created instances
+        logger.error(f"Error during FP record creation: {e}. Rolling back created instances.")
+        for key, instance in created_instances.items():
+            if isinstance(instance, list):
+                for item in instance:
+                    try:
+                        item.delete()
+                        logger.info(f"Rolled back {key} instance: {item.pk}")
+                    except Exception as delete_error:
+                        logger.error(f"Error deleting {key}: {delete_error}")
+            else:
+                try:
+                    instance.delete()
+                    logger.info(f"Rolled back {key} instance: {instance.pk}")
+                except Exception as delete_error:
+                    logger.error(f"Error deleting {key}: {delete_error}")
+        raise  
 
 
 @api_view(['POST'])

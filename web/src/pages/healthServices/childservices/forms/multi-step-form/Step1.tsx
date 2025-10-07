@@ -7,7 +7,6 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { FormInput } from "@/components/ui/form/form-input";
 import { PatientSearch } from "@/components/ui/patientSearch";
-import type { Patient } from "@/components/ui/patientSearch";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { BasicInfoSchema } from "@/form-schema/chr-schema/chr-schema";
 import { ChevronRight } from "lucide-react";
@@ -18,6 +17,7 @@ import { FatherInfoSection } from "../sections/father-info-section";
 import { AddressSection } from "../sections/address-section";
 import { populatePatientData, updateAgeFields } from "../sections/child-info-utils";
 import { useNextufcno } from "../queries/fetchQueries";
+
 export default function ChildHRPage1({ onNext, updateFormData, formData, mode, selectedPatient, setSelectedPatient, selectedPatientId, setSelectedPatientId }: Page1Props) {
   const isAddNewMode = mode === "addnewchildhealthrecord";
 
@@ -68,7 +68,7 @@ export default function ChildHRPage1({ onNext, updateFormData, formData, mode, s
     return () => subscription.unsubscribe();
   }, [watch, updateFormData]);
 
-  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+  const handlePatientSelect = (patient: any | null, patientId: string) => {
     setSelectedPatient(patient);
     setSelectedPatientId(patientId);
     reset(populatePatientData(patient));

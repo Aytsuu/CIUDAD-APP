@@ -70,4 +70,30 @@ export class KeychainService {
       return false;
     }
   }
+
+  static async authenticate(reason: string) {
+    try {
+      await Keychain.setGenericPassword('app_user', 'device_authentication', {
+        accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+        accessible: Keychain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+        authenticationPrompt: {
+          title: 'Authentication Required',
+          description: reason,
+        },
+      })
+
+      const result = await Keychain.getGenericPassword({
+        authenticationPrompt: {
+          title: 'Authentication Required',
+          description: reason,
+        },
+      });
+
+      await Keychain.resetGenericPassword();
+      return result !== false;
+
+    } catch (error) {
+      return false;
+    }
+  }
 }

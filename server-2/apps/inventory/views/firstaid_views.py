@@ -17,12 +17,26 @@ from calendar import monthrange
  
       
 class FirstAidListView(generics.ListCreateAPIView):
-    serializer_class=FirstAidListSerializers
-    queryset=FirstAidList.objects.all()
+    serializer_class = FirstAidListSerializers
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        queryset = FirstAidList.objects.all()
+        
+        # Add search functionality
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                models.Q(fa_name__icontains=search_query) |
+                models.Q(fa_id__icontains=search_query) |
+                models.Q(cat__cat_name__icontains=search_query)
+            )
+        
+        return queryset.order_by('fa_name')
+    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-     
 class FirstAidListUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class=FirstAidListSerializers
     queryset = FirstAidList.objects.all()

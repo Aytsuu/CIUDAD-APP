@@ -17,7 +17,7 @@ export function useMedConCount(patientId: string) {
     return useQuery({
       queryKey: ["fam-count"],
       queryFn: async () => {
-        const response = await api2.get(`/family-planning/count/${patientId}/`);
+        const response = await api2.get(`/familyplanning/count/${patientId}/`);
         return response.data;
       },
       refetchOnMount: true,

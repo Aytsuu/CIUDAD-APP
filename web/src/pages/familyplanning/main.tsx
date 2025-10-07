@@ -13,7 +13,6 @@ import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 
-
 // Initial form data structure - keep this for 'create' mode
 const initialFormData: FormData = {
   pat_id: "",
@@ -129,18 +128,40 @@ const initialFormData: FormData = {
 }
 
 export default function FamilyPlanningPage() {
+  const location = useLocation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  // Get all parameters from state instead of URL (preferred approach)
+  const { 
+    patientId: statePatientId, 
+    mode: stateMode, 
+    prefill: statePrefill,
+    patrecId: statePatrecId,
+    prefillFromFpRecord: statePrefillFromFpRecord,
+    gender: stateGender,
+    isNewMethod: stateIsNewMethod // NEW: Flag for "New Method for Patient"
+  } = location.state || {};
+
+  // Use state values with URL params as fallback for backward compatibility
   const { patientId: routePatientId, fprecordId } = useParams<{ patientId?: string; fprecordId?: string }>()
   const [searchParams] = useSearchParams()
-  const { user } = useAuth()
-  const navigate = useNavigate()
+  
   const modeParam = searchParams.get("mode")
   const prefillParam = searchParams.get("prefill")
   const patrecIdParam = searchParams.get("patrecId") // patrec_id for follow-up submission
   const prefillFromFpRecordParam = searchParams.get("prefillFromFpRecord") // fprecord_id to prefill from for follow-up
   const staff_id = user?.staff?.staff_id
   console.log("Staff id",staff_id)
-  // Determine the current mode of operation
-  const currentMode = (modeParam || "create") as "create" | "edit" | "view" | "followup"
+
+  // Prefer state values over URL params
+  const currentMode = (stateMode || modeParam || "create") as "create" | "edit" | "view" | "followup"
+  const actualPatientId = statePatientId || routePatientId
+  const shouldPrefill = statePrefill || prefillParam === "true"
+  const patrecId = statePatrecId || patrecIdParam
+  const prefillFromFpRecord = statePrefillFromFpRecord || prefillFromFpRecordParam
+  const passedGender = stateGender || (location.state as { gender?: string })?.gender || ""
+  const isNewMethod = stateIsNewMethod || false // NEW: Default to false
 
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [formData, setFormData] = useState<FormData>(initialFormData)
@@ -151,8 +172,7 @@ export default function FamilyPlanningPage() {
   const { mutateAsync: submitFollowUpRecord, isPending: isSubmittingFollowUpRecord } = useFollowUpFamilyPlanningFormSubmission()
 
   // Determine the actual patient ID to use for data fetching and form submission
-  // This will be the patientId from the URL for new/followup, or derived from fetched data for view/edit
-  const [actualPatientId, setActualPatientId] = useState<string | undefined>(routePatientId);
+  const [internalPatientId, setInternalPatientId] = useState<string | undefined>(actualPatientId);
 
   // Query for fetching existing record (for edit/view mode)
   const { data: fetchedRecord, isLoading: isFetchingRecord } = useQuery<FormData, Error>({
@@ -162,25 +182,37 @@ export default function FamilyPlanningPage() {
   })
 
   // Query for fetching latest record for prefill (for 'create' mode with patientId)
-  const { data: latestRecord, isLoading: isFetchingLatestRecord } = useQuery<FormData, Error>({
-    queryKey: ["latestFpRecord", actualPatientId],
-    queryFn: () => getLatestCompleteFPRecordForPatient(actualPatientId!),
-    enabled: !!actualPatientId && currentMode === "create" && prefillParam === "true",
-  })
+const { data: latestRecord, isLoading: isFetchingLatestRecord } = useQuery<FormData, Error>({
+  queryKey: ["latestFpRecord", internalPatientId, currentMode, isNewMethod],
+  queryFn: () => getLatestCompleteFPRecordForPatient(internalPatientId!),
+  enabled: !!internalPatientId && 
+    (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup")})
 
   // Query for fetching specific FP record for follow-up prefill
-  const { data: followUpPrefillRecord, isLoading: isFetchingFollowUpPrefillRecord } = useQuery<FormData, Error>({
-    queryKey: ["followUpPrefillRecord", prefillFromFpRecordParam],
-    queryFn: () => getFPCompleteRecord(Number(prefillFromFpRecordParam)),
-    enabled: currentMode === "followup" && !!prefillFromFpRecordParam,
-  })
+  // const { data: followUpPrefillRecord, isLoading: isFetchingFollowUpPrefillRecord } = useQuery<FormData, Error>({
+  //   queryKey: ["followUpPrefillRecord", prefillFromFpRecord],
+  //   queryFn: () => getFPCompleteRecord(Number(prefillFromFpRecord)),
+  //   enabled: currentMode === "followup" && !!prefillFromFpRecord,
+  // })
 
-  // Effect to update actualPatientId when fetchedRecord changes (for view/edit modes)
+  // Effect to update internalPatientId when fetchedRecord changes (for view/edit modes)
   useEffect(() => {
-    if (fetchedRecord && fetchedRecord.pat_id && !actualPatientId) {
-      setActualPatientId(fetchedRecord.pat_id);
+    if (fetchedRecord && fetchedRecord.pat_id && !internalPatientId) {
+      setInternalPatientId(fetchedRecord.pat_id);
     }
-  }, [fetchedRecord, actualPatientId]);
+  }, [fetchedRecord, internalPatientId]);
+
+  // Effect to set internalPatientId from state/URL
+  useEffect(() => {
+  if (actualPatientId && !internalPatientId) {
+    setInternalPatientId(actualPatientId);
+  }
+  
+  // Additional check for follow-up mode
+  if (currentMode === "followup" && actualPatientId && internalPatientId !== actualPatientId) {
+    setInternalPatientId(actualPatientId);
+  }
+}, [actualPatientId, internalPatientId, currentMode]);
 
 
   // Effect to set formData when fetchedRecord changes (edit/view mode)
@@ -189,19 +221,61 @@ export default function FamilyPlanningPage() {
       setFormData(fetchedRecord)
     }
   }, [fetchedRecord])
-  const location = useLocation();
-  const passedGender = (location.state as { gender?: string })?.gender || "";
 
-  // Effect to set formData when latestRecord changes ('create' mode with prefill)
+  // In main.tsx, add these logs:
+console.log("Current Mode:", currentMode);
+console.log("isNewMethod:", isNewMethod);
+console.log("shouldPrefill:", shouldPrefill);
+console.log("internalPatientId:", internalPatientId);
+console.log("Query enabled:", !!internalPatientId && (currentMode === "create" || currentMode === "followup") && (shouldPrefill || isNewMethod || currentMode === "followup"));
+
+  // Effect to set formData when latestRecord changes ('create' mode with prefill or new method)
   useEffect(() => {
-    if (latestRecord && currentMode === "create" && prefillParam === "true") {
+    if (latestRecord && currentMode === "create" && (shouldPrefill || isNewMethod)) {
       setIsPrefillingData(true)
 
       const prevEffectiveMethod = latestRecord.methodCurrentlyUsed === "Others"
         ? latestRecord.otherMethod
         : latestRecord.methodCurrentlyUsed;
 
-      const prefillData = {
+      // Different prefill logic for "New Method" vs regular prefill
+      const prefillData = isNewMethod ? {
+        ...initialFormData,
+        ...latestRecord,
+        pat_id: internalPatientId || latestRecord.pat_id,
+        patrec_id: latestRecord.patrec_id, // Keep the same patrec_id for new method under same record
+        client_id: latestRecord.client_id,
+        philhealthNo: latestRecord.philhealthNo,
+        nhts_status: latestRecord.nhts_status,
+        fourps: latestRecord.fourps,
+        lastName: latestRecord.lastName,
+        givenName: latestRecord.givenName,
+        middleInitial: latestRecord.middleInitial,
+        dateOfBirth: latestRecord.dateOfBirth,
+        age: latestRecord.age,
+        educationalAttainment: latestRecord.educationalAttainment,
+        occupation: latestRecord.occupation,
+        gender: passedGender || latestRecord.gender || "Unknown",
+        address: latestRecord.address,
+        spouse: latestRecord.spouse,
+        numOfLivingChildren: latestRecord.numOfLivingChildren,
+        plan_more_children: latestRecord.plan_more_children,
+        avg_monthly_income: latestRecord.avg_monthly_income,
+        // Reset method-related fields for new method selection
+        typeOfClient: "currentuser",
+        subTypeOfClient: "changingmethod",
+        reasonForFP: "",
+        otherReasonForFP: "",
+        reason: "",
+        methodCurrentlyUsed: "",
+        otherMethod: "",
+        previousMethod: prevEffectiveMethod || "",
+        acknowledgement: {
+          ...initialFormData.acknowledgement,
+          clientName: `${latestRecord.lastName}, ${latestRecord.givenName} ${latestRecord.middleInitial}`.trim(),
+        },
+      } : {
+        // For regular prefill - use existing logic
         ...latestRecord,
         fprecord_id: undefined,
         fpt_id: "",
@@ -215,7 +289,7 @@ export default function FamilyPlanningPage() {
         },
         serviceProvisionRecords: [], // Clear service provision records for new visit
         plan_more_children: latestRecord.plan_more_children, // Keep this from previous record
-        pat_id: actualPatientId || latestRecord.pat_id, // Ensure pat_id is set correctly
+        pat_id: internalPatientId || latestRecord.pat_id, // Ensure pat_id is set correctly
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
         typeOfClient: "currentuser",
         subTypeOfClient: "changingmethod", // Preserve existing value
@@ -223,63 +297,76 @@ export default function FamilyPlanningPage() {
         reason: latestRecord.reason,
         otherReasonForFP: latestRecord.otherReasonForFP || "", // Preserve existing value
         previousMethod: prevEffectiveMethod || "",
-      }
+      };
+
       setFormData(prefillData)
       setIsPrefillingData(false)
-      toast.success("Form pre-filled with patient's latest data. Please review and update as needed.")
+      
+      if (isNewMethod) {
+        toast.success("Ready to add new method for patient. Please select the new contraceptive method.")
+      } else {
+        toast.success("Form pre-filled with patient's latest data. Please review and update as needed.")
+      }
     }
-  }, [latestRecord, currentMode, prefillParam, actualPatientId])
+  }, [latestRecord, currentMode, shouldPrefill, internalPatientId, isNewMethod])
 
   // Effect to set formData when followUpPrefillRecord changes ('followup' mode)
- useEffect(() => {
-  if (followUpPrefillRecord && currentMode === "followup") {
+  useEffect(() => {
+  if (currentMode === "followup" && latestRecord) {
     setIsPrefillingData(true)
+    
+    const prevEffectiveMethod = latestRecord.methodCurrentlyUsed === "Others"
+      ? latestRecord.otherMethod
+      : latestRecord.methodCurrentlyUsed;
+
     const prefillData = {
-      ...followUpPrefillRecord,
+      ...latestRecord,
       fprecord_id: undefined, // Clear fprecord_id as it's a new FP record
       fpt_id: "", // Clear fpt_id as it's a new FP type record
       acknowledgement: {
-        ...followUpPrefillRecord.acknowledgement,
-        clientSignature: followUpPrefillRecord.acknowledgement.clientSignature,
+        ...latestRecord.acknowledgement,
+        clientSignature: latestRecord.acknowledgement.clientSignature,
         clientSignatureDate: new Date().toISOString().split("T")[0],
         guardianSignature: "",
         guardianSignatureDate: new Date().toISOString().split("T")[0],
       },
       serviceProvisionRecords: [], // Clear service provision records for new visit
-      avg_monthly_income: followUpPrefillRecord.avg_monthly_income,
-      plan_more_children: followUpPrefillRecord.plan_more_children, // Keep this from previous record
-      pat_id: actualPatientId || followUpPrefillRecord.pat_id, // Ensure pat_id is set correctly
-      patrec_id: patrecIdParam || followUpPrefillRecord.patrec_id, // Crucial: Use the patrecId from URL or fetched record
+      avg_monthly_income: latestRecord.avg_monthly_income,
+      plan_more_children: latestRecord.plan_more_children,
+      pat_id: internalPatientId || latestRecord.pat_id,
+      patrec_id: patrecId || latestRecord.patrec_id, // Use the patrecId from state/URL or latest record
       typeOfClient: "currentuser",
       gender: passedGender || "Unknown",
-      subTypeOfClient: followUpPrefillRecord.subTypeOfClient || "", // Preserve existing value
-      reasonForFP: followUpPrefillRecord.reasonForFP || "medicalcondition", // Preserve existing value
-      otherReasonForFP: followUpPrefillRecord.otherReasonForFP || "", // Preserve existing value
-      reason: followUpPrefillRecord.reason || "", // Add this line
-      weight: followUpPrefillRecord.weight,
-      height: followUpPrefillRecord.height,
-      methodCurrentlyUsed: followUpPrefillRecord.methodCurrentlyUsed,
-      bloodPressure: followUpPrefillRecord.bloodPressure,
-      pulseRate: followUpPrefillRecord.pulseRate,
-      numOfLivingChildren: followUpPrefillRecord.obstetricalHistory.numOfLivingChildren,
-      skinExamination: followUpPrefillRecord.fp_physical_exam?.skin_exam ?? "normal",
-      conjunctivaExamination: followUpPrefillRecord.fp_physical_exam?.conjunctiva_exam ?? "normal",
-      neckExamination: followUpPrefillRecord.fp_physical_exam?.neck_exam ?? "normal",
-      breastExamination: followUpPrefillRecord.fp_physical_exam?.breast_exam ?? "normal",
-      abdomenExamination: followUpPrefillRecord.fp_physical_exam?.abdomen_exam ?? "normal",
-      extremitiesExamination: followUpPrefillRecord.fp_physical_exam?.extremities_exam ?? "normal",
-      pelvicExamination: followUpPrefillRecord.fp_pelvic_exam?.pelvicExamination ?? "normal",
-      cervicalConsistency: followUpPrefillRecord.fp_pelvic_exam?.cervicalConsistency ?? "firm",
-      cervicalTenderness: String(followUpPrefillRecord.fp_pelvic_exam?.cervicalTenderness ?? false),
-      cervicalAdnexal: String(followUpPrefillRecord.fp_pelvic_exam?.cervicalAdnexal ?? false),
-      uterinePosition: followUpPrefillRecord.fp_pelvic_exam?.uterinePosition ?? "mid",
-      uterineDepth: followUpPrefillRecord.fp_pelvic_exam?.uterineDepth ?? "",
+      subTypeOfClient: latestRecord.subTypeOfClient || "",
+      reasonForFP: latestRecord.reasonForFP || "medicalcondition",
+      otherReasonForFP: latestRecord.otherReasonForFP || "",
+      reason: latestRecord.reason || "",
+      weight: latestRecord.weight,
+      height: latestRecord.height,
+      methodCurrentlyUsed: latestRecord.methodCurrentlyUsed,
+      bloodPressure: latestRecord.bloodPressure,
+      pulseRate: latestRecord.pulseRate,
+      numOfLivingChildren: latestRecord.obstetricalHistory.numOfLivingChildren,
+      skinExamination: latestRecord.fp_physical_exam?.skin_exam ?? "normal",
+      conjunctivaExamination: latestRecord.fp_physical_exam?.conjunctiva_exam ?? "normal",
+      neckExamination: latestRecord.fp_physical_exam?.neck_exam ?? "normal",
+      breastExamination: latestRecord.fp_physical_exam?.breast_exam ?? "normal",
+      abdomenExamination: latestRecord.fp_physical_exam?.abdomen_exam ?? "normal",
+      extremitiesExamination: latestRecord.fp_physical_exam?.extremities_exam ?? "normal",
+      pelvicExamination: latestRecord.fp_pelvic_exam?.pelvicExamination ?? "normal",
+      cervicalConsistency: latestRecord.fp_pelvic_exam?.cervicalConsistency ?? "firm",
+      cervicalTenderness: String(latestRecord.fp_pelvic_exam?.cervicalTenderness ?? false),
+      cervicalAdnexal: String(latestRecord.fp_pelvic_exam?.cervicalAdnexal ?? false),
+      uterinePosition: latestRecord.fp_pelvic_exam?.uterinePosition ?? "mid",
+      uterineDepth: latestRecord.fp_pelvic_exam?.uterineDepth ?? "",
+      previousMethod: prevEffectiveMethod || "", // Add previous method for reference
     }
+    
     setFormData(prefillData)
     setIsPrefillingData(false)
-    toast.success("Form pre-filled for follow-up. Please review and update as needed.")
+    toast.success("Form pre-filled with latest patient data for follow-up. Please review and update as needed.")
   }
-}, [followUpPrefillRecord, currentMode, actualPatientId, patrecIdParam])
+}, [latestRecord, currentMode, internalPatientId, patrecId])
 
 
   // Update form data (this function is passed down to child components)
@@ -300,9 +387,6 @@ export default function FamilyPlanningPage() {
       acknowledgement: newData.acknowledgement
         ? { ...prev.acknowledgement, ...newData.acknowledgement }
         : prev.acknowledgement,
-      // pregnancyCheck: newData.pregnancyCheck
-      //   ? { ...prev.pregnancyCheck, ...newData.pregnancyCheck }
-      //   : prev.pregnancyCheck,
     }))
   }, [])
 
@@ -310,7 +394,8 @@ export default function FamilyPlanningPage() {
     console.log("=== CURRENT FORM DATA REVIEW ===")
     console.log("pat_id:", formData.pat_id);
     console.log("patrec_id:", formData.patrec_id);
-    console.log("Current Mode:", currentMode); // Debug current mode
+    console.log("Current Mode:", currentMode);
+    console.log("Is New Method:", isNewMethod);
     console.log("General Information:", {
       client_id: formData.client_id,
       philhealthNo: formData.philhealthNo,
@@ -318,21 +403,12 @@ export default function FamilyPlanningPage() {
       givenName: formData.givenName,
       occupation: formData.occupation,
     })
-    console.log("Address:", formData.address)
-    console.log("Spouse Info:", formData.spouse)
-    console.log("Medical History:", formData.medicalHistory)
-    console.log("Obstetrical History:", formData.obstetricalHistory)
-    console.log("STI Info:", formData.sexuallyTransmittedInfections)
-    console.log("VAW Info:", formData.violenceAgainstWomen)
-    console.log("Pelvic Exam:", formData.fp_pelvic_exam)
-    console.log("Physical Exam:", {
-      weight: formData.weight,
-      height: formData.height,
-      bloodPressure: formData.bloodPressure,
+    console.log("Method Information:", {
+      typeOfClient: formData.typeOfClient,
+      subTypeOfClient: formData.subTypeOfClient,
+      methodCurrentlyUsed: formData.methodCurrentlyUsed,
+      previousMethod: formData.previousMethod,
     })
-    console.log("Acknowledgement:", formData.acknowledgement)
-    console.log("Service Provision Records:", formData.serviceProvisionRecords)
-    console.log("Pregnancy Check:", formData.pregnancyCheck)
     console.log("=== END OF REVIEW ===")
   }
 
@@ -355,9 +431,9 @@ export default function FamilyPlanningPage() {
     try {
       const finalFormData = {
         ...formData,
-        pat_id: actualPatientId || formData.pat_id, // Prioritize actualPatientId
+        pat_id: internalPatientId || formData.pat_id, // Prioritize internalPatientId
         staff_id: staff_id
-        };
+      };
 
       if (currentMode === "followup") {
         if (!finalFormData.patrec_id) {
@@ -366,11 +442,14 @@ export default function FamilyPlanningPage() {
         }
         await submitFollowUpRecord(finalFormData) // Use new mutation for follow-up
         toast.success("Family Planning follow-up record submitted successfully!")
-        navigate("/FamPlanning_table")  
+        navigate("/services/familyplanning/")  
       } else {
         await submitNewRecordSet(finalFormData) // Use original mutation for new record set
-        toast.success("Family Planning record submitted successfully!")
-        navigate("/FamPlanning_table")  
+        const successMessage = isNewMethod 
+          ? "New contraceptive method added successfully!" 
+          : "Family Planning record submitted successfully!";
+        toast.success(successMessage)
+        navigate("/services/familyplanning/")  
       }
     } catch (error) {
       toast.error("Failed to submit record. Please try again.")
@@ -379,7 +458,7 @@ export default function FamilyPlanningPage() {
   }
 
   // Display loading state while fetching data
-  const isLoading = isFetchingRecord || isFetchingLatestRecord || isFetchingFollowUpPrefillRecord || isPrefillingData;
+  const isLoading = isFetchingRecord || isFetchingLatestRecord || isPrefillingData;
   const isSubmitting = isSubmittingNewRecordSet || isSubmittingFollowUpRecord;
 
   if (isLoading || isSubmitting) {
@@ -387,19 +466,38 @@ export default function FamilyPlanningPage() {
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p>
-          {isLoading && (isFetchingRecord && "Loading record details..." || isFetchingLatestRecord && "Loading patient's latest data..." || isFetchingFollowUpPrefillRecord && "Loading follow-up prefill data..." || isPrefillingData && "Pre-filling form with patient data...")}
+          {isLoading && (isFetchingRecord && "Loading record details..." || isFetchingLatestRecord && "Loading patient's latest data..." && "Loading follow-up prefill data..." || isPrefillingData && "Pre-filling form with patient data...")}
           {isSubmitting && "Submitting form..."}
         </p>
       </div>
     )
   }
 
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="w-full mx-auto bg-white p-8 rounded-lg shadow-md">
-        {/* Show prefill notification */}
-        {(prefillParam === "true" && actualPatientId) || currentMode === "followup" ? (
+        {/* Show appropriate notification based on mode */}
+        {isNewMethod ? (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-700">
+                  <strong>New Method Setup:</strong> You are adding a new contraceptive method for this patient. 
+                  Please select the new method and provide the necessary information.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (shouldPrefill && internalPatientId) || currentMode === "followup" ? (
           <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -421,17 +519,16 @@ export default function FamilyPlanningPage() {
           </div>
         ) : null}
 
-        <div className="text-right text-sm  text-gray-500 mb-4">Page {currentPage}/6</div>
-
+        <div className="text-right text-sm text-gray-500 mb-4">Page {currentPage}/6</div>
 
         {currentPage === 1 && (
           <FamilyPlanningForm
             onNext2={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            mode={currentMode} // Pass the current mode
-            isPatientPreSelected={!!actualPatientId && (prefillParam === "true" || currentMode === "followup")}
-            patientGender={(location.state as { gender?: string })?.gender || passedGender}
+            mode={currentMode}
+            isPatientPreSelected={!!internalPatientId && (shouldPrefill || currentMode === "followup" || isNewMethod)}
+            patientGender={passedGender}
           />
         )}
         {currentPage === 2 && (
@@ -440,7 +537,6 @@ export default function FamilyPlanningPage() {
             onNext3={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-          // mode={currentMode}
           />
         )}
         {currentPage === 3 && (
@@ -449,7 +545,6 @@ export default function FamilyPlanningPage() {
             onNext4={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-          // mode={currentMode}
           />
         )}
         {currentPage === 4 && (
@@ -458,7 +553,6 @@ export default function FamilyPlanningPage() {
             onNext5={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-          // mode={currentMode}
           />
         )}
         {currentPage === 5 && (
@@ -467,7 +561,6 @@ export default function FamilyPlanningPage() {
             onNext6={handleNext}
             updateFormData={updateFormData}
             formData={formData}
-            // mode={currentMode}
             age={formData.age}
           />
         )}
@@ -478,7 +571,7 @@ export default function FamilyPlanningPage() {
             updateFormData={updateFormData}
             formData={formData}
             isSubmitting={isSubmitting}
-          // mode={currentMode}
+            patientGender={formData.gender} 
           />
         )}
       </div>

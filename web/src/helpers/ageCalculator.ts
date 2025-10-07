@@ -1,45 +1,34 @@
-export const calculateAge = (dateOfBirth: string, type?: string): string => {
+export const calculateAge = (dateOfBirth: string): string => {
   if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime())) {
-    return "-"; // or 'N/A' if you prefer
+    return "-";
   }
+  
   const birthDate = new Date(dateOfBirth);
   const today = new Date();
+  const totalDays = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  let years = today.getFullYear() - birthDate.getFullYear();
-  let months = today.getMonth() - birthDate.getMonth();
-  
-  // Adjust for month difference and day of month
-  if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
-    years--;
-    months += 12;
+  if (totalDays >= 365) {
+    const years = Math.floor(totalDays / 365);
+    return `${years} year${years > 1 ? 's' : ''} old`;
   }
   
-  // Handle day difference for more precise month calculation
-  if (today.getDate() < birthDate.getDate()) {
-    months--;
-  }
-
-  // Ensure months is positive after adjustment
-  months = Math.max(0, months);
-
-  years = Math.max(0, years);
-
-  if (years > 0) {
-    return `${years} ${type == "long" ? `year${years > 1 ? 's' : ''} old` : ''}`;
+  if (totalDays >= 30) {
+    const months = Math.floor(totalDays / 30);
+    return `${months} month${months > 1 ? 's' : ''} old`;
   }
   
-  if (months > 0) {
-    return `${months} ${type == "long" ? `month${months > 1 ? 's' : ''} old` : ''}`;
+  if (totalDays >= 7) {
+    const weeks = Math.floor(totalDays / 7);
+    return `${weeks} week${weeks > 1 ? 's' : ''} old`;
   }
   
-  // For ages less than 1 month
-  const days = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
-  if (days > 0) {
-    return `${days} ${type == "long" ? `day${days > 1 ? 's' : ''} old` : ''}`;
+  if (totalDays > 0) {
+    return `${totalDays} day${totalDays > 1 ? 's' : ''} old`;
   }
   
   return 'Newborn';
 };
+
 export interface AgeCalculation {
   totalDays: number
   totalWeeks: number

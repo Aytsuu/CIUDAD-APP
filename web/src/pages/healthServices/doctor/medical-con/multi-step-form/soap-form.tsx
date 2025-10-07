@@ -331,5 +331,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         onMedicinePageChange={handleMedicinePageChange}
       />
     </div>
+
+    
   );
 }

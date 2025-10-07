@@ -15,7 +15,6 @@ import { useMedicineRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
 import { useAuth } from "@/context/AuthContext";
 import { MedicineRequestArraySchema, MedicineRequestArrayType } from "@/form-schema/medicineRequest";
-import { Patient } from "@/components/ui/patientSearch";
 import CardLayout from "@/components/ui/card/card-layout";
 import { MedicineRequestError } from "./medicine-error";
 import { SignatureFieldRef } from "../reports/firstaid-report/signature";
@@ -31,7 +30,7 @@ export default function MedicineRequestForm() {
   const staffId = user?.staff?.staff_id || null;
   const mode = location.state?.params?.mode || "fromallrecordtable";
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -124,11 +123,13 @@ export default function MedicineRequestForm() {
     form.setValue("files", files);
   }, [mediaFiles, form]);
 
+  
+
   const handleSignatureChange = useCallback((signature: string | null) => {
     setSignature(signature);
   }, []);
 
-  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+  const handlePatientSelect = (patient: any | null, patientId: string) => {
     setSelectedPatientId(patientId);
     setSelectedPatientData(patient);
     if (patient) {
@@ -270,7 +271,11 @@ export default function MedicineRequestForm() {
                 {/* Conditionally show MediaUpload only when prescription medicine is selected */}
                 {hasPrescriptionMedicine && (
                   <div className="w-full p-4">
-                    <MediaUpload title="Supporting Documents" description="Prescription medicine selected. Image upload is required." mediaFiles={mediaFiles} activeVideoId={activeVideoId} setActiveVideoId={setActiveVideoId} setMediaFiles={setMediaFiles} maxFiles={5} />
+                    <MediaUpload title="Supporting Documents" 
+                    description="Prescription medicine selected. Image upload is required." 
+                    mediaFiles={mediaFiles} activeVideoId={activeVideoId} 
+                    setActiveVideoId={setActiveVideoId} 
+                    setMediaFiles={setMediaFiles} maxFiles={5} />
                     {mediaFiles.length === 0 && <div className="mt-2 text-sm text-red-500">Image upload is required for prescription medicines.</div>}
                   </div>
                 )}

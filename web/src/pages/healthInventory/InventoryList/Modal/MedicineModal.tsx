@@ -34,17 +34,14 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
   const { data: medicines } = useMedicinesList();
   const [isFormValid, setIsFormValid] = useState(false);
 
-
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: {
       medicineName: initialData?.medicineName || "",
-      cat_id:  String(initialData?.cat_id)||"",
-      med_type: initialData?.med_type ||""
+      cat_id: String(initialData?.cat_id) || "",
+      med_type: initialData?.med_type || ""
     }
   });
-
-
 
   useEffect(() => {
     if (mode === "edit" && initialData && categories.length > 0 && initialData.cat_id) {
@@ -111,8 +108,6 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
     }
   };
 
-  
- 
   const onSubmit = (data: MedicineType) => {
     if (!data.cat_id) {
       toast.error("Please select a category");
@@ -122,7 +117,6 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
       });
       return;
     }
-
 
     setMedicineName(data.medicineName);
   };
@@ -169,7 +163,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                 <FormItem>
                   <FormLabel className="text-darkGray">Category</FormLabel>
                   <FormControl>
-                  <SelectLayoutWithAdd
+                    <SelectLayoutWithAdd
                       className="w-full"
                       placeholder={getCurrentCategoryName()}
                       label="Select a Category"
@@ -212,7 +206,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
             </Button>
             <ConfirmationModal
               trigger={
-                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges || !isFormValid)}>
+                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges) || !isFormValid}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

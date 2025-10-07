@@ -7,8 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate, useLocation } from "react-router"
 
-import { type Patient } from "@/components/ui/patientSearch"
-
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-page1"
 import PrenatalFormSecPg from "./prenatal-form-page2"
@@ -35,7 +33,7 @@ export default function PrenatalForm() {
   const defaultValues = generateDefaultValues(PrenatalFormSchema)
   const [currentPage, setCurrentPage] = useState(1)
   const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
-  const [preselectedPatient, setPreselectedPatient] = useState<Patient | null>(null)
+  const [preselectedPatient, setPreselectedPatient] = useState<any | null>(null)
   const [activePregnancyId, setActivePregnancyId] = useState<string | null>(null)
 
   const navigate = useNavigate()
@@ -286,11 +284,63 @@ export default function PrenatalForm() {
   const nextPage = () => {
     setCurrentPage((prev) => prev + 1)
 
-    window.scrollTo(0,0)
+    // Use multiple approaches to ensure scroll works reliably
+    const scrollToTop = () => {
+      // Try multiple scroll methods
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      
+      // Also try scrolling to the form container
+      const formContainer = document.querySelector('[data-prenatal-form-container]')
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: 'instant', block: 'start' })
+      }
+    }
+
+    // Try immediate scroll
+    scrollToTop()
+    
+    // Also try with requestAnimationFrame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToTop()
+      })
+    })
+    
+    // Fallback with timeout
+    setTimeout(scrollToTop, 150)
   }
   // set to prev page
   const prevPage = () => {
     setCurrentPage((prev) => prev - 1)
+    
+    // Use multiple approaches to ensure scroll works reliably
+    const scrollToTop = () => {
+      // Try multiple scroll methods
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      
+      // Also try scrolling to the form container
+      const formContainer = document.querySelector('[data-prenatal-form-container]')
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: 'instant', block: 'start' })
+      }
+    }
+
+    // Try immediate scroll
+    scrollToTop()
+    
+    // Also try with requestAnimationFrame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToTop()
+      })
+    })
+    
+    // Fallback with timeout
+    setTimeout(scrollToTop, 150)
   }
 
   const handleFinalSubmit = async (data: z.infer<typeof PrenatalFormSchema>) => {
@@ -365,7 +415,7 @@ export default function PrenatalForm() {
   }
 
   return (
-    <div>
+    <div data-prenatal-form-container>
       <FormProvider {...form}>
         {currentPage === 1 && 
           <PrenatalFormFirstPg 

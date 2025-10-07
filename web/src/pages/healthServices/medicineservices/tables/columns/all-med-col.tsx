@@ -35,7 +35,21 @@ export const medicineColumns: ColumnDef<any>[] = [
     ),
     cell: ({ row }) => (
       <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.address ? row.original.address : "No address provided"}</div>
+        <div className="w-full">
+          {row.original.address ? (
+        row.original.address.length > 30 ? (
+          row.original.address.split(", ").map((line:any, index:any) => (
+            <div key={index} className="truncate">
+          {line}
+            </div>
+          ))
+        ) : (
+          <div className="truncate">{row.original.address}</div>
+        )
+          ) : (
+        "No address provided"
+          )}
+        </div>
       </div>
     )
   },

@@ -30,27 +30,6 @@ import { capitalize } from "@/helpers/capitalize"
 import { useResidents, useAllTransientAddresses } from "./queries/fetch"
 import { useAddPatient } from "./queries/add"
 
-
-// specialize capitalizeAllFields to handle nested objects and skip IDs capitalization
-export const capitalizeAllFields = (data: any): any => {
-    if (Array.isArray(data)) {
-        return data.map(capitalizeAllFields);
-    } else if (data && typeof data === "object") {
-        const newObj: any = {};
-        for (const key in data) {
-            if (key === "pat_id" || key === "rp_id" || key === "tradd_id") {
-                newObj[key] = data[key];
-            } else if (typeof data[key] === "string") {
-                newObj[key] = capitalize(data[key]);
-            } else {
-                newObj[key] = capitalizeAllFields(data[key]);
-            }
-        }
-        return newObj;
-    }
-    return data;
-};
-
 // typescript interfaces
 interface ResidentProfile {
   rp_id: string;
@@ -121,6 +100,7 @@ export default function CreatePatientRecord() {
 
   const patientType = form.watch("patientType")
   const phId = form.watch("philhealthId")
+  const contact = form.watch("contact")
 
   useEffect(() => {
     if(phId && phId.length != 12) {
@@ -128,8 +108,17 @@ export default function CreatePatientRecord() {
         type: "manual",
         message: "PhilHealth ID must be 12 digits.",
       })
-    } else if (phId && phId.length === 12) {
+    } else if (phId.length < 1 || phId.length === 12) {
       form.clearErrors("philhealthId")
+    }
+
+    if(contact && contact.length < 11) {
+      form.setError("contact", {
+        type: "manual",
+        message: "Contact number must be 11 digits.",
+      })
+    } else if (contact.length === 11) {
+      form.clearErrors("contact")
     }
   }, [phId, form])
 
@@ -211,8 +200,6 @@ export default function CreatePatientRecord() {
     );
 
     if (selectedPatient && selectedPatient.personal_info) {
-      console.log("Selected Patient:", selectedPatient);
-      console.log("Selected Patient:", selectedPatient);
 
       const personalInfo = selectedPatient.personal_info;
 
@@ -314,7 +301,7 @@ export default function CreatePatientRecord() {
     
     try {
       const patientType = formData.patientType === "resident" ? "Resident" : formData.patientType === "transient" ? "Transient" : "Resident";
-      const sexType = formData.sex === "female" ? "Female" : "Male";
+      const sexType = formData.sex === "female" ? "FEMALE" : "MALE";
       form.setValue("houseNo", "N/A");
 
       let patientData: PatientCreationData;
@@ -326,15 +313,15 @@ export default function CreatePatientRecord() {
         };
       } else {
         const trPatientData: PatientCreationData["transient_data"] = {
-          tran_lname: formData.lastName,
-          tran_fname: formData.firstName,
-          tran_mname: formData.middleName,
+          tran_lname: formData.lastName.toUpperCase(),
+          tran_fname: formData.firstName.toUpperCase(), 
+          tran_mname: formData.middleName ? formData.middleName.toUpperCase() : "",
           tran_dob: formData.dateOfBirth,
           tran_sex: sexType,
           tran_contact: formData.contact,
-          tran_status: "Active",
-          tran_ed_attainment: "Not Specified",
-          tran_religion: "Not Specified",
+          tran_status: "ACTIVE",
+          tran_ed_attainment: "NOT SPECIFIED",
+          tran_religion: "NOT SPECIFIED",
           philhealth_id: formData.philhealthId || "",
         }
         if(selectedTrAddtId !== 0) {
@@ -355,11 +342,9 @@ export default function CreatePatientRecord() {
         };
       }
 
-      const capitalizedData = capitalizeAllFields(patientData)
+      console.log("Creating patient with data:", patientData)
 
-      console.log("Creating patient with data:", capitalizedData)
-
-      const success = await handleCreatePatientId(capitalizedData)
+      const success = await handleCreatePatientId(patientData)
 
       if (success) {
         form.reset(defaultValues);

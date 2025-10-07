@@ -1,7 +1,6 @@
 from django.db import models
-from apps.patientrecords.models import PatientRecord,VitalSigns,BodyMeasurement,Finding
+from apps.patientrecords.models import PatientRecord, VitalSigns, BodyMeasurement, Finding, Patient
 from apps.medicineservices.models import MedicineRequest
-from apps.patientrecords.models import FollowUpVisit
 from apps.administration.models import Staff
 from django.core.validators import MinValueValidator
 from django.utils import timezone

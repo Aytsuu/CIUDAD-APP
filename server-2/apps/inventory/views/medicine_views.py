@@ -125,6 +125,9 @@ class MedicineListTable(generics.ListAPIView):
         
         return queryset
 
+
+
+
 # For creating new medicines
 class MedicineCreateView(generics.ListCreateAPIView):
     serializer_class=MedicineListSerializers

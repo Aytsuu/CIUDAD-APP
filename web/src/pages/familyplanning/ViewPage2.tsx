@@ -261,7 +261,7 @@ export default function FamilyPlanningView2() {
       {/* Navigation Buttons (outside print-content) */}
       <div className="flex justify-between mt-4 no-print"> {/* Add no-print class */}
         <Button
-          onClick={() => navigate("/FamPlanning_table")}
+          onClick={() => navigate("/services/familyplanning")}
           className="text-xs px-3 py-1"
         >
           Back to Records

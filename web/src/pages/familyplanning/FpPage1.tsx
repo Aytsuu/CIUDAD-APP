@@ -14,7 +14,7 @@ import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
 import { api2 } from "@/api/api"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { page1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { createPage1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { useObstetricalHistoryData } from "./queries/fpFetchQuery"
 
 type Page1Props = {
@@ -37,6 +37,8 @@ function calculateAge(dateOfBirth: string): number {
   return age
 }
 
+
+
 export default function FamilyPlanningForm({
   onNext2,
   updateFormData,
@@ -50,7 +52,7 @@ export default function FamilyPlanningForm({
   const [originalClientType, setOriginalClientType] = useState<string | null>(null);
   const [originalMethod, setOriginalMethod] = useState<string | null>(null)
   const form = useForm<FormData>({
-    resolver: zodResolver(page1Schema),
+    resolver: zodResolver(createPage1Schema(mode)),
     values: formData,
     mode: "onBlur",
   })
@@ -60,8 +62,6 @@ export default function FamilyPlanningForm({
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
   const patientId = formData?.pat_id
   const { data: obstetricalData } = useObstetricalHistoryData(patientId)
-
-
 
   useEffect(() => {
     if (obstetricalData?.livingChildren !== undefined) {
@@ -367,25 +367,52 @@ export default function FamilyPlanningForm({
     const fetchCommodities = async () => {
       setLoadingCommodities(true);
       try {
-        const response = await api2.get("inventory/commoditylist/");
-        const allCommodities = response.data;
+        // First, get the initial page to know the total count and pages
+        const firstPageResponse = await api2.get("/inventory/commoditylist/");
+        const firstPageData = firstPageResponse.data;
 
+        const totalCount = firstPageData.count;
+        const pageSize = firstPageData.results.length;
+        const totalPages = Math.ceil(totalCount / pageSize);
+
+        console.log(`Total commodities: ${totalCount}, Pages: ${totalPages}`);
+
+        // Create array of promises for all pages
+        const pagePromises = [Promise.resolve(firstPageResponse)];
+
+        for (let page = 2; page <= totalPages; page++) {
+          pagePromises.push(api2.get(`/inventory/commoditylist/?page=${page}`));
+        }
+
+        // Fetch all pages concurrently
+        const responses = await Promise.all(pagePromises);
+
+        // Combine all results
+        const allCommodities = responses.flatMap(response =>
+          response.data.results || []
+        );
+
+        console.log("All commodities fetched:", allCommodities);
+        console.log("Total commodities count:", allCommodities.length);
+
+        // ... rest of the filtering and formatting logic remains the same
         let filteredCommodities = allCommodities;
 
-        // First filter by user type (New acceptor/Current user)
+        // Apply filters (same as above)
         if (typeOfClient === "newacceptor") {
           filteredCommodities = filteredCommodities.filter(
-            (com: { user_type: string }) => com.user_type === "New acceptor" || com.user_type === "Both"
+            (com: { user_type: string }) =>
+              com.user_type === "New acceptor" || com.user_type === "Both"
           );
         } else if (typeOfClient === "currentuser") {
           if (subTypeOfClient === "changingmethod") {
             filteredCommodities = filteredCommodities.filter(
-              (com: { user_type: string }) => com.user_type === "Current user" || com.user_type === "Both"
+              (com: { user_type: string }) =>
+                com.user_type === "Current user" || com.user_type === "Both"
             );
           }
         }
 
-        // Then filter by gender using the watched gender from the form (falls back to prop if needed)
         const effectiveGender = watchedGender || patientGender;
         if (effectiveGender) {
           const genderLower = effectiveGender.toLowerCase();
@@ -394,18 +421,18 @@ export default function FamilyPlanningForm({
             return comGender === "both" || comGender === genderLower;
           });
         }
-        console.log("Gender type: ", effectiveGender)
-        // Format the commodities
-        const formattedCommodities = filteredCommodities.map((com: { com_id: any; com_name: any; user_type: any; gender_type: any }) => ({
-          id: com.com_name,  // Use name as the value that gets stored
-          name: com.com_name, // Display name
+
+        // Format for combobox
+        const formattedCommodities = filteredCommodities.map((com: any) => ({
+          id: com.com_name,
+          name: com.com_name,
           user_type: com.user_type,
           gender_type: com.gender_type,
-          // Store the original ID for reference if needed
           originalId: com.com_id
         }));
 
         setCommodities(formattedCommodities);
+
       } catch (error) {
         console.error("Error fetching commodities:", error);
         toast.error("Failed to load commodity data");
@@ -420,7 +447,9 @@ export default function FamilyPlanningForm({
 
   const onSubmit = async (data: FormData) => {
     const currentValues = form.getValues()
+
     try {
+      // Business logic validations first
       if (mode === "followup" && originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
         toast.error("You cannot change the contraceptive method in this follow-up record. Please create a new record to switch methods.");
         return;
@@ -431,9 +460,15 @@ export default function FamilyPlanningForm({
         return;
       }
 
-      const validatedData = page1Schema.parse(data)
-      updateFormData(validatedData)
+      if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
+        toast.error("You cannot select the same method when changing methods. Please choose a different method.");
+        return;
+      }
+
+      // The schema validation should now work with mode-aware rules
+      updateFormData(data)
       onNext2()
+
     } catch (error) {
       console.error("Validation failed:", error)
       let errorMessage = "Please fill in all required fields correctly."
@@ -444,7 +479,6 @@ export default function FamilyPlanningForm({
       toast.error(errorMessage)
     }
   }
-
   const inputProps = {
     disabled: isReadOnly,
     readOnly: isReadOnly,
@@ -523,7 +557,7 @@ export default function FamilyPlanningForm({
                         <Label className="font-normal text-[13px]">
                           {loadingPatients ? "Loading..." : "No patient found."}
                         </Label>
-                        <Link to="/create-patients-record">
+                        <Link to="/patientrecords">
                           <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
                             Register New Patient
                           </Label>
@@ -990,24 +1024,48 @@ export default function FamilyPlanningForm({
             </div>
 
             <div className="flex justify-end space-x-4">
+
               <Button
                 type="button"
                 onClick={async () => {
+                  // First trigger validation
                   const isValid = await form.trigger()
+
                   if (isValid) {
                     const currentValues = form.getValues()
+
+                    // Business logic checks
                     if (originalMethod && currentValues.methodCurrentlyUsed && currentValues.methodCurrentlyUsed !== originalMethod) {
                       toast.error("You cannot change the contraceptive method in this record. Please create a new record if you want to switch methods.")
                       return
                     }
+
                     if (currentValues.subTypeOfClient === "changingmethod" && currentEffectiveMethod === previousMethod && previousMethod) {
                       toast.error("You cannot select the same method when changing methods. Please choose a different method.");
                       return;
                     }
+
+                    if (isAgeInvalid) {
+                      toast.error("Age is outside the allowed range for family planning");
+                      return;
+                    }
+
                     updateFormData(currentValues)
                     onNext2()
-                  } else if (isAgeInvalid) {
-                    toast.error("Age is outside the allowed range for family planning");
+                  } else {
+                    // Show specific error messages based on mode
+                    const errors = form.formState.errors
+
+                    if (mode === "followup") {
+                      if (errors.methodCurrentlyUsed) {
+                        toast.error("Method currently used is required for follow-up visits.");
+                      } else if (form.watch("methodCurrentlyUsed") === "Others" && errors.otherMethod) {
+                        toast.error("Please specify the other method for follow-up visits.");
+                      }
+                    } else {
+                      // For create/edit modes, show general validation error
+                      toast.error("Please fill in all required fields correctly.");
+                    }
                   }
                 }}
                 disabled={isReadOnly || isAgeInvalid}

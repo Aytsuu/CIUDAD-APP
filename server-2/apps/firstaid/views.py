@@ -3,7 +3,9 @@ from rest_framework import generics
 from .serializers import *
 from apps.patientrecords.models import *
 from apps.patientrecords.serializers import *
-from django.db.models import Q
+from django.db.models import Q, Sum, IntegerField, Value
+from django.db.models.functions import Substr, StrIndex
+from django.db.models.functions import Cast
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -16,9 +18,6 @@ from datetime import timedelta
 from apps.pagination import StandardResultsPagination
 from apps.healthProfiling.models import *
 from apps.medicalConsultation.utils import *
-
-
-
 
 
 class PatientFirstaidRecordsView(generics.ListAPIView):
@@ -459,7 +458,7 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
         }, status=status.HTTP_200_OK)
         
    
-   
+
 class MonthlyFirstAidChart(APIView):
     def get(self, request, month):
         try:
@@ -474,19 +473,19 @@ class MonthlyFirstAidChart(APIView):
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get first aid item counts for the specified month
+            # Count first aid records for the specified month (don't sum quantities)
             queryset = FirstAidRecord.objects.filter(
                 created_at__year=year,
                 created_at__month=month_num
             ).values(
                 'finv__fa_id__fa_name'  # Path to first aid item name
             ).annotate(
-                count=Count('finv__fa_id')
-            ).order_by('-count')
+                record_count=Count('farec_id')  # Count the number of records instead of summing quantities
+            ).order_by('-record_count')
 
-            # Convert to dictionary format {item_name: count}
+            # Convert to dictionary format {item_name: record_count}
             item_counts = {
-                item['finv__fa_id__fa_name']: item['count'] 
+                item['finv__fa_id__fa_name']: item['record_count']
                 for item in queryset
             }
 
@@ -502,8 +501,6 @@ class MonthlyFirstAidChart(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 class FirstAidTotalCountAPIView(APIView):
     def get(self, request):

@@ -24,7 +24,7 @@ import { Trash2 } from "lucide-react"
 const methods = [
   "COC", "POP", "Injectable", "Implant", "Condom",
   "BOM/CMM", "BBT", "STM", "DMPA", "SDM", "Pills", "LAM", "IUD-Interval",
-  "Lactating Amenorrhea", "IUD-Post Partum", "Bilateral Tubal Ligation (BTL)", "Vasectomy",
+  "Lactating Amenorrhea", "IUD-Post Partum", "BTL", "Vasectomy",
 ]
 
 const initialCommonFindings: string[] = [
@@ -53,9 +53,10 @@ type Props = {
   formData: FormData
   isSubmitting?: boolean
   mode?: "create" | "edit" | "view"
+  patientGender?: string 
 }
 
-export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, updateFormData, formData, mode = "create" }: Props) {
+export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, updateFormData, formData, mode = "create",patientGender  }: Props) {
   const isReadOnly = mode === "view"
   const [records, setRecords] = useState(formData.serviceProvisionRecords || [])
   const [availableStock, setAvailableStock] = useState<number | null>(null)
@@ -64,7 +65,7 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
   const [selectedFindings, setSelectedFindings] = useState<string[]>([])
   const [sigRef, setSigRef] = useState<SignatureCanvas | null>(null)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-
+  const isMalePatient = patientGender?.toLowerCase() === 'male'
   const getMethodFromPage1 = () => formData?.methodCurrentlyUsed || ""
 
   // ✅ New RHF instance just for one record
@@ -266,26 +267,37 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
             </Table>
 
             <Separator className="my-8" />
-            <h3 className="text-lg font-semibold mb-4">How to be Reasonably Sure a Client is Not Pregnant</h3>
-            <div className="grid gap-4">
-              {pregnancyQuestions.map(({id,q},i)=>(
-                <FormField key={id} control={form.control} name={`pregnancyCheck.${id}` as any} render={({field})=>(
-                  <FormItem>
-                    <FormLabel>{`${i+1}. ${q}`}</FormLabel>
-                    <FormControl>
-                      <RadioGroup value={field.value ? "yes" : "no"} onValueChange={(val)=>field.onChange(val==="yes")} className="flex gap-6" disabled={isReadOnly}>
-                        {['yes','no'].map(opt=>(
-                          <div key={opt} className="flex items-center gap-2">
-                            <RadioGroupItem value={opt} id={`${id}-${opt}`} disabled={isReadOnly}/>
-                            <Label htmlFor={`${id}-${opt}`}>{opt.toUpperCase()}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )} />
-              ))}
-            </div>
+            {!isMalePatient ? (
+              <>
+                <h3 className="text-lg font-semibold mb-4">How to be Reasonably Sure a Client is Not Pregnant</h3>
+                <div className="grid gap-4">
+                  {pregnancyQuestions.map(({id,q},i)=>(
+                    <FormField key={id} control={form.control} name={`pregnancyCheck.${id}` as any} render={({field})=>(
+                      <FormItem>
+                        <FormLabel>{`${i+1}. ${q}`}</FormLabel>
+                        <FormControl>
+                          <RadioGroup value={field.value ? "yes" : "no"} onValueChange={(val)=>field.onChange(val==="yes")} className="flex gap-6" disabled={isReadOnly}>
+                            {['yes','no'].map(opt=>(
+                              <div key={opt} className="flex items-center gap-2">
+                                <RadioGroupItem value={opt} id={`${id}-${opt}`} disabled={isReadOnly}/>
+                                <Label htmlFor={`${id}-${opt}`}>{opt.toUpperCase()}</Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                      </FormItem>
+                    )} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              // Show message for male patients
+              <div className="bg-gray-50 p-4 rounded-md mb-4">
+                <p className="text-gray-600 italic">
+                  Pregnancy check is not applicable for male patients.
+                </p>
+              </div>
+            )}
 
             <div className="flex justify-end mt-6 space-x-4">
               <Button type="button" variant="outline" onClick={onPrevious5} disabled={isReadOnly}>Previous</Button>

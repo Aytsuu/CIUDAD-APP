@@ -33,14 +33,14 @@ import {
 // Helper function to calculate days difference between dates
 const calculateDaysDifference = (dateString: string): number => {
   if (!dateString) return Infinity;
-  
+
   const today = new Date();
   const targetDate = new Date(dateString);
-  
+
   // Set both dates to midnight for accurate day difference calculation
   today.setHours(0, 0, 0, 0);
   targetDate.setHours(0, 0, 0, 0);
-  
+
   const diffTime = targetDate.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
@@ -50,7 +50,7 @@ const shouldShowFollowUpWarning = (record: IndividualFPRecordDetail): { showWarn
   if (!record.dateOfFollowUp) {
     return { showWarning: false, daysLeft: Infinity };
   }
-  
+
   const daysDifference = calculateDaysDifference(record.dateOfFollowUp);
   
   // Show warning if missed by more than 3 days, but don't disable
@@ -64,29 +64,29 @@ const shouldShowFollowUpWarning = (record: IndividualFPRecordDetail): { showWarn
 const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string) => {
   // If no follow-up data exists
   if (!followv_status || !followUpDate) {
-    return { 
-      status: "No Follow-up", 
-      className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+    return {
+      status: "No Follow-up",
+      className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
     };
   }
   if (followv_status.toLowerCase() === "missed") {
-    return { 
-      status: "Missed", 
-      className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" 
+    return {
+      status: "Missed",
+      className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
     };
   }
-  
+
   if (followv_status.toLowerCase() === "dropout") {
-    return { 
-      status: "Dropped Out", 
-      className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" 
+    return {
+      status: "Dropped Out",
+      className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
     };
   }
   // If status is "Completed", always show as completed regardless of date
   if (followv_status.toLowerCase() === "completed") {
-    return { 
-      status: "Completed", 
-      className: "bg-green-100 text-green-800 border-green-300 hover:bg-green-200" 
+    return {
+      status: "Completed",
+      className: "bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
     };
   }
 
@@ -94,33 +94,33 @@ const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string
   if (followv_status.toLowerCase() === "pending") {
     const today = new Date();
     const followUp = new Date(followUpDate);
-    
+
     // Set hours to 0 for date-only comparison
     today.setHours(0, 0, 0, 0);
     followUp.setHours(0, 0, 0, 0);
 
     if (followUp < today) {
-      return { 
-        status: "Missed", 
-        className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" 
+      return {
+        status: "Missed",
+        className: "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
       };
     } else if (followUp.getTime() === today.getTime()) {
-      return { 
-        status: "Due Today", 
-        className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+      return {
+        status: "Due Today",
+        className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
       };
     } else {
-      return { 
-        status: "Pending", 
-        className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+      return {
+        status: "Pending",
+        className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
       };
     }
   }
 
   // Default case - show the backend status as is with yellow color
-  return { 
-    status: followv_status, 
-    className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" 
+  return {
+    status: followv_status,
+    className: "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
   };
 };
 
@@ -128,11 +128,11 @@ const getFollowUpDisplayStatus = (followv_status?: string, followUpDate?: string
 const hasLatestGroupMissedFollowUps = (groupedRecords: [string, IndividualFPRecordDetail[]][]) => {
   // If no groups exist, return false
   if (groupedRecords.length === 0) return false;
-  
+
   // Get the latest group (first group after sorting)
   const latestGroup = groupedRecords[0][1]; // [1] gets the records array from the tuple
-  
-  return latestGroup.some(record => {
+
+  return latestGroup.some((record) => {
     const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
     return status === "Missed" || status === "Dropped Out";
   });
@@ -141,10 +141,10 @@ const hasLatestGroupMissedFollowUps = (groupedRecords: [string, IndividualFPReco
 // UPDATED: Get missed follow-ups from the latest group only
 const getLatestGroupMissedFollowUps = (groupedRecords: [string, IndividualFPRecordDetail[]][]) => {
   if (groupedRecords.length === 0) return [];
-  
+
   const latestGroup = groupedRecords[0][1];
-  
-  return latestGroup.filter(record => {
+
+  return latestGroup.filter((record) => {
     const { status } = getFollowUpDisplayStatus(record.followv_status, record.dateOfFollowUp);
     return status === "Missed" || status === "Dropped Out";
   });
@@ -172,31 +172,27 @@ const IndividualFamPlanningTable: React.FC = () => {
     data: fpPatientRecords = [],
     isLoading: isLoadingFPRecords,
     isError: isErrorFPRecords,
-    error: errorFPRecords,
+    error: errorFPRecords
   } = useQuery<IndividualFPRecordDetail[]>({
     queryKey: ["individualFPRecordsList", patientId],
     queryFn: () => getFPRecordsForPatient(patientId),
-    enabled: !!patientId,
+    enabled: !!patientId
   });
 
   const {
     data: patientInfoForCard,
     isLoading: isLoadingPatientInfo,
     isError: isErrorPatientInfo,
-    error: errorPatientInfo,
+    error: errorPatientInfo
   } = useQuery({
     queryKey: ["patientDetails", patientId],
     queryFn: () => getPatientDetails(patientId!),
-    enabled: !!patientId,
+    enabled: !!patientId
   });
 
   const displayPatientName = useMemo(() => {
     if (patientInfoForCard) {
-      return `${patientInfoForCard.personal_info.per_fname} ${
-        patientInfoForCard.personal_info.per_mname
-          ? patientInfoForCard.personal_info.per_mname + " "
-          : ""
-      }${patientInfoForCard.personal_info.per_lname}`;
+      return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""}${patientInfoForCard.personal_info.per_lname}`;
     }
     return "Loading patient name...";
   }, [patientInfoForCard]);
@@ -242,14 +238,17 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Patient Record not found for follow-up.");
       return;
     }
-    navigate(
-      `/familyplanning/new-record/${record.patient_id}?mode=followup&patrecId=${patrecIdToReuse}&prefillFromFpRecord=${record.fprecord}`,
-      { 
-        state: { 
-          gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown"
-        } 
-      }
-    );
+  
+    navigate("/services/familyplanning/new-record", {
+  state: {
+    mode: "followup",
+    patientId: patientId, // passed in state, not URL
+    patrecId: record.patrec_id,
+    prefillFromFpRecord: record.fprecord,
+    gender: record.sex || patientInfoForCard?.personal_info.per_sex || "Unknown"
+    
+  }
+})
   };
 
   const handleCompareRecords = () => {
@@ -257,20 +256,27 @@ const IndividualFamPlanningTable: React.FC = () => {
       toast.error("Please select at least two records to compare.");
       return;
     }
-    navigate("/familyplanning/compare-multiple", {
-      state: { recordIds: selectedRecords.map((record) => record.fprecord) },
+    navigate("/services/familyplanning/compare-multiple", {
+      state: { recordIds: selectedRecords.map((record) => record.fprecord) }
     });
   };
 
   const handleCreateNewRecord = () => {
-    if (!patientId) {
-      toast.error("Patient ID not found");
-      return;
-    }
-    navigate(`/familyplanning/new-record/${patientId}?mode=create&prefill=true`, {
-      state: { gender: patientInfoForCard?.personal_info.per_sex || "Unknown" },
-    });
-  };
+  if (!patientId) {
+    toast.error("Patient ID not found");
+    return;
+  }
+  
+  navigate("/services/familyplanning/new-record", {
+    state: { 
+      mode: "create", 
+      patientId: patientId,
+      isNewMethod: true, // NEW: Flag this as a new method
+      prefill: true,
+      gender: patientInfoForCard?.personal_info.per_sex || "Unknown" 
+    },
+  });
+};
   
   const groupedRecords = useMemo(() => {
     const groups: { [key: string]: IndividualFPRecordDetail[] } = {};
@@ -314,16 +320,16 @@ const IndividualFamPlanningTable: React.FC = () => {
     return `${date} (${method})`;
   };
 
-  const tableColumns = useMemo<ColumnDef<IndividualFPRecordDetail>[]>
-    (() => [
+  const tableColumns = useMemo<ColumnDef<IndividualFPRecordDetail>[]>(
+    () => [
       {
         id: "select",
         header: ({ table }) => {
           // Get all visible rows in current table
           const visibleRows = table.getRowModel().rows;
-          const allSelected = visibleRows.length > 0 && visibleRows.every(row => isRecordSelected(row.original));
-          const someSelected = visibleRows.some(row => isRecordSelected(row.original));
-          
+          const allSelected = visibleRows.length > 0 && visibleRows.every((row) => isRecordSelected(row.original));
+          const someSelected = visibleRows.some((row) => isRecordSelected(row.original));
+
           return (
             <Checkbox
               checked={allSelected}
@@ -335,51 +341,43 @@ const IndividualFamPlanningTable: React.FC = () => {
                   // Select all visible rows (with 5 record limit)
                   const remainingSlots = 5 - selectedRecords.length;
                   const toSelect = visibleRows
-                    .filter(row => !isRecordSelected(row.original))
+                    .filter((row) => !isRecordSelected(row.original))
                     .slice(0, remainingSlots)
-                    .map(row => row.original);
-                  
+                    .map((row) => row.original);
+
                   if (toSelect.length + selectedRecords.length > 5) {
                     toast.warning("You can select a maximum of 5 records for comparison.");
                   }
-                  setSelectedRecords(prev => [...prev, ...toSelect]);
+                  setSelectedRecords((prev) => [...prev, ...toSelect]);
                 } else {
                   // Deselect all visible rows
-                  const visibleRecordIds = visibleRows.map(row => row.original.fprecord);
-                  setSelectedRecords(prev => 
-                    prev.filter(record => !visibleRecordIds.includes(record.fprecord))
-                  );
+                  const visibleRecordIds = visibleRows.map((row) => row.original.fprecord);
+                  setSelectedRecords((prev) => prev.filter((record) => !visibleRecordIds.includes(record.fprecord)));
                 }
               }}
               aria-label="Select all"
             />
           );
         },
-        cell: ({ row }) => (
-          <Checkbox
-            checked={isRecordSelected(row.original)}
-            onCheckedChange={(value) => handleCheckboxChange(row.original, !!value)}
-            aria-label="Select row"
-          />
-        ),
+        cell: ({ row }) => <Checkbox checked={isRecordSelected(row.original)} onCheckedChange={(value) => handleCheckboxChange(row.original, !!value)} aria-label="Select row" />,
         enableSorting: false,
-        enableHiding: false,
+        enableHiding: false
       },
       {
         accessorKey: "fprecord",
-        header: "Record ID",
+        header: "Record ID"
       },
       {
         accessorKey: "created_at",
         header: "Date Recorded",
-        cell: ({ row }) => formatDate(row.original.created_at),
+        cell: ({ row }) => formatDate(row.original.created_at)
       },
       {
         accessorKey: "client_type",
         header: "Client Type",
-        cell: ({ row }) => row.original.client_type || "N/A",
+        cell: ({ row }) => row.original.client_type || "N/A"
       },
-      
+
       {
         accessorKey: "method_used",
         header: "Method Used",
@@ -387,33 +385,27 @@ const IndividualFamPlanningTable: React.FC = () => {
           const method = row.original.method_used;
           const otherMethod = row.original.otherMethod;
           return method === "Others" && otherMethod ? otherMethod : method || "N/A";
-        },
+        }
       },
       {
         accessorKey: "dateOfFollowUp",
         header: "Next Follow-up Visit",
-        cell: ({ row }) => formatDate(row.original.dateOfFollowUp || "No follow-up visit date"),
+        cell: ({ row }) => formatDate(row.original.dateOfFollowUp || "No follow-up visit date")
       },
       {
         accessorKey: "followv_status",
         header: "Follow-up Status",
         cell: ({ row }) => {
-          const { status, className } = getFollowUpDisplayStatus(
-            row.original.followv_status,
-            row.original.dateOfFollowUp
-          );
-          
+          const { status, className } = getFollowUpDisplayStatus(row.original.followv_status, row.original.dateOfFollowUp);
+
           return (
             <div className="items-center gap-2">
-              <Badge 
-                variant="outline" 
-                className={className}
-              >
+              <Badge variant="outline" className={className}>
                 {status}
               </Badge>
             </div>
           );
-        },
+        }
       },
       {
         id: "actions",
@@ -421,13 +413,13 @@ const IndividualFamPlanningTable: React.FC = () => {
         cell: ({ row }) => (
           <ViewButton
             onClick={() =>
-              navigate("/familyplanning/view", {
-                state: { fprecordId: row.original.fprecord },
+              navigate("/services/familyplanning/view", {
+                state: { fprecordId: row.original.fprecord }
               })
             }
           />
-        ),
-      },
+        )
+      }
     ],
     [navigate, selectedRecords, isRecordSelected] // Added dependencies
   );
@@ -462,17 +454,11 @@ const IndividualFamPlanningTable: React.FC = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Family Planning History</h1>
-            <p className="text-gray-600">
-              {displayPatientName} (ID: {patientId})
-            </p>
+           
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={handleCompareRecords}
-            disabled={selectedRecords.length < 2}
-            className="text-white"
-          >
+          <Button onClick={handleCompareRecords} disabled={selectedRecords.length < 2} className="text-white">
             <LayoutList className="h-5 w-5 mr-2" /> Compare Records ({selectedRecords.length})
           </Button>
           
@@ -494,17 +480,14 @@ const IndividualFamPlanningTable: React.FC = () => {
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex items-center">
             <MessageCircleWarning className="h-5 w-5 text-red-500 mr-2" />
-            <h3 className="text-red-800 font-medium">
-              This patient has missed follow-up appointments for their current method!
-            </h3>
+            <h3 className="text-red-800 font-medium">This patient has missed follow-up appointments for their current method!</h3>
           </div>
           <ul className="list-disc pl-5 mt-2 text-red-700">
-            {getLatestGroupMissedFollowUps(groupedRecords)
-              .map((record, index) => (
-                <li key={index}>
-                  Missed follow-up on {formatDate(record.dateOfFollowUp ?? "")} (Record #{record.fprecord})
-                </li>
-              ))}
+            {getLatestGroupMissedFollowUps(groupedRecords).map((record, index) => (
+              <li key={index}>
+                Missed follow-up on {formatDate(record.dateOfFollowUp ?? "")} (Record #{record.fprecord})
+              </li>
+            ))}
           </ul>
           
           {/* Countdown display for when follow-up will show warning */}
@@ -516,15 +499,15 @@ const IndividualFamPlanningTable: React.FC = () => {
               </span>
             </div>
           )}
-          
-          {latestGroupDaysLeft <= -4 && (
+
+          {/* {latestGroupDaysLeft <= -4 && (
             <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-center">
               <MessageCircleWarning className="h-4 w-4 text-amber-600 mr-2" />
               <span className="text-amber-800 font-medium">
                 Follow-up appointments are overdue but can still be created with confirmation.
               </span>
             </div>
-          )}
+          )} */}
         </div>
       )}
 
@@ -556,7 +539,7 @@ const IndividualFamPlanningTable: React.FC = () => {
                               <div>
                                 <Button
                                   size="sm"
-                                  onClick={(e) => {
+                                  onClick={(e:any) => {
                                     e.stopPropagation();
                                     handleAddFollowUp(records[0]);
                                   }}
@@ -578,13 +561,7 @@ const IndividualFamPlanningTable: React.FC = () => {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                disabled
-                                className="text-gray-400"
-                                onClick={(e:any) => e.stopPropagation()}
-                              >
+                              <Button size="sm" variant="ghost" disabled className="text-gray-400" onClick={(e: any) => e.stopPropagation()}>
                                 <Plus className="h-4 w-4 mr-1" /> Follow-up not available
                               </Button>
                             </TooltipTrigger>
@@ -606,10 +583,7 @@ const IndividualFamPlanningTable: React.FC = () => {
         ) : (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">No family planning records found for this patient.</p>
-            <Button
-              onClick={() => handleCreateNewRecord()}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={() => handleCreateNewRecord()} className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="h-5 w-5 mr-2" /> Create First Record
             </Button>
           </div>

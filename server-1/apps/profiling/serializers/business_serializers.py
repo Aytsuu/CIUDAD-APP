@@ -3,8 +3,9 @@ from ..models import *
 from django.db import transaction
 from apps.profiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from apps.profiling.serializers.personal_serializers import PersonalBaseSerializer
-from utils.supabase_client import supabase, upload_to_storage, remove_from_storage
+from utils.supabase_client import upload_to_storage, remove_from_storage
 from datetime import datetime
+from ..utils import *
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,24 +46,11 @@ class BusinessHistoryBaseSerializer(serializers.ModelSerializer):
       return None
 
 class BusinessTableSerializer(serializers.ModelSerializer):
-  respondent = serializers.SerializerMethodField()
-
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_location', 'bus_status',
-              'bus_date_of_registration', 'bus_date_verified', 'respondent', 
+              'bus_date_of_registration', 'bus_date_verified', 
               'rp', 'br']
-    
-  def get_respondent(self, obj):
-    if obj.br:
-        per = obj.br
-        middle = f" {per.br_mname}" if per.br_mname else ""
-        return f"{per.br_lname}, {per.br_fname}{middle}"
-    if obj.rp:
-        per = obj.rp.per
-        middle = f" {per.per_mname}" if per.per_mname else ""
-        return f"{per.per_lname}, {per.per_fname}{middle}"
-    return None
 
 class BusinessRespondentTableSerializer(serializers.ModelSerializer):
   businesses = serializers.SerializerMethodField()
@@ -77,11 +65,13 @@ class BusinessRespondentTableSerializer(serializers.ModelSerializer):
     ).data
   
 class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
+  registered_by = serializers.SerializerMethodField()
+
   class Meta:
     model = BusinessRespondent
     fields = ['br_id', 'br_date_registered', 'br_lname', 
               'br_fname', 'br_mname', 'br_sex', 'br_dob',
-              'br_contact']
+              'br_contact', 'registered_by']
 
   def get_per_age(self, obj):
     dob = obj.br_dob
@@ -91,6 +81,18 @@ class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
         (today.month, today.day) < (dob.month, dob.day)
     )
     return age
+  
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 
 class BusinessInfoSerializer(serializers.ModelSerializer):
@@ -153,6 +155,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
         if per:
           br = BusinessRespondent.objects.create(
+            br_id=generate_busrespondent_no(),
             br_lname=per.get("per_lname", None),
             br_fname=per.get("per_fname", None),
             br_mname=per.get("per_mname", None),
@@ -163,13 +166,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
           )
 
         # Handle respondent/rp/br logic
-        business_instance = self._create_business_instance(
+        business_instance = self.create_business_instance(
             validated_data, rp, br
         )
 
         # Handle file uploads
         if create_files:
-            self._upload_files(business_instance, create_files)
+            self.upload_files(business_instance, create_files)
 
         return business_instance
 
@@ -177,19 +180,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         logger.error(f"Business creation failed: {str(e)}")
         raise serializers.ValidationError(str(e))
 
-  def _create_business_instance(self, validated_data, rp, br):
-      business = Business(
-        rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
-        br=BusinessRespondent.objects.get(br_id=br) if br else None,
-        bus_date_verified=date.today(),
-        **validated_data
-      )
+  def create_business_instance(self, validated_data, rp, br):
+    business = Business(
+      bus_id=generate_business_no(),
+      rp=ResidentProfile.objects.get(rp_id=rp) if rp else None,
+      br=BusinessRespondent.objects.get(br_id=br.br_id) if br else None,
+      bus_date_verified=date.today(),
+      **validated_data
+    )
 
-      business._history_user = validated_data.get('staff', None)
-      business.save()
-      return business
+    business._history_user = validated_data.get('staff', None)
+    business.save()
+    return business
   
-  def _upload_files(self, business_instance, files):
+  def upload_files(self, business_instance, files):
       business_files = []
       for file_data in files:
         folder = "images" if file_data['type'].split("/")[0] == "image" else "documents"

@@ -136,12 +136,12 @@ export default function Records() {
     },
     {
       id: 3,
-      name: 'Family Planning',
-      description: 'View family planning records',
-      route: '/(health)/family-planning/fp-dashboard',
-      icon: Heart,
-      image: require('@/assets/images/Health/Home/Famplanning.jpg'),
-      color: '#059669'
+      name: "Maternal Records",
+      description: "Access your maternal health records",
+      route: "/maternal-records",
+      icon: Baby,
+      image: require("@/assets/images/Health/Home/Maternal1.jpg"),
+      color: "#1E40AF"
     },
     {
       id: 4,

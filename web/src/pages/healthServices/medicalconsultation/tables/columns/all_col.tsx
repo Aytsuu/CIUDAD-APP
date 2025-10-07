@@ -43,7 +43,9 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
       ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address ? row.original.address : "No address provided"}</div>
+          <div className="w-full whitespace-pre-wrap break-words">
+            {row.original.address ? row.original.address : "No address provided"}
+          </div>
         </div>
       )
     },

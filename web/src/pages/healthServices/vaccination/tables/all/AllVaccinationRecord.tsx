@@ -1,5 +1,5 @@
 // src/features/vaccination/pages/AllVaccinationRecords.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -14,36 +14,57 @@ import { vaccinationColumns } from "../columns/all-vac-col";
 import { BasicInfoVaccinationRecord, VaccinationCounts } from "../columns/types";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
+import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function AllVaccinationRecords() {
   const { showLoading, hideLoading } = useLoading();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+
+  // Fetch sitio data
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
   // Debounce search query to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
+
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchQuery || "";
+
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+
+    return query || undefined;
+  }, [debouncedSearchQuery, selectedSitios]);
 
   // Build query parameters
   const queryParams = useMemo(
     () => ({
       page: currentPage,
       page_size: pageSize,
-      search: debouncedSearchQuery || undefined,
+      search: combinedSearchQuery,
       patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
     }),
-    [currentPage, pageSize, debouncedSearchQuery, patientTypeFilter]
+    [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
   );
 
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useVaccinationRecords(queryParams);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchQuery, patientTypeFilter]);
 
   useEffect(() => {
     if (isLoading) {
@@ -123,78 +144,81 @@ export default function AllVaccinationRecords() {
   // Calculate resident and transient counts
   const calculateCounts = useCallback((): VaccinationCounts => {
     if (!vaccinationRecords) return { residentCount: 0, transientCount: 0, totalCount: 0 };
-    
+
     let residents = 0;
     let transients = 0;
-    
+
     vaccinationRecords.forEach((record: any) => {
       const details = record.patient_details || {};
       const patType = details.pat_type || "";
-      
-      if (patType === 'Resident') residents++;
-      if (patType === 'Transient') transients++;
+
+      if (patType === "Resident") residents++;
+      if (patType === "Transient") transients++;
     });
-    
-    return { 
-      residentCount: residents, 
-      transientCount: transients, 
-      totalCount: residents + transients 
+
+    return {
+      residentCount: residents,
+      transientCount: transients,
+      totalCount: residents + transients
     };
   }, [vaccinationRecords]);
-  
+
   const { residentCount, transientCount, totalCount: calculatedTotalCount } = calculateCounts();
+
+  // Sitio filter handlers
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
 
   return (
     <div className="w-full h-full flex flex-col">
-     
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Total Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full mr-4">
-              <Users2 className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Vaccinated</p>
-              <p className="text-2xl font-bold text-gray-800">{calculatedTotalCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
-          </div>
-        </div>
-        
-        {/* Resident Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-full mr-4">
-              <Home className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Residents</p>
-              <p className="text-2xl font-bold text-gray-800">{residentCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
-          </div>
-        </div>
-        
-        {/* Transient Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-full mr-4">
-              <UserCheck className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transients</p>
-              <p className="text-2xl font-bold text-gray-800">{transientCount}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
-          </div>
+      {/* Summary Cards - Updated with EnhancedCardLayout */}
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <EnhancedCardLayout
+            title="Total Vaccinated"
+            description="All vaccination records"
+            value={calculatedTotalCount}
+            valueDescription="Total vaccinated"
+            icon={<Users2 className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <EnhancedCardLayout
+            title="Resident Patients"
+            description="Patients who are residents"
+            value={residentCount}
+            valueDescription="Total residents"
+            icon={<Home className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <EnhancedCardLayout
+            title="Transient Patients"
+            description="Patients who are transients"
+            value={transientCount}
+            valueDescription="Total transients"
+            icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
         </div>
       </div>
 
@@ -203,12 +227,7 @@ export default function AllVaccinationRecords() {
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input 
-              placeholder="Search by name, vaccine, or address..." 
-              className="pl-10 bg-white w-full" 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-            />
+            <Input placeholder="Search by name, vaccine, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
           <SelectLayout
             placeholder="Patient Type"
@@ -222,16 +241,22 @@ export default function AllVaccinationRecords() {
             value={patientTypeFilter}
             onChange={(value) => setPatientTypeFilter(value)}
           />
+          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
         </div>
 
-        <div className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto">
-            <Link to="/services/vaccination/form" state={{ mode: "newvaccination_record" }}>
-              New Record
-            </Link>
-          </Button>
-        </div>
+        <ProtectedComponentButton exclude={["DOCTOR"]}>
+          <div className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
+              <Link to="/services/vaccination/form" state={{ mode: "newvaccination_record" }}>
+                New Record
+              </Link>
+            </Button>
+          </div>
+        </ProtectedComponentButton>
       </div>
+
+      {/* Selected Filters Chips */}
+      {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
 
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -281,17 +306,13 @@ export default function AllVaccinationRecords() {
             <DataTable columns={vaccinationColumns} data={formattedData} />
           )}
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
           </p>
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage} 
-            />
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </div>
       </div>

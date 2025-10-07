@@ -33,10 +33,12 @@ export const addPersonal = async (data: Record<string, any>) => {
 // POST request for address
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
+    console.log(data)
     const res = await api.post("profiling/address/create/", data);
     await api2.post("health-profiling/address/create/", data);
     return res.data;
   } catch (err) {
+    console.log(err)
     throw err;
   }
 }
@@ -148,7 +150,7 @@ export const addBusiness = async (data: Record<string, any>) => {
   try {
     const res = await api.post("profiling/business/create/", data);
     return res.data;
-  } catch (err) {
+  } catch (err) {    
     console.error(err)
     throw err;
   }

@@ -4,14 +4,10 @@ import { Check } from "lucide-react";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import PHIllnessTable from "../medicalhistory/past-medical-history";
+import FamhistTable from "./family-history";
 
-interface PhysicalExamTableProps {
-  consultation: any;
-  examSections: any[];
-  isPhysicalExamLoading: boolean;
-}
 
-export default function PhysicalExamTable({ consultation, patientData, examSections, isPhysicalExamLoading,phHistoryData, isLoading, isError  }: any) {
+export default function PhysicalExamTable({ consultation, patientData, examSections, isPhysicalExamLoading, phHistoryData, famHistoryData }: any) {
   const splitOptionsIntoColumns = (options: any[]) => {
     const midIndex = Math.ceil(options.length / 2);
     const firstColumn = options.slice(0, midIndex);
@@ -77,7 +73,9 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
                 {/* Gender Section */}
                 <div className="flex gap-2">
                   <div className="flex items-center">
-                    <div className={`h-5 w-5 border border-black flex items-center justify-center ${patientData.personal_info.per_sex?.toLowerCase() === "female" ? "bg-black" : "bg-white"}`}>{patientData.personal_info.per_sex?.toLowerCase() === "female" && <Check className="h-4 w-4 text-white" />}</div>
+                    <div className={`h-5 w-5 border border-black flex items-center justify-center ${patientData.personal_info.per_sex?.toLowerCase() === "female" ? "bg-black" : "bg-white"}`}>
+                      {patientData.personal_info.per_sex?.toLowerCase() === "female" && <Check className="h-4 w-4 text-white" />}
+                    </div>
                     <Label className="ml-2 text-black">Female</Label>
                   </div>
                   <div className="flex items-center">
@@ -210,6 +208,12 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
               <table>
                 <div className="mb-6 w-full">
                   <PHIllnessTable phHistoryData={phHistoryData} isLoading={!phHistoryData} isError={false} />
+                </div>
+              </table>
+
+              <table>
+                <div className="mb-6 w-full">
+                  <FamhistTable famhistData={famHistoryData} isLoading={!famHistoryData} isError={false} />
                 </div>
               </table>
             </td>

@@ -60,7 +60,7 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
                     <div key={index}>
                       {note.notes && (
                         <div className="mt-2">
-                          <p className="text-gray-600 whitespace-pre-wrap">{note.notes}</p>
+                          <p className="text-gray-600 whitespace-pre-wrap">{note.notes }</p>
                         </div>
                       )}
 

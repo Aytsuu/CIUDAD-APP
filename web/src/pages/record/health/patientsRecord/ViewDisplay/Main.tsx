@@ -1,46 +1,46 @@
-"use client"
+"use client";
 
-import { useState, useMemo, useEffect } from "react"
-import React from "react"
-import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useLocation } from "react-router"
-import { toast } from "sonner"
-import { showSuccessToast, showErrorToast } from "@/components/ui/toast"
+import { useState, useMemo, useEffect } from "react";
+import React from "react";
+import { ChevronLeft, Edit, AlertCircle, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useLocation } from "react-router";
+import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
-import CardLayout from "@/components/ui/card/card-layout"
-import { Button } from "@/components/ui/button/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { calculateAge } from "@/helpers/ageCalculator"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-
-import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
-import { PatientData } from "./types"
-import PersonalInfoTab from "./PersonalInfoTab"
-import Records from "./Records"
-import VisitHistoryTab from "./VisitHistoryTab"
+import CardLayout from "@/components/ui/card/card-layout";
+import { Button } from "@/components/ui/button/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
+import { PatientData } from "./types";
+import PersonalInfoTab from "./PersonalInfoTab";
+import Records from "./Records";
+import VisitHistoryTab from "./VisitHistoryTab";
 
 // fetch queries
-import { useUpdatePatient } from "../queries/update"
-import { usePatientDetails, useChildData } from "../queries/fetch"
-import { useMedConCount, useChildHealthRecordCount, useFamplanCount, useAnimalbitesCount } from "../queries/count"
-import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries"
-import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount"
-import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries"
-import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv"
-import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries"
+import { useUpdatePatient } from "../queries/update";
+import { usePatientDetails, useChildData } from "../queries/fetch";
+import { useMedConCount, useChildHealthRecordCount, useFamplanCount, useAnimalbitesCount } from "../queries/count";
+import { useMedicineCount } from "@/pages/healthServices/medicineservices/queries/MedCountQueries";
+import { useVaccinationCount } from "@/pages/healthServices/vaccination/queries/VacCount";
+import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
+import { useCompletedFollowUpVisits, usePendingFollowUpVisits } from "../queries/followv";
+import { usePatientPostpartumCount, usePatientPrenatalCount } from "../../../../healthServices/maternal/queries/maternalFetchQueries";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function ViewPatientRecord() {
-  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal")
-  const [isEditable, setIsEditable] = useState(false)
-  const location = useLocation()
-  const { patientId } = location.state || {}
+  const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">("personal");
+  const [isEditable, setIsEditable] = useState(false);
+  const location = useLocation();
+  const { patientId } = location.state || {};
 
-  const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "")
+  const { data: patientsData, error, isError, isLoading } = usePatientDetails(patientId ?? "");
   const { data: rawChildHealthRecords } = useChildData(patientId ?? "");
 
   const { data: medicineCountData } = useMedicineCount(patientId ?? "");
@@ -112,7 +112,7 @@ export default function ViewPatientRecord() {
       lastName: currentPatient.personal_info.per_lname,
       firstName: currentPatient.personal_info.per_fname,
       middleName: currentPatient.personal_info.per_mname,
-      sex: currentPatient.personal_info.per_sex,
+      sex: currentPatient.personal_info.per_sex?.toLowerCase() || "",
       contact: currentPatient.personal_info.per_contact,
       dateOfBirth: currentPatient.personal_info.per_dob,
       patientType: currentPatient.pat_type,
@@ -192,9 +192,9 @@ export default function ViewPatientRecord() {
         per_lname: currentPatient?.personal_info.per_lname ?? patientData?.lastName ?? "",
         per_dob: currentPatient?.personal_info.per_dob ?? patientData?.dateOfBirth ?? "",
         per_sex: currentPatient?.personal_info.per_sex ?? patientData?.sex ?? "",
-        philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? "",
-      },
-    }
+        philhealth_id: currentPatient?.personal_info.philhealth_id ?? patientData?.philhealthId ?? ""
+      }
+    };
 
     return linkData;
   }, [currentPatient, patientData, patientId]);
@@ -275,8 +275,8 @@ export default function ViewPatientRecord() {
     try {
       const formData = form.getValues();
       if (!currentPatient?.trans_id) {
-        showErrorToast("Cannot update: Missing transient ID.")
-        return
+        showErrorToast("Cannot update: Missing transient ID.");
+        return;
       }
       const updatedData = {
         pat_type: formData.patientType,
@@ -288,9 +288,9 @@ export default function ViewPatientRecord() {
           tran_dob: formData.dateOfBirth,
           tran_sex: formData.sex,
           tran_contact: formData.contact,
-          tran_status: "Active",
-          tran_ed_attainment: "N/A",
-          tran_religion: "N/A",
+          tran_status: "ACTIVE",
+          tran_ed_attainment: "NOT SPECIFIED",
+          tran_religion: "NOT SPECIFIED",
           philhealth_id: formData.philhealthId,
           address: {
             tradd_street: formData.address.street,
@@ -301,32 +301,32 @@ export default function ViewPatientRecord() {
           },
         },
       }
-      await updatePatientData.mutateAsync(updatedData)
+      await updatePatientData.mutateAsync({
+        patientId: currentPatient.pat_id,
+        patientData: updatedData
+      })
       setIsEditable(false)
       showSuccessToast("Patient data updated successfully!")
     } catch (error) {
-      console.error("Error saving patient data: ", error)
-      showErrorToast("Failed to update patient data. Please try again.")
+      console.error("Error saving patient data: ", error);
+      showErrorToast("Failed to update patient data. Please try again.");
     }
   };
 
   const handleCancelEdit = () => {
-    if (patientData) form.reset(patientData)
-    setIsEditable(false)
-    toast("Edit cancelled. No changes were made.")
-  }
+    if (patientData) form.reset(patientData);
+    setIsEditable(false);
+    toast("Edit cancelled. No changes were made.");
+  };
 
   if (isLoading) {
     return (
-      <LayoutWithBack 
-        title="Patient Information and Records"
-        description="View patient information, medical records, and follow-up visits"
-      >
+      <LayoutWithBack title="Patient Information and Records" description="View patient information, medical records, and follow-up visits">
         <div className="flex h-full items-center justify-center">
           <Loader2 className="animate-spin" /> Loading...
         </div>
       </LayoutWithBack>
-            )
+    );
   }
 
   if (isError && !patientId) {
@@ -350,97 +350,89 @@ export default function ViewPatientRecord() {
     );
   }
 
-  const isTransient = patientData?.patientType?.toLowerCase() === "transient"
+  const isTransient = patientData?.patientType?.toLowerCase() === "transient";
 
-  
   return (
-    <LayoutWithBack
-      title="Patient Information and Records"
-      description="View patient information, medical records, and follow-up visits  "
-    >
-    <div className="w-full">
-      <div className="mb-6">
-        <CardLayout
-          title=""
-          description=""
-          content={
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <Avatar className="h-16 w-16 border-2 border-primary/10">
-                <AvatarFallback className="bg-primary/10 text-primary text-xl">{getInitials()}</AvatarFallback>
-              </Avatar>
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold">
-                  {`${patientData?.firstName} ${
-                    patientData?.middleName ? patientData.middleName + " " : ""
-                  }${patientData?.lastName}`}
-                </h2>
-                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                  <span>
-                    ID: <span className="font-medium text-foreground">{patientId}</span>
-                  </span>
-                  <span>•</span>
-                  <span>{calculateAge(patientData?.dateOfBirth)}</span>
-                  <span>•</span>
-                  <span>{patientData?.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
+    <LayoutWithBack title="Patient Information and Records" description="View patient information, medical records, and follow-up visits  ">
+      <div className="w-full">
+        <div className="mb-6">
+          <CardLayout
+            title=""
+            description=""
+            content={
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <Avatar className="h-16 w-16 border-2 border-primary/10">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl">{getInitials()}</AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold">{`${patientData?.firstName} ${patientData?.middleName ? patientData.middleName + " " : ""}${patientData?.lastName}`}</h2>
+                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                    <span>
+                      ID: <span className="font-medium text-foreground">{patientId}</span>
+                    </span>
+                    <span>•</span>
+                    <span>{calculateAge(patientData?.dateOfBirth)}</span>
+                    <span>•</span>
+                    <span>{patientData?.sex.toLowerCase() === "male" ? "Male" : "Female"}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Badge variant={patientData?.patientType === "Resident" ? "default" : "secondary"}>{patientData?.patientType}</Badge>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Badge variant={patientData?.patientType === "Resident" ? "default" : "secondary"}>
-                    {patientData?.patientType}
-                  </Badge>
-                </div>
+
+                <ProtectedComponentButton exclude={["DOCTOR"]}>
+                  <div className="flex gap-2 sm:ml-auto">
+                    {isTransient && activeTab === "personal" && isEditable == false && (
+                      <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
+                        <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </Button>
+                    )}
+                  </div>
+                </ProtectedComponentButton>
               </div>
-              <div className="flex gap-2 sm:ml-auto">
-                {isTransient && activeTab === "personal" && isEditable == false && (
-                  <Button onClick={handleEdit} className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
-                    <Edit className="h-4 w-4" />
-                    <span className="hidden sm:inline">Edit</span>
-                  </Button>
-                )}
-              </div>
-            </div>
-            
-          }
-          cardClassName="border shadow-sm rounded-lg"
-          headerClassName="hidden"
-          contentClassName="p-4"
-        />
-      </div>
-
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "personal" | "medical" | "visits")} className="ml-2">
-        <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
-          <TabsTrigger value="personal" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent ml-6">
-            Personal Information
-          </TabsTrigger>
-          <TabsTrigger value="medical" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent">
-            Records
-          </TabsTrigger>
-          <TabsTrigger value="visits" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent">
-            Follow up Visits
-          </TabsTrigger>
-        </TabsList>
-
-        {activeTab === "personal" && <PersonalInfoTab form={form} isEditable={isEditable} isTransient={isTransient} patientData={patientData} handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} />}
-
-        {activeTab === "medical" && (
-          <Records
-            vaccinationCount={vaccinationCount}
-            medicineCount={medicineCount}
-            firstAidCount={firstAidCount}
-            postpartumCount={postpartumCount}
-            patientLinkData={patientLinkData}
-            medicalconCount={medconCount}
-            childHealthCount={childHealthCountData}
-            childHealthRecords={formattedChildHealthData}
-            prenatalCount={prenatalCount}
-            childHistoryLoading={childHistoryLoading}
-            famplanCount={famplanCount}
-            animalbitesCount={animalbitesCount}
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="hidden"
+            contentClassName="p-4"
           />
-        )}
+        </div>
 
-        {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} />}
-      </Tabs>
-    </div>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "personal" | "medical" | "visits")} className="ml-2">
+          <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
+            <TabsTrigger value="personal" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent ml-6">
+              Personal Information
+            </TabsTrigger>
+            <TabsTrigger value="medical" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent">
+              Records
+            </TabsTrigger>
+            <TabsTrigger value="visits" className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent">
+              Follow up Visits
+            </TabsTrigger>
+          </TabsList>
+
+          {activeTab === "personal" && <PersonalInfoTab form={form} isEditable={isEditable} isTransient={isTransient} patientData={patientData} handleSaveEdit={handleSaveEdit} handleCancelEdit={handleCancelEdit} />}
+
+          {activeTab === "medical" && (
+            <Records
+              vaccinationCount={vaccinationCount}
+              medicineCount={medicineCount}
+              firstAidCount={firstAidCount}
+              postpartumCount={postpartumCount}
+              patientLinkData={patientLinkData}
+              medicalconCount={medconCount}
+              childHealthCount={childHealthCountData}
+              childHealthRecords={formattedChildHealthData}
+              prenatalCount={prenatalCount}
+              childHistoryLoading={childHistoryLoading}
+              famplanCount={famplanCount}
+              animalbitesCount={animalbitesCount}
+            />
+          )}
+
+          {activeTab === "visits" && <VisitHistoryTab completedData={completedData} pendingData={pendingData} />}
+        </Tabs>
+      </div>
     </LayoutWithBack>
-  )
+  );
 }

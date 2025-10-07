@@ -6,7 +6,18 @@ from apps.pagination import *
 
 class HouseholdListView(generics.ListAPIView):
   serializer_class = HouseholdListSerialzer
-  queryset = Household.objects.all()
+  
+  def get_queryset(self):
+    queryset = None
+    search = self.request.query_params.get('search', '').strip()
+    if search:
+       queryset = Household.objects.filter(
+          Q(hh_id__icontains=search) |
+          Q(rp__per__per_lname__icontains=search) |
+          Q(rp__per__per_fname__icontains=search) |
+          Q(rp__per__per_mname__icontains=search)
+       )
+    return queryset
 
 class HouseholdDataView(generics.RetrieveAPIView):
    serializer_class = HouseholdListSerialzer

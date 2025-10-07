@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus } from "lucide-react"
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, Loader2, RefreshCw, Plus, ClockAlert } from "lucide-react"
 
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
@@ -15,13 +15,14 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 
-import { PatientInfoCardv2 } from "@/pages/healthServices/maternal/maternal-components/patient-info-card-v2"
+import { PatientInfoCard } from "@/components/ui/patientInfoCard"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
 import PregnancyChart from "./maternal-components/pregnancy-chart"
 import PregnancyVisitTracker from "./maternal-components/8anc-visit-chart"
 
 import { usePregnancyDetails } from "./queries/maternalFetchQueries"
+import { useAddCompletePregnancy, useAddPregnancyLoss } from "./queries/maternalAddQueries"
 
 
 interface Patient {
@@ -130,9 +131,43 @@ interface PregnancyDataDetails{
 
 export default function MaternalIndivRecords() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const location = useLocation()
-  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(selectedPatient?.pat_id || "")
   const [isRefetching, setIsRefetching] = useState(false)
+  const location = useLocation()
+
+  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const { mutate: completePregnancy } = useAddCompletePregnancy()
+  const { mutate: addPregnancyLoss } = useAddPregnancyLoss()
+
+  const getLatestFollowupVisit = () => {
+    let followUpData = [];
+    
+    if (pregnancyData && typeof pregnancyData === 'object' && 'results' in pregnancyData) {
+      // Handle paginated response structure: { count, next, previous, results: [...] }
+      const results = (pregnancyData as any).results;
+      if (Array.isArray(results) && results.length > 0) {
+        followUpData = results[0]?.follow_up || [];
+      }
+    } else if (Array.isArray(pregnancyData) && pregnancyData.length > 0) {
+      // Handle direct array response
+      followUpData = pregnancyData[0]?.follow_up || [];
+    }
+    
+    return followUpData;
+  };
+
+  const latestFollowupVisit = getLatestFollowupVisit();
+  const nextFollowVisit = [...latestFollowupVisit]
+    .filter(visit => visit.followv_status === 'pending') // Only show pending visits
+    .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
+  console.log('Next Follow-up Visit:', nextFollowVisit);
+
+  const dateWords = () => {
+    return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -141,138 +176,165 @@ export default function MaternalIndivRecords() {
     }
   }, [location.state])
 
-
   const groupPregnancies = (
-    pregnancies: PregnancyDataDetails[],
-    patientType: string,
-    patientAddress: Patient["address"] | undefined,
-  ): PregnancyGroup[] => {
-    const grouped: Record<string, PregnancyGroup> = {}
+  pregnancies: PregnancyDataDetails[],
+  patientType: string,
+  patientAddress: Patient["address"] | undefined,
+): PregnancyGroup[] => {
+  const grouped: Record<string, PregnancyGroup> = {}
 
-    if(!pregnancies) return []
-
-    pregnancies.forEach((pregnancy) => {
-      if(!grouped[pregnancy.pregnancy_id]) {
-        grouped[pregnancy.pregnancy_id] = {
-          pregnancyId: pregnancy.pregnancy_id,
-          status: normalizeStatus(pregnancy.status),
-          startDate: pregnancy.created_at.split("T")[0],
-          expectedDueDate: pregnancy.prenatal_form?.[0]?.pf_edc || undefined,
-          deliveryDate: pregnancy.postpartum_record?.[0]?.delivery_date || undefined,
-          records: [],
-          hasPrenatal: false,
-          hasPostpartum: false,
-        }
-      }
-
-      const currPregnancyGroup =  grouped[pregnancy.pregnancy_id]
-
-      pregnancy.prenatal_form?.forEach((pf) => {
-        const addressParts = [
-          patientAddress?.add_street,
-          patientAddress?.add_barangay,
-          patientAddress?.add_city,
-          patientAddress?.add_province
-        ].filter(Boolean);
-
-        
-        const correspondingCare = pregnancy.prenatal_care?.find(care => care.pf_id === pf.pf_id);
-        const aogWks = correspondingCare?.pfpc_aog_wks;
-        const aogDays = correspondingCare?.pfpc_aog_days;
-        const gestationalFormatted = aogWks !== undefined && aogDays !== undefined 
-          ? `${aogWks} weeks ${aogDays} days` 
-          : undefined;
-
-
-        currPregnancyGroup.records.push({
-          id: pf.pf_id,
-          pregnancyId: pregnancy.pregnancy_id,
-          dateCreated: pf.created_at.split("T")[0],
-          address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
-          sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "Not Provided",
-          type: patientType as "Transient" | "Resident",
-          recordType: "Prenatal",
-          status: normalizeStatus(pregnancy.status),
-          gestationalWeek: aogWks,
-          gestationalFormatted: gestationalFormatted,
-          expectedDueDate: pf.pf_edc,
-          prenatal_end_date: pregnancy.prenatal_end_date,
-          notes: `Prenatal visit on ${pf.created_at.split("T")[0]}`,
-        })
-        currPregnancyGroup.hasPrenatal = true
-        if(pf.pf_edc && !currPregnancyGroup.expectedDueDate) {
-          currPregnancyGroup.expectedDueDate = pf.pf_edc
-        }
-      })
-
-      pregnancy.postpartum_record?.forEach((ppr) => {
-        const addressParts = [
-          patientAddress?.add_street,
-          patientAddress?.add_barangay,
-          patientAddress?.add_city,
-          patientAddress?.add_province
-        ].filter(Boolean);
-
-        currPregnancyGroup.records.push({
-          id: ppr.ppr_id,
-          pregnancyId: pregnancy.pregnancy_id,
-          dateCreated: ppr.created_at.split("T")[0],
-          address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
-          sitio: patientAddress?.add_sitio || "Not Provided",
-          type: patientType as "Transient" | "Resident",
-          recordType: "Postpartum Care",
-          status: normalizeStatus(pregnancy.status),
-          deliveryDate: ppr.delivery_date,
-          postpartum_end_date: pregnancy.postpartum_end_date,
-          notes: `Postpartum care on ${ppr.created_at.split("T")[0]}`,
-          postpartum_assessment: ppr.postpartum_assessment || []
-        })
-        currPregnancyGroup.hasPostpartum = true
-        // Update deliveryDate for the pregnancy group from postpartum record if available
-        if (ppr.delivery_date && !currPregnancyGroup.deliveryDate) {
-          currPregnancyGroup.deliveryDate = ppr.delivery_date
-        }
-      })
-
-      currPregnancyGroup.records.sort(
-        (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
-      )
-      
-      currPregnancyGroup.records.sort((a, b) => {
-        // First, sort by record type - postpartum records come first
-        if (a.recordType === "Postpartum Care" && b.recordType === "Prenatal") {
-          return -1; // a comes before b
-        }
-        if (a.recordType === "Prenatal" && b.recordType === "Postpartum Care") {
-          return 1; // b comes before a
-        }
-        
-        // If both records are of the same type, sort by date (newest first)
-        return new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime();
-      });
-    })
-    return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+  // Add explicit checks for array and valid data
+  if (!pregnancies || !Array.isArray(pregnancies) || pregnancies.length === 0) {
+    console.log('No valid pregnancies data:', pregnancies);
+    return []
   }
+
+  pregnancies.forEach((pregnancy) => {
+    // Add null checks for pregnancy object
+    if (!pregnancy || !pregnancy.pregnancy_id) {
+      console.warn('Invalid pregnancy object:', pregnancy);
+      return;
+    }
+
+    if(!grouped[pregnancy.pregnancy_id]) {
+      grouped[pregnancy.pregnancy_id] = {
+        pregnancyId: pregnancy.pregnancy_id,
+        status: normalizeStatus(pregnancy.status),
+        startDate: pregnancy.created_at ? pregnancy.created_at.split("T")[0] : "Unknown",
+        expectedDueDate: pregnancy.prenatal_form?.[0]?.pf_edc || undefined,
+        deliveryDate: pregnancy.postpartum_record?.[0]?.delivery_date || undefined,
+        records: [],
+        hasPrenatal: false,
+        hasPostpartum: false,
+      }
+    }
+
+    const currPregnancyGroup = grouped[pregnancy.pregnancy_id]
+
+    // Rest of your existing forEach logic...
+    pregnancy.prenatal_form?.forEach((pf) => {
+      const addressParts = [
+        patientAddress?.add_street,
+        patientAddress?.add_barangay,
+        patientAddress?.add_city,
+        patientAddress?.add_province
+      ].filter(Boolean);
+
+      const correspondingCare = pregnancy.prenatal_care?.find(care => care.pf_id === pf.pf_id);
+      const aogWks = correspondingCare?.pfpc_aog_wks;
+      const aogDays = correspondingCare?.pfpc_aog_days;
+      const gestationalFormatted = aogWks !== undefined && aogDays !== undefined 
+        ? `${aogWks} weeks ${aogDays} days` 
+        : undefined;
+
+      currPregnancyGroup.records.push({
+        id: pf.pf_id,
+        pregnancyId: pregnancy.pregnancy_id,
+        dateCreated: pf.created_at ? pf.created_at.split("T")[0] : "Unknown",
+        address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
+        sitio: patientAddress?.add_external_sitio || patientAddress?.add_sitio || "Not Provided",
+        type: patientType as "Transient" | "Resident",
+        recordType: "Prenatal",
+        status: normalizeStatus(pregnancy.status),
+        gestationalWeek: aogWks,
+        gestationalFormatted: gestationalFormatted,
+        expectedDueDate: pf.pf_edc,
+        prenatal_end_date: pregnancy.prenatal_end_date,
+        notes: `Prenatal visit on ${pf.created_at ? pf.created_at.split("T")[0] : "Unknown"}`,
+      })
+      currPregnancyGroup.hasPrenatal = true
+      if(pf.pf_edc && !currPregnancyGroup.expectedDueDate) {
+        currPregnancyGroup.expectedDueDate = pf.pf_edc
+      }
+    })
+
+    pregnancy.postpartum_record?.forEach((ppr) => {
+      const addressParts = [
+        patientAddress?.add_street,
+        patientAddress?.add_barangay,
+        patientAddress?.add_city,
+        patientAddress?.add_province
+      ].filter(Boolean);
+
+      currPregnancyGroup.records.push({
+        id: ppr.ppr_id,
+        pregnancyId: pregnancy.pregnancy_id,
+        dateCreated: ppr.created_at ? ppr.created_at.split("T")[0] : "Unknown",
+        address: addressParts.length > 0 ? addressParts.join(", ") : "Not Provided",
+        sitio: patientAddress?.add_sitio || "Not Provided",
+        type: patientType as "Transient" | "Resident",
+        recordType: "Postpartum Care",
+        status: normalizeStatus(pregnancy.status),
+        deliveryDate: ppr.delivery_date,
+        postpartum_end_date: pregnancy.postpartum_end_date,
+        notes: `Postpartum care on ${ppr.created_at ? ppr.created_at.split("T")[0] : "Unknown"}`,
+        postpartum_assessment: ppr.postpartum_assessment || []
+      })
+      currPregnancyGroup.hasPostpartum = true
+      if (ppr.delivery_date && !currPregnancyGroup.deliveryDate) {
+        currPregnancyGroup.deliveryDate = ppr.delivery_date
+      }
+    })
+
+    currPregnancyGroup.records.sort(
+      (a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
+    )
+    
+    currPregnancyGroup.records.sort((a, b) => {
+      if (a.recordType === "Postpartum Care" && b.recordType === "Prenatal") {
+        return -1;
+      }
+      if (a.recordType === "Prenatal" && b.recordType === "Postpartum Care") {
+        return 1;
+      }
+      return new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime();
+    });
+  })
+  
+  return Object.values(grouped).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+}
 
   // Helper to normalize backend status to UI-expected casing
-  const normalizeStatus = (statusRaw: string): "Active" | "Completed" | "Pregnancy Loss" => {
-    const s = statusRaw.toLowerCase()
-    if (s === "active") return "Active"
-    if (s === "completed") return "Completed"
-    return "Pregnancy Loss" // covers both "pregnancy loss" and any unknown variants
-  }
+  const normalizeStatus = (statusRaw: string | undefined): "Active" | "Completed" | "Pregnancy Loss" => {
+  if (!statusRaw) return "Pregnancy Loss";
+  const s = statusRaw.toLowerCase()
+  if (s === "active") return "Active"
+  if (s === "completed") return "Completed"
+  return "Pregnancy Loss" 
+}
 
-  // using memo for grouped pregnancies
-  const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
-    if (pregnancyData && selectedPatient) {
-      return groupPregnancies(
-        pregnancyData,
-        selectedPatient.pat_type,
-        selectedPatient.address,
-      )
+// using memo for grouped pregnancies
+const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
+  if (pregnancyData && selectedPatient) {
+    console.log('Raw pregnancyData:', pregnancyData); // Debug log
+    
+    // Extract the results array from the paginated API response
+    let pregnanciesArray: PregnancyDataDetails[] = [];
+    
+    if (pregnancyData && typeof pregnancyData === 'object' && 'results' in pregnancyData) {
+      // Handle paginated response structure: { count, next, previous, results: [...] }
+      const results = (pregnancyData as any).results;
+      if (Array.isArray(results)) {
+        pregnanciesArray = results;
+      }
+    } else if (Array.isArray(pregnancyData)) {
+      // Handle direct array response
+      pregnanciesArray = pregnancyData;
+    } else if (pregnancyData && typeof pregnancyData === 'object') {
+      // Handle single object response
+      pregnanciesArray = [pregnancyData as PregnancyDataDetails];
     }
-    return []
-  }, [pregnancyData, selectedPatient])
+
+    console.log('Processed pregnanciesArray:', pregnanciesArray); // Debug log
+
+    return groupPregnancies(
+      pregnanciesArray,
+      selectedPatient.pat_type,
+      selectedPatient.address,
+    )
+  }
+  return []
+}, [pregnancyData, selectedPatient])
 
   const filter = [
     { id: "All", name: "All" },
@@ -346,6 +408,8 @@ export default function MaternalIndivRecords() {
 
   
   const handleCompletePregnancy = (pregnancyId: string) => {
+    if(!selectedPatient?.pat_id) return;
+    completePregnancy({ pat_id: selectedPatient.pat_id, pregnancy_id: pregnancyId })
     console.log(`Pregnancy ${pregnancyId} marked as completed`)
   }
 
@@ -353,8 +417,10 @@ export default function MaternalIndivRecords() {
     console.log(`Record ${recordId} of type ${recordType} marked as completed`)
   }
 
-  const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
-    console.log(`Record ${recordId} of type ${recordType} marked as pregnancy loss`)
+  const handlePregnancyLossRecord = (pregnancyId: string) => {
+    if(!selectedPatient?.pat_id) return;
+    addPregnancyLoss({ pat_id: selectedPatient.pat_id, pregnancy_id: pregnancyId });
+    console.log(`Pregnancy ${pregnancyId} marked as pregnancy loss`);
   }
 
   const handleRefetching = async () => {
@@ -386,10 +452,10 @@ export default function MaternalIndivRecords() {
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
         {selectedPatient ? (
           <div className="mb-5 gap-1">
-            <PatientInfoCardv2 patient={selectedPatient} />
+            <PatientInfoCard patient={selectedPatient} />
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <PregnancyChart pregnancies={pregnancyData}/>
-              <PregnancyVisitTracker pregnancies={pregnancyData}/>
+              <PregnancyChart pregnancies={pregnancyData?.results || pregnancyData}/>
+              <PregnancyVisitTracker pregnancies={pregnancyData?.results || pregnancyData}/>
             </div>
           </div>
         ) : (
@@ -397,11 +463,20 @@ export default function MaternalIndivRecords() {
             <p className="text-center text-gray-500">No patient selected</p>
           </div>
         )}
-        
-        <div className="w-full mb-5 bg-white">
-          <div className="border rounded-md p-3">
-            <h3 className="font-semibold">Upcoming follow-up visit</h3>
-          </div>
+
+        <div className="flex rounded-md w-full border border-blue-400 rounded-mb mb-5 bg-blue-200 shadow-md">
+          {nextFollowVisit ? (
+            <div className="p-3 flex justify-between items-center w-full text-blue-700">
+              <h3 className="flex items-center font-semibold"><ClockAlert className="mr-2"/> Upcoming follow-up visit</h3>
+              <p className="text-sm italic"> 
+                {nextFollowVisit?.followv_description} on <b>{dateWords()}</b>
+              </p>
+            </div>
+          ) : (
+            <div className="p-3">
+              <h3 className="font-semibold text-white">No follow-up visit</h3>
+            </div>
+          )}
         </div>
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">

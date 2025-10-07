@@ -117,7 +117,8 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         father_lname: submittedData.fatherLname,
         father_mname: submittedData.fatherMname,
         father_age: submittedData.fatherAge,
-        father_dob: submittedData.fatherdob
+        father_dob: submittedData.fatherdob,
+        passed_status: submittedData.passed_status || "recorded"
       },
       staff: staff,
       todaysHistoricalRecord: todaysHistoricalRecord,
@@ -247,6 +248,8 @@ export const useUpdateChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["followupChildHealth"] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
+      queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
+
 
       showSuccessToast("submitted successfully!");
       navigate(-1);

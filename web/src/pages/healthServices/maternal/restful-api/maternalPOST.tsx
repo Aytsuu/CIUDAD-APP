@@ -217,26 +217,43 @@ export const addPostpartumRecord = async (data: PostpartumCompleteData): Promise
   }
 }
 
-// export const getPostpartumRecords = async () => {
-//   try {
-//     const res = await api2.get("maternal/postpartum_records/")
-//     return res.data
-//   } catch (error) {
-//     if (axios.isAxiosError(error)) {
-//       console.error("Get Postpartum Records Error: ", error.response?.data || error.message)
-//     }
-//     throw error
-//   }
-// }
 
-// export const getPostpartumRecordDetail = async (ppr_id: string) => {
-//   try {
-//     const res = await api2.get(`maternal/postpartum_record/${ppr_id}/`)
-//     return res.data
-//   } catch (error) {
-//     if (axios.isAxiosError(error)) {
-//       console.error("Get Postpartum Record Detail Error: ", error.response?.data || error.message)
-//     }
-//     throw error
-//   }
-// }
+// for marking pregnancy as complete
+export interface CompletePregnancyData {
+  pat_id: string;
+  pregnancy_id: string;
+}
+
+export const addCompletePregnancy = async (data: CompletePregnancyData) => {
+  try {
+    const res = await api2.post("maternal/pregnancy/complete/", data);
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Complete Pregnancy Error: ", error.response?.data || error.message);
+    } else {
+      console.error("Unexpected Error: ", error);
+    }
+    throw error;
+  }
+};
+
+// for marking pregnancy as loss
+export interface PregnancyLossData {
+  pat_id: string;
+  pregnancy_id: string;
+}
+
+export const addPregnancyLoss = async (data: PregnancyLossData) => {
+  try {
+    const res = await api2.post("maternal/pregnancy/loss/", data);
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Pregnancy Loss Error: ", error.response?.data || error.message);
+    } else {
+      console.error("Unexpected Error: ", error);
+    }
+    throw error;
+  }
+}

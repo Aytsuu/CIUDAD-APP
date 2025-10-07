@@ -13,7 +13,7 @@ import { FamilyPlanningView } from "@/pages/familyplanning/ViewPage1"
 
 export const famplanning_route = [
   {
-    path: "/FamPlanning_main",
+    path: "services/FamPlanning_main",
     element: <FamilyPlanningMain />,
   },
   {
@@ -25,41 +25,41 @@ export const famplanning_route = [
   //   element: <MonthlyFamilyPlanningReports/>
   // },
   {
-    path: "/FamPlanning_table",
+    path: "services/familyplanning",
     element: <FamPlanning_table />,
   },
  
   {
-    path: "/familyplanning/new-record",
+    path: "services/familyplanning/new-record",
     element: <FamilyPlanningPage/>,
   },
   {
-    path: "/familyplanning/new-record/:patientId",
+    path: "services/familyplanning/new-record/:patientId",
     element: <FamilyPlanningPage />,
   },
   {
-    path: "/familyplanning/compare-multiple",
+    path: "services/familyplanning/compare-multiple",
     element: <MultiRecordComparisonPage />,
   },
   {
-    path: "/familyplanning/history/:patientId",
+    path: "services/familyplanning/history/:patientId",
     element: <FamilyPlanningHistoryPage />,
   },
   // Route for viewing or editing an existing specific Family Planning Record
   {
-    path: "/familyplanning/records/:fprecordId",
+    path: "services/familyplanning/records/:fprecordId",
     element: <FamilyPlanningPage />,
   },
   {
-    path: "/familyplanning/individual",
+    path: "services/familyplanning/records",
     element: <IndividualFamPlanningTable/>,
   },
   {
-    path: "/familyplanning/view",
+    path: "services/familyplanning/view",
     element: <FamilyPlanningView />,
   },
   {
-    path: "/familyplanning/view2",
+    path: "services/familyplanning/view2",
     element: <FamilyPlanningView2 />,
   },
 ]

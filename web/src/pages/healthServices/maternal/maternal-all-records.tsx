@@ -20,8 +20,11 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLoading } from "@/context/LoadingContext";
+import ViewButton from "@/components/ui/view-button";
+
 
 import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 
 export default function MaternalAllRecords() {
@@ -193,10 +196,10 @@ export default function MaternalAllRecords() {
 
         return (
           <div className="flex justify-center w-full">
-            <div className="flex flex-col ">
-              <div className="font-medium truncate">{fullName}</div>
+            <div className="flex flex-col">
+              <div className="font-medium truncate">{capitalize(fullName)}</div>
               <div className="text-sm text-darkGray">
-                {patient.per_sex}, {age} {patient.ageTime} old
+                {capitalize(patient.per_sex)}, {age} {patient.ageTime} old
               </div>
             </div>
           </div>
@@ -205,6 +208,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "address",
+      size: 300,
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -226,8 +230,8 @@ export default function MaternalAllRecords() {
               .join(", ") || "Unknown"
           : "Unknown";
         return (
-          <div className="flex justify-center min-w-full px-2">
-            <div className="w-full break-words">{fullAddress}</div>
+          <div className="flex justify-center min-w-full px-">
+            <div className="w-full truncate">{capitalize(fullAddress)}</div>
           </div>
         );
       },
@@ -241,7 +245,7 @@ export default function MaternalAllRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
-            {row.original.address?.add_sitio}
+            {capitalize(row.original.address?.add_sitio)}
           </div>
         </div>
       ),
@@ -263,7 +267,7 @@ export default function MaternalAllRecords() {
           <div className="flex justify-center gap-2 ">
             <TooltipLayout
               trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border border-gray text-black px-4 py-2 rounded-lg cursor-pointer ">
+                <div className="bg-white hover:bg-[#f3f2f2] text-black px-4 rounded-lg cursor-pointer ">
                   <Link
                     to="/services/maternalindividualrecords"
                     state={{
@@ -286,7 +290,7 @@ export default function MaternalAllRecords() {
                       },
                     }}
                   >
-                    <p className="font-semibold">View</p>
+                    <ViewButton onClick={() => {}} />
                   </Link>
                 </div>
               }
@@ -470,7 +474,7 @@ export default function MaternalAllRecords() {
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
-              {totalPages > 1 && (
+              {totalPages > 0 && (
                 <PaginationLayout
                   currentPage={page}
                   totalPages={totalPages}
@@ -484,4 +488,3 @@ export default function MaternalAllRecords() {
     </LayoutWithBack>
   );
 }
-

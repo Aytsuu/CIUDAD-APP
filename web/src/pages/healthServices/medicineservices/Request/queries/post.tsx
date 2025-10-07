@@ -20,6 +20,8 @@ export const useUpdateMedicineRequestItem = () => {
       queryClient.invalidateQueries({ queryKey: ["medicine-request-items"] });
       queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
       queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+
 
       // Dynamic success message based on status
       const message = variables.data.status === "rejected" ? "Document rejected successfully" : "Request referred successfully";
@@ -49,7 +51,7 @@ export const useCreateMedicineAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords"] });
       queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
       queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
-
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
 
 
       console.log("Allocation successful:", data);
