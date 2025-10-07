@@ -67,13 +67,13 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
 
     //Fetch mutation
     const { data: IncomeParticularItems = [] } = useIncomeParticular();
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();  
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
     //Put mutation
     const { mutate: updateIncome, isPending } = useUpdateIncome(inc_num, onSuccess);
 
 
-    const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totInc = matchedYearData?.ie_main_inc ?? 0;
 
 
