@@ -62,9 +62,9 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
 
 
     const { mutate: createExpense, isPending } = useCreateIncomeExpense(onSuccess);
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-    const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;
 

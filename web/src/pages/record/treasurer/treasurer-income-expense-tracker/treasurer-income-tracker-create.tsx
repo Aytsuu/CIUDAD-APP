@@ -47,12 +47,12 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
 
     //Fetch mutation
     const { data: IncomeParticularItems = [] } = useIncomeParticular();
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
     //Post mutation
     const { mutate: createIncome, isPending } = useCreateIncome(onSuccess);
 
-    const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totInc = matchedYearData?.ie_main_inc ?? 0;
 
     

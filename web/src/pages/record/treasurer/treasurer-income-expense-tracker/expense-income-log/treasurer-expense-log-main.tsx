@@ -7,6 +7,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Search } from 'lucide-react';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { useExpenseLog, type ExpenseLog} from "../queries/treasurerIncomeExpenseFetchQueries";
 import { useLocation } from "react-router-dom";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -45,7 +46,14 @@ function ExpenseLogMain() {
     // Fetch data with search and filter parameters
     const location = useLocation();
     const year = location.state?.LogYear;
-    const { data: fetchedData = [], isLoading } = useExpenseLog(
+
+    //fetch mutation
+    const { 
+        data: expenseLogData = { results: [], count: 0 }, 
+        isLoading 
+    } = useExpenseLog(
+        currentPage,
+        pageSize,
         year ? parseInt(year) : new Date().getFullYear(),
         debouncedSearchQuery,
         selectedMonth
@@ -59,7 +67,6 @@ function ExpenseLogMain() {
         }
     }, [isLoading, showLoading, hideLoading]);   
 
-    console.log("Fetched Expense log:", fetchedData);
     
     const formatDate = (dateString: string) => 
         new Date(dateString).toLocaleString('en-US', {
@@ -70,18 +77,18 @@ function ExpenseLogMain() {
             minute: '2-digit', 
             hour12: true
         });
+    
+    // Get data from paginated response
+    const fetchedData = expenseLogData.results || [];
+    const totalCount = expenseLogData.count || 0;
 
-    // Filter data - only show non-archived entries (search and month filtering now done in backend)
+    // Filter data - only show non-archived entries
     const filteredData = React.useMemo(() => {
         return fetchedData.filter(row => row.el_is_archive === false);
     }, [fetchedData]);
 
     // Pagination
-    const totalPages = Math.ceil(filteredData.length / pageSize);
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-    );
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     // Handle search input change
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,18 +200,25 @@ function ExpenseLogMain() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
                         <div className="flex gap-x-2 items-center">
                             <p className="text-xs sm:text-sm">Show</p>
-                            <Input 
-                                type="number" 
-                                className="w-14 h-8" 
-                                value={pageSize}
-                                onChange={(e) => {
-                                    const value = +e.target.value;
-                                    if (value >= 1) {
-                                        setPageSize(value);
-                                        setCurrentPage(1);
-                                    }
+                            <Select 
+                                value={pageSize.toString()} 
+                                onValueChange={(value) => {
+                                    const newPageSize = Number.parseInt(value);
+                                    setPageSize(newPageSize);
+                                    setCurrentPage(1); // Reset to page 1 when page size changes
                                 }}
-                            />
+                            >
+                                <SelectTrigger className="w-20 h-8 bg-white border-gray-200">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="5">5</SelectItem>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <p className="text-xs sm:text-sm">Entries</p>
                         </div>
                     </div>
@@ -218,7 +232,7 @@ function ExpenseLogMain() {
                         ) : (
                             <DataTable 
                                 columns={columns} 
-                                data={paginatedData} 
+                                data={filteredData} 
                             />
                         )}                        
                     </div>
@@ -227,10 +241,10 @@ function ExpenseLogMain() {
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                     <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
                         Showing {(currentPage - 1) * pageSize + 1}-
-                        {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                        {filteredData.length} rows
+                        {Math.min(currentPage * pageSize, totalCount)} of{" "}
+                        {totalCount} rows
                     </p>
-                    {filteredData.length > 0 && (
+                    {totalCount > 0 && (
                         <PaginationLayout
                             currentPage={currentPage}
                             totalPages={totalPages}

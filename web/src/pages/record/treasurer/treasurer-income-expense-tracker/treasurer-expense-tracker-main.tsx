@@ -766,10 +766,10 @@ function IncomeandExpenseTracking() {
 
     const { data: budgetItems = [] } = useBudgetItems(year);
 
-    const {  data: fetchIncData = [] } = useIncomeExpenseMainCard("");
+    const { data: fetchIncData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
 
-    const matchedYearData = fetchIncData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchIncData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totBud = matchedYearData?.ie_remaining_bal ?? 0;
     const totExp = matchedYearData?.ie_main_exp ?? 0;  
 

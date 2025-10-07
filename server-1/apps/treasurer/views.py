@@ -649,6 +649,7 @@ class GetExpenseParticularsView(generics.ListAPIView):
 class Expense_LogView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Expense_LogSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
 
     def get_queryset(self):
         # Get parameters from query params
@@ -676,7 +677,7 @@ class Expense_LogView(generics.ListCreateAPIView):
         if month and month != "All":
             queryset = queryset.filter(el_datetime__month=month)
         
-        return queryset
+        return queryset.order_by('-el_datetime')  # Add ordering
 
 # ------------------------- INCOME --------------------------------------
 
@@ -690,16 +691,32 @@ class Expense_LogView(generics.ListCreateAPIView):
 class Income_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         # Get parameters from query params
         year = self.request.query_params.get('year', datetime.now().year)
         search_query = self.request.query_params.get('search', '')
         month = self.request.query_params.get('month', 'All')
+        is_archive = self.request.query_params.get('is_archive', None)  # Add archive filter
         
         queryset = Income_Tracking.objects.filter(
             Q(inc_datetime__year=year)
         ).select_related('incp_id')
+        
+        # Filter by archive status if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(inc_is_archive=is_archive_bool)
         
         # Apply search filter if search query exists
         if search_query:
@@ -717,7 +734,7 @@ class Income_TrackingView(generics.ListCreateAPIView):
         if month and month != "All":
             queryset = queryset.filter(inc_datetime__month=month)
         
-        return queryset
+        return queryset.order_by('-inc_datetime')  # Add ordering
 
 
 class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
@@ -768,6 +785,7 @@ class DeleteIncome_ParticularView(generics.DestroyAPIView):
 class Income_Expense_MainView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_MainSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         search_query = self.request.query_params.get('search', '')
@@ -784,7 +802,7 @@ class Income_Expense_MainView(generics.ListCreateAPIView):
                 Q(ie_main_exp__icontains=search_query)
             )
         
-        return queryset
+        return queryset.order_by('-ie_main_year') 
 
 
 class UpdateIncome_Expense_MainView(generics.RetrieveUpdateAPIView):
