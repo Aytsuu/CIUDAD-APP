@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useAddSuppDoc } from "./council-mediation/queries/summonInsertQueries";
+import { useAddSuppDoc } from "./queries/summonInsertQueries";
 
 export default function SummonSuppDocForm({hs_id, sc_id, onSuccess}: {
     hs_id: string;

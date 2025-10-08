@@ -1,5 +1,5 @@
 import { FolderOpen, FileText, Calendar } from 'lucide-react';
-import { useGetSummonSuppDoc } from './council-mediation/queries/summonFetchQueries';
+import { useGetSummonSuppDoc } from './queries/summonFetchQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTimestamp } from '@/helpers/timestampformatter';
 import { useState } from 'react';
