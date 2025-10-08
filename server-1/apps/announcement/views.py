@@ -29,9 +29,9 @@ class AnnouncementListView(generics.ListAPIView):
     def get_queryset(self):
         search = self.request.query_params.get('search', '').strip()
         staff = self.request.query_params.get('staff', None)
-        sort = self.request.query_params.get('sort', None).lower()
-        filter = self.request.query_params.get('filter', None).lower()
-        recipient = self.request.query_params.get('recipient', None).lower()
+        sort = self.request.query_params.get('sort', '').lower()
+        filter = self.request.query_params.get('filter', '').lower()
+        recipient = self.request.query_params.get('recipient', '').lower()
 
         queryset = Announcement.objects.filter(
             ann_status__iexact="ACTIVE"
@@ -39,7 +39,7 @@ class AnnouncementListView(generics.ListAPIView):
 
         if staff:
             print("Retrieving data created by you...")
-            queryset = queryset.filter(staff=Staff.objects.filter(staff_id=staff).first())
+            queryset = Announcement.objects.filter(staff=Staff.objects.filter(staff_id=staff).first())
         
         if filter:
             print(f"Handling {filter} filter...")
@@ -72,71 +72,61 @@ class AnnouncementListView(generics.ListAPIView):
                 queryset = queryset.order_by('ann_title') 
                 
         return queryset
+
+class AnnouncementUpdateView(generics.UpdateAPIView):
+    serializer_class = AnnouncementBaseSerializer
+    queryset = Announcement.objects.all()
+    lookup_field = 'ann_id'
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        ar_types = request.data.pop('ar_type', [])
+        files = request.data.pop('files', [])
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        recipients = instance.announcement_recipients.all()
+        flattened = [
+            rec.ar_type
+            for rec in recipients
+        ]
+
+        if len(ar_types) > 0:
+            for rec in recipients:
+                if rec.ar_type not in ar_types:
+                    rec.delete()
+
+            for type in ar_types:
+                if type not in flattened:
+                    AnnouncementRecipient.objects.create(
+                        ann=instance,
+                        ar_type=type
+                    )
         
+        if len(files) > 0:
+            instance.announcement_files.all().delete()
+            self._upload_files(instance, files)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def _upload_files(self, announcement_instance, files):
+        announcement_files = []
+        for file_data in files:
+            announcement_file = AnnouncementFile(
+                ann=announcement_instance,
+                af_name=file_data.get('name'),
+                af_type=file_data.get('type'),
+                af_path=file_data.get('name'),
+            )
+            url = upload_to_storage(file_data, 'announcement-bucket', "")
+            announcement_file.af_url = url
+            announcement_files.append(announcement_file)
 
-        # now = timezone.now()
-
-        # Announcements created (ONLY active + valid date)
-        # created = Announcement.objects.filter(
-        #     staff=staff,
-        #     ann_status="Active"
-        # ).filter(
-        #     Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
-        #     Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
-        # )
-
-        # Announcements received (ONLY active + valid date)
-        # received_ids = AnnouncementRecipient.objects.filter(
-        #     Q(ar_category=staff_id) | Q(ar_type__iexact=staff.pos.pos_title)
-        # ).values_list("ann_id", flat=True).distinct()
-
-        # received = Announcement.objects.filter(
-        #     ann_id__in=received_ids,
-        #     ann_status="Active"
-        # ).filter(
-        #     Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
-        #     Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
-        # )
-
-        # Public announcements (ONLY active + valid date)
-        # public_announcements = Announcement.objects.filter(
-        #     ann_type="public",
-        #     ann_status="Active"
-        # ).filter(
-        #     Q(ann_start_at__lte=now) | Q(ann_start_at__isnull=True),
-        #     Q(ann_end_at__gte=now) | Q(ann_end_at__isnull=True)
-        # )
-
-        # Union with public
-        # received = received.union(public_announcements)
-
-        # Apply filters (backend side)
-        # def apply_filters(queryset):
-        #     if search:
-        #         queryset = queryset.filter(ann_title__icontains=search)
-
-        #     if filter_param == "toSms":
-        #         queryset = queryset.filter(ann_to_sms=True)
-        #     elif filter_param == "toEmail":
-        #         queryset = queryset.filter(ann_to_email=True)
-        #     elif filter_param == "general":
-        #         queryset = queryset.filter(ann_type="general")
-        #     elif filter_param == "public":
-        #         queryset = queryset.filter(ann_type="public")
-        #     elif filter_param == "event":
-        #         queryset = queryset.filter(ann_type="event")
-        #     elif filter_param == "dateRecent":
-        #         queryset = queryset.order_by("-ann_created_at")
-
-        #     return queryset
-
-        # created = apply_filters(created)
-        # received = apply_filters(received)
-
-        # created_data = AnnouncementCreateSerializer(created, many=True).data
-        # received_data = AnnouncementCreateSerializer(received, many=True).data
-
-
+        if announcement_files:
+            AnnouncementFile.objects.bulk_create(announcement_files)
 
 
 class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
