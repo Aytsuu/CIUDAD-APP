@@ -6,7 +6,9 @@ import { wasteColData } from "../request/waste-col-post-request";
 import { addAssCollector } from "../request/waste-col-post-request";
 import { createCollectionReminders } from "../request/waste-col-post-request";
 
-
+type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
+  staff: string;
+};
 
 
 export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => {
@@ -14,7 +16,7 @@ export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => 
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: (values: z.infer<typeof WasteColSchedSchema>) =>
+    mutationFn: (values: ExtendedWasteColSchema) =>
       wasteColData(values),
     onSuccess: (wc_num) => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });

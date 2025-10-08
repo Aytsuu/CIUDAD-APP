@@ -4,7 +4,12 @@ import { useToastContext } from "@/components/ui/toast";
 import { api } from "@/api/api";
 import { updateWasteColData } from "../request/waste-col-put-request";
 import { addAssCollector } from "../request/waste-col-post-request";
+import WasteColSchedSchema from "@/form-schema/waste/waste-collection";
 
+
+type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
+  staff: string;
+};
 
 // Update the mutation hooks
 export const useUpdateWasteSchedule = () => {
@@ -12,7 +17,7 @@ export const useUpdateWasteSchedule = () => {
   const { toast } = useToastContext();  
   
   return useMutation({
-    mutationFn: ({ wc_num, values }: { wc_num: number, values: any }) =>
+    mutationFn: ({ wc_num, values }: { wc_num: number, values: ExtendedWasteColSchema }) =>
       updateWasteColData(wc_num, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });

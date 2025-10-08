@@ -270,8 +270,9 @@ class CreateCollectionRemindersView(APIView):
             # Check if announcement already exists for today
             existing_announcement = Announcement.objects.filter(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
+                ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
                 ann_created_at__date=today,
-                ann_type="general"
+                ann_type="GENERAL"
             ).first()
             
             if existing_announcement:
@@ -750,6 +751,8 @@ class WasteTruckRestoreView(ActivityLogMixin, generics.UpdateAPIView):
 
 # get Driver for garbage Collection Form
 class DriverPersonnelAPIView(APIView):
+    permission_classes = [AllowAny]  
+
     def get(self, request, *args, **kwargs): 
         allowed_positions = ["WASTE DRIVER", "TRUCK DRIVER", "DRIVER", "DRIVER LOADER"]  
         
@@ -765,6 +768,8 @@ class DriverPersonnelAPIView(APIView):
      
 #get Collectors for garbage collection Form
 class CollectorPersonnelAPIView(APIView):
+    permission_classes = [AllowAny]  
+
     def get(self, request, *args, **kwargs): 
         allowed_positions = ["WASTE COLLECTOR", "COLLECTOR","LOADER"]  
         
@@ -780,12 +785,14 @@ class CollectorPersonnelAPIView(APIView):
     
 #get Sitio 
 class SitioListView(ActivityLogMixin, generics.ListCreateAPIView):
-    # permission_classes = [AllowAny]
+    permission_classes = [AllowAny]
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
 
 
 class WatchmanView(generics.GenericAPIView): 
+    permission_classes = [AllowAny]      
+
     def get(self, request, *args, **kwargs):
         watchmen = WastePersonnel.objects.filter(
             staff_id__pos__pos_title="Watchman"  
