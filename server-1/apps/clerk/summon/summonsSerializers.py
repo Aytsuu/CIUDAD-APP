@@ -179,7 +179,8 @@ class HearingScheduleDetailSerializer(serializers.ModelSerializer):
     
     def get_remarks(self, obj):
         try:
-            remarks = Remark.objects.filter(hs_id=obj.hs_id)
+            # Now uses the related_name
+            remarks = obj.remarks.all()
             return RemarkDetailSerializer(remarks, many=True).data
         except Exception as e:
             print(f"Error getting remarks: {e}")
@@ -187,12 +188,13 @@ class HearingScheduleDetailSerializer(serializers.ModelSerializer):
     
     def get_hearing_minutes(self, obj):
         try:
-            hearing_minutes = HearingMinutes.objects.filter(hs_id=obj.hs_id)
+            # Now uses the related_name
+            hearing_minutes = obj.hearing_minutes.all()
             return HearingMinutesSerializer(hearing_minutes, many=True).data
         except Exception as e:
             print(f"Error getting hearing minutes: {e}")
             return []
-    
+
 class SummonCaseDetailSerializer(serializers.ModelSerializer):
     hearing_schedules = serializers.SerializerMethodField()
     
@@ -210,9 +212,9 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
     
     def get_hearing_schedules(self, obj):
         try:
+            # Now uses the related_name
             hearing_schedules = obj.hearing_schedules.all()
             return HearingScheduleDetailSerializer(hearing_schedules, many=True).data
         except Exception as e:
             print(f"Error getting hearing schedules: {e}")
             return []
-

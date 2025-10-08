@@ -1,6 +1,6 @@
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { z } from "zod";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { resolution_create } from "../request/resolution-post-request";
 import { resolution_file_create } from "../request/resolution-post-request";
@@ -51,24 +51,17 @@ export const useCreateResolution = (onSuccess?: () => void) => {
     onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['resData'] });
-
-      toast.loading("Creating resolution...", { id: "createRes" });
-      
+     
       // Show success toast
-      toast.success('Resolution created successfully', {
-        id: "createRes",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Resolution created successfully')
 
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
       console.error("Error submitting Resolution:", err);
-      toast.error(
-        "Failed to submit Resolution. Please check the input data and try again.",
-        { duration: 2000 }
-      );
+      showErrorToast(
+        "Failed to submit Resolution. Please check the input data and try again."
+      );      
     }
   });
 };

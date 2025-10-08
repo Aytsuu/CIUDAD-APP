@@ -108,11 +108,13 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         return response
 
 class WasteCollectionStaffView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
 # WASTE COLLECTION RETRIEVE / VIEW
 class WasteCollectionSchedView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]        
     serializer_class = WasteCollectionSchedSerializer
     queryset = WasteCollectionSched.objects.all()
 
@@ -120,15 +122,15 @@ class WasteCollectionSchedView(ActivityLogMixin, generics.ListCreateAPIView):
         instance = serializer.save()
         return instance  # Return the created instance including wc_num
 
-# class WasteCollectionAssignmentView(generics.ListCreateAPIView):
-#     serializer_class = WasteCollectionAssignmentSerializer
-#     queryset = WasteCollectionAssignment.objects.all()
 
 class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
+    
 
 class WasteCollectionSchedFullDataView(generics.ListAPIView):
+    permission_classes = [AllowAny]   
     serializer_class = WasteCollectionSchedFullDataSerializer
     
     def get_queryset(self):
@@ -160,6 +162,7 @@ class WasteCollectionSchedFullDataView(generics.ListAPIView):
         return queryset
 
 class WasteCollectorDeleteView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = WasteCollector.objects.all()
     serializer_class = WasteCollectorSerializer
 
@@ -169,6 +172,7 @@ class WasteCollectorDeleteView(generics.DestroyAPIView):
 
 # WASTE COLLECTION DELETE
 class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = WasteCollectionSched.objects.all()
     serializer_class = WasteCollectionSchedSerializer
 
@@ -187,6 +191,7 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
 
 
 class WasteCollectorListView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteCollectorSerializer
     
     def get_queryset(self):
@@ -204,6 +209,7 @@ class WasteCollectorListView(generics.ListAPIView):
 
 # WASTE COLLECTION UPDATE
 class WasteCollectionSchedUpdateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]    
     queryset = WasteCollectionSched.objects.all()
     serializer_class = WasteCollectionSchedSerializer
     lookup_field = 'wc_num'
@@ -281,6 +287,7 @@ class CreateCollectionRemindersView(APIView):
 #============================= WASTE HOTSPOT ================================
 
 class UpcomingHotspotView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
@@ -318,6 +325,7 @@ class UpcomingHotspotView(generics.ListAPIView):
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class WasteHotspotView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]   
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
@@ -328,6 +336,7 @@ class WasteHotspotView(ActivityLogMixin, generics.ListCreateAPIView):
         ).all().order_by('wh_date', 'wh_start_time', 'wh_end_time')
 
 class UpdateHotspotView(ActivityLogMixin, generics.RetrieveUpdateAPIView): 
+    permission_classes = [AllowAny]    
     serializer_class = WasteHotspotSerializer
     queryset = WasteHotspot.objects.all()
     lookup_field = 'wh_num'
@@ -341,6 +350,7 @@ class UpdateHotspotView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class DeleteHotspotView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteHotspotSerializer    
     queryset = WasteHotspot.objects.all()
 
@@ -352,6 +362,7 @@ class DeleteHotspotView(generics.DestroyAPIView):
 # ============================ ILLEGAL DUMPING ================================
 
 class WasteReportFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteReportFileSerializer
     queryset = WasteReport_File.objects.all()
 
@@ -387,6 +398,7 @@ class WasteReportDeleteFileView(generics.RetrieveDestroyAPIView):
     
 
 class WasteReportResolveFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteReportResolveFileSerializer
     queryset = WasteReportResolve_File.objects.all()
 
@@ -415,6 +427,7 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
 
 
 class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteReportSerializer
     
     def get_queryset(self):
@@ -458,6 +471,7 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
     
 
 class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()
     lookup_field = 'rep_id'
@@ -471,6 +485,7 @@ class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteWasteReportView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WasteReportSerializer    
     queryset = WasteReport.objects.all()
 

@@ -440,8 +440,9 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 #     queryset = Resolution.objects.all()
 
 class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResolutionSerializer
-    # Remove the fixed queryset and use get_queryset method instead
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         queryset = Resolution.objects.all().prefetch_related('resolution_files', 'resolution_supp')
@@ -450,6 +451,21 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         search_query = self.request.query_params.get('search', '')
         area_filter = self.request.query_params.get('area', '')
         year_filter = self.request.query_params.get('year', '')
+        is_archive = self.request.query_params.get('is_archive', None)
+        
+        # Apply archive filter if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(res_is_archive=is_archive_bool)
         
         # Apply search filter
         if search_query:
@@ -470,7 +486,7 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         if year_filter and year_filter != "all":
             queryset = queryset.filter(res_date_approved__year=year_filter)
         
-        return queryset
+        return queryset.order_by('-res_date_approved')  # Add ordering
     
     def create(self, request, *args, **kwargs):
         # Check if we need to generate a resolution number
@@ -489,6 +505,7 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
 
 
 class DeleteResolutionView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResolutionSerializer    
     queryset = Resolution.objects.all()
 
@@ -498,6 +515,7 @@ class DeleteResolutionView(generics.DestroyAPIView):
 
 
 class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
     lookup_field = 'res_num'
@@ -517,6 +535,7 @@ class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
 
 
 class ResolutionFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionFileSerializer
     queryset = ResolutionFile.objects.all()
 
@@ -546,6 +565,7 @@ class ResolutionFileView(generics.ListCreateAPIView):
 
 # Deleting Res File or replace if updated
 class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = ResolutionFile.objects.all()
     serializer_class = ResolutionFileSerializer
     lookup_field = 'rf_id' 
@@ -553,6 +573,7 @@ class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
 
  # Resolution Supp Docs
 class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionSupDocsSerializer
     queryset = ResolutionSupDocs.objects.all()
 
@@ -581,12 +602,14 @@ class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
 
 
 class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = ResolutionSupDocs.objects.all()
     serializer_class = ResolutionSupDocsSerializer
     lookup_field = 'rsd_id'     
 
 
 class GADProposalsView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = GADProposalSerializer
     
     def get_queryset(self):

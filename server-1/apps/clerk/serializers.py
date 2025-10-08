@@ -580,11 +580,6 @@ class SummonScheduleDetailSerializer(serializers.ModelSerializer):
             'hearing_time'
         ]
 
-class SummonScheduleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonSchedule
-        fields = '__all__'
-
 
 class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
     complaint = serializers.SerializerMethodField()

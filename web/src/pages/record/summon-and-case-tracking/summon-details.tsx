@@ -64,6 +64,8 @@ export default function SummonDetails() {
   const { mutate: escalate } = useEscalateCase()
   const { data: templates = [], isLoading: isLoadingTemplate } = useGetTemplateRecord()
 
+  console.log('caseDetails', caseDetails)
+
   // Template data fetching
   const templateData = templates[0] || {}
   const barangayLogo =
@@ -108,7 +110,7 @@ export default function SummonDetails() {
                                 !isThirdMediationLevel;
 
   // Determine if Resolve button should be shown
-  const shouldShowResolveButton = !isCaseClosed;
+  const shouldShowResolveButton = !isCaseClosed && case_status !== "Waiting for Schedule";
 
   // Determine if Escalate button should be shown
   const shouldShowEscalateButton = !isCaseClosed && isThirdMediationLevel;
@@ -160,7 +162,7 @@ export default function SummonDetails() {
                   : "bg-green-100 text-green-800 border border-green-200"
               }`}
             >
-              {isClosed ? "Closed" : "Active"}
+              {isClosed ? "Closed" : "Open"}
             </span>
           </div>
         )
@@ -460,7 +462,7 @@ export default function SummonDetails() {
               description="Schedule a new summon."
               mainContent={
                 <CreateSummonSched
-                  sr_id={sc_id}
+                  sc_id={sc_id}
                   onSuccess={() => setIsDialogOpen(false)}
                 />
               }

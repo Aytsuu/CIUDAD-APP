@@ -5,6 +5,7 @@ export default () => {
   return (
     <ToastProvider>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }}/>
         <Stack.Screen name="council-events/calendar" options={{ headerShown: false }} />
         <Stack.Screen name="council-events/schedule" options={{ headerShown: false }} />
         <Stack.Screen name="council-events/editEvent" options={{ headerShown: false, headerTitle: ""}}/>

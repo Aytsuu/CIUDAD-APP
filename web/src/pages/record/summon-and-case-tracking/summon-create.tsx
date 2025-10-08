@@ -13,12 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useGetScheduleList } from "./queries/summonFetchQueries";
 
-function CreateSummonSched({ sr_id, onSuccess }: {
-    sr_id: string;
+function CreateSummonSched({ sc_id, onSuccess }: {
+    sc_id: string;
     onSuccess: () => void
 }) {
     const [selectedDateId, setSelectedDateId] = useState<number | null>(null);
-    const { data: scheduleList = [], isLoading: isLoadingSchedList} = useGetScheduleList(sr_id)
+    const { data: scheduleList = [], isLoading: isLoadingSchedList} = useGetScheduleList(sc_id)
     const { data: dates = [], isLoading: isLoadingDates } = useGetSummonDates();
     const { data: timeslots = [], isLoading: isLoadingTimeslots } = useGetSummonTimeSlots(selectedDateId || 0);
     const { mutate: addSched, isPending } = useAddSummonSchedule(onSuccess);
@@ -32,13 +32,14 @@ function CreateSummonSched({ sr_id, onSuccess }: {
             return "2nd MEDIATION";
         } else if (scheduleCount === 2) {
             return "3rd MEDIATION";
-        } else if (scheduleCount === 3) {
-            return "1st Conciliation Proceedings";
-        } else if (scheduleCount === 4) {
-            return "2nd Conciliation Proceedings";
-        } else if (scheduleCount >= 5) {
-            return "3rd Conciliation Proceedings";
-        }
+        } 
+        // else if (scheduleCount === 3) {
+        //     return "1st Conciliation Proceedings";
+        // } else if (scheduleCount === 4) {
+        //     return "2nd Conciliation Proceedings";
+        // } else if (scheduleCount >= 5) {
+        //     return "3rd Conciliation Proceedings";
+        // }
         return "1st MEDIATION"; // Default fallback
     }
   
@@ -56,14 +57,13 @@ function CreateSummonSched({ sr_id, onSuccess }: {
         defaultValues: {
             sd_id: "",
             st_id: "",
-            ss_mediation_level: mediationLevel,
-            sr_id: String(sr_id),
+            hs_level: mediationLevel,
+            sc_id: String(sc_id),
         },
     });
 
-    // Update form value when mediationLevel changes
     useEffect(() => {
-        form.setValue("ss_mediation_level", mediationLevel);
+        form.setValue("hs_level", mediationLevel);
     }, [mediationLevel, form]);
 
     const selectedDate = form.watch("sd_id");

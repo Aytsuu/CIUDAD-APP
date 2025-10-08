@@ -10,6 +10,12 @@ export default function CertificatesLayout() {
         }} 
       />
       <Stack.Screen 
+        name="cert-main" 
+        options={{ 
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
         name="cert-list" 
         options={{ 
           headerShown: false 

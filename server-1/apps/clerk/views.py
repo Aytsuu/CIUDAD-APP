@@ -45,22 +45,18 @@ class SummonScheduleByServiceRequestView(generics.ListAPIView):
             'st_id'
         ).order_by('sd_id__sd_date', 'st_id__st_start_time')
 
-class SummonScheduleCreateView(ActivityLogMixin, generics.ListCreateAPIView):
-    serializer_class = SummonScheduleSerializer
-    queryset = SummonSchedule.objects.all()
-    
-class UpdateSummonScheduleView(ActivityLogMixin, generics.UpdateAPIView):
-    serializer_class = SummonScheduleSerializer
-    queryset = SummonSchedule.objects.all()
-    lookup_field = 'ss_id'
+# class UpdateSummonScheduleView(ActivityLogMixin, generics.UpdateAPIView):
+#     serializer_class = SummonScheduleSerializer
+#     queryset = SummonSchedule.objects.all()
+#     lookup_field = 'ss_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
 class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
