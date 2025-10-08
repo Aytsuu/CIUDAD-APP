@@ -1,45 +1,43 @@
+// components/personalizedCompo/staff_search_input.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, FlatList } from 'react-native';
 import { ChevronDown, Check } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 
-interface Person {
-  per_id: number;
+interface Staff {
+  staff_id: string;
   full_name: string;
+  position_title?: string;
 }
 
-interface DonorSelectProps {
+interface StaffSelectProps {
   placeholder?: string;
   label?: string;
   className?: string;
   contentClassName?: string;
-  people: Person[];
-  selectedDonor: string;
-  onSelect: (donorName: string) => void;
+  staff: Staff[];
+  selectedStaff: string | null | undefined;
+  onSelect: (staffName: string) => void;
   error?: string;
 }
 
-export function DonorSelect({
-  placeholder = 'Select...',
+export function StaffSelect({
+  placeholder = 'Select distribution head...',
   label,
   className,
   contentClassName,
-  people,
-  selectedDonor,
+  staff = [],
+  selectedStaff,
   onSelect,
   error,
-}: DonorSelectProps) {
+}: StaffSelectProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
-  // Add Anonymous option at the beginning of filtered people
-  const filteredOptions = [
-    { per_id: -1, full_name: 'Anonymous' },
-    ...people.filter(person =>
-      person.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  ];
+  const filteredStaff = staff.filter(person =>
+    person.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const measureDropdownPosition = (event: any) => {
     event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
@@ -58,9 +56,9 @@ export function DonorSelect({
   };
 
   return (
-    <View>
+    <View className="mb-4">
       {label && (
-        <Text className="text-[12px] font-PoppinsRegular mb-2">
+        <Text className="text-[16px] font-PoppinsRegular mb-2">
           {label}
         </Text>
       )}
@@ -75,8 +73,8 @@ export function DonorSelect({
           onPress={() => setIsOpen(!isOpen)}
           onLayout={measureDropdownPosition}
         >
-          <Text className="text-[12px] font-PoppinsRegular">
-            {selectedDonor || placeholder}
+          <Text className="text-[12px] font-PoppinsRegular flex-1">
+            {selectedStaff || placeholder}
           </Text>
           <ChevronDown size={16} color="#6b7280" />
         </TouchableOpacity>
@@ -105,7 +103,7 @@ export function DonorSelect({
             {/* Search input */}
             <View className="p-2 border-b rounded-xl border-gray-200">
               <TextInput
-                placeholder="Search or enter donor name..."
+                placeholder="Search staff..."
                 value={searchTerm}
                 onChangeText={setSearchTerm}
                 className="p-2 border border-gray-300 rounded-md font-PoppinsRegular"
@@ -113,10 +111,10 @@ export function DonorSelect({
               />
             </View>
 
-            {/* Options list with Anonymous first */}
+            {/* Staff list */}
             <FlatList
-              data={filteredOptions}
-              keyExtractor={item => item.per_id.toString()}
+              data={filteredStaff}
+              keyExtractor={item => item.staff_id}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   className="flex-row items-center p-3 border-b border-gray-100"
@@ -124,32 +122,25 @@ export function DonorSelect({
                 >
                   <Check
                     size={16}
-                    color={selectedDonor === item.full_name ? 'green' : 'transparent'}
+                    color={selectedStaff === item.full_name ? 'green' : 'transparent'}
                     className="mr-2"
                   />
-                  <Text className="text-base font-PoppinsRegular">{item.full_name}</Text>
+                  <View className="flex-1">
+                    <Text className="text-base font-PoppinsRegular">{item.full_name}</Text>
+                    {item.position_title && (
+                      <Text className="text-sm text-gray-500 mt-1 font-PoppinsRegular">
+                        {item.position_title}
+                      </Text>
+                    )}
+                  </View>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
                 <View className="p-4 items-center">
-                  <Text className="text-gray-500 font-PoppinsRegular">No matching people found</Text>
+                  <Text className="text-gray-500 font-PoppinsRegular">No staff found</Text>
                 </View>
               }
             />
-
-            {/* Manual entry option */}
-            {searchTerm.trim() && !filteredOptions.some(
-              person => person.full_name.toLowerCase() === searchTerm.toLowerCase()
-            ) && (
-              <TouchableOpacity
-                className="flex-row items-center p-3 border-t border-gray-200 bg-blue-50"
-                onPress={() => handleSelect(searchTerm)}
-              >
-                <Text className="text-blue-500 font-PoppinsRegular">
-                  Use "{searchTerm}" as donor name
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         </Modal>
       </View>
