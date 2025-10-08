@@ -398,7 +398,7 @@ export default () => {
                 )}
 
                 {/* Footer Info */}
-                <View className="flex-row items-center justify-between mt-4 border-b border-gray-100 pb-5">
+                <View className="flex-row items-center justify-between border-b border-gray-100 pb-5">
                   <View></View>
                   <Text className="text-xs text-gray-500">
                     {handleFormatDate(item.ann_start_at ? item.ann_start_at : item.ann_created_at)}
