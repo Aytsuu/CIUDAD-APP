@@ -17,9 +17,11 @@ import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 export default function IllegalDumpCreateForm() {
+  const {user} = useAuth()  
   const {toast} = useToastContext();
   const router = useRouter();
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
@@ -72,7 +74,9 @@ export default function IllegalDumpCreateForm() {
 
     const allValues = {
       ...values,  
-      files      
+      files,
+      rp_id: user?.rp,
+      phone: user?.phone
     }
 
     addReport(allValues, {
