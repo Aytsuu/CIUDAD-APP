@@ -81,7 +81,7 @@ export const addSchedule = async (schedule: Record<string, any>) => {
 }
 
 
-export const addHearingMinutes = async ( hs_id: string, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addHearingMinutes = async ( hs_id: string, sc_id: string, files: { name: string; type: string; file: string | undefined }[]) => {
     try{
         const data = {
             hs_id,
@@ -98,8 +98,14 @@ export const addHearingMinutes = async ( hs_id: string, files: { name: string; t
             await api.put(`clerk/update-hearing-schedule/${hs_id}/`, {
                 hs_is_closed: true,
             })
+
+            await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                sc_case_status: "Waiting for Schedule",
+            })
+
+
         }
-        
+
         return response.data;
 
     }catch(err){

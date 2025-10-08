@@ -8,7 +8,7 @@ urlpatterns = [
     path('summon-case-list/', SummonCasesView.as_view(), name='summon-case-list'),
     path('summon-case-detail/<str:sc_id>/', SummonCaseDetailView.as_view(), name='summon-case-detail'),
     path('update-summon-case/<str:sc_id>/', UpdateSummonCaseView.as_view(), name='update-summon-case'),
-    path('summon-schedule-list/<str:sr_id>/', SummonScheduleByServiceRequestView.as_view(), name='summon-schedule-list'),
+    path('summon-schedule-list/<str:sc_id>/', HearingScheduleListView.as_view(), name='summon-schedule-list'),
     path('view-complaint/<str:comp_id>/', ComplaintDetailView.as_view(), name='complaint-detail'),
 
     path('hearing-minutes/', HearingMinutesCreateView.as_view(), name='hearing-minutes-create'),

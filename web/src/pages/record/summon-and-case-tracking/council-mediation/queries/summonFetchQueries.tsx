@@ -40,6 +40,16 @@ export const useGetSummonTimeSlots = (sd_id: number) => {
 }
 
 
+export const useGetScheduleList = (sc_id: string) => {
+     return useQuery<ScheduleList[]>({
+        queryKey: ['schedList', sc_id],
+        queryFn: () => getSummonScheduleList(sc_id),
+        enabled: !!sc_id, 
+        staleTime: 5000,
+    });
+}
+  
+
 
 
 
@@ -119,15 +129,7 @@ export const useGetServiceChargeReqDetails = (sr_id: string) => {
     });
 }
 
-export const useGetScheduleList = (sr_id: string) => {
-     return useQuery<ScheduleList[]>({
-        queryKey: ['schedList', sr_id],
-        queryFn: () => getSummonScheduleList(sr_id),
-        enabled: !!sr_id, 
-        staleTime: 5000,
-    });
-}
-  
+
 
 
 

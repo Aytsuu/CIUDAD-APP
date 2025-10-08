@@ -86,9 +86,10 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: async (data: {
             hs_id: string;
+            sc_id: string;
             file: { name: string; type: string; file: string | undefined}[];
         }) => {
-            return addHearingMinutes(data.hs_id, data.file);
+            return addHearingMinutes(data.hs_id, data.sc_id, data.file);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });

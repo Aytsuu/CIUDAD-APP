@@ -1,6 +1,7 @@
 import SummonCalendar from "@/pages/record/summon-and-case-tracking/council-mediation/summonCalendar";
 import SummonCases from "@/pages/record/summon-and-case-tracking/council-mediation/summon-cases";
-import SummonDetails from "@/pages/record/summon-and-case-tracking/summon-details";
+import SummonDetails from "@/pages/record/summon-and-case-tracking/council-mediation/summon-details";
+import LuponCases from "@/pages/record/summon-and-case-tracking/lupon-mediation/lupon-cases";
 
 export const summon_router = [
 
@@ -15,5 +16,9 @@ export const summon_router = [
     {
         path: '/summon-calendar',
         element: <SummonCalendar/>
+    },
+    {
+        path: '/lupon-cases',
+        element: <LuponCases/>
     }
 ]

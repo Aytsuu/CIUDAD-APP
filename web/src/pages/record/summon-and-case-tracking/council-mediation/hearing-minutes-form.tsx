@@ -53,8 +53,9 @@ import { Button } from "@/components/ui/button/button";
 import { useState } from "react";
 import { useAddHearingMinutes } from "./queries/summonInsertQueries";
 
-export default function HearingMinutesForm({hs_id, onSuccess}: {
+export default function HearingMinutesForm({hs_id, sc_id, onSuccess}: {
     hs_id: string;
+    sc_id: string;
     onSuccess: () => void;
 }){
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
@@ -74,7 +75,7 @@ export default function HearingMinutesForm({hs_id, onSuccess}: {
             'file': media.file
         }))
         
-        addMinutes({hs_id, file});
+        addMinutes({hs_id, sc_id, file});
     }
 
     return(

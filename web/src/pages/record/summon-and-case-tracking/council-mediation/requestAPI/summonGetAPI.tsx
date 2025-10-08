@@ -22,9 +22,9 @@ export const getSummonCaseDetail = async (sc_id: string) => {
 
 
 
-export const getSummonScheduleList = async (sr_id: string) => {
+export const getSummonScheduleList = async (sc_id: string) => {
     try{
-        const res = await api.get( `clerk/summon-schedule-list/${sr_id}/`)
+        const res = await api.get( `clerk/summon-schedule-list/${sc_id}/`)
         return res.data
     }catch(err){
         console.error(err)

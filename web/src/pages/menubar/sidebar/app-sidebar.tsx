@@ -190,7 +190,7 @@ export function AppSidebar() {
       title: "Team",
       url: "/team",
     },
-    ...(featureValidator("summon & case tracker")
+    ...(featureValidator("council mediation")
       ? [
           {
             title: "Council Mediation",
@@ -199,6 +199,14 @@ export function AppSidebar() {
               { title: "Summon Calendar", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
+          },
+        ]
+      : []),
+    ...(featureValidator("lupon mediation")
+      ? [
+          {
+            title: "Conciliation Proceeding",
+            url: "/lupon-cases",
           },
         ]
       : []),

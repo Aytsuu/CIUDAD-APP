@@ -31,20 +31,6 @@ logger = logging.getLogger(__name__)
 
 # ==================== MIGHT DELETE LATER ========================    
 
-class SummonScheduleByServiceRequestView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonScheduleDetailSerializer
-    
-    def get_queryset(self):
-        sr_id = self.kwargs['sr_id']
-        return SummonSchedule.objects.filter(
-            sr_id=sr_id
-        ).select_related(
-            'sr_id',
-            'sd_id',
-            'st_id'
-        ).order_by('sd_id__sd_date', 'st_id__st_start_time')
-
 # class UpdateSummonScheduleView(ActivityLogMixin, generics.UpdateAPIView):
 #     serializer_class = SummonScheduleSerializer
 #     queryset = SummonSchedule.objects.all()

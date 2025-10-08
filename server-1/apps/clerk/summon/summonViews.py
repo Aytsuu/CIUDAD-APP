@@ -73,6 +73,21 @@ class UpdateHearingScheduleView(generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class HearingScheduleListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = HearingScheduleDetailSerializer  
+    
+    def get_queryset(self):
+        sc_id = self.kwargs['sc_id']  
+        return HearingSchedule.objects.filter(
+            sc_id=sc_id  
+        ).select_related(
+            'sc_id',     
+            'sd_id',
+            'st_id'
+        ).order_by('sd_id__sd_date', 'st_id__st_start_time')
+    
+
 # ======================== SUMMON DATE AND TIME ========================
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
     serializer_class = SummonDateAvailabilitySerializer
