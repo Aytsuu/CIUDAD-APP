@@ -144,7 +144,7 @@ import { SummonTimeSchema } from "@/form-schema/summon-time-schema";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { useAddSummonTimeSlots } from "./queries/summonInsertQueries";
+import { useAddSummonTimeSlots } from "../queries/summonInsertQueries";
 
 type TimeSlot = {
   id: number;

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState, useEffect } from "react";
-import { useGetSummonCaseList } from "../council-mediation/queries/summonFetchQueries";
+import { useGetSummonCaseList } from "../queries/summonFetchQueries";
 import type { SummonCaseList } from "../summon-types";
 import { useLoading } from "@/context/LoadingContext";
 

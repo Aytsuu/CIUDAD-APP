@@ -8,6 +8,7 @@ export interface TruckData {
   truck_status: "Operational" | "Maintenance";
   truck_last_maint: string;
   truck_is_archive?: boolean;
+  staff?: any;
 }
 
 export interface PersonnelItem {
@@ -23,6 +24,7 @@ export interface TruckFormValues {
   truck_capacity: string;
   truck_status: "Operational" | "Maintenance";
   truck_last_maint: string;
+  staff?: any;
 }
 
 export const SearchFormSchema = z.object({

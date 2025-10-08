@@ -11,8 +11,10 @@ import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
 import { useAddTruck } from './waste-personnel-truck-queries';
 import { TruckFormValues } from './waste-personnel-types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function WasteTruckCreate() {
+  const { user } = useAuth();
   const router = useRouter();
   const { mutate: addTruck, isPending: isSubmitting } = useAddTruck(() => router.back());
   const { control, handleSubmit } = useForm<TruckFormValues>({
@@ -23,6 +25,7 @@ export default function WasteTruckCreate() {
       truck_capacity: '',
       truck_status: 'Operational',
       truck_last_maint: new Date().toISOString().split('T')[0],
+      staff: user?.staff?.staff_id || null,
     },
   });
 
@@ -45,7 +48,7 @@ export default function WasteTruckCreate() {
       contentPadding="medium"
       loadingMessage="Creating truck..."
     >
-          <View className="space-y-4 p-4 flex-1">
+          <View className="space-y-4 p-4 flex-1 px-6">
             <View className="mb-4">
               <FormInput
                 control={control}
