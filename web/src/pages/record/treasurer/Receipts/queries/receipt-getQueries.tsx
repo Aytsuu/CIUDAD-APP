@@ -19,10 +19,15 @@ export type Receipt = {
     payor_fname?: string;
 };
   
-export const useInvoiceQuery = (searchQuery?: string, natureFilter?: string) => {
-    return useQuery<Receipt[]>({
-        queryKey: ["invoices", searchQuery, natureFilter],
-        queryFn: () => getInvoice(searchQuery, natureFilter),
+export const useInvoiceQuery = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string, 
+    natureFilter?: string
+) => {
+    return useQuery<{ results: Receipt[]; count: number }>({
+        queryKey: ["invoices", page, pageSize, searchQuery, natureFilter],
+        queryFn: () => getInvoice(page, pageSize, searchQuery, natureFilter),
         staleTime: 1000 * 60 * 30,
     });
 };

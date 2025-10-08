@@ -1217,15 +1217,16 @@ class PurposeAndRatesByPurposeView(generics.RetrieveAPIView):
 class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         queryset = Invoice.objects.select_related(
-            'bpr_id__rp_id__per',  # For business permit requests
-            'nrc_id',              # For non-resident certificate requests
-            'cr_id__rp_id__per',   # For resident certificates
-            'spay_id__sr_id__comp_id'  # For service charge payments
+            'bpr_id__rp_id__per',
+            'nrc_id',
+            'cr_id__rp_id__per',
+            'spay_id__comp_id'
         ).prefetch_related(
-            'spay_id__sr_id__comp_id__complainant'  # For complainants in service charges
+            'spay_id__comp_id__complainant'
         ).all()
         
         # Get filter parameters from request
@@ -1238,25 +1239,21 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
                 Q(inv_serial_num__icontains=search_query) |
                 Q(inv_nat_of_collection__icontains=search_query) |
                 Q(inv_discount_reason__icontains=search_query) |
-                # Search in business permit related fields
                 Q(bpr_id__rp_id__per__per_lname__icontains=search_query) |
                 Q(bpr_id__rp_id__per__per_fname__icontains=search_query) |
                 Q(bpr_id__rp_id__per__per_mname__icontains=search_query) |
-                # Search in resident certificate related fields
                 Q(cr_id__rp_id__per__per_lname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_fname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_mname__icontains=search_query) |
-                # Search in non-resident certificate fields
                 Q(nrc_id__nrc_requester__icontains=search_query) |
-                # Search in service charge complainant names
                 Q(spay_id__sr_id__comp_id__complainant__cpnt_name__icontains=search_query)
-            ).distinct()  # Add distinct to avoid duplicates
+            ).distinct()
         
         # Apply nature of collection filter
         if nature_filter and nature_filter != "all":
             queryset = queryset.filter(inv_nat_of_collection=nature_filter)
         
-        return queryset
+        return queryset.order_by('-inv_date') 
 
 
 # Clearance Request Views

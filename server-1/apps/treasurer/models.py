@@ -179,7 +179,7 @@ class Invoice(models.Model):
 
     class Meta:
         db_table = 'invoice'
-
+        
 #======================================================================================
 
 class Expense_Particular(models.Model):
