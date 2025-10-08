@@ -19,10 +19,10 @@ urlpatterns = [
     path('summon-case-detail/<str:sc_id>/', SummonCaseDetailView.as_view(), name='summon-case-detail'),
     path('update-summon-case/<str:sc_id>/', UpdateSummonCaseView.as_view(), name='update-summon-case'),
     path('summon-schedule-list/<str:sr_id>/', SummonScheduleByServiceRequestView.as_view(), name='summon-schedule-list'),
-    path('update-summon-sched/<str:ss_id>/', UpdateSummonScheduleView.as_view(), name='update-summon-sched'),
+    # path('update-summon-sched/<str:ss_id>/', UpdateSummonScheduleView.as_view(), name='update-summon-sched'),
     path('summon-supp-doc/', SummonSuppDocView.as_view(), name='summon-supp-doc'),
     path('summon-supp-doc/<str:ss_id>/', SummonSuppDocRetrieveView.as_view(), name='summon-supp-doc-retrieve'),
-    path('create-summon-sched/', SummonScheduleCreateView.as_view(), name='summon-sched-create'),
+    path('hearing-schedule/', HearingScheduleView.as_view(), name='summon-sched-create'),
 
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),

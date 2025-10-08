@@ -13,7 +13,7 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
      return useMutation({
             mutationFn: (values: z.infer<typeof SummonSchema>) => addSchedule(values),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
+                queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });
 
                 toast.loading('Submitting Record...', {id: "createCase"});
         

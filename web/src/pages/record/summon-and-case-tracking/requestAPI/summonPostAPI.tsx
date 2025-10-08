@@ -5,24 +5,22 @@ export const addSchedule = async (schedule: Record<string, any>) => {
         console.log('data:', {
             sd_id: schedule.sd_id,
             st_id: schedule.st_id,
-            ss_mediation_level: schedule.ss_mediation_level,
-            ss_reason: "Ongoing Mediation",
-            ss_is_rescheduled: false,
-            sr_id: schedule.sr_id
+            hs_level: schedule.hs_level,
+            hs_is_closed: false,
+            sc_id: schedule.sc_id
         })
    
-        const res = await api.post('clerk/create-summon-sched/', {
+        const res = await api.post('clerk/hearing-schedule/', {
             sd_id: schedule.sd_id,
             st_id: schedule.st_id,
-            ss_mediation_level: schedule.ss_mediation_level,
-            ss_reason: "Ongoing Mediation",
-            ss_is_rescheduled: false,
-            sr_id: schedule.sr_id
+            hs_level: schedule.hs_level,
+            hs_is_closed: false,
+            sc_id: schedule.sc_id
         })
 
         if(res){
-            await api.put(`clerk/update-summon-request/${schedule.sr_id}/`, {
-                sr_case_status: "Ongoing",
+            await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
+                sc_case_status: "Ongoing",
             })
 
             await api.put(`clerk/update-summon-time-availability/${schedule.st_id}/`, {
@@ -30,42 +28,12 @@ export const addSchedule = async (schedule: Record<string, any>) => {
             })
 
         }
-
         return res.data
     }catch(err){
         console.error(err)
         throw err;
     }
 }
-
-// export const addSuppDoc = async(ca_id: string, media: MediaUploadType[number], description: string) => {    
-    // try{
-
-    //     if (media.status !== 'uploaded' || !media.publicUrl || !media.storagePath) {
-    //         throw new Error('File upload incomplete: missing URL or path');
-    //     }
-
- 
-
-    //     const formData = new FormData();
-    //     formData.append('file', media.file);
-    //     formData.append('ca_id', ca_id);
-    //     formData.append('csd_name', media.file.name);
-    //     formData.append('csd_type', media.file.type || 'application/octet-stream');
-    //     formData.append('csd_path', media.storagePath);
-    //     formData.append('csd_url', media.publicUrl);
-    //     formData.append('csd_upload_date', new Date().toISOString());
-    //     formData.append('csd_description', description);
-
-    //     console.log(formData)
-
-    //     const res = await api.post('clerk/case-supp-doc/', formData)
-
-    //     return res.data
-    // }catch(err){
-    //     console.error(err)
-    // }
-// }
 
 export const addSuppDoc = async ( ss_id: string, sr_id: string, files: { name: string; type: string; file: string | undefined }[], reason: string
 ) => {

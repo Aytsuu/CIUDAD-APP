@@ -260,8 +260,8 @@ class ServiceChargePaymentRequest(models.Model):
     pay_date_req = models.DateTimeField(default=datetime.now)
     pay_due_date = models.DateField(default = default_due_date())
     pay_date_paid = models.DateTimeField(null = True, blank = True)
-    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='service_charge_payments')
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True, related_name='payment_requests')
 
     class Meta:
         db_table = 'service_charge_payment_request'
@@ -273,7 +273,7 @@ class SummonCase(models.Model):
     sc_case_status = models.CharField(max_length=500)
     sc_date_marked = models.DateTimeField(null=True, blank=True)
     sc_reason = models.TextField(null=True, blank=True)
-    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='summon_cases')
 
     class Meta:
         db_table = 'summon_case'
@@ -283,9 +283,9 @@ class HearingSchedule(models.Model):
     hs_id = models.BigAutoField(primary_key=True)
     hs_level = models.CharField(max_length=500)
     hs_is_closed = models.BooleanField(default=False)
-    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True)
-    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True)
-    sc_id = models.ForeignKey('SummonCase', db_column='sc_id', on_delete=models.SET_NULL, null = True, blank = True)
+    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
+    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
+    sc_id = models.ForeignKey('SummonCase', db_column='sc_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
 
     class Meta:
         db_table = 'hearing_schedule'
@@ -297,7 +297,7 @@ class HearingMinutes(models.Model):
     hm_type = models.CharField(max_length=100, null=True, blank=True)
     hm_path = models.CharField(max_length=500, null=True, blank=True)
     hm_url = models.CharField(max_length=500)
-    hs_id = models.ForeignKey('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True)
+    hs_id = models.ForeignKey('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_minutes')
 
     class Meta:
         db_table = 'hearing_minutes'
@@ -307,7 +307,7 @@ class Remark(models.Model):
     rem_id = models.BigAutoField(primary_key=True)
     rem_remarks = models.TextField()
     rem_date = models.DateTimeField(default = datetime.now)
-    hs_id = models.ForeignKey('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True)
+    hs_id = models.ForeignKey('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remarks')
 
     class Meta:
         db_table = 'remark'
@@ -319,7 +319,7 @@ class RemarkSuppDocs(models.Model):
     rsd_type = models.CharField(max_length=100, null=True, blank=True)
     rsd_path = models.CharField(max_length=500, null=True, blank=True)
     rsd_url = models.CharField(max_length=500)
-    rem_id = models.ForeignKey('Remark', db_column='rem_id', on_delete=models.SET_NULL, null = True, blank = True)
+    rem_id = models.ForeignKey('Remark', db_column='rem_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='supporting_documents')
     
     class Meta:
         db_table = 'remark_supp_docs'
