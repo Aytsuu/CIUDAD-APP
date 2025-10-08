@@ -166,7 +166,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             }
             stickyFooter={true}
         >
-            <View className="w-full space-y-4 px-4 pt-5">
+            <View className="w-full space-y-4 px-6 pt-5">
 
                 <FormInput
                     control={form.control}

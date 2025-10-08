@@ -31,8 +31,11 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
     
     // Fetch existing resolutions
-    const { data: resolutionData = [] } = useResolution();
+    const { data: resolutionData = { results: [], count: 0 } } = useResolution();    
     const { data: gadProposals = [] } = useApprovedProposals();
+
+    // Extract the actual data array from paginated response
+    const fetchedResolutions = resolutionData.results || [];    
 
     // Create mutation
     const { mutate: createResolution, isPending } = useCreateResolution(() => {
@@ -76,11 +79,11 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
 
     // Extract resolution numbers from fetched data
     useEffect(() => {
-        if (resolutionData && resolutionData.length > 0) {
-            const numbers = resolutionData.map((resolution: any) => resolution.res_num);
+        if (fetchedResolutions && fetchedResolutions.length > 0) {
+            const numbers = fetchedResolutions.map((resolution: any) => resolution.res_num);
             setResolutionNumbers(numbers);
         }
-    }, [resolutionData]);
+    }, [fetchedResolutions]);
 
     // Check if GAD is selected
     const isGADSelected = selectedAreas.includes("gad");
@@ -195,7 +198,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             }
             stickyFooter={true}
         >
-            <View className="w-full space-y-4 px-4 pt-5">
+            <View className="w-full space-y-4 px-6 pt-5">
                 {/* Tabs for New/Old Resolution */}
                 <View className="flex-row gap-2 mb-10">
                     <TabButton
