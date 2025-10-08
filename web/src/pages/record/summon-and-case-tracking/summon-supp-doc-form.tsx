@@ -9,14 +9,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useAddSuppDoc } from "./queries/summonInsertQueries";
 
-export default function SummonSuppDocForm({hs_id, sc_id, onSuccess}: {
-    hs_id: string;
-    sc_id: string;
+export default function SummonSuppDocForm({onSuccess}: {
+    // hs_id: string;
+    // sc_id: string;
     onSuccess: () => void;
 }) {
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-    const {mutate: addDocs, isPending} = useAddSuppDoc(onSuccess);
+    const {mutate: _addDocs, isPending} = useAddSuppDoc(onSuccess);
 
     const form = useForm<z.infer<typeof SummonSuppDocSchema>>({
         resolver: zodResolver(SummonSuppDocSchema),
@@ -31,19 +31,19 @@ export default function SummonSuppDocForm({hs_id, sc_id, onSuccess}: {
                 alert("Please upload at least one file");
                 return;
             }
-            const values = form.getValues();
-            const files = mediaFiles.map((media) => ({
-                'name': media.name,
-                'type': media.type,
-                'file': media.file
-            }))
+            // const values = form.getValues();
+            // const files = mediaFiles.map((media) => ({
+            //     'name': media.name,
+            //     'type': media.type,
+            //     'file': media.file
+            // }))
 
-             addDocs({
-                ss_id,
-                sc_id,
-                file: files,
-                reason: values.reason
-            })
+            //  addDocs({
+            //     ss_id,
+            //     sc_id,
+            //     file: files,
+            //     reason: values.reason
+            // })
         }catch(err){
             console.error(err)
         }

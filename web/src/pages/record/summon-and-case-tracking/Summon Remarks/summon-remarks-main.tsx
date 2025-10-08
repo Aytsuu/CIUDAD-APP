@@ -1,14 +1,14 @@
-import CardLayout from "@/components/ui/card/card-layout";
-import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
-import { Search } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useState, useEffect } from "react";
-import { useGetSummonCaseList } from "../queries/summonFetchQueries";
-import type { SummonCaseList } from "../summon-types";
-import { useLoading } from "@/context/LoadingContext";
+// import CardLayout from "@/components/ui/card/card-layout";
+// import { Label } from "@/components/ui/label";
+// import { Link } from "react-router-dom";
+// import { Search } from 'lucide-react';
+// import { Input } from "@/components/ui/input";
+// import { Spinner } from "@/components/ui/spinner";
+// import { SelectLayout } from "@/components/ui/select/select-layout";
+// import { useState, useEffect } from "react";
+// import { useGetSummonCaseList } from "../queries/summonFetchQueries";
+// import type { SummonCaseList } from "../summon-types";
+// import { useLoading } from "@/context/LoadingContext";
 
 
 
@@ -34,7 +34,7 @@ export default function SummonRemarksMain(){
                         </h1>
                     </div>
                     <p className="text-xs sm:text-sm text-darkGray">
-                            View, manage, and track the status of council mediation cases.
+                            Record remarks, attach files, and close hearing schedules.
                     </p>
                 </div>
                 <hr className="border-gray mb-7 sm:mb-8" />

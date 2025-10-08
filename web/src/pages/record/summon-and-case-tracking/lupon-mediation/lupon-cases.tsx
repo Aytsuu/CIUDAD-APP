@@ -72,7 +72,7 @@ function LuponCases(){
 
     // Filter data based on selected filter and search term
     const filteredData = fetchedData.filter(item => {
-        const matchesFilter = selectedFilter === "All" || item.sc_case_status === selectedFilter;
+        const matchesFilter = selectedFilter === "All" || item.sc_mediation_status === selectedFilter;
         
         if (searchTerm === "") return matchesFilter;
         
@@ -248,8 +248,8 @@ function LuponCases(){
 
                                                 <div className={styles.cardInfoRow}>
                                                     <p className={styles.cardContent}>Status: </p>
-                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.sc_case_status)}`}>
-                                                        {item.sc_case_status || "Unknown"}
+                                                    <p className={`${styles.cardInfo} ${getStatusColor(item.sc_mediation_status)}`}>
+                                                        {item.sc_mediation_status || "Unknown"}
                                                     </p>
                                                 </div>
 

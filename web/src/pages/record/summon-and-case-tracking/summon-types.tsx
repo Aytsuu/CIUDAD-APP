@@ -7,7 +7,7 @@ export type SummonCaseList = {
     complainant_addresses: string[];
     complainant_rp_ids: string[],
     incident_type: string;
-    sc_case_status: string;
+    sc_mediation_status: string;
     decision_date: string;
     comp_id: string;
 }
@@ -61,7 +61,7 @@ export type SummonCaseList = {
     export type SummonCaseDetails = {
         sc_id: string;
         sc_code: string;
-        sc_case_status: string;
+        sc_mediation_status: string;
         sc_date_marked: string;
         sc_reason: string;
         comp_id: string;

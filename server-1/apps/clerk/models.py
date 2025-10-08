@@ -240,7 +240,8 @@ class ServiceChargePaymentRequest(models.Model):
 class SummonCase(models.Model):
     sc_id = models.BigAutoField(primary_key=True)
     sc_code = models.CharField(max_length=200)
-    sc_case_status = models.CharField(max_length=500)
+    sc_mediation_status = models.CharField(max_length=500)
+    sc_conciliation_status = models.CharField(max_length=500, null=True, blank=True)
     sc_date_marked = models.DateTimeField(null=True, blank=True)
     sc_reason = models.TextField(null=True, blank=True)
     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='summon_cases')

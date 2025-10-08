@@ -65,7 +65,7 @@ export const addSchedule = async (schedule: Record<string, any>) => {
 
         if(res){
             await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
-                sc_case_status: "Ongoing",
+                sc_mediation_status: "Ongoing",
             })
 
             await api.put(`clerk/update-summon-time-availability/${schedule.st_id}/`, {
@@ -100,7 +100,7 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, files: { 
             })
 
             await api.put(`clerk/update-summon-case/${sc_id}/`, {
-                sc_case_status: "Waiting for Schedule",
+                sc_mediation_status: "Waiting for Schedule",
             })
 
 
