@@ -6,14 +6,15 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { formatTime } from "@/helpers/timeFormatter";
 import UpdateWasteColSched from "./waste-col-UpdateSched";
 import { useGetWasteCollectionSchedFull, type WasteCollectionSchedFull } from "./queries/wasteColFetchQueries";
 import WasteColSched from "./waste-col-sched";
 import { useArchiveWasteCol, useRestoreWasteCol, useDeleteWasteCol } from "./queries/wasteColDeleteQueries";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { sortWasteCollectionData } from "@/helpers/wasteCollectionHelper";
 import { useCreateCollectionReminders } from "./queries/wasteColAddQueries";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Spinner } from "@/components/ui/spinner";
@@ -42,19 +43,36 @@ function WasteCollectionMain() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null);
     const [selectedDay, setSelectedDay] = useState<string>("0");
     const [searchQuery, setSearchQuery] = useState("");
+    const [pageSize, setPageSize] = useState(10);
+    const [activeCurrentPage, setActiveCurrentPage] = useState(1);
+    const [archiveCurrentPage, setArchiveCurrentPage] = useState(1);    
     const { showLoading, hideLoading } = useLoading();
+
+    const currentPage = activeTab === "active" ? activeCurrentPage : archiveCurrentPage;
+    const isArchive = activeTab === "archived";    
 
     // Add debouncing for search
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     // FETCH MUTATIONS - Updated to include search and filter parameters
-    const { data: wasteCollectionData = [], isLoading } = useGetWasteCollectionSchedFull(
+    const { data: wasteCollectionData = { results: [], count: 0 }, isLoading } = useGetWasteCollectionSchedFull(
+        currentPage,
+        pageSize,
         debouncedSearchQuery,
-        selectedDay
+        selectedDay,
+        isArchive
     );
 
     //POST MUTATIONs (announcement)
     const { mutate: createReminders } = useCreateCollectionReminders();
+
+    // Extract data from paginated response
+    const fetchedData = wasteCollectionData.results || [];
+    const totalCount = wasteCollectionData.count || 0;    
+
+    // Calculate total pages for current tab
+    const activeTotalPages = activeTab === "active" ? Math.ceil(totalCount / pageSize) : 0;
+    const archiveTotalPages = activeTab === "archived" ? Math.ceil(totalCount / pageSize) : 0;    
 
     // useEffect(() => {
     //     if (isLoading || wasteCollectionData.length === 0) return;
@@ -87,8 +105,9 @@ function WasteCollectionMain() {
         }
     }, [isLoading, showLoading, hideLoading]);   
 
+
     useEffect(() => {
-        if (isLoading || wasteCollectionData.length === 0) return;
+        if (isLoading || fetchedData.length === 0) return;
 
         const today = new Date();
         const tomorrow = new Date(today);
@@ -96,14 +115,14 @@ function WasteCollectionMain() {
         const tomorrowDayName = tomorrow.toLocaleDateString('en-US', { weekday: 'long' });
 
         // Check if any schedule is for tomorrow
-        const hasTomorrowCollection = wasteCollectionData.some(
+        const hasTomorrowCollection = fetchedData.some(
             schedule => schedule.wc_day?.toLowerCase() === tomorrowDayName.toLowerCase() && !schedule.wc_is_archive
         );
 
         if (hasTomorrowCollection) {
             createReminders();
         }
-    }, [wasteCollectionData, isLoading, createReminders]);
+    }, [fetchedData, isLoading, createReminders]);
 
 
     // ARCHIVE / RESTORE / DELETE MUTATIONS
@@ -134,14 +153,17 @@ function WasteCollectionMain() {
         setSelectedDay(value);
     };
 
-    //sort data by day and time
-    const sortedData = useMemo(() => 
-        sortWasteCollectionData(wasteCollectionData), 
-        [wasteCollectionData]
-    );    
+    // Handle tab change - reset to page 1 when switching tabs
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        if (tab === "active") {
+            setActiveCurrentPage(1);
+        } else {
+            setArchiveCurrentPage(1);
+        }
+    };    
 
-    // Filter data based only on archive status (search and day filtering now done in backend)
-    const filteredData = sortedData;
+
 
     // Common columns for both tabs
     const commonColumns: ColumnDef<WasteCollectionSchedFull>[] = [
@@ -316,7 +338,36 @@ function WasteCollectionMain() {
 
             {/* Tabs for Active/Archived Schedules */}
             <div className="bg-white rounded-lg shadow">
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
+
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
+                    <div className="flex gap-x-2 items-center">
+                        <p className="text-xs sm:text-sm">Show</p>
+                        <Select 
+                            value={pageSize.toString()} 
+                            onValueChange={(value) => {
+                                const newPageSize = Number.parseInt(value);
+                                setPageSize(newPageSize);
+                                // Reset both pagination states to page 1
+                                setActiveCurrentPage(1);
+                                setArchiveCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="w-20 h-8 bg-white border-gray-200">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs sm:text-sm">Entries</p>
+                    </div>
+                </div>
+
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                     <div className="p-4">
                         <TabsList className="grid w-full grid-cols-2 max-w-xs">
                             <TabsTrigger value="active">Active Schedules</TabsTrigger>
@@ -338,10 +389,26 @@ function WasteCollectionMain() {
                             ) : (
                                 <DataTable
                                     columns={activeColumns}
-                                    data={filteredData.filter(item => !item.wc_is_archive)}
+                                    data={fetchedData} 
                                 />
                             )}                            
                         </div>
+
+                        {/* Active Tab Pagination */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                                Showing {(activeCurrentPage - 1) * pageSize + 1}-
+                                {Math.min(activeCurrentPage * pageSize, totalCount)} of{" "}
+                                {totalCount} rows
+                            </p>
+                            {totalCount > 0 && (
+                                <PaginationLayout
+                                    currentPage={activeCurrentPage}
+                                    totalPages={activeTotalPages}
+                                    onPageChange={setActiveCurrentPage}
+                                />
+                            )}
+                        </div>                        
                     </TabsContent>
 
                     <TabsContent value="archived">
@@ -354,10 +421,26 @@ function WasteCollectionMain() {
                             ) : (
                                 <DataTable
                                     columns={archiveColumns}
-                                    data={filteredData.filter(item => item.wc_is_archive)}
+                                    data={fetchedData} 
                                 />
                             )}                               
                         </div>
+
+                        {/* Archive Tab Pagination */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                                Showing {(archiveCurrentPage - 1) * pageSize + 1}-
+                                {Math.min(archiveCurrentPage * pageSize, totalCount)} of{" "}
+                                {totalCount} rows
+                            </p>
+                            {totalCount > 0 && (
+                                <PaginationLayout
+                                    currentPage={archiveCurrentPage}
+                                    totalPages={archiveTotalPages}
+                                    onPageChange={setArchiveCurrentPage}
+                                />
+                            )}
+                        </div>                        
                     </TabsContent>
                 </Tabs>
             </div>

@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { wasteColData } from "../request/wasteColPostRequest";
 import WasteColSchedSchema from "@/form-schema/waste-col-form-schema";
 import { addAssCollector } from "../request/wasteColPostRequest";
 import { createCollectionReminders } from "../request/wasteColPostRequest";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 
 type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
@@ -21,16 +22,14 @@ export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => 
       wasteColData(values),
     onSuccess: (wc_num) => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
-      toast.success("Waste collection scheduled successfully", {
-        id: "createWaste",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 4000
-      });
+
+      showSuccessToast("Waste collection scheduled successfully");
+
       if (onSuccess) onSuccess(wc_num);
     },
     onError: (err) => {
       console.error("Error creating schedule:", err);
-      toast.error("Failed to create schedule.");
+      showErrorToast("Failed to create schedule.");
     }
   });
 };
@@ -49,15 +48,13 @@ export const useAssignCollectors = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
-      toast.success("Collectors assigned successfully", {
-        id: "createWaste",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 3000
-      });
+
+      showSuccessToast("Collectors assigned successfully");
+
     },
     onError: (err) => {
       console.error("Error assigning collectors:", err);
-      toast.error("Failed to assign collectors.");
+      showErrorToast("Failed to assign collectors.");
     }
   });
 };

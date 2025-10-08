@@ -60,7 +60,7 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
 
     //FETCH QUERY MUTATIONS
-    const { data: wasteCollectionData = [] } = useGetWasteCollectionSchedFull();
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetWasteCollectors();
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
@@ -69,6 +69,9 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
     const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
     console.log("WASTE COLLECTORS: ", collectors)
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];
 
     const collectorOptions = collectors.map(collector => ({
         id: collector.id,  
@@ -116,16 +119,16 @@ function WasteColSched({ onSuccess }: WasteColSchedProps) {
         }
 
         //checks for sitio with the same day
-        const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;        
+        const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
         
-        const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+        const hasSameSitioSameDay = wasteSchedules.some(schedule => 
             schedule.wc_day === values.day &&
             schedule.sitio_name === selectedSitioName
         );
 
 
         //checks for overlapping day and time
-        const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+        const hasDuplicateSchedule = wasteSchedules.some(schedule => 
             schedule.wc_day === values.day && 
             schedule.wc_time === formattedTime
         );

@@ -16,6 +16,7 @@ from django.db.models import Q
 from datetime import date, timedelta
 from rest_framework.views import APIView
 from django.utils import timezone
+from django.db.models import Case, When, Value, IntegerField
 from apps.announcement.models import Announcement, AnnouncementRecipient
 from apps.pagination import StandardResultsPagination
 
@@ -132,12 +133,28 @@ class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
 class WasteCollectionSchedFullDataView(generics.ListAPIView):
     permission_classes = [AllowAny]   
     serializer_class = WasteCollectionSchedFullDataSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         search_query = self.request.query_params.get('search', '')
         day = self.request.query_params.get('day', '')
+        is_archive = self.request.query_params.get('is_archive', None)
         
         queryset = WasteCollectionSched.objects.all()
+        
+        # Apply archive filter if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(wc_is_archive=is_archive_bool)
         
         # Apply search filter if search query exists
         if search_query:
@@ -153,13 +170,27 @@ class WasteCollectionSchedFullDataView(generics.ListAPIView):
                 Q(wastecollector__wstp__staff__rp__per__per_lname__icontains=search_query) |
                 Q(wastecollector__wstp__staff__rp__per__per_fname__icontains=search_query) |
                 Q(wastecollector__wstp__staff__rp__per__per_mname__icontains=search_query)
-            ).distinct()  # Important: use distinct() to avoid duplicate results from collector joins
+            ).distinct()
         
         # Apply day filter
         if day:
             queryset = queryset.filter(wc_day=day)
         
-        return queryset
+        # Custom day ordering
+        day_order = Case(
+            When(wc_day='Monday', then=Value(1)),
+            When(wc_day='Tuesday', then=Value(2)),
+            When(wc_day='Wednesday', then=Value(3)),
+            When(wc_day='Thursday', then=Value(4)),
+            When(wc_day='Friday', then=Value(5)),
+            When(wc_day='Saturday', then=Value(6)),
+            When(wc_day='Sunday', then=Value(7)),
+            default=Value(8),
+            output_field=IntegerField()
+        )
+        
+        return queryset.order_by(day_order, 'wc_time')
+    
 
 class WasteCollectorDeleteView(generics.DestroyAPIView):
     permission_classes = [AllowAny]    
@@ -251,23 +282,25 @@ class CreateCollectionRemindersView(APIView):
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
                 ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
                 ann_created_at=timezone.now(),
-                ann_type="general",
+                ann_start_at=timezone.now(),
+                ann_end_at=timezone.now() + timedelta(days=2),
+                ann_type="GENERAL",
                 ann_to_email=True,
                 ann_to_sms=True,
-                ann_status="Active",
+                ann_status="ACTIVE",
                 staff=schedule.staff
             )
 
             # Create recipients
             AnnouncementRecipient.objects.create(
                 ann=announcement,
-                ar_category="staff",
+                ar_category="STAFF",
                 ar_type="LOADER"
             )
 
             AnnouncementRecipient.objects.create(
                 ann=announcement,
-                ar_category="staff",
+                ar_category="STAFF",
                 ar_type="DRIVER LOADER"
             )
 
