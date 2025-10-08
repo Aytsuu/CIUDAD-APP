@@ -70,7 +70,7 @@ const ImageCarousel = ({
           <TouchableOpacity onPress={() => setIsFullScreen(true)}>
             <Image
               source={{ uri: images[currentIndex][urlKey] }}
-              className="w-full aspect-square bg-gray-100 rounded-xl border border-gray-100 shadow-sm"
+              className="w-full aspect-square bg-gray-100 rounded-lg border border-gray-100 shadow-sm"
               resizeMode="cover"
             />
           </TouchableOpacity>
