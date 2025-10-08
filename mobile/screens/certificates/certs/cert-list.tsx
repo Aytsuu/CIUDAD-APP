@@ -1,21 +1,15 @@
-import { View, Text, ScrollView, Pressable, TextInput, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { getCertificates, Certificate } from '../queries/certificateQueries'
-import { DataTable, ColumnDef } from '@/components/ui/table/data-table'
-import { SelectLayout } from '@/components/ui/select-layout'
+import _ScreenLayout from '../../_ScreenLayout'
+import { ChevronLeft } from '@/lib/icons/ChevronLeft'
 
 const CertList = () => {
-  const [searchQuery, setSearchQuery] = useState('')
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filterType, setFilterType] = useState("all")
-  const [filterPurpose, setFilterPurpose] = useState("all")
-  const [entriesPerPage, setEntriesPerPage] = useState(10)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected' | 'completed'>('all')
 
   // Fetch certificates from API
   useEffect(() => {
@@ -36,200 +30,148 @@ const CertList = () => {
     fetchCertificates()
   }, [])
 
-  const handleCertificatePress = (certificate: Certificate) => {
-    // Navigate to certificate details
-    console.log('View certificate:', certificate.cr_id)
-    // router.push(`/certificate-details/${certificate.cr_id}`)
+  const getStatusBadge = (status?: string) => {
+    const normalized = (status || "").toLowerCase();
+    if (normalized.includes("reject") || normalized === "rejected") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Rejected</Text>
+    }
+    if (normalized.includes("approve") || normalized === "approved") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Approved</Text>
+    }
+    if (normalized.includes("complete") || normalized === "completed") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-800">Completed</Text>
+    }
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</Text>
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'rejected':
-        return 'bg-red-100 text-red-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+  const getNormalizedStatus = (status?: string): 'approved' | 'pending' | 'rejected' | 'completed' => {
+    const normalized = (status || "").toLowerCase();
+    if (normalized.includes("reject")) return 'rejected';
+    if (normalized.includes("approve")) return 'approved';
+    if (normalized.includes("complete")) return 'completed';
+    return 'pending';
+  }
+
+  const formatDate = (d?: string) => {
+    if (!d) return '—';
+    try {
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return d;
+      return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    } catch {
+      return d;
     }
   }
 
-  // Filter and search logic matching web version
+  const wrapPurpose = (text?: string, maxFirstLine: number = 24) => {
+    if (!text) return '—';
+    if (text.length <= maxFirstLine) return text;
+    const breakIdx = text.lastIndexOf(' ', maxFirstLine);
+    const idx = breakIdx > 0 ? breakIdx : maxFirstLine;
+    return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
+  }
+
+  // Filter certificates based on status
   const filteredCertificates = useMemo(() => {
     return certificates.filter(cert => {
-      const matchesSearch = searchQuery === '' || 
-        cert.cr_id?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cert.resident_details?.per_fname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cert.resident_details?.per_lname?.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchesType = filterType === "all" || cert.req_status === filterType
-      const matchesPurpose = filterPurpose === "all" || cert.req_type === filterPurpose
-      
-      return matchesSearch && matchesType && matchesPurpose
+      if (statusFilter === 'all') return true;
+      return getNormalizedStatus(cert.req_status) === statusFilter;
     })
-  }, [certificates, searchQuery, filterType, filterPurpose])
-
-  const paginatedData = filteredCertificates
-
-  // Table columns matching web version
-  const columns: ColumnDef<Certificate>[] = [
-    {
-      accessorKey: 'cr_id',
-      header: 'ID',
-      cell: ({ value }) => (
-        <Text className="text-sm font-medium text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'resident_details',
-      header: 'Name',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">
-          {value?.per_fname || ''} {value?.per_lname || ''}
-        </Text>
-      )
-    },
-    {
-      accessorKey: 'req_type',
-      header: 'Purpose',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'req_status',
-      header: 'Status',
-      cell: ({ value }) => (
-        <View className={`px-2 py-1 rounded-full ${getStatusColor(value)}`}>
-          <Text className="text-xs font-medium">{value || 'Unknown'}</Text>
-        </View>
-      )
-    },
-    {
-      accessorKey: 'req_request_date',
-      header: 'Request Date',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'req_claim_date',
-      header: 'Claim Date',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    }
-  ]
-
-  const filterOptions = [
-    { label: "All", value: "all" },
-    { label: "Approved", value: "approved" },
-    { label: "Pending", value: "pending" },
-    { label: "Rejected", value: "rejected" },
-    { label: "Completed", value: "completed" }
-  ]
-
-  const purposeOptions = [
-    { label: "All", value: "all" },
-    { label: "Barangay Clearance", value: "Barangay Clearance" },
-    { label: "Certificate of Residency", value: "Certificate of Residency" },
-    { label: "Certificate of Indigency", value: "Certificate of Indigency" }
-  ]
+  }, [certificates, statusFilter])
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="p-4">
-          {/* Header */}
-          <View className="mb-6">
-            <View className="flex-row items-center mb-2">
-              <Pressable 
-                onPress={() => router.back()}
-                className="mr-3 p-2"
+    <_ScreenLayout
+      customLeftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">Personal Clearance Request</Text>}
+      customRightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 px-5">
+        {loading && (
+          <View className="items-center justify-center py-10">
+            <ActivityIndicator />
+            <Text className="text-gray-500 mt-2">Loading certificates…</Text>
+          </View>
+        )}
+
+        {error && (
+          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+            <Text className="text-red-800 text-sm">Failed to load certificates.</Text>
+          </View>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* Status Filters */}
+            <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'all' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('all')}
               >
-                <Ionicons name="arrow-back" size={24} color="#374151" />
-              </Pressable>
-              <Text className="text-2xl font-bold text-gray-900">
-                Personal Clearance Request
-              </Text>
+                <Text className={`text-sm ${statusFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'pending' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('pending')}
+              >
+                <Text className={`text-sm ${statusFilter === 'pending' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Pending</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'approved' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('approved')}
+              >
+                <Text className={`text-sm ${statusFilter === 'approved' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Approved</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'completed' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('completed')}
+              >
+                <Text className={`text-sm ${statusFilter === 'completed' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Completed</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'rejected' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('rejected')}
+              >
+                <Text className={`text-sm ${statusFilter === 'rejected' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Rejected</Text>
+              </TouchableOpacity>
             </View>
-            <Text className="text-gray-600 text-sm ml-11">
-              Create, manage, and process personal clearance requests
-            </Text>
-          </View>
 
-          {/* Search and Filters - Matching Web Layout */}
-          <View className="mb-6 space-y-4">
-            {/* Search Bar */}
-            <View className="relative">
-              <View className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Ionicons name="search" size={20} color="#9CA3AF" />
-              </View>
-              <TextInput
-                placeholder="Search certificates..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                className="bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-gray-900"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-
-            {/* Filter Row */}
-            <View className="flex-row space-x-3">
-              <View className="flex-1">
-                <SelectLayout
-                  options={filterOptions}
-                  selectedValue={filterType}
-                  onSelect={(option) => setFilterType(option.value)}
-                  placeholder="Filter by Status"
-                  className="h-10"
-                />
-              </View>
-              <View className="flex-1">
-                <SelectLayout
-                  options={purposeOptions}
-                  selectedValue={filterPurpose}
-                  onSelect={(option) => setFilterPurpose(option.value)}
-                  placeholder="Filter by Purpose"
-                  className="h-10"
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Data Table - Matching Web Version */}
-          <View className="mb-4">
-            <DataTable
-              columns={columns}
-              data={paginatedData}
-              loading={loading}
-              onRowPress={handleCertificatePress}
-            />
-          </View>
-
-          {/* Pagination Info */}
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-sm text-gray-600">
-              Showing {filteredCertificates.length} rows
-            </Text>
-            <View className="flex-row items-center space-x-2">
-              <Text className="text-sm text-gray-600">Show</Text>
-              <TextInput
-                value={entriesPerPage.toString()}
-                onChangeText={(text) => setEntriesPerPage(parseInt(text) || 10)}
-                className="w-14 h-8 border border-gray-300 rounded text-center text-sm"
-                keyboardType="numeric"
-              />
-              <Text className="text-sm text-gray-600">Entries</Text>
-            </View>
-          </View>
-
-        </View>
-      </ScrollView>
-    </View>
+            {/* Certificate Cards */}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {filteredCertificates.length ? (
+                filteredCertificates.map((certificate, idx) => (
+                  <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-gray-900 font-medium">{wrapPurpose(certificate.req_type || "Personal Certificate")}</Text>
+                      {getStatusBadge(certificate.req_status)}
+                    </View>
+                    <Text className="text-gray-500 text-xs mt-1">ID: {certificate.cr_id}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Name: {certificate.resident_details?.per_fname} {certificate.resident_details?.per_lname}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(certificate.req_request_date)}</Text>
+                    {certificate.req_claim_date && (
+                      <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(certificate.req_claim_date)}</Text>
+                    )}
+                  </View>
+                ))
+              ) : (
+                <Text className="text-gray-500 text-sm mb-4">No personal certificates found.</Text>
+              )}
+            </ScrollView>
+          </>
+        )}
+      </View>
+    </_ScreenLayout>
   )
 }
 

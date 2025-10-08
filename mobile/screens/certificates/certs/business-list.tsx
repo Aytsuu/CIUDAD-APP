@@ -1,21 +1,15 @@
-import { View, Text, ScrollView, Pressable, TextInput, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
-import { DataTable, ColumnDef } from '@/components/ui/table/data-table'
-import { SelectLayout } from '@/components/ui/select-layout'
+import _ScreenLayout from '../../_ScreenLayout'
+import { ChevronLeft } from '@/lib/icons/ChevronLeft'
 
 const BusinessList = () => {
-  const [searchQuery, setSearchQuery] = useState('')
   const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterType, setFilterType] = useState("all")
-  const [entriesPerPage, setEntriesPerPage] = useState(10)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected' | 'completed'>('all')
 
   // Fetch business permits from API
   useEffect(() => {
@@ -36,222 +30,149 @@ const BusinessList = () => {
     fetchBusinessPermits()
   }, [])
 
-  const handleBusinessPress = (business: BusinessPermit) => {
-    // Navigate to business permit details
-    console.log('View business permit:', business.bp_id)
-    // router.push(`/business-permit-details/${business.bp_id}`)
+  const getStatusBadge = (status?: string) => {
+    const normalized = (status || "").toLowerCase();
+    if (normalized.includes("reject") || normalized === "rejected") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700">Rejected</Text>
+    }
+    if (normalized.includes("approve") || normalized === "approved") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-green-100 text-green-800">Approved</Text>
+    }
+    if (normalized.includes("complete") || normalized === "completed") {
+      return <Text className="text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-800">Completed</Text>
+    }
+    return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</Text>
   }
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'paid':
-        return 'bg-green-100 text-green-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+  const getNormalizedStatus = (status?: string): 'approved' | 'pending' | 'rejected' | 'completed' => {
+    const normalized = (status || "").toLowerCase();
+    if (normalized.includes("reject")) return 'rejected';
+    if (normalized.includes("approve")) return 'approved';
+    if (normalized.includes("complete")) return 'completed';
+    return 'pending';
+  }
+
+  const formatDate = (d?: string) => {
+    if (!d) return '—';
+    try {
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return d;
+      return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    } catch {
+      return d;
     }
   }
 
-  // Filter and search logic matching web version
+  const wrapPurpose = (text?: string, maxFirstLine: number = 24) => {
+    if (!text) return '—';
+    if (text.length <= maxFirstLine) return text;
+    const breakIdx = text.lastIndexOf(' ', maxFirstLine);
+    const idx = breakIdx > 0 ? breakIdx : maxFirstLine;
+    return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
+  }
+
+  // Filter business permits based on status
   const filteredBusinesses = useMemo(() => {
     return businessPermits.filter(business => {
-      const matchesSearch = searchQuery === '' || 
-        business.bp_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        business.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        business.owner_name?.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchesStatus = filterStatus === "all" || business.req_payment_status === filterStatus
-      const matchesType = filterType === "all" || business.business_type === filterType
-      
-      return matchesSearch && matchesStatus && matchesType
+      if (statusFilter === 'all') return true;
+      return getNormalizedStatus(business.req_status) === statusFilter;
     })
-  }, [businessPermits, searchQuery, filterStatus, filterType])
-
-  const paginatedData = filteredBusinesses
-
-  // Table columns matching web version
-  const columns: ColumnDef<BusinessPermit>[] = [
-    {
-      accessorKey: 'bp_id',
-      header: 'ID',
-      cell: ({ value }) => (
-        <Text className="text-sm font-medium text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'business_name',
-      header: 'Business Name',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'owner_name',
-      header: 'Owner',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'business_type',
-      header: 'Type',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'req_payment_status',
-      header: 'Payment Status',
-      cell: ({ value }) => (
-        <View className={`px-2 py-1 rounded-full ${getPaymentStatusColor(value)}`}>
-          <Text className="text-xs font-medium">{value || 'Unknown'}</Text>
-        </View>
-      )
-    },
-    {
-      accessorKey: 'req_request_date',
-      header: 'Request Date',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    },
-    {
-      accessorKey: 'req_claim_date',
-      header: 'Claim Date',
-      cell: ({ value }) => (
-        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
-      )
-    }
-  ]
-
-  const statusOptions = [
-    { label: "All", value: "all" },
-    { label: "Paid", value: "paid" },
-    { label: "Pending", value: "pending" },
-    { label: "Cancelled", value: "cancelled" }
-  ]
-
-  const typeOptions = [
-    { label: "All", value: "all" },
-    { label: "Sari-sari Store", value: "Sari-sari Store" },
-    { label: "Restaurant", value: "Restaurant" },
-    { label: "Retail", value: "Retail" },
-    { label: "Service", value: "Service" }
-  ]
-
-  const formatAddress = (business: BusinessPermit) => {
-    return business.business_address
-  }
-
-  const formatCurrency = (amount: string) => {
-    return `₱${parseInt(amount).toLocaleString()}`
-  }
+  }, [businessPermits, statusFilter])
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="p-4">
-          {/* Header */}
-          <View className="mb-6">
-            <View className="flex-row items-center mb-2">
-              <Pressable 
-                onPress={() => router.back()}
-                className="mr-3 p-2"
+    <_ScreenLayout
+      customLeftAction={
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerBetweenAction={<Text className="text-[13px]">Business Permit Request</Text>}
+      customRightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 px-5">
+        {loading && (
+          <View className="items-center justify-center py-10">
+            <ActivityIndicator />
+            <Text className="text-gray-500 mt-2">Loading business permits…</Text>
+          </View>
+        )}
+
+        {error && (
+          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+            <Text className="text-red-800 text-sm">Failed to load business permits.</Text>
+          </View>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* Status Filters */}
+            <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'all' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('all')}
               >
-                <Ionicons name="arrow-back" size={24} color="#374151" />
-              </Pressable>
-              <Text className="text-2xl font-bold text-gray-900">
-                Business Permit Request
-              </Text>
+                <Text className={`text-sm ${statusFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'pending' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('pending')}
+              >
+                <Text className={`text-sm ${statusFilter === 'pending' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Pending</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'approved' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('approved')}
+              >
+                <Text className={`text-sm ${statusFilter === 'approved' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Approved</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'completed' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('completed')}
+              >
+                <Text className={`text-sm ${statusFilter === 'completed' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Completed</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'rejected' ? 'bg-white' : ''}`}
+                activeOpacity={0.8}
+                onPress={() => setStatusFilter('rejected')}
+              >
+                <Text className={`text-sm ${statusFilter === 'rejected' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Rejected</Text>
+              </TouchableOpacity>
             </View>
-            <Text className="text-gray-600 text-sm ml-11">
-              Manage and view business permit requests
-            </Text>
-          </View>
 
-          {/* Search and Filters - Matching Web Layout */}
-          <View className="mb-6 space-y-4">
-            {/* Search Bar */}
-            <View className="relative">
-              <View className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Ionicons name="search" size={20} color="#9CA3AF" />
-              </View>
-              <TextInput
-                placeholder="Search business permits..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                className="bg-white border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-gray-900"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-
-            {/* Filter Row */}
-            <View className="flex-row space-x-3">
-              <View className="flex-1">
-                <SelectLayout
-                  options={statusOptions}
-                  selectedValue={filterStatus}
-                  onSelect={(option) => setFilterStatus(option.value)}
-                  placeholder="Filter by Status"
-                  className="h-10"
-                />
-              </View>
-              <View className="flex-1">
-                <SelectLayout
-                  options={typeOptions}
-                  selectedValue={filterType}
-                  onSelect={(option) => setFilterType(option.value)}
-                  placeholder="Filter by Type"
-                  className="h-10"
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Data Table - Matching Web Version */}
-          <View className="mb-4">
-            <DataTable
-              columns={columns}
-              data={paginatedData}
-              loading={loading}
-              onRowPress={handleBusinessPress}
-            />
-          </View>
-
-          {/* Pagination Info */}
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-sm text-gray-600">
-              Showing {filteredBusinesses.length} rows
-            </Text>
-            <View className="flex-row items-center space-x-2">
-              <Text className="text-sm text-gray-600">Show</Text>
-              <TextInput
-                value={entriesPerPage.toString()}
-                onChangeText={(text) => setEntriesPerPage(parseInt(text) || 10)}
-                className="w-14 h-8 border border-gray-300 rounded text-center text-sm"
-                keyboardType="numeric"
-              />
-              <Text className="text-sm text-gray-600">Entries</Text>
-            </View>
-          </View>
-
-
-          {/* Create New Business Permit Button */}
-          <View className="mt-6 mb-4">
-            <Button 
-              className="w-full h-12 rounded-lg"
-              onPress={() => console.log('Create new business permit')}
-            >
-              <Ionicons name="add" size={20} color="white" />
-              <Text className="ml-2 text-white font-medium">Create Business Permit</Text>
-            </Button>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
+            {/* Business Permit Cards */}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {filteredBusinesses.length ? (
+                filteredBusinesses.map((business, idx) => (
+                  <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
+                      {getStatusBadge(business.req_status)}
+                    </View>
+                    <Text className="text-gray-500 text-xs mt-1">ID: {business.bp_id}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Type: {business.business_type}</Text>
+                    <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(business.req_request_date)}</Text>
+                    {business.req_claim_date && (
+                      <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(business.req_claim_date)}</Text>
+                    )}
+                  </View>
+                ))
+              ) : (
+                <Text className="text-gray-500 text-sm mb-4">No business permits found.</Text>
+              )}
+            </ScrollView>
+          </>
+        )}
+      </View>
+    </_ScreenLayout>
   )
 }
 
