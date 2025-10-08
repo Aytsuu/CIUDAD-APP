@@ -159,7 +159,6 @@ export default function PrenatalForm() {
       pat_id: data.pat_id as string, 
       patrec_type: "Prenatal",
       pf_occupation: capitalize(data.motherPersonalInfo.occupation) || "",
-      pf_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
       previous_complications: forceCapitalize(data.medicalHistory.previousComplications) || null,
       staff_id: data.assessedBy.id ?? "",
@@ -185,7 +184,7 @@ export default function PrenatalForm() {
         obs_para: data.presentPregnancy.para || null,
         obs_fullterm: data.presentPregnancy.fullterm || null,
         obs_preterm: data.presentPregnancy.preterm || null,
-        obs_record_from: "Prenatal", 
+        obs_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       },
       
       // previous illness section

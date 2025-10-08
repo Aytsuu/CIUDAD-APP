@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import { Form } from "@/components/ui/form/form"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Trash } from "lucide-react"
+import { Loader2, SquarePen, Trash } from "lucide-react"
 
 import type { z } from "zod"
 
@@ -17,6 +17,7 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
+import { ProtectedComponentButton } from "@/ProtectedComponentButton"
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
@@ -216,6 +217,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "date",
       header: "Date",
+      size: 100,
       cell: ({ row }) => {
         return <div className="text-center">{row.original.date}</div>
       },
@@ -223,6 +225,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "aog",
       header: "AOG",
+      size: 100,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -234,6 +237,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "wt",
       header: "Weight",
+      size: 100,
       cell: ({ row }) => {
         return <div className="text-center">{row.original.wt || ""} kg</div>
       },
@@ -241,6 +245,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "bp",
       header: "Blood Pressure",
+      size: 100,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -252,6 +257,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "leopoldsFindings",
       header: "Leopold's Findings",
+      size: 200,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -265,6 +271,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "notes",
       header: "Notes",
+      size: 250,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -278,9 +285,17 @@ export default function PrenatalFormFourthPq({
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <Button variant="destructive" onClick={() => removePrenatalCareEntry(row.index)}>
-          <Trash className="h-4 w-4" />
-        </Button>
+        <div className="flex justify-center gap-2">
+          <ProtectedComponentButton exclude={['BARANGAY HEALTH WORKER']}>
+            <Button variant="outline" onClick={() => removePrenatalCareEntry(row.index)}>
+              <SquarePen className="h-4 w-4" />
+            </Button>
+          </ProtectedComponentButton>
+          <Button variant="destructive" onClick={() => removePrenatalCareEntry(row.index)}>
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+        
       ),
     },
   ]
@@ -465,20 +480,9 @@ export default function PrenatalFormFourthPq({
               <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
                 Prev
               </Button>
-              <Button 
-                type="submit" 
-                className="mt-4 mr-4 w-[120px]"
-                disabled={isSubmitting || addPrenatalRecordMutation.isPending}
-                onClick={() => setIsConfirmOpen(true)}
-              >
-                
-                {isSubmitting ? 
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    "Submitting..." 
-                  </>
-                : "Submit"
-                }
+              <Button type="submit" className="mt-4 mr-4 w-[120px]" disabled={isSubmitting || addPrenatalRecordMutation.isPending}>
+                {addPrenatalRecordMutation.isPending && isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit
               </Button>
             </div>
           </form>

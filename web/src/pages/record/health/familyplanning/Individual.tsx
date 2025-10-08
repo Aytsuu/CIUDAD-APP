@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest";

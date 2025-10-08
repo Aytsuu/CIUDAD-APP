@@ -41,7 +41,7 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
+            'pf_id', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
             'pregnancy_details', 'patient_record_details', 'spouse_details', 
             'body_measurement_details', 'vital_signs_details', 'follow_up_visit_details',
             'staff_details', 'previous_hospitalizations', 'tt_statuses', 
@@ -236,13 +236,17 @@ class PrenatalDetailSerializer(serializers.ModelSerializer):
         } for hosp in hospitalizations]
 
     def get_tt_statuses(self, obj):
-        tt_statuses = obj.tt_status.all()
-        return [{
-            'tts_id': tt.tts_id,
-            'tts_status': tt.tts_status,
-            'tts_date_given': tt.tts_date_given,
-            'tts_tdap': tt.tts_tdap
-        } for tt in tt_statuses]
+        # TT_Status now links to Patient via pat_id. Retrieve by patient on the related patient record.
+        if obj.patrec_id and obj.patrec_id.pat_id:
+            patient = obj.patrec_id.pat_id
+            tts_qs = TT_Status.objects.filter(pat_id=patient).order_by('-tts_date_given', '-tts_id')
+            return [{
+                'tts_id': tt.tts_id,
+                'tts_status': tt.tts_status,
+                'tts_date_given': tt.tts_date_given,
+                'tts_tdap': tt.tts_tdap
+            } for tt in tts_qs]
+        return []
 
     def get_laboratory_results(self, obj):
         lab_results = obj.lab_result.all()
@@ -353,7 +357,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pf_id', 'pf_lmp', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
+            'pf_id', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
             'patient_details', 'pregnancy_details', 'vital_signs_details', 'tt_statuses',
             'body_measurement_details', 'spouse_details', 'follow_up_visit_details', 'obstetric_history',
             'staff_details', 'previous_hospitalizations','previous_pregnancy', 'medical_history',
@@ -565,6 +569,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
                     'obs_para': obs_history.obs_para,
                     'obs_fullterm': obs_history.obs_fullterm,
                     'obs_preterm': obs_history.obs_preterm,
+                    'obs_lmp': obs_history.obs_lmp,
                 }
             return None
 
@@ -622,13 +627,15 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
         return None
     
     def get_tt_statuses(self, obj):
-        if obj.patrec_id:
-            tts = TT_Status.objects.filter(pf_id=obj).prefetch_related('pf_id')
+        if obj.patrec_id and obj.patrec_id.pat_id:
+            patient = obj.patrec_id.pat_id
+            tts = TT_Status.objects.filter(pat_id=patient).order_by('-tts_date_given', '-tts_id')
             return [{
                 'tts_id': tt.tts_id,
                 'tts_status': tt.tts_status,
                 'tts_date_given': tt.tts_date_given,
             } for tt in tts]
+        return []
     
     def get_staff_details(self, obj):
         if obj.staff:
@@ -773,7 +780,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
         fields = [
-            'pat_id', 'patrec_type', 'pf_lmp', 'pf_edc', 'pf_occupation', 'previous_complications',
+            'pat_id', 'patrec_type', 'pf_edc', 'pf_occupation', 'previous_complications',
             'spouse_data', 'body_measurement', 'obstetrical_history', 'previous_hospitalizations',
             'medical_history', 'previous_pregnancy_data', 'tt_statuses', 'lab_results_data', 
             'anc_visit_data', 'checklist_data', 'birth_plan_data',
@@ -816,9 +823,9 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
         try:
             created_count = 0
 
-            # check for existing tt records
+            # check for existing tt records by patient
             existing_tt = TT_Status.objects.filter(
-                pf_id__patrec_id__pat_id=patient.pat_id
+                pat_id=patient
             ).values('tts_status', 'tts_date_given')
 
             # create set of existing tt records for faster lookup
@@ -837,8 +844,9 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     print(f'TT Record already exists')
                     continue
                 
+                # TT_Status now expects pat_id referencing the Patient
                 TT_Status.objects.create(
-                    pf_id=prenatal_form,
+                    pat_id=patient,
                     tts_status=tt_data.get('tts_status'),
                     tts_date_given=tt_data.get('tts_date_given'),
                     tts_tdap=tt_data.get('tts_tdap', False)
@@ -884,7 +892,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     prev_hospitalization_year=ph_data.get('prev_hospitalization_year')
                 )
 
-                created_count =+ 1
+                created_count += 1
                 print(f'Created {created_count} hospitalizations record/s')
         
         except Exception as e:
@@ -901,18 +909,26 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 for med_history_data_item in medical_history_data:
                     ill = med_history_data_item.get('ill')
-                    ill_date = med_history_data_item.get('ill_date')
+                    # Normalize ill_date: treat empty strings or falsy values as None
+                    ill_date_raw = med_history_data_item.get('ill_date')
+                    ill_date = None
+                    if ill_date_raw is not None and str(ill_date_raw).strip() != '':
+                        # If a datetime-like object was passed, try to keep it; otherwise store as-is
+                        ill_date = ill_date_raw
                     
                     if not ill:
                         continue
                     
                     # Check if this illness already exists for this patient (across all their records)
-                    existing_record = MedicalHistory.objects.filter(
+                    existing_qs = MedicalHistory.objects.filter(
                         patrec__pat_id=patient_record.pat_id,
                         ill=ill,
-                        ill_date=ill_date
-                    ).first()
-                    
+                    )
+                    # Only filter by date if a meaningful date was provided; otherwise check by illness only
+                    if ill_date is not None:
+                        existing_qs = existing_qs.filter(ill_date=ill_date)
+
+                    existing_record = existing_qs.first()
                     if existing_record:
                         print(f'Medical history record already exists for patient {patient_record.pat_id} - skipping')
                         continue
@@ -964,36 +980,17 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 patient = Patient.objects.get(pat_id=pat_id)
                 print(f"Found patient: {patient.pat_id}")
 
-                # --- NEW LOGIC: Check for latest prenatal form with follow-up visit and pending status ---
+                # Check for existing prenatal record with pending follow up
                 latest_prenatal_form = Prenatal_Form.objects.filter(
                     pregnancy_id__pat_id=patient,
-                    followv_id__isnull=False
+                    followv_id__isnull=False,
+                    followv_id__followv_status='pending'  # Only get pending ones
                 ).order_by('-created_at').first()
 
-                if latest_prenatal_form and latest_prenatal_form.followv_id and latest_prenatal_form.followv_id.followv_status == 'pending':
-                    followup_dt = latest_prenatal_form.followv_id.followv_date
-                    today_dt = date.today()
-                    days_diff = (today_dt - followup_dt).days
-                    # If follow-up date is today or earlier, mark as completed
-                    if followup_dt <= today_dt and days_diff <= 0:
-                        latest_prenatal_form.followv_id.followv_status = 'completed'
-                        latest_prenatal_form.followv_id.save()
-                        print(f"Marked previous follow-up as completed.")
-                    # If follow-up date is before today, mark as missed
-                    elif followup_dt < today_dt:
-                        latest_prenatal_form.followv_id.followv_status = 'missed'
-                        latest_prenatal_form.followv_id.save()
-                        print(f"Marked previous follow-up as missed.")
-
-                # If last follow-up is missed and more than 7 days have passed, do not mark as completed ever
-                if latest_prenatal_form and latest_prenatal_form.followv_id and latest_prenatal_form.followv_id.followv_status == 'missed':
-                    followup_dt = latest_prenatal_form.followv_id.followv_date
-                    today_dt = date.today()
-                    days_diff = (today_dt - followup_dt).days
-                    if days_diff > 7:
-                        print(f"Last missed follow-up is beyond 7 days; will not mark as completed.")
-
-                # --- END NEW LOGIC ---
+                if latest_prenatal_form and latest_prenatal_form.followv_id:
+                    latest_prenatal_form.followv_id.followv_status = 'completed'
+                    latest_prenatal_form.followv_id.save()
+                    print(f"Marked previous pending follow-up as completed (patient returned for new visit)")
 
                 # handle Pregnancy (create new or link to existing active)
                 pregnancy = None
@@ -1102,17 +1099,19 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     print("Created previous pregnancy record.")
 
                 # 7. get Staff (to be modified)
-                staff = None
+                staff_instance = None
                 if assessed_by:
                     try:
-                        staff = Staff.objects.get(staff_id=assessed_by)
-                        print(f"✅ Found staff: {staff.staff_id} - {staff}")
+                        staff_instance = Staff.objects.get(staff_id=assessed_by)
+                        print(f"✅ Found staff: {staff_instance.staff_id}")
                     except Staff.DoesNotExist:
-                        print(f"❌ Staff with ID {assessed_by} not found. Proceeding without staff link.")
-                        staff = None
+                        print(f"❌ Staff with ID {assessed_by} not found")
+                        # Validation should have caught this, but just in case
+                        staff_instance = None
+                validated_data['staff'] = staff_instance
 
                 # create Prenatal_Form
-                print(f"🔍 Creating prenatal form with staff: {staff}")
+                print(f"🔍 Creating prenatal form with staff: {staff_instance}")
                 prenatal_form = Prenatal_Form.objects.create(
                     patrec_id=patient_record,
                     pregnancy_id=pregnancy,
@@ -1120,7 +1119,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     spouse_id=spouse,
                     bm_id=body_measurement,
                     followv_id=follow_up_visit,
-                    staff=staff if staff else None,
                     **validated_data 
                 )
                 print(f"✅ Created prenatal form: {prenatal_form.pf_id}")
@@ -1210,6 +1208,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 
         if instance.staff:
             representation['staff_id'] = instance.staff.staff_id
+            representation['assessed_by'] = instance.staff.staff_id
         
         if hasattr(instance, 'pf_obstetric_risk_code') and instance.pf_obstetric_risk_code.exists():
             representation['obstetric_risk_code_id'] = instance.pf_obstetric_risk_code.first().pforc_id
@@ -1223,7 +1222,9 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrenatalAppointmentRequest
-        fields = ['requested_at', 'approved_at', 'cancelled_at', 'completed_at', 'rejected_at', 'reason', 'status', 'rp_id', 'pat_id']
+        fields = ['requested_at', 'requested_date', 'approved_at', 'cancelled_at', 
+                  'completed_at', 'rejected_at', 'missed_at', 'reason', 'status', 'rp_id', 
+                  'pat_id', 'was_approved_before_cancel']
         extra_kwargs = {
             'pat_id': {'required': False, 'allow_null': True},
         }

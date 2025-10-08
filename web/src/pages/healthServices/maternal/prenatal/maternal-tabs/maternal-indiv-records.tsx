@@ -17,12 +17,12 @@ import { Badge } from "@/components/ui/badge"
 
 import { PatientInfoCard } from "@/components/ui/patientInfoCard"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
-import PregnancyChart from "./maternal-components/pregnancy-chart"
-import PregnancyVisitTracker from "./maternal-components/8anc-visit-chart"
+import { PregnancyAccordion } from "../../maternal-components/pregnancy-accordion"
+import PregnancyChart from "../../maternal-components/pregnancy-chart"
+import PregnancyVisitTracker from "../../maternal-components/8anc-visit-chart"
 
-import { usePregnancyDetails } from "./queries/maternalFetchQueries"
-import { useAddCompletePregnancy, useAddPregnancyLoss } from "./queries/maternalAddQueries"
+import { usePregnancyDetails } from "../../queries/maternalFetchQueries"
+import { useAddCompletePregnancy, useAddPregnancyLoss } from "../../queries/maternalAddQueries"
 
 
 interface Patient {

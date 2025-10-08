@@ -6,6 +6,11 @@ import ReportSectionCharts from "@/components/analytics/report/report-section-ch
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
 import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
+import { format } from "date-fns";
+import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
+import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
+import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -17,6 +22,7 @@ export const getItemsConfig = (
   
   
 ) => {
+  const currentMonth = format(new Date(), "yyyy-MM");
   const { residents, families, households, businesses } = profilingCards
   const { staffs } = administrationCards
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards
@@ -79,14 +85,49 @@ export const getItemsConfig = (
       dashboard: "WASTE",
     },
     {
-      dashboard: "MIDWIFE",
+      dashboard: "SERVICES",
       card: [childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal],
       sidebar: [
         {
           title: "Most Requested Medicine",
           element: <MedicineDistributionSidebar />,
         },
+        {
+          title: "Most used FirstAid",
+          element: <FirstAidDistributionSidebar />,
+        },
+      ],
+      chart: [
+        {
+          title: "Growth",
+          element: <OPTStatusChart initialMonth={currentMonth} />
+          ,
+        },
+        {
+          title: "Medical History",
+          element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />
+          ,
+        },
+        {
+          title: "Vaccination",
+          element: <VaccineDistributionChart initialMonth={currentMonth} />
+        }
+      ],
+    },
+
+    {
+      dashboard: "INVENTORY",
+      sidebar: [
+        {
+          title: "Most Requested Medicine",
+          element: <MedicineDistributionSidebar />,
+        },
+        {
+          title: "Most used FirstAid",
+          element: <FirstAidDistributionSidebar />,
+        },
       ],
     }
+
   ];
 };

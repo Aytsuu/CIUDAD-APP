@@ -63,7 +63,8 @@ class PrenatalAppointmentRequestView(generics.ListAPIView):
                 'approved': queryset.filter(status='approved').count(),
                 'cancelled': queryset.filter(status='cancelled').count(),
                 'completed': queryset.filter(status='completed').count(),
-                'rejected': queryset.filter(status='rejected').count()
+                'rejected': queryset.filter(status='rejected').count(),
+                'missed': queryset.filter(status='missed').count()
             }
             
             if not queryset.exists():
@@ -80,10 +81,12 @@ class PrenatalAppointmentRequestView(generics.ListAPIView):
                 appointment_data = {
                     'par_id': appointment.par_id,
                     'requested_at': appointment.requested_at.strftime('%Y-%m-%d') if appointment.requested_at else None,
+                    'requested_date': appointment.requested_date.strftime('%Y-%m-%d') if appointment.requested_date else None,
                     'approved_at': appointment.approved_at.strftime('%Y-%m-%d') if appointment.approved_at else None,
                     'cancelled_at': appointment.cancelled_at.strftime('%Y-%m-%d') if appointment.cancelled_at else None,
                     'completed_at': appointment.completed_at.strftime('%Y-%m-%d') if appointment.completed_at else None,
                     'rejected_at': appointment.rejected_at.strftime('%Y-%m-%d') if appointment.rejected_at else None,
+                    'missed_at': appointment.missed_at.strftime('%Y-%m-%d') if appointment.missed_at else None,
                     'reason': appointment.reason,
                     'status': appointment.status,
                     'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
@@ -99,6 +102,66 @@ class PrenatalAppointmentRequestView(generics.ListAPIView):
                 'status_counts': status_counts
             }, status=status.HTTP_200_OK)
 
+        except Exception as e:
+            logger.error(f"Error retrieving prenatal appointment requests: {str(e)}")
+            return Response({
+                'error': 'An error occurred while retrieving appointment requests',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
+    serializer_class = PrenatalRequestAppointmentSerializer
+    queryset = PrenatalAppointmentRequest.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        """Handle list with proper error handling for no requests"""
+        try:
+            queryset = self.get_queryset()
+            
+            # Calculate status counts
+            status_counts = {
+                'pending': queryset.filter(status='pending').count(),
+                'approved': queryset.filter(status='approved').count(),
+                'cancelled': queryset.filter(status='cancelled').count(),
+                'completed': queryset.filter(status='completed').count(),
+                'rejected': queryset.filter(status='rejected').count(),
+                'missed': queryset.filter(status='missed').count()
+            }
+            
+            if not queryset.exists():
+                logger.info("No prenatal appointment requests found")
+                return Response({
+                    'message': 'No prenatal appointment requests found',
+                    'requests': [],
+                    'status_counts': status_counts
+                }, status=status.HTTP_200_OK)
+
+            # Manual serialization to handle date fields properly
+            requests_data = []
+            for appointment in queryset:
+                appointment_data = {
+                    'par_id': appointment.par_id,
+                    'requested_at': appointment.requested_at.strftime('%Y-%m-%d') if appointment.requested_at else None,
+                    'requested_date': appointment.requested_date if appointment.requested_date else None,
+                    'approved_at': appointment.approved_at if appointment.approved_at else None,
+                    'cancelled_at': appointment.cancelled_at if appointment.cancelled_at else None,
+                    'completed_at': appointment.completed_at if appointment.completed_at else None,
+                    'rejected_at': appointment.rejected_at if appointment.rejected_at else None,
+                    'missed_at': appointment.missed_at if appointment.missed_at else None,
+                    'reason': appointment.reason,
+                    'status': appointment.status,
+                    'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
+                    'pat_id': appointment.pat_id.pat_id if appointment.pat_id else None,
+                }
+                requests_data.append(appointment_data)
+            
+            logger.info(f"Found {queryset.count()} prenatal appointment requests")
+
+            return Response({
+                'message': 'Prenatal appointment requests retrieved successfully',
+                'requests': requests_data,
+                'status_counts': status_counts
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error retrieving prenatal appointment requests: {str(e)}")
             return Response({

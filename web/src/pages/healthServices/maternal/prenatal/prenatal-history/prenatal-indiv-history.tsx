@@ -12,7 +12,6 @@ import PFHistoryTab from "./form-history/form-history-tab";
 
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries";
 import PrenatalViewingTwo from "./form-history/prenatal-viewing-two";
-import { Label } from "@/components/ui/label";
 
 
 interface PrenatalVisit {
@@ -138,14 +137,7 @@ export default function PrenatalIndivHistory() {
       description="Complete record of prenatal visits and clinical notes"
     >
       <div className="bg-white p-3 space-y-2">
-        {/* <div className="flex justify-end pr-4 my-5">
-          <Button variant="outline"><Printer/> Print</Button>
-        </div> */}
-
-        <div className="w-full" defaultValue={1}>
-          <div className="flex m-5 p-2 border-b-2 border-black/50">
-            <Label className="text-xl">Form</Label>
-          </div>
+        <div className="w-full mt-8" defaultValue={1}>
           <div className="flex items-center justify-center">
             <PFHistoryTab onPageChange={handlePFPageChange} />
           </div>
@@ -159,16 +151,13 @@ export default function PrenatalIndivHistory() {
           )}
         </div>
        
-        <div className="bg-white/70 pt-5 px-2">
-          <div className="flex m-5 p-2 border-b-2 border-black/50">
-            <Label className="text-xl">Form</Label>
-          </div>
-          <div className="flex-1 p-1 border rounded-md bg-blue-50">
+        <div className="bg-white/70 pt-5 px-2 py-2">
+          <div className="flex-1 px-1 py-1 m-5 border rounded-md bg-blue-50">
             <PrenatalIndivHistoryTab onTabChange={(tab) => setActiveTab(tab)} />
           </div>
 
           {hasData && activeTab === "prenatalcare" ? (
-            <div className="px-2">
+            <div className="px-5">
               <PrenatalCareHistoryTable data={processedPrenatalData} />
             </div>
           ):

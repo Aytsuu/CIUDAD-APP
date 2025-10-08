@@ -5,7 +5,7 @@ from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address, HealthRelatedDetails, MotherHealthInfo
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
-from apps.maternal.models import PostpartumRecord, TT_Status, Prenatal_Form
+from apps.maternal.models import *
 from apps.healthProfiling.serializers.minimal import *
 from apps.healthProfiling.models import *
 from apps.healthProfiling.serializers.resident_profile_serializers import *
@@ -193,25 +193,14 @@ class PatientSerializer(serializers.ModelSerializer):
     # method to retrieve a mother's TT Status
     def get_mother_tt_status(self, mother_rp):
         try:
-            mother_patient = Patient.objects.filter(rp_id=mother_rp, pat_type='Resident').first()
-            print(f'Checking TT Status for mother: {mother_patient}')
-
-            if not mother_patient:
-                return f'TT Status not found - Not a patient'
-
-            mom_prenatal_record = TT_Status.objects.filter(
-                pf_id__patrec_id__pat_id=mother_patient,
-                pf_id__patrec_id__patrec_type__icontains='Prenatal'
-            ).select_related(
-                'pf_id', 
-                'pf_id__patrec_id'
+            # TT_Status is now linked directly to pat_id. Query by pat_id for latest status.
+            tt_qs = TT_Status.objects.filter(
+                pat_id__rp_id=mother_rp
             ).order_by('-tts_date_given', '-tts_id')
 
-            if mom_prenatal_record.exists():
-                latest_tt = mom_prenatal_record.first()
-                return latest_tt.tts_status
-            else:
-                return 'No TT Status found'
+            if tt_qs.exists():
+                return tt_qs.first().tts_status
+            return 'No TT Status found'
         
         except Exception as e:
             print(f'Error in getting mother tt status: {str(e)}')
@@ -244,11 +233,7 @@ class PatientSerializer(serializers.ModelSerializer):
                             'personal_info': PersonalSerializer(personal, context=self.context).data,
                             'composition_id': composition.fc_id
                         }
-
-                        # check if mother has TT status
-                        if role == 'mother':
-                            tt_status = self.get_mother_tt_status(composition.rp.rp_id)
-                            family_heads['tt_status'] = tt_status
+                        # NOTE: mother TT status lookup moved to get_additional_info
                 
                 return {
                     'fam_id': fam_id,
@@ -558,20 +543,115 @@ class PatientSerializer(serializers.ModelSerializer):
     def get_additional_info(self, obj):
         try:
             additional_info = {}
-            if obj.pat_id and obj.rp_id:
-                # Use first() to get a single object instead of checking exists()
-                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
-                mother_tt = MotherHealthInfo.objects.filter(rp=obj.rp_id).first()
 
-                if per_ph_id and mother_tt:
+            # Case 1: Resident patient with rp_id
+            if obj.pat_id and obj.rp_id:
+                # philhealth from HealthRelatedDetails (resident)
+                per_ph_id = HealthRelatedDetails.objects.filter(rp=obj.rp_id).first()
+                if per_ph_id:
                     additional_info['philhealth_id'] = per_ph_id.per_add_philhealth_id
-                    additional_info['mother_tt_status'] = mother_tt.mhi_immun_status
-                else:
-                    additional_info['philhealth_id'] = None
+
+                # Try to find latest family composition for this resident
+                current_composition = FamilyComposition.objects.filter(rp=obj.rp_id).order_by('-fam_id__fam_date_registered','-fc_id').first()
+                if current_composition:
+                    # If the current role for this resident is 'Father', skip fetching mother TT status
+                    try:
+                        current_role = (current_composition.fc_role or '').strip().lower()
+                    except Exception:
+                        current_role = ''
+
+                    if current_role == 'father':
+                        # don't attempt to fetch mother TT status when resident's role is Father
+                        pass
+                    else:
+                        fam_id = current_composition.fam_id
+                        all_compositions = FamilyComposition.objects.filter(fam_id=fam_id).select_related('rp', 'rp__per')
+                        # find composition entry with role mother if present
+                        mother_comp = all_compositions.filter(fc_role__iexact='Mother').first()
+                        if mother_comp:
+                            # get TT_Status for mother (resident rp)
+                            try:
+                                tt_status = self.get_mother_tt_status(mother_comp.rp.rp_id)
+                                additional_info['mother_tt_status'] = tt_status
+                            except Exception as e:
+                                additional_info['mother_tt_status'] = None
+
+                # Check for latest pregnancy and AOG data
+                try:
+                    latest_pregnancy = Pregnancy.objects.filter(
+                        pat_id=obj,
+                        status='active'
+                    ).order_by('-created_at').first()
+                    
+                    if latest_pregnancy:
+                        # Get the latest prenatal form for this pregnancy
+                        latest_prenatal = Prenatal_Form.objects.filter(
+                            pregnancy_id=latest_pregnancy
+                        ).order_by('-created_at').first()
+                        
+                        if latest_prenatal:
+                            # Get the latest prenatal care entry with AOG data
+                            latest_prenatal_care = PrenatalCare.objects.filter(
+                                pf_id=latest_prenatal,
+                                pfpc_aog_wks__isnull=False
+                            ).order_by('-pfpc_date', '-created_at').first()
+                            
+                            if latest_prenatal_care:
+                                additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
+                                additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
+                except Exception as e:
+                    print(f"Error fetching AOG data for resident: {str(e)}")
+
+                return additional_info if additional_info else None
+
+            # Case 2: Transient patient - check transient's philhealth and TT_Status via Transient or related records
+            if obj.pat_id and obj.trans_id:
+                trans = obj.trans_id
+                # check transient philhealth
+                if getattr(trans, 'philhealth_id', None):
+                    additional_info['philhealth_id'] = trans.philhealth_id
+
+                # For TT status, attempt to find latest TT_Status associated with this transient via patient records
+                try:
+                    tt_qs = TT_Status.objects.filter(
+                        pat_id=obj
+                    ).select_related('pat_id').order_by('-tts_date_given', '-tts_id')
+                    if tt_qs.exists():
+                        additional_info['mother_tt_status'] = tt_qs.first().tts_status
+                    else:
+                        additional_info['mother_tt_status'] = None
+                except Exception:
                     additional_info['mother_tt_status'] = None
 
-                # Only return if at least one value exists
+                # Check for latest pregnancy and AOG data
+                try:
+                    latest_pregnancy = Pregnancy.objects.filter(
+                        pat_id=obj,
+                        status='active'
+                    ).order_by('-created_at').first()
+                    
+                    if latest_pregnancy:
+                        # Get the latest prenatal form for this pregnancy
+                        latest_prenatal = Prenatal_Form.objects.filter(
+                            pregnancy_id=latest_pregnancy
+                        ).order_by('-created_at').first()
+                        
+                        if latest_prenatal:
+                            # Get the latest prenatal care entry with AOG data
+                            latest_prenatal_care = PrenatalCare.objects.filter(
+                                pf_id=latest_prenatal,
+                                pfpc_aog_wks__isnull=False
+                            ).order_by('-pfpc_date', '-created_at').first()
+                            
+                            if latest_prenatal_care:
+                                additional_info['latest_aog_weeks'] = latest_prenatal_care.pfpc_aog_wks
+                                additional_info['latest_aog_days'] = latest_prenatal_care.pfpc_aog_days
+                except Exception as e:
+                    print(f"Error fetching AOG data for transient: {str(e)}")
+
                 return additional_info if additional_info else None
+
+            # Fallback: nothing found
             return None
         except Exception as e:
             print(f"Error in get_additional_info: {str(e)}")

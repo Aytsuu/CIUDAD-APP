@@ -8,7 +8,6 @@ export interface PrenatalRecord {
   pat_id: string
   patrec_type: string
   pf_occupation: string
-  pf_lmp: string | null
   pf_edc: string | null
   staff_id: string
   previous_complications: string | null
@@ -37,7 +36,7 @@ export interface PrenatalRecord {
     obs_para: number | null
     obs_fullterm: number | null
     obs_preterm: number | null
-    obs_record_from: string | "Prenatal"
+    obs_lmp: string | null
   }
   medical_history?: Array<{
     year: number | null
@@ -59,7 +58,6 @@ export interface PrenatalRecord {
   tt_statuses: Array<{
     tts_status: string | null
     tts_date_given: string | null
-    // tts_tdap: boolean | null
   }>
   lab_results_data: Array<{
     lab_type: string

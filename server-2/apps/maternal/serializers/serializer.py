@@ -73,7 +73,7 @@ class ObstetricalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obstetrical_History
         fields = ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 'obs_still_birth', 'obs_lg_babies',
-                  'obs_lg_babies_str', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm', 'obs_record_from']
+                  'obs_lg_babies_str', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm', 'obs_lmp']
 # end of serializer for models not in maternal
 
 class PreviousHospitalizationCreateSerializer(serializers.ModelSerializer):
@@ -243,12 +243,12 @@ class PrenatalPatientObstetricalHistorySerializer(serializers.ModelSerializer):
         
         except Exception as e:
             return None
-
+        
 
 class PrenatalDetailViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
-        fields = ['pf_id', 'pf_lmp', 'pf_edc', 'created_at']
+        fields = ['pf_id', 'pf_edc', 'created_at']
 
 
 class PrenatalCareSerializer(serializers.ModelSerializer):

@@ -17,13 +17,12 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 
-import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
+import { useMaternalRecords, useMaternalCounts } from "../../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -65,11 +64,12 @@ export default function MaternalAllRecords() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 
+  // useMaternalRecords expects (page, pageSize, searchQuery, status)
   const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords(
     page,
     pageSize,
-    selectedFilter,
     debouncedSearchTerm,
+    selectedFilter,
   );
   const { data: maternalCountsData } = useMaternalCounts();
 
@@ -83,13 +83,6 @@ export default function MaternalAllRecords() {
     { id: "transient", name: "Transient" },
   ];
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
   
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
@@ -168,6 +161,7 @@ export default function MaternalAllRecords() {
     });
   }, [maternalRecordsData]);
 
+  // table columns
   const columns: ColumnDef<maternalRecords>[] = [
     {
       accessorKey: "pat_id",
@@ -304,9 +298,8 @@ export default function MaternalAllRecords() {
       ),
     },
   ];
-
   
-  
+  // refetch handler
   const handleRefetching = async () => {
     try {
       setIsRefetching(true);
@@ -317,13 +310,21 @@ export default function MaternalAllRecords() {
       setIsRefetching(false);
     }
   };
+  
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
 
   return (
-    <MainLayoutComponent
-      title="Maternal Health Records  "
-      description="Manage and view mother's maternal information"
-    >
       <div className="w-full h-full flex flex-col">
+        <div>
+          
+        </div>
         <div className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <EnhancedCardLayout 
@@ -404,7 +405,7 @@ export default function MaternalAllRecords() {
         {/*  */}
 
         {/* Table Container */}
-        <div className="h-full w-full rounded-md ">
+        <div className="h-full w-full rounded-md border">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
@@ -442,7 +443,7 @@ export default function MaternalAllRecords() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, maternalRecordsData?.count) || 0} of {maternalRecordsData?.count} rows
@@ -462,6 +463,5 @@ export default function MaternalAllRecords() {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
   );
 }

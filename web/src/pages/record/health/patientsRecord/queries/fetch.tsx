@@ -64,7 +64,7 @@ export const usePatients = (page: number, pageSize: number, searchQuery: string,
 						page,
 						page_size: pageSize,
 						search: searchQuery,
-						status: shouldSendStatus ? status : undefined
+						status: status
 					}
 				});
 				return res.data;

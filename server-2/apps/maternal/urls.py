@@ -7,13 +7,15 @@ from .views.prenatal_views import *
 from .views.pregnancy_views import *
 
 urlpatterns=[
+    # Maternal
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),
 	path('counts/', MaternalCountView.as_view(), name='maternal-count'),
    
     # Prenatal Appointment Request URLs
     path('prenatal/appointment/request/', PrenatalAppointmentRequestCreateListView.as_view(), name='prenatal-appointment-request'),
-    path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-list'),
-   
+    path('prenatal/appointment/requests/all/', PrenatalAppointmentRequestViewAll.as_view(), name='prenatal-appointment-requests-all'),
+    path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
+
     # Pregnancy URLs
     path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
     path('pregnancy/complete/', CompletePregnancyView.as_view(), name='pregnancy-complete'),
@@ -30,6 +32,7 @@ urlpatterns=[
     path('patient/<str:pat_id>/prenatalcare/', get_prenatal_records_with_care, name='prenatal-patient-care-records'),
     path('patient/<str:pat_id>/ttstatus/', get_prenatal_patient_tt_status, name="prenatal-patient-tt-status"),
     path('patient/<str:pat_id>/prenatalcare/', get_prenatal_records_with_care, name='prenatal-patient-care-records'),
+
     path("prenatal-record/", PrenatalRecordCreateView.as_view(), name="prenatal-record"),
 	path('patient/<str:pat_id>/prenatal_count/', get_patient_prenatal_count, name='patient-prenatal-count'),
     path('prenatal/<str:pat_id>/latest/', get_latest_patient_prenatal_record, name='latest-prenatal-record'),

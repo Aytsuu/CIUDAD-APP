@@ -70,18 +70,6 @@ const capitalize = (str: string): string => {
     .join(" ");
 };
 
-// age calculation for dob
-// const calculateAge = (dob: string): number => {
-//   const birthDate = new Date(dob)
-//   const today = new Date()
-//   let age = today.getFullYear() - birthDate.getFullYear()
-//   const monthDiff = today.getMonth() - birthDate.getMonth()
-
-//   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-//     age--
-//   }
-//   return age
-// }
 type previousIllness = {
   prevIllness: string;
   prevIllnessYr?: number;
@@ -254,7 +242,6 @@ export default function PrenatalFormFirstPg({
           "medicalHistory.previousComplications",
           latestPF.previous_complications || ""
         );
-        form.setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "");
         form.setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "");
         form.setValue(
           "followUpSchedule.aogWeeks",
@@ -778,6 +765,7 @@ export default function PrenatalFormFirstPg({
       setValue("presentPregnancy.para", currObs?.obs_para || 0);
       setValue("presentPregnancy.fullterm", currObs?.obs_fullterm || 0);
       setValue("presentPregnancy.preterm", currObs?.obs_preterm || 0);
+      setValue("presentPregnancy.pf_lmp", currObs?.obs_lmp || "");
     } else {
       setValue("obstetricHistory.noOfChBornAlive", undefined);
       setValue("obstetricHistory.noOfLivingCh", undefined);
@@ -857,6 +845,45 @@ export default function PrenatalFormFirstPg({
     setValue(
       "riskCodes.hasOneOrMoreOneConditions.diabetes",
       hasDiabetes ? true : false
+    );
+  });
+
+  // check if any heart disease is in previous illness to automate Heart Disease radio button
+  useEffect(() => {
+    const heartDiseaseVariants = [
+      "heart disease",
+      "coronary artery disease",
+      "cad",
+      "stroke",
+      "cerebrovascular disease",
+      "heart failure",
+      "arrhythmias",
+      "arrhythmia",
+      "heart valve disease",
+      "hypertensive heart disease",
+      "peripheral artery disease",
+      "pad",
+      "cardiomyopathies",
+      "cardiomyopathy",
+      "rheumatic heart disease",
+      "rhd",
+      "transthyretin amyloid cardiomyopathy",
+      "attr-cm",
+      "kawasaki disease",
+      "chagas disease",
+      "arrhythmogenic right ventricular dysplasia",
+      "arvd"
+    ];
+    
+    const hasHeartDisease = prevIllnessData.some((illness) =>
+      heartDiseaseVariants.some((variant) =>
+        illness.prevIllness.toLowerCase().includes(variant)
+      )
+    );
+    
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.heartDisease",
+      hasHeartDisease ? true : false
     );
   });
 

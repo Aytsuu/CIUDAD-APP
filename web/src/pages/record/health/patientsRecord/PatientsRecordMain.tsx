@@ -96,11 +96,11 @@ export const columns: ColumnDef<Report>[] = [
   },
   {
     accessorKey: "fullName",
+    size: 250,
     header: () => (
       <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
         <div className="flex items-center gap-2">
           <span>Name</span>
-          {/* <ArrowUpDown size={14} /> */}
         </div>
       </div>
     ),
@@ -225,8 +225,8 @@ export default function PatientsRecord() {
   // filter options
   const filter = [
     { id: "all", name: "All" },
-    { id: "resident", name: "Resident" },
-    { id: "transient", name: "Transient" }
+    { id: "Resident", name: "Resident" },
+    { id: "Transient", name: "Transient" }
   ];
 
   // searching and pagination handlers

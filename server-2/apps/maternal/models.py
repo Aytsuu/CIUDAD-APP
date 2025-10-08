@@ -19,10 +19,12 @@ year = str(today.year)
 class PrenatalAppointmentRequest(models.Model):
     par_id = models.BigAutoField(primary_key=True)
     requested_at = models.DateTimeField(auto_now_add=True)
-    approved_at = models.DateTimeField(null=True, blank=True)
-    cancelled_at = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    rejected_at = models.DateTimeField(null=True, blank=True)
+    requested_date = models.DateField(auto_now_add=True)
+    approved_at = models.DateField(null=True, blank=True)
+    cancelled_at = models.DateField(null=True, blank=True)
+    completed_at = models.DateField(null=True, blank=True)
+    rejected_at = models.DateField(null=True, blank=True)
+    missed_at = models.DateField(null=True, blank=True)
     reason = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),
@@ -31,12 +33,72 @@ class PrenatalAppointmentRequest(models.Model):
         ('cancelled', 'Cancelled'),
         ('completed', 'Completed'),
         ('rejected', 'Rejected'),
-    ], default='pending')
+        ('missed', 'Missed'),
+    ], default='pending')   
+    was_approved_before_cancel = models.BooleanField(default=False)
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='pa_request')
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pa_request', null=True)
     
     class Meta:
         db_table = 'prenatal_appointment_request'
+        indexes = [
+            models.Index(fields=['status', 'requested_date']),
+            models.Index(fields=['pat_id', 'status']),
+        ]
+    
+    def approve(self, staff=None):
+        """Approve the appointment"""
+        from django.utils import timezone
+        self.status = 'approved'
+        self.approved_at = timezone.now()
+        self.save()
+    
+    def cancel(self, reason=None, staff=None):
+        """Cancel the appointment"""
+        from django.utils import timezone
+        
+        # Check if it was approved before cancellation
+        if self.status == 'approved':
+            self.was_approved_before_cancel = True
+        
+        self.status = 'cancelled'
+        self.cancelled_at = timezone.now()
+        if reason:
+            self.reason = reason
+        self.save()
+    
+    def complete(self, staff=None):
+        """Mark appointment as completed"""
+        from django.utils import timezone
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        self.save()
+    
+    def reject(self, reason=None, staff=None):
+        """Reject the appointment"""
+        from django.utils import timezone
+        self.status = 'rejected'
+        self.rejected_at = timezone.now()
+        if reason:
+            self.reason = reason
+        self.save()
+    
+    def mark_as_missed(self, staff=None):
+        """Mark appointment as missed - no reason required"""
+        from django.utils import timezone
+        self.status = 'missed'
+        self.missed_at = timezone.now()
+        self.save()
+    
+    def is_overdue(self):
+        """Check if appointment date has passed and status is still approved"""
+        from django.utils import timezone
+        if self.requested_date and self.status == 'approved':
+            return self.requested_date < timezone.now().date()
+        return False
+    
+    def __str__(self):
+        return f"Appointment {self.par_id} - {self.status} - {self.requested_date}"
 
 class Pregnancy(models.Model):
     pregnancy_id = models.CharField(primary_key=True, max_length=20, unique=True)
@@ -82,7 +144,6 @@ class Pregnancy(models.Model):
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
-    pf_lmp = models.DateField(null=True, blank=True)
     pf_edc = models.DateField(null=True, blank=True)
     pf_occupation = models.CharField(max_length=100, null=True, blank=True)
     previous_complications = models.TextField(null=True, blank=True, default='')

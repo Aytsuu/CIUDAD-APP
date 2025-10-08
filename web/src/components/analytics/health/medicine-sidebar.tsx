@@ -1,7 +1,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, BarChart3, Pill, ChevronDown } from "lucide-react";
+import { AlertCircle, Loader2, Pill, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import { useMedicineChart } from "@/pages/healthServices/reports/medicine-report/queries/fetchQueries";
 import { useState } from "react";
 import { Link } from "react-router";

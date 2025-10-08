@@ -160,7 +160,7 @@ export default function ScheduleRecords() {
     setPage(1) 
   }
 
-  const handleTimeFrameChange = (timeFrame: string) => {
+const handleTimeFrameChange = (timeFrame: string) => {
     setIsTimeFrameLoading(true);
     setTimeFrame(timeFrame)
     setPage(1)
@@ -378,11 +378,9 @@ export default function ScheduleRecords() {
             <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
           </div>
 
+          {/* defaulters tracking */}
           <div className="flex justify-center items-center">
-            <span className="text-sm font-semibold text-center text-white bg-blue-500 rounded-lg py-2 px-3 hover:bg-blue-600 shadow-md transition-colors duration-200 ease-in-out cursor-pointer">
-              
-              Defaulters Tracking
-            </span>
+            <Button variant="link" className="rounded-none border-b-2 border-blue-500">View Defaulters</Button>
           </div>
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
