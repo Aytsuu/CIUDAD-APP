@@ -84,7 +84,16 @@ function DonationTracker() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("don_num")}</div>
+        <div className="flex-row items-center bg-blue-50 px-2 py-0.5 rounded-full border border-primary">
+        <div className="text-primary text-xs font-medium">{row.getValue("don_num")}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "don_date",
+      header: "Date",
+      cell: ({ row }) => (
+        <div className="text-center">{formatTableDate(row.getValue("don_date"))}</div>
       ),
     },
     {
@@ -101,13 +110,13 @@ function DonationTracker() {
         <div className="text-center">{row.getValue("don_item_name")}</div>
       ),
     },
-    {
-      accessorKey: "don_category",
-      header: "Item Category",
-      cell: ({ row }) => (
-        <div className="text-center">{row.getValue("don_category")}</div>
-      ),
-    },
+    // {
+    //   accessorKey: "don_category",
+    //   header: "Item Category",
+    //   cell: ({ row }) => (
+    //     <div className="text-center">{row.getValue("don_category")}</div>
+    //   ),
+    // },
     {
       accessorKey: "don_qty",
       header: "Quantity/Amount",
@@ -134,13 +143,6 @@ function DonationTracker() {
           </div>
         );
       },
-    },
-    {
-      accessorKey: "don_date",
-      header: "Date",
-      cell: ({ row }) => (
-        <div className="text-center">{formatTableDate(row.getValue("don_date"))}</div>
-      ),
     },
     {
       accessorKey: "action",

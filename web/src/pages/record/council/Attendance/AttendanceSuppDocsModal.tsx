@@ -142,22 +142,12 @@ export function AttendanceDocumentCard({
             </div>
           )}
         </div>
-        <p className="mt-2 text-sm text-gray-700 font-medium text-center">
-          {displayName} {isArchived && "(Archived)"}
-        </p>
       </div>
 
       {/* Image Modal */}
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
         <DialogContent className="max-w-[95vw] w-auto max-h-[95vh] h-auto p-0 bg-transparent border-none shadow-none">
           <div className="relative">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute -top-10 right-0 text-white bg-black/50 hover:bg-black/70 z-10"
-              onClick={() => setIsImageModalOpen(false)}
-            >
-            </Button>
             <img
               src={doc.att_file_url}
               alt={`Attendance Sheet ${displayName}`}

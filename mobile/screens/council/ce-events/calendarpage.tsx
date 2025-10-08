@@ -28,6 +28,7 @@ import {
 } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { FormattedCouncilEvent } from "./ce-att-typeFile";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const { width } = Dimensions.get("window");
 const DAY_SIZE = width / 7 - 10;
@@ -197,12 +198,12 @@ const CouncilCalendarPage = () => {
       className="mb-3"
     >
       <View
-        className={`bg-white shadow-sm rounded-lg p-4 mx-2 ${
+        className={`bg-white shadow-sm rounded-lg p-4 mx-2 border-2 border-gray-200 ${
           item.is_archive ? "bg-gray-50" : ""
         }`}
       >
         <View className="flex-row justify-between items-start">
-          <Text className="text-primaryBlue text-lg font-semibold flex-1">
+          <Text className="text-[#1a2332] text-lg font-semibold flex-1">
             {item.title}
           </Text>
         </View>
@@ -300,6 +301,13 @@ const CouncilCalendarPage = () => {
     isSameDay(event.rawDate, selectedDate)
   );
 
+  const handleTabChange = (tab: "active" | "archive") => {
+    setEventViewMode(tab);
+    queryClient.invalidateQueries({
+      queryKey: ["councilEvents", tab === "archive"],
+    });
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
@@ -321,19 +329,17 @@ const CouncilCalendarPage = () => {
   return (
     <ScreenLayout
       customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Council Events</Text>}
+      headerBetweenAction={<Text className="font-semibold text-lg text-[#2a3a61]">Council Events</Text>}
       showExitButton={false}
       headerAlign="left"
       keyboardAvoiding={true}
       contentPadding="medium"
       scrollable={false}
     >
-
-
       {/* Calendar Header */}
       <View className="bg-white shadow-sm py-4">
         <View className="flex-row justify-between items-center mb-4 px-2">
@@ -366,40 +372,32 @@ const CouncilCalendarPage = () => {
         </View>
       </View>
 
-            {/* View Mode Toggle */}
-      <View className="flex-row justify-start ml-2 mt-3">
-        <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
-          <TouchableOpacity
-            className={`px-4 py-2 ${
-              eventViewMode === "active" ? "bg-white" : ""
-            }`}
-            onPress={() => {
-              setEventViewMode("active");
-              queryClient.invalidateQueries({
-                queryKey: ["councilEvents", false],
-              });
-            }}
-          >
-            <Text className="text-sm font-medium">Active</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`px-4 py-2 ${
-              eventViewMode === "archive" ? "bg-white" : ""
-            }`}
-            onPress={() => {
-              setEventViewMode("archive");
-              queryClient.invalidateQueries({
-                queryKey: ["councilEvents", true],
-              });
-            }}
-          >
-            <Text className="text-sm font-medium">Archived</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Tabs - Styled like Budget Plan */}
+      <View className="px-6 mt-4">
+        <Tabs value={eventViewMode} onValueChange={val => handleTabChange(val as "active" | "archive")}>
+          <TabsList className="bg-blue-50 flex-row justify-between">
+            <TabsTrigger 
+              value="active" 
+              className={`flex-1 mx-1 ${eventViewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${eventViewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="archive" 
+              className={`flex-1 mx-1 ${eventViewMode === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${eventViewMode === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Archive
+              </Text>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </View>
 
       {/* Events Section */}
-      <View className="flex-1 px-4 pt-4">
+      <View className="flex-1 px-6 pt-4">
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-lg font-bold text-gray-800">
             {format(selectedDate, "EEEE, MMMM d")}

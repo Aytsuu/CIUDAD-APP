@@ -18,8 +18,10 @@ import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/councilEventdelqueries";
 import { Archive } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
+  const { user } = useAuth();
   const isArchived = initialValues.ce_is_archive || false;
   const [isEditMode, setIsEditMode] = useState(false && !isArchived);
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string; present_or_absent?: string }[]>(initialValues.attendees || []);
@@ -59,6 +61,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       ce_description: values.eventDescription.trim(),
       ce_is_archive: false,
       ce_rows: numberOfRows,
+      staff_id: user?.staff?.staff_id,
     };
 
     updateEvent(
@@ -214,7 +217,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                     max="100"
                     value={numberOfRows}
                     onChange={handleNumberOfRowsChange}
-                    className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                     placeholder="Enter number of rows needed"
                   />
                   <p className="text-sm text-gray-500">
@@ -226,9 +229,9 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Expected Attendees
                   </label>
-                  <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
+                  <div className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
                     {numberOfRows > 0 ? (
-                      <p className="font-medium">{numberOfRows}</p>
+                      <p>{numberOfRows}</p>
                     ) : (
                       "No attendees expected"
                     )}
@@ -239,7 +242,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
           </div>
 
          <div className="mt-4 flex justify-between items-center">
-  {/* LEFT: Only show Archive when NOT in edit mode and NOT archived */}
+  
   {!isEditMode && !isArchived ? (
     <ConfirmationModal
       trigger={
@@ -267,7 +270,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
     <div />
   )}
 
-  {/* RIGHT: Buttons that are always on the right side */}
+ 
   <div className="flex gap-3">
     {isEditMode ? (
       <>

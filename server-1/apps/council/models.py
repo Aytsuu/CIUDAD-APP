@@ -46,7 +46,12 @@ class CouncilScheduling(models.Model):
 
 class CouncilAttendance(models.Model):
     att_id = models.BigAutoField(primary_key=True)
-    ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+    ce = models.ForeignKey(
+        'CouncilScheduling', 
+        on_delete=models.CASCADE,
+        db_column='ce_id',
+        related_name='attendance_sheets'
+    )
     att_is_archive = models.BooleanField(default=False)
     att_file_name = models.CharField(max_length=255, null=True)
     att_file_path = models.CharField(max_length=512, null=True)

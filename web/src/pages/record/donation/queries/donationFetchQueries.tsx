@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getdonationreq, getPersonalList, getDonationById } from "../request-db/donationGetRequest";
-import { Donations, Personal } from "../donation-types";
+import { getdonationreq, getPersonalList, getDonationById, getStaffList } from "../request-db/donationGetRequest";
+import { Donations, Personal, Staff } from "../donation-types";
 
 export const useGetDonations = (
   page: number = 1,
@@ -32,5 +32,13 @@ export const useGetPersonalList = () => {
       throw error;
     }),
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useGetStaffList = () => {
+  return useQuery<Staff[], Error>({
+    queryKey: ["staffList"],
+    queryFn: () => getStaffList(),
+    staleTime: 1000 * 60 * 5,
   });
 };

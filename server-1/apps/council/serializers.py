@@ -21,22 +21,22 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
-        # Extract staff_id if it exists (won't be in validated_data if not in model)
+        # Extract staff_id if it exists
         staff_id = self.initial_data.get('staff_id')
         
         # Create the council event
         council_event = CouncilScheduling.objects.create(**validated_data)
         
-        # Automatically create announcement for all barangay staff
+        # Always create announcement on creation
         self._create_staff_announcement(council_event, staff_id)
         
         return council_event
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        # Extract staff_id if it exists
         staff_id = self.initial_data.get('staff_id')
         
+        # Fields that should trigger announcement creation
         announcement_trigger_fields = ['ce_title', 'ce_date', 'ce_time', 'ce_place', 'ce_description']
         
         # Check if any announcement-relevant fields were changed
@@ -56,12 +56,17 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
         
         # Only create announcement if relevant fields changed
         if should_create_announcement:
-            self._create_staff_announcement(instance, staff_id, is_update=True)
+            try:
+                self._create_staff_announcement(instance, staff_id, is_update=True)
+            except Exception as e:
+                logger.error(f"Failed to create update announcement: {str(e)}")
+                # Event is still updated successfully even if announcement fails
         
         return instance
     
-    def _create_staff_announcement(self, council_event, staff_id=None, is_update=False): 
+    def _create_staff_announcement(self, council_event, staff_id=None, is_update=False):
         staff = None
+        
         # Try to get staff from staff_id parameter
         if staff_id:
             try:
@@ -88,26 +93,36 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
             logger.error(error_msg)
             raise serializers.ValidationError(error_msg)
         
-        # Get current time and set end time to 24 hours later
-        now = timezone.now()
+        # Create the announcement title based on whether it's an update
+        announcement_title = f"Council {'Meeting (Update)' if is_update else 'Meeting'}: {council_event.ce_title}"
+        
+        # Combine event date and time, make it timezone-aware
         naive_event_datetime = datetime.combine(council_event.ce_date, council_event.ce_time)
         event_datetime = timezone.make_aware(naive_event_datetime, timezone.get_current_timezone())
+        
+        # Set announcement to start now and end 24 hours after the event time
+        now = timezone.now()
         end_time = event_datetime + timedelta(hours=24)
         
-        # Create the announcement title based on whether it's an update
-        announcement_title = f"Council {'Update' if is_update else 'Meeting'}: {council_event.ce_title}"
-       
+        # Format the announcement details with event information
+        announcement_details = (
+            f"{council_event.ce_description}\n\n"
+            f"Location: {council_event.ce_place}\n"
+            f"Date: {council_event.ce_date.strftime('%B %d, %Y')}\n"
+            f"Time: {council_event.ce_time.strftime('%I:%M %p')}"
+        )
+        
         if is_update:
-            announcement_details += "This meeting has been updated. Please take note of the changes."
+            announcement_details += "This event has been updated. Please take note of the changes."
         
         # Create the announcement
         announcement = Announcement.objects.create(
             ann_title=announcement_title,
             ann_details=announcement_details,
             ann_type="GENERAL",
-            ann_event_start=None,  
+            ann_event_start=None, 
             ann_event_end=None,
-            ann_start_at=now,  
+            ann_start_at=now, 
             ann_end_at=end_time, 
             ann_to_sms=True,
             ann_to_email=True,
@@ -119,7 +134,7 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
         AnnouncementRecipient.objects.create(
             ann=announcement,
             ar_category="staff",
-            ar_type=None
+            ar_type=None  # None means all staff positions
         )
         
         return announcement
@@ -133,7 +148,7 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
-    
+    ce_id = serializers.IntegerField(source='ce.ce_id', read_only=True)
     class Meta:
         model = CouncilAttendance
         fields = '__all__'
@@ -175,7 +190,7 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
                     att_file_type=file_data['type'],
                     att_file_path=f"attendance/{file_data['name']}",
                     att_file_url=file_url,
-                    ce_id=event
+                    ce=event
                 )
                 attendance_sheets.append(attendance_sheet)
                 
@@ -231,11 +246,9 @@ class TemplateSerializer(serializers.ModelSerializer):
 
 
 Staff = apps.get_model('administration', 'Staff')
-
-
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
-    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)  # Add position title
+    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)
 
     class Meta:
         model = Staff

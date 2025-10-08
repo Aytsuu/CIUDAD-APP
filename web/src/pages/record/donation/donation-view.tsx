@@ -14,6 +14,7 @@ import { useUpdateDonation } from "./queries/donationUpdateQueries";
 import {
   useGetPersonalList,
   useGetDonationById,
+  useGetStaffList,
 } from "./queries/donationFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { ClerkDonateViewProps } from "./donation-types";
@@ -32,19 +33,21 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     isLoading: isPersonalLoading,
     isFetching: isPersonalFetching,
   } = useGetPersonalList();
+  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const { mutate: updateDonation, isPending } = useUpdateDonation();
 
   const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
     resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
       don_donor: "",
-      per_id: null,
       don_item_name: "",
       don_qty: "",
       don_description: "",
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
       don_status: "Stashed",
+      don_dist_head: null,
+      don_dist_date: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -53,7 +56,6 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     if (donation) {
       form.reset({
         don_donor: donation.don_donor || "",
-        per_id: donation.per_id || null,
         don_item_name: donation.don_item_name || "",
         don_qty: donation.don_qty || "",
         don_description: donation.don_description || "",
@@ -61,6 +63,8 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
         don_date: donation.don_date || new Date().toISOString().split("T")[0],
         don_status:
           (donation.don_status as "Stashed" | "Allotted") || "Stashed",
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
       });
     }
   }, [donation, form]);
@@ -144,6 +148,15 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             readOnly={!isEditing}
           />
 
+          {/* Donation Date */}
+          <FormDateTimeInput
+            control={form.control}
+            name="don_date"
+            type="date"
+            label="Donation Date"
+            readOnly={!isEditing}
+          />
+          
           {/* Donor Name */}
           <FormField
             control={form.control}
@@ -236,17 +249,38 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             readOnly={!isEditing}
           />
 
-          {/* Donation Date */}
+          <FormField
+            control={form.control}
+            name="don_dist_head"
+            render={({ field }) => (
+              <ComboboxInput
+                value={field.value || ""}
+                options={staffList}
+                isLoading={isStaffLoading}
+                label="Distribution Head"
+                placeholder="Select distribution head..."
+                emptyText="No staff found."
+                onSelect={(value, _item) => {
+                  field.onChange(value);
+                }}
+                displayKey="full_name"
+                valueKey="staff_id"
+                additionalDataKey="position_title"
+                readOnly={!isEditing}
+              />
+            )}
+          />
+
           <FormDateTimeInput
             control={form.control}
-            name="don_date"
+            name="don_dist_date"
             type="date"
-            label="Donation Date"
+            label="Distributed Date"
             readOnly={!isEditing}
           />
 
           {/* Edit/Save Button */}
-          <div className="mt-8 flex justify-end gap-3">
+          <div className="mt-8 flex justify-end gap-3 mb-2">
             {isEditing ? (
               <>
                 <Button

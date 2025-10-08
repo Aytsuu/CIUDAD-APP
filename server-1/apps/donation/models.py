@@ -8,6 +8,14 @@ class Donation(models.Model):
     def save(self, *args, **kwargs):
         if not self.don_num:  # If no ID provided
             self.don_num = f"DON-{uuid.uuid4().hex[:10].upper()}"
+        
+        # Automatically set status to "Allotted" if distribution date is set
+        if self.don_dist_date and not self.don_status == "Allotted":
+            self.don_status = "Allotted"
+        # Optional: Set back to "Stashed" if distribution date is removed
+        elif not self.don_dist_date and self.don_status == "Allotted":
+            self.don_status = "Stashed"
+            
         super().save(*args, **kwargs)
         
     don_item_name = models.CharField(max_length=100, default='')
@@ -17,6 +25,8 @@ class Donation(models.Model):
     don_category = models.CharField(max_length=100, default='')
     don_date = models.DateField(default=date.today)
     don_status = models.CharField(max_length=100, default='')
+    don_dist_head = models.CharField(max_length=100, null=True, blank=True)
+    don_dist_date = models.DateField(null=True, blank=True)
 
     staff = models.ForeignKey(
         'administration.Staff',
@@ -29,11 +39,4 @@ class Donation(models.Model):
     class Meta:
         db_table = 'donation'
     
-    per_id = models.ForeignKey( #for name searching, staff-side
-        'profiling.Personal',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='per_id'
-    )
     

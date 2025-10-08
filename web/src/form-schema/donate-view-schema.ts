@@ -21,6 +21,8 @@ const ClerkDonateViewSchema = z.object({
   don_receiver: z.string().optional(),
   don_date: z.string().min(1, "Donation date is required"),
   don_status: z.enum(["Stashed", "Allotted"]),
+  don_dist_head: z.string().optional().nullable(), 
+  don_dist_date: z.string().optional().nullable(),
 });
 
 export default ClerkDonateViewSchema;

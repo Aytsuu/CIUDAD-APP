@@ -9,7 +9,7 @@ export const updateWasteColData = async (wc_num: number, collectionInfo: Record<
             sitio: collectionInfo.selectedSitios,
             truck: collectionInfo.collectionTruck,
             wstp: collectionInfo.driver,
-            staff: collectionInfo.staff 
+            staff: collectionInfo.staff
         });
 
         const res = await api.put(`waste/waste-collection-sched/${wc_num}/`, {
