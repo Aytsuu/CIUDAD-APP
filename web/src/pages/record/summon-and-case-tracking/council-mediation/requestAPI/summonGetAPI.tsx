@@ -88,7 +88,7 @@ export const getSummonTimeSlots = async(sd_id: number) => {
 
 export const getComplaintDetails = async (comp_id: string) => {
     try{
-        const res = await api.get(`/complaint/view/${comp_id}/`)
+        const res = await api.get(`/clerk/view-complaint/${comp_id}/`)
 
         return res.data
     }catch(err){

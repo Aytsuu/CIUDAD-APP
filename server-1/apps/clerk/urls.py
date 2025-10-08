@@ -1,28 +1,19 @@
 from django.urls import path
 from .views import *
 from .summon.summonViews import *
+from apps.complaint.view import ComplaintDetailView
 
-urlpatterns = [
-    # path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
-    # path('case-details/<int:sr_id>/', ServiceChargeRequestDetailView.as_view(), name='case-details'),
-    # path('case-activity/', CaseActivityView.as_view(), name='case-activity'),
-   
-    # path('file-action-request/', FileActionrequestView.as_view(), name='file-action-request'),
-    # path('case-supp-doc/', CaseSuppDocView.as_view(), name='case-supp-doc'),
-    # path('case-supp-doc/<int:ca_id>/', CaseSuppDocView.as_view(), name='case-supp-doc'),
-    # path('delete-case-supp-doc/<int:csd_id>/', DeleteCaseSuppDocView.as_view(), name='delete-case-supp-doc'),
-    # path('update-case-supp-doc/<int:csd_id>/', UpdateCaseSuppDocView.as_view(), name='update-case-supp-doc'),
-    # path('service-charge-request-file/', ServiceChargeRequestFileView.as_view(), name='service-charge-request-file'),
- 
+urlpatterns = [ 
     # Case List and details
     path('summon-case-list/', SummonCasesView.as_view(), name='summon-case-list'),
     path('summon-case-detail/<str:sc_id>/', SummonCaseDetailView.as_view(), name='summon-case-detail'),
     path('update-summon-case/<str:sc_id>/', UpdateSummonCaseView.as_view(), name='update-summon-case'),
     path('summon-schedule-list/<str:sr_id>/', SummonScheduleByServiceRequestView.as_view(), name='summon-schedule-list'),
-    # path('update-summon-sched/<str:ss_id>/', UpdateSummonScheduleView.as_view(), name='update-summon-sched'),
-    path('summon-supp-doc/', SummonSuppDocView.as_view(), name='summon-supp-doc'),
-    path('summon-supp-doc/<str:ss_id>/', SummonSuppDocRetrieveView.as_view(), name='summon-supp-doc-retrieve'),
-    path('hearing-schedule/', HearingScheduleView.as_view(), name='summon-sched-create'),
+    path('view-complaint/<str:comp_id>/', ComplaintDetailView.as_view(), name='complaint-detail'),
+
+    path('hearing-minutes/', HearingMinutesCreateView.as_view(), name='hearing-minutes-create'),
+    path('hearing-schedule/', HearingScheduleView.as_view(), name='hearing-sched-create'),
+    path('update-hearing-schedule/<str:hs_id>/', UpdateHearingScheduleView.as_view(), name='hearing-sched-update'),
 
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),

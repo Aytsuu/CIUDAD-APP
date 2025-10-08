@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { addSchedule, addSummonDate, addSummonTimeSlots, addSuppDoc } from "../requestAPI/summonPostAPI";
+import { addHearingMinutes, addSummonDate, addSummonTimeSlots, addSchedule, addSuppDoc } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
 import { showSuccessToast } from "@/components/ui/toast";
@@ -32,30 +32,6 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
                 );
             }
         })
-}
-
-export const useAddSuppDoc = (onSuccess?: () => void) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (data: {
-            ss_id: string;
-            sr_id: string;
-            file: { name: string; type: string; file: string | undefined}[];
-            reason: string;
-        }) => {
-            return addSuppDoc(data.ss_id, data.sr_id,  data.file, data.reason);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
-
-            showSuccessToast('Documents uploaded successfully!')
-            onSuccess?.();
-        },
-        onError: (err: Error) => {
-            console.error("Upload error:", err);
-            showErrorToast( "Failed to upload documents. Please try again.")
-        }
-    });
 }
 
 export const useAddSummonDates = (onSuccess?: () => void) => {
@@ -103,3 +79,65 @@ export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
         }
     });
 }
+
+
+export const useAddHearingMinutes = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (data: {
+            hs_id: string;
+            file: { name: string; type: string; file: string | undefined}[];
+        }) => {
+            return addHearingMinutes(data.hs_id, data.file);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });
+
+            showSuccessToast('Hearing Minutes uploaded successfully!')
+            onSuccess?.();
+        },
+        onError: (err: Error) => {
+            console.error("Upload error:", err);
+            showErrorToast( "Failed to upload documents. Please try again.")
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const useAddSuppDoc = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (data: {
+            ss_id: string;
+            sr_id: string;
+            file: { name: string; type: string; file: string | undefined}[];
+            reason: string;
+        }) => {
+            return addSuppDoc(data.ss_id, data.sr_id,  data.file, data.reason);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['serviceChargeDetails'] });
+
+            showSuccessToast('Documents uploaded successfully!')
+            onSuccess?.();
+        },
+        onError: (err: Error) => {
+            console.error("Upload error:", err);
+            showErrorToast( "Failed to upload documents. Please try again.")
+        }
+    });
+}
+
