@@ -158,85 +158,68 @@ export default function SoapFormFields({
             </div>
           </div>
 
-    {medicalConsultation.is_phrecord && (
-      <div className="space-y-3">
-        <h2 className="text-lg font-medium text-darkBlue2">Laboratory Request/s</h2>
-        <div className="bg-white rounded-lg border p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* As Required - All ages */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-md text-gray-700 pb-2 border-b">As required - All ages</h3>
-              <div className="space-y-3">
-                {labTests.asRequired.map((test) => (
-                  <FormField
-                    key={test.name}
-                    control={form.control}
-                    name={test.name}
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="border-gray-400 border rounded-sm"
-                          />
-                        </FormControl>
-                        <FormLabel className="text-md font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          {test.label}
-                        </FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                ))}
+          {medicalConsultation.is_phrecord && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-medium text-darkBlue2">Laboratory Request/s</h2>
+              <div className="bg-white rounded-lg border p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* As Required - All ages */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-md text-gray-700 pb-2 border-b">As required - All ages</h3>
+                    <div className="space-y-3">
+                      {labTests.asRequired.map((test) => (
+                        <FormField
+                          key={test.name}
+                          control={form.control}
+                          name={test.name}
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-gray-400 border rounded-sm" />
+                              </FormControl>
+                              <FormLabel className="text-md font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{test.label}</FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mandatory */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-md text-gray-700 pb-2 border-b">Mandatory</h3>
+                    <div className="space-y-3">
+                      {labTests.mandatory.map((test) => (
+                        <FormField
+                          key={test.name}
+                          control={form.control}
+                          name={test.name}
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-gray-400 border rounded-sm peer focus:ring-2 focus:ring-offset-2 focus:ring-primary-600" />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="text-md font-normal">
+                                  {test.age && <span className="text-gray-600 mr-2">{test.age}</span>}
+                                  {test.label}
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Others field */}
+                <div className="mt-6 pt-6 border-t">
+                  <FormTextArea control={form.control} name="others" label="Others" placeholder="Specify any other laboratory tests or requests..." className="min-h-[80px] w-full" rows={3} />
+                </div>
               </div>
             </div>
-
-            {/* Mandatory */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-md text-gray-700 pb-2 border-b">Mandatory</h3>
-              <div className="space-y-3">
-                {labTests.mandatory.map((test) => (
-                  <FormField
-                    key={test.name}
-                    control={form.control}
-                    name={test.name}
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="border-gray-400 border rounded-sm peer focus:ring-2 focus:ring-offset-2 focus:ring-primary-600"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-md font-normal">
-                            {test.age && <span className="text-gray-600 mr-2">{test.age}</span>}
-                            {test.label}
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Others field */}
-          <div className="mt-6 pt-6 border-t">
-            <FormTextArea
-              control={form.control}
-              name="others"
-              label="Others"
-              placeholder="Specify any other laboratory tests or requests..."
-              className="min-h-[80px] w-full"
-              rows={3}
-            />
-          </div>
-        </div>
-      </div>
-    )}
+          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">

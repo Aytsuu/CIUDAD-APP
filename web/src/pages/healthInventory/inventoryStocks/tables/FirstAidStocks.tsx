@@ -171,7 +171,7 @@ export default function FirstAidStocks() {
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
         </div>
-        <Button onClick={() => navigate("/inventory/stocks/add-firstaid")} className="hover:bg-buttonBlue/90 group">
+        <Button onClick={() => navigate("/inventory-stocks/list/stocks/firstaid/add")} className="hover:bg-buttonBlue/90 group">
           <Plus size={15} /> New First Aid
         </Button>
       </div>

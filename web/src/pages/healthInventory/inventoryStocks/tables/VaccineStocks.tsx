@@ -179,10 +179,10 @@ export default function CombinedStockTable() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="min-w-[200px]" align="end">
-              <DropdownMenuItem onSelect={() => navigate("/inventory/stocks/add-vaccine")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
+              <DropdownMenuItem onSelect={() => navigate("/inventory-stocks/list/stocks/antigen/vaccine/add")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
                 Vaccine
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => navigate("/inventory/stocks/add-immunization-supply")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
+              <DropdownMenuItem onSelect={() => navigate("/inventory-stocks/list/stocks/immunization-supply/add")} className="cursor-pointer hover:bg-gray-100 px-4 py-2">
                 Immunization Supplies
               </DropdownMenuItem>
             </DropdownMenuContent>
