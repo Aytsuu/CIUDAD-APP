@@ -73,3 +73,14 @@ class MonetaryDonationTotalView(APIView):
         ).aggregate(total=Sum('don_qty'))['total'] or 0
         
         return Response({'total_monetary_donations': total})
+    
+Staff = apps.get_model('administration', 'Staff')
+class StaffListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    queryset = Staff.objects.select_related('pos', 'rp__per').only(
+        'staff_id',
+        'rp__per__per_fname',
+        'rp__per__per_lname',
+        'pos__pos_title'
+    )
+    serializer_class = StaffSerializer

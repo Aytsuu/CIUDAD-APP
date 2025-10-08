@@ -246,11 +246,9 @@ class TemplateSerializer(serializers.ModelSerializer):
 
 
 Staff = apps.get_model('administration', 'Staff')
-
-
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
-    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)  # Add position title
+    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)
 
     class Meta:
         model = Staff
