@@ -21,7 +21,7 @@ export const useGetWasteSitio = () => {
 
 
 
-//======================= Staff's End =================
+//======================= Both Resident & Staff =================
 
 export type WasteReport = {
     rep_id: number;
@@ -54,13 +54,17 @@ export type WasteReport = {
 };
   
 // Retrieving Waste reports for staff
-export const useWasteReport = (searchQuery?: string, reportMatter?: string, rp_id?: string) => {
-    return useQuery<WasteReport[]>({
-        queryKey: ["wastereport", searchQuery, reportMatter, rp_id],
-        queryFn: () => getWasteReport(searchQuery, reportMatter, rp_id),
+export const useWasteReport = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string,
+    reportMatter?: string,
+    status?: string,
+    rp_id?: string
+) => {
+    return useQuery<{ results: WasteReport[]; count: number }>({
+        queryKey: ["wastereport", page, pageSize, searchQuery, reportMatter, status, rp_id],
+        queryFn: () => getWasteReport(page, pageSize, searchQuery, reportMatter, status, rp_id),
         staleTime: 1000 * 60 * 30,
     });
 };
-
-
-

@@ -48,7 +48,7 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
         const uploadPromises = reportInfo.files.map(async (fileData: any) => { 
 
             const payload = {
-                rep_id: Number(RepNum),
+                rep_id: RepNum,
                 files: [{
                     name: fileData.name,
                     type: fileData.type,

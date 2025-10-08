@@ -23,6 +23,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <HomeScreen/>
+    return <App/>
 }
  

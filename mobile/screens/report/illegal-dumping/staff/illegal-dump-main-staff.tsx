@@ -14,8 +14,7 @@ import { SelectLayout } from '@/components/ui/select-layout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
-import { useDebounce } from '@/hooks/use-debounce'; 
-
+import { useDebounce } from '@/hooks/use-debounce';
 
 export default function WasteIllegalDumping() {
   const [selectedFilterId, setSelectedFilterId] = useState("0");
@@ -23,44 +22,38 @@ export default function WasteIllegalDumping() {
   const [activeTab, setActiveTab] = useState<'pending' | 'resolved' | 'cancelled'>('pending');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
+  // Map tab to status value for backend
+  const getStatusParam = (tab: string) => {
+    if (tab === "pending") return "pending";
+    if (tab === "resolved") return "resolved";
+    if (tab === "cancelled") return "cancelled";
+    return "";
+  };
 
-  //fetch mutations
-  const { data: fetchedData = [], isLoading, isError, refetch } = useWasteReport(
+  // Fetch data with backend filtering and pagination
+  // Using large page size (1000) to get all data like in Resolution mobile
+  const { data: wasteReportData = { results: [], count: 0 }, isLoading, isError, refetch } = useWasteReport(
+    1, // page
+    1000, // pageSize - large number to get all data
     debouncedSearchQuery, 
-    selectedFilterId
+    selectedFilterId,
+    getStatusParam(activeTab)
   );
+
+  // Extract the actual data array from paginated response
+  const fetchedData = wasteReportData.results || [];
 
   const filterOptions = [
     { id: "0", name: "All Report Matter" },
     { id: "Littering, Illegal dumping, Illegal disposal of garbage", name: "Littering, Illegal dumping, Illegal disposal of garbage" },
     { id: "Urinating, defecating, spitting in a public place", name: "Urinating, defecating, spitting in a public place" },
     { id: "Dirty frontage and immediate surroundings for establishment owners", name: "Dirty frontage and immediate surroundings for establishment owners" },
-    { id: "Improper and untimely stacking of garbage outside residences or establishmen", name: "Improper and untimely stacking of garbage outside residences or establishment" },
+    { id: "Improper and untimely stacking of garbage outside residences or establishment", name: "Improper and untimely stacking of garbage outside residences or establishment" },
     { id: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)", name: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)" },
     { id: "Dirty public utility vehicles, or no trash can or receptacle", name: "Dirty public utility vehicles, or no trash can or receptacle" },
     { id: "Spilling, scattering, littering of wastes by public utility vehicles", name: "Spilling, scattering, littering of wastes by public utility vehicles" },
     { id: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
   ];
-
-  // Filter reports based on tab
-  const filteredData = useMemo(() => {
-    let result = fetchedData;
-
-    // Filter by active tab (frontend filtering only for status)
-    if (activeTab === 'pending') {
-      result = result.filter(item => 
-        item.rep_status !== 'resolved' && item.rep_status !== 'cancelled'
-      );
-    } else if (activeTab === 'resolved') {
-      result = result.filter(item => item.rep_status === 'resolved');
-    } else if (activeTab === 'cancelled') {
-      result = result.filter(item => item.rep_status === 'cancelled');
-    }
-
-    return result;
-  }, [fetchedData, activeTab]);
-
-
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
@@ -72,8 +65,7 @@ export default function WasteIllegalDumping() {
 
   const handleTabChange = (val: string) => {
     setActiveTab(val as 'pending' | 'resolved' | 'cancelled');
-  };  
-
+  };
 
   const handleView = async (item: any) => {
     router.push({
@@ -109,21 +101,21 @@ export default function WasteIllegalDumping() {
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
       <View className="flex-row justify-between items-start mb-3">
-        <Text className="font-semibold text-xl">Report #{item.rep_id}</Text>
+        <Text className="font-semibold text-xl text-primaryBlue">Report No. {item.rep_id}</Text>
         <View className="flex-row items-center">
           {item.rep_status === "resolved" ? (
-            <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
+            <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full border border-green-600">
               <CheckCircle size={12} color="#22c55e" />
               <Text className="text-green-600 text-sm font-medium ml-1">Resolved</Text>
             </View>
           ) : item.rep_status === "cancelled" ? (
-            <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full">
+            <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full border border-red-600">
               <XCircle size={12} color="#ef4444" />
               <Text className="text-red-600 text-sm font-medium ml-1">Cancelled</Text>
             </View>
           ) : (
-            <View className="flex-row items-center bg-yellow-50 px-2 py-1 rounded-full">
-              <Text className="text-yellow-600 text-sm font-medium">Pending</Text>
+            <View className="flex-row items-center bg-blue-100 px-2 py-1 rounded-full border border-primaryBlue">
+              <Text className="text-primaryBlue text-sm font-medium">In progress</Text>
             </View>
           )}
         </View>
@@ -151,12 +143,12 @@ export default function WasteIllegalDumping() {
         </Text>
       </View>
 
-      {item.rep_status === "cancelled" && (
+      {item.rep_status === "cancelled" && item.rep_cancel_reason && (
         <View className="mb-4">
           <Text className="text-base font-semibold">Cancel Reason:</Text>
-          <Text>{item.rep_cancel_reason}</Text>              
+          <Text>{item.rep_cancel_reason}</Text>
         </View>
-      )}         
+      )}
 
       <View className="self-end">
         <SquareArrowOutUpRight size={16} color="#00A8F0" />
@@ -185,7 +177,6 @@ export default function WasteIllegalDumping() {
     );
   }
 
-
   return (
     <PageLayout
       leftAction={
@@ -195,8 +186,9 @@ export default function WasteIllegalDumping() {
       }
       headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Illegal Dumping Reports</Text>}
       rightAction={<View className="w-10 h-10 rounded-full items-center justify-center" />}
+      wrapScroll={false}
     >
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-6">
         {/* Search and Filters */}
         <View className="mb-4">
           <View className="relative mb-3">
@@ -245,7 +237,7 @@ export default function WasteIllegalDumping() {
           <TabsContent value={activeTab} className="flex-1">
             <View className="mb-2">
               <Text className="text-sm text-gray-500">
-                {filteredData.length} report{filteredData.length !== 1 ? 's' : ''} found
+                {fetchedData.length} report{fetchedData.length !== 1 ? 's' : ''} found
               </Text>
             </View>
 
@@ -256,18 +248,20 @@ export default function WasteIllegalDumping() {
               </View>
             ) : (
               <FlatList
-                data={filteredData}
+                data={fetchedData}
                 renderItem={({ item }) => renderReportCard(item)}
                 keyExtractor={(item) => item.rep_id.toString()}
                 contentContainerStyle={{ paddingBottom: 20 }}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
                   <View className="py-8 items-center">
-                    <Text className="text-gray-500 text-center">No reports found</Text>
+                    <Text className="text-gray-500 text-center">
+                      No {activeTab} reports found
+                    </Text>
                   </View>
                 }
-              />              
-            )}       
+              />
+            )}
           </TabsContent>
         </Tabs>
       </View>
