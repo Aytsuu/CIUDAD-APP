@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { putCouncilEvent, putAttendanceSheet } from "../api/councilEventputreq";
 import { CouncilEvent, CouncilEventInput, AttendanceSheet, AttendanceSheetInput } from "../councilEventTypes";
 
@@ -17,16 +16,10 @@ export const useUpdateCouncilEvent = () => {
         )
       );
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
-      toast.success("Council event updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Council event updated successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to update council event", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to update council event");
     },
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ['councilEvents'] });
@@ -57,16 +50,10 @@ export const useUpdateAttendanceSheet = () => {
         )
       );
       queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
-      toast.success("Attendance sheet updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Attendance sheet updated successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to update attendance sheet", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to update attendance sheet");
     },
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });

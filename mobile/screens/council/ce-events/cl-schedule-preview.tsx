@@ -279,7 +279,7 @@ const CLSchedulePreview = () => {
                 <Text className="text-sm font-medium text-gray-700">
                   Expected Attendees
                 </Text>
-                <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
+                <View className="border border-gray-300 rounded-xl px-3 py-2">
                   <Text className="text-base text-gray-900">
                     {(numRows || 0) > 0 ? numRows : "No attendees expected"}
                   </Text>
