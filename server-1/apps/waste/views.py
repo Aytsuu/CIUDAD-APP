@@ -463,6 +463,7 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
 class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]    
     serializer_class = WasteReportSerializer
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         queryset = WasteReport.objects.select_related(
@@ -477,7 +478,12 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         # Get filter parameters from request
         search_query = self.request.query_params.get('search', '')
         report_matter = self.request.query_params.get('report_matter', '')
+        status = self.request.query_params.get('status', '')
         rp_id = self.request.query_params.get('rp_id')
+        
+        # Apply status filter
+        if status:
+            queryset = queryset.filter(rep_status=status)
         
         # Apply search filter
         if search_query:
@@ -501,7 +507,7 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
         if rp_id:
             queryset = queryset.filter(rp_id=rp_id)
         
-        return queryset
+        return queryset.order_by('-rep_date')  
     
 
 class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):

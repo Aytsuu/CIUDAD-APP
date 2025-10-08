@@ -1,16 +1,37 @@
 import { api } from "@/api/api";
+import { WasteReport } from "../queries/waste-ReportGetQueries";
 
 
-export const getWasteReport = async (searchQuery?: string, reportMatter?: string) => {
+export const getWasteReport = async (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string,
+    reportMatter?: string,
+    status?: string
+): Promise<{ results: WasteReport[]; count: number }> => {
     try {
-        const params: any = {};
+        const params: any = { page, page_size: pageSize };
         if (searchQuery) params.search = searchQuery;
         if (reportMatter && reportMatter !== "0") params.report_matter = reportMatter;
+        if (status) params.status = status;
         
         const res = await api.get('waste/waste-report/', { params });
-        return res.data;
+        
+        // Handle paginated response
+        if (res.data.results !== undefined) {
+            return {
+                results: res.data.results || [],
+                count: res.data.count || 0
+            };
+        }
+        
+        // Fallback for non-paginated response
+        return {
+            results: Array.isArray(res.data) ? res.data : [],
+            count: Array.isArray(res.data) ? res.data.length : 0
+        };
     } catch (err) {
         console.error(err);
-        throw err;
+        return { results: [], count: 0 };
     }
 };
