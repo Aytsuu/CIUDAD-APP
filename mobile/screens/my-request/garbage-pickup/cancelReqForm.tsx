@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { CancelGarbagePickupSchema } from '@/form-schema/waste/garbage-pickup-schema-staff';
+import { CancelGarbagePickupSchema } from '@/form-schema/waste/garbage-pickup-schema-resident';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import {z} from "zod"
 import { useCancelRequest } from './queries/garbagePickupInsertQueries';

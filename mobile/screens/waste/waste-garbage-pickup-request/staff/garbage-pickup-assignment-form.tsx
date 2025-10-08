@@ -16,8 +16,10 @@ import FormComboCheckbox from '@/components/ui/form/form-combo-checkbox';
 import { useAddPickupAssignmentandCollectors } from './queries/garbagePickupStaffInsertQueries';
 import { LoadingState } from '@/components/ui/loading-state';
 import { LoadingModal } from '@/components/ui/loading-modal';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AcceptGarbagePickupForm() {
+    const {user} = useAuth();
     const params = useLocalSearchParams();
     const garb_id = params.garb_id || '';
     const pref_date = params.pref_date as string;
@@ -36,6 +38,7 @@ export default function AcceptGarbagePickupForm() {
         truck: '',
         date: pref_date,
         time: pref_time,
+        staff_id: user?.staff?.staff_id,
       }
     });
 

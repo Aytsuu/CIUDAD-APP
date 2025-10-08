@@ -11,9 +11,10 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import z from "zod";
 import { useAddDecision } from './queries/garbagePickupStaffInsertQueries';
-
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RejectGarbagePickupForm() {
+    const {user} = useAuth()
     const params = useLocalSearchParams();
     const garb_id = params.garb_id || '';
     const router = useRouter();
@@ -23,6 +24,7 @@ export default function RejectGarbagePickupForm() {
       resolver: zodResolver(RejectPickupRequestSchema),
       defaultValues: {
         reason: '',
+        staff_id: user?.staff?.staff_id
       }
     });
     

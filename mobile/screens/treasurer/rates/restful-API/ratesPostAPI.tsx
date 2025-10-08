@@ -11,6 +11,7 @@ const addAnnualGrossSales = async (grossSales: Record<string, any>) => {
             ags_rate: parseFloatSafe(grossSales.amount),
             ags_date: new Date().toISOString(),
             ags_is_archive: false,
+            staff_id: grossSales.staff_id
         })
 
         const res = await api.post('treasurer/annual-gross-sales-active/', {
@@ -19,6 +20,7 @@ const addAnnualGrossSales = async (grossSales: Record<string, any>) => {
             ags_rate: parseFloatSafe(grossSales.amount),
             ags_date: new Date().toISOString(),
             ags_is_archive: false,
+            staff_id: grossSales.staff_id
         });
 
         return res.data.ags_id;
