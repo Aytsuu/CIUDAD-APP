@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 from django.db import transaction
 from django.utils.timezone import now
@@ -13,22 +12,51 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class AnnouncementBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Announcement
+        fields = '__all__'
 
-# New
 class AnnouncementListSerializer(serializers.ModelSerializer):
     staff = serializers.SerializerMethodField()
+    files = serializers.SerializerMethodField()
+    recipients = serializers.SerializerMethodField()
     class Meta:
         model = Announcement
         fields = '__all__'
     
     def get_staff(self, obj):
         info = obj.staff.rp.per
-        name = f"{info.per_lname}, {info.per_fname}{f" {info.per_mname[0]}." if info.per_mname else ""}"
+        name = f"{info.per_lname}{f" {info.per_mname[0]}." if info.per_mname else ""} {info.per_fname}"
 
         return {
             "id": obj.staff.staff_id,
             "name": name,
             "position": obj.staff.pos.pos_title
+        }
+    
+    def get_files(self, obj):        
+        return [
+            {
+                'id': file.af_id,
+                'name': file.af_name,
+                'type': file.af_type,
+                'url': file.af_url
+            }
+            for file in obj.announcement_files.filter(ann=obj)
+        ]
+    
+    def get_recipients(self, obj):
+        recipient = obj.announcement_recipients.filter(ann=obj).first()
+
+        if not recipient: return []
+
+        return {
+            'ar_category': recipient.ar_category,
+            'ar_types': [
+                rec.ar_type
+                for rec in obj.announcement_recipients.filter(ann=obj)
+            ]
         }
 
 
@@ -60,7 +88,7 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
     recipients = AnnouncementRecipientSerializer(many=True, required=False)
 
     announcement_files = AnnouncementFileSerializer(
-        source="announcementfile_set", many=True, read_only=True
+        source="announcement_files_set", many=True, read_only=True
     )
 
     class Meta:
@@ -75,11 +103,6 @@ class AnnouncementCreateSerializer(serializers.ModelSerializer):
 
         # Create the announcement
         announcement = Announcement.objects.create(**validated_data)
-
-        # Save recipients
-        for recipient in recipients_data:
-            print(recipient)
-            AnnouncementRecipient.objects.create(ann=announcement, **recipient)
 
         # Upload files
         if files:
@@ -193,8 +216,6 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
                     logger.error(f"Failed to send email for announcement {announcement.pk}: {e}")
 
         return created_recipients
-
-
 
 class AnnouncementRecipientFilteredSerializer(serializers.ModelSerializer):
     class Meta:

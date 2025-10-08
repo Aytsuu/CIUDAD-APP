@@ -12,13 +12,12 @@ class PositionView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         staff_type = self.request.query_params.get('staff_type', None)
-        
+        queryset = Position.objects.all()
         if staff_type:
-            pos_category = 'Barangay Position' if staff_type == 'Barangay Staff' \
-                            else 'Health Position'
-            queryset = Position.objects.filter(pos_category=pos_category)
-            return queryset
-        return None
+            pos_category = 'BARANGAY POSITION' if staff_type.lower() == 'barangay staff' \
+                            else 'HEALTH POSITION'
+            queryset = queryset.filter(pos_category=pos_category)
+        return queryset
     
 class PositionDeleteView(generics.DestroyAPIView):
     serializer_class = PositionBaseSerializer
