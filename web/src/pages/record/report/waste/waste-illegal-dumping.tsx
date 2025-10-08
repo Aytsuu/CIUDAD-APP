@@ -1,4 +1,4 @@
-import{ useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { ArrowUpDown } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
@@ -13,25 +14,45 @@ import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueri
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Spinner } from "@/components/ui/spinner";
-import { useLoading } from "@/context/LoadingContext"; 
-
-
+import { useLoading } from "@/context/LoadingContext";
 
 function WasteIllegalDumping() {
-  const [activeTab, setActiveTab] = useState("pending"); // 'pending', 'resolved', or 'cancelled'
+  const [activeTab, setActiveTab] = useState("pending");
   const [selectedFilterId, setSelectedFilterId] = useState("0");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
+  const [resolvedCurrentPage, setResolvedCurrentPage] = useState(1);
+  const [cancelledCurrentPage, setCancelledCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { showLoading, hideLoading } = useLoading();
 
-  //Fetch mutation
-  const { data: fetchedData = [], isLoading } = useWasteReport(
+  // Get current page based on active tab
+  const currentPage = 
+    activeTab === "pending" ? pendingCurrentPage :
+    activeTab === "resolved" ? resolvedCurrentPage :
+    cancelledCurrentPage;
+
+  // Map tab to status value for backend
+  const getStatusParam = (tab: string) => {
+    if (tab === "pending") return "pending";
+    if (tab === "resolved") return "resolved";
+    if (tab === "cancelled") return "cancelled";
+    return "";
+  };
+
+  // Fetch data with backend filtering and pagination
+  const { data: wasteReportData = { results: [], count: 0 }, isLoading } = useWasteReport(
+    currentPage,
+    pageSize,
     debouncedSearchQuery, 
-    selectedFilterId
+    selectedFilterId,
+    getStatusParam(activeTab)
   );
 
+  // Extract data from paginated response
+  const fetchedData = wasteReportData.results || [];
+  const totalCount = wasteReportData.count || 0;
 
   useEffect(() => {
     if (isLoading) {
@@ -41,6 +62,10 @@ function WasteIllegalDumping() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
+  // Calculate total pages for current tab
+  const pendingTotalPages = activeTab === "pending" ? Math.ceil(totalCount / pageSize) : 0;
+  const resolvedTotalPages = activeTab === "resolved" ? Math.ceil(totalCount / pageSize) : 0;
+  const cancelledTotalPages = activeTab === "cancelled" ? Math.ceil(totalCount / pageSize) : 0;
 
   const filterOptions = [
     { id: "0", name: "All Report Matter" },
@@ -54,40 +79,25 @@ function WasteIllegalDumping() {
     { id: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
   ];
 
-  // Filter data based on active tab, filter, and search query
-  const filteredData = useMemo(() => {
-    return fetchedData.filter(row => {
-      if (activeTab === "pending") {
-        return row.rep_status !== "resolved" && row.rep_status !== "cancelled";
-      } else if (activeTab === "resolved") {
-        return row.rep_status === "resolved";
-      } else if (activeTab === "cancelled") {
-        return row.rep_status === "cancelled";
-      }
-      return true;
-    });
-  }, [fetchedData, activeTab]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1);
+    // Reset all pages to 1
+    setPendingCurrentPage(1);
+    setResolvedCurrentPage(1);
+    setCancelledCurrentPage(1);
   };
 
   const handleFilterChange = (value: string) => {
     setSelectedFilterId(value);
-    setCurrentPage(1);
+    // Reset all pages to 1
+    setPendingCurrentPage(1);
+    setResolvedCurrentPage(1);
+    setCancelledCurrentPage(1);
   };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setCurrentPage(1);
-  };  
+  };
 
   const columns: ColumnDef<WasteReport>[] = [
     {
@@ -198,8 +208,6 @@ function WasteIllegalDumping() {
     },
   ];
 
-
-
   return (
     <div className="w-full h-full">
       <div className="flex-col items-center mb-4">
@@ -238,98 +246,141 @@ function WasteIllegalDumping() {
         <div className="flex justify-between items-center p-4">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input 
-              type="number" 
-              className="w-14 h-8" 
-              value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                if (value >= 1) {
-                  setPageSize(value);
-                  setCurrentPage(1);
-                }
+            <Select 
+              value={pageSize.toString()} 
+              onValueChange={(value) => {
+                const newPageSize = Number.parseInt(value);
+                setPageSize(newPageSize);
+                // Reset all pages to 1
+                setPendingCurrentPage(1);
+                setResolvedCurrentPage(1);
+                setCancelledCurrentPage(1);
               }}
-            />
+            >
+              <SelectTrigger className="w-20 h-8 bg-white border-gray-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-            {/* Tabs for Pending/Resolved/Cancelled */}
-            <div className="pt-3">
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
-                <div className='pl-5 pb-3'>
-                  <TabsList className="grid w-full grid-cols-3 max-w-xs">
-                    <TabsTrigger value="pending">Pending</TabsTrigger>
-                    <TabsTrigger value="resolved">Resolved</TabsTrigger>
-                    <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-                  </TabsList>
-                </div>
-              </Tabs>
-            </div>
+          {/* Tabs for Pending/Resolved/Cancelled */}
+          <div className="pt-3">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <div className='pl-5 pb-3'>
+                <TabsList className="grid w-full grid-cols-3 max-w-xs">
+                  <TabsTrigger value="pending">Pending</TabsTrigger>
+                  <TabsTrigger value="resolved">Resolved</TabsTrigger>
+                  <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+                </TabsList>
+              </div>
+            </Tabs>
+          </div>
         </div>  
 
         <Tabs value={activeTab}>
           <TabsContent value="pending">
             <div className="border overflow-auto max-h-[400px]">
               {isLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                      <Spinner size="lg" />
-                      <span className="ml-2 text-gray-600">Loading...</span>
-                  </div>
+                <div className="flex items-center justify-center py-12">
+                  <Spinner size="lg" />
+                  <span className="ml-2 text-gray-600">Loading...</span>
+                </div>
               ) : (
                 <DataTable 
                   columns={columns} 
-                  data={paginatedData.filter(row => row.rep_status !== "resolved" && row.rep_status !== "cancelled")} 
+                  data={fetchedData}
                 />                
               )}              
+            </div>
+
+            {/* Pending Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+              <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                Showing {(pendingCurrentPage - 1) * pageSize + 1}-
+                {Math.min(pendingCurrentPage * pageSize, totalCount)} of{" "}
+                {totalCount} rows
+              </p>
+              {totalCount > 0 && (
+                <PaginationLayout
+                  currentPage={pendingCurrentPage}
+                  totalPages={pendingTotalPages}
+                  onPageChange={setPendingCurrentPage}
+                />
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="resolved">
             <div className="border overflow-auto max-h-[400px]">
               {isLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                      <Spinner size="lg" />
-                      <span className="ml-2 text-gray-600">Loading...</span>
-                  </div>
+                <div className="flex items-center justify-center py-12">
+                  <Spinner size="lg" />
+                  <span className="ml-2 text-gray-600">Loading...</span>
+                </div>
               ) : (
                 <DataTable 
                   columns={columns} 
-                  data={paginatedData.filter(row => row.rep_status === "resolved")} 
+                  data={fetchedData}
                 />                
               )}                
+            </div>
+
+            {/* Resolved Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+              <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                Showing {(resolvedCurrentPage - 1) * pageSize + 1}-
+                {Math.min(resolvedCurrentPage * pageSize, totalCount)} of{" "}
+                {totalCount} rows
+              </p>
+              {totalCount > 0 && (
+                <PaginationLayout
+                  currentPage={resolvedCurrentPage}
+                  totalPages={resolvedTotalPages}
+                  onPageChange={setResolvedCurrentPage}
+                />
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="cancelled">
             <div className="border overflow-auto max-h-[400px]">
               {isLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                      <Spinner size="lg" />
-                      <span className="ml-2 text-gray-600">Loading...</span>
-                  </div>
+                <div className="flex items-center justify-center py-12">
+                  <Spinner size="lg" />
+                  <span className="ml-2 text-gray-600">Loading...</span>
+                </div>
               ) : (
                 <DataTable 
                   columns={columns} 
-                  data={paginatedData.filter(row => row.rep_status === "cancelled")} 
+                  data={fetchedData}
                 />                
               )}                
             </div>
+
+            {/* Cancelled Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+              <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                Showing {(cancelledCurrentPage - 1) * pageSize + 1}-
+                {Math.min(cancelledCurrentPage * pageSize, totalCount)} of{" "}
+                {totalCount} rows
+              </p>
+              {totalCount > 0 && (
+                <PaginationLayout
+                  currentPage={cancelledCurrentPage}
+                  totalPages={cancelledTotalPages}
+                  onPageChange={setCancelledCurrentPage}
+                />
+              )}
+            </div>
           </TabsContent>
         </Tabs>
-      </div>   
-
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {(currentPage - 1) * pageSize + 1}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-          {filteredData.length} rows
-        </p>
-        {filteredData.length > 0 && (
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        )}
       </div>                                 
     </div>
   );

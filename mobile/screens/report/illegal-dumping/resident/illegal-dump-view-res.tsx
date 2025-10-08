@@ -90,7 +90,7 @@ export default function WasteIllegalDumpingResDetails() {
   
   
   //UPDATE MUTATION
-  const { mutate: updateRep, isPending } = useUpdateWasteResReport(Number(rep_id), () => {
+  const { mutate: updateRep, isPending } = useUpdateWasteResReport(String(rep_id), () => {
       setTimeout(() => {
           router.back();
       }, 600);
@@ -200,7 +200,7 @@ export default function WasteIllegalDumpingResDetails() {
         }
         stickyFooter={true}
       >
-        <ScrollView className="p-4 pb-8">
+        <ScrollView className="px-6 pb-8">
           {/* Header */}
           <View className="items-center pb-10">
             <View className="bg-gray-100 px-3 py-2 rounded-md">

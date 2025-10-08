@@ -5,20 +5,20 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ChevronLeft } from "lucide-react-native";
-import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
+import {ClerkDonateViewSchema} from "@/form-schema/donate-create-form-schema";
 import {
   useGetDonations,
   useUpdateDonation,
-  useGetPersonalList,
+  useGetPersonalList, useGetStaffList
 } from "./donation-queries";
 import { Donation } from "../donation-types";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingModal } from "@/components/ui/loading-modal";
+import { StaffSelect } from "../personalizedCompo/staff_select";
 
 const DonationView = () => {
   const router = useRouter();
@@ -28,13 +28,14 @@ const DonationView = () => {
   const updateDonationMutation = useUpdateDonation();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: staffList = [] } = useGetStaffList();
   
   // Extract the donations array from the data structure
   const donations = donationsData.results || [];
   const donation = donations.find((d: Donation) => d.don_num === don_num);
 
   const { control, handleSubmit, watch, setValue, reset } = useForm({
-    resolver: zodResolver(ClerkDonateCreateSchema),
+    resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
       don_donor: "",
       per_id: null as number | null,
@@ -44,6 +45,8 @@ const DonationView = () => {
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
       don_status: undefined,
+      don_dist_head: null,
+      don_dist_date: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -56,8 +59,9 @@ const DonationView = () => {
         don_category: donation.don_category || "",
         don_description: donation.don_description || undefined,
         don_date: donation.don_date || new Date().toISOString().split("T")[0],
-        per_id: donation.per_id || null,
         don_status: donation.don_status,
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
       });
     }
   }, [donation, reset]);
@@ -79,6 +83,8 @@ const DonationView = () => {
         don_description: formData.don_description || null,
         don_date: formData.don_date,
         don_status: formData.don_status,
+         don_dist_head: formData.don_dist_head || null,
+        don_dist_date: formData.don_dist_date || null,
       };
 
       await updateDonationMutation.mutateAsync({
@@ -114,8 +120,9 @@ const DonationView = () => {
         don_category: donation.don_category || "",
         don_description: donation.don_description || undefined,
         don_date: donation.don_date || new Date().toISOString().split("T")[0],
-        per_id: donation.per_id || null,
         don_status: donation.don_status || undefined,
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
       });
     }
     setIsEditing(false);
@@ -208,7 +215,7 @@ const DonationView = () => {
           )}
         </View>}
     >
-      <View className="space-y-4 p-4 flex-1">
+      <View className="space-y-4 p-4 flex-1 px-6">
         <Text className="text-sm font-medium mb-1">Condition</Text>
         <FormSelect
           control={control}
@@ -225,6 +232,19 @@ const DonationView = () => {
             onPress={() => {}}
           />
         )}
+
+        <View className="relative">
+          <Text className="text-sm font-medium mb-1">Donation Date</Text>
+          <FormDateInput control={control} name="don_date" />
+          {!isEditing && (
+            <TouchableOpacity
+              className="absolute top-0 left-0 right-0 bottom-0"
+              style={{ backgroundColor: "transparent" }}
+              onPress={() => {}}
+            />
+          )}
+        </View>
+
         <View className="relative">
           <Text className="text-sm font-medium mb-1">Donor Name</Text>
           <DonorSelect
@@ -248,7 +268,7 @@ const DonationView = () => {
           )}
         </View>
 
-        <View className="relative">
+        <View className="relative mt-4">
           <Text className="text-sm font-medium mb-1">Category</Text>
           <FormSelect
             control={control}
@@ -355,9 +375,28 @@ const DonationView = () => {
           )}
         </View>
 
+        <View className="relative mt-1">
+          <Text className="text-sm font-medium mb-1">Distribution Head</Text>
+          <StaffSelect
+            placeholder="Select distribution head..."
+            staff={staffList}
+            selectedStaff={watch("don_dist_head")}
+            onSelect={(staffName) => {
+              setValue("don_dist_head", staffName);
+            }}
+          />
+          {!isEditing && (
+            <TouchableOpacity
+              className="absolute top-0 left-0 right-0 bottom-0"
+              style={{ backgroundColor: "transparent" }}
+              onPress={() => {}}
+            />
+          )}
+        </View>
+        
         <View className="relative">
-          <Text className="text-sm font-medium mb-1">Donation Date</Text>
-          <FormDateInput control={control} name="don_date" />
+          <Text className="text-sm font-medium mb-1">Distribution Date</Text>
+          <FormDateInput control={control} name="don_dist_date" />
           {!isEditing && (
             <TouchableOpacity
               className="absolute top-0 left-0 right-0 bottom-0"
