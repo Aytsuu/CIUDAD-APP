@@ -9,15 +9,17 @@ import { useRouter } from 'expo-router';
 import { useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {  ChevronLeft } from 'lucide-react-native';
-import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
+import {ClerkDonateCreateSchema} from '@/form-schema/donate-create-form-schema';
 import { useAddDonation, useGetPersonalList } from './donation-queries';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import PageLayout from '@/screens/_PageLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const DonationAdd = () => {
+  const { user } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,6 +34,7 @@ const DonationAdd = () => {
       don_category: '',
       don_date: new Date().toISOString().split('T')[0],
       don_status: "Stashed",
+      staff: user?.staff?.staff_id || null,
     },
   });
 
@@ -107,7 +110,15 @@ const DonationAdd = () => {
           />
         </View>}
     >
-      <View className="space-y-4 p-4 flex-1">
+      <View className="space-y-4 p-4 flex-1 px-6">
+
+        {/* Date */}
+        <FormDateInput
+          control={control}
+          name="don_date"
+          label="Donation Date"
+        />   
+
         <View className="mb-4">
           <DonorSelect
             placeholder="Select donor or enter name"
@@ -175,13 +186,6 @@ const DonationAdd = () => {
           label="Description"
           placeholder="Enter description"
         />
-
-        {/* Date */}
-        <FormDateInput
-          control={control}
-          name="don_date"
-          label="Donation Date"
-        />   
       </View>
     </PageLayout>
   );

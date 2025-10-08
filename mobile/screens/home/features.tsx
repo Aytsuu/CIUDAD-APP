@@ -72,7 +72,7 @@ export const features: FeatureType[] = [
     users: []
   },
   {
-    name: "Treasurer",
+    name: "Finance",
     icon: <Circle />,
     route: "/(treasurer)",
     users: []
