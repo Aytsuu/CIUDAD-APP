@@ -205,11 +205,6 @@ const CouncilCalendarPage = () => {
           <Text className="text-primaryBlue text-lg font-semibold flex-1">
             {item.title}
           </Text>
-          <View className="bg-blue-100 px-2 py-1 rounded">
-            <Text className="text-primaryBlue text-xs font-medium">
-              {item.type}
-            </Text>
-          </View>
         </View>
         <Text className="text-gray-600 mt-2">{item.description}</Text>
         <View className="flex-row items-center mt-3">
@@ -340,7 +335,7 @@ const CouncilCalendarPage = () => {
 
 
       {/* Calendar Header */}
-      <View className="bg-white shadow-sm py-4 px-2">
+      <View className="bg-white shadow-sm py-4">
         <View className="flex-row justify-between items-center mb-4 px-2">
           <TouchableOpacity
             onPress={() => handleMonthChange(-1)}
