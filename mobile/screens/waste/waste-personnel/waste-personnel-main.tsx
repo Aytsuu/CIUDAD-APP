@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "expo-router";
-import { useState, useRef } from "react";
+import { useState} from "react";
 import {
   Text,
   View,
@@ -9,14 +9,13 @@ import {
   ActivityIndicator,
   TextInput,
   RefreshControl,
-  ScrollView
+  FlatList,
 } from "react-native";
 import {
   User,
   Trash2,
   Truck,
   ArchiveRestore,
-  Plus,
   ChevronLeft,
   Ban,
 } from "lucide-react-native";
@@ -31,8 +30,13 @@ import {
 import  { PersonnelItem, TruckData, SearchFormValues, Role, SearchFormSchema, WastePersonnel } from "./waste-personnel-types";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
-import { SearchInput } from "@/components/ui/search-input";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import EmptyState from "@/components/ui/emptyState";
+import { LoadingModal } from "@/components/ui/loading-modal";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function WastePersonnelMain() {
   const router = useRouter();
@@ -40,7 +44,6 @@ export default function WastePersonnelMain() {
   const [selectedRole, setSelectedRole] = useState<Role>("LOADER");
   const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
   const [currentPage, setCurrentPage] = useState(1);
-  const searchInputRef = useRef<TextInput>(null);
 
   const {
     control: searchControl,
@@ -173,276 +176,304 @@ export default function WastePersonnelMain() {
 
   const preparedPersonnel = filteredPersonnel.map(preparePersonnelItem);
 
-  // Render truck item
-  const renderTruckItem = (truck: TruckData) => (
+  // Render Truck Card (styled like Budget Plan)
+  const RenderTruckCard = ({ truck }: { truck: TruckData }) => (
     <TouchableOpacity
-      key={truck.truck_id}
       onPress={() => handleEditTruck(truck)}
-      activeOpacity={0.7}
-      className="mb-4"
+      activeOpacity={0.8}
+      className="mb-3"
     >
-      <View
-        className={`bg-white rounded-lg border border-gray-300 p-3 flex-row items-center justify-between ${
-          truckViewMode === "archive" ? "bg-gray-50" : ""
-        }`}
-      >
-        <View className="flex-1">
-          <Text className="text-sm font-medium">
-            {truck.truck_plate_num}
-          </Text>
-          <Text className="text-xs text-gray-500">
-            {truck.truck_model}
-          </Text>
-          <Text
-            className={`text-xs px-2 py-1 rounded-full mt-1 ${
-              truck.truck_status === "Operational"
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
-            {truck.truck_status}
-          </Text>
-        </View>
-        <View className="flex-row space-x-4">
-          {truck.truck_is_archive ? (
-            <ConfirmationModal
-              trigger={
-                <TouchableOpacity
-                  className="p-2"
-                  disabled={restoreTruckMutation.isPending}
-                >
-                  {restoreTruckMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#10b981" />
-                  ) : (
-                    <ArchiveRestore size={20} color="#10b981" />
-                  )}
-                </TouchableOpacity>
-              }
-              title="Confirm Restore"
-              description={`Restore truck ${truck.truck_plate_num}?`}
-              actionLabel="Restore"
-              onPress={() => handleRestoreTruck(truck)}
-              loading={restoreTruckMutation.isPending}
-            />
-          ) : (
-            <ConfirmationModal
-              trigger={
-                <TouchableOpacity
-                  className="p-2"
-                  disabled={deleteTruckMutation.isPending}
-                >
-                  {deleteTruckMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#f59e0b" />
-                  ) : (
-                    <Trash2 size={20} color="#ef4444" />
-                  )}
-                </TouchableOpacity>
-              }
-              title="Confirm Dispose"
-              description={`Are you sure you want to record truck ${truck.truck_plate_num} as disposed? It will be moved to the disposed trucks list.`}
-              actionLabel="Confirm"
-              onPress={() => handleDeleteTruck(truck)}
-              loading={deleteTruckMutation.isPending}
-            />
-          )}
-          {truckViewMode === "archive" && (
-            <ConfirmationModal
-              trigger={
-                <TouchableOpacity
-                  className="p-2"
-                  disabled={deleteTruckMutation.isPending}
-                >
-                  {deleteTruckMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#ef4444" />
-                  ) : (
-                    <Ban size={20} color="#ef4444" />
-                  )}
-                </TouchableOpacity>
-              }
-              title="Confirm Permanent Delete"
-              description={`Permanently delete truck ${truck.truck_plate_num}? This cannot be undone.`}
-              actionLabel="Delete"
-              variant="destructive"
-              onPress={() => handlePermanentDeleteTruck(truck)}
-              loading={deleteTruckMutation.isPending}
-            />
-          )}
-        </View>
-      </View>
+      <Card className="border-2 border-gray-200 shadow-sm bg-white">
+        <CardHeader className="pb-3">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+              <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+                {truck.truck_plate_num}
+              </Text>
+              <Text className="text-sm text-gray-500">
+                {truck.truck_model}
+              </Text>
+            </View>
+            <View className="flex-row items-center">
+              <Text
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  truck.truck_status === "Operational"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {truck.truck_status}
+              </Text>
+            </View>
+          </View>
+        </CardHeader>
+
+        <CardContent className="pt-3 border-t border-gray-200">
+          <View className="flex-row justify-end items-center">
+            <View className="flex-row space-x-2">
+              {truck.truck_is_archive ? (
+                <ConfirmationModal
+                  trigger={
+                    <TouchableOpacity className="bg-green-50 p-2 rounded-lg">
+                      <ArchiveRestore size={16} color="#10b981" />
+                    </TouchableOpacity>
+                  }
+                  title="Confirm Restore"
+                  description={`Restore truck ${truck.truck_plate_num}?`}
+                  actionLabel="Restore"
+                  onPress={() => handleRestoreTruck(truck)}
+                  loading={restoreTruckMutation.isPending}
+                />
+              ) : (
+                <ConfirmationModal
+                  trigger={
+                    <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
+                      <Trash2 size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  }
+                  title="Confirm Dispose"
+                  description={`Are you sure you want to record truck ${truck.truck_plate_num} as disposed? It will be moved to the disposed trucks list.`}
+                  actionLabel="Confirm"
+                  onPress={() => handleDeleteTruck(truck)}
+                  loading={deleteTruckMutation.isPending}
+                />
+              )}
+              {truckViewMode === "archive" && (
+                <ConfirmationModal
+                  trigger={
+                    <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
+                      <Ban size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  }
+                  title="Confirm Permanent Delete"
+                  description={`Permanently delete truck ${truck.truck_plate_num}? This cannot be undone.`}
+                  actionLabel="Delete"
+                  variant="destructive"
+                  onPress={() => handlePermanentDeleteTruck(truck)}
+                  loading={deleteTruckMutation.isPending}
+                />
+              )}
+            </View>
+          </View>
+        </CardContent>
+      </Card>
     </TouchableOpacity>
   );
 
-  const renderPersonnelItem = (item: PersonnelItem) => (
-    <View
-      key={item.id}
-      className="flex-row items-center px-6 py-5 mb-3 bg-white border border-gray-300 rounded-xl shadow-sm"
-    >
-      <View className="flex-1 pr-4">
-        <Text
-          className={`font-semibold text-[#1a1a1a] ${
-            width < 400 ? "text-sm" : "text-base"
-          }`}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.name}
-        </Text>
-      </View>
-      <View className="w-px h-6 bg-gray-300" />
-      <View className="flex-1 pl-4">
-        <Text
-          className={`font-semibold text-[#1a1a1a] text-right ${
-            width < 400 ? "text-sm" : "text-base"
-          }`}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.contact}
-        </Text>
-      </View>
-    </View>
+  // Render Personnel Card (styled like Budget Plan)
+  const RenderPersonnelCard = ({ item }: { item: PersonnelItem }) => (
+    <Card className="border-2 border-gray-200 shadow-sm bg-white mb-3">
+      <CardHeader className="pb-3">
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1">
+            <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+              {item.name}
+            </Text>
+            {/* <Text className="text-sm text-gray-500">
+              {item.position}
+            </Text> */}
+          </View>
+        </View>
+      </CardHeader>
+
+      <CardContent className="pt-3 border-t border-gray-200">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-sm text-gray-600">Contact:</Text>
+          <Text className="text-sm font-medium text-black">
+            {item.contact}
+          </Text>
+        </View>
+      </CardContent>
+    </Card>
   );
 
   const isLoading = (selectedRole === "Trucks" ? isTrucksLoading : isPersonnelLoading);
-  const isFetching = (selectedRole === "Trucks" ? isTrucksFetching : isPersonnelFetching);
+  const isMutationLoading = deleteTruckMutation.isPending || restoreTruckMutation.isPending;
 
-  return (
-  <PageLayout
-    leftAction={
-      <TouchableOpacity onPress={() => router.back()}>
-        <ChevronLeft size={30} color="black" className="text-black" />
-      </TouchableOpacity>
-    }
-    headerTitle={<Text>Waste Personnel and Collection Vehicle Management</Text>}
-    rightAction={<View></View>}
-  >
-    {/* Fixed Header Section */}
-    <View className="bg-white border-b border-gray-300">
-      <View className="flex-row justify-between items-center gap-x-2 px-4">
-        {buttonData.map((item, index) => (
-          <View key={index} className="flex-1">
-            <TouchableOpacity
-              className={`items-center justify-center rounded-lg py-3 px-1 ${
-                selectedRole === item.label ? "bg-gray-100" : "bg-white"
-              }`}
-              onPress={() => handleRoleChange(item.label as Role)}
-              activeOpacity={0.7}
-            >
-              {item.icon}
-              <Text
-                className={`font-medium mt-1 text-black text-center ${
-                  width < 400 ? "text-xs" : "text-sm"
-                }`}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+  const getLoadingMessage = () => {
+    if (deleteTruckMutation.isPending) return "Processing truck...";
+    if (restoreTruckMutation.isPending) return "Restoring truck...";
+    return `Loading ${selectedRole === "Trucks" ? "trucks" : "personnel"}...`;
+  };
+
+  // Empty state component
+  const renderEmptyState = () => {
+    const emptyMessage = searchQuery
+      ? `No ${selectedRole === "Trucks" ? "trucks" : "personnel"} found matching your search`
+      : `No ${selectedRole === "Trucks" ? "trucks" : "personnel"} found`;
+    
+    return (
+      <View className="flex-1 justify-center items-center py-8">
+        <EmptyState emptyMessage={emptyMessage} />
       </View>
+    );
+  };
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <ActivityIndicator size="large" color="#2a3a61" />
+      <Text className="text-sm text-gray-500 mt-2">
+        Loading {selectedRole === "Trucks" ? "trucks" : "personnel"}...
+      </Text>
     </View>
+  );
 
-    {/* Search and Filter Section */}
-    <View className="px-5 pt-4 pb-3 bg-white">
-      <View className="flex-row items-center gap-x-2 mb-3">
-        <View className="relative flex-1 h-12 mb-2">
-          <SearchInput
-            value={searchQuery}
-            onChange={(text) => {
-              setSearchValue("searchQuery", text);
-              setCurrentPage(1);
-            }}
-            onSubmit={() => {}}
-          />
-         
-        </View>
-        {selectedRole === "Trucks" && truckViewMode === "active" && (
-          <TouchableOpacity
-            className="bg-primaryBlue p-2 rounded-full"
-            onPress={handleAddTruck}
-          >
-            <Plus size={20} color="white" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {selectedRole === "Trucks" && (
-        <View className="flex-row justify-end">
-          <View className="flex-row bg-gray-100 rounded-full border border-gray-200 overflow-hidden">
-            <TouchableOpacity
-              className={`px-4 py-2 ${
-                truckViewMode === "active" ? "bg-gray-100" : "bg-white"
-              }`}
-              onPress={() => {
-                setTruckViewMode("active");
-                setCurrentPage(1);
-              }}
-            >
-              <Text className="text-sm font-medium">Active</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`px-4 py-2 ${
-                truckViewMode === "archive" ? "bg-gray-100" : "bg-white"
-              }`}
-              onPress={() => {
-                setTruckViewMode("archive");
-                setCurrentPage(1);
-              }}
-            >
-              <Text className="text-sm font-medium">Disposed</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-    </View>
-
-    {/* Content Area - Only this section shows loading */}
-    <ScrollView
-      className="flex-1 px-5"
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+return (
+  <>
+    <PageLayout
+      leftAction={
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
       }
+      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Waste Personnel & Vehicles</Text>}
+      rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+      wrapScroll={false}
     >
-      {/* Show loading only in content area */}
-      {(isLoading || (isFetching && searchQuery === debouncedSearchTerm)) ? (
-        <View className="py-8 items-center">
-          <ActivityIndicator size="large" color="#2a3a61" />
-          <Text className="text-gray-500 text-sm mt-2">
-            Loading {selectedRole === "Trucks" ? "trucks" : "personnel"}...
-          </Text>
+      <View className="flex-1">
+        {/* Role Selection Buttons */}
+        <View className="bg-white border-b border-gray-300">
+          <View className="flex-row justify-between items-center gap-x-2 px-6 py-3">
+            {buttonData.map((item, index) => (
+              <View key={index} className="flex-1">
+                <TouchableOpacity
+                  className={`items-center justify-center rounded-lg py-3 px-1 ${
+                    selectedRole === item.label ? "bg-gray-100" : "bg-white"
+                  }`}
+                  onPress={() => handleRoleChange(item.label as Role)}
+                  activeOpacity={0.7}
+                >
+                  {item.icon}
+                  <Text
+                    className={`font-medium mt-1 text-black text-center ${
+                      width < 400 ? "text-xs" : "text-sm"
+                    }`}
+                  >
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
         </View>
-      ) : (
-        <View className="pb-4">
-          {selectedRole === "Trucks" ? (
-            filteredTrucks.length > 0 ? (
-              filteredTrucks.map(truck => renderTruckItem(truck))
-            ) : (
-              <View className="py-8 items-center">
-                <Text className="text-gray-500 text-center">
-                  {searchQuery
-                    ? "No trucks found matching your search"
-                    : "No trucks found"
-                  }
-                </Text>
-              </View>
-            )
-          ) : (
-            preparedPersonnel.length > 0 ? (
-              preparedPersonnel.map(item => renderPersonnelItem(item))
-            ) : (
-              <View className="py-8 items-center">
-                <Text className="text-gray-500 text-center">
-                  {searchQuery
-                    ? "No personnel found matching your search"
-                    : "No personnel found"
-                  }
-                </Text>
-              </View>
-            )
+
+        {/* Search and Filter Section - Styled like Resolution */}
+        <View className="px-6 pt-4 pb-3 bg-white">
+          <View className="flex-row items-center gap-2 pb-3">
+            <View className="relative flex-1">
+              <TextInput
+                placeholder={`Search ${selectedRole === "Trucks" ? "trucks" : "personnel"}...`}
+                className="pl-2                                                 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
+                value={searchQuery}
+                onChangeText={(text) => {
+                  setSearchValue("searchQuery", text);
+                  setCurrentPage(1);
+                }}
+              />
+            </View>
+          </View>
+
+          {/* Truck Tabs - Styled like Budget Plan */}
+          {selectedRole === "Trucks" && (
+            <View className="pb-3">
+              <Tabs value={truckViewMode} onValueChange={val => setTruckViewMode(val as "active" | "archive")}>
+                <TabsList className="bg-blue-50 flex-row justify-between">
+                  <TabsTrigger 
+                    value="active" 
+                    className={`flex-1 mx-1 ${truckViewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                  >
+                    <Text className={`${truckViewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                      Active
+                    </Text>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="archive" 
+                    className={`flex-1 mx-1 ${truckViewMode === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                  >
+                    <Text className={`${truckViewMode === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                      Disposed
+                    </Text>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </View>
+          )}
+
+          {/* Add Truck Button - Styled like Resolution */}
+          {selectedRole === "Trucks" && truckViewMode === "active" && (
+            <Button 
+              onPress={handleAddTruck} 
+              className="bg-primaryBlue rounded-xl"
+            >
+              <Text className="text-white text-[17px]">Add Truck</Text>
+            </Button>
           )}
         </View>
-      )}
-    </ScrollView>
-  </PageLayout>
-  );
+
+        {/* Content Area */}
+        <View className="flex-1 px-6">
+          {isLoading ? (
+            <View className="flex-1 justify-center items-center">
+              <LoadingState/>
+            </View>
+          ) : (
+            <View className="flex-1">
+              {selectedRole === "Trucks" ? (
+                filteredTrucks.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={filteredTrucks}
+                    renderItem={({ item }) => <RenderTruckCard truck={item} />}
+                    keyExtractor={(item) => item.truck_id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )
+              ) : (
+                preparedPersonnel.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={preparedPersonnel}
+                    renderItem={({ item }) => <RenderPersonnelCard item={item} />}
+                    keyExtractor={(item) => item.id}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )
+              )}
+            </View>
+          )}
+        </View>
+      </View>
+    </PageLayout>
+
+    {/* Loading Modal only for mutations (delete, restore) */}
+    <LoadingModal 
+      visible={deleteTruckMutation.isPending || restoreTruckMutation.isPending} 
+    />
+  </>
+);
 }
