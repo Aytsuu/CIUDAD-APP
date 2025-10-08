@@ -111,6 +111,7 @@ export const addTruck = async (data: TruckFormValues): Promise<TruckData> => {
     truck_capacity: response.data.truck_capacity.toString(),
     truck_status: response.data.truck_status,
     truck_last_maint: response.data.truck_last_maint,
+    staff: response.data.staff,
   };
 };
 

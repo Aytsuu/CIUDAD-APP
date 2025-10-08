@@ -16,11 +16,13 @@ import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
 
 export default function IllegalDumpResubmitForm() {
+  const {user} = useAuth()  
   const params = useLocalSearchParams();    
   const router = useRouter();
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
@@ -92,7 +94,9 @@ export default function IllegalDumpResubmitForm() {
 
     const allValues = {
       ...values,
-      files      
+      files,
+      rp_id: user?.rp,
+      phone: user?.phone      
     }
 
     addReport(allValues, {
