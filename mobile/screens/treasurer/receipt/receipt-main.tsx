@@ -194,7 +194,7 @@ const ReceiptPage = () => {
             <Search className="absolute left-3 top-3 text-gray-500" size={17} />
             <TextInput
               placeholder="Search..."
-              className="pl-5 w-full h-12 bg-white text-base rounded-lg p-2 border border-gray-300"
+              className="pl-5 w-full h-12 bg-white text-base rounded-xl p-2 border border-gray-300"
               value={searchQuery}
               onChangeText={handleSearchChange}
             />
