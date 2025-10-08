@@ -283,9 +283,9 @@ class HearingSchedule(models.Model):
     hs_id = models.BigAutoField(primary_key=True)
     hs_level = models.CharField(max_length=500)
     hs_is_closed = models.BooleanField(default=False)
-    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
-    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
-    sc_id = models.ForeignKey('SummonCase', db_column='sc_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
+    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null=True, blank=True, related_name='hearing_schedules')
+    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null=True, blank=True, related_name='hearing_schedules')
+    sc_id = models.ForeignKey('SummonCase', db_column='sc_id', on_delete=models.SET_NULL, null=True, blank=True, related_name='hearing_schedules')
 
     class Meta:
         db_table = 'hearing_schedule'

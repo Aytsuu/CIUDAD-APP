@@ -71,10 +71,13 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
-    const { data: wasteCollectionData = [], isLoading: isLoadingWasteData } = useGetWasteCollectionSchedFull();
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
-    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
+    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];    
 
     //UPDATE QUERY MUTATIONS
     const { mutate: updateSchedule } = useUpdateWasteSchedule();
@@ -129,18 +132,19 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             //checks for sitio with the same day
             const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
             
-            const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+
+            const hasSameSitioSameDay = wasteSchedules.some(schedule => 
                 schedule.wc_day === values.day &&
                 schedule.sitio_name === selectedSitioName &&
-                schedule.wc_num !== Number(wc_num)          
-            );
+                schedule.wc_num !== Number(wc_num)   
+            );            
 
             //checks for overlapping day and time
-            const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+            const hasDuplicateSchedule = wasteSchedules.some(schedule => 
                 schedule.wc_day === values.day && 
                 schedule.wc_time === formattedTime &&
-                schedule.wc_num !== Number(wc_num) 
-            );     
+                schedule.wc_num !== Number(wc_num)   
+            );  
             
             //return if there is overlapping schedule
             if (hasDuplicateSchedule) {

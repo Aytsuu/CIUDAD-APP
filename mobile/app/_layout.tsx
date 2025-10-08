@@ -64,12 +64,12 @@ export default function RootLayout() {
                 <Stack.Screen name="(report)" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="(securado)" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="(health)" options={{ headerShown: false, animation: 'fade' }} />
-                <Stack.Screen name="donation" options = {{ headerShown: false, animation: 'fade' }}/>
+                <Stack.Screen name="(donation)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(council)" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="(treasurer)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(waste)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(request)" options = {{headerShown: false, animation: 'fade'}}/>
-                <Stack.Screen name="gad" options = {{ headerShown: false, animation: 'fade' }}/>
+                <Stack.Screen name="(gad)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
                 <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>

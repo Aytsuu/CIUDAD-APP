@@ -53,12 +53,12 @@ const DonationTracker = () => {
   };
 
   const handleAddDonation = () => {
-    router.push("/donation/staffDonationAdd");
+    router.push("/(donation)/staffDonationAdd");
   };
 
   const handleViewDonation = (donationNum: string) => {
     router.push({
-      pathname: "/donation/staffDonationView",
+      pathname: "/(donation)/staffDonationView",
       params: { don_num: donationNum.toString() },
     });
   };

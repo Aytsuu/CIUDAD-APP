@@ -18,11 +18,12 @@ export default () => {
                 <Stack.Screen name="receipt/receipt-main" options={{ headerShown: false, animation: 'fade' }} />  
                 
                 <Stack.Screen name='rates/annual-gross-sales-create' options = {{headerShown: false}} />
+                <Stack.Screen name='rates/purpose-and-rate-main' options = {{headerShown: false}} />
                 <Stack.Screen name='rates/purpose-and-rate-create' options = {{headerShown: false}} />
                 <Stack.Screen name='rates/purpose-and-rate-edit' options = {{headerShown: false}} />
                 <Stack.Screen name='rates/annual-gross-sales-edit' options = {{headerShown: false}} />
                 <Stack.Screen name="disbursementVoucher/disb-main" options={{ headerShown: false, animation: 'fade' }} />
-                      
+                <Stack.Screen name="budgetPlan/budget-plan-main" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="budgetPlan/budget-plan-view" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="budgetPlan/budget-plan-suppdoc-create" options={{ headerShown: false, animation: 'fade' }} />
 

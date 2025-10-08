@@ -16,6 +16,7 @@ from django.db.models import Q
 from datetime import date, timedelta
 from rest_framework.views import APIView
 from django.utils import timezone
+from django.db.models import Case, When, Value, IntegerField
 from apps.announcement.models import Announcement, AnnouncementRecipient
 from apps.pagination import StandardResultsPagination
 
@@ -108,11 +109,13 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
         return response
 
 class WasteCollectionStaffView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
 # WASTE COLLECTION RETRIEVE / VIEW
 class WasteCollectionSchedView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]        
     serializer_class = WasteCollectionSchedSerializer
     queryset = WasteCollectionSched.objects.all()
 
@@ -120,22 +123,38 @@ class WasteCollectionSchedView(ActivityLogMixin, generics.ListCreateAPIView):
         instance = serializer.save()
         return instance  # Return the created instance including wc_num
 
-# class WasteCollectionAssignmentView(generics.ListCreateAPIView):
-#     serializer_class = WasteCollectionAssignmentSerializer
-#     queryset = WasteCollectionAssignment.objects.all()
 
 class WasteCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
+    
 
 class WasteCollectionSchedFullDataView(generics.ListAPIView):
+    permission_classes = [AllowAny]   
     serializer_class = WasteCollectionSchedFullDataSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         search_query = self.request.query_params.get('search', '')
         day = self.request.query_params.get('day', '')
+        is_archive = self.request.query_params.get('is_archive', None)
         
         queryset = WasteCollectionSched.objects.all()
+        
+        # Apply archive filter if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(wc_is_archive=is_archive_bool)
         
         # Apply search filter if search query exists
         if search_query:
@@ -151,15 +170,30 @@ class WasteCollectionSchedFullDataView(generics.ListAPIView):
                 Q(wastecollector__wstp__staff__rp__per__per_lname__icontains=search_query) |
                 Q(wastecollector__wstp__staff__rp__per__per_fname__icontains=search_query) |
                 Q(wastecollector__wstp__staff__rp__per__per_mname__icontains=search_query)
-            ).distinct()  # Important: use distinct() to avoid duplicate results from collector joins
+            ).distinct()
         
         # Apply day filter
         if day:
             queryset = queryset.filter(wc_day=day)
         
-        return queryset
+        # Custom day ordering
+        day_order = Case(
+            When(wc_day='Monday', then=Value(1)),
+            When(wc_day='Tuesday', then=Value(2)),
+            When(wc_day='Wednesday', then=Value(3)),
+            When(wc_day='Thursday', then=Value(4)),
+            When(wc_day='Friday', then=Value(5)),
+            When(wc_day='Saturday', then=Value(6)),
+            When(wc_day='Sunday', then=Value(7)),
+            default=Value(8),
+            output_field=IntegerField()
+        )
+        
+        return queryset.order_by(day_order, 'wc_time')
+    
 
 class WasteCollectorDeleteView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = WasteCollector.objects.all()
     serializer_class = WasteCollectorSerializer
 
@@ -169,6 +203,7 @@ class WasteCollectorDeleteView(generics.DestroyAPIView):
 
 # WASTE COLLECTION DELETE
 class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = WasteCollectionSched.objects.all()
     serializer_class = WasteCollectionSchedSerializer
 
@@ -187,6 +222,7 @@ class WasteCollectionSchedDeleteView(generics.DestroyAPIView):
 
 
 class WasteCollectorListView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteCollectorSerializer
     
     def get_queryset(self):
@@ -204,6 +240,7 @@ class WasteCollectorListView(generics.ListAPIView):
 
 # WASTE COLLECTION UPDATE
 class WasteCollectionSchedUpdateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]    
     queryset = WasteCollectionSched.objects.all()
     serializer_class = WasteCollectionSchedSerializer
     lookup_field = 'wc_num'
@@ -245,23 +282,25 @@ class CreateCollectionRemindersView(APIView):
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
                 ann_details=f"When: {schedule.wc_day} at {time_str}\nLocation: SITIO {sitio_name}",
                 ann_created_at=timezone.now(),
-                ann_type="general",
+                ann_start_at=timezone.now(),
+                ann_end_at=timezone.now() + timedelta(days=2),
+                ann_type="GENERAL",
                 ann_to_email=True,
                 ann_to_sms=True,
-                ann_status="Active",
+                ann_status="ACTIVE",
                 staff=schedule.staff
             )
 
             # Create recipients
             AnnouncementRecipient.objects.create(
                 ann=announcement,
-                ar_category="staff",
+                ar_category="STAFF",
                 ar_type="LOADER"
             )
 
             AnnouncementRecipient.objects.create(
                 ann=announcement,
-                ar_category="staff",
+                ar_category="STAFF",
                 ar_type="DRIVER LOADER"
             )
 
@@ -281,6 +320,7 @@ class CreateCollectionRemindersView(APIView):
 #============================= WASTE HOTSPOT ================================
 
 class UpcomingHotspotView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
@@ -318,6 +358,7 @@ class UpcomingHotspotView(generics.ListAPIView):
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class WasteHotspotView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]   
     serializer_class = WasteHotspotSerializer
 
     def get_queryset(self):
@@ -328,6 +369,7 @@ class WasteHotspotView(ActivityLogMixin, generics.ListCreateAPIView):
         ).all().order_by('wh_date', 'wh_start_time', 'wh_end_time')
 
 class UpdateHotspotView(ActivityLogMixin, generics.RetrieveUpdateAPIView): 
+    permission_classes = [AllowAny]    
     serializer_class = WasteHotspotSerializer
     queryset = WasteHotspot.objects.all()
     lookup_field = 'wh_num'
@@ -341,6 +383,7 @@ class UpdateHotspotView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class DeleteHotspotView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteHotspotSerializer    
     queryset = WasteHotspot.objects.all()
 
@@ -352,6 +395,7 @@ class DeleteHotspotView(generics.DestroyAPIView):
 # ============================ ILLEGAL DUMPING ================================
 
 class WasteReportFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteReportFileSerializer
     queryset = WasteReport_File.objects.all()
 
@@ -387,6 +431,7 @@ class WasteReportDeleteFileView(generics.RetrieveDestroyAPIView):
     
 
 class WasteReportResolveFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteReportResolveFileSerializer
     queryset = WasteReportResolve_File.objects.all()
 
@@ -415,6 +460,7 @@ class WasteReportResolveFileView(generics.ListCreateAPIView):
 
 
 class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = WasteReportSerializer
     
     def get_queryset(self):
@@ -458,6 +504,7 @@ class WasteReportView(ActivityLogMixin, generics.ListCreateAPIView):
     
 
 class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()
     lookup_field = 'rep_id'
@@ -471,6 +518,7 @@ class UpdateWasteReportView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteWasteReportView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = WasteReportSerializer    
     queryset = WasteReport.objects.all()
 

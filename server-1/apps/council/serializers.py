@@ -7,71 +7,122 @@ from apps.gad.models import ProjectProposal
 from utils.supabase_client import upload_to_storage
 from apps.treasurer.serializers import FileInputSerializer
 from django.db import transaction
-from datetime import datetime
+from datetime import datetime, timedelta
 from apps.announcement.models import Announcement, AnnouncementRecipient
+import logging
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
     class Meta:
         model = CouncilScheduling
         fields = '__all__'
-
+    
     @transaction.atomic
     def create(self, validated_data):
+        # Extract staff_id if it exists (won't be in validated_data if not in model)
+        staff_id = self.initial_data.get('staff_id')
+        
         # Create the council event
         council_event = CouncilScheduling.objects.create(**validated_data)
         
         # Automatically create announcement for all barangay staff
-        self._create_staff_announcement(council_event)
+        self._create_staff_announcement(council_event, staff_id)
         
         return council_event
 
-    def _create_staff_announcement(self, council_event):
-        """
-        Creates an announcement targeted to all barangay staff
-        when a council event is created.
-        """
-        # Combine date and time for event start
-        event_start = datetime.combine(council_event.ce_date, council_event.ce_time)
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        # Extract staff_id if it exists
+        staff_id = self.initial_data.get('staff_id')
+        
+        announcement_trigger_fields = ['ce_title', 'ce_date', 'ce_time', 'ce_place', 'ce_description']
+        
+        # Check if any announcement-relevant fields were changed
+        should_create_announcement = False
+        for field in announcement_trigger_fields:
+            if field in validated_data:
+                old_value = getattr(instance, field)
+                new_value = validated_data[field]
+                if old_value != new_value:
+                    should_create_announcement = True
+                    break
+        
+        # Update the council event
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Only create announcement if relevant fields changed
+        if should_create_announcement:
+            self._create_staff_announcement(instance, staff_id, is_update=True)
+        
+        return instance
+    
+    def _create_staff_announcement(self, council_event, staff_id=None, is_update=False): 
+        staff = None
+        # Try to get staff from staff_id parameter
+        if staff_id:
+            try:
+                Staff = apps.get_model('administration', 'Staff')
+                staff = Staff.objects.get(staff_id=staff_id)
+            except Staff.DoesNotExist:
+                logger.error(f"Staff with id {staff_id} does not exist")
+            except Exception as e:
+                logger.error(f"Error getting staff: {str(e)}")
+        
+        # Try to get from council_event if it has staff_id field
+        if not staff and hasattr(council_event, 'staff_id') and council_event.staff_id:
+            staff = council_event.staff_id
+        
+        # Try to get from request context
+        if not staff and self.context.get('request'):
+            request = self.context.get('request')
+            if hasattr(request.user, 'staff'):
+                staff = request.user.staff
+        
+        # If still no staff, raise error since it's required
+        if not staff:
+            error_msg = f"staff_id is required to create an announcement. Provided staff_id: {staff_id}"
+            logger.error(error_msg)
+            raise serializers.ValidationError(error_msg)
+        
+        # Get current time and set end time to 24 hours later
+        now = timezone.now()
+        naive_event_datetime = datetime.combine(council_event.ce_date, council_event.ce_time)
+        event_datetime = timezone.make_aware(naive_event_datetime, timezone.get_current_timezone())
+        end_time = event_datetime + timedelta(hours=24)
+        
+        # Create the announcement title based on whether it's an update
+        announcement_title = f"Council {'Update' if is_update else 'Meeting'}: {council_event.ce_title}"
+       
+        if is_update:
+            announcement_details += "This meeting has been updated. Please take note of the changes."
         
         # Create the announcement
         announcement = Announcement.objects.create(
-            ann_title=f"Council: {council_event.ce_title}",
-            ann_details=f"{council_event.ce_description}\n\n"
-                       f"Location: {council_event.ce_place}\n"
-                       f"Date: {council_event.ce_date.strftime('%B %d, %Y')}\n"
-                       f"Time: {council_event.ce_time.strftime('%I:%M %p')}",
-            ann_type="event",
-            ann_event_start=event_start,
-            ann_event_end=None,  # You can adjust this if you have end time
+            ann_title=announcement_title,
+            ann_details=announcement_details,
+            ann_type="GENERAL",
+            ann_event_start=None,  
+            ann_event_end=None,
+            ann_start_at=now,  
+            ann_end_at=end_time, 
             ann_to_sms=True,
             ann_to_email=True,
-            ann_status="Active",
-            staff=council_event.staff
+            ann_status="ACTIVE",
+            staff=staff,
         )
         
         # Create recipient record for all staff
         AnnouncementRecipient.objects.create(
             ann=announcement,
             ar_category="staff",
-            ar_type=None  # None means all staff positions
+            ar_type=None
         )
         
         return announcement
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        """
-        Optional: Update the related announcement when council event is updated
-        """
-        # Update the council event
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        # Optionally update the related announcement
-        # You can find and update the announcement here if needed
-        
-        return instance
 
 # class CouncilAttendeesSerializer(serializers.ModelSerializer):
 #     atn_present_or_absent = serializers.ChoiceField(choices=['Present', 'Absent'])

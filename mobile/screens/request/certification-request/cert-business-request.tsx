@@ -9,7 +9,7 @@ import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleFiles, prepareFileForUpload, type FileUploadData } from "@/helpers/fileUpload";
 
 const CertPermit: React.FC = () => {
@@ -38,7 +38,7 @@ const CertPermit: React.FC = () => {
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    user?.resident?.rp_id || ""
+    user?.rp || ""
   );
   const businessData = businessResponse?.results || [];
 
@@ -133,18 +133,18 @@ const CertPermit: React.FC = () => {
       }));
   }, [annualGrossSales]);
 
-  // Memoize text input handlers to prevent re-renders
-  const handleBusinessNameChange = useCallback((text: string) => {
+  // Text input handlers
+  const handleBusinessNameChange = (text: string) => {
     if (permitType === 'Business Clearance' && businessData.length === 0) {
       setBusinessName(text);
     }
-  }, [permitType, businessData.length]);
+  };
 
-  const handleBusinessAddressChange = useCallback((text: string) => {
+  const handleBusinessAddressChange = (text: string) => {
     if (permitType === 'Business Clearance' && businessData.length === 0) {
       setBusinessAddress(text);
     }
-  }, [permitType, businessData.length]);
+  };
 
   // Memoize editable state
   const isBusinessNameEditable = useMemo(() => {
@@ -183,14 +183,21 @@ const CertPermit: React.FC = () => {
       return;
     }
 
-    // Validate required images (only for non-Business Clearance)
+    // Validate required images
     if (permitType !== 'Business Clearance') {
+      // For other permit types
       if (isBusinessOld && !previousPermitImage) {
         setError("Previous permit image is required for existing businesses");
         return;
       }
       if (!assessmentImage) {
         setError("Assessment image is required");
+        return;
+      }
+    } else if (permitType === 'Business Clearance' && businessData.length === 0) {
+      // For Business Clearance with new businesses
+      if (!assessmentImage) {
+        setError("Assessment document is required for new businesses");
         return;
       }
     }
@@ -200,7 +207,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: user?.resident?.rp_id || "",
+      rp_id: user?.rp || "",
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
@@ -247,13 +254,13 @@ const CertPermit: React.FC = () => {
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: selectedPurpose?.pr_id,
-      rp_id: rp,
+      rp_id: user?.rp || "",
       req_amount: reqAmount,
       ags_id: agsId || undefined,
     };
 
     // Handle file uploads if images are provided
-    if ((previousPermitImage || assessmentImage) && permitType !== 'Business Clearance') {
+    if ((previousPermitImage || assessmentImage) && (permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0))) {
       try {
         setIsUploadingFiles(true);
         setUploadProgress("Preparing files for upload...");
@@ -304,8 +311,8 @@ const CertPermit: React.FC = () => {
   // Show loading screen while auth is loading
   if (isLoading) {
     return (
-      <_ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
           <TouchableOpacity 
             onPress={() => router.back()} 
             className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -313,20 +320,20 @@ const CertPermit: React.FC = () => {
             <Ionicons name="chevron-back" size={20} color="#374151" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
-        customRightAction={<View className="w-10 h-10" />}
+        headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
+        rightAction={<View className="w-10 h-10" />}
       >
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00AFFF" />
           <Text className="text-gray-600 text-base mt-4">Loading...</Text>
         </View>
-      </_ScreenLayout>
+      </PageLayout>
     );
   }
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity 
           onPress={() => router.back()} 
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -334,8 +341,8 @@ const CertPermit: React.FC = () => {
           <Ionicons name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 px-5">
         {/* Loading Overlay */}
@@ -430,6 +437,8 @@ const CertPermit: React.FC = () => {
               value={businessName}
               onChangeText={handleBusinessNameChange}
               editable={isBusinessNameEditable}
+              autoCapitalize="words"
+              autoCorrect={false}
             />
 
             {/* Business Address */}
@@ -449,6 +458,8 @@ const CertPermit: React.FC = () => {
               value={businessAddress}
               onChangeText={handleBusinessAddressChange}
               editable={isBusinessAddressEditable}
+              autoCapitalize="words"
+              autoCorrect={false}
             />
 
             {/* Annual Gross Sales */}
@@ -476,8 +487,8 @@ const CertPermit: React.FC = () => {
 
             {/* Claim Date removed */}
 
-            {/* Image Upload Section - Only show for non-Business Clearance */}
-            {permitType !== 'Business Clearance' && (
+            {/* Image Upload Section - Show for non-Business Clearance OR Business Clearance for new businesses */}
+            {(permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0)) && (
               <View className="mb-4">
                 <Text className="text-sm font-medium text-gray-700 mb-3">Required Documents</Text>
                 
@@ -487,7 +498,7 @@ const CertPermit: React.FC = () => {
                     {isBusinessOld ? 'Existing Business' : 'New Business'}
                   </Text>
                   <Text className={`text-xs ${isBusinessOld ? 'text-blue-600' : 'text-green-600'} mt-1`}>
-                    {isBusinessOld ? 'Previous permit and assessment required' : 'Assessment only required'}
+                    {isBusinessOld ? 'Previous permit and assessment required' : 'Assessment document required for new businesses'}
                   </Text>
                 </View>
 
@@ -544,7 +555,12 @@ const CertPermit: React.FC = () => {
                     >
                       <Ionicons name="document-outline" size={32} color="#888" />
                       <Text className="text-gray-600 text-sm mt-2">Upload Assessment</Text>
-                      <Text className="text-gray-400 text-xs mt-1">Required for all businesses</Text>
+                      <Text className="text-gray-400 text-xs mt-1">
+                        {permitType === 'Business Clearance' && businessData.length === 0 
+                          ? 'Required for new businesses' 
+                          : 'Required for all businesses'
+                        }
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -628,7 +644,7 @@ const CertPermit: React.FC = () => {
         )}
       </ScrollView>
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 };
 

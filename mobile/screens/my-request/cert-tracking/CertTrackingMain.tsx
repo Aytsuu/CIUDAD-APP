@@ -10,8 +10,8 @@ export default function CertTrackingMain() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
 
-  const { data, isLoading, isError } = useCertTracking(user?.resident?.rp_id || "");
-  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.resident?.rp_id || "");
+  const { data, isLoading, isError } = useCertTracking(user?.rp || "");
+  const { mutate: cancelCert, isPending: isCancelling } = useCancelCertificate(user?.rp || "");
   const [activeTab, setActiveTab] = React.useState<'personal' | 'business'>('personal');
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all');
 
