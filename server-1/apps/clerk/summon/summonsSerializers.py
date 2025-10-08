@@ -55,7 +55,7 @@ class RemarkSuppDocSerializer(serializers.ModelSerializer):
 
 class SummonCaseSerializer(serializers.ModelSerializer):
     class Meta:
-        models = SummonCase
+        model = SummonCase
         fields = '__all__'  
 
 class SummonCasesSerializer(serializers.ModelSerializer):

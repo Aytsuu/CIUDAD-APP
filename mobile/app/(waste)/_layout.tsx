@@ -31,6 +31,10 @@ export default () => {
                 <Stack.Screen name="waste-hotspot/waste-hotspot-create" options={{ headerShown: false, animation: 'fade' }} /> 
                 <Stack.Screen name="waste-hotspot/waste-hotspot-edit" options={{ headerShown: false, animation: 'fade' }} />        
 
+                <Stack.Screen name="waste-event/waste-event-main" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="waste-event/waste-event-create" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="waste-event/waste-event-edit" options={{ headerShown: false, animation: 'fade' }} />
+
             </Stack>
         </ToastProvider>
     );

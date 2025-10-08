@@ -144,29 +144,49 @@ class CaseTrackingView(generics.RetrieveAPIView):
 class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ClerkCertificateSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        return (
-            ClerkCertificate.objects.filter(
-                cr_req_payment_status="Paid"
+        queryset = ClerkCertificate.objects.select_related(
+            'rp_id__per',
+            'pr_id'
+        ).prefetch_related(
+            'rp_id__per__personal_addresses__add'
+        ).prefetch_related(
+            Prefetch(
+                'issuedcertificate_set',
+                queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
             )
-            .exclude(
-                issuedcertificate__isnull=False
+        ).all()
+
+        # Search functionality - matching web version
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(cr_id__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(cr_req_status__icontains=search) |
+                Q(cr_req_payment_status__icontains=search)
             )
-            .select_related(
-                'rp_id__per',
-                'pr_id'
-            )
-            .prefetch_related(
-                'rp_id__per__personal_addresses__add'
-            )
-            .prefetch_related(
-                Prefetch(
-                    'issuedcertificate_set',
-                    queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
-                )
-            )
-        )
+
+        # Status filter - matching web version
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(cr_req_status=status_filter)
+
+        # Payment status filter - matching web version
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(cr_req_payment_status=payment_status)
+
+        # Purpose filter - matching web version
+        purpose_filter = self.request.query_params.get('purpose', None)
+        if purpose_filter:
+            queryset = queryset.filter(pr_id__pr_purpose=purpose_filter)
+
+        return queryset.order_by('-cr_req_request_date')
 
     def create(self, request, *args, **kwargs):
         try:
@@ -224,6 +244,14 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for non-paginated requests
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -501,14 +529,41 @@ class CancelCertificateView(APIView):
 class IssuedCertificateListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = IssuedCertificateSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         try:
-            base_qs = IssuedCertificate.objects.all()
-            logger.info(f"Found {base_qs.count()} issued certificates (base)")
-            sample = list(base_qs.values('ic_id', 'ic_date_of_issuance', 'certificate_id', 'staff_id')[:5])
-            logger.info(f"IssuedCertificate sample: {sample}")
-            return base_qs.select_related('certificate__rp_id__per', 'staff')
+            queryset = IssuedCertificate.objects.select_related(
+                'certificate__rp_id__per',
+                'certificate__pr_id',
+                'staff'
+            ).all()
+
+            # Search functionality - matching web version
+            search = self.request.query_params.get('search', None)
+            if search:
+                queryset = queryset.filter(
+                    Q(ic_id__icontains=search) |
+                    Q(certificate__rp_id__per__per_fname__icontains=search) |
+                    Q(certificate__rp_id__per__per_lname__icontains=search) |
+                    Q(certificate__pr_id__pr_purpose__icontains=search) |
+                    Q(ic_date_of_issuance__icontains=search)
+                )
+
+            # Purpose filter - matching web version
+            purpose_filter = self.request.query_params.get('purpose', None)
+            if purpose_filter:
+                queryset = queryset.filter(certificate__pr_id__pr_purpose=purpose_filter)
+
+            # Date range filter - matching web version
+            date_from = self.request.query_params.get('date_from', None)
+            date_to = self.request.query_params.get('date_to', None)
+            if date_from:
+                queryset = queryset.filter(ic_date_of_issuance__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(ic_date_of_issuance__lte=date_to)
+
+            return queryset.order_by('-ic_date_of_issuance')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -517,11 +572,15 @@ class IssuedCertificateListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-            for cert in queryset:
-                logger.info(f"Processing certificate: {cert.ic_id}")
-                logger.info(f"- Certificate: {cert.certificate.cr_id if cert.certificate else 'No certificate'}")
-                logger.info(f"- Staff: {cert.staff.staff_id if cert.staff else 'No staff'}")
-
+            logger.info(f"Found {queryset.count()} issued certificates")
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for non-paginated requests
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -651,20 +710,59 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
 class BusinessPermitListView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BusinessPermitSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        return BusinessPermitRequest.objects.filter(
-            req_payment_status="Paid"
-        ).exclude(
-            # Exclude business permits that are already issued
-            issuedbusinesspermit__isnull=False
-        ).select_related('bus_id').all()
+        queryset = BusinessPermitRequest.objects.select_related(
+            'bus_id',
+            'rp_id__per',
+            'pr_id',
+            'ags_id'
+        ).all()
+
+        # Search functionality - matching web version
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(bpr_id__icontains=search) |
+                Q(bus_permit_name__icontains=search) |
+                Q(bus_permit_address__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(req_status__icontains=search) |
+                Q(req_payment_status__icontains=search)
+            )
+
+        # Status filter - matching web version
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(req_status=status_filter)
+
+        # Payment status filter - matching web version
+        payment_status = self.request.query_params.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(req_payment_status=payment_status)
+
+        # Business type filter - matching web version
+        business_type = self.request.query_params.get('business_type', None)
+        if business_type:
+            queryset = queryset.filter(bus_id__bus_type=business_type)
+
+        return queryset.order_by('-req_request_date')
 
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
             logger.info(f"Found {queryset.count()} business permits")
             
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for non-paginated requests
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -823,16 +921,44 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
 class IssuedBusinessPermitListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = IssuedBusinessPermitSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         try:
             queryset = IssuedBusinessPermit.objects.select_related(
                 'permit_request__bus_id',
+                'permit_request__rp_id__per',
+                'permit_request__pr_id',
                 'staff'
             ).all()
+
+            # Search functionality - matching web version
+            search = self.request.query_params.get('search', None)
+            if search:
+                queryset = queryset.filter(
+                    Q(ibp_id__icontains=search) |
+                    Q(permit_request__bus_permit_name__icontains=search) |
+                    Q(permit_request__rp_id__per__per_fname__icontains=search) |
+                    Q(permit_request__rp_id__per__per_lname__icontains=search) |
+                    Q(permit_request__pr_id__pr_purpose__icontains=search) |
+                    Q(date_issued__icontains=search)
+                )
+
+            # Purpose filter - matching web version
+            purpose_filter = self.request.query_params.get('purpose', None)
+            if purpose_filter:
+                queryset = queryset.filter(permit_request__pr_id__pr_purpose=purpose_filter)
+
+            # Date range filter - matching web version
+            date_from = self.request.query_params.get('date_from', None)
+            date_to = self.request.query_params.get('date_to', None)
+            if date_from:
+                queryset = queryset.filter(date_issued__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(date_issued__lte=date_to)
             
             logger.info(f"Found {queryset.count()} issued business permits")
-            return queryset
+            return queryset.order_by('-date_issued')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -841,6 +967,11 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:

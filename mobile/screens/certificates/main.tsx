@@ -6,7 +6,6 @@ import { router } from 'expo-router'
 
 const CertificatesMain = () => {
   const handleNavigation = (route: string) => {
-    // Navigate to the appropriate route based on selection
     switch (route) {
       case 'personal':
         router.push('/(certificates)/cert-list')

@@ -1,16 +1,21 @@
-import { View, Text, ScrollView, Pressable, TextInput } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { View, Text, ScrollView, Pressable, TextInput, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { getIssuedCertificates, IssuedCertificate } from '../queries/issuedCertificateQueries'
+import { DataTable, ColumnDef } from '@/components/ui/table/data-table'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const IssuedCertList = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [certificates, setCertificates] = useState<IssuedCertificate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filterValue, setFilterValue] = useState("All")
+  const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates")
+  const [entriesPerPage, setEntriesPerPage] = useState(10)
 
   // Fetch issued certificates from API
   useEffect(() => {
@@ -18,7 +23,7 @@ const IssuedCertList = () => {
       try {
         setLoading(true)
         const data = await getIssuedCertificates()
-        setCertificates(data)
+        setCertificates(data.results)
         setError(null)
       } catch (err) {
         console.error('Error fetching issued certificates:', err)
@@ -37,12 +42,69 @@ const IssuedCertList = () => {
     // router.push(`/certificate-details/${certificate.ic_id}`)
   }
 
-  const filteredCertificates = certificates.filter(cert => {
-    const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         cert.purpose.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return matchesSearch
-  })
+  // Filter and search logic matching web version
+  const filteredCertificates = useMemo(() => {
+    return certificates.filter(cert => {
+      const matchesSearch = searchQuery === '' || 
+        cert.requester?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cert.purpose?.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesFilter = filterValue === "All" || cert.purpose === filterValue
+      
+      return matchesSearch && matchesFilter
+    })
+  }, [certificates, searchQuery, filterValue])
+
+  const paginatedData = filteredCertificates
+
+  // Table columns matching web version
+  const columns: ColumnDef<IssuedCertificate>[] = [
+    {
+      accessorKey: 'ic_id',
+      header: 'ID',
+      cell: ({ value }) => (
+        <Text className="text-sm font-medium text-gray-900">{value || 'N/A'}</Text>
+      )
+    },
+    {
+      accessorKey: 'requester',
+      header: 'Requester',
+      cell: ({ value }) => (
+        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
+      )
+    },
+    {
+      accessorKey: 'purpose',
+      header: 'Purpose',
+      cell: ({ value }) => (
+        <Text className="text-sm text-gray-900">{value || 'N/A'}</Text>
+      )
+    },
+    {
+      accessorKey: 'dateIssued',
+      header: 'Date Issued',
+      cell: ({ value }) => (
+        <Text className="text-sm text-gray-900">{formatDate(value) || 'N/A'}</Text>
+      )
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ value }) => (
+        <View className="bg-green-100 px-2 py-1 rounded-full">
+          <Text className="text-green-800 text-xs font-medium">Issued</Text>
+        </View>
+      )
+    }
+  ]
+
+  const filterOptions = [
+    { label: "All", value: "All" },
+    { label: "Barangay Clearance", value: "Barangay Clearance" },
+    { label: "Certificate of Residency", value: "Certificate of Residency" },
+    { label: "Certificate of Indigency", value: "Certificate of Indigency" },
+    { label: "Business Clearance", value: "Business Clearance" }
+  ]
 
   const formatDate = (dateString: string) => {
     try {
@@ -71,56 +133,17 @@ const IssuedCertList = () => {
                 <Ionicons name="arrow-back" size={24} color="#374151" />
               </Pressable>
               <Text className="text-2xl font-bold text-gray-900">
-                Issued Certifications
+                Issued Certificates
               </Text>
             </View>
             <Text className="text-gray-600 text-sm ml-11">
-              Collection of issued certifications
+              View and manage issued certificates
             </Text>
           </View>
 
-          {/* Quick Stats */}
-          <View className="mb-6">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-4">
-                <View className="flex-row justify-between items-center">
-                  <View>
-                    <Text className="text-gray-500 text-sm">Total Issued</Text>
-                    <Text className="text-2xl font-bold text-gray-900">
-                      {certificates.length}
-                    </Text>
-                  </View>
-                  <View className="flex-row space-x-4">
-                    <View className="items-center">
-                      <Text className="text-gray-500 text-xs">This Month</Text>
-                      <Text className="text-lg font-semibold text-green-600">
-                        {certificates.filter(cert => {
-                          const certDate = new Date(cert.dateIssued)
-                          const now = new Date()
-                          return certDate.getMonth() === now.getMonth() && 
-                                 certDate.getFullYear() === now.getFullYear()
-                        }).length}
-                      </Text>
-                    </View>
-                    <View className="items-center">
-                      <Text className="text-gray-500 text-xs">This Week</Text>
-                      <Text className="text-lg font-semibold text-blue-600">
-                        {certificates.filter(cert => {
-                          const certDate = new Date(cert.dateIssued)
-                          const now = new Date()
-                          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                          return certDate >= weekAgo
-                        }).length}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </CardContent>
-            </Card>
-          </View>
-
-          {/* Search */}
-          <View className="mb-6">
+          {/* Search and Filters - Matching Web Layout */}
+          <View className="mb-6 space-y-4">
+            {/* Search Bar */}
             <View className="relative">
               <View className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
                 <Ionicons name="search" size={20} color="#9CA3AF" />
@@ -133,99 +156,48 @@ const IssuedCertList = () => {
                 placeholderTextColor="#9CA3AF"
               />
             </View>
+
+            {/* Filter Row */}
+            <View className="flex-row space-x-3">
+              <View className="flex-1">
+                <SelectLayout
+                  options={filterOptions}
+                  selectedValue={filterValue}
+                  onSelect={(option) => setFilterValue(option.value)}
+                  placeholder="Filter by Purpose"
+                  className="h-10"
+                />
+              </View>
+            </View>
           </View>
 
-          {/* Certificate List */}
-          <View className="space-y-4">
-            {loading ? (
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8 items-center">
-                  <Ionicons name="refresh-outline" size={48} color="#9CA3AF" />
-                  <Text className="text-gray-500 text-center mt-2">
-                    Loading issued certificates...
-                  </Text>
-                </CardContent>
-              </Card>
-            ) : error ? (
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8 items-center">
-                  <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-                  <Text className="text-red-500 text-center mt-2">
-                    {error}
-                  </Text>
-                </CardContent>
-              </Card>
-            ) : filteredCertificates.length === 0 ? (
-              <Card className="border-0 shadow-sm bg-white">
-                <CardContent className="p-8 items-center">
-                  <Ionicons name="ribbon-outline" size={48} color="#9CA3AF" />
-                  <Text className="text-gray-500 text-center mt-2">
-                    No issued certificates found
-                  </Text>
-                </CardContent>
-              </Card>
-            ) : (
-              filteredCertificates.map((certificate, index) => (
-                <Pressable
-                  key={index}
-                  onPress={() => handleCertificatePress(certificate)}
-                  className="active:opacity-80"
-                >
-                  <Card className="border-0 shadow-lg bg-white rounded-xl">
-                    <CardContent className="p-5">
-                      <View className="flex-row justify-between items-start mb-4">
-                        <View className="flex-1">
-                          <Text className="text-lg font-semibold text-gray-900 mb-1">
-                            {certificate.requester}
-                          </Text>
-                          <Text className="text-gray-600 text-sm">
-                            {certificate.purpose}
-                          </Text>
-                        </View>
-                        <View className="flex-row items-center space-x-2">
-                          <View className="bg-green-100 px-2 py-1 rounded-full">
-                            <Text className="text-green-800 text-xs font-medium">
-                              Issued
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      <View className="space-y-3">
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">Purpose:</Text>
-                          <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.purpose}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">Date Issued:</Text>
-                          <Text className="text-gray-900 text-sm font-medium">
-                            {formatDate(certificate.dateIssued)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                          <Text className="text-gray-500 text-sm">Certificate ID:</Text>
-                          <Text className="text-gray-900 text-sm font-medium">
-                            {certificate.ic_id}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View className="flex-row justify-end mt-4 pt-4 border-t border-gray-100">
-                        <View className="flex-row items-center bg-blue-50 px-3 py-2 rounded-lg">
-                          <Ionicons name="eye-outline" size={16} color="#2563EB" />
-                          <Text className="text-blue-600 text-sm font-medium ml-1">
-                            View Details
-                          </Text>
-                        </View>
-                      </View>
-                    </CardContent>
-                  </Card>
-                </Pressable>
-              ))
-            )}
+          {/* Data Table - Matching Web Version */}
+          <View className="mb-4">
+            <DataTable
+              columns={columns}
+              data={paginatedData}
+              loading={loading}
+              onRowPress={handleCertificatePress}
+            />
           </View>
+
+          {/* Pagination Info */}
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-sm text-gray-600">
+              Showing {filteredCertificates.length} rows
+            </Text>
+            <View className="flex-row items-center space-x-2">
+              <Text className="text-sm text-gray-600">Show</Text>
+              <TextInput
+                value={entriesPerPage.toString()}
+                onChangeText={(text) => setEntriesPerPage(parseInt(text) || 10)}
+                className="w-14 h-8 border border-gray-300 rounded text-center text-sm"
+                keyboardType="numeric"
+              />
+              <Text className="text-sm text-gray-600">Entries</Text>
+            </View>
+          </View>
+
         </View>
       </ScrollView>
     </View>

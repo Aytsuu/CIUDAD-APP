@@ -52,40 +52,6 @@ export const testServerConnection = async () => {
 
 export const addCertificationRequest = async (requestInfo: Record<string, any>, staffId?: string, userId?: string) => {
     try {
-        let businessExistenceFileId = null;
-        let grossSalesFileId = null;
-
-        // Upload Business Existence Image
-        if (requestInfo.business_existence_image && requestInfo.business_existence_image.length > 0) {
-            const fileData = requestInfo.business_existence_image[0];
-
-            const fileUploadResponse = await api.post('file/upload/', {
-                file_name: fileData.name,
-                file_type: fileData.type,
-                file_path: fileData.path,
-                file_url: fileData.uri
-            });
-
-            if (fileUploadResponse.data && fileUploadResponse.data.file_id) {
-                businessExistenceFileId = fileUploadResponse.data.file_id;
-            }
-        }
-
-        // Upload Gross Sales Image
-        if (requestInfo.gross_sales_image && requestInfo.gross_sales_image.length > 0) {
-            const fileData = requestInfo.gross_sales_image[0];
-
-            const fileUploadResponse = await api.post('file/upload/', {
-                file_name: fileData.name,
-                file_type: fileData.type,
-                file_path: fileData.path,
-                file_url: fileData.uri
-            });
-
-            if (fileUploadResponse.data && fileUploadResponse.data.file_id) {
-                grossSalesFileId = fileUploadResponse.data.file_id;
-            }
-        }
 
         // Personal Certification (ClerkCertificate model)
         if (requestInfo.cert_type === 'personal') {
