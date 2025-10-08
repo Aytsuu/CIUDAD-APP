@@ -441,7 +441,7 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 
 class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = ResolutionSerializer
-    # Remove the fixed queryset and use get_queryset method instead
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         queryset = Resolution.objects.all().prefetch_related('resolution_files', 'resolution_supp')
@@ -450,6 +450,21 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         search_query = self.request.query_params.get('search', '')
         area_filter = self.request.query_params.get('area', '')
         year_filter = self.request.query_params.get('year', '')
+        is_archive = self.request.query_params.get('is_archive', None)
+        
+        # Apply archive filter if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(res_is_archive=is_archive_bool)
         
         # Apply search filter
         if search_query:
@@ -470,7 +485,7 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         if year_filter and year_filter != "all":
             queryset = queryset.filter(res_date_approved__year=year_filter)
         
-        return queryset
+        return queryset.order_by('-res_date_approved')  # Add ordering
     
     def create(self, request, *args, **kwargs):
         # Check if we need to generate a resolution number
