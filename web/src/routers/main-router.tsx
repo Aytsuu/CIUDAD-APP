@@ -38,6 +38,7 @@ import { clearances_router } from './clearances-router';
 import { team_router } from "./team-router";
 import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
+import TrackerMap from "@/pages/map/TrackerMap";
 
 export const main_router: RouteObject[] = [
   {
@@ -199,6 +200,10 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
+      {
+        path: "map",
+        element: <TrackerMap />
+      },
       ...vaccination,
       ...childHealthServices,
       ...gad_router,
