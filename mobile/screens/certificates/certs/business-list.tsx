@@ -2,8 +2,8 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'rea
 import React, { useState, useEffect, useMemo } from 'react'
 import { router } from 'expo-router'
 import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
-import _ScreenLayout from '../../_ScreenLayout'
-import { ChevronLeft } from '@/lib/icons/ChevronLeft'
+import PageLayout from '../../_PageLayout'
+import { ChevronLeft } from 'lucide-react-native'
 
 const BusinessList = () => {
   const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
@@ -80,8 +80,8 @@ const BusinessList = () => {
   }, [businessPermits, statusFilter])
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -89,8 +89,9 @@ const BusinessList = () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Business Permit Request</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Business Permit Request</Text>}
+      rightAction={<View className="w-10 h-10" />}
+      wrapScroll={false}
     >
       <View className="flex-1 px-5">
         {loading && (
@@ -172,7 +173,7 @@ const BusinessList = () => {
           </>
         )}
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   )
 }
 
