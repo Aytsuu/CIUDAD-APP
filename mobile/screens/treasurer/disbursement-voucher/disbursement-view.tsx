@@ -4,11 +4,10 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
-  StatusBar,
   Image,
   Modal,
   Linking,
+  FlatList,
 } from "react-native";
 import {
   ChevronLeft,
@@ -40,6 +39,11 @@ import {
   DisbursementVoucher,
   Signatory,
 } from "./disbursement-types";
+import { LoadingModal } from "@/components/ui/loading-modal";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface DisbursementViewProps {
   disNum: string;
@@ -56,7 +60,36 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
   customHeaderActions,
   disableDocumentManagement = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<"details" | "supporting">(
+  if (!disNum && !propDisbursement) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={onBack}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="font-semibold text-lg text-[#2a3a61] font-sans">
+            Disbursement Voucher
+          </Text>
+        }
+        rightAction={
+          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
+        }
+      >
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-gray-500 font-sans">
+            No disbursement data available
+          </Text>
+        </View>
+      </PageLayout>
+    );
+  }
+
+  const [activeTab, setActiveTab] = useState<"details" | "documents">(
     "details"
   );
   const [supportDocsViewMode, setSupportDocsViewMode] = useState<
@@ -92,17 +125,11 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
   const activeSupportDocs = supportDocs.filter((doc) => !doc.disf_is_archive);
   const archivedSupportDocs = supportDocs.filter((doc) => doc.disf_is_archive);
-  const imageDocs = (
-    supportDocsViewMode === "active" ? activeSupportDocs : archivedSupportDocs
-  ).filter((doc) => doc.disf_type?.startsWith("image/"));
 
   const handleUploadFiles = async () => {
     try {
-      console.log("Selected images before processing:", selectedImages);
-
       const filesForUpload = selectedImages.map((image) => {
         const dataUrl = `data:${image.type};base64,${image.file}`;
-
         return {
           file: dataUrl,
           name: image.name || `image_${Date.now()}.jpg`,
@@ -110,24 +137,16 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         };
       });
 
-      console.log("Files for upload:", filesForUpload);
-
       const uploadData = {
         dis_num: disNum,
         files: filesForUpload,
       };
 
-      console.log("Final upload data:", uploadData);
-
       await addSupportDocMutation.mutateAsync(uploadData, {
-        onSuccess: (data) => {
-          console.log("Upload successful response:", data);
+        onSuccess: () => {
           setShowUploadModal(false);
           setSelectedImages([]);
           refetchSupportDocs();
-        },
-        onError: (error) => {
-          console.error("Upload error:", error);
         },
       });
     } catch (error) {
@@ -168,7 +187,6 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
     );
   };
 
-  // Updated to match project proposal pattern
   const handleViewImage = (doc: DisbursementFile, index: number) => {
     setSelectedImageUrl(doc.disf_url);
     setCurrentImageIndex(index);
@@ -185,12 +203,10 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
+    return `₱${num.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(num || 0);
+    })}`;
   };
 
   const getSignatoryLabel = (type: Signatory["type"]) => {
@@ -206,470 +222,615 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
     }
   };
 
-  if (!disbursement && !isLoadingDisbursement) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text className="text-gray-500">No disbursement data available</Text>
-        <TouchableOpacity
-          onPress={onBack || (() => router.back())}
-          className="mt-4"
-        >
-          <Text className="text-blue-500">Go back</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  if (isLoadingDisbursement) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text className="text-gray-500">Loading disbursement...</Text>
-      </SafeAreaView>
-    );
-  }
+  const InfoCard = ({
+    title,
+    value,
+    icon: Icon,
+    color = "#1D4ED8",
+  }: {
+    title: string;
+    value: string;
+    icon: any;
+    color?: string;
+  }) => (
+    <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+      <CardContent className="p-4">
+        <View className="flex-row items-center gap-2 mb-3">
+          <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+            <Icon size={20} color={color} />
+          </View>
+          <Text className="text-sm font-medium text-gray-600 font-sans">
+            {title}
+          </Text>
+        </View>
+        <Text className="text-lg font-semibold text-gray-900 font-sans">
+          {value}
+        </Text>
+      </CardContent>
+    </Card>
+  );
 
   const renderDetails = () => (
-    <ScrollView className="flex-1 bg-gray-50">
-      <View className="px-4 space-y-4">
-        {/* Payee Information Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <View className="flex-row items-center mb-3 pb-2 border-b border-gray-100">
-            <View className="bg-blue-100 p-2 rounded-full mr-3">
-              <User size={20} color="#2563eb" />
-            </View>
-            <Text className="text-lg font-semibold text-gray-800">Payee Information</Text>
-          </View>
-          
-          <Text className="text-base text-gray-900 font-medium mb-2">
-            {disbursement?.dis_payee}
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="px-6 py-4 space-y-4">
+        <View className="mb-4">
+          <Text className="text-xl font-semibold text-gray-900 font-sans mb-1">
+            Disbursement Overview
           </Text>
-          {disbursement?.dis_tin && (
-            <View className="bg-gray-50 px-3 py-2 rounded-lg">
-              <Text className="text-sm text-gray-600">
-                <Text className="font-medium">TIN:</Text> {disbursement.dis_tin}
-              </Text>
-            </View>
-          )}
+          <Text className="text-sm text-gray-600 font-sans">
+            Voucher Details
+          </Text>
         </View>
 
-        {/* Date Information Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <View className="flex-row items-center mb-4 pb-2 border-b border-gray-100">
-            <View className="bg-green-100 p-2 rounded-full mr-3">
-              <Calendar size={20} color="#059669" />
-            </View>
-            <Text className="text-lg font-semibold text-gray-800">Date Information</Text>
-          </View>
-          
-          <View className="space-y-3">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-sm font-medium text-gray-600">DV Date:</Text>
-              <Text className="text-sm text-gray-900 font-medium">
-                {disbursement?.dis_date
-                  ? new Date(disbursement.dis_date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })
-                  : "Not specified"}
-              </Text>
-            </View>
-            
-            <View className="h-px bg-gray-100" />
-            
-            <View className="flex-row justify-between items-center">
-              <Text className="text-sm font-medium text-gray-600">Payment Date:</Text>
-              <Text className="text-sm text-gray-900 font-medium">
-                {disbursement?.dis_paydate
-                  ? new Date(disbursement.dis_paydate).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })
-                  : "Not specified"}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <InfoCard
+          title="Payee"
+          value={disbursement?.dis_payee || "Unknown Payee"}
+          icon={User}
+          color="#1D4ED8"
+        />
 
-        {/* Payment Details Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <View className="flex-row items-center mb-4 pb-2 border-b border-gray-100">
-            <View className="bg-purple-100 p-2 rounded-full mr-3">
-              <CreditCard size={20} color="#7c3aed" />
-            </View>
-            <Text className="text-lg font-semibold text-gray-800">Payment Details</Text>
-          </View>
-
-          <View className="space-y-3">
-            {disbursement?.dis_checknum && (
-              <View className="flex-row justify-between items-center">
-                <Text className="text-sm font-medium text-gray-600">Check Number:</Text>
-                <Text className="text-sm text-gray-900 font-medium">
-                  {disbursement.dis_checknum}
+        {disbursement?.dis_tin && (
+          <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+            <CardContent className="p-4">
+              <View className="flex-row items-center gap-2 mb-3">
+                <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                  <CreditCard size={20} color="#7C3AED" />
+                </View>
+                <Text className="text-sm font-medium text-gray-600 font-sans">
+                  TIN
                 </Text>
               </View>
-            )}
-
-            {disbursement?.dis_bank && (
-              <>
-                {disbursement?.dis_checknum && <View className="h-px bg-gray-100" />}
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-medium text-gray-600">Bank:</Text>
-                  <Text className="text-sm text-gray-900 font-medium">
-                    {disbursement.dis_bank}
-                  </Text>
-                </View>
-              </>
-            )}
-
-            {disbursement?.dis_or_num && (
-              <>
-                {(disbursement?.dis_checknum || disbursement?.dis_bank) && 
-                  <View className="h-px bg-gray-100" />
-                }
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm font-medium text-gray-600">OR Number:</Text>
-                  <Text className="text-sm text-gray-900 font-medium">
-                    {disbursement.dis_or_num}
-                  </Text>
-                </View>
-              </>
-            )}
-            
-            {!disbursement?.dis_checknum && !disbursement?.dis_bank && !disbursement?.dis_or_num && (
-              <Text className="text-sm text-gray-500 italic text-center py-2">
-                No payment details provided
+              <Text className="text-lg font-semibold text-gray-900 font-sans">
+                {disbursement.dis_tin}
               </Text>
-            )}
-          </View>
-        </View>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Particulars Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <View className="flex-row items-center mb-4 pb-2 border-b border-gray-100">
-            <View className="bg-orange-100 p-2 rounded-full mr-3">
-              <Receipt size={20} color="#ea580c" />
+        <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+          <CardContent className="p-4">
+            <View className="flex-row items-center gap-2 mb-4">
+              <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                <Calendar size={20} color="#059669" />
+              </View>
+              <Text className="text-sm font-medium text-gray-600 font-sans">
+                Date Information
+              </Text>
             </View>
-            <Text className="text-lg font-semibold text-gray-800">Particulars</Text>
-          </View>
 
-          {!disbursement?.dis_particulars || disbursement.dis_particulars.length === 0 ? (
-            <Text className="text-sm text-gray-500 italic text-center py-4">
-              No particulars provided
-            </Text>
-          ) : (
-            <View className="space-y-4">
-              {disbursement.dis_particulars.map((item: any, index: number) => {
-                const amount =
-                  typeof item.amount === "string"
-                    ? parseFloat(item.amount) || 0
-                    : item.amount || 0;
+            <View className="space-y-3">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-sm font-medium text-gray-600 font-sans">
+                  DV Date:
+                </Text>
+                <Text className="text-sm text-gray-900 font-medium font-sans">
+                  {disbursement?.dis_date
+                    ? new Date(disbursement.dis_date).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }
+                      )
+                    : "Not specified"}
+                </Text>
+              </View>
 
-                const taxRate =
-                  typeof item.tax === "string"
-                    ? parseFloat(item.tax) || 0
-                    : item.tax || 0;
+              <View className="h-px bg-gray-100" />
 
-                const taxAmount = amount * (taxRate / 100);
-                const netAmount = amount - taxAmount;
-
-                return (
-                  <View
-                    key={index}
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                  >
-                    <Text className="text-base font-semibold text-gray-800 mb-3">
-                      {item.forPayment || `Payment Item ${index + 1}`}
-                    </Text>
-
-                    <View className="space-y-2">
-                      {/* Gross Amount */}
-                      <View className="flex-row justify-between items-center">
-                        <Text className="text-sm text-gray-600">Gross Amount:</Text>
-                        <Text className="text-sm font-semibold text-gray-800">
-                          {formatCurrency(amount)}
-                        </Text>
-                      </View>
-
-                      {/* Tax Calculation */}
-                      {taxRate > 0 && (
-                        <>
-                          <View className="flex-row justify-between items-center">
-                            <Text className="text-sm text-gray-600">
-                              Withholding Tax ({taxRate}%):
-                            </Text>
-                            <Text className="text-sm text-red-600 font-semibold">
-                              - {formatCurrency(taxAmount)}
-                            </Text>
-                          </View>
-                        </>
-                      )}
-
-                      {/* Divider */}
-                      <View className="h-px bg-gray-200 my-2" />
-
-                      {/* Net Amount */}
-                      <View className="flex-row justify-between items-center">
-                        <Text className="text-sm font-bold text-gray-700">
-                          Net Amount:
-                        </Text>
-                        <Text className="text-sm font-bold text-green-600">
-                          {formatCurrency(taxRate > 0 ? netAmount : amount)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                );
-              })}
+              <View className="flex-row justify-between items-center">
+                <Text className="text-sm font-medium text-gray-600 font-sans">
+                  Payment Date:
+                </Text>
+                <Text className="text-sm text-gray-900 font-medium font-sans">
+                  {disbursement?.dis_paydate
+                    ? new Date(disbursement.dis_paydate).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }
+                      )
+                    : "Not specified"}
+                </Text>
+              </View>
             </View>
-          )}
-        </View>
+          </CardContent>
+        </Card>
 
-        {/* Signatories Card */}
-        <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-          <View className="flex-row items-center mb-4 pb-2 border-b border-gray-100">
-            <View className="bg-indigo-100 p-2 rounded-full mr-3">
-              <Building size={20} color="#4f46e5" />
+        <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+          <CardContent className="p-4">
+            <View className="flex-row items-center gap-2 mb-4">
+              <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                <CreditCard size={20} color="#7c3aed" />
+              </View>
+              <Text className="text-sm font-medium text-gray-600 font-sans">
+                Payment Details
+              </Text>
             </View>
-            <Text className="text-lg font-semibold text-gray-800">Signatories</Text>
-          </View>
 
-          {!disbursement?.dis_signatories || disbursement.dis_signatories.length === 0 ? (
-            <Text className="text-sm text-gray-500 italic text-center py-4">
-              No signatories provided
-            </Text>
-          ) : (
-            <View className="space-y-4">
-              {disbursement.dis_signatories.map((sig: Signatory, index: number) => (
-                <View
-                  key={index}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                >
-                  <Text className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-2">
-                    {getSignatoryLabel(sig.type)}
+            <View className="space-y-3">
+              {disbursement?.dis_checknum && (
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-sm font-medium text-gray-600 font-sans">
+                    Check Number:
                   </Text>
-                  <Text className="text-base font-semibold text-gray-800 mb-1">
-                    {sig.name}
+                  <Text className="text-sm text-gray-900 font-medium font-sans">
+                    {disbursement.dis_checknum}
                   </Text>
-                  <Text className="text-sm text-gray-600">{sig.position}</Text>
                 </View>
-              ))}
+              )}
+
+              {disbursement?.dis_bank && (
+                <>
+                  {disbursement?.dis_checknum && (
+                    <View className="h-px bg-gray-100" />
+                  )}
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-sm font-medium text-gray-600 font-sans">
+                      Bank:
+                    </Text>
+                    <Text className="text-sm text-gray-900 font-medium font-sans">
+                      {disbursement.dis_bank}
+                    </Text>
+                  </View>
+                </>
+              )}
+
+              {disbursement?.dis_or_num && (
+                <>
+                  {(disbursement?.dis_checknum || disbursement?.dis_bank) && (
+                    <View className="h-px bg-gray-100" />
+                  )}
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-sm font-medium text-gray-600 font-sans">
+                      OR Number:
+                    </Text>
+                    <Text className="text-sm text-gray-900 font-medium font-sans">
+                      {disbursement.dis_or_num}
+                    </Text>
+                  </View>
+                </>
+              )}
+
+              {!disbursement?.dis_checknum &&
+                !disbursement?.dis_bank &&
+                !disbursement?.dis_or_num && (
+                  <Text className="text-sm text-gray-500 italic text-center py-2 font-sans">
+                    No payment details provided
+                  </Text>
+                )}
             </View>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+          <CardHeader className="pb-3">
+            <View className="flex-row items-center gap-3">
+              <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                <Receipt size={20} color="#ea580c" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+                  Particulars
+                </Text>
+                <Text className="text-xs text-gray-500 mt-1 font-sans">
+                  Payment breakdown details
+                </Text>
+              </View>
+            </View>
+          </CardHeader>
+          <CardContent className="pt-3 border-t border-gray-200">
+            {!disbursement?.dis_particulars ||
+            disbursement.dis_particulars.length === 0 ? (
+              <Text className="text-sm text-gray-500 italic text-center py-4 font-sans">
+                No particulars provided
+              </Text>
+            ) : (
+              <View className="space-y-4">
+                {disbursement.dis_particulars.map(
+                  (item: any, index: number) => {
+                    const amount =
+                      typeof item.amount === "string"
+                        ? parseFloat(item.amount) || 0
+                        : item.amount || 0;
+
+                    const taxRate =
+                      typeof item.tax === "string"
+                        ? parseFloat(item.tax) || 0
+                        : item.tax || 0;
+
+                    const taxAmount = amount * (taxRate / 100);
+                    const netAmount = amount - taxAmount;
+
+                    return (
+                      <View
+                        key={index}
+                        className="flex-row justify-between items-start py-2 border-b border-gray-100 last:border-b-0"
+                      >
+                        <View className="flex-1 pr-4">
+                          <Text
+                            className="text-sm font-medium text-gray-900 font-sans mb-1"
+                            numberOfLines={2}
+                          >
+                            {item.forPayment || `Payment Item ${index + 1}`}
+                          </Text>
+                          <View className="flex-col gap-1 mt-2">
+                            <Text className="text-xs text-gray-600 font-sans">
+                              Gross: {formatCurrency(amount)}
+                            </Text>
+                            {taxRate > 0 && (
+                              <Text className="text-xs text-red-600 font-sans">
+                                Tax ({taxRate}%): - {formatCurrency(taxAmount)}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                        <View className="min-w-[120px] items-end">
+                          <Text
+                            className="text-base font-semibold text-[#2a3a61] font-sans"
+                            numberOfLines={1}
+                          >
+                            {formatCurrency(taxRate > 0 ? netAmount : amount)}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }
+                )}
+              </View>
+            )}
+          </CardContent>
+        </Card>
+
+        {disbursement?.dis_signatories &&
+          disbursement.dis_signatories.length > 0 && (
+            <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+              <CardHeader className="pb-3">
+                <View className="flex-row items-center gap-3">
+                  <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                    <Building size={20} color="#4f46e5" />
+                  </View>
+                  <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+                    Signatories
+                  </Text>
+                </View>
+              </CardHeader>
+              <CardContent className="pt-3 border-t border-gray-200">
+                <View className="space-y-4">
+                  {disbursement.dis_signatories.map(
+                    (sig: Signatory, index: number) => (
+                      <View
+                        key={index}
+                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      >
+                        <Text className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-2 font-sans">
+                          {getSignatoryLabel(sig.type)}
+                        </Text>
+                        <Text className="text-base font-semibold text-gray-800 mb-1 font-sans">
+                          {sig.name}
+                        </Text>
+                        <Text className="text-sm text-gray-600 font-sans">
+                          {sig.position}
+                        </Text>
+                      </View>
+                    )
+                  )}
+                </View>
+              </CardContent>
+            </Card>
           )}
-        </View>
       </View>
     </ScrollView>
   );
 
-  const renderSupportingDocument = () => (
-    <ScrollView className="flex-1 bg-white p-4">
-      {!disableDocumentManagement && (
-        <View className="flex-row justify-between items-center mb-4">
-          <TouchableOpacity
-            className={`px-4 py-2 rounded-lg ${
-              disbursement?.dis_is_archive ? "bg-gray-300" : "bg-blue-500"
-            }`}
-            onPress={() =>
-              !disbursement?.dis_is_archive && setShowUploadModal(true)
-            }
-            disabled={disbursement?.dis_is_archive}
-          >
-            <Text
-              className={`font-medium ${
-                disbursement?.dis_is_archive ? "text-gray-500" : "text-white"
-              }`}
-            >
-              Add Documents
-            </Text>
-          </TouchableOpacity>
-
-          <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
+  const renderSupportingDocuments = () => (
+    <View className="flex-1">
+      <View className="px-6 py-4">
+        {!disableDocumentManagement && (
+          <View className="relative mb-4 flex-col items-center">
             <TouchableOpacity
-              className={`px-4 py-2 ${
-                supportDocsViewMode === "active" ? "bg-white" : ""
+              className={`rounded-xl w-full h-10 px-4 py-2 native:h-12 native:px-5 native:py-3 ${
+                disbursement?.dis_is_archive ? "bg-gray-300" : "bg-primaryBlue"
               }`}
-              onPress={() => setSupportDocsViewMode("active")}
+              onPress={() =>
+                !disbursement?.dis_is_archive && setShowUploadModal(true)
+              }
+              disabled={disbursement?.dis_is_archive}
             >
-              <Text className="text-sm">Active</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`px-4 py-2 ${
-                supportDocsViewMode === "archived" ? "bg-white" : ""
-              }`}
-              onPress={() => setSupportDocsViewMode("archived")}
-            >
-              <Text className="text-sm">Archived</Text>
+              <Text
+                className={`font-medium font-sans text-center ${
+                  disbursement?.dis_is_archive ? "text-gray-500" : "text-white"
+                }`}
+              >
+                Add Documents
+              </Text>
             </TouchableOpacity>
           </View>
-        </View>
-      )}
+        )}
 
-      {disbursement?.dis_is_archive && (
-        <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-          <Text className="text-yellow-800 text-sm text-center">
-            This disbursement is archived. Document modifications are disabled.
-          </Text>
-        </View>
-      )}
+        {disbursement?.dis_is_archive && (
+          <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <Text className="text-yellow-800 text-sm text-center font-sans">
+              This disbursement is archived. Document modifications are
+              disabled.
+            </Text>
+          </View>
+        )}
+
+        <Tabs
+          value={supportDocsViewMode}
+          onValueChange={(val) =>
+            setSupportDocsViewMode(val as "active" | "archived")
+          }
+        >
+          <TabsList className="bg-blue-50 flex-row justify-between">
+            <TabsTrigger
+              value="active"
+              className={`flex-1 mx-1 ${
+                supportDocsViewMode === "active"
+                  ? "bg-white border-b-2 border-primaryBlue"
+                  : ""
+              }`}
+            >
+              <Text
+                className={`font-sans ${
+                  supportDocsViewMode === "active"
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-500"
+                }`}
+              >
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger
+              value="archived"
+              className={`flex-1 mx-1 ${
+                supportDocsViewMode === "archived"
+                  ? "bg-white border-b-2 border-primaryBlue"
+                  : ""
+              }`}
+            >
+              <Text
+                className={`font-sans ${
+                  supportDocsViewMode === "archived"
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-500"
+                }`}
+              >
+                Archived
+              </Text>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </View>
 
       {(supportDocsViewMode === "active"
         ? activeSupportDocs
         : archivedSupportDocs
-      ).length === 0 ? (
+      ).length === 0 && !isLoadingSupportDocs ? (
         <View className="flex-1 justify-center items-center py-12">
-          <Text className="text-gray-500 text-center">
+          <Text className="text-gray-500 text-center font-sans">
             No {supportDocsViewMode === "active" ? "active" : "archived"}{" "}
             supporting documents found.
           </Text>
         </View>
+      ) : isLoadingSupportDocs ? (
+        <View className="flex-1 justify-center items-center py-12">
+          <LoadingState />
+        </View>
       ) : (
-        (supportDocsViewMode === "active"
-          ? activeSupportDocs
-          : archivedSupportDocs
-        ).map((doc, index) => (
-          <View
-            key={doc.disf_num}
-            className="mb-6 border border-gray-200 rounded-lg overflow-hidden"
-          >
-            {doc.disf_type?.startsWith("image/") && doc.disf_url ? (
-              <TouchableOpacity onPress={() => handleViewImage(doc, index)}>
-                <Image
-                  source={{ uri: doc.disf_url }}
-                  className="w-full h-96"
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            ) : (
-              <View className="bg-gray-100 p-8 items-center justify-center h-96">
-                <FileText size={48} color="#6b7280" />
-                <Text className="text-gray-600 text-center mb-2 mt-2">
-                  {doc.disf_name || "Document"}
-                </Text>
-                <Text className="text-gray-500 text-sm">
-                  Document preview not available
-                </Text>
-                {doc.disf_url && (
-                  <TouchableOpacity
-                    onPress={() => handleDownloadFile(doc)}
-                    className="flex-row items-center bg-blue-100 px-3 py-2 rounded-lg mt-3"
-                  >
-                    <Download size={16} color="#3b82f6" />
-                    <Text className="text-blue-600 text-sm ml-2">
-                      Open Document
+        <FlatList
+          data={
+            supportDocsViewMode === "active"
+              ? activeSupportDocs
+              : archivedSupportDocs
+          }
+          keyExtractor={(doc) => doc.disf_num.toString()}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16 }}
+          renderItem={({ item: doc, index }) => (
+            <Card className="bg-white border-2 border-gray-200 shadow-sm mb-2">
+              <CardHeader className="pb-3">
+                <View className="flex-row justify-between items-start">
+                  <View className="flex-1">
+                    <Text className="font-semibold text-lg text-[#1a2332] mb-1 font-sans">
+                      {doc.disf_name || "Document"}
                     </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
+                    <Text className="text-sm text-gray-500 font-sans">
+                      {doc.disf_type || "Unknown type"}
+                    </Text>
+                  </View>
+                </View>
+              </CardHeader>
 
-            {!disableDocumentManagement && (
-              <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
-                {supportDocsViewMode === "active"
-                  ? !disbursement?.dis_is_archive && (
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="p-2 rounded-lg">
-                            <Archive size={20} color="#ef4444" />
-                          </TouchableOpacity>
-                        }
-                        title="Archive Document"
-                        description="Are you sure you want to archive this document?"
-                        actionLabel="Archive"
-                        onPress={() => handleArchiveSupportDoc(doc.disf_num)}
-                      />
-                    )
-                  : !disbursement?.dis_is_archive && (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <TouchableOpacity className="p-2 bg-green-100 rounded-lg">
-                              <ArchiveRestore size={20} color="#10b981" />
-                            </TouchableOpacity>
-                          }
-                          title="Restore Document"
-                          description="Are you sure you want to restore this document?"
-                          actionLabel="Restore"
-                          onPress={() => handleRestoreSupportDoc(doc.disf_num)}
-                        />
-                        <ConfirmationModal
-                          trigger={
-                            <TouchableOpacity className="p-2 bg-red-100 rounded-lg">
-                              <Trash size={20} color="#ef4444" />
-                            </TouchableOpacity>
-                          }
-                          title="Delete Document"
-                          description="Are you sure you want to permanently delete this document?"
-                          actionLabel="Delete"
-                          variant="destructive"
-                          onPress={() => handleDeleteSupportDoc(doc.disf_num)}
-                        />
-                      </>
+              <CardContent className="pt-3 border-t border-gray-200">
+                {doc.disf_type?.startsWith("image/") && doc.disf_url ? (
+                  <TouchableOpacity onPress={() => handleViewImage(doc, index)}>
+                    <Image
+                      source={{ uri: doc.disf_url }}
+                      className="w-full h-48 rounded-lg"
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <View className="bg-gray-100 p-6 items-center justify-center rounded-lg">
+                    <FileText size={48} color="#6B7280" />
+                    <Text className="text-gray-600 text-center mt-2 font-sans">
+                      Document preview not available
+                    </Text>
+                    {doc.disf_url && (
+                      <TouchableOpacity
+                        onPress={() => handleDownloadFile(doc)}
+                        className="flex-row items-center bg-blue-100 px-4 py-2 rounded-lg mt-3"
+                      >
+                        <Download size={16} color="#3b82f6" />
+                        <Text className="text-blue-600 text-sm ml-2 font-sans">
+                          Open Document
+                        </Text>
+                      </TouchableOpacity>
                     )}
-              </View>
-            )}
-          </View>
-        ))
+                  </View>
+                )}
+
+                {!disableDocumentManagement && (
+                  <View className="flex-row justify-end space-x-2 mt-3">
+                    {supportDocsViewMode === "active"
+                      ? !disbursement?.dis_is_archive && (
+                          <ConfirmationModal
+                            trigger={
+                              <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
+                                <Archive size={16} color="#ef4444" />
+                              </TouchableOpacity>
+                            }
+                            title="Archive Document"
+                            description="Are you sure you want to archive this document?"
+                            actionLabel="Archive"
+                            onPress={() =>
+                              handleArchiveSupportDoc(doc.disf_num)
+                            }
+                          />
+                        )
+                      : !disbursement?.dis_is_archive && (
+                          <>
+                            <ConfirmationModal
+                              trigger={
+                                <TouchableOpacity className="bg-green-50 p-2 rounded-lg">
+                                  <ArchiveRestore size={16} color="#10b981" />
+                                </TouchableOpacity>
+                              }
+                              title="Restore Document"
+                              description="Are you sure you want to restore this document?"
+                              actionLabel="Restore"
+                              onPress={() =>
+                                handleRestoreSupportDoc(doc.disf_num)
+                              }
+                            />
+                            <ConfirmationModal
+                              trigger={
+                                <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
+                                  <Trash size={16} color="#ef4444" />
+                                </TouchableOpacity>
+                              }
+                              title="Delete Document"
+                              description="Are you sure you want to permanently delete this document?"
+                              actionLabel="Delete"
+                              variant="destructive"
+                              onPress={() =>
+                                handleDeleteSupportDoc(doc.disf_num)
+                              }
+                            />
+                          </>
+                        )}
+                  </View>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        />
       )}
-    </ScrollView>
+    </View>
   );
 
+  if (isLoadingDisbursement || isLoadingSupportDocs) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={onBack}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="font-semibold text-lg text-[#2a3a61] font-sans">
+            Disbursement Voucher
+          </Text>
+        }
+        rightAction={
+          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
+        }
+      >
+        <LoadingState />
+      </PageLayout>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-
-      <View className="mt-16 flex-row justify-between items-center p-4 border-b border-gray-200">
-        <TouchableOpacity
-          onPress={onBack || (() => router.back())}
-          className="flex-row items-center flex-1"
-        >
-          <ChevronLeft color="#374151" size={20} />
-          <Text
-            className="ml-2 font-medium flex-1"
-            numberOfLines={1}
+    <>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={onBack || (() => router.back())}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
           >
-            DV {disbursement?.dis_num} - {disbursement?.dis_payee}
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="font-semibold text-lg text-[#2a3a61] font-sans">
+            DV #{disbursement?.dis_num}
           </Text>
-        </TouchableOpacity>
-        {customHeaderActions}
-      </View>
+        }
+        rightAction={<View />}
+        wrapScroll={false}
+      >
+        <View className="flex-1">
+          <View className="pt-4">
+            <Tabs
+              value={activeTab}
+              onValueChange={(val) =>
+                setActiveTab(val as "details" | "documents")
+              }
+            >
+              <TabsList className="bg-white flex-row justify-between">
+                <TabsTrigger
+                  value="details"
+                  className={`flex-1 mx-1 ${
+                    activeTab === "details"
+                      ? "border-b-2 border-primaryBlue"
+                      : ""
+                  }`}
+                >
+                  <Text
+                    className={`font-sans ${
+                      activeTab === "details" ? "font-medium" : "text-gray-500"
+                    }`}
+                  >
+                    Voucher Details
+                  </Text>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="documents"
+                  className={`flex-1 mx-1 ${
+                    activeTab === "documents"
+                      ? "border-b-2 border-primaryBlue"
+                      : ""
+                  }`}
+                >
+                  <Text
+                    className={`font-sans ${
+                      activeTab === "documents"
+                        ? "font-medium"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    Documents
+                  </Text>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </View>
 
-      <View className="flex-row p-4">
-        <TouchableOpacity
-          onPress={() => setActiveTab("details")}
-          className={`flex-1 py-2 px-4 rounded-l-lg border ${
-            activeTab === "details"
-              ? "bg-gray-800 border-gray-800"
-              : "bg-white border-gray-300"
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === "details" ? "text-white" : "text-gray-700"
-            }`}
-          >
-            Details
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setActiveTab("supporting")}
-          className={`flex-1 py-2 px-4 rounded-r-lg border-t border-r border-b ${
-            activeTab === "supporting"
-              ? "bg-gray-800 border-gray-800"
-              : "bg-white border-gray-300"
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === "supporting" ? "text-white" : "text-gray-700"
-            }`}
-          >
-            Supporting Docs
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === "details" ? renderDetails() : renderSupportingDocument()}
+          <View className="flex-1">
+            {activeTab === "details"
+              ? renderDetails()
+              : renderSupportingDocuments()}
+          </View>
+        </View>
+      </PageLayout>
 
       {!disableDocumentManagement && (
         <Modal
@@ -677,12 +838,12 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           animationType="slide"
           onRequestClose={() => setShowUploadModal(false)}
         >
-          <SafeAreaView className="flex-1 bg-white">
+          <View className="flex-1 bg-white">
             <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
               <TouchableOpacity onPress={() => setShowUploadModal(false)}>
-                <Text className="text-blue-500">Cancel</Text>
+                <Text className="text-blue-500 font-sans">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold">
+              <Text className="text-lg font-semibold font-sans">
                 Add Supporting Documents
               </Text>
               <TouchableOpacity
@@ -690,7 +851,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 disabled={selectedImages.length === 0}
               >
                 <Text
-                  className={`${
+                  className={`font-sans ${
                     selectedImages.length === 0
                       ? "text-gray-400"
                       : "text-blue-500"
@@ -708,11 +869,10 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               multiple={true}
               editable={true}
             />
-          </SafeAreaView>
+          </View>
         </Modal>
       )}
 
-      {/* Image View Modal - Following Project Proposal Pattern */}
       <Modal
         visible={viewImageModalVisible}
         transparent={true}
@@ -733,7 +893,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 className="w-full h-4/5"
                 resizeMode="contain"
               />
-              <Text className="text-white mt-2">
+              <Text className="text-white mt-2 font-sans">
                 {(supportDocsViewMode === "active"
                   ? activeSupportDocs
                   : archivedSupportDocs)[currentImageIndex]?.disf_name ||
@@ -743,7 +903,16 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           )}
         </View>
       </Modal>
-    </SafeAreaView>
+
+      <LoadingModal
+        visible={
+          addSupportDocMutation.isPending ||
+          archiveSupportDocMutation.isPending ||
+          restoreSupportDocMutation.isPending ||
+          deleteSupportDocMutation.isPending
+        }
+      />
+    </>
   );
 };
 

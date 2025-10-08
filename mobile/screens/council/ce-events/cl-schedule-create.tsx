@@ -38,7 +38,6 @@ const CLCreateEvent = () => {
   const addEventMutation = useAddCouncilEvent();
 
   const onSubmit = async (formData: any) => {
-    console.log('Button pressed')
     const isValid = await trigger();
     if (!isValid) {
       return;
@@ -55,7 +54,7 @@ const CLCreateEvent = () => {
         ce_description: formData.eventDescription.trim(),
         ce_is_archive: false,
         ce_rows: numRows,
-        staff_id: user?.staff?.staff_id || '00005250925',
+        staff_id: user?.staff?.staff_id || null,
       };
 
       const newEvent = await addEventMutation.mutateAsync(eventPayload);

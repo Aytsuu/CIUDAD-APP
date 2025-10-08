@@ -28,7 +28,8 @@ import {
 } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { FormattedCouncilEvent } from "./ce-att-typeFile";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const { width } = Dimensions.get("window");
 const DAY_SIZE = width / 7 - 10;
@@ -311,7 +312,7 @@ const CouncilCalendarPage = () => {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#3B82F6" />
+        <LoadingState/>
       </SafeAreaView>
     );
   }

@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { DisbursementVoucher, DisbursementFile, Staff, DisbursementParams, DisbursementFileParams, DisbursementFileInput } from "./disbursement-types"
+import { DisbursementVoucher, DisbursementFile, Staff, DisbursementFileParams, DisbursementFileInput } from "./disbursement-types"
 
 export const getDisbursementVouchers = async (
   page: number = 1,
