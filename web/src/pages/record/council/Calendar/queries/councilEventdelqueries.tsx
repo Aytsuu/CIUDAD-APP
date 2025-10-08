@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { delCouncilEvent, restoreCouncilEvent, delAttendanceSheet, restoreAttendanceSheet } from "../api/councilEventdelreq";
 import { CouncilEvent, AttendanceSheet } from "../councilEventTypes";
 
@@ -17,10 +16,7 @@ export const useDeleteCouncilEvent = () => {
         queryClient.setQueryData(["councilEvents"], (old: CouncilEvent[] = []) => 
           old.filter(event => event.ce_id !== ce_id)
         );
-        toast.success("Council event permanently deleted successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000
-        });
+       showSuccessToast("Council event permanently deleted successfully")
       } else {
         // Soft delete (archive)
         queryClient.setQueryData(["councilEvents"], (old: CouncilEvent[] = []) => 
@@ -28,18 +24,12 @@ export const useDeleteCouncilEvent = () => {
             event.ce_id === ce_id ? { ...event, ce_is_archive: true } : event
           )
         );
-        toast.success("Council event archived successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000
-        });
+        showSuccessToast("Council event archived successfully")
       }
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
     },
-    onError: (error: Error) => {
-      toast.error("Failed to delete council event", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to delete council event");
     },
     onMutate: async (variables) => {
       const { ce_id, permanent = false } = variables;
@@ -76,16 +66,10 @@ export const useRestoreCouncilEvent = () => {
         )
       );
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
-      toast.success("Council event restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Council event restored successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to restore council event", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to restore council event");
     },
     onMutate: async (ce_id) => {
       await queryClient.cancelQueries({ queryKey: ['councilEvents'] });
@@ -150,16 +134,10 @@ export const useArchiveAttendanceSheet = () => {
         )
       );
       queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
-      toast.success("Attendance sheet archived successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Attendance sheet archived successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to archive attendance sheet", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to archive attendance sheet");
     },
     onMutate: async (att_id) => {
       await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });
@@ -187,16 +165,10 @@ export const useDeleteAttendanceSheet = () => {
         old.filter(sheet => sheet.att_id !== att_id)
       );
       queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
-      toast.success("Attendance sheet permanently deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Attendance sheet permanently deleted successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to delete attendance sheet", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+     showErrorToast("Failed to delete attendance sheet");
     },
     onMutate: async (att_id) => {
       await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });
@@ -224,16 +196,10 @@ export const useRestoreAttendanceSheet = () => {
         )
       );
       queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
-      toast.success("Attendance sheet restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Attendance sheet restored successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to restore attendance sheet", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to restore attendance sheet");
     },
     onMutate: async (att_id) => {
       await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });

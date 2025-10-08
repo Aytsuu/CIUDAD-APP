@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,269 +8,38 @@ import {
   Modal,
   Dimensions,
   RefreshControl,
+  FlatList,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
-  Trash,
+  Trash2,
   Archive,
   ArchiveRestore,
   Loader2,
   ChevronLeft,
 } from "lucide-react-native";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   useGetAttendanceSheets,
   useArchiveAttendanceSheet,
   useRestoreAttendanceSheet,
   useDeleteAttendanceSheet,
-  useGetAttendees,
-  useAddAttendee,
-  useUpdateAttendee,
   useAddAttendanceSheet,
 } from "../ce-events/ce-att-queries";
 import { useLocalSearchParams } from "expo-router";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useToastContext } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { Button } from "@/components/ui/button";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useRouter } from "expo-router";
-import { Attendee } from "../ce-events/ce-att-typeFile";
 import PageLayout from "@/screens/_PageLayout";
-
-// ============ MARK ATTENDANCE ==============
+import EmptyState from "@/components/ui/emptyState";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-const MarkAttendeesSchema = z.object({ attendees: z.array(z.string()) });
-const MarkAttendance = ({ ceId }: { ceId: number }) => {
-  const {
-    data: allAttendees = [],
-    isLoading,
-    error,
-    refetch,
-  } = useGetAttendees(ceId);
-  const addAttendee = useAddAttendee();
-  const updateAttendee = useUpdateAttendee();
-  const { toast } = useToastContext();
-  const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
-  const eventAttendees = useMemo(() => {
-    return allAttendees.filter((attendee) => attendee.ce_id === ceId);
-  }, [allAttendees, ceId]);
-
-  const form = useForm<z.infer<typeof MarkAttendeesSchema>>({
-    resolver: zodResolver(MarkAttendeesSchema),
-    defaultValues: {
-      attendees: [],
-    },
-  });
-
-  const selectedAttendees = form.watch("attendees") ?? [];
-  const isAllSelected =
-    selectedAttendees.length === eventAttendees.length &&
-    eventAttendees.length > 0;
-
-  useEffect(() => {
-    if (isLoading || !eventAttendees) return;
-    if (eventAttendees.length > 0) {
-      const presentAttendees = eventAttendees
-        .filter(
-          (attendee: Attendee) => attendee.atn_present_or_absent === "Present"
-        )
-        .map((attendee: Attendee) => attendee.atn_name);
-      form.reset({ attendees: presentAttendees });
-    }
-  }, [eventAttendees, form, isLoading]);
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allAttendeeNames = eventAttendees.map(
-        (attendee: Attendee) => attendee.atn_name
-      );
-      form.setValue("attendees", allAttendeeNames);
-    } else {
-      form.setValue("attendees", []);
-    }
-  };
-
-  const onSubmit = async (values: z.infer<typeof MarkAttendeesSchema>) => {
-    try {
-      const mutationPromises = eventAttendees.map(
-        async (attendee: Attendee) => {
-          const isPresent = values.attendees.includes(attendee.atn_name);
-          const status = isPresent ? "Present" : "Absent";
-          if (attendee.atn_id) {
-            return updateAttendee.mutateAsync({
-              atn_id: attendee.atn_id,
-              attendeeInfo: { atn_present_or_absent: status },
-            });
-          } else {
-            return addAttendee.mutateAsync({
-              atn_name: attendee.atn_name,
-              atn_designation: attendee.atn_designation || "No Designation",
-              atn_present_or_absent: status,
-              ce_id: ceId,
-              staff_id: attendee.staff_id || null,
-            });
-          }
-        }
-      );
-      await Promise.all(mutationPromises);
-      toast.success("Attendees updated successfully");
-    } catch (err) {
-      toast.error("Failed to save attendance");
-    }
-  };
-
-  if (ceId === 0) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-red-500 text-lg font-medium">
-          Error: Invalid meeting ID
-        </Text>
-      </View>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Loader2 size={24} color="#07143F" className="animate-spin" />
-        <Text className="text-gray-500 text-lg font-medium mt-4">
-          Loading attendees...
-        </Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-red-500 text-lg font-medium">
-          Error: {error.message || "Failed to load attendees"}
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <FormProvider {...form}>
-      <View className="flex-1 bg-white p-4">
-        <Text className="text-lg font-bold text-gray-800 mb-4">
-          Mark Attendance for Meeting
-        </Text>
-        <Text className="text-sm text-gray-600 mb-4">
-          Attendees count: {eventAttendees.length}
-        </Text>
-        {eventAttendees.length > 0 ? (
-          <View>
-            <View className="flex-row items-center mb-4 p-2 h-10 bg-gray-50 rounded">
-              <Checkbox
-                checked={isAllSelected}
-                onCheckedChange={handleSelectAll}
-                accessibilityLabel="Select all attendees"
-                disabled={!true}
-                className="h-5 w-5"
-              />
-              <Text className="ml-3 text-base font-medium text-gray-900">
-                Select All
-              </Text>
-            </View>
-            <ScrollView
-              style={{ maxHeight: 500, minHeight: 500 }}
-              showsVerticalScrollIndicator={true}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            >
-              <View className="space-y-3">
-                {eventAttendees.map((attendee: Attendee, index) => {
-                  const isSelected = selectedAttendees.includes(
-                    attendee.atn_name
-                  );
-                  return (
-                    <View
-                      key={attendee.atn_id || index}
-                      className="flex-row items-center p-3 bg-gray-50 rounded border border-gray-200"
-                    >
-                      <MaterialIcons name="person" size={20} color="#4b5563" />
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => {
-                          const newValue = checked
-                            ? [...selectedAttendees, attendee.atn_name]
-                            : selectedAttendees.filter(
-                                (name: string) => name !== attendee.atn_name
-                              );
-                          form.setValue("attendees", newValue);
-                        }}
-                        accessibilityLabel={`Mark ${attendee.atn_name} as ${
-                          isSelected ? "absent" : "present"
-                        }`}
-                        disabled={!true}
-                        className="h-5 w-5 ml-2"
-                      />
-                      <View className="ml-3 flex-1">
-                        <Text className="text-base font-medium text-gray-900">
-                          {attendee.atn_name}
-                        </Text>
-                        {attendee.atn_designation && (
-                          <Text className="text-sm text-gray-500 mt-1">
-                            {attendee.atn_designation}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            <View className=" bg-white border-t border-gray-200 px-4 py-4">
-              <ConfirmationModal
-                trigger={
-                  <Button className="bg-primaryBlue py-3 rounded-lg">
-                    <Text className="text-white text-base font-semibold text-center">
-                      Save
-                    </Text>
-                  </Button>
-                }
-                title="Confirm Save Attendance"
-                description="Are you sure you want to save these attendance changes?"
-                actionLabel="Save"
-                variant="default"
-                onPress={form.handleSubmit(onSubmit)}
-                loading={addAttendee.isPending || updateAttendee.isPending}
-                loadingMessage="Saving..."
-              />
-            </View>
-          </View>
-        ) : (
-          <View className="flex-1 justify-center items-center bg-gray-50 rounded-lg p-4">
-            <Text className="text-gray-500 text-lg font-medium text-center">
-              No attendees found for this meeting.
-            </Text>
-          </View>
-        )}
-      </View>
-    </FormProvider>
-  );
-};
-
-// ============ ATTENDANCE SHEETS ==============
 
 const AttendanceSheets = () => {
   const { ceId } = useLocalSearchParams();
-  const [viewMode, setViewMode] = useState<"active" | "archive">("active");
-  const [modalTab, setModalTab] = useState<"view" | "mark">("view");
+  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
   const [zoomModalVisible, setZoomModalVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -279,13 +48,14 @@ const AttendanceSheets = () => {
   const router = useRouter();
   const parsedCeId = Number(ceId) || 0;
 
-  // Get all sheets and filter based on view mode
-  const { data: allSheets = [], refetch } = useGetAttendanceSheets();
+  // Get all sheets and filter based on active tab
+  const { data: allSheets = [], refetch, isLoading } = useGetAttendanceSheets();
   const filteredSheets = allSheets.filter(
     (sheet) =>
       sheet.ce_id === parsedCeId &&
-      sheet.att_is_archive === (viewMode === "archive")
+      sheet.att_is_archive === (activeTab === "archive")
   );
+  
   const archiveSheet = useArchiveAttendanceSheet();
   const restoreSheet = useRestoreAttendanceSheet();
   const deleteSheet = useDeleteAttendanceSheet();
@@ -322,155 +92,226 @@ const AttendanceSheets = () => {
     setZoomModalVisible(true);
   };
 
-  const handleTabChange = (value: string) => {
-    setModalTab(value as "view" | "mark");
+  const handleArchive = (attId: number) => {
+    archiveSheet.mutate(attId, {
+      onSuccess: () => {
+        refetch();
+      }
+    });
+  };
+
+  const handleRestore = (attId: number) => {
+    restoreSheet.mutate(attId, {
+      onSuccess: () => {
+        refetch();
+      }
+    });
+  };
+
+  const handleDelete = (attId: number) => {
+    deleteSheet.mutate(attId, {
+      onSuccess: () => {
+        refetch();
+      }
+    });
+  };
+
+  const RenderAttendanceSheetCard = React.memo(({ sheet, isArchived }: { sheet: any; isArchived: boolean }) => (
+    <Card className="border-2 border-gray-200 shadow-sm bg-white mb-4">
+      <CardHeader className="pb-3">
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1">
+            {/* <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+              Attendance Sheet
+            </Text> */}
+            <Text className="text-sm text-gray-500">
+              {sheet.att_file_type}
+            </Text>
+          </View>
+          
+          {isArchived ? (
+            <View className="flex-row">
+              <ConfirmationModal
+                trigger={
+                  <TouchableOpacity className="bg-green-50 p-2 rounded-lg ml-2">
+                    <ArchiveRestore size={16} color="#10b981" />
+                  </TouchableOpacity>
+                }
+                title="Restore Attendance Sheet"
+                description="This attendance sheet will be restored to active sheets."
+                actionLabel="Restore"
+                onPress={() => handleRestore(sheet.att_id)}
+              />
+              <ConfirmationModal
+                trigger={
+                  <TouchableOpacity className="bg-red-50 p-2 rounded-lg ml-2">
+                    <Trash2 size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                }
+                title="Delete Attendance Sheet"
+                description="This action cannot be undone. The attendance sheet will be permanently deleted."
+                actionLabel="Delete"
+                onPress={() => handleDelete(sheet.att_id)}
+              />
+            </View>
+          ) : (
+            <ConfirmationModal
+              trigger={
+                <TouchableOpacity className="bg-red-50 p-2 rounded-lg ml-2">
+                  <Archive size={16} color="#ef4444" />
+                </TouchableOpacity>
+              }
+              title="Archive Attendance Sheet"
+              description="This attendance sheet will be moved to archive. You can restore it later if needed."
+              actionLabel="Archive"
+              onPress={() => handleArchive(sheet.att_id)}
+            />
+          )}
+        </View>
+      </CardHeader>
+
+      <CardContent className="pt-3 border-t border-gray-200">
+        <TouchableOpacity
+          onPress={() => handleZoomImage(sheet.att_file_url)}
+          className="mb-3"
+        >
+          <Image
+            source={{ uri: sheet.att_file_url }}
+            style={{ width: "100%", height: 200 }}
+            resizeMode="contain"
+            className="rounded-lg"
+          />
+        </TouchableOpacity>
+      </CardContent>
+    </Card>
+  ));
+
+  // Empty state component
+  const renderEmptyState = () => {
+    const emptyMessage = activeTab === "active"
+      ? "No active sheets found for this meeting"
+      : "No archived sheets found for this meeting";
+    
+    return (
+      <View className="flex-1 justify-center items-center py-12">
+        <EmptyState emptyMessage={emptyMessage} />
+      </View>
+    );
   };
 
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" />
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
+      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Attendance Sheets</Text>}
+      rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+      wrapScroll={false}
     >
-      <ScrollView className="flex-1 p-2">
-        <Tabs value={modalTab} onValueChange={handleTabChange}>
-          <TabsList className="flex-row bg-white px-4 pb-4">
-            <TabsTrigger
-              value="view"
-              className={`flex-1 h-10 rounded-l-lg ${
-                modalTab === "view" ? "bg-primaryBlue" : "bg-gray-200"
-              } mr-1`}
+      <View className="flex-1 px-6">
+        {/* Upload Button */}
+        <View className="mb-4 mt-5">
+          <Button
+            className="bg-primaryBlue rounded-xl"
+            onPress={() => setUploadModalVisible(true)}
+          >
+            <Text className="text-white text-[15px]">Upload Sheets</Text>
+          </Button>
+        </View>
+
+        {/* Tabs - Styled like Budget Plan */}
+        <Tabs value={activeTab} onValueChange={val => setActiveTab(val as "active" | "archive")} className="flex-1">
+          <TabsList className="bg-blue-50 flex-row justify-between">
+            <TabsTrigger 
+              value="active" 
+              className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
             >
-              <Text
-                className={`text-sm font-medium ${
-                  modalTab === "view" ? "text-white" : "text-gray-700"
-                }`}
-              >
-                View Sheets
+              <Text className={`${activeTab === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Active
               </Text>
             </TabsTrigger>
-            <TabsTrigger
-              value="mark"
-              className={`flex-1 h-10 rounded-r-lg ${
-                modalTab === "mark" ? "bg-primaryBlue" : "bg-gray-200"
-              }`}
+            <TabsTrigger 
+              value="archive" 
+              className={`flex-1 mx-1 ${activeTab === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
             >
-              <Text
-                className={`text-sm font-medium ${
-                  modalTab === "mark" ? "text-white" : "text-gray-700"
-                }`}
-              >
-                Mark Attendance
+              <Text className={`${activeTab === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Archive
               </Text>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="view" className="flex-1">
-            <View className="px-4 pt-4 flex-row justify-between items-center">
-              <Button
-                className="bg-primaryBlue mb-4"
-                onPress={() => setUploadModalVisible(true)}
-              >
-                <Text className="text-white">Upload</Text>
-              </Button>
-
-              <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden h-10">
-                <TouchableOpacity
-                  className={`px-4 items-center justify-center ${
-                    viewMode === "active" ? "bg-white" : ""
-                  }`}
-                  onPress={() => setViewMode("active")}
-                >
-                  <Text className="text-sm font-medium">Active</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className={`px-4 items-center justify-center ${
-                    viewMode === "archive" ? "bg-white" : ""
-                  }`}
-                  onPress={() => setViewMode("archive")}
-                >
-                  <Text className="text-sm font-medium">Archive</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {filteredSheets.length === 0 ? (
-              <View className="flex-1 justify-center items-center py-12">
-                <Text className="text-gray-500">
-                  {viewMode === "active"
-                    ? "No active sheets found for this meeting"
-                    : "No archived sheets found for this meeting"}
+          {/* Active Tab Content */}
+          <TabsContent value="active" className="flex-1 mt-4">
+            {isLoading ? (
+              <View className="h-64 justify-center items-center">
+                <Loader2 size={24} color="#2a3a61" className="animate-spin" />
+                <Text className="text-sm text-gray-500 mt-2">
+                  Loading attendance sheets...
                 </Text>
               </View>
             ) : (
-              <View className="px-4">
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                />
-                {filteredSheets.map((sheet) => (
-                  <Card key={sheet.att_id} className="mb-4">
-                    <CardContent>
-                      <TouchableOpacity
-                        onPress={() => handleZoomImage(sheet.att_file_url)}
-                        className="mb-4"
-                      >
-                        <Image
-                          source={{ uri: sheet.att_file_url }}
-                          style={{ width: "100%", height: 300 }}
-                          resizeMode="contain"
-                        />
-                      </TouchableOpacity>
-
-                      <View className="flex-row justify-end gap-1 space-x-2">
-                        {viewMode === "active" ? (
-                          <ConfirmationModal
-                            trigger={
-                              <TouchableOpacity className="bg-red-600 p-1 rounded-md">
-                                <Archive size={16} color="white" />
-                              </TouchableOpacity>
-                            }
-                            title="Archive Sheet"
-                            description="Are you sure you want to archive this sheet?"
-                            onPress={() => archiveSheet.mutate(sheet.att_id)}
-                          />
-                        ) : (
-                          <>
-                            <ConfirmationModal
-                              trigger={
-                                <TouchableOpacity className="bg-green-600 p-1 rounded-md">
-                                  <ArchiveRestore size={20} color="white" />
-                                </TouchableOpacity>
-                              }
-                              title="Restore Sheet"
-                              description="Restore this sheet?"
-                              onPress={() => restoreSheet.mutate(sheet.att_id)}
-                            />
-                            <ConfirmationModal
-                              trigger={
-                                <TouchableOpacity className="bg-red-600 p-1 rounded-md">
-                                  <Trash size={20} color="white" />
-                                </TouchableOpacity>
-                              }
-                              title="Delete Sheet"
-                              description="Permanently delete this sheet?"
-                              variant="destructive"
-                              onPress={() => deleteSheet.mutate(sheet.att_id)}
-                            />
-                          </>
-                        )}
-                      </View>
-                    </CardContent>
-                  </Card>
-                ))}
+              <View className="flex-1">
+                {filteredSheets.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={filteredSheets}
+                    renderItem={({ item }) => <RenderAttendanceSheetCard sheet={item} isArchived={false} />}
+                    keyExtractor={(item) => item.att_id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )}
               </View>
             )}
           </TabsContent>
 
-          <TabsContent value="mark" className="flex-1">
-            <MarkAttendance ceId={parsedCeId} />
+          {/* Archive Tab Content */}
+          <TabsContent value="archive" className="flex-1 mt-4">
+            {isLoading ? (
+              <View className="h-64 justify-center items-center">
+                <Loader2 size={24} color="#2a3a61" className="animate-spin" />
+                <Text className="text-sm text-gray-500 mt-2">
+                  Loading attendance sheets...
+                </Text>
+              </View>
+            ) : (
+              <View className="flex-1">
+                {filteredSheets.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={filteredSheets}
+                    renderItem={({ item }) => <RenderAttendanceSheetCard sheet={item} isArchived={true} />}
+                    keyExtractor={(item) => item.att_id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )}
+              </View>
+            )}
           </TabsContent>
         </Tabs>
 
@@ -478,11 +319,15 @@ const AttendanceSheets = () => {
         <Modal
           visible={uploadModalVisible}
           onRequestClose={() => setUploadModalVisible(false)}
+          animationType="slide"
         >
           <View className="flex-1 bg-white p-4">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-xl font-bold">Upload Sheets</Text>
-              <TouchableOpacity onPress={() => setUploadModalVisible(false)}>
+              <Text className="text-xl font-bold text-[#2a3a61]">Upload Attendance Sheets</Text>
+              <TouchableOpacity 
+                onPress={() => setUploadModalVisible(false)}
+                className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+              >
                 <MaterialIcons name="close" size={24} color="black" />
               </TouchableOpacity>
             </View>
@@ -550,10 +395,10 @@ const AttendanceSheets = () => {
         >
           <View className="flex-1 bg-black/90 justify-center items-center">
             <TouchableOpacity
-              className="absolute top-10 right-4 z-10"
+              className="absolute top-10 right-4 z-10 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
               onPress={() => setZoomModalVisible(false)}
             >
-              <MaterialIcons name="close" size={30} color="white" />
+              <MaterialIcons name="close" size={24} color="white" />
             </TouchableOpacity>
             <Image
               source={{ uri: zoomedImage }}
@@ -565,7 +410,7 @@ const AttendanceSheets = () => {
             />
           </View>
         </Modal>
-      </ScrollView>
+      </View>
     </PageLayout>
   );
 };

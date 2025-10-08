@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getSummonCaseDetail, getSummonTemplate, getSuppDoc, getSummonDates, 
     getSummonTimeSlots, getComplaintDetails} from "../requestAPI/summonGetAPI";
-import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList } from "../summon-types";
+import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList } from "../../summon-types";
 
 
 

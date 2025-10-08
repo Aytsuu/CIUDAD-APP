@@ -6,12 +6,12 @@ import SummonSchema from "@/form-schema/summon-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useForm } from "react-hook-form";
-import { useAddSummonSchedule } from "./queries/summonInsertQueries";
-import { useGetSummonDates } from "./queries/summonFetchQueries";
-import { useGetSummonTimeSlots } from "./queries/summonFetchQueries";
+import { useAddSummonSchedule } from "./council-mediation/queries/summonInsertQueries";
+import { useGetSummonDates } from "./council-mediation/queries/summonFetchQueries";
+import { useGetSummonTimeSlots } from "./council-mediation/queries/summonFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTime } from "@/helpers/timeFormatter";
-import { useGetScheduleList } from "./queries/summonFetchQueries";
+import { useGetScheduleList } from "./council-mediation/queries/summonFetchQueries";
 
 function CreateSummonSched({ sc_id, onSuccess }: {
     sc_id: string;

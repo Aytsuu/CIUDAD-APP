@@ -499,61 +499,6 @@ class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
         fields = ['ibp_id', 'dateIssued', 'business_name']
 
 # ================== SERVICE CHARGE SERIALIZERS =========================
-        
-class SummonSuppDocCreateSerializer(serializers.ModelSerializer):
-    files = FileInputSerializer(write_only=True, required=False, many=True)
-
-    class Meta:
-        model = SummonSuppDoc
-        fields = '__all__'
-        extra_kwargs={
-            'ssd_name': {'required': False},
-            'ssd_path': {'required': False},
-            'ssd_type': {'required': False},
-            'ssd_upload_date': {'read_only': True},
-            'ssd_url': {'read_only': True}
-        }
-
-    @transaction.atomic
-    def create(self, validated_data):   
-        files_data = validated_data.pop('files', [])
-        if not files_data:
-            raise serializers.ValidationError({"files": "At least one file must be provided"})
-            
-        # Remove ss_id from validated_data so it doesn't interfere with model creation
-        ss_id = validated_data.pop('ss_id')
-        created_files = self._upload_files(files_data, ss_id)
-
-        if not created_files:
-            raise serializers.ValidationError("Failed to upload files")
-
-        return created_files[0]
-
-    def _upload_files(self, files_data, ss_id):
-        ssd_files = []
-        for file_data in files_data:
-            ssd_file = SummonSuppDoc(
-                ssd_name=file_data['name'],
-                ssd_type=file_data['type'],
-                ssd_path=file_data['name'],
-                ssd_upload_date=timezone.now(),
-                ss_id=ss_id
-            )
-
-            # Pass the entire file_data to upload_to_storage
-            url = upload_to_storage(file_data, 'summon-bucket', '')
-            ssd_file.ssd_url = url
-            ssd_files.append(ssd_file)
-
-        if ssd_files:
-            return SummonSuppDoc.objects.bulk_create(ssd_files)
-        return []
-    
-
-class SummonSuppDocViewSieralizer(serializers.ModelSerializer):
-    class Meta:
-        model = SummonSuppDoc
-        fields = '__all__'
     
 class ServiceChargeDecisionSerializer(serializers.ModelSerializer):
     class Meta: 

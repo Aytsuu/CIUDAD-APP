@@ -53,6 +53,24 @@ class UpdateSummonCaseView(generics.UpdateAPIView):
 class HearingScheduleView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = HearingScheduleSerializer
     queryset = HearingSchedule.objects.all()
+
+class HearingMinutesCreateView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = HearingMinutesCreateSerializer
+    queryset = HearingMinutes.objects.all()
+
+class UpdateHearingScheduleView(generics.UpdateAPIView):
+    serializer_class = HearingScheduleSerializer
+    queryset = HearingSchedule.objects.all()
+    lookup_field = 'hs_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 # ======================== SUMMON DATE AND TIME ========================

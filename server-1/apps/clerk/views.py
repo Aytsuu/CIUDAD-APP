@@ -91,22 +91,22 @@ class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
 #             return Response(serializer.data, status=status.HTTP_200_OK)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class SummonSuppDocView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonSuppDocCreateSerializer
-    queryset = SummonSuppDoc.objects.all()
+# class SummonSuppDocView(generics.ListCreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = SummonSuppDocCreateSerializer
+#     queryset = SummonSuppDoc.objects.all()
 
     
-class SummonSuppDocRetrieveView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonSuppDocViewSieralizer
+# class SummonSuppDocRetrieveView(generics.ListCreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = SummonSuppDocViewSieralizer
 
-    def get_queryset(self):
-        ss_id = self.kwargs.get('ss_id')
-        if ss_id:
-            # Use the exact field name from your model
-            return SummonSuppDoc.objects.filter(ss_id=ss_id)
-        return SummonSuppDoc.objects.all()
+#     def get_queryset(self):
+#         ss_id = self.kwargs.get('ss_id')
+#         if ss_id:
+#             # Use the exact field name from your model
+#             return SummonSuppDoc.objects.filter(ss_id=ss_id)
+#         return SummonSuppDoc.objects.all()
     
 
 class ServiceChargeDecisionView(generics.ListCreateAPIView):

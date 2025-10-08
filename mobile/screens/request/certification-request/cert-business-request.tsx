@@ -9,7 +9,7 @@ import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleFiles, prepareFileForUpload, type FileUploadData } from "@/helpers/fileUpload";
 
 const CertPermit: React.FC = () => {
@@ -38,7 +38,7 @@ const CertPermit: React.FC = () => {
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    user?.resident?.rp_id || ""
+    user?.rp || ""
   );
   const businessData = businessResponse?.results || [];
 
@@ -207,7 +207,7 @@ const CertPermit: React.FC = () => {
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
-      rp_id: user?.resident?.rp_id || "",
+      rp_id: user?.rp || "",
       previous_permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
@@ -254,7 +254,7 @@ const CertPermit: React.FC = () => {
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: selectedPurpose?.pr_id,
-      rp_id: user?.resident?.rp_id || "",
+      rp_id: user?.rp || "",
       req_amount: reqAmount,
       ags_id: agsId || undefined,
     };
@@ -311,8 +311,8 @@ const CertPermit: React.FC = () => {
   // Show loading screen while auth is loading
   if (isLoading) {
     return (
-      <_ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
           <TouchableOpacity 
             onPress={() => router.back()} 
             className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -320,20 +320,20 @@ const CertPermit: React.FC = () => {
             <Ionicons name="chevron-back" size={20} color="#374151" />
           </TouchableOpacity>
         }
-        headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
-        customRightAction={<View className="w-10 h-10" />}
+        headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
+        rightAction={<View className="w-10 h-10" />}
       >
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00AFFF" />
           <Text className="text-gray-600 text-base mt-4">Loading...</Text>
         </View>
-      </_ScreenLayout>
+      </PageLayout>
     );
   }
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity 
           onPress={() => router.back()} 
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -341,8 +341,8 @@ const CertPermit: React.FC = () => {
           <Ionicons name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Submit a Request</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 px-5">
         {/* Loading Overlay */}
@@ -644,7 +644,7 @@ const CertPermit: React.FC = () => {
         )}
       </ScrollView>
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 };
 

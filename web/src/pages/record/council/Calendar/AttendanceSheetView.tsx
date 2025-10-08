@@ -196,10 +196,12 @@ headerText.forEach((line) => {
 
 interface EnhancedAttendanceSheetViewProps extends AttendanceSheetViewProps {
   citylogo?: string;
+  numberOfRows?: number; // Add this prop
 }
 
 const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
   selectedAttendees = [],
+  numberOfRows, // Add this prop
   activity = "Untitled Activity",
   date = "No date provided",
   time = "N/A",
@@ -216,12 +218,19 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
   const isMounted = useRef(true);
 
   const formattedTime = formatTimeTo12Hour(time);
-  const attendanceData = selectedAttendees.map((attendee) => ({
-    Number: "",
-    nameOfAttendee: attendee.name,
-    designation: attendee.designation,
-    Sign: "",
-  }));
+  const attendanceData = numberOfRows && numberOfRows > 0 
+    ? Array.from({ length: numberOfRows }, (_, _index) => ({
+        Number: "",
+        nameOfAttendee: "",
+        designation: "",
+        Sign: "",
+      }))
+    : selectedAttendees.map((attendee) => ({
+        Number: "",
+        nameOfAttendee: attendee.name,
+        designation: attendee.designation,
+        Sign: "",
+      }));
 
   const maxRowsPerPage = 1000;
   const dataChunks = splitDataIntoChunks(attendanceData, maxRowsPerPage);
@@ -305,6 +314,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
     time,
     place,
     selectedAttendees,
+    numberOfRows, // Add numberOfRows to dependency array
     formattedTime,
     sanRoqueLogoBase64,
     cityLogoBase64,
