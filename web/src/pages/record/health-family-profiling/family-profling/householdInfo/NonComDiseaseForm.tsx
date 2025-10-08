@@ -1,7 +1,8 @@
 import React from "react";
-import { Form } from "@/components/ui/form/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { Combobox } from "@/components/ui/combobox";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { z } from "zod";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useIllnessesList } from "../queries/profilingFetchQueries";
 
 export default function NonComDiseaseForm({
   residents,
@@ -25,17 +27,13 @@ export default function NonComDiseaseForm({
 }) {
   const [selectedMember, setSelectedMember] = React.useState<string>(""); // Changed to single selection
   
-  // Watch for "others" selections
-  const selectedComorbidities = form.watch(`${prefix}.new.ncdFormSchema.comorbidities`);
+  // Fetch illnesses list
+  const { data: illnessesList, isLoading: isLoadingIllnesses } = useIllnessesList();
+  
+  // Watch for "others" selection for lifestyle risk
   const selectedLifestyleRisk = form.watch(`${prefix}.new.ncdFormSchema.lifestyleRisk`);
   
-  // Clear "others" fields when selection changes
-  React.useEffect(() => {
-    if (selectedComorbidities !== "Others") {
-      form.setValue(`${prefix}.new.ncdFormSchema.comorbiditiesOthers`, "");
-    }
-  }, [selectedComorbidities, form, prefix]);
-
+  // Clear "others" field when lifestyle risk selection changes
   React.useEffect(() => {
     if (selectedLifestyleRisk !== "Others") {
       form.setValue(`${prefix}.new.ncdFormSchema.lifestyleRiskOthers`, "");
@@ -136,6 +134,8 @@ export default function NonComDiseaseForm({
   const handleAddPatient = () => {
     const newPatient = form.getValues(`${prefix}.new`);
     
+    console.log('Attempting to add patient:', newPatient);
+    
     // Validate that required fields are filled
     if (!newPatient.id || !newPatient.lastName || !newPatient.firstName) {
       return; // Don't add incomplete records
@@ -143,19 +143,22 @@ export default function NonComDiseaseForm({
     
     // Validate NCD form fields when resident is selected
     const ncdData = newPatient.ncdFormSchema;
+    console.log('NCD Data validation check:', {
+      riskClassAgeGroup: ncdData?.riskClassAgeGroup,
+      comorbidities: ncdData?.comorbidities,
+      lifestyleRisk: ncdData?.lifestyleRisk,
+      inMaintenance: ncdData?.inMaintenance
+    });
+    
     if (!ncdData?.riskClassAgeGroup || !ncdData?.comorbidities || 
         !ncdData?.lifestyleRisk || !ncdData?.inMaintenance) {
       toast.error("Please fill all required NCD fields");
+      console.log('Validation failed - missing fields');
       return;
     }
 
-    // Validate "others" fields if "Others" is selected
-    if (ncdData.comorbidities === "Others" && !ncdData.comorbiditiesOthers?.trim()) {
-      toast.error("Please specify comorbidities");
-      return;
-    }
-
-    if (ncdData.lifestyleRisk === "Others" && !ncdData.lifestyleRiskOthers?.trim()) {
+    // Validate "others" field if "OTHERS" is selected for lifestyle risk (fixed to match uppercase value)
+    if (ncdData.lifestyleRisk === "OTHERS" && !ncdData.lifestyleRiskOthers?.trim()) {
       toast.error("Please specify lifestyle risk");
       return;
     }
@@ -166,7 +169,6 @@ export default function NonComDiseaseForm({
       ncdFormSchema: {
         riskClassAgeGroup: ncdData.riskClassAgeGroup,
         comorbidities: ncdData.comorbidities,
-        comorbiditiesOthers: ncdData.comorbiditiesOthers || "",
         lifestyleRisk: ncdData.lifestyleRisk,
         lifestyleRiskOthers: ncdData.lifestyleRiskOthers || "",
         inMaintenance: ncdData.inMaintenance
@@ -189,7 +191,6 @@ export default function NonComDiseaseForm({
       ncdFormSchema: {
         riskClassAgeGroup: "",
         comorbidities: "",
-        comorbiditiesOthers: "",
         lifestyleRisk: "",
         lifestyleRiskOthers: "",
         inMaintenance: ""
@@ -302,32 +303,35 @@ export default function NonComDiseaseForm({
                 { id: "SENIOR CITIZEN", name: "Senior Citizen (60+ years old)" },
               ]}
             />
-            <FormSelect
+            <FormField
               control={form.control}
               name={`${prefix}.new.ncdFormSchema.comorbidities`}
-              label="Comorbidities/Sakit Balation"
-              options={[
-                { id: "HYPERTENSION", name: "HPN - Hypertension" },
-                { id: "DIABETES", name: "Diabetes" },
-                { id: "ASTHMA", name: "Bronchial Asthma" },
-                { id: "DYSLIPIDEMIA", name: "Dyslipedemia" },
-                { id: "CKD", name: "Chronic Kidney Disease" },
-                { id: "CANCER", name: "Cancer" },
-                { id: "MHI", name: "Mental Health Illness" },
-                { id: "NONE", name: "None" },
-                { id: "OTHERS", name: "Others" },
-              ]}
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Comorbidities/Sakit Balation</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={
+                          (illnessesList?.data || []).map((illness: any) => ({
+                            id: illness.illname,
+                            name: illness.illname
+                          }))
+                        }
+                        value={field.value || ""}
+                        onChange={(value) => {
+                          field.onChange(value || "");
+                        }}
+                        placeholder="Search or select illness..."
+                        emptyMessage={isLoadingIllnesses ? "Loading illnesses..." : "No illnesses found"}
+                        triggerClassName="w-full h-10"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
-            
-            {/* Show "Others" input field when "Others" is selected for comorbidities */}
-            {selectedComorbidities === "OTHERS" && (
-              <FormInput
-                control={form.control}
-                name={`${prefix}.new.ncdFormSchema.comorbiditiesOthers`}
-                label="Please specify comorbidities"
-                placeholder="Enter comorbidities"
-              />
-            )}
             
             <FormSelect
               control={form.control}

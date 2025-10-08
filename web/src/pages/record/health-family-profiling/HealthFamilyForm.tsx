@@ -51,14 +51,14 @@ export default function HealthFamilyForm() {
   const navigate = useNavigate();
   const { data: householdsListHealth, isLoading: isLoadingHouseholds } = useHouseholdsListHealth();
   const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsListHealth(); 
-  const [currentStep, setCurrentStep] = React.useState<number>(1);
+  const [currentStep, setCurrentStep] = React.useState<number>(4);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
   // const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
   const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
   const [selectedRespondentId, setSelectedRespondentId] = React.useState<string>(""); 
-  const [famId, setFamId] = React.useState<string>(""); 
+  const [famId, setFamId] = React.useState<string>("251008000016-O"); 
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );

@@ -143,6 +143,7 @@ class FamilyHealthProfilingDetailView(APIView):
                 water_supply = WaterSupply.objects.filter(hh=household).first()
                 if water_supply:
                     environmental_data['water_supply'] = {
+                        'id': water_supply.water_sup_id,  # Added ID for update operations
                         'type': water_supply.water_sup_type,
                         'connection_type': water_supply.water_conn_type,
                         'description': water_supply.water_sup_desc
@@ -152,6 +153,7 @@ class FamilyHealthProfilingDetailView(APIView):
                 sanitary_facility = SanitaryFacility.objects.filter(hh=household).first()
                 if sanitary_facility:
                     environmental_data['sanitary_facility'] = {
+                        'id': sanitary_facility.sf_id,  # Added ID for update operations
                         'facility_type': sanitary_facility.sf_type,  # Fixed: sf_type instead of sf_facility_type
                         'description': sanitary_facility.sf_desc,    # Added: human-readable subtype description
                         'toilet_facility_type': sanitary_facility.sf_toilet_type  # Fixed: sf_toilet_type instead of sf_toilet_facility_type
@@ -161,6 +163,7 @@ class FamilyHealthProfilingDetailView(APIView):
                 solid_waste = SolidWasteMgmt.objects.filter(hh=household).first()
                 if solid_waste:
                     environmental_data['waste_management'] = {
+                        'id': solid_waste.swm_id,  # Added ID for update operations
                         'type': solid_waste.swn_desposal_type,  # Fixed: swn_desposal_type instead of swm_type
                         'description': solid_waste.swm_desc  # Fixed: swm_desc instead of checking for swm_others
                     }

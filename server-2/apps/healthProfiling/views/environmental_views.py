@@ -3,7 +3,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from ..models import WaterSupply, SanitaryFacility, SolidWasteMgmt, Household
-from ..serializers.base import WaterSupplySerializer, SanitaryFacilitySerializer, SolidWasteMgmtSerializer
+from ..serializers.base import (
+    WaterSupplySerializer, 
+    WaterSupplyUpdateSerializer,
+    SanitaryFacilitySerializer, 
+    SanitaryFacilityUpdateSerializer,
+    SolidWasteMgmtSerializer,
+    SolidWasteMgmtUpdateSerializer
+)
 from ..serializers.household_serializers import HouseholdBaseSerializer
 
 
@@ -148,15 +155,23 @@ class SanitaryFacilityByHouseholdView(generics.ListAPIView):
 
 # NEW: Update/Delete endpoints for Water Supply and Sanitary Facility
 class WaterSupplyUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = WaterSupplySerializer
     queryset = WaterSupply.objects.all()
     lookup_field = 'water_sup_id'
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return WaterSupplyUpdateSerializer
+        return WaterSupplySerializer
 
 
 class SanitaryFacilityUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = SanitaryFacilitySerializer
     queryset = SanitaryFacility.objects.all()
     lookup_field = 'sf_id'
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return SanitaryFacilityUpdateSerializer
+        return SanitaryFacilitySerializer
 
 
 # Solid Waste Management CRUD
@@ -193,9 +208,13 @@ class SolidWasteByHouseholdView(generics.ListAPIView):
 
 
 class SolidWasteUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = SolidWasteMgmtSerializer
     queryset = SolidWasteMgmt.objects.all()
     lookup_field = 'swm_id'
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return SolidWasteMgmtUpdateSerializer
+        return SolidWasteMgmtSerializer
 
 
 class EnvironmentalDataView(APIView):

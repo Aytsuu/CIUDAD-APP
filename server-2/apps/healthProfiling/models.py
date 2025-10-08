@@ -229,6 +229,13 @@ class WaterSupply(AbstractModels):
     water_sup_desc = models.TextField(max_length=1000)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
 
+    history = HistoricalRecords(
+        table_name='water_supply_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
+
     class Meta:
         db_table = 'water_supply'
 
@@ -239,6 +246,13 @@ class SanitaryFacility(AbstractModels):
     sf_toilet_type = models.CharField(max_length=50)
 
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+
+    history = HistoricalRecords(
+        table_name='sanitary_facility_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     class Meta:
         db_table = 'sanitary_facility'
@@ -255,8 +269,15 @@ class FacilityDetails(AbstractModels):
 class SolidWasteMgmt(AbstractModels):
     swm_id = models.BigAutoField(primary_key=True)
     swn_desposal_type = models.CharField(max_length=50)
-    swm_desc = models.TextField(max_length=1000)
+    swm_desc = models.TextField(max_length=1000, blank=True, default='')
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+    
+    history = HistoricalRecords(
+        table_name='solid_waste_mgmt_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
     
     class Meta:
         db_table = 'solid_waste_mgmt'
@@ -269,6 +290,13 @@ class TBsurveilance(AbstractModels):
 
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
+    history = HistoricalRecords(
+        table_name='tb_surveillance_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
+
     class Meta:
         db_table = 'tb_surveillance_records'
 
@@ -280,6 +308,13 @@ class NonCommunicableDisease(AbstractModels):
     ncd_maintenance_status = models.CharField(max_length=100, blank=True, null=True)
 
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+
+    history = HistoricalRecords(
+        table_name='ncd_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     class Meta:
         db_table = 'non_communicable_disease'
@@ -327,6 +362,13 @@ class SurveyIdentification(AbstractModels):
     si_updated_at = models.DateTimeField(auto_now=True)
     
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='survey_identifications')
+
+    history = HistoricalRecords(
+        table_name='survey_identification_history',
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        cascade_delete_history=True,
+    )
 
     class Meta:
         db_table = 'survey_identification'

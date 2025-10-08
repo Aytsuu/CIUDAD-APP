@@ -18,6 +18,7 @@ from .views.survey_views import *
 from .views.survey_form_views import *
 from .views.all_record_views import *
 from .views.dependents_views import *
+from .views.history_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -155,5 +156,13 @@ urlpatterns = [
     # Survey Identification Form URLs
     path("survey-identification/form/submit/", SurveyIdentificationFormSubmitView.as_view(), name="survey-identification-form-submit"),
 
-]
+    # Update History URLs
+    path("history/ncd/", NCDHistoryView.as_view(), name="ncd-history"),
+    path("history/tb/", TBHistoryView.as_view(), name="tb-history"),
+    path("history/survey/", SurveyHistoryView.as_view(), name="survey-history"),
+    path("history/water-supply/", WaterSupplyHistoryView.as_view(), name="water-supply-history"),
+    path("history/sanitary-facility/", SanitaryFacilityHistoryView.as_view(), name="sanitary-facility-history"),
+    path("history/solid-waste/", SolidWasteMgmtHistoryView.as_view(), name="solid-waste-history"),
+    path("history/environmental/", EnvironmentalHealthHistoryView.as_view(), name="environmental-health-history"),
 
+]

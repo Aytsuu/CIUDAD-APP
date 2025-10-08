@@ -76,30 +76,31 @@ def create_patient_and_record_for_health_profiling(rp_id, record_type=None, illn
 
 def create_medical_history_for_health_record(patient_record, record_type, illness_name):
     """
-    Create or find existing MedicalHistory record for health profiling
+    Create MedicalHistory record for health profiling using EXISTING illness records only.
+    Does NOT create new illness records - only fetches from existing illness table data.
+    Uses case-insensitive search for illness names.
     
     Args:
         patient_record (PatientRecord): The patient record
         record_type (str): Type of health record ('NCD', 'TB')
-        illness_name (str): Name of the illness/condition
+        illness_name (str): Name of the illness/condition (must exist in Illness table, case-insensitive)
         
     Returns:
-        MedicalHistory: The created or existing medical history record
+        MedicalHistory: The created or existing medical history record, or None if illness not found
     """
     try:
-        # Create or get illness record
-        illness, created = Illness.objects.get_or_create(
-            illname=illness_name,
-            defaults={
-                'ill_description': f'{record_type} condition: {illness_name}',
-                'ill_code': f'{record_type.upper()}_{illness_name.upper().replace(" ", "_")}'
-            }
-        )
-        
-        if created:
-            logger.info(f"Created new illness record: {illness.illname}")
-        else:
-            logger.info(f"Found existing illness record: {illness.illname}")
+        # Fetch existing illness record - DO NOT CREATE NEW
+        # Use case-insensitive search (iexact) to match regardless of capitalization
+        try:
+            illness = Illness.objects.get(illname__iexact=illness_name)
+            logger.info(f"Found existing illness record: {illness.illname} (ID: {illness.ill_id})")
+        except Illness.DoesNotExist:
+            logger.error(f"Illness '{illness_name}' does not exist in the Illness table (searched case-insensitively). Medical history not created.")
+            return None
+        except Illness.MultipleObjectsReturned:
+            # If multiple matches found, get the first one and log a warning
+            illness = Illness.objects.filter(illname__iexact=illness_name).first()
+            logger.warning(f"Multiple illness records found for '{illness_name}'. Using first match: {illness.illname} (ID: {illness.ill_id})")
         
         # Check if medical history already exists for this patient record and illness
         existing_history = MedicalHistory.objects.filter(
@@ -111,14 +112,17 @@ def create_medical_history_for_health_record(patient_record, record_type, illnes
             logger.info(f"Medical history already exists for patient record {patient_record.patrec_id} and illness {illness.illname}")
             return existing_history
         
-        # Create new medical history record
+        # Create new medical history record with ill_date formatted as YYYY-MM-DD
+        current_date = timezone.now()
+        formatted_date = current_date.strftime('%Y-%m-%d')  # Format: YYYY-MM-DD
+        
         medical_history = MedicalHistory.objects.create(
             patrec=patient_record,
             ill=illness,
-            year=str(timezone.now().year)
+            ill_date=formatted_date  # Use ill_date instead of year, formatted as YYYY-MM-DD
         )
         
-        logger.info(f"Created medical history record {medical_history.medhist_id} for patient record {patient_record.patrec_id}")
+        logger.info(f"Created medical history record {medical_history.medhist_id} for patient record {patient_record.patrec_id} with illness {illness.illname} (ID: {illness.ill_id}) on date {formatted_date}")
         return medical_history
         
     except Exception as e:

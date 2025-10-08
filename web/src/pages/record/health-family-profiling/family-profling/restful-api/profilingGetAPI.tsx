@@ -1,5 +1,16 @@
 import { api2 } from "@/api/api";
 
+// GET request for illnesses list
+export const fetchIllnesses = async () => {
+  try {
+    const response = await api2.get("maternal/prenatal/illnesses/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching illnesses:", error);
+    throw error;
+  }
+};
+
 // ==================== FETCH FAMILY HEALTH PROFILING ==================== (Status: New)
 export const getFamilyHealthProfilingData = async (famId: string) => {
   try {
