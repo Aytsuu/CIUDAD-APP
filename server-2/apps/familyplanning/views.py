@@ -2418,11 +2418,26 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
         }
         
         # Check if vital signs are significantly different
+        current_pulse = int(data.get("pulseRate") or 0)
+        latest_pulse = 0
+        
+        # Safely convert the database value (which is a VARCHAR) to an integer
+        if latest_vital and latest_vital.vital_pulse is not None:
+             try:
+                 latest_pulse = int(latest_vital.vital_pulse)
+             except ValueError:
+                 # Log a warning if the VARCHAR is not a valid number
+                 logger.warning(f"latest_vital.vital_pulse '{latest_vital.vital_pulse}' is not a valid integer. Using 0 for comparison.")
+                 latest_pulse = 0
+                 
         should_create_vital = True
+        
         if latest_vital:
-            pulse_diff = abs(float(data.get("pulseRate") or 0) - float(latest_vital.vital_pulse or 0))
+            # Now perform comparison using the integer values
+            pulse_diff = abs(current_pulse - latest_pulse) 
+            
             bp_same = (vital_bp_systolic == latest_vital.vital_bp_systolic and 
-                      vital_bp_diastolic == latest_vital.vital_bp_diastolic)
+                       vital_bp_diastolic == latest_vital.vital_bp_diastolic)
             
             if pulse_diff < 5 and bp_same:
                 vital_id = latest_vital.vital_id

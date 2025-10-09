@@ -18,7 +18,7 @@ import { api2 } from "@/api/api"
 import { toast } from "sonner"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 import { Trash2 } from "lucide-react"
-// import { z } from "zod"
+// import { z } from "  "
 // import { formatDate } from "@/helpers/dateFormatter"
 
 const methods = [
@@ -168,6 +168,8 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
     
   })
 
+  const hasRecords = records.length > 0
+
   return (
     <Card>
       <CardHeader><CardTitle>Service Provision Record</CardTitle></CardHeader>
@@ -301,7 +303,8 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
 
             <div className="flex justify-end mt-6 space-x-4">
               <Button type="button" variant="outline" onClick={onPrevious5} disabled={isReadOnly}>Previous</Button>
-              <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={isReadOnly}>Submit</Button>
+           
+               <Button type="button" onClick={() => setIsConfirmOpen(true)} disabled={isReadOnly || !hasRecords}>Submit</Button>
             </div>
 
             <ConfirmationDialog isOpen={isConfirmOpen} onOpenChange={setIsConfirmOpen} onConfirm={onConfirmSubmit} title="Confirm Submission" description="Are you sure you want to submit all data? This action cannot be undone." />

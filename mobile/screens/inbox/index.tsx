@@ -3,8 +3,11 @@ import ScreenLayout from "../_ScreenLayout";
 import { Megaphone } from "@/lib/icons/Megaphone";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { Bell } from "@/lib/icons/Bell";
+import { useRouter } from "expo-router";
 
 export default () => {
+  const router = useRouter();
+
   return (
     <ScreenLayout
       showBackButton={false}
@@ -12,7 +15,9 @@ export default () => {
       headerBetweenAction={<Text className="text-[13px]">Inbox</Text>}
     >
       <View className="flex-1">
+        {/* Announcement Card */}
         <TouchableOpacity
+          onPress={() => router.push("/(announcement)")}
           className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
           activeOpacity={0.7}
         >
@@ -39,6 +44,7 @@ export default () => {
           </View>
         </TouchableOpacity>
 
+        {/* Notification Card */}
         <TouchableOpacity
           className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
           activeOpacity={0.7}

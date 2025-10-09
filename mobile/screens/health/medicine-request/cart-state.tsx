@@ -71,6 +71,12 @@ export const removeUploadedFile = (fileId: string): void => {
   notifySubscribers();
 };
 
+// ADD THIS MISSING FUNCTION:
+export const clearUploadedFiles = (): void => {
+  _globalCartState.uploadedFiles = [];
+  notifySubscribers();
+};
+
 export const clearCart = (): void => {
   _globalCartState.items = [];
   _globalCartState.uploadedFiles = [];

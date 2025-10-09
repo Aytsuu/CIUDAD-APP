@@ -19,22 +19,31 @@ export const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().min(1, "Date of visit is required"),
   methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Provider name is required"),
-  dateOfFollowUp: z.preprocess(
-    (arg) => (arg === "" ? null : arg),
-    z.union([
-      z.literal(null),
-      z.string().refine(
-        (dateString) => {
-          if (!dateString) return true; // Allow null/empty
-          const date = new Date(dateString);
-          return date > today && !isWeekend(date);
-        },
-        { 
-          message: "Follow-up date must be a future date and cannot be on weekends (Saturday or Sunday)" 
-        }
-      ),
-    ]).optional(),
-  ),
+dateOfFollowUp: z.preprocess(
+  (arg) => (arg === "" ? null : arg),
+  z.union([
+    z.literal(null),
+    z.string().refine(
+      (dateString) => {
+        if (!dateString) return true; // Allow null/empty
+        
+        const date = new Date(dateString);
+        date.setHours(0, 0, 0, 0); // Normalize time for comparison
+        
+        // Check if date is today or in the past
+        const isTodayOrPast = date <= today;
+        // Check if date is on weekend
+        const isOnWeekend = isWeekend(date);
+        
+        // Return false if date is today/past OR on weekend
+        return !isTodayOrPast && !isOnWeekend;
+      },
+      { 
+        message: "Follow-up date must be a future date, and cannot be on weekends" 
+      }
+    ),
+  ]).optional(),
+),
   bloodPressure: z.string().optional(),
   methodQuantity: z.string().optional(),
   serviceProviderSignature: z.string().nonempty("Please sign and save the signature first"),

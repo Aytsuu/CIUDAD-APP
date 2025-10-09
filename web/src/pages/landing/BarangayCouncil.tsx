@@ -2,6 +2,7 @@
 import { Footer } from "./Footer";
 import { useBrgyCouncil } from "./queries/landingFetchQueries";
 
+
 export default function BarangayCouncil() {
   const { data: brgyCouncil } = useBrgyCouncil();
 
@@ -275,7 +276,6 @@ export default function BarangayCouncil() {
           </div>
         </div>
       </section>
-
       <Footer />
     </main>
   );

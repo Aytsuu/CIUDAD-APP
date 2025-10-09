@@ -24,9 +24,5 @@ class SidebarAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):
     today = date.today()
     three_days_ago = today-timedelta(days=3)
-    queryset = RequestRegistration.objects.filter(
-      req_created_at__date__gte=three_days_ago, 
-      req_created_at__date__lte=today
-    )
-    
+    queryset = RequestRegistration.objects.all()    
     return Response(RequestTableSerializer(queryset, many=True).data)

@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/table/data-table"
-import { Search } from "lucide-react"
+import { FileText, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { IRColumns } from "../ReportColumns"
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDebounce } from "@/hooks/use-debounce"
 import { useGetIncidentReport } from "../queries/reportFetch"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function IRArchive() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -76,11 +77,30 @@ export default function IRArchive() {
               </div>
             </div>
 
-            <div className="border-t overflow-hidden">
-              <div className="overflow-x-auto">
-                <DataTable columns={IRColumns()} data={IRList} isLoading={isLoadingIR} />
+            {/* Empty State */}
+            {!isLoadingIR && IRList.length === 0 && (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {searchQuery ? "No reports found" : "No reports yet"}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {searchQuery &&`No reports match "${searchQuery}". Try adjusting your search.`}
+                </p>
               </div>
-            </div>
+            )}
+            
+            {/* Loading State */}
+            {isLoadingIR && (
+              <div className="flex items-center justify-center py-12">
+                <Spinner size="lg"/>
+                <span className="ml-2 text-gray-600">Loading incident reports...</span>
+              </div>
+            )}
+
+            {!isLoadingIR && IRList.length > 0 && (
+              <DataTable columns={IRColumns()} data={IRList} isLoading={isLoadingIR} />
+            )}
           </CardContent>
 
           {/* Pagination Section */}

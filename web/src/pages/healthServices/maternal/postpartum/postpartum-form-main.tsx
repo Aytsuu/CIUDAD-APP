@@ -6,8 +6,6 @@ import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocation } from "react-router"
 
-import { Patient } from "@/pages/record/health/patientsRecord/patient-types";
-
 import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
 import PostpartumFormFirstPg from "./postpartum-form"
 

@@ -9,6 +9,7 @@ import { UserRound } from "@/lib/icons/UserRound"
 import { Home } from "@/lib/icons/Home"
 import { Building } from "@/lib/icons/Building"
 import { Store } from "@/lib/icons/Store"
+import PageLayout from "../_PageLayout"
 
 export default () => {
   const router = useRouter();
@@ -81,38 +82,27 @@ export default () => {
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={
-        <View className="items-center">
-          <Text className="text-gray-900 text-[13px]">
-            Barangay Profiling
-          </Text>
-        </View>
-      }
-      customRightAction={<View className="w-10 h-10"/>}
+    <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-gray-700" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-[13px]">Profiling</Text>}
+          rightAction={<View className="w-10 h-10" />}
     >
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-        <Text className="text-sm text-center text-gray-600 leading-6">
-          Monitor barangay demographic records. Select a category below to view records.
-        </Text> 
-        <View className="mt-6 pb-6">
-          {menuItems.map((item, index) => (
-            <MenuCard 
-              key={item.id}
-              item={item}
-              index={index}
-            />
-          ))}
-        </View>
-      </ScrollView>
-    </ScreenLayout>
+      <View className="mt-4 px-6">
+        {menuItems.map((item, index) => (
+          <MenuCard 
+            key={item.id}
+            item={item}
+            index={index}
+          />
+        ))}
+      </View>
+    </PageLayout>
   )
 }

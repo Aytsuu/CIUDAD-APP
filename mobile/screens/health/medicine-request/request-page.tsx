@@ -28,7 +28,7 @@ export type MedicineDisplay = {
 
 export default function MedicineRequestScreen() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery); // Debounced for API fetch
+  // const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery); // Debounced for API fetch
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showCategories, setShowCategories] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
@@ -36,7 +36,7 @@ export default function MedicineRequestScreen() {
   const { cartItems } = useGlobalCartState();
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize, debouncedSearchQuery); // Use debounced for fetch
+  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(currentPage, pageSize); // Use debounced for fetch
   const { user } = useAuth();
   const userId = user?.rp;
 
@@ -45,15 +45,15 @@ export default function MedicineRequestScreen() {
   console.log("RP_ID:", userId);
 
   // Debounce the search query (delay API fetch by 500ms)
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 1000);
+  // useEffect(() => {
+  //   const handler = setTimeout(() => {
+  //     setDebouncedSearchQuery(searchQuery);
+  //   }, 1000);
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery]);
+  //   return () => {
+  //     clearTimeout(handler);
+  //   };
+  // }, [searchQuery]);
 
   useEffect(() => {
     const checkPendingRequests = async () => {
@@ -190,7 +190,7 @@ export default function MedicineRequestScreen() {
           )}
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => setShowCategories(!showCategories)}
           className="flex-row items-center justify-between mt-3 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
         >
@@ -198,7 +198,7 @@ export default function MedicineRequestScreen() {
             Category: <Text className="font-semibold">{selectedCategory}</Text>
           </Text>
           <Filter size={20} color="#9CA3AF" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {showCategories && (
           <View className="mt-2 border border-gray-200 rounded-lg bg-white max-h-48 overflow-hidden">

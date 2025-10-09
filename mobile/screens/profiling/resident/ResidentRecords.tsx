@@ -67,11 +67,6 @@ export default function ResidentRecords() {
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <View className="flex-row items-center mb-2">
-                <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-blue-600 font-semibold text-lg">
-                    {item.fname.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
                 <View className="flex-1">
                   <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
                     {fullName}
@@ -190,6 +185,7 @@ export default function ResidentRecords() {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

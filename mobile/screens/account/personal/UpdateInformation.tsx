@@ -10,7 +10,7 @@ import { useToastContext } from "@/components/ui/toast";
 import { uppercaseAll } from "@/helpers/caseHelper";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
-import { useGetPersonalModificationReq } from "../queries/accountFetchQueries";
+import { useGetPersonalModificationReq } from "../queries/accountGetQueries";
 
 export default function UpdateInformation() {
   // ===================== STATE INITIALIZATION =====================

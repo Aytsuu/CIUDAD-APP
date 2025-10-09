@@ -328,7 +328,7 @@ export default function AllFirstAidRecords() {
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
             />
-            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue="" />
+            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
           </div>
           
 

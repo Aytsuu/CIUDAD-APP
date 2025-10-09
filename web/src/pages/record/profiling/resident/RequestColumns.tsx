@@ -6,6 +6,7 @@ import { FamilyRequestRecord, IndividualRequestRecord } from "../ProfilingTypes"
 import { calculateAge } from "@/helpers/ageCalculator";
 import { Combobox } from "@/components/ui/combobox";
 import { formatRequestComposition } from "../ProfilingFormats";
+import { formatDate } from "@/helpers/dateHelper";
 
 // Define the colums for the data table
 export const IndividualRequestColumns: ColumnDef<IndividualRequestRecord>[] = [
@@ -68,8 +69,11 @@ export const IndividualRequestColumns: ColumnDef<IndividualRequestRecord>[] = [
     ),
   },
   {
-    accessorKey: "req_date",
-    header: "Date Requested",
+    accessorKey: "req_created_at",
+    header: "Requested",
+    cell: ({ row }) => (
+      formatDate(row.original.req_created_at, "short")
+    )
   },
   {
     accessorKey: "action",
@@ -132,9 +136,9 @@ export const FamilyRequestColumns: ColumnDef<FamilyRequestRecord>[] = [
     ),
     cell: ({ row }) => {
       const data = row.original.respondent;
-      const lname = data.per_lname;
-      const fname = data.per_fname;
-      const mname = data.per_mname;
+      const lname = data?.per_lname;
+      const fname = data?.per_fname;
+      const mname = data?.per_mname;
 
       return <p>{`${lname}, ${fname}${mname ? ` ${mname}` : ""}`}</p>
     },
@@ -173,8 +177,11 @@ export const FamilyRequestColumns: ColumnDef<FamilyRequestRecord>[] = [
     }
   },
   {
-    accessorKey: "req_date",
-    header: "Date Requested",
+    accessorKey: "req_created_at",
+    header: "Requested",
+    cell: ({ row }) => (
+      formatDate(row.original.req_created_at, "short")
+    )
   },
   {
     accessorKey: "action",
