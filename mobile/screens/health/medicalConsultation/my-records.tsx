@@ -48,7 +48,7 @@ export default function InvMedicalConRecords() {
 
     if (mode === "admin") {
       // Admin mode - get patient data from params
-      const adminPatId = params.patId as string;
+      const adminPatId = params.pat_id as string;
 
       console.log("Admin mode - Setting patId to:", adminPatId);
       setPatientId(adminPatId || "");

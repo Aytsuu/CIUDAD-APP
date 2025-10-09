@@ -30,8 +30,8 @@ export default () => {
   },
   {
     title: "Medical Consultation Appointment",
-     description: "",
-     route: ""
+     description: "Monitor your medical consultation appointments",
+     route: "/(health)/medconsultation/my-medappointments"
   },
 ]
 

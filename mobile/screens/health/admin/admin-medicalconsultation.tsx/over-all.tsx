@@ -173,7 +173,7 @@ export default function AllMedicalRecord() {
       router.push({
         pathname: "/medconsultation/my-records",
         params: {
-          patId: record.pat_id,
+          pat_id: record.pat_id,
           mode: "admin"
         }
       });

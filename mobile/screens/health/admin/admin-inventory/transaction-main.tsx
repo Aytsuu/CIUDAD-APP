@@ -120,7 +120,7 @@ export default function InventoryTransactionMainScreen() {
       </View>
 
       {/* Content Area - Let child components handle their own scrolling */}
-      <View className="flex-1 px-4">
+      <View className="flex-1">
         {selectedView === "medicine" && <MedicineListScreen />}
         {selectedView === "antigen" && <AntigenListScreen />}
         {selectedView === "commodity" && <CommodityListScreen />}

@@ -354,10 +354,10 @@ export function AppSidebar() {
       title: "Services",
       url: "/",
       items: [
-        { title: "Animal Bites", url: "/Animalbite_viewing" },
+        { title: "Animal Bites", url: "/services/animalbites" },
         { title: "Child Health", url: "/services/childhealthrecords" },
         { title: "Firstaid", url: "/services/firstaid" },
-        { title: "Family Planning", url: "/FamPlanning_table" },
+        { title: "Family Planning", url: "/services/familyplanning" },
         { title: "Maternal", url: "/services/maternalrecords" },
         {
           title: "Medical Consultation ",

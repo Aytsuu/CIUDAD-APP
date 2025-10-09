@@ -41,7 +41,7 @@ export default function MonthlyVaccineRecords() {
   const totalMonths = monthlyData.length;
 
   // Filter data based on search query
-  const filteredData = monthlyData.filter((monthData) => {
+  const filteredData = monthlyData.filter((monthData:any) => {
     const monthName = new Date(monthData.month + "-01").toLocaleString("default", {
       month: "long",
       year: "numeric"
@@ -108,7 +108,7 @@ export default function MonthlyVaccineRecords() {
                 </div>
               ) : paginatedData.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {paginatedData.map((record) => {
+                  {paginatedData.map((record:any) => {
                     const monthName = new Date(record.month + "-01").toLocaleString("default", {
                       month: "long",
                       year: "numeric"

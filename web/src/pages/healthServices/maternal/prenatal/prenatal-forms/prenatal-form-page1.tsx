@@ -70,18 +70,6 @@ const capitalize = (str: string): string => {
     .join(" ");
 };
 
-// age calculation for dob
-// const calculateAge = (dob: string): number => {
-//   const birthDate = new Date(dob)
-//   const today = new Date()
-//   let age = today.getFullYear() - birthDate.getFullYear()
-//   const monthDiff = today.getMonth() - birthDate.getMonth()
-
-//   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-//     age--
-//   }
-//   return age
-// }
 type previousIllness = {
   prevIllness: string;
   prevIllnessYr?: number;
@@ -254,7 +242,6 @@ export default function PrenatalFormFirstPg({
           "medicalHistory.previousComplications",
           latestPF.previous_complications || ""
         );
-        form.setValue("presentPregnancy.pf_lmp", latestPF.pf_lmp || "");
         form.setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "");
         form.setValue(
           "followUpSchedule.aogWeeks",
@@ -488,6 +475,7 @@ export default function PrenatalFormFirstPg({
           noOfAbortion: 0,
           noOfStillBirths: 0,
           historyOfLBabies: 0,
+          historyOfLBabiesStr: undefined,
           historyOfDiabetes: undefined,
         },
         medicalHistory: {
@@ -770,28 +758,21 @@ export default function PrenatalFormFirstPg({
       );
       setValue("obstetricHistory.noOfLivingCh", currObs?.obs_living_ch || 0);
       setValue("obstetricHistory.noOfAbortion", currObs?.obs_abortion || 0);
-      setValue(
-        "obstetricHistory.noOfStillBirths",
-        currObs?.obs_still_birth || 0
-      );
-      setValue(
-        "obstetricHistory.historyOfLBabiesStr",
-        currObs?.obs_lg_babies_str || 0
-      );
-      setValue(
-        "obstetricHistory.historyOfLBabies",
-        currObs?.obs_lg_babies || 0
-      );
+      setValue("obstetricHistory.noOfStillBirths", currObs?.obs_still_birth || 0);
+      setValue("obstetricHistory.historyOfLBabiesStr", currObs?.obs_lg_babies_str || false);
+      setValue("obstetricHistory.historyOfLBabies", currObs?.obs_lg_babies || 0);
       setValue("presentPregnancy.gravida", currObs?.obs_gravida || 0);
       setValue("presentPregnancy.para", currObs?.obs_para || 0);
       setValue("presentPregnancy.fullterm", currObs?.obs_fullterm || 0);
       setValue("presentPregnancy.preterm", currObs?.obs_preterm || 0);
+      setValue("presentPregnancy.pf_lmp", currObs?.obs_lmp || "");
     } else {
       setValue("obstetricHistory.noOfChBornAlive", undefined);
       setValue("obstetricHistory.noOfLivingCh", undefined);
       setValue("obstetricHistory.noOfAbortion", undefined);
       setValue("obstetricHistory.noOfStillBirths", undefined);
       setValue("obstetricHistory.historyOfLBabies", undefined);
+      setValue("obstetricHistory.historyOfLBabiesStr", false);
       setValue("presentPregnancy.gravida", undefined);
       setValue("presentPregnancy.para", undefined);
       setValue("presentPregnancy.fullterm", undefined);
@@ -864,6 +845,78 @@ export default function PrenatalFormFirstPg({
     setValue(
       "riskCodes.hasOneOrMoreOneConditions.diabetes",
       hasDiabetes ? true : false
+    );
+  });
+
+  // check if bronchial asthma is in previous illness to automate Bronchial Asthma radio button
+  useEffect(() => {
+    const hasBronchialAsthma = prevIllnessData.some(
+      (illness) => illness.prevIllness.toLowerCase() === "bronchial asthma"
+    );
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.bronchialAsthma",
+      hasBronchialAsthma ? true : false
+    );
+  });
+
+  // check if goiter is in previous illness to automate Goiter radio button
+  useEffect(() => {
+    const hasGoiter = prevIllnessData.some(
+      (illness) => illness.prevIllness.toLowerCase() === "goiter"
+    );
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.goiter",
+      hasGoiter ? true : false
+    );
+  });
+
+  // check if tuberculosis is in previous illness to automate Tuberculosis radio button
+  useEffect(() => {
+    const hasTuberculosis = prevIllnessData.some(
+      (illness) => illness.prevIllness.toLowerCase() === "tuberculosis"
+    );
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.tuberculosis",
+      hasTuberculosis ? true : false
+    );
+  });
+
+  // check if any heart disease is in previous illness to automate Heart Disease radio button
+  useEffect(() => {
+    const heartDiseaseVariants = [
+      "heart disease",
+      "coronary artery disease",
+      "cad",
+      "stroke",
+      "cerebrovascular disease",
+      "heart failure",
+      "arrhythmias",
+      "arrhythmia",
+      "heart valve disease",
+      "hypertensive heart disease",
+      "peripheral artery disease",
+      "pad",
+      "cardiomyopathies",
+      "cardiomyopathy",
+      "rheumatic heart disease",
+      "rhd",
+      "transthyretin amyloid cardiomyopathy",
+      "attr-cm",
+      "kawasaki disease",
+      "chagas disease",
+      "arrhythmogenic right ventricular dysplasia",
+      "arvd"
+    ];
+    
+    const hasHeartDisease = prevIllnessData.some((illness) =>
+      heartDiseaseVariants.some((variant) =>
+        illness.prevIllness.toLowerCase().includes(variant)
+      )
+    );
+    
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.heartDisease",
+      hasHeartDisease ? true : false
     );
   });
 

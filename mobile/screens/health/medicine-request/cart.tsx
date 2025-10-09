@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
-import { ArrowLeft, Trash2, ShoppingBag, Pill, Upload, Camera, X, CheckCircle, AlertTriangle } from "lucide-react-native";
+import { ArrowLeft, Trash2, ShoppingBag, Pill, X, CheckCircle, AlertTriangle } from "lucide-react-native";
 import { useGlobalCartState, removeFromCart, clearCart, addUploadedFile, removeUploadedFile, UploadedFile } from "./cart-state";
 import { submitMedicineRequest } from "./queries/queries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
@@ -9,28 +9,26 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function CartScreen() {
   const { cartItems, uploadedFiles } = useGlobalCartState();
-  const [showUploadOptions, setShowUploadOptions] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
   const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
   const requiresPrescription = cartItems.some(item => item.med_type === "Prescription");
-const { user } = useAuth();
+ const { user } = useAuth(); // ✅ Move here from handleConfirm
   const userId = user?.rp;
-  // console.log("Auth user:", JSON.stringify(user, null, 2));
 
-
+ 
   if (!userId) {
     Alert.alert("Error", "Please log in to request medicines");
     router.back();
     return null;
   }
+
   const checkFileSize = (fileSize?: number, fileName?: string): boolean => {
     if (fileSize && fileSize > MAX_FILE_SIZE) {
       Alert.alert(
         "File Too Large",
-        `The file "${fileName || "selected file"}" is too large. Please select a file smaller than 15MB.",
-        [{ text: "OK" }],`
+        `The file "${fileName || "selected file"}" is too large. Please select a file smaller than 15MB.`,
+        [{ text: "OK" }],
       );
       return false;
     }
@@ -38,36 +36,28 @@ const { user } = useAuth();
   };
 
   const handleMediaSelected = (mediaItems: MediaItem[] | ((prev: MediaItem[]) => MediaItem[])) => {
+    // Handle both direct array and functional updates
     if (typeof mediaItems === "function") {
-      setSelectedMedia((prev) => {
-        const newItems = mediaItems(prev);
-        if (!Array.isArray(newItems)) {
-          console.error("Functional update returned invalid mediaItems:", newItems);
-          Alert.alert("Error", "No valid media items selected. Please try again.");
-          return prev;
-        }
-        const newFiles: UploadedFile[] = newItems.map(item => ({
-          id: item.id,
-          name: item.name || `image_${Date.now()}.jpg`,
-          type: item.type || "image/jpeg",
-          uri: item.uri,
-          size: item.file ? (item.file.length * 3) / 4 : undefined,
-        }));
-        const validFiles = newFiles.filter(file => checkFileSize(file.size, file.name));
-        validFiles.forEach(file => addUploadedFile(file));
-        setShowUploadOptions(false);
-        return newItems;
-      });
-      return;
+      // For functional updates, we need to get the current uploadedFiles and apply the function
+      const currentMediaItems: MediaItem[] = uploadedFiles.map(file => ({
+        id: file.id,
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      }));
+      
+      const updatedMediaItems = mediaItems(currentMediaItems);
+      handleMediaArrayUpdate(updatedMediaItems);
+    } else if (Array.isArray(mediaItems)) {
+      handleMediaArrayUpdate(mediaItems);
     }
+  };
 
-    if (!mediaItems || !Array.isArray(mediaItems)) {
-      console.error("Invalid mediaItems:", mediaItems);
-      Alert.alert("Error", "No valid media items selected. Please try again.");
-      return;
-    }
-
-    // console.log("Processing mediaItems:", mediaItems);
+  const handleMediaArrayUpdate = (mediaItems: MediaItem[]) => {
+    // Clear all existing uploaded files first
+    uploadedFiles.forEach(file => removeUploadedFile(file.id));
+    
+    // Add new files from the MediaPicker
     const newFiles: UploadedFile[] = mediaItems.map(item => ({
       id: item.id,
       name: item.name || `image_${Date.now()}.jpg`,
@@ -75,11 +65,10 @@ const { user } = useAuth();
       uri: item.uri,
       size: item.file ? (item.file.length * 3) / 4 : undefined,
     }));
-    // console.log("Converted to UploadedFile:", newFiles);
+    
+    // Filter for valid files and add to global state
     const validFiles = newFiles.filter(file => checkFileSize(file.size, file.name));
-    // console.log("Valid files after size check:", validFiles);
     validFiles.forEach(file => addUploadedFile(file));
-    setShowUploadOptions(false);
   };
 
   const removeFile = (fileId: string) => {
@@ -87,7 +76,7 @@ const { user } = useAuth();
   };
 
   const getFileIcon = (type: string) => {
-    return <Camera size={20} color="#4F46E5" />;
+    return <Pill size={20} color="#4F46E5" />;
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -97,108 +86,98 @@ const { user } = useAuth();
     return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
   };
 
-const handleConfirm = async () => {
-  if (cartItems.length === 0) {
-    Alert.alert("Empty Cart", "Please add medicines to your bag before confirming.");
-    return;
-  }
-
-  // console.log("Cart items:", cartItems);
-
-  const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
-  if (invalidItems.length > 0) {
-    Alert.alert("Invalid Cart", "One or more items are missing a valid minv_id. Please reselect medicines.");
-    return;
-  }
-
-  if (requiresPrescription && uploadedFiles.length === 0) {
-    Alert.alert(
-      "Prescription Required",
-      "One or more medicines in your cart require a prescription. Please upload a doctor's prescription or consultation image.",
-      [{ text: "OK" }]
-    );
-    return;
-  }
-
-  setIsSubmitting(true); // Start loading
-
-  try {
-    
-    const formData = new FormData();
-    const medicineData = cartItems.map(item => ({
-      minv_id: item.minv_id,
-      quantity: 0,
-      reason: item.reason,
-      med_type: item.med_type,
-    }));
-    formData.append("medicines", JSON.stringify(medicineData)); // Single string
-
-    const rpId = user?.rp;   // e.g., "RP12345"
-    const patId = user?.resident?.patient?.pat_id;  // e.g., "PT20230001"
-    console.log("rp id and pat_id: ", rpId, patId);
-
-    if (!patId && !rpId) {
-      throw new Error("User must have either a patient ID or resident ID.");
+ const handleConfirm = async () => {
+    if (cartItems.length === 0) {
+      Alert.alert("Empty Cart", "Please add medicines to your bag before confirming.");
+      return;
     }
-    
-    if (patId) {
-      // User is a patient: Use pat_id
-      console.log("Submitting with pat_id:", patId);
-      formData.append("pat_id", patId);
-    } else {
-      // User is a resident (no patient record): Use rp_id
-      console.log("Submitting with rp_id:", rpId);
-      formData.append("rp_id", rpId);
-    }
-    
-    uploadedFiles.forEach(file => {
-      formData.append("files", {
-        uri: file.uri,
-        name: file.name,
-        type: file.type,
-      } as any);
-    });
 
-    const response = await submitMedicineRequest(formData);
-    if (response.success) {
-      const orderItems = cartItems.map(item => ({
-        id: item.minv_id,
-        name: item.name, 
-        unit: "pc/s",
+    const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
+    if (invalidItems.length > 0) {
+      Alert.alert("Invalid Cart", "One or more items are missing a valid minv_id. Please reselect medicines.");
+      return;
+    }
+
+    if (requiresPrescription && uploadedFiles.length === 0) {
+      Alert.alert(
+        "Prescription Required",
+        "One or more medicines in your cart require a prescription. Please upload a doctor's prescription or consultation image.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      const medicineData = cartItems.map(item => ({
+        minv_id: item.minv_id,
+        quantity: 0,
         reason: item.reason,
-        hasPrescription: item.med_type === "Prescription",
+        med_type: item.med_type,
       }));
+      formData.append("medicines", JSON.stringify(medicineData));
 
-      Alert.alert("Request Submitted", "Your medicine request has been submitted successfully!", [
-        {
-          text: "OK",
-          onPress: () => {
-            clearCart();
-            router.push({
-              pathname: "/medicine-request/confirmation",
-              params: {
-                orderItems: JSON.stringify(orderItems),
-                medreqId: response.medreq_id.toString(),
-                status: "submitted",
-              },
-            });
+      const rpId = userId;
+
+      if (!rpId) {
+        throw new Error("User must have either a patient ID or resident ID.");
+      }
+      
+      if (rpId) {
+        console.log("Submitting with rp_id:", rpId);
+        formData.append("rp_id", rpId);
+      }
+      
+      uploadedFiles.forEach(file => {
+        formData.append("files", {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
+        } as any);
+      });
+
+      const response = await submitMedicineRequest(formData);
+      if (response.success) {
+        const orderItems = cartItems.map(item => ({
+          id: item.minv_id,
+          name: item.name, 
+          unit: "pc/s",
+          reason: item.reason,
+          hasPrescription: item.med_type === "Prescription",
+        }));
+
+        Alert.alert("Request Submitted", "Your medicine request has been submitted successfully!", [
+          {
+            text: "OK",
+            onPress: () => {
+              clearCart();
+              router.push({
+                pathname: "/medicine-request/confirmation",
+                params: {
+                  orderItems: JSON.stringify(orderItems),
+                  medreqId: response.medreq_id.toString(),
+                  status: "submitted",
+                },
+              });
+            },
           },
-        },
-      ]);
-    } else {
-      Alert.alert("Error", response.error || "Failed to submit request");
+        ]);
+      } else {
+        Alert.alert("Error", response.error || "Failed to submit request");
+      }
+    } catch (error: any) {
+      console.log("Submission error:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      Alert.alert("Error", error.response?.data?.error || "Failed to submit your request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error: any) {
-    console.log("Submission error:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-    });
-    Alert.alert("Error", error.response?.data?.error || "Failed to submit your request. Please try again.");
-  } finally {
-    setIsSubmitting(false); // Stop loading regardless of success or error
-  }
-};
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -253,13 +232,6 @@ const handleConfirm = async () => {
                   <Text className="text-gray-700 font-semibold">
                     Medical Documentation {requiresPrescription && <Text className="text-red-500">*</Text>}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowUploadOptions(!showUploadOptions)}
-                    className="bg-indigo-600 px-4 py-2 rounded-xl flex-row items-center"
-                  >
-                    <Upload size={16} color="#fff" />
-                    <Text className="text-white font-medium ml-2">Upload Images</Text>
-                  </TouchableOpacity>
                 </View>
                 
                 <Text className="text-gray-500 text-sm mb-4">
@@ -272,46 +244,28 @@ const handleConfirm = async () => {
                   <View className="ml-3 flex-1">
                     <Text className="text-amber-800 font-semibold text-sm mb-1">Important Notice</Text>
                     <Text className="text-amber-700 text-sm leading-5">
-Upload only valid prescriptions or any medical records. All documents will be check. False or forged uploads are strictly prohibited.
+                      Upload only valid prescriptions or any medical records. All documents will be check. False or forged uploads are strictly prohibited.
                     </Text>
                   </View>
                 </View>
 
-                {showUploadOptions && (
-                  <View className="mb-4">
-                    <MediaPicker
-                      selectedImages={selectedMedia}
-                      setSelectedImages={handleMediaSelected}
-                      multiple={true}
-                      maxImages={5}
-                    />
-                  </View>
-                )}
+                {/* MediaPicker - Always displayed like in IRForm */}
+                <View className="mb-4">
+                  <MediaPicker
+                    selectedImages={uploadedFiles.map(file => ({ 
+                      id: file.id, 
+                      uri: file.uri, 
+                      name: file.name, 
+                      type: file.type 
+                    }))}
+                    setSelectedImages={handleMediaSelected}
+                    multiple={true}
+                    maxImages={5}
+                  />
+                </View>
 
-                {uploadedFiles.length > 0 && (
-                  <View className="space-y-2">
-                    {uploadedFiles.map((file) => (
-                      <View
-                        key={file.id}
-                        className="bg-green-50 border border-green-200 rounded-xl p-4 flex-row items-center justify-between"
-                      >
-                        <View className="flex-row items-center flex-1">
-                          {getFileIcon(file.type)}
-                          <View className="ml-3 flex-1">
-                            <Text className="text-gray-800 font-medium" numberOfLines={1}>
-                              {file.name}
-                            </Text>
-                            <Text className="text-gray-500 text-sm">{formatFileSize(file.size)}</Text>
-                          </View>
-                          <CheckCircle size={20} color="#10B981" />
-                        </View>
-                        <TouchableOpacity onPress={() => removeFile(file.id)} className="ml-3 p-1">
-                          <X size={18} color="#EF4444" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                {/* Selected Files List */}
+             
 
                 {requiresPrescription && uploadedFiles.length === 0 && (
                   <Text className="text-red-500 text-sm text-center mt-2">

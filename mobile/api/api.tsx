@@ -34,6 +34,7 @@ export const api2 = axios.create({
   timeout: 10000,
 });
 
+
 // export const api2 = axios.create({
 //   baseURL: Constants.expoConfig?.extra?.apiUrl2,
 //   withCredentials: true,

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Trash2 } from "lucide-react-native";
+import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrenatalAppointmentRequests } from "./queries/fetch";
 import { useUpdatePrenatalAppointment } from "./queries/update";
@@ -95,72 +95,6 @@ export default function MyPrenatalAppointments() {
         );
     }
   };
-
-  type TabKey = 'all' | 'pending' | 'approved' | 'completed' | 'cancelled' | 'rejected';
-
-  const TabBar: React.FC<{
-    activeTab: TabKey;
-    setActiveTab: (t: TabKey) => void;
-    counts: { all: number; pending: number; approved: number; completed: number; cancelled: number; rejected: number };
-  }> = ({ activeTab, setActiveTab, counts }) => (
-    <View className="bg-white p-2 border-b border-gray-200 mb-2">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8 }}>
-        <TouchableOpacity
-          onPress={() => setActiveTab('all')}
-          className={`px-4 py-3 mr-2 rounded-md ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-        >
-          <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-            All ({counts.all})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('pending')}
-          className={`px-4 py-3 mr-2 rounded-md ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
-        >
-          <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
-            Pending ({counts.pending})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('approved')}
-          className={`px-4 py-3 mr-2 rounded-md ${activeTab === 'approved' ? 'border-b-2 border-blue-600' : ''}`}
-        >
-          <Text className={`text-sm font-medium ${activeTab === 'approved' ? 'text-blue-600' : 'text-gray-600'}`}>
-            Approved ({counts.approved})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('completed')}
-          className={`px-4 py-3 mr-2 rounded-md ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
-        >
-          <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
-            Completed ({counts.completed})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('cancelled')}
-          className={`px-4 py-3 mr-2 rounded-md ${activeTab === 'cancelled' ? 'border-b-2 border-blue-600' : ''}`}
-        >
-          <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
-            Cancelled ({counts.cancelled})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('rejected')}
-          className={`px-4 py-3 mr-2 rounded-md ${activeTab === 'rejected' ? 'border-b-2 border-blue-600' : ''}`}
-        >
-          <Text className={`text-sm font-medium ${activeTab === 'rejected' ? 'text-blue-600' : 'text-gray-600'}`}>
-            Rejected ({counts.rejected})
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
-  );
 
   // Format date helper
   const formatDate = (dateString?: string) => {
@@ -282,19 +216,40 @@ export default function MyPrenatalAppointments() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#3B82F6"]} />
         }
       >
-        {/* Status Filter Tabs (MedicineRequestTracker style) */}
-        <TabBar
-          activeTab={statusFilter}
-          setActiveTab={(t) => setStatusFilter(t as any)}
-          counts={{
-            all: appointments.length,
-            pending: statusCounts.pending,
-            approved: statusCounts.approved,
-            completed: statusCounts.completed,
-            cancelled: statusCounts.cancelled,
-            rejected: statusCounts.rejected,
-          }}
-        />
+        {/* Status Filter Tabs */}
+        <View className="bg-white rounded-lg p-1 mb-4 shadow-sm border border-gray-200">
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 4 }}
+          >
+            {[
+              { key: 'all', label: 'All', count: appointments.length },
+              { key: 'pending', label: 'Pending', count: statusCounts.pending },
+              { key: 'approved', label: 'Approved', count: statusCounts.approved },
+              { key: 'completed', label: 'Completed', count: statusCounts.completed },
+              { key: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled },
+              { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
+            ].map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => setStatusFilter(tab.key as any)}
+                className={`px-4 py-2 mx-1 rounded-md ${
+                  statusFilter === tab.key ? 'bg-blue-100 border border-blue-300' : 'bg-transparent'
+                }`}
+                activeOpacity={0.8}
+              >
+                <Text
+                  className={`text-sm font-medium ${
+                    statusFilter === tab.key ? 'text-blue-600' : 'text-gray-500'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Error State */}
         {isError && (
@@ -324,7 +279,7 @@ export default function MyPrenatalAppointments() {
             </TouchableOpacity>
           </View>
         ) : (
-          <View className="space-y-3 gap-2">
+          <View className="space-y-3">
             {filteredAppointments.map((appointment: any, index: number) => (
               <View key={appointment.par_id || index} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <View className="flex-row justify-between items-start mb-3">
@@ -393,10 +348,10 @@ export default function MyPrenatalAppointments() {
                 {appointment.status.toLowerCase() === 'pending' && (
                   <View className="flex-row space-x-2 mt-3">
                     <TouchableOpacity
-                      className={`flex-1 py-3 px-4 rounded-lg ${
+                      className={`flex-1 py-2 px-4 rounded-lg ${
                         isUpdating 
                           ? 'bg-gray-100 border border-gray-300' 
-                          : 'bg-red-500 border border-red-300'
+                          : 'bg-red-100 border border-red-300'
                       }`}
                       disabled={isUpdating}
                       onPress={() => {
@@ -420,11 +375,7 @@ export default function MyPrenatalAppointments() {
                           <Text className="text-gray-600 text-center font-medium ml-2">Cancelling...</Text>
                         </View>
                       ) : (
-                        <View className="flex-row items-center justify-center gap-1">
-                          <Trash2 size={16} color="white" />
-                          <Text className="text-white text-center font-medium">Cancel</Text>
-                        </View>
-                        
+                        <Text className="text-red-700 text-center font-medium">Cancel</Text>
                       )}
                     </TouchableOpacity>
                   </View>

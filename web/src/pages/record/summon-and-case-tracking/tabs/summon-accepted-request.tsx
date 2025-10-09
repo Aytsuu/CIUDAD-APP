@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/table/data-table";
-import { useGetSummonReqPendingList } from "../queries/summonFetchQueries";
+import { useGetSummonReqAcceptedList } from "../queries/summonFetchQueries";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,15 +15,14 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { ComplaintRecordForSummon } from "../complaint-record";
 
 export default function SummonAcceptedReq() {
-    const { data: pendingReq = [], isLoading } = useGetSummonReqPendingList();
+    const { data: acceptedReq = [], isLoading } = useGetSummonReqAcceptedList();
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [selectedIncident, setSelectedIncident] = useState<string>("0");
-    const [editingRowId, setEditingRowId] = useState<string | null>(null);
 
     
-    console.log('fetchedData:', pendingReq);
+    console.log('fetchedData:', acceptedReq);
 
     // Filter and paginate function
     const filterAndPaginate = (rows: any[], search: string, page: number, pageSize: number) => {
@@ -44,7 +43,7 @@ export default function SummonAcceptedReq() {
 
     // Apply filtering and pagination
     const { filtered: _filteredData, paginated: paginatedData, total: totalItems } = filterAndPaginate(
-        pendingReq, 
+        acceptedReq, 
         searchQuery, 
         currentPage, 
         pageSize
@@ -60,7 +59,7 @@ export default function SummonAcceptedReq() {
                 </span>
             ),
         },
-        {
+            {
             accessorKey: "comp_id ",
             header: "Complaint No.",
             cell: ({ row }) => (
@@ -100,6 +99,11 @@ export default function SummonAcceptedReq() {
             ),
         },
         {
+            accessorKey: "decision_date",
+            header: "Date Accepted",
+            cell: ({ row }) => formatTimestamp(row.original.decision_date),
+        },
+        {
             // View Button
             accessorKey: "",
             header: " ",
@@ -123,15 +127,11 @@ export default function SummonAcceptedReq() {
                                 <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
                                     <ComplaintRecordForSummon 
                                         comp_id={complaint} 
-                                        sr_id={String(row.original.sr_id)}
-                                        onSuccess={() => setEditingRowId(null)}
-                                        isPending={true}
+                                        isPending={false}
                                     />
                                 </div>
                             </div>
                         }
-                        isOpen={editingRowId == row.original.sr_id}
-                        onOpenChange={(open) => setEditingRowId(open? row.original.sr_id: null)}
                     />
                 );
             },
@@ -173,7 +173,7 @@ export default function SummonAcceptedReq() {
                                 placeholder="Filter by Incident Type"
                                 options={[
                                     { id: "0", name: "All Incident Types" },
-                                    ...Array.from(new Set(pendingReq.map(item => item.incident_type)))
+                                    ...Array.from(new Set(acceptedReq.map(item => item.incident_type)))
                                         .filter(name => name)
                                         .map((name) => ({ id: name, name }))
                                 ]}

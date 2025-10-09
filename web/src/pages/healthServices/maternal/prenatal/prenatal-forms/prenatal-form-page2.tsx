@@ -1,22 +1,24 @@
 "use client"
 
+// react and others
 import type { UseFormReturn } from "react-hook-form"
 import { useState, useEffect } from "react"
 import { CircleAlert } from "lucide-react"
 import type { z } from "zod"
 
+// components
 import { Form } from "@/components/ui/form/form" 
-// import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form" 
-// import { Combobox } from "@/components/ui/combobox"
+import { Combobox } from "@/components/ui/combobox"
 import { Button } from "@/components/ui/button/button"
 import { Label } from "@/components/ui/label"
-// import { Separator } from "@/components/ui/separator"
-// import { Checkbox } from "@/components/ui/checkbox"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { showErrorToast } from "@/components/ui/toast"
+
+// maternal components
 import LaboratoryResults, {
   createInitialLabResults,
   getLabResultsSummary,
@@ -24,11 +26,12 @@ import LaboratoryResults, {
   convertLabResultsToSchema,
   type LabResults,
 } from "@/pages/healthServices/maternal/maternal-components/lab-result"
-import { showErrorToast } from "@/components/ui/toast"
 
+// schema
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
-// import { fetchVaccinesWithStock } from "../../../vaccination/restful-api/fetch"
+// hooks
+import { fetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
 
 
 export default function PrenatalFormSecPg({
@@ -45,7 +48,16 @@ export default function PrenatalFormSecPg({
   const [labErrors, setLabErrors] = useState<Record<string, string>>({})
   const [ttRecords, setTTRecords] = useState<TetanusToxoidType[]>([])
 
-  // const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock()
+  // Fetch vaccine stocks with age filtering based on patient DOB
+  const patientDob = form.watch("motherPersonalInfo.motherDOB")
+  const { data: vaccineStocksData, isLoading: isVaccineLoading } = fetchVaccinesWithStock(patientDob)
+
+  // Check if selected vaccine is conditional
+  const selectedVaccineType = form.watch("prenatalVaccineInfo.vaccineType")
+  const isConditionalVaccine = selectedVaccineType && vaccineStocksData?.default?.find((stock: any) => {
+    const stockId = `${stock.vacStck_id},${stock.vac_id},${stock.vaccinelist?.vac_name || "Unknown Vaccine"},${stock.inv_details?.expiry_date || "No Expiry"}`
+    return stockId === selectedVaccineType && stock.is_conditional === true
+  })
 
 
   // tt status badge
@@ -168,9 +180,15 @@ export default function PrenatalFormSecPg({
     }
   }
 
-  // const handleVaccineChange = (value: string) => {
-  //   form.setValue("prenatalVaccineInfo.vaccineType", value)
-  // }
+  // Handle vaccine selection change
+  const handleVaccineChange = (value: string) => {
+    form.setValue("prenatalVaccineInfo.vaccineType", value)
+    
+    // Clear total dose when vaccine changes
+    form.setValue("prenatalVaccineInfo.vacrec_totaldose", undefined)
+    
+    console.log("Selected vaccine:", value)
+  }
 
   //tt type
   type TetanusToxoidType = {
@@ -183,13 +201,20 @@ export default function PrenatalFormSecPg({
   const addTTRecord = () => {
     const ttstatus = form.getValues("prenatalVaccineInfo.ttStatus")
     const ttDateGiven = form.getValues("prenatalVaccineInfo.ttDateGiven")
+    const vaccineType = form.getValues("prenatalVaccineInfo.vaccineType")
 
-    if (!ttstatus ) {
+    if (!ttstatus) {
       showErrorToast("Error! No TT Status selected.")
       return
     }
+
+    if (!vaccineType) {
+      showErrorToast("Error! Please select a vaccine type.")
+      return
+    }
+
     const newTTData: TetanusToxoidType = {
-      vaccineType: form.getValues("prenatalVaccineInfo.vaccineType"),
+      vaccineType: vaccineType,
       ttStatus: ttstatus,
       ttDateGiven: ttDateGiven || "",
     }
@@ -201,6 +226,8 @@ export default function PrenatalFormSecPg({
       return upd
     })
 
+    // Clear form fields after adding
+    form.setValue("prenatalVaccineInfo.vaccineType", "")
     form.setValue("prenatalVaccineInfo.ttStatus", "")
     form.setValue("prenatalVaccineInfo.ttDateGiven", "")
   }
@@ -280,30 +307,44 @@ export default function PrenatalFormSecPg({
             </h3>
             <div className="grid gap-3 px-5">
               <div className="flex flex-col">
-                {/* <div className="grid mt-5 mb-5"> */}
-                  {/* <div className="">
+                <div className="grid mt-5 mb-5">
+                  <div className="">
                     <div className="mb-2">
-                      <Label className="flex text-black/70 items-center">Vaccine Type</Label>
+                      <Label className="flex text-black/70 items-center">Vaccine Type (TT/TD/TDAP)</Label>
                     </div>
-                    {/* <Combobox
-                      options={vaccineStocksOptions.map((vaccine: any) => ({
-                        id: vaccine.id,
-                        name: `${vaccine.name} (Expiry: ${vaccine.expiry || "N/A"})`,
-                      }))}
+                    <Combobox
+                      options={vaccineStocksData?.formatted || []}
                       value={form.watch("prenatalVaccineInfo.vaccineType") || ""}
-                      placeholder={isLoading ? "Loading vaccines..." : "Select a vaccine"}
+                      placeholder={isVaccineLoading ? "Loading vaccines..." : "Select a vaccine (TT/TD/TDAP)"}
                       triggerClassName="font-normal w-full"
                       emptyMessage={
                         <div className="flex gap-2 justify-center items-center">
                           <Label className="font-normal text-[13px]">
-                            {isLoading ? "Loading..." : "No available vaccines in stock."}
+                            {isVaccineLoading ? "Loading..." : "No available vaccines in stock."}
                           </Label>
                         </div>
                       }
-                      onChange={handleVaccineChange}
+                      onChange={(value) => handleVaccineChange(value ?? "")}
                     />
-                  </div> */}
-                {/* </div> */}
+                  </div>
+                </div>
+
+                {/* Conditional Total Dose Input - Only shown for conditional vaccines */}
+                {isConditionalVaccine && (
+                  <div className="mb-3">
+                    <FormInput
+                      control={form.control}
+                      name="prenatalVaccineInfo.vacrec_totaldose"
+                      label="Total dose"
+                      type="number"
+                      placeholder="Enter total number of doses"
+                    />
+                    <Label className="text-xs text-black/50 italic mt-1">
+                      This vaccine requires manual input of total dose count
+                    </Label>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4 mt-2 mb-5">
                   <FormSelect
                     control={form.control}
@@ -388,11 +429,11 @@ export default function PrenatalFormSecPg({
                                     : "Date not set"
                                   }
                                 </span>
-                                {/* {record.vaccineType && (
+                                {record.vaccineType && (
                                   <span className="text-xs text-gray-500">
-                                    Vaccine: {record.vaccineType}
+                                    Vaccine: {record.vaccineType.split(',')[2] || record.vaccineType}
                                   </span>
-                                )} */}
+                                )}
                               </div>
                               <Badge variant={statusBadge.variant} className={statusBadge.className}>
                                 {record.ttStatus}

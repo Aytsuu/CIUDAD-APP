@@ -42,7 +42,7 @@ export default function AccountRegistrationLayout({
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
-      email: null,
+      email: undefined,
     },
   });
 

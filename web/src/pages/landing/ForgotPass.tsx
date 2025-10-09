@@ -69,7 +69,10 @@ export default function ForgotPassword() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const result = await sendEmailOTP(data.email);
+      const result = await sendEmailOTP({
+        email: data.email,
+        type: "signin"
+      });
       if (result) {
         setEmail(data.email);
         setCurrentStep("forgot-verification");
@@ -125,7 +128,10 @@ export default function ForgotPassword() {
     }
     setLoading(true);
     try {
-      const success = await sendEmailOTP(email);
+      const success = await sendEmailOTP({
+        email: email,
+        type: "signin"
+      });
       if (success) {
         setVerificationCode("");
         alert("OTP resent successfully!");

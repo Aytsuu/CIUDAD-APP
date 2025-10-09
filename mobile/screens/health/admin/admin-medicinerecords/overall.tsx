@@ -88,7 +88,7 @@ export default function AllMedicineRecords() {
   const [pageSize] = useState(10);
 
   const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500);
 
   // Build query parameters
   const queryParams = useMemo(
@@ -177,7 +177,7 @@ export default function AllMedicineRecords() {
       router.push({
         pathname: "/medicine-records/my-records",
         params: { 
-          patId: record.pat_id,
+          pat_id: record.pat_id,
           mode: "admin"
         }
       });
@@ -230,12 +230,12 @@ export default function AllMedicineRecords() {
     >
       <View className="flex-1">
         {/* Search Bar */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
+        <View className="bg-white px-4 py-3 p-2  border-b border-gray-200">
+          <View className="flex-row items-center p-2 px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput 
               className="flex-1 ml-3 text-gray-800 text-base" 
-              placeholder="Search by name, medicine, or address..." 
+              placeholder="Search..." 
               placeholderTextColor="#9CA3AF" 
               value={searchQuery} 
               onChangeText={setSearchQuery} 

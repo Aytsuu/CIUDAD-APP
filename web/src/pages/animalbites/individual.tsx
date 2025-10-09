@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAnimalBitePatientDetails } from "./api/get-api";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
+import { Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -11,10 +11,6 @@ import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-// import { getAnimalBiteCount } from "../record/health/patientsRecord/restful-api/patientsGetAPI";
-
-// const { data: animalbite_count } = getAnimalBiteCount(patientData.pat_id);
-//   const firstAidCount = firstAidCountData?.firstaidrecord_count;
 
 // --- Type Definition ---
 type PatientRecordDetail = {
@@ -41,7 +37,6 @@ type PatientRecordDetail = {
 
 // --- New Printable Referral Slip Component (Redesigned) ---
 const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => {
- 
   const slipRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = async () => {
@@ -50,10 +45,8 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
 
     const margin = 10; // 10mm margin on both sides
     const pdf = new jsPDF("p", "mm", "letter"); // bondpaper size
-    //if pailisan ug long, change letter to legal
 
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    // const pdfHeight = pdf.internal.pageSize.getHeight();
     const contentWidth = pdfWidth - margin * 2;
 
     const canvas = await html2canvas(content, { scale: 2 });
@@ -70,7 +63,6 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
   };
 
   const UnderlinedText: React.FC<{ value?: string | number; className?: string }> = ({ value, className = "" }) => (
-    // Corrected: Using text-decoration: underline for better PDF rendering
     <span className={`underline decoration-black decoration-1 underline-offset-2 px-2 ${className}`}>{value || "________________"}</span>
   );
 
@@ -136,49 +128,55 @@ const ReferralSlip: React.FC<{ record: PatientRecordDetail }> = ({ record }) => 
 
 // --- Main Individual Patient History Component ---
 const IndividualPatientHistory: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { patientId, patientData } = location.state || {};
+
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<PatientRecordDetail | null>(null);
+
+  // Redirect to Overall page if no patientId is provided
+  useEffect(() => {
+    if (!patientId) {
+      navigate("/Animalbite_viewing");
+    }
+  }, [patientId, navigate]);
 
   const {
     data: patientRecords = [],
     isLoading,
     isError,
-    error
-    // refetch,
+    error,
   } = useQuery<PatientRecordDetail[], Error>({
-    queryKey: ["animalBiteHistory", id],
-    queryFn: () => getAnimalBitePatientDetails(id),
-    enabled: !!id,
-    refetchOnWindowFocus: true
+    queryKey: ["animalBiteHistory", patientId],
+    queryFn: () => getAnimalBitePatientDetails(patientId),
+    enabled: !!patientId,
+    refetchOnWindowFocus: true,
   });
 
-  const patientData = useMemo(() => {
-    if (patientRecords.length === 0) return null;
-
-    const firstRecord = patientRecords[0];
+  const patientInfo = useMemo(() => {
+    if (!patientData) return null;
     return {
-      pat_id: String(firstRecord.patient_id),
-      pat_type: "Animal Bite Patient",
+      pat_id: patientData.pat_id,
+      pat_type: patientData.pat_type,
       personal_info: {
-        per_fname: firstRecord.patient_fname || "",
-        per_lname: firstRecord.patient_lname || "",
-        per_mname: firstRecord.patient_mname || "",
-        per_sex: firstRecord.patient_sex,
-        per_dob: firstRecord.patient_dob
+        per_fname: patientData.personal_info.per_fname,
+        per_lname: patientData.personal_info.per_lname,
+        per_mname: patientData.personal_info.per_mname || "",
+        per_sex: patientData.personal_info.per_sex,
+        per_dob: patientData.personal_info.per_dob,
       },
       address: {
-        add_street: firstRecord.patient_address
-      }
+        add_street: patientData.address?.add_street || "",
+      },
     };
-  }, [patientRecords]);
+  }, [patientData]);
 
   const handlePrintClick = (record: PatientRecordDetail) => {
     setSelectedRecord(record);
     setPrintModalOpen(true);
   };
 
-  const navigate = useNavigate();
   const tableColumns = useMemo<ColumnDef<PatientRecordDetail>[]>(
     () => [
       { accessorKey: "referral_date", header: "Date", cell: ({ row }) => new Date(row.original.referral_date).toLocaleDateString() },
@@ -186,7 +184,6 @@ const IndividualPatientHistory: React.FC = () => {
       { accessorKey: "biting_animal", header: "Biting Animal" },
       { accessorKey: "exposure_site", header: "Site of Exposure" },
       { accessorKey: "actions_taken", header: "Actions Taken" },
-
       { accessorKey: "referredby", header: "Referred By" },
       {
         id: "actions",
@@ -197,8 +194,8 @@ const IndividualPatientHistory: React.FC = () => {
               <Printer size={16} className="mr-2" /> Print
             </Button>
           </div>
-        )
-      }
+        ),
+      },
     ],
     []
   );
@@ -209,7 +206,7 @@ const IndividualPatientHistory: React.FC = () => {
     { label: "Biting Animal", key: "biting_animal", icon: <PawPrint className="w-4 h-4 text-gray-500" /> },
     { label: "Actions Taken", key: "actions_taken", icon: <Stethoscope className="w-4 h-4 text-gray-500" /> },
     { label: "Referred By", key: "referredby", icon: <User className="w-4 h-4 text-gray-500" /> },
-    { label: "Referred To", key: "referral_receiver", icon: <Building className="w-4 h-4 text-gray-500" /> }
+    { label: "Referred To", key: "referral_receiver", icon: <Building className="w-4 h-4 text-gray-500" /> },
   ];
 
   if (isLoading) {
@@ -220,16 +217,22 @@ const IndividualPatientHistory: React.FC = () => {
     );
   }
 
-  if (isError || !id) {
-    return <div className="p-4 text-center text-red-600">Error: {error?.message || "Could not load patient history."}</div>;
+  if (isError || !patientId) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        Error: {error?.message || "Patient ID not provided or could not load patient history."}
+      </div>
+    );
   }
 
-  const patientName = patientRecords.length > 0 ? `${patientRecords[0].patient_fname} ${patientRecords[0].patient_lname}` : "Patient";
+  const patientName = patientData
+    ? `${patientData.personal_info.per_fname} ${patientData.personal_info.per_lname}`
+    : "Patient";
 
   return (
     <LayoutWithBack title="Animal Bite Patient History" description="Detailed history of animal bite incidents for the selected patient.">
       <div className="container mx-auto py-8 space-y-8">
-        <PatientInfoCard patient={patientData} />
+        <PatientInfoCard patient={patientInfo} />
 
         {/* Records Summary Table */}
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -259,24 +262,13 @@ const IndividualPatientHistory: React.FC = () => {
                     </div>
                   ))}
                 </div>
-
                 {patientRecords.map((record) => (
                   <div key={record.bite_id} className="flex-shrink-0 w-64 bg-slate-50 rounded-lg p-4 border">
                     <div className="border-b pb-2 mb-4 text-center">
                       <div className="font-bold text-lg text-blue-600 flex items-center justify-center gap-2">
-                        {" "}
-                        {/* Added flex, items-center, justify-center, gap-2 */}
-                        <Calendar size={20} /> {/* Add the Calendar icon here */}
+                        <Calendar size={20} />
                         {new Date(record.referral_date).toLocaleDateString()}
                       </div>
-                      {/* <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="text-xs text-gray-500 cursor-pointer">Record #{record.bite_id}</span>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Bite ID: {record.bite_id}</p></TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider> */}
                     </div>
                     <div className="space-y-4">
                       {historyFields.map((field) => (

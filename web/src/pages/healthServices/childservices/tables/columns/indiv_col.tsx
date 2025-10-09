@@ -125,19 +125,7 @@ const FindingsCell = ({ findings }: { findings: FindingsData }) => {
     return <span className="text-gray-400 text-sm">No findings</span>;
   }
 
-  // Create a preview text (first 100 characters from all sections)
-  const getPreviewText = () => {
-    const allText = [
-      findings.subj_summary,
-      findings.obj_summary,
-      findings.assessment_summary,
-      findings.plantreatment_summary
-    ].filter(Boolean).join(" ");
-    
-    return allText.length > 100 ? allText.substring(0, 100) + "..." : allText;
-  };
 
-  const previewText = getPreviewText();
 
   return (
     <FindingsModal
@@ -149,7 +137,6 @@ const FindingsCell = ({ findings }: { findings: FindingsData }) => {
         >
           <Eye size={14} />
           View Findings
-          <span className="ml-1 text-gray-500">({previewText.length} chars)</span>
         </Button>
       }
     />

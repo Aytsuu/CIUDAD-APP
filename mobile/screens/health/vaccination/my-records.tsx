@@ -35,8 +35,9 @@ export default function IndividualVaccinationRecords() {
   useEffect(() => {
     console.log("MODE:", mode);
     if (mode == "admin") {
-      const adminPatId = params.patId as string;
+      const adminPatId = params.pat_id as string;
       if (adminPatId) {
+        console.log("Admin viewing patient ID:", adminPatId);
         setPatientId(adminPatId);
       }
     } else {
@@ -148,7 +149,7 @@ export default function IndividualVaccinationRecords() {
               <ChevronLeft size={24} color="#374151" />
             </TouchableOpacity>
           }
-          headerTitle={<Text className="text-slate-900 text-[13px]">Records</Text>}
+          headerTitle={<Text className="text-slate-900 text-[13px]">Vaccination Records</Text>}
           rightAction={<View className="w-10 h-10" />}
         >
           {" "}
@@ -186,7 +187,7 @@ export default function IndividualVaccinationRecords() {
               <PatientInfoCard patient={patientData} />
             </View>
           )}
-          {/* Vaccination Status Cards */}=
+          {/* Vaccination Status Cards */}
           <View className="px-4 mt-4">
             <View className="flex-row border-b border-gray-200">
               <TouchableOpacity onPress={() => handleSetActiveTab("status")} className={`flex-1 py-3 items-center ${activeTab === "status" ? "border-b-2 border-blue-600" : ""}`}>
@@ -202,10 +203,10 @@ export default function IndividualVaccinationRecords() {
             </View>
           </View>
           <View className="p-4 mt-4">
-            <View className="flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg shadow-sm">
+            <View className="flex-row items-center px-2 border p-2  border-gray-300 bg-gray-50 rounded-lg shadow-sm">
               <Search size={20} color="#6B7280" />
-              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by vaccine name, batch number..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
-              {isSearching && (
+              <TextInput className="flex-1 ml-3  text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+              {isSearching && ( 
                 <View className="ml-2">
                   <RefreshCw size={16} color="#3B82F6" className="animate-spin" />
                 </View>

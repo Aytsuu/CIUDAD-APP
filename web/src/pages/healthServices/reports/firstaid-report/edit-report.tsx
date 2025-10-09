@@ -6,8 +6,8 @@ import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/report
 import { Combobox } from "@/components/ui/combobox";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Label } from "@/components/ui/label";
-import { useUpdateMonthlyRecipientList } from "./queries/post";
 import { toast } from "sonner";
+import {useUpdateMonthlyRecipientList} from "@/pages/healthServices/reports/firstaid-report/queries/post";
 
 export default function EditMonthlyRecipientList() {
   const location = useLocation();
@@ -19,11 +19,9 @@ export default function EditMonthlyRecipientList() {
   } = location.state || {};
   const navigate = useNavigate();
   const signatureRef = useRef<SignatureFieldRef>(null);
+    const { mutate: updateRecipientList, isPending: isSubmitting } = useUpdateMonthlyRecipientList();
   
-  // Use the mutation hook
-  const { mutate: updateRecipientList, isPending: isSubmitting } = useUpdateMonthlyRecipientList();
-  
-  const [signature, setSignature] = useState<string | null>(null);
+  const setSignature = useState<string | null>(null)[1];
   const [office, setOffice] = useState("");
   const [control_no, setcontrol_no] = useState("");
   const [selectedStaffId, setSelectedStaffId] = useState("");

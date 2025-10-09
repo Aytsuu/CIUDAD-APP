@@ -28,7 +28,7 @@ const PatientInfoCard = ({ patientData }: { patientData: any }) => {
   };
 
   return (
-    <Card className="mb-4 bg-white border-slate-200">
+    <Card className="mb-4 bg-blue-100 border-slate-200">
       <CardContent className="p-4">
         <View className="flex-row justify-between items-start mb-3">
           <View className="flex-1">
@@ -280,7 +280,7 @@ export default function IndivFirstAidRecords() {
               </Text>
               <Text className="text-gray-500 text-center">
                 {searchQuery
-                  ? "No records match your search criteria."
+                  ? ""
                   : "No first aid records available for this patient."}
               </Text>
             </View>

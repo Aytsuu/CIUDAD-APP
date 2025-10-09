@@ -66,29 +66,29 @@ export function VaccinationStatusCards({ vaccinations = [], unvaccinatedVaccines
   }, {});
 
   // Debug function to check vaccine categorization
-  const debugVaccine = (record: any) => {
-    const vaccineDetails = getVaccineDetails(record);
-    const vaccineId = vaccineDetails?.vac_id;
+  // const debugVaccine = (record: any) => {
+  //   const vaccineDetails = getVaccineDetails(record);
+  //   const vaccineId = vaccineDetails?.vac_id;
 
-    if (!vaccineId) return { maxDose: 0, totalDose: 0 };
+  //   if (!vaccineId) return { maxDose: 0, totalDose: 0 };
 
-    const maxDose = maxDoseByVaccine[vaccineId];
-    const totalDose = getTotalDoses(record);
+  //   const maxDose = maxDoseByVaccine[vaccineId];
+  //   const totalDose = getTotalDoses(record);
 
-    console.log("Vaccine Debug:", {
-      vaccineName: vaccineDetails?.vac_name,
-      vaccineId,
-      maxDose,
-      totalDose,
-      isPartial: maxDose < totalDose,
-      isCompleted: maxDose === totalDose,
-      vachist_doseNo: record.vachist_doseNo,
-      vacrec_totaldose: record.vacrec_details?.vacrec_totaldose,
-      vaccinelist_doses: record.vaccine_stock?.vaccinelist?.no_of_doses
-    });
+  //   console.log("Vaccine Debug:", {
+  //     vaccineName: vaccineDetails?.vac_name,
+  //     vaccineId,
+  //     maxDose,
+  //     totalDose,
+  //     isPartial: maxDose < totalDose,
+  //     isCompleted: maxDose === totalDose,
+  //     vachist_doseNo: record.vachist_doseNo,
+  //     vacrec_totaldose: record.vacrec_details?.vacrec_totaldose,
+  //     vaccinelist_doses: record.vaccine_stock?.vaccinelist?.no_of_doses
+  //   });
 
-    return { maxDose, totalDose };
-  };
+  //   return { maxDose, totalDose };
+  // };
 
   // Categorize the vaccines (only non-"in queue" status)
   const categorizedVaccines = {

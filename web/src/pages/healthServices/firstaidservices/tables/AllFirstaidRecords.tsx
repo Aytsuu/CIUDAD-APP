@@ -169,9 +169,9 @@ export default function AllFirstAidRecords() {
     }
   };
 
-  const handleManualSitioSearch = (value: string) => {
-    // Not used since we're using the main search field
-  };
+  // const handleManualSitioSearch = (value: string) => {
+  //   // Not used since we're using the main search field
+  // };
 
   const columns: ColumnDef<any>[] = [
     {
@@ -238,43 +238,43 @@ export default function AllFirstAidRecords() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-            <Link
-              to="/services/firstaid/records"
-              state={{
-                params: {
-                  patientData: {
-                    pat_id: row.original.pat_id,
-                    pat_type: row.original.pat_type,
-                    age: row.original.age,
-                    addressFull: row.original.address,
-                    address: {
-                      add_street: row.original.street,
-                      add_barangay: row.original.barangay,
-                      add_city: row.original.city,
-                      add_province: row.original.province,
-                      add_sitio: row.original.sitio,
-                    },
-                    households: [{ hh_id: row.original.householdno }],
-                    personal_info: {
-                      per_fname: row.original.fname,
-                      per_mname: row.original.mname,
-                      per_lname: row.original.lname,
-                      per_dob: row.original.dob,
-                      per_sex: row.original.sex,
-                    },
-                  },
-                },
-              }}
-            >
-              View
-            </Link>
-          </div>
-        </div>
-      ),
-    },
+      cell: ({ row }) => {
+        const patientData = {
+          pat_id: row.original.pat_id,
+          pat_type: row.original.pat_type,
+          age: row.original.age,
+          addressFull: row.original.address,
+          address: {
+            add_street: row.original.street,
+            add_barangay: row.original.barangay,
+            add_city: row.original.city,
+            add_province: row.original.province,
+            add_sitio: row.original.sitio
+          },
+          households: [{ hh_id: row.original.householdno }],
+          personal_info: {
+            per_fname: row.original.fname,
+            per_mname: row.original.mname,
+            per_lname: row.original.lname,
+            per_dob: row.original.dob,
+            per_sex: row.original.sex
+          }
+        };
+        return (
+          <ViewButton
+            onClick={() => {
+              navigate("/services/firstaid/records", {
+                state: {
+                  params: {
+                    patientData
+                  }
+                }
+              });
+            }}
+          />
+        );
+      }
+    }
   ];
 
   return (
@@ -328,7 +328,7 @@ export default function AllFirstAidRecords() {
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
             />
-            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue="" />
+            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
           </div>
           
 

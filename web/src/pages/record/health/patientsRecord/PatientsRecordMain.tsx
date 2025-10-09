@@ -10,16 +10,18 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import { getAgeInUnit } from "@/helpers/ageCalculator";
-import { capitalize } from "@/helpers/capitalize";
+import { formatDate } from "@/helpers/dateHelper";
 
 import { usePatients } from "./queries/fetch";
 
 import PatientRecordCount from "./PatientRecordCounts";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import ViewButton from "@/components/ui/view-button";
 
 
 type Report = {
@@ -36,6 +38,7 @@ type Report = {
   };
   type: string;
   noOfRecords?: number; 
+  created_at: string;
   philhealthId?: string;
 };
 
@@ -58,14 +61,16 @@ interface Patients {
   additional_info?: {
     per_add_philhealth_id?: string
   }
+
+  created_at: string;
 }
 
 const getPatType = (type: string) => {
   switch (type.toLowerCase()) {
     case "resident":
-      return 'bg-blue-500 w-24 rounded-md font-semibold text-white'
+      return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white'
     case "transient":
-      return 'border border-black/40 w-24 rounded-md font-semibold text-black'
+      return 'border border-black/40 py-1 w-20 rounded-xl font-semibold text-black'
     default:
       return "bg-gray-500 text-white";
   }
@@ -76,9 +81,11 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer " onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Patient No.
-        <ArrowUpDown size={14} />
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex items-center gap-2">
+          <span>Patient No.</span>
+          <ArrowUpDown size={14} />
+        </div>
       </div>
     ),
     cell: ({ row }) => (
@@ -86,6 +93,25 @@ export const columns: ColumnDef<Report>[] = [
         <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
       </div>
     )
+  },
+  {
+    accessorKey: "fullName",
+    size: 250,
+    header: () => (
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+        <div className="flex items-center gap-2">
+          <span>Name</span>
+        </div>
+      </div>
+    ),
+    cell: ({ row }) => {
+      const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
+      return (
+        <div className="hidden lg:block max-w-xs truncate">
+          {`${(fullNameObj?.lastName)}, ${(fullNameObj?.firstName)} ${fullNameObj?.mi}`}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "sitio",
@@ -96,53 +122,50 @@ export const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {capitalize(row.getValue("sitio"))}
+      <div className="hidden lg:block max-w-xs truncate uppercase">
+        {row.getValue("sitio")}
       </div>
     ),
   },
-  {
-    accessorKey: "fullName",
-    header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Last Name
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
-      return (
-        <div className="hidden lg:block max-w-xs truncate">
-          {fullNameObj ? `${capitalize(fullNameObj.lastName)}, ${capitalize(fullNameObj.firstName)} ${fullNameObj.mi ? fullNameObj.mi.charAt(0).toUpperCase() + "." : ""}` : "-"}
-        </div>
-      )
-    },
-  },
+  
   {
     accessorKey: "age",
-    header: "Age",
+    header:"Age",
     cell: ({ row }) => {
       const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
-      return <div className="hidden xl:block">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
+      return <div className="hidden xl:flex justify-center">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
     }
   },
   {
     accessorKey: "type",
-    header: "Type",
+    header: () => <div className="">Type</div>,
     cell: ({ row }) => (
-      <div className="flex items-center justify-center">
+      <div className="flex  items-center justify-center">
         <div className={getPatType(row.getValue("type"))}>{row.getValue("type")}</div>
       </div>
     )
   },
   {
     accessorKey: "noOfRecords",
-    header: "No. of Records",
-    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />
+    header: () => <div className="flex justify-center">No. of Records</div>,
+    cell: ({ row }) => <div className="flex justify-center"><PatientRecordCount patientId={row.getValue("id")} /></div>
+  },
+  {
+    accessorKey: "dateRegistered",
+    header: () => (
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+        Date Registered
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="hidden lg:block max-w-xs truncate">
+        {formatDate(row.getValue("dateRegistered"), 'short')}
+      </div>
+    ),
   },
   {
     accessorKey: "action",
-    header: "Action",
+    header: () => <div className="flex justify-center">Action</div>,
     cell: ({ row }) => (
       <Link
         to="/patientrecords/view"
@@ -158,7 +181,7 @@ export const columns: ColumnDef<Report>[] = [
             }
           }}
       >
-        <Button variant="outline">View</Button>
+        <ViewButton onClick={() => {}} />
       </Link>
     ),
     enableSorting: false,
@@ -188,20 +211,22 @@ export default function PatientsRecord() {
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const { data: patientData, isLoading } = usePatients({
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  const { data: patientData, isLoading } = usePatients(
     page,
-    page_size: pageSize,
-    status: selectedFilter !== " All" ? selectedFilter : undefined,
-    search: searchTerm || undefined
-  });
+    pageSize,
+    debouncedSearchTerm,
+    selectedFilter
+  );
 
   const totalPages = Math.ceil((patientData?.count || 0) / pageSize);
 
   // filter options
   const filter = [
     { id: "all", name: "All" },
-    { id: "resident", name: "Resident" },
-    { id: "transient", name: "Transient" }
+    { id: "Resident", name: "Resident" },
+    { id: "Transient", name: "Transient" }
   ];
 
   // searching and pagination handlers
@@ -227,7 +252,8 @@ export default function PatientsRecord() {
   const transformPatientsToReports = (patients: Patients[]): Report[] => {
     return patients.map((patient) => {
       const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patient.personal_info?.per_dob || "");
-      // Prefer personal_info.philhealth_id, fallback to additional_info.per_add_philhealth_id
+      const registeredDate = formatDate(new Date(patient.created_at)) || "";
+
       let philhealthId = "N/A";
       if (patient.personal_info && patient.personal_info.philhealth_id) {
         philhealthId = patient.personal_info.philhealth_id;
@@ -244,6 +270,8 @@ export default function PatientsRecord() {
         },
         age: { ageNumber: ageInfo, ageUnit: ageUnit},
         type: patient.pat_type || "Resident",
+        created_at: registeredDate,
+        dateRegistered: patient.created_at || registeredDate,
         philhealthId: philhealthId,
       };
     });
@@ -264,11 +292,11 @@ export default function PatientsRecord() {
   const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
   return (
-    <LayoutWithBack
+    <MainLayoutComponent
       title="Patient Records"
       description="Manage and view patients information"
     >
-      <div className="w-full ">
+      <div className="w-full">
         {/* Stats Cards with simplified design */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <CardLayout
@@ -412,6 +440,6 @@ export default function PatientsRecord() {
           </div>
         </div>
       </div>
-    </LayoutWithBack>
+    </MainLayoutComponent>
   );
 }

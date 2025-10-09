@@ -20,7 +20,7 @@ interface FilterSitioProps {
   manualSearchValue?: string;
 }
 
-export function FilterSitio({ sitios, isLoading = false, selectedSitios, onSitioSelection, onSelectAll, onManualSearch, manualSearchValue }: FilterSitioProps) {
+export function FilterSitio({ sitios, isLoading = false, selectedSitios, onSitioSelection, onSelectAll}: FilterSitioProps) {
   const [showFilter, setShowFilter] = useState(false);
 
   return (

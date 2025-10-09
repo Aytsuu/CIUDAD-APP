@@ -4,13 +4,12 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Patient } from "@/components/ui/patientSearch";
 
 interface FormSectionsProps {
   control: Control<FormData>;
   isTransient: boolean;
   isAddNewMode: boolean;
-  selectedPatient: Patient | null;
+  selectedPatient: any | null;
   placeOfDeliveryType: string;
 }
 
