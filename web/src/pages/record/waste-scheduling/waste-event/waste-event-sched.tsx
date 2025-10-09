@@ -11,7 +11,7 @@ import WasteEventSchedSchema from '@/form-schema/waste-event-form-schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { CalendarDays, Clock, MapPin, Users, User, FileText, Bell } from 'lucide-react';
 import { createWasteEvent } from './queries/wasteEventQueries';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { FormSelect } from '@/components/ui/form/form-select';
@@ -52,7 +52,7 @@ function WasteEventSched() {
             const staffId = user?.staff?.staff_id;
             
             if (!staffId) {
-                toast.error("Staff information not available. Please log in again.");
+                showErrorToast("Staff information not available. Please log in again.");
                 return;
             }
 
@@ -84,15 +84,15 @@ function WasteEventSched() {
             
             // Show appropriate success message
             if (response?.announcement_created) {
-                toast.success("Event scheduled and announcement sent successfully!");
+                showSuccessToast("Event scheduled and announcement sent successfully!");
             } else {
-                toast.success("Event has been scheduled successfully!");
+                showSuccessToast("Event has been scheduled successfully!");
             }
 
             form.reset();
         } catch (error) {
             console.error('Error creating waste event:', error);
-            toast.error("Failed to schedule event. Please try again.");
+            showErrorToast("Failed to schedule event. Please try again.");
         }
     };
 

@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button/button";
 import { Badge } from '@/components/ui/badge';
 import { Eye, Brain } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { Ordinance, OrdinanceFolder } from './restful-api/OrdinanceGetAPI';
 import { useMemo, useState } from 'react';
-import { huggingFaceAIService, AIAnalysisResponse } from './services/HuggingFaceAIService';
+import { huggingFaceAIService, AIAnalysisResponse } from './services/AIService';
 
 interface ViewOrdinanceProps {
     folder: OrdinanceFolder | null;
@@ -53,7 +53,7 @@ function ViewOrdinance({
     // Function to handle AI analysis for ordinances (individual or amendment comparison)
     const handleOpenAIAnalysis = async (ordinance: Ordinance) => {
         if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
+            showErrorToast("AI service is not available. Please try again later.");
             return;
         }
 
@@ -77,7 +77,7 @@ function ViewOrdinance({
 
     const handleIndividualAIAnalysis = async (item: Ordinance) => {
         if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
+            showErrorToast("AI service is not available. Please try again later.");
             return;
         }
 
@@ -94,10 +94,10 @@ function ViewOrdinance({
             setSelectedOrdinanceForAnalysis(updatedItem);
             setAiAnalysisOpen(true);
             
-            toast.success("AI analysis completed successfully!");
+            showSuccessToast("AI analysis completed successfully!");
         } catch (error) {
             console.error("Error analyzing ordinance:", error);
-            toast.error("Failed to analyze ordinance. Please try again.");
+            showErrorToast("Failed to analyze ordinance. Please try again.");
         } finally {
             setIndividualAnalysisLoading(null);
         }
@@ -109,11 +109,11 @@ function ViewOrdinance({
     // Function to analyze and compare all amendments within a folder
     const handleFolderAmendmentComparison = async (folder: OrdinanceFolder) => {
         if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
+            showErrorToast("AI service is not available. Please try again later.");
             return;
         }
         if (folder.amendments.length === 0) {
-            toast.info("No amendments found to compare.");
+            showErrorToast("No amendments found to compare.");
             return;
         }
         
@@ -174,10 +174,10 @@ function ViewOrdinance({
             });
             setAiAnalysisOpen(true);
             
-            toast.success("Amendment comparison analysis completed successfully! File content from all ordinances has been analyzed and compared.");
+            showSuccessToast("Amendment comparison analysis completed successfully! File content from all ordinances has been analyzed and compared.");
         } catch (error) {
             console.error("Error comparing amendments:", error);
-            toast.error("Failed to compare amendments. Please try again.");
+            showErrorToast("Failed to compare amendments. Please try again.");
         } finally {
             setFolderAmendmentLoading(null);
         }
@@ -230,7 +230,7 @@ function ViewOrdinance({
                                                 if (folder.baseOrdinance.file && folder.baseOrdinance.file.file_url) {
                                                     window.open(folder.baseOrdinance.file.file_url, '_blank');
                                                 } else {
-                                                    toast.error('No file available to view');
+                                                    showErrorToast('No file available to view');
                                                 }
                                             }}
                                             className="text-xs px-3 py-1 h-7"
@@ -336,7 +336,7 @@ function ViewOrdinance({
                                                             if (amendment.file && amendment.file.file_url) {
                                                                 window.open(amendment.file.file_url, '_blank');
                                                             } else {
-                                                                toast.error('No file available to view');
+                                                                showErrorToast('No file available to view');
                                                             }
                                                         }}
                                                         className="text-xs px-3 py-1 h-7"
@@ -393,7 +393,7 @@ function ViewOrdinance({
                                                                     if (repeal.file && repeal.file.file_url) {
                                                                         window.open(repeal.file.file_url, '_blank');
                                                                     } else {
-                                                                        toast.error('No file available to view');
+                                                                        showErrorToast('No file available to view');
                                                                     }
                                                                 }}
                                                                 className="text-xs px-3 py-1 h-7"

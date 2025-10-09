@@ -798,8 +798,11 @@ class OrdinanceListView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # Extract of_id from request data
         of_id = request.data.get('of_id')
-        print(f"Received of_id: {of_id}")
-        print(f"Full request data: {request.data}")
+        staff_id = request.data.get('staff_id')
+        print(f"🔍 Received of_id: {of_id}")
+        print(f"🔍 Received staff_id: {staff_id}")
+        print(f"🔍 staff_id type: {type(staff_id)}")
+        print(f"🔍 Full request data: {request.data}")
         
         # Remove of_id from data to avoid serializer issues
         ordinance_data = request.data.copy()
@@ -830,7 +833,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -869,7 +872,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -902,7 +905,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:
@@ -940,7 +943,7 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
             staff = Staff.objects.filter(staff_id=staff_id).first()
             
             if staff:

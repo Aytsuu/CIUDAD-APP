@@ -99,7 +99,7 @@ export const createOrdinanceFile = async (mediaFile: MediaUploadType[0]) => {
     }
 };
 
-export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, mediaFiles: MediaUploadType) => {
+export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, mediaFiles: MediaUploadType, staffId: string) => {
     try {
         // Extract year from date
         const date = new Date(ordinanceInfo.ordinanceDate);
@@ -154,7 +154,7 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
             ord_year: year,
             ord_is_archive: false,
             ord_repealed: Boolean(ordinanceInfo.ord_repealed),
-            staff: "00003250722", // Default staff ID
+            staff_id: staffId, // Dynamic staff ID from parameter
             of_id: fileId
         };
 

@@ -6,7 +6,7 @@ import { z } from "zod"
 import PermitClearanceFormSchema from "@/form-schema/permitClearance-schema";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { createPermitClearance } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/permitClearancePostAPI";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -152,7 +152,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             setIsSubmitting(true);
             
             if (!staffId) {
-                toast.error("Missing staff ID. Please re-login and try again.");
+                showErrorToast("Missing staff ID. Please re-login and try again.");
                 return;
             }
 
@@ -177,7 +177,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             await createPermitClearance(payload, staffId);
             console.log("Permit clearance created successfully");
             
-            toast.success("Permit clearance created successfully!");
+            showSuccessToast("Permit clearance created successfully!");
             
       
             form.reset();
@@ -192,7 +192,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
             
         } catch (error) {
             console.error('Error creating permit clearance:', error);
-            toast.error("Failed to create permit clearance. Please try again.");
+            showErrorToast("Failed to create permit clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

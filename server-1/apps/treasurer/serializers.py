@@ -519,6 +519,11 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
                 change_amount = paid_amount - required_amount
                 invoice.inv_change = change_amount if change_amount > 0 else 0
+                
+                # Update inv_nat_of_collection with the actual purpose name
+                if invoice.bpr_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.bpr_id.pr_id.pr_purpose
+                
                 invoice.save()
                 
                 # Update payment status
@@ -534,7 +539,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.act_log.utils import create_activity_log
                     from apps.administration.models import Staff
                     
-                    staff_id = getattr(business_permit.staff_id, 'staff_id', '00003250722') if business_permit.staff_id else '00003250722'
+                    staff_id = getattr(business_permit.staff_id, 'staff_id', None) if business_permit.staff_id else None
                     # Format staff_id properly (pad with leading zeros if needed)
                     if len(str(staff_id)) < 11:
                         staff_id = str(staff_id).zfill(11)
@@ -558,6 +563,11 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
                 change_amount = paid_amount - required_amount
                 invoice.inv_change = change_amount if change_amount > 0 else 0
+                
+                # Update inv_nat_of_collection with the actual purpose name
+                if invoice.cr_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.cr_id.pr_id.pr_purpose
+                
                 invoice.inv_status = "Paid"
                 invoice.save()
 
@@ -575,6 +585,10 @@ class InvoiceSerializers(serializers.ModelSerializer):
             # Check if it's a non-resident certificate request
             elif invoice.nrc_id:
                 # Add similar logic for non-resident certificates if needed
+                # Update inv_nat_of_collection with the actual purpose name if available
+                if hasattr(invoice.nrc_id, 'pr_id') and invoice.nrc_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.nrc_id.pr_id.pr_purpose
+                
                 invoice.inv_status = "Paid"
                 invoice.save()
                 
@@ -592,6 +606,13 @@ class InvoiceSerializers(serializers.ModelSerializer):
             # Check if it's a service charge payment request
             elif invoice.spay_id:
                 print(f"[InvoiceSerializer] Processing service charge payment for spay_id: {invoice.spay_id}")
+                
+                # Update inv_nat_of_collection with service charge purpose if available
+                if hasattr(invoice.spay_id, 'pr_id') and invoice.spay_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.spay_id.pr_id.pr_purpose
+                elif hasattr(invoice.spay_id, 'sr_id') and hasattr(invoice.spay_id.sr_id, 'comp_id'):
+                    # For service charges, use a default purpose name
+                    invoice.inv_nat_of_collection = "Service Charge"
                 
                 # Update invoice status to Paid
                 invoice.inv_status = "Paid"
@@ -612,8 +633,8 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.act_log.utils import create_activity_log
                     from apps.administration.models import Staff
                     
-                    # Use a default staff ID if none is available
-                    staff_id = '00003250722'  # Default staff ID
+                    # Get staff ID from the service charge payment if available
+                    staff_id = getattr(service_charge_payment, 'staff_id', None)
                     # Format staff_id properly (pad with leading zeros if needed)
                     if len(str(staff_id)) < 11:
                         staff_id = str(staff_id).zfill(11)

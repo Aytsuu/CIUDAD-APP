@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAnnualDevPlansByYear } from "./restful-api/annualGetAPI";
-import { toast } from "sonner";
+import { showErrorToast } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetProjectProposals, useGetProjectProposal } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
@@ -110,7 +110,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
       setPlans(data);
     } catch (error) {
       console.error("Error fetching plans:", error);
-      toast.error("Failed to fetch annual development plans");
+      showErrorToast("Failed to fetch annual development plans");
     } finally {
       setIsLoading(false);
     }

@@ -57,7 +57,7 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
 
     return useMutation({
         mutationFn: (values: BusinessPermitFormData) => 
-            addCertificationRequest(values, "00003250722", user?.resident?.rp_id),
+            addCertificationRequest(values, undefined, user?.resident?.rp_id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });
             queryClient.invalidateQueries({ queryKey: ['businessPermitRequests'] });
@@ -85,7 +85,7 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
 
     return useMutation({
         mutationFn: (values: CertificationRequestFormData) => {
-            return addCertificationRequest(values, "00003250722", user?.resident?.rp_id);
+            return addCertificationRequest(values, undefined, user?.resident?.rp_id);
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['personalCertifications'] });

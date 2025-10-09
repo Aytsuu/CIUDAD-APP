@@ -1389,12 +1389,17 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
                             import time
                             next_num = int(time.time())
                         
+                        # Get the purpose name from the related pr_id if available
+                        purpose_name = instance.req_type or ""
+                        if hasattr(instance, 'pr_id') and instance.pr_id:
+                            purpose_name = instance.pr_id.pr_purpose
+                        
                         Invoice.objects.create(
                             inv_num=next_num,
                             cr_id=instance,
                             inv_serial_num=f"INV-{instance.cr_id}",  # You can improve this serial logic
                             inv_amount=0,  # Set correct amount if available
-                            inv_nat_of_collection=instance.req_type or "",
+                            inv_nat_of_collection=purpose_name,
                             inv_status="Paid",  # Set status to Paid since payment is complete
                         )
                         
@@ -1404,7 +1409,7 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
                             from apps.administration.models import Staff
                             
                             # Get staff member from the clearance request
-                            staff_id = getattr(instance.ra_id, 'staff_id', '00003250722') if instance.ra_id else '00003250722'
+                            staff_id = getattr(instance.ra_id, 'staff_id', None) if instance.ra_id else None
                             # Format staff_id properly (pad with leading zeros if needed)
                             if len(str(staff_id)) < 11:
                                 staff_id = str(staff_id).zfill(11)

@@ -340,7 +340,7 @@ class Ordinance(models.Model):
             # Re-raise to preserve default behavior upstream
             raise
         if not self.ord_num:  # If no ordinance number provided
-            # Generate ordinance number: ORD-YYYY-XXXX
+            
             year = getattr(self, 'ord_year', 2024)
             import random
             import string

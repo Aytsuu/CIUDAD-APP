@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { insertOrdinanceUpload } from '../restful-api/OrdinanceUploadAPI.tsx';
 import { updateOrdinance } from '../restful-api/OrdinanceGetAPI.tsx';
 import { MediaUploadType } from '@/components/ui/media-upload';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { useAuth } from '@/context/AuthContext';
 
 export interface OrdinanceUploadData {
     values: {
@@ -21,13 +22,18 @@ export interface OrdinanceUploadData {
 
 export const useInsertOrdinanceUpload = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
 
     return useMutation({
         mutationFn: async ({ values, mediaFiles }: OrdinanceUploadData) => {
-            return await insertOrdinanceUpload(values, mediaFiles);
+            const staffId = user?.staff?.staff_id;
+            if (!staffId) {
+                throw new Error("Staff information not available. Please log in again.");
+            }
+            return await insertOrdinanceUpload(values, mediaFiles, staffId);
         },
         onSuccess: async (_data, variables) => {
-            toast.success('Ordinance uploaded successfully!');
+            showSuccessToast('Ordinance uploaded successfully!');
             // If this upload was a repeal, mark the targeted base ordinance as repealed
             try {
                 const wasRepeal = Boolean(variables?.values?.ord_repealed);
@@ -43,7 +49,7 @@ export const useInsertOrdinanceUpload = (onSuccess?: () => void) => {
         },
         onError: (error) => {
             console.error('Error uploading ordinance:', error);
-            toast.error('Failed to upload ordinance. Please try again.');
+            showErrorToast('Failed to upload ordinance. Please try again.');
         },
     });
 }; 
