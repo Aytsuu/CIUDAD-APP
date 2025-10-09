@@ -2,41 +2,13 @@
 
 import { api2 } from "@/api/api"
 
-// interfaces
-export interface MaternalPatientFilters {
-  page?: number;
-	page_size?: number;
-	status?: string;
-	search?: string;
-}
-
+// for get
 export const getPatients = async () => {
   try {
       const res = await api2.get("patientrecords/patient/view/create/")
       return res.data;
   } catch (error) {
       console.error("Error:", error);
-  }
-}
-
-// maternal-records
-export const getMaternalRecords = async (filters: MaternalPatientFilters = {}) => {
-  try {
-    const params = new URLSearchParams();
-
-    if(filters.page) params.append('page', filters.page.toString());
-    if(filters.page_size) params.append('page_size', filters.page_size.toString());
-    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-    if(filters.search) params.append('search', filters.search);
-
-    const queryString = params.toString();
-    const url = queryString ? `maternal/maternal-patients/?${queryString}` : "maternal/maternal-patients/"
-
-    const res = await api2.get(url);
-    return res.data || {count: 0, next: null, previous: null, results: []};
-  } catch (error) {
-    console.error("Error fetching maternal records: ", error);
-    return error || {count: 0, next: null, previous: null, results: []};
   }
 }
 
@@ -103,26 +75,6 @@ export const getPatientPostpartumCount = async (patientId: string): Promise<numb
     }
 
     return 0
-  }
-}
-
-// pregnancy details
-export const getPregnancyDetails = async (filters: MaternalPatientFilters & { patientId: string }) => {
-  try {
-    const params = new URLSearchParams();
-    if(filters.page) params.append('page', filters.page.toString());
-    if(filters.page_size) params.append('page_size', filters.page_size.toString());
-    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-    if(filters.search) params.append('search', filters.search);
-    const queryString = params.toString();
-    const url = queryString
-      ? `maternal/pregnancy/${filters.patientId}/details/?${queryString}`
-      : `maternal/pregnancy/${filters.patientId}/details/`;
-    const res = await api2.get(url);
-    return res.data || {count: 0, next: null, previous: null, results: []};
-  } catch (error) {
-    console.error("Error fetching pregnancy details: ", error);
-    return error || {count: 0, next: null, previous: null, results: []};
   }
 }
 
@@ -239,26 +191,7 @@ export const getPatientTTStatus = async (patientId: string) => {
   }
 }
 
-// calculated missed visits
-export const getCalculatedMissedVisits = async (pregnancyId: string, aogWks?: number, aogDays?: number) => {
-  try {
-    const params = new URLSearchParams()
-    
-    if(aogWks !== undefined) params.append('aog_weeks', aogWks.toString())
-    if(aogDays !== undefined) params.append('aog_days', aogDays.toString())
-
-    const queryString = params.toString()
-    const url = `maternal/prenatal/missed-visits/${pregnancyId}/${queryString ? `?${queryString}` : ''}`
-
-    const res = await api2.get(url)
-    return res.data || {}
-  } catch (error) {
-    console.error("Error fetching calcualted missed visits: ", error)
-    throw error;
-  }
-}
-
-
+// illness list for prenatal form
 export const getIllnessList = async () => {
   try {
     const res = await api2.get("maternal/prenatal/illnesses/")
@@ -269,7 +202,16 @@ export const getIllnessList = async () => {
   }
 }
 
-
+// prenatal complete table comparison
+export const getPrenatalRecordComparison = async (pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/prenatal/records/?pregnancyId=${pregnancyId}`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal record comparison: ", error);
+    throw error;
+  }
+}
 
 {/* *********** postpartum *********** */}
 
@@ -313,3 +255,17 @@ export const getPostpartumAssessements = async (patientId: string) => {
     throw error;
   }
 }
+
+
+{/* *********** prenatal appointment request *********** */}
+export const getPrenatalAppointmentRequests = async () => {
+  try {
+    const res = await api2.get("maternal/prenatal/appointment/requests/all/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal appointment requests: ", error);
+    throw error;
+  }
+}
+
+

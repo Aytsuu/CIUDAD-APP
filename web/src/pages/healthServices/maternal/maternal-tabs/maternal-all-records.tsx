@@ -9,7 +9,6 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import CardLayout from "@/components/ui/card/card-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,17 +17,16 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 
-import { useMaternalRecords, useMaternalCounts } from "./queries/maternalFetchQueries";
+import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
+import { useDebounce } from "@/hooks/use-debounce";
 
-
-export default function MaternalAllRecords() {
-  interface maternalRecords {
+interface maternalRecords {
     pat_id: string;
     age: number;
 
@@ -55,7 +53,7 @@ export default function MaternalAllRecords() {
     pregnancy_count?: number;
   }
 
-  
+export default function MaternalAllRecords() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -63,12 +61,16 @@ export default function MaternalAllRecords() {
   const [selectedFilter, setSelectedFilter] = useState("all");
 
   const { showLoading, hideLoading } = useLoading();
-  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords({
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+
+  // useMaternalRecords expects (page, pageSize, searchQuery, status)
+  const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords(
     page,
-    page_size: pageSize,
-    status: selectedFilter !== " All" ? selectedFilter : undefined,
-    search: searchTerm || undefined
-  });
+    pageSize,
+    debouncedSearchTerm,
+    selectedFilter,
+  );
   const { data: maternalCountsData } = useMaternalCounts();
 
   const totalMaternalCount = maternalCountsData?.total_records || 0;
@@ -81,13 +83,6 @@ export default function MaternalAllRecords() {
     { id: "transient", name: "Transient" },
   ];
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
   
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
@@ -166,6 +161,7 @@ export default function MaternalAllRecords() {
     });
   }, [maternalRecordsData]);
 
+  // table columns
   const columns: ColumnDef<maternalRecords>[] = [
     {
       accessorKey: "pat_id",
@@ -239,9 +235,8 @@ export default function MaternalAllRecords() {
 
     {
       accessorKey: "sitio",
-      header: ({}) => (
-        <div>Sitio</div>
-      ),
+      size: 80,
+      header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
@@ -252,6 +247,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "type",
+      size: 80,
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
@@ -261,6 +257,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "action",
+      size: 100,
       header: "Action",
       cell: ({ row }) => (
         <>
@@ -301,9 +298,8 @@ export default function MaternalAllRecords() {
       ),
     },
   ];
-
   
-  
+  // refetch handler
   const handleRefetching = async () => {
     try {
       setIsRefetching(true);
@@ -314,55 +310,37 @@ export default function MaternalAllRecords() {
       setIsRefetching(false);
     }
   };
+  
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
 
   return (
-    <LayoutWithBack
-      title="Maternal Health Records  "
-      description="Manage and view mother's maternal information"
-    >
       <div className="w-full h-full flex flex-col">
+        <div>
+          
+        </div>
         <div className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <CardLayout
+            <EnhancedCardLayout 
               title="Total Maternal Patients"
               description="Patients with maternal records"
-              content={
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{totalMaternalCount}</span>
-                    <span className="text-xs text-muted-foreground">
-                      Total patients
-                    </span>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <WomanRoundedIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </div>
-              }
-              cardClassName="border shadow-sm rounded-lg"
-              headerClassName="pb-2"
-              contentClassName="pt-0"
+              value={totalMaternalCount}
+              valueDescription="Total patients"
+              icon={<WomanRoundedIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />}
             />
 
-            <CardLayout
+            <EnhancedCardLayout 
               title="Active Pregnancies"
               description="Patients with active pregnancies"
-              content={
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{activePregnanciesCount}</span>
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <span>Total active pregnancies</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <PregnantWomanIcon fontSize="large" className="text-muted-foreground" />
-                  </div>
-                </div>
-              }
-              cardClassName="border shadow-sm rounded-lg"
-              headerClassName="pb-2"
-              contentClassName="pt-0"
+              value={activePregnanciesCount}
+              valueDescription="Total active pregnancies"
+              icon={<PregnantWomanIcon fontSize="large" className="h-5 w-5 text-muted-foreground" />}
             />
           </div>
         </div>
@@ -427,7 +405,7 @@ export default function MaternalAllRecords() {
         {/*  */}
 
         {/* Table Container */}
-        <div className="h-full w-full rounded-md ">
+        <div className="h-full w-full rounded-md border">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
@@ -465,7 +443,7 @@ export default function MaternalAllRecords() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, maternalRecordsData?.count) || 0} of {maternalRecordsData?.count} rows
@@ -485,6 +463,5 @@ export default function MaternalAllRecords() {
           </div>
         </div>
       </div>
-    </LayoutWithBack>
   );
 }

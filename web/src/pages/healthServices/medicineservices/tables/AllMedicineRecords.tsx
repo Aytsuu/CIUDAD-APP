@@ -11,8 +11,9 @@ import { useMedicineRecords } from "../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { MedicineRecord } from "../types";
 import { useDebounce } from "@/hooks/use-debounce";
-// import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/context/LoadingContext";
 import { medicineColumns } from "./columns/all-med-col";
+// import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
@@ -20,7 +21,7 @@ import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function AllMedicineRecords() {
-  // const { showLoading, hideLoading } = useLoading();
+  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,13 +67,13 @@ export default function AllMedicineRecords() {
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useMedicineRecords(queryParams);
 
-  // useEffect(() => {
-  //   if (isLoading) {
-  //     showLoading();
-  //   } else {
-  //     hideLoading();
-  //   }
-  // }, [isLoading, showLoading, hideLoading]);
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   // Handle API response structure
   const {

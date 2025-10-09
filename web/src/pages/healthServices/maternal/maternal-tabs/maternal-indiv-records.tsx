@@ -14,15 +14,18 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { useDebounce } from "@/hooks/use-debounce"
 
 import { PatientInfoCard } from "@/components/ui/patientInfoCard"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { PregnancyAccordion } from "../maternal/maternal-components/maternal-records-accordion"
-import PregnancyChart from "./maternal-components/pregnancy-chart"
-import PregnancyVisitTracker from "./maternal-components/8anc-visit-chart"
+import { PregnancyAccordion } from "../maternal-components/pregnancy-accordion"
+import PregnancyChart from "../maternal-components/pregnancy-chart"
+import PregnancyVisitTracker from "../maternal-components/8anc-visit-chart"
+import { formatDate } from "./appointments/columns"
 
-import { usePregnancyDetails } from "./queries/maternalFetchQueries"
-import { useAddCompletePregnancy, useAddPregnancyLoss } from "./queries/maternalAddQueries"
+import { usePregnancyDetails } from "../queries/maternalFetchQueries"
+import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries"
+import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 
 
 interface Patient {
@@ -132,11 +135,46 @@ interface PregnancyDataDetails{
 export default function MaternalIndivRecords() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [isRefetching, setIsRefetching] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   const location = useLocation()
 
-  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(
+    selectedPatient?.pat_id || "", 
+    page,
+    pageSize,
+    selectedFilter === "All" ? "" : selectedFilter,
+    debouncedSearchTerm
+  )
   const { mutate: completePregnancy } = useAddCompletePregnancy()
   const { mutate: addPregnancyLoss } = useAddPregnancyLoss()
+
+  const totalPages = Math.ceil((pregnancyData?.count || 0) / pageSize);
+
+
+  // searching, pagination, status filter handlers
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
+
+  const handleSearch = (search: string) => {
+    setSearchTerm(search)
+    setPage(1)
+  }
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter)
+    setPage(1) 
+  }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setPage(1) 
+  }
 
   const getLatestFollowupVisit = () => {
     let followUpData = [];
@@ -160,14 +198,6 @@ export default function MaternalIndivRecords() {
     .filter(visit => visit.followv_status === 'pending') // Only show pending visits
     .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
   console.log('Next Follow-up Visit:', nextFollowVisit);
-
-  const dateWords = () => {
-    return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -240,7 +270,7 @@ export default function MaternalIndivRecords() {
         gestationalFormatted: gestationalFormatted,
         expectedDueDate: pf.pf_edc,
         prenatal_end_date: pregnancy.prenatal_end_date,
-        notes: `Prenatal visit on ${pf.created_at ? pf.created_at.split("T")[0] : "Unknown"}`,
+        notes: `${pf.created_at ? formatDate(pf.created_at) : "Unknown"}`,
       })
       currPregnancyGroup.hasPrenatal = true
       if(pf.pf_edc && !currPregnancyGroup.expectedDueDate) {
@@ -337,13 +367,11 @@ const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
 }, [pregnancyData, selectedPatient])
 
   const filter = [
-    { id: "All", name: "All" },
-    { id: "Active", name: "Active" },
-    { id: "Completed", name: "Completed" },
-    { id: "Pregnancy Loss", name: "Pregnancy Loss" },
+    { id: "all", name: "All" },
+    { id: "active", name: "Active" },
+    { id: "completed", name: "Completed" },
+    { id: "pregnancy_loss", name: "Pregnancy Loss" },
   ]
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
-
 
   const filteredGroups = pregnancyGroups.filter((group) => {
     switch (selectedFilter) {
@@ -469,7 +497,7 @@ const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
             <div className="p-3 flex justify-between items-center w-full text-blue-700">
               <h3 className="flex items-center font-semibold"><ClockAlert className="mr-2"/> Upcoming follow-up visit</h3>
               <p className="text-sm italic"> 
-                {nextFollowVisit?.followv_description} on <b>{dateWords()}</b>
+                {nextFollowVisit?.followv_description} on <b>{formatDate(nextFollowVisit?.followv_date)}</b>
               </p>
             </div>
           ) : (
@@ -495,15 +523,15 @@ const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
             <div className="flex w-full gap-x-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input placeholder="Search..." className="pl-10 w-full bg-white" />
+                <Input placeholder="Search..." className="pl-10 w-full bg-white" onChange={(e) => handleSearch(e.target.value)}/>
               </div>
               <SelectLayout
                 className="w-full md:w-[200px] bg-white"
-                label=""
-                placeholder="Select"
+                label="All"
+                placeholder="Select Filter"
                 options={filter}
                 value={selectedFilter}
-                onChange={setSelectedFilter}
+                onChange={handleFilterChange}
               />
             </div>
           </div>
@@ -551,11 +579,18 @@ const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
         <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-md">
             <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Showing {filteredGroups.length === 1 ? filteredGroups.length + " pregnancy" :  filteredGroups.length + " pregnancies"}</p>
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-6"
+                defaultValue={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
             </div>
           </div>
 
-          <div className="bg-white w-full rounded-b-md">
+          <div className="bg-white w-full">
             {filteredGroups.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <p>No pregnancy records found</p>
@@ -569,6 +604,23 @@ const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
                 onCompletePregnancy={handleCompletePregnancy}
                 onCompleteRecord={handleCompleteRecord}
                 onPregnancyLossRecord={handlePregnancyLossRecord}
+              />
+            )}
+          </div>
+        </div>
+        <div className="bg-white flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
+          {/* Showing Rows Info */}
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, pregnancyData?.count) || 0} of {pregnancyData?.count} rows
+          </p>
+
+          {/* Pagination */}
+          <div className="w-full sm:w-auto flex justify-center">
+            {totalPages > 0 && (
+              <PaginationLayout
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
               />
             )}
           </div>
