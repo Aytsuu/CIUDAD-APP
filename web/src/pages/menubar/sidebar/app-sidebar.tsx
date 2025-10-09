@@ -210,6 +210,14 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator("summon remarks")
+      ? [
+          {
+            title: "Summon Remarks",
+            url: "/summon-remarks",
+          },
+        ]
+      : []),
     ...(featureValidator("gad")
       ? [
           {
