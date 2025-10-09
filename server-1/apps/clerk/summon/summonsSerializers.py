@@ -164,7 +164,7 @@ class RemarkDetailSerializer(serializers.ModelSerializer):
             return []
 
 class HearingScheduleDetailSerializer(serializers.ModelSerializer):
-    remarks = serializers.SerializerMethodField()
+    remark = RemarkDetailSerializer(read_only=True)
     hearing_minutes = serializers.SerializerMethodField()
     summon_date = SummonDateAvailabilitySerializer(source='sd_id', read_only=True)
     summon_time = SummonTimeAvailabilitySerializer(source='st_id', read_only=True)
@@ -177,18 +177,19 @@ class HearingScheduleDetailSerializer(serializers.ModelSerializer):
             'hs_is_closed',
             'summon_date',
             'summon_time',
-            'remarks',
+            'remark',
             'hearing_minutes'
         ]
     
-    def get_remarks(self, obj):
+    def get_remark(self, obj):
         try:
-            # Now uses the related_name
-            remarks = obj.remarks.all()
-            return RemarkDetailSerializer(remarks, many=True).data
+            remark = obj.remark  
+            if remark:
+                return RemarkDetailSerializer(remark).data
+            return None
         except Exception as e:
-            print(f"Error getting remarks: {e}")
-            return []
+            print(f"Error getting : {e}")
+            return None
     
     def get_hearing_minutes(self, obj):
         try:
@@ -318,41 +319,3 @@ class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
     
 
 
-# class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
-#     suppDocs = FileInputSerializer(write_only=True, required=False, many=True)
-
-#     class Meta:
-#         model = RemarkSuppDocs
-#         fields = ['mom_id', 'suppDocs']
-
-#     @transaction.atomic
-#     def create(self, validated_data):   
-#         files = validated_data.pop('suppDocs', [])
-#         if not files:
-#             raise serializers.ValidationError({"files": "At least one file must be provided"})
-            
-#         mom_id = validated_data.pop('mom_id')
-#         created_files = self._upload_files(files, mom_id)
-
-#         if not created_files:
-#             raise serializers.ValidationError("Failed to upload files")
-
-#         return created_files[0]
-
-#     def _upload_files(self, files, mom_id):
-#         momsp_files = []
-#         for file_data in files:
-#             momsp_file = MOMSuppDoc(
-#                 momsp_name=file_data['name'],
-#                 momsp_type=file_data['type'],
-#                 momsp_path=f"images/{file_data['name']}",
-#                 mom_id=mom_id
-#             )
-
-#             url = upload_to_storage(file_data, 'mom-bucket', 'images')
-#             momsp_file.momsp_url = url
-#             momsp_files.append(momsp_file)
-
-#         if momsp_files:
-#             return MOMSuppDoc.objects.bulk_create(momsp_files)
-#         return []

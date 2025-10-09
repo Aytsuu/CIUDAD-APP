@@ -26,6 +26,7 @@ export const getSummonCaseList = async (page: number, pageSize: number, searchQu
 export const getSummonCaseDetail = async (sc_id: string) => {
     try{
         const res = await api.get(`clerk/summon-case-detail/${sc_id}/`)
+        console.log('data', res.data)
         return res.data
     }catch(err){
         console.error(err)

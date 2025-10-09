@@ -6,7 +6,7 @@ import { ComplaintRecordForSummon } from "../complaint-record"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ChevronLeft  } from "lucide-react"
+import { ChevronLeft, CircleAlert } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { formatTime } from "@/helpers/timeFormatter"
 import { Card } from "@/components/ui/card"
@@ -17,6 +17,7 @@ import { formatTimestamp } from "@/helpers/timestampformatter"
 import { useLoading } from "@/context/LoadingContext"
 import { formatDate } from "@/helpers/dateHelper"
 import SummonRemarksForm from "./summon-remarks-form"
+import SummonRemarksView from "../summon-remarks-view"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -35,7 +36,6 @@ function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
 export default function SummonRemarksDetails() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { 
     sc_id, 
     incident_type, 
@@ -46,7 +46,6 @@ export default function SummonRemarksDetails() {
 
   const { data: caseDetails, isLoading: isDetailLoading } = useGetSummonCaseDetails(sc_id)
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
-  // const { mutate: escalate } = useEscalateCase()
   const { showLoading, hideLoading } = useLoading()
 
   useEffect(() => {
@@ -111,31 +110,45 @@ export default function SummonRemarksDetails() {
       },
     },
     {
-      accessorKey: "remarks",
+      accessorKey: "remark",
       header: "Remarks",
       cell: ({ row }) => {
-        if (row.original.remarks.length > 0) {
+        const remark = row.original.remark;
+        
+        if (remark && remark.rem_id) {
           return (
-            <div 
-              className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline"
-              // onClick={() => handleMinutesClick(row.original.hearing_minutes, row.original.hs_id)}
-            >
-              View ({row.original.remarks.length})
-            </div>
+            <DialogLayout
+              className="w-[90vw] h-[80vh] max-w-[1800px] max-h-[1000px]"
+              trigger={
+                <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
+                  View Remarks  
+                </div>
+              }
+              mainContent={
+                <SummonRemarksView
+                  rem_remarks={remark.rem_remarks}
+                  rem_date={remark.rem_date}
+                  supp_docs={remark.supp_docs}
+                />
+              }
+              title="Remarks"
+              description="Detailed view of remarks and attached files."
+            />
           );
         } else {
-          // If no minutes or no URLs, show dialog layout to add minutes
           return (
             <DialogLayout
               trigger={
-                <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
-                  View ({row.original.hearing_minutes.length})
+                <div className="text-red-500 flex items-center gap-1 justify-center underline cursor-pointer">
+                  <CircleAlert size={16} />
+                  <span className="text-xs">No remarks available</span>
                 </div>
               }
               mainContent={
                 <SummonRemarksForm 
                   hs_id={row.original.hs_id}
-                  st_id = {row.original.summon_time.st_id}
+                  st_id={row.original.summon_time.st_id}
+                  sc_id = {sc_id}
                   onSuccess={() => setEditingRowId(null)}
                 />
               }

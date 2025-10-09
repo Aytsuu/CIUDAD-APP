@@ -37,8 +37,8 @@ class SummonCasesView(generics.ListAPIView):
             Prefetch('comp_id__complaintaccused_set__acsd'),
             Prefetch('hearing_schedules'),
             Prefetch('hearing_schedules__hearing_minutes'),
-            Prefetch('hearing_schedules__remarks'),
-            Prefetch('hearing_schedules__remarks__supporting_documents')
+            Prefetch('hearing_schedules__remark'),
+            Prefetch('hearing_schedules__remark__supporting_documents')
         )
 
         # Status filter for remarks (combined logic)
@@ -71,8 +71,8 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
     serializer_class = SummonCaseDetailSerializer
     queryset = SummonCase.objects.all().prefetch_related(
         'hearing_schedules',  # Now uses the related_name
-        'hearing_schedules__remarks',
-        'hearing_schedules__remarks__supporting_documents',
+        'hearing_schedules__remark',
+        'hearing_schedules__remark__supporting_documents',
         'hearing_schedules__hearing_minutes',
         'hearing_schedules__sd_id',
         'hearing_schedules__st_id'

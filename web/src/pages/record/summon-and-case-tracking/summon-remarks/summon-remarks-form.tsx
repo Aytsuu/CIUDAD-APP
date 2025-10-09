@@ -6,9 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAddRemarks } from "../queries/summonInsertQueries";
 
-export default function SummonRemarksForm({hs_id, st_id, onSuccess}:{
+export default function SummonRemarksForm({hs_id, st_id, sc_id, onSuccess}:{
     hs_id: string;
     st_id: string;
+    sc_id: string;
     onSuccess?: () => void
 }){
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
@@ -31,7 +32,7 @@ export default function SummonRemarksForm({hs_id, st_id, onSuccess}:{
             'file': media.file
         }))
         
-        Addremarks({hs_id, st_id, remarks, close, files});
+        Addremarks({hs_id, st_id, sc_id, remarks, close, files});
     }
 
     const handleCheckboxChange = (checked: boolean) => {
@@ -50,7 +51,7 @@ export default function SummonRemarksForm({hs_id, st_id, onSuccess}:{
                 acceptableFiles='image'
             />
 
-            <div className="space-y-2">
+            <div className="space-y-2 mt-4">
                 <label className="text-sm font-medium text-gray-700">Remarks</label>
                 <Textarea
                     placeholder="Enter your remarks"

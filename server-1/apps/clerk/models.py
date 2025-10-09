@@ -278,7 +278,7 @@ class Remark(models.Model):
     rem_id = models.BigAutoField(primary_key=True)
     rem_remarks = models.TextField()
     rem_date = models.DateTimeField(default = datetime.now)
-    hs_id = models.ForeignKey('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remarks')
+    hs_id = models.OneToOneField('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remark')
 
     class Meta:
         db_table = 'remark'

@@ -111,11 +111,12 @@ export const useAddRemarks = (onSuccess?: () => void) => {
         mutationFn: async (data: {
             hs_id: string;
             st_id: string;
+            sc_id: string;
             remarks: string;
             close: boolean
             files: { name: string; type: string; file: string | undefined}[];
         }) => {
-            return addRemarks(data.hs_id, data.st_id, data.remarks, data.close, data.files);
+            return addRemarks(data.hs_id, data.st_id, data.sc_id, data.remarks, data.close, data.files);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });

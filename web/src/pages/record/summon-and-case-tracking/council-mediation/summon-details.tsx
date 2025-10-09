@@ -6,7 +6,7 @@ import { ComplaintRecordForSummon } from "../complaint-record"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ChevronLeft, Check  } from "lucide-react"
+import { ChevronLeft, Check, CircleAlert  } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import SummonPreview from "./summon-preview"
@@ -25,6 +25,7 @@ import HearingMinutesForm from "./hearing-minutes-form"
 import { formatDate } from "@/helpers/dateHelper"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { InfoIcon } from "lucide-react"
+import SummonRemarksView from "../summon-remarks-view"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -149,13 +150,40 @@ export default function SummonDetails() {
       ),
     },
     {
-      accessorKey: "remarks",
-      header: "Remarks",
-      cell: ({ row }) => (
-        <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
-          View ({row.original.remarks.length})
-        </div>
-      ),
+        accessorKey: "remark",
+        header: "Remarks",
+        cell: ({ row }) => {
+          const remark = row.original.remark;
+          
+          if (remark && remark.rem_id) {
+            return (
+              <DialogLayout
+                className="w-[90vw] h-[80vh] max-w-[1800px] max-h-[1000px]"
+                trigger={
+                  <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
+                    View Remarks  
+                  </div>
+                }
+                mainContent={
+                  <SummonRemarksView
+                    rem_remarks={remark.rem_remarks}
+                    rem_date={remark.rem_date}
+                    supp_docs={remark.supp_docs}
+                  />
+                }
+                title="Remarks"
+                description="Detailed view of remarks and attached files."
+              />
+            );
+          } else {
+            return (
+              <div className="text-red-500 flex items-center gap-1 justify-center">
+                  <CircleAlert size={16} />
+                  <span className="text-xs">No remarks available</span>
+              </div>
+            )
+          }
+        }
     },
     {
       accessorKey: "hearing_minutes",
@@ -163,30 +191,45 @@ export default function SummonDetails() {
       cell: ({ row }) => {
         const hasMinutes = row.original.hearing_minutes.length > 0;
         const hasMinutesWithUrl = hasMinutes && row.original.hearing_minutes.some((minute: any) => minute.hm_url);
+        const hasRemarks = row.original.remark && row.original.remark.rem_id;
+        
+        const isDisabled = !hasRemarks;
         
         if (hasMinutesWithUrl) {
-          // If minutes exist with URLs, show clickable text that opens the file
           return (
             <div 
-              className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline"
-              onClick={() => handleMinutesClick(row.original.hearing_minutes, row.original.hs_id)}
+              className={`cursor-pointer text-[12px] underline ${
+                isDisabled 
+                  ? "text-gray-400 cursor-not-allowed" 
+                  : "text-[#1273B8] hover:text-[#0e5a97]"
+              }`}
+              onClick={isDisabled ? undefined : () => handleMinutesClick(row.original.hearing_minutes, row.original.hs_id)}
             >
-              View ({row.original.hearing_minutes.length})
+              View Minutes
             </div>
           );
         } else {
-          // If no minutes or no URLs, show dialog layout to add minutes
+          // If disabled, show non-clickable version
+          if (isDisabled) {
+            return (
+              <div className="text-gray-400 flex items-center gap-1 justify-center cursor-not-allowed">
+                <CircleAlert size={16} />
+                <span className="text-xs">No minutes available</span>
+              </div>
+            );
+          }
           return (
             <DialogLayout
               trigger={
-                <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
-                  View ({row.original.hearing_minutes.length})
+                <div className="text-red-500 flex items-center gap-1 underline justify-center cursor-pointer">
+                  <CircleAlert size={16} />
+                  <span className="text-xs">No minutes available</span>
                 </div>
               }
               mainContent={
                 <HearingMinutesForm 
                   hs_id={row.original.hs_id}
-                  sc_id = {sc_id}
+                  sc_id={sc_id}
                   onSuccess={() => setEditingRowId(null)}
                 />
               }

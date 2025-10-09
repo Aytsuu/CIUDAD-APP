@@ -114,7 +114,7 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, files: { 
 }
 
 
-export const addRemarks = async (hs_id: string, st_id: string, remarks: string, close: boolean, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addRemarks = async (hs_id: string, st_id: string, sc_id: string, remarks: string, close: boolean, files: { name: string; type: string; file: string | undefined }[]) => {
     try{
 
         // insert the remark
@@ -149,6 +149,10 @@ export const addRemarks = async (hs_id: string, st_id: string, remarks: string, 
             })
             await api.put(`clerk/update-summon-time-availability/${st_id}/`, {
                 st_is_booked: false,
+            })
+
+            await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                sc_mediation_status: "Waiting for Schedule",
             })
         }
 
