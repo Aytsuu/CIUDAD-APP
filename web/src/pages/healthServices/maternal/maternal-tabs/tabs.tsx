@@ -2,9 +2,10 @@ import { useState } from "react";
 
 interface MaternalTabProps {
    onTabChange: (tab: string) => void;
+   pendingCount?: number;
 }
 
-export default function MaternalTab({ onTabChange }: MaternalTabProps): JSX.Element {
+export default function MaternalTab({ onTabChange, pendingCount = 0 }: MaternalTabProps): JSX.Element {
    const [selectedTab, setSelectedTab] = useState("records");
 
    const handleTabChange = (tab: string) => {
@@ -40,6 +41,11 @@ export default function MaternalTab({ onTabChange }: MaternalTabProps): JSX.Elem
 								onClick={() => handleTabChange("appointments")}
 							>
 								<h2 className="text-sm font-semibold">Appointments</h2>
+								{pendingCount > 0 && (
+									<span className="ml-2 rounded-full bg-red-500 text-white px-2 py-0.5 text-xs font-medium">
+										{pendingCount}
+									</span>
+								)}
 							</div>		
 						</div>
 					</div>

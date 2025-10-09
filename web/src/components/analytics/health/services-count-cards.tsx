@@ -117,7 +117,7 @@ export const useHealthServicesSectionCards = () => {
     maternal: (
       <HealthCard 
         title="Maternal Health" 
-        value={healthCardAnalytics?.data?.maternal_records_count} 
+        value={healthCardAnalytics?.data?.pregnancy_count} 
         isLoading={isLoading}
         onClick={() => {
           navigate("/services/maternal")

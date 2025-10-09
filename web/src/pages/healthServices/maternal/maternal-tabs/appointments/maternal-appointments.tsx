@@ -16,6 +16,8 @@ import MaternalAppointmentsTab from "./tabs"
 import { usePrenatalAppointmentRequest } from "../../queries/maternalFetchQueries"
 import { useUpdatePARequestApprove, useUpdatePARequestReject } from "../../queries/maternalUpdateQueries"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { capitalize } from "@/helpers/capitalize"
+import { calculateAge } from "@/helpers/ageCalculator"
 
 export default function MaternalAppointmentsMain() {
   const [selectedTab, setSelectedTab] = useState("pending")
@@ -65,16 +67,39 @@ export default function MaternalAppointmentsMain() {
 
   // Map API response to Appointment interface
   const mapAppointmentData = (apiData: any[]): Appointment[] => {
-    return apiData.map((item, index) => ({
-      id: item.par_id || index + 1,
-      patientName: item.rp_id || "Unknown Patient", // Using rp_id as identifier for now
-      gender: "Female" as const, // Default to Female for maternal services
-      age: 0, // Age not provided in API, would need pat_id lookup
-      dateScheduled: item.approved_at || item.requested_date || item.requested_at || "",
-      requestedDate: item.requested_at || "",
-      status: (item.status === "approved" ? "confirmed" : item.status) as "confirmed" | "pending" | "cancelled" | "rejected" | "missed" | "completed",
-      reason: item.reason || undefined,
-    }))
+    return apiData.map((item, index) => {
+      // Format patient name from personal_info
+      let patientName = "Unknown Patient"
+      if (item.personal_info) {
+        const { per_fname, per_mname, per_lname, per_suffix } = item.personal_info
+        const nameParts = [
+          capitalize(per_lname),
+          capitalize(per_fname),
+          per_mname ? capitalize(per_mname) : null,
+          per_suffix ? capitalize(per_suffix) : null,
+        ].filter(Boolean)
+        patientName = nameParts.join(" ")
+      }
+
+      // Calculate age from personal_info DOB
+      const age = item.personal_info?.per_dob 
+        ? parseInt(calculateAge(item.personal_info.per_dob)) || 0
+        : 0
+
+      // Get gender from personal_info
+      const gender = item.personal_info?.per_sex === "MALE" ? "Male" : "Female"
+
+      return {
+        id: item.par_id || index + 1,
+        patientName,
+        gender: gender as "Male" | "Female",
+        age,
+        dateScheduled: item.approved_at || item.requested_date || item.requested_at || "",
+        requestedDate: item.requested_at || "",
+        status: (item.status === "approved" ? "confirmed" : item.status) as "confirmed" | "pending" | "cancelled" | "rejected" | "missed" | "completed",
+        reason: item.reason || undefined,
+      }
+    })
   }
 
   // Get appointments from API

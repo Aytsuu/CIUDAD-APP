@@ -269,3 +269,13 @@ export const getPrenatalAppointmentRequests = async () => {
 }
 
 
+{/* *********** charts or reports *********** */}
+export const getMaternalCharts = async (month: string) => {
+  try {
+    const res = await api2.get(`maternal/maternal-patients/charts/${month}/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching maternal charts: ", error);
+    throw error;
+  }
+}
