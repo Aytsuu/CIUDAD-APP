@@ -1,5 +1,3 @@
-"use client"
-
 import { type SetStateAction, useState } from "react"
 import { Footer } from "./Footer"
 import { useGetAnnouncement } from "@/pages/announcement/queries/announcementFetchQueries"
