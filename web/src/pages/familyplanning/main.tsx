@@ -138,7 +138,7 @@ export default function FamilyPlanningPage() {
     mode: stateMode, 
     prefill: statePrefill,
     patrecId: statePatrecId,
-    prefillFromFpRecord: statePrefillFromFpRecord,
+    // prefillFromFpRecord: statePrefillFromFpRecord,
     gender: stateGender,
     isNewMethod: stateIsNewMethod // NEW: Flag for "New Method for Patient"
   } = location.state || {};
@@ -150,7 +150,7 @@ export default function FamilyPlanningPage() {
   const modeParam = searchParams.get("mode")
   const prefillParam = searchParams.get("prefill")
   const patrecIdParam = searchParams.get("patrecId") // patrec_id for follow-up submission
-  const prefillFromFpRecordParam = searchParams.get("prefillFromFpRecord") // fprecord_id to prefill from for follow-up
+  // const prefillFromFpRecordParam = searchParams.get("prefillFromFpRecord") // fprecord_id to prefill from for follow-up
   const staff_id = user?.staff?.staff_id
   console.log("Staff id",staff_id)
 
@@ -159,7 +159,7 @@ export default function FamilyPlanningPage() {
   const actualPatientId = statePatientId || routePatientId
   const shouldPrefill = statePrefill || prefillParam === "true"
   const patrecId = statePatrecId || patrecIdParam
-  const prefillFromFpRecord = statePrefillFromFpRecord || prefillFromFpRecordParam
+  // const prefillFromFpRecord = statePrefillFromFpRecord || prefillFromFpRecordParam
   const passedGender = stateGender || (location.state as { gender?: string })?.gender || ""
   const isNewMethod = stateIsNewMethod || false // NEW: Default to false
 

@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useState,useEffect } from "react";
+import { useMemo, useState} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest";
@@ -155,18 +155,18 @@ const IndividualFamPlanningTable: React.FC = () => {
   const location = useLocation();
   const { patientId } = location.state || {};
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date()); // For countdown timer
+  // const [currentTime, setCurrentTime] = useState(new Date()); // For countdown timer
   const [showFollowUpConfirm, setShowFollowUpConfirm] = useState(false);
   const [selectedRecordForFollowUp, setSelectedRecordForFollowUp] = useState<IndividualFPRecordDetail | null>(null);
 
   // Update time every minute for countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Update every minute
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     setCurrentTime(new Date());
+  //   }, 60000); // Update every minute
 
-    return () => clearInterval(timer);
-  }, []);
+  //   return () => clearInterval(timer);
+  // }, []);
 
   const {
     data: fpPatientRecords = [],
@@ -190,12 +190,12 @@ const IndividualFamPlanningTable: React.FC = () => {
     enabled: !!patientId
   });
 
-  const displayPatientName = useMemo(() => {
-    if (patientInfoForCard) {
-      return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""}${patientInfoForCard.personal_info.per_lname}`;
-    }
-    return "Loading patient name...";
-  }, [patientInfoForCard]);
+  // const displayPatientName = useMemo(() => {
+  //   if (patientInfoForCard) {
+  //     return `${patientInfoForCard.personal_info.per_fname} ${patientInfoForCard.personal_info.per_mname ? patientInfoForCard.personal_info.per_mname + " " : ""}${patientInfoForCard.personal_info.per_lname}`;
+  //   }
+  //   return "Loading patient name...";
+  // }, [patientInfoForCard]);
 
   const handleCheckboxChange = (record: IndividualFPRecordDetail, isChecked: boolean) => {
     setSelectedRecords((prevSelected) => {

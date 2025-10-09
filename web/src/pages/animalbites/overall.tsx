@@ -292,16 +292,7 @@ const Overall: React.FC = () => {
       header: "Action",
       cell: ({ row }) => {
         const p = row.original;
-        const patientData = {
-          pat_id: p.id,
-          pat_type: p.patientType,
-          age: p.age,
-          personal_info: {
-            per_fname: p.fname,
-            per_lname: p.lname,
-            per_sex: p.gender
-          }
-        };
+        
 
         return (
           <ViewButton
