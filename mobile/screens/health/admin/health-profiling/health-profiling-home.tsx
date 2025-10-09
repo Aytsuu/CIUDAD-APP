@@ -25,6 +25,30 @@ function HealthProfilingHome() {
       color: '#3B82F6'
     },
     {
+      id: 'household-register',
+      title: 'Register New Household',
+      description: 'Register household information',
+      icon: Building,
+      route: '/(health)/admin/health-profiling/household-registration',
+      color: '#10B981'
+    },
+    {
+      id: 'family-profiling',
+      title: 'Health Family Profiling',
+      description: 'Complete family health profiling',
+      icon: UsersRound,
+      route: '/(health)/admin/health-profiling/family-profiling',
+      color: '#8B5CF6'
+    },
+    {
+      id: 'family-records',
+      title: 'Family Health Records',
+      description: 'View family health profiles',
+      icon: UsersRound,
+      route: '/(health)/admin/health-profiling/family-records',
+      color: '#8B5CF6'
+    },
+    {
       id: 'resident',
       title: 'Residents',
       description: 'View individual records',
@@ -48,49 +72,44 @@ function HealthProfilingHome() {
       route: '/(profiling)/household/records',
       color: '#F59E0B'
     },
-    {
-      id: 'business',
-      title: 'Businesses',
-      description: 'View local enterprises',
-      icon: Store,
-      route: '/(profiling)/business/records',
-      color: '#EF4444'
-    }
+   
   ]
 
   const MenuCard = ({ item }: { item: any }) => {
     const IconComponent = item.icon
     const isRegister = item.id === 'register'
+    const isHouseholdRegister = item.id === 'household-register'
+    const isFamilyProfiling = item.id === 'family-profiling'
 
     return (
       <TouchableOpacity
         onPress={() => router.push(item.route as any)}
         className={`rounded-2xl p-5 mb-4 shadow-sm ${
-          isRegister ? 'bg-blue-600' : 'bg-white border border-gray-200'
+          isRegister ? 'bg-blue-600' : isHouseholdRegister ? 'bg-green-600' : isFamilyProfiling ? 'bg-purple-600' : 'bg-white border border-gray-200'
         }`}
         activeOpacity={0.7}
       >
         <View className="flex-row items-center">
           {/* Icon Container */}
           <View className={`w-16 h-16 rounded-2xl items-center justify-center ${
-            isRegister ? 'bg-white/20' : 'bg-gray-100'
-          }`} style={!isRegister ? { backgroundColor: `${item.color}15` } : {}}>
+            isRegister || isHouseholdRegister || isFamilyProfiling ? 'bg-white/20' : 'bg-gray-100'
+          }`} style={!isRegister && !isHouseholdRegister && !isFamilyProfiling ? { backgroundColor: `${item.color}15` } : {}}>
             <IconComponent 
               size={28} 
-              className={isRegister ? 'text-white' : ''} 
-              color={isRegister ? 'white' : item.color}
+              className={isRegister || isHouseholdRegister || isFamilyProfiling ? 'text-white' : ''} 
+              color={isRegister || isHouseholdRegister || isFamilyProfiling ? 'white' : item.color}
             />
           </View>
 
           {/* Content */}
           <View className="flex-1 ml-4">
             <Text className={`text-lg font-semibold ${
-              isRegister ? 'text-white' : 'text-gray-900'
+              isRegister || isHouseholdRegister || isFamilyProfiling ? 'text-white' : 'text-gray-900'
             }`}>
               {item.title}
             </Text>
             <Text className={`text-sm mt-1 ${
-              isRegister ? 'text-white/90' : 'text-gray-500'
+              isRegister || isHouseholdRegister || isFamilyProfiling ? 'text-white/90' : 'text-gray-500'
             }`}>
               {item.description}
             </Text>
@@ -98,7 +117,7 @@ function HealthProfilingHome() {
 
           {/* Arrow or Plus Icon */}
           <View className="ml-2">
-            {isRegister ? (
+            {isRegister || isHouseholdRegister || isFamilyProfiling ? (
               <Plus size={24} className="text-white" color="white" />
             ) : (
               <ChevronRight size={24} className="text-gray-400" color="#9CA3AF" />

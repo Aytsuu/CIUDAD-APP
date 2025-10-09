@@ -25,6 +25,14 @@ function HealthProfilingHome() {
       color: '#3B82F6'
     },
     {
+      id: 'household-register',
+      title: 'Register New Household',
+      description: 'Register household information',
+      icon: Building,
+      route: '/(health)/admin/health-profiling/household-registration',
+      color: '#10B981'
+    },
+    {
       id: 'resident',
       title: 'Residents',
       description: 'View individual records',
@@ -61,36 +69,37 @@ function HealthProfilingHome() {
   const MenuCard = ({ item }: { item: any }) => {
     const IconComponent = item.icon
     const isRegister = item.id === 'register'
+    const isHouseholdRegister = item.id === 'household-register'
 
     return (
       <TouchableOpacity
         onPress={() => router.push(item.route as any)}
         className={`rounded-2xl p-5 mb-4 shadow-sm ${
-          isRegister ? 'bg-blue-600' : 'bg-white border border-gray-200'
+          isRegister ? 'bg-blue-600' : isHouseholdRegister ? 'bg-green-600' : 'bg-white border border-gray-200'
         }`}
         activeOpacity={0.7}
       >
         <View className="flex-row items-center">
           {/* Icon Container */}
           <View className={`w-16 h-16 rounded-2xl items-center justify-center ${
-            isRegister ? 'bg-white/20' : 'bg-gray-100'
-          }`} style={!isRegister ? { backgroundColor: `${item.color}15` } : {}}>
+            isRegister || isHouseholdRegister ? 'bg-white/20' : 'bg-gray-100'
+          }`} style={!isRegister && !isHouseholdRegister ? { backgroundColor: `${item.color}15` } : {}}>
             <IconComponent 
               size={28} 
-              className={isRegister ? 'text-white' : ''} 
-              color={isRegister ? 'white' : item.color}
+              className={isRegister || isHouseholdRegister ? 'text-white' : ''} 
+              color={isRegister || isHouseholdRegister ? 'white' : item.color}
             />
           </View>
 
           {/* Content */}
           <View className="flex-1 ml-4">
             <Text className={`text-lg font-semibold ${
-              isRegister ? 'text-white' : 'text-gray-900'
+              isRegister || isHouseholdRegister ? 'text-white' : 'text-gray-900'
             }`}>
               {item.title}
             </Text>
             <Text className={`text-sm mt-1 ${
-              isRegister ? 'text-white/90' : 'text-gray-500'
+              isRegister || isHouseholdRegister ? 'text-white/90' : 'text-gray-500'
             }`}>
               {item.description}
             </Text>
@@ -98,7 +107,7 @@ function HealthProfilingHome() {
 
           {/* Arrow or Plus Icon */}
           <View className="ml-2">
-            {isRegister ? (
+            {isRegister || isHouseholdRegister ? (
               <Plus size={24} className="text-white" color="white" />
             ) : (
               <ChevronRight size={24} className="text-gray-400" color="#9CA3AF" />

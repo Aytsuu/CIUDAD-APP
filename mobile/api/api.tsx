@@ -4,7 +4,7 @@ import Constants from 'expo-constants'
 
 
 export const api = axios.create({
-  baseURL: "http://192.168.1.3:8000",
+  baseURL: "http://192.168.1.21:8000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -30,7 +30,7 @@ export const api = axios.create({
 //   },
 // });
 export const api2 = axios.create({
-  baseURL: "http://192.168.1.3:8001",
+  baseURL: "http://192.168.1.21:8001",
   timeout: 10000,
 });
 

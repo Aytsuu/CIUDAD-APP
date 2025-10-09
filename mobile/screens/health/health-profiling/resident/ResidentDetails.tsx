@@ -52,47 +52,49 @@ export default function ResidentDetails() {
     label: string
     value: string | number
   }) => (
-    <View className="flex-row items-center py-3 border-t border-gray-100">
-      <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-3">
-        <Icon size={18} className="text-gray-600" />
+    <View className="flex-row items-center py-4 border-b border-gray-50">
+      <View className="w-11 h-11 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl items-center justify-center mr-4 shadow-sm">
+        <Icon size={20} className="text-blue-600" />
       </View>
       <View className="flex-1">
-        <Text className="text-gray-500 text-sm">{label}</Text>
-        <Text className="text-gray-900 text-base font-medium">{value}</Text>
+        <Text className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wide">{label}</Text>
+        <Text className="text-gray-900 text-base font-semibold">{value}</Text>
       </View>
     </View>
   )
 
   const FamilyMemberCard = ({ member }: { member: any }) => (
-    <View className="bg-gray-50 rounded-lg p-4 mb-3">
-      <View className="flex-row items-center mb-2">
-        <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-          <Text className="text-blue-600 font-bold text-lg">
+    <View className="bg-white rounded-xl p-4 mb-3 border border-gray-100 shadow-sm">
+      <View className="flex-row items-center mb-3">
+        <View className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full items-center justify-center mr-4 shadow-md">
+          <Text className="text-white font-bold text-xl">
             {member.name?.split(",")[0]?.charAt(0)?.toUpperCase() || "N"}
           </Text>
         </View>
         <View className="flex-1">
-          <Text className="text-gray-900 font-semibold text-base">{member.name}</Text>
-          <Text className="text-blue-600 text-sm font-medium">{member.fc_role}</Text>
+          <Text className="text-gray-900 font-bold text-base mb-1">{member.name}</Text>
+          <View className="bg-blue-50 px-3 py-1 rounded-full self-start">
+            <Text className="text-blue-600 text-xs font-semibold">{member.fc_role}</Text>
+          </View>
         </View>
       </View>
-      <View className="ml-15">
-        <View className="flex-row justify-between mb-1">
-          <Text className="text-gray-500 text-sm">ID:</Text>
-          <Text className="text-gray-700 text-sm">{member.rp_id}</Text>
+      <View className="ml-0 bg-gray-50 rounded-lg p-3">
+        <View className="flex-row justify-between mb-2">
+          <Text className="text-gray-500 text-sm font-medium">ID:</Text>
+          <Text className="text-gray-900 text-sm font-semibold">{member.rp_id}</Text>
         </View>
-        <View className="flex-row justify-between mb-1">
-          <Text className="text-gray-500 text-sm">Gender:</Text>
-          <Text className="text-gray-700 text-sm">{member.sex}</Text>
+        <View className="flex-row justify-between mb-2">
+          <Text className="text-gray-500 text-sm font-medium">Gender:</Text>
+          <Text className="text-gray-900 text-sm font-semibold">{member.sex}</Text>
         </View>
-        <View className="flex-row justify-between mb-1">
-          <Text className="text-gray-500 text-sm">Status:</Text>
-          <Text className="text-gray-700 text-sm">{member.status}</Text>
+        <View className="flex-row justify-between mb-2">
+          <Text className="text-gray-500 text-sm font-medium">Status:</Text>
+          <Text className="text-gray-900 text-sm font-semibold">{member.status}</Text>
         </View>
         {member.dob && (
           <View className="flex-row justify-between">
-            <Text className="text-gray-500 text-sm">Birth Date:</Text>
-            <Text className="text-gray-700 text-sm">{member.dob}</Text>
+            <Text className="text-gray-500 text-sm font-medium">Birth Date:</Text>
+            <Text className="text-gray-900 text-sm font-semibold">{member.dob}</Text>
           </View>
         )}
       </View>
@@ -113,14 +115,14 @@ export default function ResidentDetails() {
   }
 
   const AddressCard = ({ address, index }: { address: any; index: number }) => (
-    <View className="bg-gray-50 rounded-lg p-3 mb-2">
+    <View className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3 border border-gray-200">
       <View className="flex-row items-start">
-        <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3 mt-1">
-          <MapPin size={14} className="text-blue-600" />
+        <View className="w-10 h-10 bg-blue-500 rounded-lg items-center justify-center mr-3 mt-1 shadow-sm">
+          <MapPin size={18} className="text-white" />
         </View>
         <View className="flex-1">
-          <Text className="text-gray-500 text-xs mb-1">Address {index + 1}</Text>
-          <Text className="text-gray-900 text-sm font-medium leading-5">{formatAddress(address)}</Text>
+          <Text className="text-blue-600 text-xs font-bold mb-2 uppercase tracking-wide">Address {index + 1}</Text>
+          <Text className="text-gray-900 text-sm font-medium leading-6">{formatAddress(address)}</Text>
         </View>
       </View>
     </View>
@@ -166,31 +168,34 @@ export default function ResidentDetails() {
         showsVerticalScrollIndicator={false}
       >
         {/* Profile Header */}
-        <View className="mx-5 mb-4">
+        <View className="mx-5 mb-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg">
           <View className="items-center">
-            <View className="w-24 h-24 bg-blue-100 rounded-full items-center justify-center mb-4">
-              <Text className="text-blue-600 font-bold text-3xl">{resident.fname?.charAt(0).toUpperCase()}</Text>
+            <View className="w-28 h-28 bg-white rounded-full items-center justify-center mb-4 shadow-xl border-4 border-blue-200">
+              <Text className="text-blue-600 font-bold text-4xl">{resident.fname?.charAt(0).toUpperCase()}</Text>
             </View>
-            <Text className="text-gray-500 text-sm text-center mb-2">Full Name</Text>
-            <Text className="text-gray-900 font-bold text-xl text-center mb-2">{fullName}</Text>
-            <View className="bg-blue-100 px-3 py-1 rounded-full">
-              <Text className="text-blue-600 font-medium text-sm">ID: {resident.rp_id}</Text>
+            <Text className="text-blue-100 text-xs font-semibold text-center mb-2 uppercase tracking-widest">Full Name</Text>
+            <Text className="text-white font-bold text-2xl text-center mb-3">{fullName}</Text>
+            <View className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
+              <Text className="text-white font-semibold text-sm">ID: {resident.rp_id}</Text>
             </View>
           </View>
         </View>
 
         {/* Basic Information */}
         {loadingPersonalInfo ? (
-          <Card className="mx-5 mt-4 p-4">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">Basic Information</Text>
+          <Card className="mx-5 mt-4 p-5 shadow-md rounded-xl">
+            <Text className="text-gray-900 font-bold text-xl mb-4">Basic Information</Text>
             <View className="items-center py-8">
               <ActivityIndicator size="small" color="#3B82F6" />
               <Text className="text-gray-500 text-sm mt-2">Loading basic information...</Text>
             </View>
           </Card>
         ) : (
-          <Card className="mx-5 mt-4 p-4">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">Basic Information</Text>
+          <Card className="mx-5 mt-4 p-5 shadow-md rounded-xl bg-white">
+            <View className="flex-row items-center mb-4">
+              <View className="w-1 h-6 bg-blue-500 rounded-full mr-3" />
+              <Text className="text-gray-900 font-bold text-xl">Basic Information</Text>
+            </View>
             <InfoRow icon={Calendar} label="Age" value={`${personalInfo?.per_age || "N/A"} years old`} />
             <InfoRow icon={UserRound} label="Gender" value={personalInfo?.per_sex || "N/A"} />
             {personalInfo?.per_status && (
@@ -202,18 +207,21 @@ export default function ResidentDetails() {
 
         {/* Contact Information */}
         {(personalInfo?.per_contact || (personalInfo?.per_addresses && personalInfo.per_addresses.length > 0)) && (
-          <Card className="mx-5 mt-4 p-4">
-            <Text className="text-gray-900 font-semibold text-lg mb-4">Contact Information</Text>
+          <Card className="mx-5 mt-4 p-5 shadow-md rounded-xl bg-white">
+            <View className="flex-row items-center mb-4">
+              <View className="w-1 h-6 bg-green-500 rounded-full mr-3" />
+              <Text className="text-gray-900 font-bold text-xl">Contact Information</Text>
+            </View>
             {personalInfo.per_contact && <InfoRow icon={Phone} label="Phone Number" value={personalInfo.per_contact} />}
             {personalInfo?.per_addresses && personalInfo.per_addresses.length > 0 && (
-              <View className={personalInfo.per_contact ? "border-t border-gray-100 pt-3" : ""}>
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-gray-500 text-sm">
+              <View className={personalInfo.per_contact ? "pt-4" : ""}>
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-gray-700 text-sm font-bold uppercase tracking-wide">
                     {personalInfo.per_addresses.length === 1 ? "Address" : "Addresses"}
                   </Text>
                   {personalInfo.per_addresses.length > 1 && (
-                    <View className="bg-gray-100 px-2 py-1 rounded-full">
-                      <Text className="text-gray-600 text-xs font-medium">
+                    <View className="bg-blue-500 px-3 py-1 rounded-full shadow-sm">
+                      <Text className="text-white text-xs font-bold">
                         {personalInfo.per_addresses.length} addresses
                       </Text>
                     </View>
@@ -228,8 +236,11 @@ export default function ResidentDetails() {
         )}
 
         {/* Additional Information */}
-        <Card className="mx-5 mt-4 p-4">
-          <Text className="text-gray-900 font-semibold text-lg mb-4">Additional Information</Text>
+        <Card className="mx-5 mt-4 p-5 shadow-md rounded-xl bg-white">
+          <View className="flex-row items-center mb-4">
+            <View className="w-1 h-6 bg-purple-500 rounded-full mr-3" />
+            <Text className="text-gray-900 font-bold text-xl">Additional Information</Text>
+          </View>
           {resident.family_no && <InfoRow icon={UsersRound} label="Family ID" value={resident.family_no} />}
           {resident.household_no && <InfoRow icon={Home} label="Household ID" value={resident.household_no} />}
           {resident.rp_date_registered && (
@@ -241,21 +252,24 @@ export default function ResidentDetails() {
         {members.length > 0 &&  (<View className="px-5 mt-4 mb-6">
           <Accordion type="single" className="border-0">
             <AccordionItem value="family-members" className="border-0">
-              <AccordionTrigger className="px-2 py-4">
+              <AccordionTrigger className="px-4 py-5 bg-white rounded-xl shadow-md">
                 <View className="flex-row justify-between items-center flex-1">
-                  <Text className="text-gray-900 font-semibold text-lg">Family Members</Text>
+                  <View className="flex-row items-center">
+                    <View className="w-1 h-6 bg-orange-500 rounded-full mr-3" />
+                    <Text className="text-gray-900 font-bold text-xl">Family Members</Text>
+                  </View>
                   {!loadingFam && totalCount > 0 && (
-                    <View className="bg-blue-100 px-2 py-1 rounded-full mr-4">
-                      <Text className="text-blue-600 text-xs font-medium">
+                    <View className="bg-orange-500 px-3 py-1 rounded-full mr-4 shadow-sm">
+                      <Text className="text-white text-xs font-bold">
                         {totalCount} member{totalCount !== 1 ? "s" : ""}
                       </Text>
                     </View>
                   )}
                 </View>
               </AccordionTrigger>
-              <AccordionContent className="px-2 pb-4">
+              <AccordionContent className="px-2 pb-4 pt-4">
                 {loadingFam ? (
-                  <View className="items-center py-8">
+                  <View className="items-center py-8 bg-white rounded-xl">
                     <ActivityIndicator size="small" color="#3B82F6" />
                     <Text className="text-gray-500 text-sm mt-2">Loading family members...</Text>
                   </View>
@@ -270,9 +284,11 @@ export default function ResidentDetails() {
                     ))}
                   </ScrollView>
                 ) : (
-                  <View className="items-center py-8">
-                    <UsersRound size={48} className="text-gray-300 mb-2" />
-                    <Text className="text-gray-500 text-sm">No family members found</Text>
+                  <View className="items-center py-12 bg-white rounded-xl">
+                    <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
+                      <UsersRound size={40} className="text-gray-300" />
+                    </View>
+                    <Text className="text-gray-500 text-base font-medium">No family members found</Text>
                   </View>
                 )}
               </AccordionContent>
