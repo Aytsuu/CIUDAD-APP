@@ -287,7 +287,7 @@ class SemiAnnualOPTChildHealthReportAPIView(generics.ListAPIView):
                     child_fname = personal_info.get('per_fname', '')
                     child_mname = personal_info.get('per_mname', '')
                     child_lname = personal_info.get('per_lname', '')
-                    child_name = f"{child_fname} {child_mname} {child_lname}".strip()
+                    child_name = f"{child_fname or ''} {child_mname or ''} {child_lname or ''}".strip()
 
                     # Use utility function for address
                     address, sitio, is_transient = get_patient_address(bm_obj.pat)
