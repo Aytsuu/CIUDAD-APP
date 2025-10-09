@@ -134,13 +134,14 @@ class PrenatalAppointmentCancellationView(generics.UpdateAPIView):
                     'error': f'Cannot cancel an appointment that is already {appointment.status}'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Update the appointment status to 'cancelled' and set the cancelled_at date
+            # Update the appointment status to 'cancelled' and set the cancelled_at date and reason
             appointment.status = 'cancelled'
             appointment.cancelled_at = request.data.get('cancelled_at')
+            appointment.reason = request.data.get('reason', '')  # Get reason from request
             appointment.save()
 
             serializer = self.get_serializer(appointment)
-            logger.info(f"Appointment with ID {par_id} cancelled successfully")
+            logger.info(f"Appointment with ID {par_id} cancelled successfully with reason: {appointment.reason}")
 
             return Response({
                 'message': 'Prenatal appointment cancelled successfully',

@@ -1718,7 +1718,7 @@ class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
         model = PrenatalAppointmentRequest
         fields = ['requested_at', 'requested_date', 'approved_at', 'cancelled_at', 
                   'completed_at', 'rejected_at', 'missed_at', 'reason', 'status', 'rp_id', 
-                  'pat_id', 'was_approved_before_cancel']
+                  'pat_id']
         extra_kwargs = {
             'pat_id': {'required': False, 'allow_null': True},
         }
@@ -1727,7 +1727,7 @@ class PrenatalRequestAppointmentSerializer(serializers.ModelSerializer):
 class PrenatalAppointmentCancellationSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrenatalAppointmentRequest
-        fields = ['cancelled_at', 'status']
+        fields = ['cancelled_at', 'status', 'reason']
 
 
 class PARequestConfirmSerializer(serializers.ModelSerializer):

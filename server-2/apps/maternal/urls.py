@@ -14,6 +14,8 @@ urlpatterns=[
     # Prenatal Appointment Request URLs
     path('prenatal/appointment/request/', PrenatalAppointmentRequestCreateListView.as_view(), name='prenatal-appointment-request'),
     path('prenatal/appointment/requests/all/', PrenatalAppointmentRequestViewAll.as_view(), name='prenatal-appointment-requests-all'),
+    path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-list'),
+    path('prenatal/appointment/cancel/<str:par_id>/', PrenatalAppointmentCancellationView.as_view(), name='prenatal-appointment-cancel'),
     path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
     path('prenatal/appointment/request/<int:par_id>/approve/', PrenatalAppointmentRequestApproveView.as_view(), name='prenatal-appointment-approve'),
     path('prenatal/appointment/request/<int:par_id>/reject/', PrenatalAppointmentRequestRejectView.as_view(), name='prenatal-appointment-reject'),

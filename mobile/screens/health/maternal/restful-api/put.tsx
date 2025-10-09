@@ -3,9 +3,10 @@ import { api2 } from "@/api/api";
 interface PrenatalAppointmentUpdateData {
       cancelled_at: string | null;
       status: string;
+      reason?: string;
 }
 
-export const updatePrenatalAppointment = async (par_id: string, data: PrenatalAppointmentUpdateData) => {
+export const cancelPrenatalAppointment = async (par_id: string, data: PrenatalAppointmentUpdateData) => {
     try {
         const response = await api2.put(`/maternal/prenatal/appointment/cancel/${par_id}/`, data);
         return response.data;
