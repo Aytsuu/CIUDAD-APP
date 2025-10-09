@@ -1,6 +1,8 @@
 import { Footer } from "./Footer";
 
+
 export default function Services() {
+
   const serviceCategories = [
     {
       id: 'documents',
@@ -200,6 +202,9 @@ export default function Services() {
           </div>
         </div>
       </section>
+
+
+      
       <Footer/>
     </main>
   );

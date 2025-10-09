@@ -95,7 +95,7 @@ export default function RegistrationRequests() {
         const respondent = request.compositions.filter((comp: any) => comp.acc !== null)[0]
         return {
           req_id: request.req_id,
-          req_date: request.req_date,
+          req_created_at: request.req_created_at,
           respondent: respondent,
           compositions: request.compositions
         }

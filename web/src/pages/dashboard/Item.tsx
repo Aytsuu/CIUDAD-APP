@@ -123,19 +123,10 @@ export const getItemsConfig = (
           familyPlanning,
           maternal,
         ],
-        sidebar: [
-          {
-            title: "Most Requested Medicine",
-            element: <MedicineDistributionSidebar />,
-          },
-          {
-            title: "Most used FirstAid",
-            element: <FirstAidDistributionSidebar />,
-          },
-        ],
+
         chart: [
           {
-            title: "Growth",
+            title: "OPT",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
@@ -163,5 +154,6 @@ export const getItemsConfig = (
         ],
       },
     ];
-  }
+    
+  } else return []
 };

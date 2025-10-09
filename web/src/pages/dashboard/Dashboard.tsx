@@ -20,8 +20,8 @@ export default function Dashboard() {
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards,healthCards),
-    [profilingCards, adminCards, reportCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards),
+    [profilingCards, adminCards, reportCards, healthCards]
   );
 
   const validateFeature = (feature: string) => {
@@ -33,7 +33,7 @@ export default function Dashboard() {
 
   // Filter items based on user access
   const cardsWithAccess = React.useMemo(() => {
-    return instance.flatMap((item) =>
+    return (instance ?? []).flatMap((item) =>
       validateFeature(item.dashboard) && Array.isArray(item.card)
         ? item.card
         : []
@@ -41,7 +41,7 @@ export default function Dashboard() {
   }, [instance, user]);
 
   const chartsWithAccess = React.useMemo(() => {
-    const itemsWithCharts = instance.filter(
+    const itemsWithCharts = (instance ?? []).filter(
       (item) => item.chart && validateFeature(item.dashboard)
     );
     return itemsWithCharts.flatMap((item) =>
@@ -53,7 +53,7 @@ export default function Dashboard() {
   }, [instance, user]);
 
   const sidebarsWithAccess = React.useMemo(() => {
-    return instance.filter(
+    return (instance ?? []).filter(
       (item) => item.sidebar && validateFeature(item.dashboard)
     );
   }, [instance, user]);
@@ -114,7 +114,7 @@ export default function Dashboard() {
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
             <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
-              <Label className="text-white text-xl">Upcomming Events</Label>
+              <Label className="text-white text-xl">Upcoming Events</Label>
   
             </div>
             {cardsWithAccess.length > 0 && (

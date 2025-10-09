@@ -6,10 +6,42 @@ from ..serializers.personal_serializers import *
 from ..models import *
 from rest_framework.permissions import AllowAny
 
-class PersonalCreateView(generics.CreateAPIView):
+class PersonalCreateView(APIView):
   permission_classes = [AllowAny]
-  serializer_class = PersonalWithHistorySerializer
-  queryset = Personal.objects.all()
+
+  def post(self, request, *args, **kwargs):
+    personal = request.data
+    addresses = personal.pop("per_addresses", None)
+    add_instances = [
+      Address.objects.get_or_create(
+        add_province=add["add_province"],
+        add_city=add["add_city"],
+        add_barangay = add["add_barangay"],
+        sitio=Sitio.objects.filter(sitio_name=add["sitio"]).first(),
+        add_external_sitio=add["add_external_sitio"],
+        add_street=add["add_street"]
+      )[0]
+      for add in addresses
+    ]
+
+    # Create Personal record
+    per_instance = Personal(**personal)
+    per_instance._history_user = None
+    per_instance.save()
+
+    try:
+      latest_history = per_instance.history.latest()
+      history_id = latest_history.history_id
+    except per_instance.history.model.DoesNotExist:
+      history_id = None  
+
+    for add in add_instances:
+      PersonalAddress.objects.create(add=add, per=per_instance) 
+      history = PersonalAddressHistory(add=add, per=per_instance)
+      history.history_id=history_id
+      history.save()
+
+    return Response(status=status.HTTP_200_OK)
 
 class PersonalUpdateView(APIView):
   permission_classes = [AllowAny]

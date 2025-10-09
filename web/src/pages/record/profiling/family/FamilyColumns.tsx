@@ -14,7 +14,6 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
 import { capitalize } from "@/helpers/capitalize";
-import { useAuth } from "@/context/AuthContext";
 
 // Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -98,17 +97,14 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const { user } = useAuth();
-      
       const handleViewClick = async () => {
-        // Check if the current user is health staff
-        const isHealthStaff = user?.staff?.staff_type === "HEALTH STAFF";
-        
+        // const familyData = await getFamilyData(row.original.fam_id);
+        // const members = await getFamilyMembers(row.original.fam_id);
+        // const households = await getHouseholdList();
         navigate("/profiling/family/view", {
           state: {
             params: {
               fam_id: row.original.fam_id,
-              showHealthProfiling: isHealthStaff, // Pass flag to show health profiling data
             }
           }
         })
@@ -206,7 +202,6 @@ export const familyMembersCol = (
       const navigate = useNavigate()
 
       const handleViewClick = () => {
-        console.log('clicked')
         navigate("/profiling/resident/view/personal", {
           state: {
             params: {

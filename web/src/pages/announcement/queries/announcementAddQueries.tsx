@@ -5,14 +5,14 @@ import { CircleCheck } from "lucide-react";
 import {
   postAnnouncement,
   postAnnouncementRecipient,
+  postAnnouncementFile,
 } from "../restful-api/announcementPostRequest";
 
 export const usePostAnnouncement = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values:  Record<string, any>) =>
-      postAnnouncement(values),
+    mutationFn: (values: Record<string, any>) => postAnnouncement(values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
 
@@ -46,4 +46,25 @@ export const usePostAnnouncementRecipient = () => {
   });
 };
 
+export const usePostAnnouncementFile = () => {
+  const queryClient = useQueryClient();
 
+  return useMutation({
+    mutationFn: (files: Record<string, any>[]) => postAnnouncementFile(files),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcement_files"] });
+
+      toast.loading("Uploading Files...", { id: "uploadAnnouncementFiles" });
+
+      toast.success("Files Uploaded!", {
+        id: "uploadAnnouncementFiles",
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    },
+    onError: (err) => {
+      console.error("Error uploading files:", err);
+      toast.error("Failed to upload files.", { duration: 2000 });
+    },
+  });
+};
