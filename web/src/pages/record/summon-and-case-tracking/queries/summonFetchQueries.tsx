@@ -89,18 +89,6 @@ export type ResidentProfileBase = {
   [key: string]: any;
 };
 
-export type Complainant = {
-  cpnt_id: number;
-  cpnt_name: string;
-  rp_id: number | null;
-  res_profile: ResidentProfileBase | null;
-};
-
-export type Accused = {
-  acsd_id: number;
-  acsd_name: string;
-  res_profile: ResidentProfileBase | null;
-};
 
 export type Complaint = {
   comp_incident_type: string;
@@ -134,6 +122,38 @@ export const useGetServiceChargeReqDetails = (sr_id: string) => {
 
 
 
+export type ComplaintFile = {
+    comp_file_id: string;
+    comp_file_name: string;
+    comp_file_type: string;
+    comp_file_url: string;
+}
+
+export type Complainant = {
+    cpnt_id: string;
+    cpnt_name: string;
+    cpnt_gender: string;
+    cpnt_age: string;
+    cpnt_number: string;
+    cpnt_relation_to_respondent: string;
+    cpnt_address: string;
+    rp_id: string;
+}
+
+export type Accused = {
+    acsd_id: string;
+    acsd_name: string;
+    acsd_age: string;
+    acsd_gender: string;
+    acsd_description: string;
+    acsd_address: string;
+}
+
+export type Staff = {
+    staff_id: string;
+    staff_name: string;
+}
+
 export type ComplaintDetails = {
     comp_id: string;
     comp_incident_type: string;
@@ -141,9 +161,12 @@ export type ComplaintDetails = {
     comp_location: string;
     comp_datetime: string;
     comp_created_at: string;
-    complainant: string [];
-    accused_persons: string [];
-    complaint_files: string [];
+    comp_is_archive: boolean;
+    comp_status: string;
+    complainant: Complainant[];  
+    accused: Accused[];          
+    complaint_files: ComplaintFile[];  
+    staff: Staff | null;
 }
 
 export const useGetComplaintDetails = (comp_id: string) => {
