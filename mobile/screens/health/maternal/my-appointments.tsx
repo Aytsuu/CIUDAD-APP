@@ -21,6 +21,7 @@ export default function MyPrenatalAppointments() {
   const [cancelReason, setCancelReason] = useState("");
 
   const rp_id = user?.rp || "";
+  const { pat_id } = useAuth();
   
   const { data: appointmentData, isLoading, isError, refetch } = usePrenatalAppointmentRequests(rp_id);
   const { mutate: cancelAppointment, isPending: isCancelling } = useCancelPrenatalAppointment();
