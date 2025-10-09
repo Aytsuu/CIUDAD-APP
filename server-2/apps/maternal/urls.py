@@ -8,22 +8,21 @@ from .views.pregnancy_views import *
 
 urlpatterns=[
     # Maternal
+    path('maternal-patients/charts/<str:month>/', MaternalPatientsListView.as_view(), name='maternal-patients-charts'),
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),
 	path('counts/', MaternalCountView.as_view(), name='maternal-count'),
    
     # Prenatal Appointment Request URLs
     path('prenatal/appointment/request/', PrenatalAppointmentRequestCreateListView.as_view(), name='prenatal-appointment-request'),
     path('prenatal/appointment/requests/all/', PrenatalAppointmentRequestViewAll.as_view(), name='prenatal-appointment-requests-all'),
-    # path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
+    path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-list'),
+    path('prenatal/appointment/cancel/<str:par_id>/', PrenatalAppointmentCancellationView.as_view(), name='prenatal-appointment-cancel'),
+    path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
     path('prenatal/appointment/request/<int:par_id>/approve/', PrenatalAppointmentRequestApproveView.as_view(), name='prenatal-appointment-approve'),
     path('prenatal/appointment/request/<int:par_id>/reject/', PrenatalAppointmentRequestRejectView.as_view(), name='prenatal-appointment-reject'),
-    # path('prenatal/appointment/request/<int:par_id>/cancel/', PrenatalAppointmentRequestCancelView.as_view(), name='prenatal-appointment-cancel'),
     # path('prenatal/appointment/request/<int:par_id>/complete/', PrenatalAppointmentRequestCompleteView.as_view(), name='prenatal-appointment-complete'),
     # path('prenatal/appointment/request/<int:par_id>/missed/', PrenatalAppointmentRequestMissedView.as_view(), name='prenatal-appointment-missed'),
 
-    path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-list'),
-    # path('prenatal/appointment/cancel/<str:par_id>/', PrenatalAppointmentCancellationView.as_view(), name='prenatal-appointment-cancel'),
-   
     # Pregnancy URLs
     path('pregnancy/<str:pat_id>/details/', PatientPregnancyRecordsListView.as_view(), name='pregnancy-records-details' ),
     path('pregnancy/complete/', CompletePregnancyView.as_view(), name='pregnancy-complete'),
