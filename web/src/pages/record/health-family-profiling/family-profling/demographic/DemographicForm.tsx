@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { FormInput } from "@/components/ui/form/form-input";
+// import { FormInput } from "@/components/ui/form/form-input";
 import { useHouseholdData, usePersonalInfo } from "../../family-profling/queries/profilingFetchQueries";
 
 export default function DemographicForm({
@@ -28,7 +28,7 @@ export default function DemographicForm({
   const selectedHouseholdId = form.watch("demographicInfo.householdNo");
   
   // Fetch household data when household is selected
-  const { data: householdData, isLoading: isLoadingHousehold, error: householdError } = useHouseholdData(selectedHouseholdId);
+  const { data: householdData, isLoading: isLoadingHousehold } = useHouseholdData(selectedHouseholdId);
   
   // Extract household head ID from household data - try multiple possible property names
   const householdHeadId = React.useMemo(() => {
@@ -51,7 +51,7 @@ export default function DemographicForm({
   }, [householdData]);
   
   // Fetch personal info of household head
-  const { data: personalInfo, isLoading: isLoadingPersonal, error: personalError } = usePersonalInfo(householdHeadId);
+  const { data: personalInfo, isLoading: isLoadingPersonal } = usePersonalInfo(householdHeadId);
 
   // Populate form fields when personal info is fetched
   React.useEffect(() => {
@@ -110,16 +110,16 @@ export default function DemographicForm({
 
   const isLoadingData = isLoadingHousehold || isLoadingPersonal;
 
-  const getStatusMessage = () => {
-    if (isLoadingHousehold) return "Loading household information...";
-    if (isLoadingPersonal) return "Loading household head information...";
-    if (householdError) return "Error loading household data";
-    if (personalError) return "Error loading personal information";
-    if (!selectedHouseholdId) return "Select a household to view head information";
-    if (!householdHeadId) return "No household head ID found";
-    if (!personalInfo) return "No personal info found for household head";
-    return "Household head information loaded";
-  };
+  // const getStatusMessage = () => {
+  //   if (isLoadingHousehold) return "Loading household information...";
+  //   if (isLoadingPersonal) return "Loading household head information...";
+  //   if (householdError) return "Error loading household data";
+  //   if (personalError) return "Error loading personal information";
+  //   if (!selectedHouseholdId) return "Select a household to view head information";
+  //   if (!householdHeadId) return "No household head ID found";
+  //   if (!personalInfo) return "No personal info found for household head";
+  //   return "Household head information loaded";
+  // };
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">

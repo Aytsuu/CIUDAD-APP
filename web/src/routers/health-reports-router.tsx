@@ -45,7 +45,6 @@ import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/new
 
 import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main"
 import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
-import path from "path";
 
 export const healthreports_router = [
   // {

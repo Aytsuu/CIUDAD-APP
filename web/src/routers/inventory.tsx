@@ -1,7 +1,7 @@
 import MainInventoryList from "@/pages/healthInventory/InventoryList/tables/MainInventoryList";
 import MainInventoryStocks from "@/pages/healthInventory/inventoryStocks/tables/StocksMain";
 import TransactionMainInventoryList from "@/pages/healthInventory/transaction/tables/TransactionMainInventoryList";
-import AddImmunizationSupplies from "@/pages/healthInventory/InventoryList/Modal/ImmunizationSupplies";
+// import AddImmunizationSupplies from "@/pages/healthInventory/InventoryList/Modal/ImmunizationSupplies";
 import AddMedicineStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/MedStockModal";
 import AddCommodityStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/ComStockModal";
 import AddFirstAidStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/FirstAidStockModal";
