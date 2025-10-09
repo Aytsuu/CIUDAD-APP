@@ -309,12 +309,12 @@ export default function PrenatalFormFourthPq({
     
     try {
       // Check if there's any prenatal care data to submit
-      if (prenatalCareData.length === 0) {
-        console.warn("No prenatal care data to submit")
-        alert("Please add at least one prenatal care entry before submitting.")
-        setIsSubmitting(false)
-        return
-      }
+      // if (prenatalCareData.length === 0) {
+      //   console.warn("No prenatal care data to submit")
+      //   alert("Please add at least one prenatal care entry before submitting.")
+      //   setIsSubmitting(false)
+      //   return
+      // }
 
       const transformedPrenatalCare = prenatalCareData.map(entry => ({
         ...entry,

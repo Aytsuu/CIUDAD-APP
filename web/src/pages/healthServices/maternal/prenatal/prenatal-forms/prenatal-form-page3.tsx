@@ -25,13 +25,14 @@ import { ANCVisitsGuide } from "../../maternal-components/guide-for-8anc"
 import { useAuth } from "@/context/AuthContext"
 
 // main  component
-export default function PrenatalFormThirdPg({ form, onSubmit, back }: {
+export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedicines, setSelectedMedicines }: {
   form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>
   onSubmit: () => void
   back: () => void
+  selectedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]
+  setSelectedMedicines: React.Dispatch<React.SetStateAction<{ minv_id: string; medrec_qty: number; reason: string }[]>>
 }) {
 
-  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 

@@ -34,8 +34,7 @@ class PrenatalAppointmentRequest(models.Model):
         ('completed', 'Completed'),
         ('rejected', 'Rejected'),
         ('missed', 'Missed'),
-    ], default='pending')   
-    was_approved_before_cancel = models.BooleanField(default=False)
+    ], default='pending')
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='pa_request')
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pa_request', null=True)
     
@@ -48,19 +47,12 @@ class PrenatalAppointmentRequest(models.Model):
     
     def approve(self, staff=None):
         """Approve the appointment"""
-        from django.utils import timezone
         self.status = 'approved'
         self.approved_at = timezone.now()
         self.save()
     
     def cancel(self, reason=None, staff=None):
         """Cancel the appointment"""
-        from django.utils import timezone
-        
-        # Check if it was approved before cancellation
-        if self.status == 'approved':
-            self.was_approved_before_cancel = True
-        
         self.status = 'cancelled'
         self.cancelled_at = timezone.now()
         if reason:
@@ -69,14 +61,12 @@ class PrenatalAppointmentRequest(models.Model):
     
     def complete(self, staff=None):
         """Mark appointment as completed"""
-        from django.utils import timezone
         self.status = 'completed'
         self.completed_at = timezone.now()
         self.save()
     
     def reject(self, reason=None, staff=None):
         """Reject the appointment"""
-        from django.utils import timezone
         self.status = 'rejected'
         self.rejected_at = timezone.now()
         if reason:
@@ -85,14 +75,12 @@ class PrenatalAppointmentRequest(models.Model):
     
     def mark_as_missed(self, staff=None):
         """Mark appointment as missed - no reason required"""
-        from django.utils import timezone
         self.status = 'missed'
         self.missed_at = timezone.now()
         self.save()
     
     def is_overdue(self):
         """Check if appointment date has passed and status is still approved"""
-        from django.utils import timezone
         if self.requested_date and self.status == 'approved':
             return self.requested_date < timezone.now().date()
         return False
@@ -157,6 +145,7 @@ class Prenatal_Form(models.Model):
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='prenatal_form', db_column='followv_id', null=True)
     medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medrec_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
+    vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vacrec_id', null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
 
     def save(self, *args, **kwargs):
@@ -190,6 +179,7 @@ class Previous_Hospitalization(models.Model):
     prev_hospitalization = models.CharField(max_length=250, default='', blank=True)
     prev_hospitalization_year = models.PositiveIntegerField(null=True, blank=True)
     pf_id =models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_previous_hospitalization', db_column='pf_id', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'pf_previous_hospitalization'
@@ -215,8 +205,9 @@ class TT_Status(models.Model):
     tts_status = models.CharField(max_length=10, default='', blank=True)
     tts_date_given = models.DateField(null=True, blank=True)
     tts_tdap = models.BooleanField(null=True, blank=True)
-    vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='tt_status', db_column='vacrec_id', null=True)
+    # vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='tt_status', db_column='vacrec_id', null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='tt_status', db_column='pat_id', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'tt_status'

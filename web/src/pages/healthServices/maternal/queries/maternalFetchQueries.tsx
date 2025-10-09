@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getPatients, 
 			getMaternalCounts,
 			getPatientPostpartumCount,
-			getPregnancyDetails,
 			getPrenatalPatientMedHistory,
 			getPrenatalPatientObsHistory,
 			getPrenatalPatientBodyMeasurement,
@@ -16,15 +15,15 @@ import { getPatients,
 			getPrenatalPatientPrenatalCare,
 			getPrenatalRecordComplete,
 			getPatientTTStatus,
-			getCalculatedMissedVisits,
 			getLatestPatientPostpartumRecord,
 			getIllnessList,
 			getPatientPostpartumCompleteRecord,
 			getPatientPostpartumAllRecords,
 			getPostpartumAssessements,
+			getPrenatalAppointmentRequests,
+			getPrenatalRecordComparison,
 } from "../restful-api/maternalGetAPI";
 
-import { MaternalPatientFilters } from "../restful-api/maternalGetAPI";
 import { api2 } from "@/api/api";
 
 
@@ -102,10 +101,24 @@ export const usePatientPrenatalCount = (patientId: string) => {
 }
 
 // for getPregnancyDetails
-export const usePregnancyDetails = (patientId: string, filters: Partial<MaternalPatientFilters> = {}) => {
+export const usePregnancyDetails = (patientId: string, page: number, pageSize: number, status: string, search: string) => {
 	return useQuery({
-		queryKey: ["pregnancyDetails", { patientId, ...filters }],
-		queryFn: () => getPregnancyDetails({ patientId, ...filters }),
+		queryKey: ["pregnancyDetails", { patientId, page, pageSize, status, search }],
+		queryFn: async () => {
+			try {
+				const res = await api2.get(`maternal/pregnancy/${patientId}/details/`, {
+					params: {
+						page,
+						pageSize,
+						status,
+						search,
+					}
+				})
+				return res.data
+			} catch (error) {
+				throw error;
+			}
+		},
 		enabled: !!patientId,
 		staleTime: 30 * 1,
 		refetchInterval: 2000,
@@ -221,19 +234,8 @@ export const usePatientTTStatus = (patientId: string) => {
 		queryFn: () => getPatientTTStatus(patientId),
 		enabled: !!patientId,
 		staleTime: 30 * 1,
-		retry: 2
-	})
-}
-
-// for getCalculatedMissedVisits
-export const useCalculatedMissedVisits = (pregnancyId: string, aogWks?: number, aogDays?: number) => {
-	return useQuery({
-		queryKey: ["calculatedMissedVisits", pregnancyId, aogWks, aogDays],
-		queryFn: () => getCalculatedMissedVisits(pregnancyId, aogWks, aogDays),
-		enabled: !!pregnancyId,
-		staleTime: 30 * 1,
-		retry: 2,
-		refetchOnWindowFocus: false
+		retry: 1,
+		refetchInterval: 2000,
 	})
 }
 
@@ -295,3 +297,26 @@ export const usePostpartumAssessements = (patientId: string) => {
 		refetchInterval: 2000,
 	})
 }
+
+// for getPrenatalAppointmentRequests
+export const usePrenatalAppointmentRequest = () => {
+	return useQuery({
+		queryKey: ['prenatalAppointmentRequests'],
+		queryFn: () => getPrenatalAppointmentRequests(),
+		staleTime: 5000,
+		retry: 1,
+		refetchInterval: 2000,
+	})
+}
+
+// for getPrenatalRecordComparison
+export const usePrenatalRecordComparison = (pregnancyId: string) => {
+	return useQuery({
+		queryKey: ['prenatalRecordComparison', pregnancyId],
+		queryFn: () => getPrenatalRecordComparison(pregnancyId),
+		enabled: !!pregnancyId && pregnancyId !== "undefined" && pregnancyId !== "null",
+		staleTime: 30 * 1000,
+		retry: 2,
+	})
+}
+

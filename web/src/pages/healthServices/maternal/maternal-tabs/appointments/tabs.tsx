@@ -11,12 +11,13 @@ interface MaternalAppointmentsTabProps {
    cancelled: number
    rejected: number
    missed: number
+   completed: number
   }
 }
 
 export default function MaternalAppointmentsTab({
   onTabChange,
-  counts = { confirmed: 0, pending: 0, cancelled: 0, rejected: 0, missed: 0 },
+  counts = { confirmed: 0, pending: 0, cancelled: 0, rejected: 0, missed: 0, completed: 0 },
 }: MaternalAppointmentsTabProps): JSX.Element {
   const [selectedTab, setSelectedTab] = useState("pending")
 
@@ -44,17 +45,25 @@ export default function MaternalAppointmentsTab({
          <div className="flex flex-row bg-blue-50 p-1 rounded-md gap-2">
             <div className={getTabStyle("pending")} onClick={() => handleTabChange("pending")}>
               <h2 className="text-sm font-semibold">Pending</h2>
-              {counts.confirmed > 0 && (
+              {counts.pending > 0 && (
                 <span className="ml-2 rounded-full bg-red-500 text-white px-2 py-0.5 text-xs font-medium">
-                  {counts.confirmed}
+                  {counts.pending}
                 </span>
               )}
             </div>
             <div className={getTabStyle("confirmed")} onClick={() => handleTabChange("confirmed")}>
               <h2 className="text-sm font-semibold">Confirmed</h2>
-              {counts.pending > 0 && (
+              {counts.confirmed > 0 && (
                 <span className="ml-2 rounded-full bg-gray-500 text-white px-2 py-0.5 text-xs font-medium">
-                  {counts.pending}
+                  {counts.confirmed}
+                </span>
+              )}
+            </div>
+            <div className={getTabStyle("completed")} onClick={() => handleTabChange("completed")}>
+              <h2 className="text-sm font-semibold">Completed</h2>
+              {counts.completed > 0 && (
+                <span className="ml-2 rounded-full bg-green-500 text-white px-2 py-0.5 text-xs font-medium">
+                  {counts.completed}
                 </span>
               )}
             </div>

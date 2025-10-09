@@ -22,7 +22,7 @@ import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
 
-import { useMaternalRecords, useMaternalCounts } from "../../queries/maternalFetchQueries";
+import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
 

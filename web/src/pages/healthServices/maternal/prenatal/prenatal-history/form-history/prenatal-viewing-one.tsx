@@ -82,8 +82,9 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const checklist = prenatalForm.checklist_data;
   const riskCodes = prenatalForm.obstetric_risk_codes;
   const birthPlan = prenatalForm.birth_plan_details;
-  const ancVisit = prenatalForm?.anc_visit_guide;
   const assessedBy = prenatalForm.staff_details?.staff_name
+  const prenatalCareEntries = prenatalForm.prenatal_care_entries || [];
+  const followUpDetails = prenatalForm.follow_up_visit_details;
 
   // spouse or father details
   const isFatherFC = prenatalForm.patient_details?.family?.family_heads?.father?.role.toLowerCase() === "father";
@@ -135,6 +136,66 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
     if (!result) return "";
     if (result.to_be_followed) return "to be followed";
     return result.result_date || "";
+  };
+
+  // Helper function to categorize visits by trimester based on AOG
+  const categorizeVisitByAOG = (aogWeeks: number, aogDays: number) => {
+    const totalDays = (aogWeeks * 7) + (aogDays || 0);
+    
+    // 1st trimester: 0-12 weeks and 6 days (0-90 days)
+    if (totalDays <= 90) return '1st';
+    // 2nd trimester: 13-27 weeks and 6 days (91-195 days)
+    if (totalDays <= 195) return '2nd';
+    // 3rd trimester: 28+ weeks (196+ days)
+    return '3rd';
+  };
+
+  // Get completed follow-up dates for each trimester
+  const getCompletedVisitDate = (trimester: string) => {
+    const completedVisits = prenatalCareEntries.filter((entry: any) => {
+      const category = categorizeVisitByAOG(entry.pfpc_aog_wks || 0, entry.pfpc_aog_days || 0);
+      return category === trimester && entry.pfpc_date;
+    });
+    
+    // Return the first completed visit date for this trimester
+    if (completedVisits.length > 0) {
+      return completedVisits[0].pfpc_date;
+    }
+    return "";
+  };
+
+  // Get pending follow-up information for advises
+  const getPendingFollowUp = () => {
+    if (followUpDetails && followUpDetails.followv_status === 'pending' && followUpDetails.followv_date) {
+      return `Follow-up visit scheduled: ${new Date(followUpDetails.followv_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })}`;
+    }
+    return "";
+  };
+
+  // Get all lab remarks with lab names
+  const getAllLabRemarks = () => {
+    const remarks = labResults
+      .filter((lab: any) => lab.to_be_followed || lab.result_date)
+      .map((lab: any) => {
+        const labName = lab.lab_type.toUpperCase().replace(/_/g, ' ');
+        if (lab.to_be_followed) return `${labName}: to be followed`;
+        if (lab.result_date) {
+          const dateFormatted = new Date(lab.result_date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          return `${labName}: ${dateFormatted}`;
+        }
+        return "";
+      })
+      .filter(Boolean);
+    
+    return remarks.join('; ');
   };
 
 
@@ -472,7 +533,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
             </div>
             <div className="flex">
               <Label className="mt-4">LMP:</Label>
-              <InputLine className="w-[208px]" value={prenatalForm.pf_lmp || ""} />
+              <InputLine className="w-[208px]" value={obstetricHistory?.obs_lmp || ""} />
               <Label className="mt-4">EDC:</Label>
               <InputLine className="w-[208px]" value={prenatalForm.pf_edc || ""} />
             </div>
@@ -492,19 +553,46 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                   <p className="text-xs font-semibold">3rd tri upto 28wks and more</p>
               </div>
 
-              {/* 4anc visits values */}
+              {/* 4anc visits values - showing completed follow-up dates */}
               <div className="flex text-center items-center justify-center p-3 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_1st_tri || ""}<br /></p>
+                  <p className="text-xs font-semibold">
+                    {getCompletedVisitDate('1st') ? new Date(getCompletedVisitDate('1st')).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }) : ""}
+                  </p>
               </div>
               <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_2nd_tri || ""}</p>
+                  <p className="text-xs font-semibold">
+                    {getCompletedVisitDate('2nd') ? new Date(getCompletedVisitDate('2nd')).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }) : ""}
+                  </p>
               </div>
               <div className="grid grid-cols-2">
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_one || ""}</p>
+                  <p className="text-xs font-semibold">
+                    {getCompletedVisitDate('3rd') ? new Date(getCompletedVisitDate('3rd')).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }) : ""}
+                  </p>
                 </div>
                 <div className="flex text-center items-center justify-center p-2 border border-black">
-                  <p className="text-xs font-semibold">{ancVisit?.pfav_3rd_tri_two || ""}</p>
+                  <p className="text-xs font-semibold">
+                    {/* Second 3rd trimester visit if exists */}
+                    {prenatalCareEntries.filter((entry: any) => categorizeVisitByAOG(entry.pfpc_aog_wks || 0, entry.pfpc_aog_days || 0) === '3rd')[1]?.pfpc_date 
+                      ? new Date(prenatalCareEntries.filter((entry: any) => categorizeVisitByAOG(entry.pfpc_aog_wks || 0, entry.pfpc_aog_days || 0) === '3rd')[1].pfpc_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : ""}
+                  </p>
                 </div>
               </div>
             </div>
@@ -741,6 +829,42 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
               <Label className="mt-4">DEWORMING TAB: (PREFERABLY 3RD TRIMESTER) DATE GIVEN:</Label>
               <InputLine className="w-[150px]" value="" />
             </div>
+          </div>
+        </div>
+
+        {/* Advises and Follow-Up */}
+        <div className="w-full">
+          <h6 className="text-sm mt-4 underline"><b>ADVISES:</b></h6>
+          <div className="flex flex-col">
+            {/* Show pending follow-up */}
+            {getPendingFollowUp() && (
+              <div className="flex mt-2">
+                <Label className="font-semibold">Next Follow-Up:</Label>
+                <InputLineLonger className="w-3/4 ml-2" value={getPendingFollowUp()} />
+              </div>
+            )}
+            
+            {/* Show lab remarks */}
+            {getAllLabRemarks() && (
+              <div className="flex mt-2">
+                <Label className="font-semibold">Laboratory Remarks:</Label>
+                <InputLineLonger className="w-3/4 ml-2" value={getAllLabRemarks()} />
+              </div>
+            )}
+
+            {/* Show general advises from prenatal care entries */}
+            {prenatalCareEntries.some((entry: any) => entry.pfpc_advises) && (
+              <div className="flex mt-2">
+                <Label className="font-semibold">General Advises:</Label>
+                <InputLineLonger 
+                  className="w-3/4 ml-2" 
+                  value={prenatalCareEntries
+                    .filter((entry: any) => entry.pfpc_advises)
+                    .map((entry: any) => entry.pfpc_advises)
+                    .join('; ')} 
+                />
+              </div>
+            )}
           </div>
         </div>
 

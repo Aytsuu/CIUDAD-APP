@@ -848,6 +848,39 @@ export default function PrenatalFormFirstPg({
     );
   });
 
+  // check if bronchial asthma is in previous illness to automate Bronchial Asthma radio button
+  useEffect(() => {
+    const hasBronchialAsthma = prevIllnessData.some(
+      (illness) => illness.prevIllness.toLowerCase() === "bronchial asthma"
+    );
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.bronchialAsthma",
+      hasBronchialAsthma ? true : false
+    );
+  });
+
+  // check if goiter is in previous illness to automate Goiter radio button
+  useEffect(() => {
+    const hasGoiter = prevIllnessData.some(
+      (illness) => illness.prevIllness.toLowerCase() === "goiter"
+    );
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.goiter",
+      hasGoiter ? true : false
+    );
+  });
+
+  // check if tuberculosis is in previous illness to automate Tuberculosis radio button
+  useEffect(() => {
+    const hasTuberculosis = prevIllnessData.some(
+      (illness) => illness.prevIllness.toLowerCase() === "tuberculosis"
+    );
+    setValue(
+      "riskCodes.hasOneOrMoreOneConditions.tuberculosis",
+      hasTuberculosis ? true : false
+    );
+  });
+
   // check if any heart disease is in previous illness to automate Heart Disease radio button
   useEffect(() => {
     const heartDiseaseVariants = [

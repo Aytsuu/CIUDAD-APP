@@ -27,6 +27,7 @@ const forceCapitalize = (str: string | null | undefined): string => {
 interface TTStatusRecord {
   tts_status: string
   tts_date_given: string | null
+  vaccineType?: string  // Added to support vaccine stock information
 }
 
 export default function PrenatalForm() {
@@ -35,6 +36,7 @@ export default function PrenatalForm() {
   const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
   const [preselectedPatient, setPreselectedPatient] = useState<any | null>(null)
   const [activePregnancyId, setActivePregnancyId] = useState<string | null>(null)
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -123,10 +125,12 @@ export default function PrenatalForm() {
 
     if (data.prenatalVaccineInfo.ttRecordsHistory && data.prenatalVaccineInfo.ttRecordsHistory.length > 0) {
       data.prenatalVaccineInfo.ttRecordsHistory.forEach((record) => {
+        console.log("Processing TT record from history:", record)
         if (record.ttStatus && record.ttStatus.trim() !== '') {
           ttStatusesArray.push({
             tts_status: record.ttStatus.trim(),
             tts_date_given: toNullIfEmpty(record.ttDateGiven) ?? null,
+            vaccineType: record.vaccineType || undefined,  // Include vaccine stock info
           })
         }
       })
@@ -136,8 +140,11 @@ export default function PrenatalForm() {
       const currentTTRecord = {
         tts_status: data.prenatalVaccineInfo.ttStatus.trim(),
         tts_date_given: toNullIfEmpty(data.prenatalVaccineInfo.ttDateGiven) ?? null,
-        tts_tdap: data.prenatalVaccineInfo.isTDAPAdministered === true
+        tts_tdap: data.prenatalVaccineInfo.isTDAPAdministered === true,
+        vaccineType: data.prenatalVaccineInfo.vaccineType || undefined  // Include current vaccine selection
       }
+      
+      console.log("Current TT record being evaluated:", currentTTRecord)
       
       const isDuplicateOfHistory = ttStatusesArray.some(existingRecord => 
         existingRecord.tts_status === currentTTRecord.tts_status && 
@@ -154,6 +161,8 @@ export default function PrenatalForm() {
       console.log("No current TT record to add (empty or missing)")
     }
 
+    console.log("Final ttStatusesArray being sent to backend:", ttStatusesArray)
+
 
     return {
       pat_id: data.pat_id as string, 
@@ -161,7 +170,7 @@ export default function PrenatalForm() {
       pf_occupation: capitalize(data.motherPersonalInfo.occupation) || "",
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
       previous_complications: forceCapitalize(data.medicalHistory.previousComplications) || null,
-      staff_id: data.assessedBy.id ?? "",
+      assessed_by: data.assessedBy.id ?? "",
 
       // spouse section
       spouse_data: spouseData,
@@ -276,6 +285,14 @@ export default function PrenatalForm() {
       vital_bp_diastolic: (data.prenatalCare?.[0]?.bp.diastolic != null && !isNaN(data.prenatalCare?.[0]?.bp.diastolic))
         ? data.prenatalCare[0].bp.diastolic
         : null,
+      
+      // Selected medicines for micronutrient supplementation
+      selected_medicines: selectedMedicines.length > 0 ? selectedMedicines : undefined,
+      
+      // Vaccination total dose for conditional vaccines
+      vacrec_totaldose: data.prenatalVaccineInfo.vacrec_totaldose 
+        ? parseInt(data.prenatalVaccineInfo.vacrec_totaldose.toString()) 
+        : undefined,
     }
   }
 
@@ -434,7 +451,9 @@ export default function PrenatalForm() {
           <PrenatalFormThirdPg 
           form={form} 
           onSubmit={() => handlePatientSubmit(3)} 
-          back={() => prevPage()} 
+          back={() => prevPage()}
+          selectedMedicines={selectedMedicines}
+          setSelectedMedicines={setSelectedMedicines}
           />)}
         {currentPage === 4 && (
           <PrenatalFormFourthPq

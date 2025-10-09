@@ -23,9 +23,23 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
+    year = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    
     class Meta:
         model = MedicalHistory
-        fields = ['ill_date', 'ill']
+        fields = ['ill_date', 'ill', 'year']
+    
+    def validate(self, attrs):
+        # If 'year' is provided, use it for 'ill_date'
+        year = attrs.pop('year', None)
+        if year is not None:
+            attrs['ill_date'] = str(year)
+        elif 'ill_date' not in attrs or attrs.get('ill_date') is None:
+            # If no year or ill_date provided, default to current year
+            from datetime import datetime
+            attrs['ill_date'] = str(datetime.now().year)
+        
+        return attrs
     
     def create(self, validated_data):
         cleaned_data = {k: v for k, v in validated_data.items() if v is not None}
@@ -88,9 +102,12 @@ class PreviousPregnancyCreateSerializer(serializers.ModelSerializer):
         extra_kwargs = { 'date_of_delivery': {'required': False, 'allow_null': True} }
 
 class TTStatusCreateSerializer(serializers.ModelSerializer):
+    # vaccineType is not a model field - it's used to pass vaccine stock info for creating VaccinationRecord
+    vaccineType = serializers.CharField(required=False, allow_blank=True, allow_null=True, write_only=True)
+    
     class Meta:
         model = TT_Status
-        fields = ['tts_status', 'tts_date_given', 'tts_tdap']
+        fields = ['tts_status', 'tts_date_given', 'tts_tdap', 'vaccineType']
 
 class LaboratoryResultImgCreateSerializer(serializers.ModelSerializer):
     # image_url, image_name, image_type, image_size will be handled in create method
