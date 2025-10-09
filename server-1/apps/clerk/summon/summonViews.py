@@ -59,9 +59,7 @@ class SummonCasesView(generics.ListAPIView):
                 Q(comp_id__comp_incident_type__icontains=search_query) |
                 Q(comp_id__comp_location__icontains=search_query) |
                 Q(comp_id__comp_allegation__icontains=search_query) |
-                # Search complainant names through the through model
                 Q(comp_id__complaintcomplainant__cpnt__cpnt_name__icontains=search_query) |
-                # Search accused names through the through model
                 Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
             ).distinct()
 
@@ -133,6 +131,13 @@ class HearingScheduleListView(generics.ListAPIView):
             'st_id'
         ).order_by('sd_id__sd_date', 'st_id__st_start_time')
     
+class RemarkView(generics.ListCreateAPIView):
+    serializer_class = RemarkSerializer
+    queryset = Remark.objects.all()
+
+class RemarkSuppDocCreateView(generics.ListCreateAPIView):
+    serializer_class = RemarkSuppDocCreateSerializer
+    queryset = RemarkSuppDocs.objects.all()
 
 # ======================== SUMMON DATE AND TIME ========================
 class SummonDateAvailabilityView(generics.ListCreateAPIView):

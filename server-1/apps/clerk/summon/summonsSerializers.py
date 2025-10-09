@@ -269,3 +269,90 @@ class HearingMinutesCreateSerializer(serializers.ModelSerializer):
         if hm_files:
             return HearingMinutes.objects.bulk_create(hm_files)
         return []
+    
+
+class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
+    files = FileInputSerializer(write_only=True, required=False, many=True)
+
+    class Meta:
+        model = RemarkSuppDocs
+        fields = '__all__'
+        extra_kwargs={
+            'rsd_name': {'required': False},
+            'rsd_path': {'required': False},
+            'rsd_type': {'required': False},
+            'rsd_url': {'read_only': True}
+        }
+
+    @transaction.atomic
+    def create(self, validated_data):   
+        files_data = validated_data.pop('files', [])
+        if not files_data:
+            raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+        rem_id = validated_data.pop('rem_id')
+        created_files = self._upload_files(files_data, rem_id)
+
+        if not created_files:
+            raise serializers.ValidationError("Failed to upload files")
+        
+        return created_files[0]
+
+    def _upload_files(self, files_data, rem_id):
+        rsd_files = []
+        for file_data in files_data:
+            rsd_file = RemarkSuppDocs(
+                rsd_name=file_data['name'],
+                rsd_type=file_data['type'],
+                rsd_path=file_data['name'],
+                rem_id=rem_id
+            )
+
+            url = upload_to_storage(file_data, 'summon-bucket', '')
+            rsd_file.rsd_url = url
+            rsd_files.append(rsd_file)
+
+        if rsd_files:
+            return RemarkSuppDocs.objects.bulk_create(rsd_files)
+        return []
+    
+
+
+# class RemarkSuppDocCreateSerializer(serializers.ModelSerializer):
+#     suppDocs = FileInputSerializer(write_only=True, required=False, many=True)
+
+#     class Meta:
+#         model = RemarkSuppDocs
+#         fields = ['mom_id', 'suppDocs']
+
+#     @transaction.atomic
+#     def create(self, validated_data):   
+#         files = validated_data.pop('suppDocs', [])
+#         if not files:
+#             raise serializers.ValidationError({"files": "At least one file must be provided"})
+            
+#         mom_id = validated_data.pop('mom_id')
+#         created_files = self._upload_files(files, mom_id)
+
+#         if not created_files:
+#             raise serializers.ValidationError("Failed to upload files")
+
+#         return created_files[0]
+
+#     def _upload_files(self, files, mom_id):
+#         momsp_files = []
+#         for file_data in files:
+#             momsp_file = MOMSuppDoc(
+#                 momsp_name=file_data['name'],
+#                 momsp_type=file_data['type'],
+#                 momsp_path=f"images/{file_data['name']}",
+#                 mom_id=mom_id
+#             )
+
+#             url = upload_to_storage(file_data, 'mom-bucket', 'images')
+#             momsp_file.momsp_url = url
+#             momsp_files.append(momsp_file)
+
+#         if momsp_files:
+#             return MOMSuppDoc.objects.bulk_create(momsp_files)
+#         return []

@@ -14,6 +14,8 @@ urlpatterns = [
     path('hearing-minutes/', HearingMinutesCreateView.as_view(), name='hearing-minutes-create'),
     path('hearing-schedule/', HearingScheduleView.as_view(), name='hearing-sched-create'),
     path('update-hearing-schedule/<str:hs_id>/', UpdateHearingScheduleView.as_view(), name='hearing-sched-update'),
+    path('remark/', RemarkView.as_view(), name='remark-create'),
+    path('remark-supp-docs/', RemarkSuppDocCreateView.as_view(), name='remark-supp-doc-create'),
 
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),

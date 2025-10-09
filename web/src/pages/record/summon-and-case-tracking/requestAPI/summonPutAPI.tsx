@@ -12,6 +12,7 @@ export const resolveCase = async (sc_id: string) => {
     }
 }
 
+
 export const escalateCase = async (sr_id: string) => {
     try{
         //  const res2 = await api.post('clerk/file-action-request/', {

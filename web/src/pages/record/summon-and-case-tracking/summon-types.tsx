@@ -43,9 +43,9 @@ export type SummonCaseList = {
 
 
     export type SummonTimeSlots = {
-        st_id?: number;
+        st_id: string;
         st_start_time: string;
-        sd_id?: number;
+        sd_id: string;
         st_is_booked?: boolean;
     }
 

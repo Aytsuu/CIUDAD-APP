@@ -16,7 +16,7 @@ import type { HearingSchedule } from "../summon-types"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { useLoading } from "@/context/LoadingContext"
 import { formatDate } from "@/helpers/dateHelper"
-
+import SummonRemarksForm from "./summon-remarks-form"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -91,16 +91,6 @@ export default function SummonRemarksDetails() {
       ),
     },
     {
-      accessorKey: "remarks",
-      header: "Remarks",
-      cell: ({ row }) => (
-        <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
-          View ({row.original.remarks.length})
-        </div>
-      ),
-    },
-
-    {
       accessorKey: "hs_is_closed",
       header: "Status",
       cell: ({ row }) => {
@@ -119,6 +109,44 @@ export default function SummonRemarksDetails() {
           </div>
         )
       },
+    },
+    {
+      accessorKey: "remarks",
+      header: "Remarks",
+      cell: ({ row }) => {
+        if (row.original.remarks.length > 0) {
+          return (
+            <div 
+              className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline"
+              // onClick={() => handleMinutesClick(row.original.hearing_minutes, row.original.hs_id)}
+            >
+              View ({row.original.remarks.length})
+            </div>
+          );
+        } else {
+          // If no minutes or no URLs, show dialog layout to add minutes
+          return (
+            <DialogLayout
+              trigger={
+                <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
+                  View ({row.original.hearing_minutes.length})
+                </div>
+              }
+              mainContent={
+                <SummonRemarksForm 
+                  hs_id={row.original.hs_id}
+                  st_id = {row.original.summon_time.st_id}
+                  onSuccess={() => setEditingRowId(null)}
+                />
+              }
+              title="Add Remarks"
+              description="Add hearing minutes document to close the schedule."
+              isOpen={editingRowId === row.original.hs_id}
+              onOpenChange={(open) => setEditingRowId(open ? row.original.hs_id : null)}
+            />
+          );
+        }
+      }
     }
   ]
 
