@@ -89,9 +89,8 @@ class MedConsultAppointment(models.Model):
         'healthProfiling.ResidentProfile',
         on_delete=models.CASCADE,
         db_column='rp_id',
-        to_field='rp_id' 
+        to_field='rp_id'  # Specify which field to use as the foreign key
     )
-  
     
     class Meta:
         db_table = "medconsult_appointment"

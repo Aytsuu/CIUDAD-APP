@@ -98,7 +98,7 @@ class PreviousHospitalizationCreateSerializer(serializers.ModelSerializer):
 class PreviousPregnancyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Previous_Pregnancy
-        fields = ['date_of_delivery', 'outcome', 'type_of_delivery', 'babys_wt', 'gender', 'ballard_score', 'apgar_score']
+        fields = ['date_of_delivery', 'outcome', 'type_of_delivery', 'babys_wt', 'gender', 'ballard_score', 'apgar_score','patrec_id']
         extra_kwargs = { 'date_of_delivery': {'required': False, 'allow_null': True} }
 
 class TTStatusCreateSerializer(serializers.ModelSerializer):

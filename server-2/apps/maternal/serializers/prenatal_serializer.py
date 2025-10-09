@@ -1736,3 +1736,7 @@ class PARequestRejectSerializer(serializers.ModelSerializer):
         model = PrenatalAppointmentRequest
         fields = ['status', 'reason']
         lookup_field = 'par_id'
+class PrenatalAppointmentCancellationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrenatalAppointmentRequest
+        fields = ['cancelled_at', 'status']

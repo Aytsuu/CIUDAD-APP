@@ -43,7 +43,6 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
                 'error': 'An error occurred while creating the appointment request',
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
 
 class PrenatalAppointmentRequestView(generics.ListAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer

@@ -132,22 +132,6 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-// const formatDate = (dateString: string) => {
-//   if (!dateString) return "N/A";
-//   try {
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString('en-US', {
-//       year: 'numeric',
-//       month: 'short',
-//       day: 'numeric',
-//       hour: '2-digit',
-//       minute: '2-digit',
-//     });
-//   } catch (e) {
-//     return "Invalid Date";
-//   }
-// };
-
 // Components
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const statusConfig = getStatusConfig(status);
@@ -269,9 +253,9 @@ const MedicineRequestCard: React.FC<{
         )}
       </View>
 
-      {/* Action Button */}
-      {canCancel && (
-        <View className="p-4 bg-red-50 border-t border-red-100">
+      {/* Action Button / Reminder */}
+      <View className="p-4 bg-gray-50 border-t border-gray-100">
+        {canCancel ? (
           <TouchableOpacity
             onPress={onCancel}
             disabled={isCancelPending}
@@ -283,8 +267,12 @@ const MedicineRequestCard: React.FC<{
               {isCancelPending ? 'Cancelling...' : 'Cancel Request'}
             </Text>
           </TouchableOpacity>
-        </View>
-      )}
+        ) : (
+          <View className="">
+            
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -410,7 +398,7 @@ const MedicineRequestTracker: React.FC = () => {
         case 'pending':
           return lowerStatus === 'pending';
         case 'cancelled':
-          return ['rejected', 'cancelled','referred'].includes(lowerStatus);
+          return ['rejected', 'cancelled','referred', 'declined'].includes(lowerStatus); // Included 'declined'
         case 'ready_for_pickup':
           return ['confirmed', 'ready_for_pickup'].includes(lowerStatus);
         case 'completed':
@@ -429,7 +417,7 @@ const MedicineRequestTracker: React.FC = () => {
   // Counts for tabs
   const counts = useMemo(() => ({
     pending: requests.filter((r) => r.status.toLowerCase() === 'pending').length,
-    cancelled: requests.filter((r) => ['declined', 'cancelled'].includes(r.status.toLowerCase())).length,
+    cancelled: requests.filter((r) => ['declined', 'cancelled', 'rejected', 'referred'].includes(r.status.toLowerCase())).length, // Adjusted to include all cancel/rejected statuses
     ready_for_pickup: requests.filter((r) => ['confirmed', 'ready_for_pickup'].includes(r.status.toLowerCase())).length,
     completed: requests.filter((r) => ['completed', 'fulfilled'].includes(r.status.toLowerCase())).length,
   }), [requests]);
@@ -522,14 +510,25 @@ const MedicineRequestTracker: React.FC = () => {
         {/* Tab Bar */}
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
 
+        {/* Reminder for Pending Tab */}
+        {activeTab === 'pending' && (
+          <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+            <Text className="text-blue-800 text-sm font-medium">
+              Cancellation is only possible for requests that are currently pending. 
+              Once the status changes, you won't be able to cancel.
+            </Text>
+          </View>
+        )}
+
+        {/* Reminder for To Pick Up Tab */}
         {activeTab === 'ready_for_pickup' && (
-  <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
-    <Text className="text-blue-800 text-sm font-medium">
-      Reminder: Medicines are available for pickup at the Barangay Health Center 
-      every weekdays, 8:00 AM - 5:00 PM only.
-    </Text>
-  </View>
-)}
+          <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
+            <Text className="text-blue-800 text-sm font-medium">
+              Reminder: Medicines are available for pickup at the Barangay Health Center 
+              every weekdays, 8:00 AM - 5:00 PM only.
+            </Text>
+          </View>
+        )}
 
         {/* Requests List */}
         {requests.length === 0 ? (

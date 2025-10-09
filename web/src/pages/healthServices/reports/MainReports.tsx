@@ -24,6 +24,13 @@ export default function HealthcareReports() {
         "Monthly report of Barangay Health Workers activities and achievements",
       link: "/bhw-monthly-reports",
     },
+    {
+  title: "Family Planning Monthly Report",
+  icon: <ClipboardList className="w-6 h-6 text-purple-600" />,
+  bgColor: "bg-gradient-to-br from-purple-50 to-pink-50",
+  description: "Monthly report of family planning service provision and statistics",
+  link: "/familyplanning/report"
+},
   ];
 
   const recipientLists = [

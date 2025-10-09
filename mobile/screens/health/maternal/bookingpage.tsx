@@ -17,10 +17,15 @@ interface User {
 }
 
 interface PrenatalAppointmentData {
-  userId: string;
-  reqDate: string;
-  time: string;
-  appointmentType: 'prenatal';
+  requested_at: string;
+  status: string;
+  rp_id: string;
+  pat_id: string;
+  approved_at?: string | null;
+  cancelled_at?: string | null;
+  completed_at?: string | null;
+  rejected_at?: string | null;
+  reason?: string | null;
 }
 
 // Helper function to calculate age from DOB
@@ -60,7 +65,6 @@ const PrenatalBookingPage: React.FC = () => {
   );
 
   
-
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
@@ -75,7 +79,7 @@ const PrenatalBookingPage: React.FC = () => {
     } else {
       // Fallback to Thursdays if no services are defined
       const dayOfWeek = date.getDay();
-      return dayOfWeek !== 4
+      return dayOfWeek !== 4;
     }
   };
 
@@ -87,7 +91,7 @@ const PrenatalBookingPage: React.FC = () => {
           'Unavailable Date',
           availableDays.size > 0
             ? 'Prenatal appointments are only available on scheduled days.'
-            : 'Prenatal appointments are only available on Thursdays that are not marked as unavailable.'
+            : 'Prenatal appointments are only available on Thursdays.'
         );
         return;
       }
@@ -135,7 +139,7 @@ const PrenatalBookingPage: React.FC = () => {
 
     const payload = {
       requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`,
-      confirmed_at: null,
+      // confirmed_at: null,
       status: 'pending',
       rp_id: rp_id || '',
       pat_id: ''

@@ -100,7 +100,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.animalbite_records_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/animal-bites")
+          navigate("/services/animalbites")
         }}
       />
     ),
@@ -110,7 +110,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.familyplanning_records_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/family-planning")
+          navigate("/services/familyplanning")
         }}
       />
     ),

@@ -6,6 +6,8 @@ from ..serializers import *
 from pagination import *
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q, Count, Sum, Prefetch
+
+
 class UserMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
     pagination_class = StandardResultsPagination
@@ -158,18 +160,32 @@ class SubmitMedicineRequestView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
+            print(f"🔍 DEBUG: Request data keys: {list(request.data.keys())}")
+            print(f"🔍 DEBUG: Request FILES keys: {list(request.FILES.keys())}")
+            
             data = request.data
-            # Handle medicines as array or single string
             medicines_data = data.get('medicines', '[]')
+            print(f"🔍 DEBUG: medicines_data type: {type(medicines_data)}, value: {medicines_data}")
+            
             if isinstance(medicines_data, list):
-                print("Warning: medicines received as array, taking first element")
-                medicines_data = medicines_data[0]
-            medicines = json.loads(medicines_data)
+                print("⚠️ WARNING: medicines received as array, taking first element")
+                medicines_data = medicines_data[0] if medicines_data else '[]'
+            
+            try:
+                medicines = json.loads(medicines_data)
+            except json.JSONDecodeError as e:
+                print(f"❌ ERROR: Failed to parse medicines JSON: {e}")
+                return Response({"error": "Invalid medicines data format"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            print(f"🔍 DEBUG: Parsed medicines: {medicines}")
+            
             files = request.FILES.getlist('files', [])
+            print(f"🔍 DEBUG: Number of files: {len(files)}")
             
             if not medicines:
                 return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Check if prescription is required
             requires_prescription = any(med.get('med_type', '') == 'Prescription' for med in medicines)
             if requires_prescription and not files:
                 return Response({"error": "Prescription document is required for prescription medicines"}, 
@@ -177,37 +193,28 @@ class SubmitMedicineRequestView(APIView):
             
             pat_id = data.get('pat_id')
             if isinstance(pat_id, list):
-                print("Warning: pat_id received as array, taking first element")
-                pat_id = pat_id[0]
-            rp_id = data.get('rp_id')
+                pat_id = pat_id[0] if pat_id else None
+            rp_id = data.get('rp_id') 
             if isinstance(rp_id, list):
-                print("Warning: rp_id received as array, taking first element")
-                rp_id = rp_id[0]
+                rp_id = rp_id[0] if rp_id else None
                 
-            print(f"Received pat_id: {pat_id}, rp_id: {rp_id}")
+            print(f"🔍 DEBUG: Received pat_id: {pat_id}, rp_id: {rp_id}")
                 
             if not pat_id and not rp_id:
                 return Response({"error": "Either patient ID or resident ID must be provided"}, 
                               status=status.HTTP_400_BAD_REQUEST)
             
+            # Prioritize pat_id over rp_id
             if pat_id and rp_id:
-            # Both provided: Prioritize pat_id (user is a patient linked to resident)
-                print("Prioritizing pat_id over rp_id")
-                rp_id = None  # Ignore rp_id
-            elif not pat_id and not rp_id:
-                return Response({"error": "Either patient ID (pat_id) or resident ID (rp_id) must be provided"},
-                            status=status.HTTP_400_BAD_REQUEST)
-            elif pat_id:
-                print("Using pat_id only")
-            else:
-                print("Using rp_id only")
+                print("🔍 DEBUG: Both pat_id and rp_id provided - prioritizing pat_id")
+                rp_id = None
             
+            # Validate and get instances
             pat_instance = None
-            
             if pat_id:
                 try:
                     pat_instance = Patient.objects.get(pat_id=pat_id)
-                    print(f"Validated pat_id: {pat_id} -> Patient {pat_instance}")
+                    print(f"✅ DEBUG: Validated pat_id: {pat_id}")
                 except Patient.DoesNotExist:
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -215,34 +222,42 @@ class SubmitMedicineRequestView(APIView):
             if rp_id:
                 try:
                     rp_instance = ResidentProfile.objects.get(rp_id=rp_id)
-                    print(f"Validated rp_id: {rp_id} -> Resident {rp_instance}")
+                    print(f"✅ DEBUG: Validated rp_id: {rp_id}")
                 except ResidentProfile.DoesNotExist:
                     return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-                
+            
+            # Create MedicineRequest
             medicine_request = MedicineRequest.objects.create(
                 pat_id=pat_instance,
                 rp_id=rp_instance,
                 mode='app'
             )
+            print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
             
+            # Create MedicineRequestItems
             request_items = []
             for med in medicines:
                 if 'minv_id' not in med:
                     return Response({"error": f"minv_id is required for each medicine"}, 
                                   status=status.HTTP_400_BAD_REQUEST)
+                
                 try:
                     minv_id = int(med['minv_id'])
                     medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                    # print(f"Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
+                    
+                    print(f"🔍 DEBUG: Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
+                    
+                    # Create the request item with BOTH minv_id and med
                     request_item = MedicineRequestItem(
                         medreq_id=medicine_request,
-                        minv_id=None,
-                        med=medicine_inv.med_id,  # Assign Medicinelist object
-                        medreqitem_qty=med['quantity'],
+                        minv_id=medicine_inv,  # ✅ Set the minv_id
+                        med=medicine_inv.med_id,  # ✅ Set the med field
+                        medreqitem_qty=med.get('quantity', 0),  # Use get with default
                         reason=med.get('reason', ''),
                         status='pending'
                     )
                     request_items.append(request_item)
+                    
                 except ValueError:
                     return Response({"error": f"Invalid minv_id: {med['minv_id']} must be a number"}, 
                                   status=status.HTTP_400_BAD_REQUEST)
@@ -250,19 +265,16 @@ class SubmitMedicineRequestView(APIView):
                     return Response({"error": f"Medicine with minv_id {med['minv_id']} not found"}, 
                                   status=status.HTTP_404_NOT_FOUND)
             
-            # # Debug: Log request items
-            # for item in request_items:
-            #     print(f"Creating MedicineRequestItem: medreq_id={item.medreq_id.medreq_id}, minv_id={item.minv_id.minv_id}, med_id={item.med.pk}")
-            
+            # Bulk create the items
             MedicineRequestItem.objects.bulk_create(request_items)
-            print(f"Created request at: {medicine_request.requested_at}")
+            print(f"✅ DEBUG: Created {len(request_items)} MedicineRequestItems")
+            
+            # Handle file uploads
             uploaded_files = []
             if files:
                 try:
-                    # Convert Django file objects to the format expected by the serializer
                     file_data_list = []
                     for file in files:
-                        # Read file content and convert to base64 data URL format
                         file_content = file.read()
                         import base64
                         base64_content = base64.b64encode(file_content).decode('utf-8')
@@ -274,19 +286,19 @@ class SubmitMedicineRequestView(APIView):
                             'file': data_url
                         })
                     
-                    # Use the Medicine_FileSerializer to upload files to Supabase
+                    # Upload files
                     serializer = Medicine_FileSerializer(context={'request': request})
                     uploaded_files = serializer._upload_files(
                         file_data_list, 
-                        medreq_instance=medicine_request  # Associate with the medicine request, not the item
+                        medreq_instance=medicine_request
                     )
                     
-                    print(f"Successfully uploaded {len(uploaded_files)} files to Supabase")
+                    print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
                     
                 except Exception as e:
-                    print(f"Error uploading files to Supabase: {str(e)}")
-                    # If file upload fails, we might want to roll back the transaction
-                    raise Exception(f"File upload failed: {str(e)}")
+                    print(f"❌ ERROR: File upload failed: {str(e)}")
+                    # Don't raise exception here, just log it
+                    # Files are optional for non-prescription medicines
             
             return Response({
                 "success": True,
@@ -295,10 +307,8 @@ class SubmitMedicineRequestView(APIView):
                 "files_uploaded": len(uploaded_files)
             }, status=status.HTTP_201_CREATED)
             
-        except (Patient.DoesNotExist, ResidentProfile.DoesNotExist) as e:
-            return Response({"error": "Patient or resident not found"}, 
-                          status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            print(f"Internal server error: {str(e)}")
+            import traceback
+            print(f"❌ ERROR: Full traceback: {traceback.format_exc()}")
             return Response({"error": f"Internal server error: {str(e)}"}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)

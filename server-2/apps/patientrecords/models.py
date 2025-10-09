@@ -236,7 +236,6 @@ class Obstetrical_History(models.Model):
     obs_preterm = models.PositiveIntegerField(null=True, blank=True)
     obs_lmp = models.DateField(null=True, blank=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='obstetrical_history', db_column='patrec_id')
-
     class Meta:
         db_table = 'obstetrical_history'
         
