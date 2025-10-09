@@ -19,7 +19,7 @@ export default function PendingDisplayMedicalConsultation({
   // patientData // Added patientData to props
 }: PendingDisplayMedicalConsultationProps) {
   // const patId = checkupData.pat_details.pat_id;
-  const chrecId = checkupData.chrec_id;
+  const chrecId = checkupData.chrec;
   const chhistId = checkupData.chhist_id;
   // const navigate = useNavigate(); // Added navigate hook
 

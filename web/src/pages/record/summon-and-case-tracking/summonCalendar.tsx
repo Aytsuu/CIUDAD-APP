@@ -826,7 +826,7 @@ const SummonCalendar = () => {
                                     >
                                       <div className="flex-1">
                                         <div className="text-sm font-medium">
-                                          {formatTime(slot.st_start_time)}
+                                          {formatTime(slot.st_start_time)} - {formatTime(slot.st_end_time)}
                                         </div>
                                         <div className={`text-xs ${slot.st_is_booked ? "text-red-600" : "text-green-600"}`}>
                                           {slot.st_is_booked ? "Booked" : "Available"}

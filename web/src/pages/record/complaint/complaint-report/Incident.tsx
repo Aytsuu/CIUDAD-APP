@@ -6,21 +6,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { FormInput } from "@/components/ui/form/form-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
 
 export const IncidentInfo = () => {
   const { control } = useFormContext();
   const incidentType = useWatch({ control, name: "incident.type" });
-
-  const incidentTypeOptions = [
-    { id: "Theft", name: "Theft" },
-    { id: "Assault", name: "Assault" },
-    { id: "Property Damage", name: "Property Damage" },
-    { id: "Noise", name: "Noise Complaint" },
-    { id: "Other", name: "Other" },
-  ];
 
   return (
     <div className="space-y-4">
@@ -28,58 +26,102 @@ export const IncidentInfo = () => {
         <FormField
           control={control}
           name="incident.type"
-          render={({ field }) => (
+          render={({ field }: any) => (
             <FormItem>
               <FormLabel className="font-semibold text-black/50">
                 Incident Type *
               </FormLabel>
-              <FormControl>
-                <SelectLayout
-                  placeholder="Select incident type"
-                  label="Incident Types"
-                  options={incidentTypeOptions}
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                />
-              </FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select incident type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Theft">Theft</SelectItem>
+                  <SelectItem value="Assault">Assault</SelectItem>
+                  <SelectItem value="Property Damage">
+                    Property Damage
+                  </SelectItem>
+                  <SelectItem value="Noise">Noise Complaint</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
 
         {incidentType === "Other" && (
-          <FormInput
+          <FormField
             control={control}
             name="incident.otherType"
-            label="Specify Incident Type *"
-            placeholder="Describe the incident type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold text-black/50">
+                  Specify Incident Type *
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Describe the incident type" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormInput
+        <FormField
           control={control}
           name="incident.date"
-          label="Date *"
-          type="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-semibold text-black/50">
+                Date *
+              </FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
-        <FormInput
+        <FormField
           control={control}
           name="incident.time"
-          label="Time *"
-          type="time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-semibold text-black/50">
+                Time *
+              </FormLabel>
+              <FormControl>
+                <Input type="time" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
-
-      <FormInput
+      <FormField
         control={control}
         name="incident.location"
-        label="Location *"
-        placeholder="Specific place of where the incident happened"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="font-semibold text-black/50">
+              Location *
+            </FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Specific place of where the incident happened"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
       />
-
       <FormField
         control={control}
         name="incident.description"
@@ -99,11 +141,11 @@ export const IncidentInfo = () => {
           </FormItem>
         )}
       />
-
       <div className="space-y-6">
         {/* <MediaUpload
           title="Supporting Documents"
           description="Upload images, videos, or documents (PDF, DOC, DOCX) that support your complaint (Max 10MB each)"
+
         /> */}
       </div>
     </div>

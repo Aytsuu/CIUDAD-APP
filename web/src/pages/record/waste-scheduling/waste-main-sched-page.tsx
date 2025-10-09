@@ -44,7 +44,7 @@ const WasteMainScheduling = () => {
       data: wasteCollectionData,
       columns: wasteColColumns,
       titleAccessor: "sitio_name",
-      dateAccessor: "wc_day",
+      dateAccessor: "wc_date",
       timeAccessor: "wc_time",
       defaultColor: "#10b981", // emerald
     },

@@ -11,14 +11,17 @@ from .views.medicalhistory_views import *
 from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
+from .views.mobile_views import *
 from apps.administration.views.staff_views import HealthStaffListView
-
+from.views.family_views import MyChildrenSimpleAPIView
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
-    path('patient/', PatientView.as_view(), name='patient'),
+    path('patients/', PatientListView.as_view(), name='patient-list'),
+    path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
@@ -64,7 +67,7 @@ urlpatterns = [
    
     path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view(), name='delete-peresults'),
 
     #DISABLITY
     
@@ -72,6 +75,11 @@ urlpatterns = [
     # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
+    
+    # Mobile url
+    path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
+    path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
+    path('parent-children/<str:pat_id>/', MyChildrenSimpleAPIView.as_view(), name='parent-children-simple'),
 
+    # path('patient-by-resident/<str:rp_id>/', get_patient_by_resident_id, name='patient-by-resident-id'),
 ]
-

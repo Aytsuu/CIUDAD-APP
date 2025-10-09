@@ -32,6 +32,9 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
         fields = '__all__'
+        
+
+        
 class MedicineRecordCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicineRecord
@@ -82,10 +85,10 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
             if obj.pat_id:
                 return obj.pat_id.pat_id
             elif obj.rp_id:
-                return f"RES_{obj.rp_id.rp_id}"
+                return f"{obj.rp_id.rp_id}"
         except Exception as e:
             print(f"Error getting patient ID: {str(e)}")
-        return None
+        return None 
 
     def get_personal_info(self, obj):
         """Get personal information using the same pattern as PatientSerializer"""

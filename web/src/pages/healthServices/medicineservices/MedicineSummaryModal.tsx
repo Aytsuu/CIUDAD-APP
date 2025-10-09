@@ -2,9 +2,9 @@ import React from "react";
 import { Button } from "@/components/ui/button/button";
 import { FileText, X, Loader2, AlertCircle } from "lucide-react";
 import { MediaUploadType } from "@/components/ui/media-upload";
-import { SignatureField, SignatureFieldRef } from "@/pages/healthServices/reports/firstaid-report/signature";
 import { ImageGallery } from "./StatusIndicator";
 import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
+import { SignatureFieldRef,SignatureField } from "../reports/firstaid-report/signature";
 
 export const MedicineSummaryModal = ({
   isOpen,

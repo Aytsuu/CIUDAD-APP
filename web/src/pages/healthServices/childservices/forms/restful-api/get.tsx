@@ -1,14 +1,28 @@
 import { api2 } from "@/api/api";
 
-export const getChildHealthRecords = async () => {
+
+export const getChildHealthRecords = async (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
   try {
-    const response = await api2.get("/child-health/records/");
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.page_size) queryParams.append("page_size", params.page_size.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.patient_type && params.patient_type !== "all") {
+      queryParams.append("patient_type", params.patient_type);
+    }
+    if (params?.status && params.status !== "all") {
+      queryParams.append("status", params.status);
+    }
+
+    const url = `/child-health/records/${queryParams.toString() ? "?" + queryParams.toString() : ""}`;
+    const response = await api2.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching records:", error);
     throw error;
   }
-};
+}
 
 export const getNutrionalSummary = async (chrec_id: string) => {
   try {
@@ -64,3 +78,14 @@ export const getLatestVitals = async (id:any) => {
     throw err;
   }
 };
+
+
+export const getChildnotesfollowup = async (chrec_id: any) => {
+  try {
+    const response = await api2.get(`/child-health/patients/${chrec_id}/pending-followups-with-notes/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+  }

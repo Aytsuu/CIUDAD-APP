@@ -19,7 +19,7 @@ import { Edit } from "@/lib/icons/Edit";
 import { Phone } from "@/lib/icons/Phone";
 import { Mail } from "@/lib/icons/Mail";
 import { Building } from "@/lib/icons/Building";
-import { CheckCircle } from "@/lib/icons/CircleCheck";
+import { CircleCheck } from "@/lib/icons/CircleCheck";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import PageLayout from "@/screens/_PageLayout";
 
@@ -307,7 +307,7 @@ export default function HouseholdDetails() {
         {household.nhts && (
           <Card className="mt-4 p-4">
             <View className="flex-row items-center mb-4">
-              <CheckCircle size={20} className="text-green-600 mr-2" />
+              <CircleCheck size={20} className="text-green-600 mr-2" />
               <Text className="text-gray-900 font-semibold text-lg">
                 NHTS Beneficiary
               </Text>

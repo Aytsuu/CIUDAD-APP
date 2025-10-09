@@ -159,7 +159,7 @@ export default function FamilyDetails() {
           <InfoRow icon={Home} label="Household Number" value={family.household_no} />
           <InfoRow icon={MapPin} label="Location" value={`Sitio ${family.sitio}${family.street !== 'N/A' ? `, ${family.street}` : ''}`} />
           <InfoRow icon={Calendar} label="Date Registered" 
-            value={formatDate(family.fam_date_registered, true) as string} 
+            value={formatDate(family.fam_date_registered, 'long') as string} 
           />
           
           <View className="flex-row items-center py-3">

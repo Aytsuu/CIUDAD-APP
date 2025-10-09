@@ -10,8 +10,7 @@ export const AccountUpdateSchema = z.object({
   email: z
     .string()
     .email({ message: "Invalid email address" })
-    .optional()
-    .nullable(),
+    .optional(  ),
 
   newPassword: z
     .string()
@@ -38,7 +37,7 @@ export const AccountUpdateSchema = z.object({
 });
 
 export const accountFormSchema = z.object({
-  email: z.string().optional().nullable(),
+  email: z.string(),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(

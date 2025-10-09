@@ -10,7 +10,7 @@ import { FormTextArea } from "@/components/ui/form/form-text-area";
 import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { useAddCouncilEvent } from "./queries/councilEventaddqueries";
+import { useAddCouncilEvent, useAddAttendee } from "./queries/councilEventaddqueries";
 import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SchedEventFormProps } from "./councilEventTypes";
@@ -24,6 +24,7 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [numberOfRows, setNumberOfRows] = useState<number>(0);
   const { mutate: addEvent } = useAddCouncilEvent();
+  const { mutate: addAttendee } = useAddAttendee();
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -50,16 +51,26 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
       ce_time: formattedTime,
       ce_description: values.eventDescription,
       ce_is_archive: false,
-      ce_rows: numberOfRows,
       staff: user?.staff?.staff_id || null,
     };
 
     addEvent(eventData, {
       onSuccess: (ce_id) => {
         setCeId(ce_id);
+        // Add empty attendee rows based on the number specified
+        if (numberOfRows > 0) {
+          for (let i = 0; i < numberOfRows; i++) {
+            addAttendee({
+              staff_id: null,
+              atn_present_or_absent: "Present",
+              ce_id: ce_id,
+              atn_name: "",
+              atn_designation: "",
+            });
+          }
+        }
         form.reset();
         setNumberOfRows(0);
-        setSelectedAttendees([]);
         setIsSubmitting(false);
         if (onSuccess) onSuccess();
       },
@@ -93,9 +104,9 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
     setNumberOfRows(value);
     
     // Generate empty attendees based on the number of rows
-    const emptyAttendees = Array.from({ length: value }, (_, index) => ({
-      name: `Attendee ${index + 1}`,
-      designation: "To be filled",
+    const emptyAttendees = Array.from({ length: value }, () => ({
+      name: "",
+      designation: "",
     }));
     setSelectedAttendees(emptyAttendees);
   };
@@ -147,7 +158,12 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
               readOnly={false}
             />
 
+            {/* Number of rows input instead of staff selection */}
             <div>
+              <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
+                ATTENDEES
+              </h1>
+
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-700">
                   Expected number of attendees
@@ -186,7 +202,6 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
                 <AttendanceSheetView
                   ce_id={ceId}
                   selectedAttendees={selectedAttendees}
-                  numberOfRows={numberOfRows}
                   activity={form.watch("eventTitle")}
                   date={form.watch("eventDate")}
                   time={form.watch("eventTime")}

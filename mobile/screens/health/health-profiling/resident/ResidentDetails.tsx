@@ -10,7 +10,7 @@ import { Calendar } from "@/lib/icons/Calendar"
 import { MapPin } from "@/lib/icons/MapPin"
 import { Phone } from "@/lib/icons/Phone"
 import { UsersRound } from "@/lib/icons/UsersRound"
-import PageLayout from "../../_PageLayout"
+import PageLayout from "@/screens/_PageLayout"
 import { useGetFamilyMembers, useGetPersonalInfo } from "../queries/profilingGetQueries"
 import { capitalize } from "@/helpers/capitalize"
 

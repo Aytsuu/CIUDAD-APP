@@ -123,7 +123,7 @@ export default function MonthlyVaccineRecords() {
                           month_name: monthName
                         }}
                         navigateTo={{
-                          path: "/monthly-vaccination-details",
+                          path: "/reports/monthly-vaccination/records",
                           state: {
                             month: record.month,
                             monthName: monthName,

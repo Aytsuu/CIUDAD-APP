@@ -12,7 +12,6 @@ import {
 } from "../api/get-api" // Updated import
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
 
-import { submitAnimalBiteReferral } from "./postrequest"
 import { useToastContext } from "@/components/ui/toast"
 
 
@@ -122,42 +121,41 @@ export const usePatientRecordsByReferralId = (referralId: string) => {
 }
 
 // NEW: Mutation hook for submitting animal bite referrals
-export const useSubmitAnimalBiteReferralMutation = () => {
-  const queryClient = useQueryClient()
-  const { toast } = useToastContext();
-  return useMutation({
-    mutationFn: submitAnimalBiteReferral,
-    onSuccess: () => {
-      // Invalidate the query key that 'overall.tsx' uses to refetch data
-      queryClient.invalidateQueries({ queryKey: ["animalbite-patient-summary"] })
-      queryClient.invalidateQueries({ queryKey: ["animalbitePatientHistory"] }) // Also invalidate individual patient history queries
-      toast.success("Animal bite referral submitted successfully!")
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to submit referral: ${error.message || "Unknown error"}`)
-    },
-  })
-}
+// export const useSubmitAnimalBiteReferralMutation = () => {
+//   const queryClient = useQueryClient()
+//   return useMutation({
+//     mutationFn: submitAnimalBiteReferral,
+//     onSuccess: () => {
+//       // Invalidate the query key that 'overall.tsx' uses to refetch data
+//       queryClient.invalidateQueries({ queryKey: ["animalbite-patient-summary"] })
+//       queryClient.invalidateQueries({ queryKey: ["animalbitePatientHistory"] }) // Also invalidate individual patient history queries
+//       console.log("Animal bite referral submitted successfully!")
+//     },
+//     onError: (error: any) => {
+//       console.log(`Failed to submit referral: ${error.message || "Unknown error"}`)
+//     },
+//   })
+// }
 
-export const useSubmitAnimalBiteReferral = () => {
-  const queryClient = useQueryClient()
-  const { toast } = useToastContext();
-  return useMutation({
-    mutationFn: submitAnimalBiteReferral,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["animalbite-patient-summary"] }) // Invalidate unique patient summary
-      queryClient.invalidateQueries({ queryKey: ["animalbite-patient-counts"] }) // Invalidate aggregated counts
-      queryClient.invalidateQueries({ queryKey: ["animalbite-referrals"] }) // Invalidate all referrals
-      queryClient.invalidateQueries({ queryKey: ["animalbite-details"] }) // Invalidate all details
-      // If you were on an individual patient's page, you might want to invalidate their history too
-      queryClient.invalidateQueries({ queryKey: ["animalbite-patient-history"] }) // Invalidate all individual patient history queries
-      toast.success("Animal bite referral submitted successfully!")
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to submit referral: ${error.message || "Unknown error"}`)
-    },
-  })
-}
+// export const useSubmitAnimalBiteReferral = () => {
+//   const queryClient = useQueryClient()
+//   const { toast } = useToastContext();
+//   return useMutation({
+//     mutationFn: submitAnimalBiteReferral,
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: ["animalbite-patient-summary"] }) // Invalidate unique patient summary
+//       queryClient.invalidateQueries({ queryKey: ["animalbite-patient-counts"] }) // Invalidate aggregated counts
+//       queryClient.invalidateQueries({ queryKey: ["animalbite-referrals"] }) // Invalidate all referrals
+//       queryClient.invalidateQueries({ queryKey: ["animalbite-details"] }) // Invalidate all details
+//       // If you were on an individual patient's page, you might want to invalidate their history too
+//       queryClient.invalidateQueries({ queryKey: ["animalbite-patient-history"] }) // Invalidate all individual patient history queries
+//       toast.success("Animal bite referral submitted successfully!")
+//     },
+//     onError: (error: any) => {
+//       toast.error(`Failed to submit referral: ${error.message || "Unknown error"}`)
+//     },
+//   })
+// }
 
 export const useRefreshAllData = () => {
   const queryClient = useQueryClient()

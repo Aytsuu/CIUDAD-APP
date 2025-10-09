@@ -174,7 +174,7 @@ export default function CommodityStocks() {
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
         </div>
-        <Button onClick={() => navigate("/addCommodityStock")} className="hover:bg-buttonBlue/90 group">
+        <Button onClick={() => navigate("/inventory/stocks/add-commodity")} className="hover:bg-buttonBlue/90 group">
           <Plus size={15} /> New Commodity
         </Button>
       </div>

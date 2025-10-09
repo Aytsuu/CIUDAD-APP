@@ -90,14 +90,14 @@ class MonthlyMedicineSummariesAPIView(APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({
+            return Response({ 
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
-class MonthlyMedicineRecordsDetailAPIView(APIView):
+class MonthlyMedicineRecordsRCPDetailAPIView(APIView):
     def get(self, request, month):
         try:
             # Validate month format (YYYY-MM)
@@ -151,6 +151,8 @@ class MonthlyMedicineRecordsDetailAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
 class MonthlyMedicineChart(APIView):
     def get(self, request, month):
         try:
@@ -193,5 +195,3 @@ class MonthlyMedicineChart(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
- 

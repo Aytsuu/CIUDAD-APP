@@ -28,5 +28,9 @@ urlpatterns = [
     path('assignment/create/', AssignmentCreateView.as_view(), name='assignment-create'),
     path('assignment/<int:pos>/', AssignmentFilteredView.as_view(), name='assigned-feature'),
     path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
+    
+    path('healthstaff/', HealthStaffListView.as_view(), name='administration-healthsatff-list'),
+    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),
+    
  
-]   
+]

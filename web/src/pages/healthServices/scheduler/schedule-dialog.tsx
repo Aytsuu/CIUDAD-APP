@@ -1,10 +1,18 @@
 "use client";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog/dialog";
-import { Button } from "@/components/ui/button/button";
-import { Edit } from "lucide-react";
-import ServiceScheduleForm from "../scheduler/schedule-form";
-import type { WeeklySchedule } from "../scheduler/schedule-types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog/dialog"
+import { Button } from "@/components/ui/button/button"
+import { Edit } from "lucide-react"
+import ServiceScheduleForm from "../scheduler/schedule-form"
+import type { WeeklySchedule } from "../scheduler/schedule-types"
+import { useState } from "react"
 
 interface ScheduleDialogProps {
   weeklySchedule: WeeklySchedule;
@@ -15,17 +23,35 @@ interface ScheduleDialogProps {
   onAddDay: (newDay: Date) => void;
 }
 
-export default function ScheduleDialog({ weeklySchedule, weekDays, services, onSave, onAddService, onAddDay }: ScheduleDialogProps) {
+export default function ScheduleDialog({
+  weeklySchedule,
+  weekDays,
+  services,
+  onSave,
+  onAddService,
+  onAddDay,
+}: ScheduleDialogProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
   const handleSave = (newSchedule: WeeklySchedule) => {
-    onSave(newSchedule);
-  };
+    onSave(newSchedule)
+    setIsOpen(false)
+  }
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Edit className="h-4 w-4" />
-          Edit Schedule
+          {!services.length ? (
+            <span className="text-sm">
+              Add Schedule
+            </span>
+          ) : (
+            <span className="text-sm">
+              Edit Schedule
+            </span>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">

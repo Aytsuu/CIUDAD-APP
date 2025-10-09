@@ -116,7 +116,7 @@ export function PatientSummarySection({ recordsToDisplay, fullHistoryData, chhis
                 {/* Patient details - takes about 50% width on larger screens */}
                 <div className="lg:w-[50%] space-y-4">
                   <div>
-                    <div className="space-y-4 mb-4">
+                    <div className="space-y-2 mb-4">
                       <div className="flex justify-between w-full">
                         <p>
                           <strong>Name:</strong>{" "}
@@ -177,7 +177,7 @@ export function PatientSummarySection({ recordsToDisplay, fullHistoryData, chhis
                           if (deliveryType === "HC") {
                             return (
                               <span>
-                                <strong>Place of Delivery:</strong> <span className="underline">Health Center</span>
+                               <span className="underline">({getValueByPath(recordsToDisplay[0], ["chrec_details", "pod_location"])})</span>
                               </span>
                             );
                           }

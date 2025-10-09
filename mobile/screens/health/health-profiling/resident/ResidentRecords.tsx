@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card";
 import { UserRound } from "@/lib/icons/UserRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
-import PageLayout from "../../_PageLayout";
+import PageLayout from "@/screens/_PageLayout";
 
 export default function ResidentRecords() {
   const router = useRouter();

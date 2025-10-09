@@ -9,11 +9,33 @@ from apps.medicineservices.models import MedicineRecord
 from apps.vaccination.models import VaccinationRecord
 import uuid
 from apps.administration.models import Staff
+from apps.healthProfiling.models import ResidentProfile
 
 # ************** prenatal **************
 today = datetime.now()
 month = str(today.month).zfill(2)  
 year = str(today.year)
+
+class PrenatalAppointmentRequest(models.Model):
+    par_id = models.BigAutoField(primary_key=True)
+    requested_at = models.DateField(auto_now_add=True)
+    approved_at = models.DateField(null=True, blank=True)
+    cancelled_at = models.DateField(null=True, blank=True)
+    completed_at = models.DateField(null=True, blank=True)
+    rejected_at = models.DateField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('rejected', 'Rejected'),
+    ], default='pending')
+    rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='pa_request')
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pa_request', null=True)
+    
+    class Meta:
+        db_table = 'prenatal_appointment_request'
 
 class Pregnancy(models.Model):
     pregnancy_id = models.CharField(primary_key=True, max_length=20, unique=True)
@@ -69,11 +91,11 @@ class Prenatal_Form(models.Model):
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='prenatal_form', db_column='pregnancy_id', null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True) 
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True)
-    bm_id = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True)
+    bm_id  = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='prenatal_form', db_column='followv_id', null=True)
     medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medrec_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
-    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
 
     def save(self, *args, **kwargs):
         if not self.pf_id:
@@ -159,7 +181,7 @@ class LaboratoryResult(models.Model):
     result_date = models.DateField(blank=True, null=True)
     is_completed = models.BooleanField(default=False, blank=True)
     to_be_followed = models.BooleanField(default=False, blank=True)
-    document_path = models.CharField(max_length=500, blank=True, null=True)
+    document_path = models.TextField(blank=True, null=True)
     remarks = models.TextField(default='', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -172,8 +194,8 @@ class LaboratoryResult(models.Model):
 class LaboratoryResultImg(models.Model):
     lab_img_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lab_id = models.ForeignKey(LaboratoryResult, on_delete=models.CASCADE, related_name='lab_result_img', db_column='lab_id', null=True)
-    image_url = models.CharField(max_length=255, default='')
-    image_name = models.CharField(max_length=500, default='')
+    image_url = models.TextField(default='')
+    image_name = models.TextField(default='')
     image_type = models.CharField(max_length=50, default='')
     image_size = models.PositiveIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -268,9 +290,9 @@ class PrenatalCare(models.Model):
 class PostpartumRecord(models.Model):
     ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
     ppr_lochial_discharges = models.CharField(max_length=100)
-    ppr_vit_a_date_given = models.DateField()
+    ppr_vit_a_date_given = models.DateField(null=True, blank=True)
     ppr_num_of_pads = models.PositiveIntegerField()
-    ppr_mebendazole_date_given = models.DateField()
+    ppr_mebendazole_date_given = models.DateField(null=True, blank=True)
     ppr_date_of_bf = models.DateField()
     ppr_time_of_bf = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -282,6 +304,7 @@ class PostpartumRecord(models.Model):
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True, blank=True)
+    medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medrec_id', null=True)
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):

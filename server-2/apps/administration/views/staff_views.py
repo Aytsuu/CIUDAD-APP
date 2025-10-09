@@ -98,7 +98,6 @@ class HealthStaffComboboxView(generics.ListAPIView):
 
     return queryset
 
-
    
 class StaffDataByTitleView(APIView):
     def get(self, request, *args, **kwargs):
@@ -127,3 +126,12 @@ class StaffTypeDebugView(APIView):
           'staff_types': list(staff_types),
           'detailed': staff_data
       })
+
+
+  
+class DoctorStaffListView(generics.ListAPIView):
+  serializer_class = StaffFullSerializer
+
+  def get_queryset(self):
+    return Staff.objects.filter(pos__pos_title__iexact="DOCTOR")
+

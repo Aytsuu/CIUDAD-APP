@@ -143,7 +143,7 @@
 
 
 
-export default function PrenatalFormHistory() {
+export default function PrenatalFormTableHistory() {
 	return (
 		<>
 		<div>

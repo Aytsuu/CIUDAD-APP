@@ -22,7 +22,7 @@ class Feature(AbstractModels):
     class Meta:
         db_table = 'feature'
 
-class Assignment(AbstractModels):
+class Assignment(models.Model):
     assi_id = models.BigAutoField(primary_key=True)
     feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)

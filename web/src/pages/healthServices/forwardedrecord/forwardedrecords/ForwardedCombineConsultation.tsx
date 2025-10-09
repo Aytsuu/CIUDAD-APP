@@ -1,336 +1,162 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Loader2, Search, ChevronLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpDown, Loader2, Search, Users, Home, UserCheck, FileInput } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Toaster } from "sonner";
 import { api2 } from "@/api/api";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { FileInput } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { MedicalConsultationHistory } from "../../medicalconsultation/types";
 import { useLoading } from "@/context/LoadingContext";
-
-export interface PatientRecord {
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  dob: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  pat_type: string;
-  address: string;
-}
-
-// Child Health Checkup Interfaces
-export interface ChildHealthCheckupRecord {
-  chhist_id: string;
-  chrec_id: string;
-  chrec_details: {
-    ufc_no: string;
-    family_no: string;
-    mother_occupation: string;
-    father_occupation: string;
-    type_of_feeding: string;
-    newborn_screening: string;
-    place_of_delivery_type: string;
-    birth_order: number;
-    pod_location: string;
-    created_at: string;
-  };
-  pat_details?: {
-    pat_id: string;
-  };
-  created_at: string;
-  tt_status: string;
-  status: string;
-  patrec: string;
-  child_health_vital_signs?: Array<{ chvital_id?: string }>;
-}
-
-export type CombinedRecord = {
-  recordType: "child-health" | "medical-consultation";
-  patient: PatientRecord;
-} & (
-  | {
-      recordType: "child-health";
-      checkup: ChildHealthCheckupRecord;
-    }
-  | {
-      recordType: "medical-consultation";
-      consultation: MedicalConsultationHistory;
-    }
-);
+import { useAuth } from "@/context/AuthContext";
+import { useDebounce } from "@/hooks/use-debounce";
+import ViewButton from "@/components/ui/view-button";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function ForwardedCombinedHealthRecordsTable() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const staffId = user?.staff?.staff_id || "";
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordTypeFilter, setRecordTypeFilter] = useState("all");
   const { showLoading, hideLoading } = useLoading();
 
-  // Fetch both types of records
-  const { data: childHealthData, isLoading: childHealthLoading } = useQuery({
-    queryKey: ["ChildHealthCheckuprecord"],
+  // Fetch combined records
+  const { data: combinedData, isLoading: combinedLoading } = useQuery({
+    queryKey: ["combinedHealthRecords", debouncedSearchQuery, recordTypeFilter, currentPage, pageSize],
     queryFn: async () => {
-      const response = await api2.get("/child-health/history/checkup/");
-      return response.data || [];
+      const params = new URLSearchParams({
+        search: debouncedSearchQuery,
+        record_type: recordTypeFilter,
+        page: currentPage.toString(),
+        page_size: pageSize.toString()
+      });
+
+      const response = await api2.get(`/medical-consultation/combined-health-records/${staffId}/?${params}`);
+      return response.data;
     }
   });
 
-  const { data: medConsultData, isLoading: medConsultLoading } = useQuery({
-    queryKey: ["PendingimpoRecords"],
-    queryFn: async () => {
-      const response = await api2.get("/medical-consultation/pending-medcon-record/");
-      return response.data || [];
-    }
-  });
+  // Reset to first page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, recordTypeFilter]);
 
-  const formatRecordsData = React.useCallback((): CombinedRecord[] => {
-    const childRecords = childHealthData || [];
-    const medRecords = medConsultData || [];
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize >= 1 ? newPageSize : 1);
+    setCurrentPage(1);
+  };
 
-    const formattedChildRecords = childRecords.map((record: any) => {
-      const details = record.chrec_details.patrec_details?.pat_details || {};
-      const info = details.personal_info || {};
-      const address = details.address || {};
-
-      const addressParts = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ");
-
-      const fullAddress = address.full_address || addressParts || "";
-
-      const patientRecord: PatientRecord = {
-        pat_id: details.pat_id || "",
-        fname: info.per_fname || "",
-        lname: info.per_lname || "",
-        mname: info.per_mname || "",
-        sex: info.per_sex || "",
-        age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || "",
-        householdno: details.households?.[0]?.hh_id || "N/A",
-        street: address.add_street || "",
-        sitio: address.add_sitio || "",
-        barangay: address.add_barangay || "",
-        city: address.add_city || "",
-        province: address.add_province || "",
-        pat_type: details.pat_type || "",
-        address: fullAddress
-      };
-
-      const checkupRecord: ChildHealthCheckupRecord = {
-        chhist_id: record.chhist_id,
-        chrec_details: {
-          ufc_no: record.chrec_details.ufc_no || "N/A",
-          family_no: record.chrec_details.family_no || "N/A",
-          mother_occupation: record.chrec_details.mother_occupation || "Not specified",
-          father_occupation: record.chrec_details.father_occupation || "Not specified",
-          type_of_feeding: record.chrec_details.type_of_feeding || "Not specified",
-          newborn_screening: record.chrec_details.newborn_screening || "Not done",
-          place_of_delivery_type: record.chrec_details.place_of_delivery_type || "Not specified",
-          birth_order: record.chrec_details.birth_order || 0,
-          pod_location: record.chrec_details.pod_location || "Not specified",
-          created_at: record.chrec_details.created_at || ""
-        },
-        chrec_id: record.chrec || "",
-        created_at: record.created_at || "",
-        tt_status: record.tt_status || "Not vaccinated",
-        status: record.status || "check-up",
-        patrec: record.chrec_details?.patrec || "",
-        child_health_vital_signs: [
-          {
-            chvital_id: record.child_health_vital_signs?.[0]?.chvital_id || ""
-          }
-        ],
-        pat_details: {
-          pat_id: record.chrec_details?.patrec_details?.pat_details?.pat_id || ""
-        }
-      };
-
-      return {
-        recordType: "child-health",
-        patient: patientRecord,
-        checkup: checkupRecord
-      };
-    });
-
-    const formattedMedRecords = medRecords.map((record: any) => {
-      const details = record.patrec_details?.patient_details || {};
-      const info = details.personal_info || {};
-      const address = details.address || {};
-
-      const addressParts = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ");
-
-      const fullAddress = address.full_address || addressParts || "";
-
-      const patientRecord: PatientRecord = {
-        pat_id: record.patrec_details?.pat_id || "",
-        fname: info.per_fname || "",
-        lname: info.per_lname || "",
-        mname: info.per_mname || "",
-        sex: info.per_sex || "",
-        age: calculateAge(info.per_dob).toString(),
-        dob: info.per_dob || "",
-        householdno: details.households?.[0]?.hh_id || "N/A",
-        street: address.add_street || "",
-        sitio: address.add_sitio || "",
-        barangay: address.add_barangay || "",
-        city: address.add_city || "",
-        province: address.add_province || "",
-        pat_type: details.pat_type || "",
-        address: fullAddress
-      };
-
-      const consultation: MedicalConsultationHistory = {
-        patrec: record.patrec,
-        medrec_id: record.medrec_id,
-        medrec_status: record.medrec_status,
-        medrec_chief_complaint: record.medrec_chief_complaint,
-        medrec_age: record.medrec_age,
-        created_at: record.created_at,
-        vital_signs: record.vital_signs,
-        bmi_details: record.bmi_details,
-        find_details: record.find_details || null,
-        staff_details: record.staff_details
-          ? {
-              rp: {
-                per: {
-                  per_fname: record.staff_details.rp?.per?.per_fname || "",
-                  per_lname: record.staff_details.rp?.per?.per_lname || "",
-                  per_mname: record.staff_details.rp?.per?.per_mname || "",
-                  per_suffix: record.staff_details.rp?.per?.per_suffix || "",
-                  per_dob: record.staff_details.rp?.per?.per_dob || ""
-                }
-              }
-            }
-          : null,
-        patrec_details: {
-          pat_id: record.patrec_details?.pat_id || ""
-        }
-      };
-
-      return {
-        recordType: "medical-consultation",
-        patient: patientRecord,
-        consultation
-      };
-    });
-
-    return [...formattedChildRecords, ...formattedMedRecords];
-  }, [childHealthData, medConsultData]);
-
-  const filteredData = React.useMemo(() => {
-    return formatRecordsData().filter((record) => {
-      const searchText = `${record.patient.pat_id} ${record.patient.lname} ${record.patient.fname} ${record.recordType === "child-health" ? record.checkup.tt_status : record.consultation.medrec_chief_complaint}`.toLowerCase();
-
-      const typeMatches = recordTypeFilter === "all" || record.recordType === recordTypeFilter;
-
-      return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
-    });
-  }, [searchQuery, formatRecordsData, recordTypeFilter]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const columns: ColumnDef<CombinedRecord>[] = [
+  const columns: ColumnDef<any>[] = [
     {
-      accessorKey: "patient",
+      accessorKey: "record_type",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient <ArrowUpDown size={15} />
+          Record Type <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-sm min-w-[120px] capitalize text-center">{row.original.record_type.replace("-", " ")}</div>
+    },
+    {
+      accessorKey: "patient_info",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient Info <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
-        const patient = row.original.patient;
-        const fullName = `${patient.lname}, ${patient.fname} ${patient.mname}`.trim();
+        const data = row.original.data;
+        let patientDetails = null;
+
+        if (row.original.record_type === "child-health") {
+          patientDetails = data.chrec_details?.patrec_details?.pat_details;
+        } else {
+          patientDetails = data.patrec_details?.patient_details;
+        }
+
+        const personalInfo = patientDetails?.personal_info || {};
+        const fullName = `${personalInfo.per_lname || ""}, ${personalInfo.per_fname || ""} ${personalInfo.per_mname || ""}`.trim();
+
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-gray-500">
-                {patient.sex}, {patient.age}
-              </div>
-              <div className="text-xs text-gray-500">ID: {patient.pat_id}</div>
+          <div className="flex flex-col min-w-[200px]">
+            <div className="font-medium">{fullName}</div>
+            <div className="text-sm text-gray-500">
+              {personalInfo.per_sex}, {personalInfo.per_dob ? calculateAge(personalInfo.per_dob) : "N/A"}
             </div>
+            <div className="text-xs text-gray-500">ID: {patientDetails?.pat_id || "N/A"}</div>
           </div>
         );
       }
     },
     {
-      accessorKey: "recordType",
-      header: "Record Type",
-      cell: ({ row }) => <div className="text-sm min-w-[120px] capitalize">{row.original.recordType.replace("-", " ")}</div>
-    },
-    {
       accessorKey: "details",
-      header: "Details",
+      header: "Record Details",
       cell: ({ row }) => {
-        if (row.original.recordType === "child-health") {
-          // Get the full record data from childHealthData
-          const fullRecord = childHealthData?.find((record: any) => row.original.recordType === "child-health" && record.chhist_id === row.original.checkup.chhist_id);
+        const data = row.original.data;
 
-          const vitalSigns = fullRecord?.child_health_vital_signs?.[0];
-          const nutritionStatus = fullRecord?.nutrition_statuses?.[0];
-
+        if (row.original.record_type === "child-health") {
           return (
             <div className="grid grid-cols-1 gap-1 text-sm min-w-[180px]">
-              <div>Birth Order: {row.original.checkup.chrec_details.birth_order}</div>
-              <div>Feeding: {row.original.checkup.chrec_details.type_of_feeding.replace("_", " ")}</div>
-              {vitalSigns && <div>Temp: {vitalSigns.temp}°C</div>}
-              {nutritionStatus && <div>Nutrition: {nutritionStatus.wfa} (WFA)</div>}
+              <div>UFC No: {data.chrec_details?.ufc_no || "N/A"}</div>
+              <div>TT Status of Mother: {data.tt_status || "N/A"}</div>
             </div>
           );
         } else {
-          const vital = row.original.consultation.vital_signs;
           return (
-            <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
-              <div>
-                BP: {vital.vital_bp_systolic}/{vital.vital_bp_diastolic} mmHg
-              </div>
-              <div>Temp: {vital.vital_temp}°C</div>
-              <div>Pulse: {vital.vital_pulse} bpm</div>
-              <div>RR: {vital.vital_RR} cpm</div>
+            <div className="grid grid-cols-1 gap-1 text-sm min-w-[200px]">
+              <div>Chief Complaint: {data.medrec_chief_complaint || "N/A"}</div>
+              <div>Status: {data.medrec_status || "N/A"}</div>
+              <div>Age: {data.medrec_age || "N/A"}</div>
             </div>
           );
         }
       }
     },
     {
-      accessorKey: "HT and WT",
-      header: "Height and Weight",
+      accessorKey: "vital_signs",
+      header: "Vital Signs",
       cell: ({ row }) => {
-        if (row.original.recordType === "child-health") {
-          // Get height and weight from child health vital signs if available
-          const vitalSigns = childHealthData?.find((record: any) => row.original.recordType === "child-health" && record.chhist_id === row.original.checkup.chhist_id)?.child_health_vital_signs?.[0]?.bm_details;
+        const data = row.original.data;
+
+        if (row.original.record_type === "child-health") {
+          const vitalSigns = data.child_health_vital_signs?.[0];
+          const bmDetails = vitalSigns?.bm_details;
+          const temp = vitalSigns?.temp;
 
           return (
             <div className="text-sm min-w-[180px]">
-              {vitalSigns && (
+              {temp && <div>Temp: {temp}°C</div>}
+              {bmDetails && (
                 <>
-                  <div>HT: {vitalSigns.height.endsWith(".00") ? vitalSigns.height.slice(0, -3) : vitalSigns.height} cm</div>
-                  <div>WT: {vitalSigns.weight.endsWith(".00") ? vitalSigns.weight.slice(0, -3) : vitalSigns.weight} kg</div>
+                  <div>Height: {bmDetails.height || "N/A"} cm</div>
+                  <div>Weight: {bmDetails.weight || "N/A"} kg</div>
+                  <div>WFA: {bmDetails.wfa || "N/A"}</div>
+                  <div>LHFA: {bmDetails.lhfa || "N/A"}</div>
                 </>
               )}
             </div>
           );
         } else {
-          const bmi = row.original.consultation.bmi_details;
+          const vitalSigns = data.vital_signs || {};
+          const bmiDetails = data.bmi_details || {};
+
           return (
-            <div className="text-sm min-w-[150px]">
-              <div>HT: {bmi?.height?.endsWith(".00") ? bmi.height.slice(0, -3) : bmi.height} cm</div>
-              <div>WT: {bmi?.weight?.endsWith(".00") ? bmi.weight.slice(0, -3) : bmi.weight} kg</div>
+            <div className="text-sm min-w-[180px]">
+              <div>
+                BP: {vitalSigns.vital_bp_systolic || "N/A"}/{vitalSigns.vital_bp_diastolic || "N/A"}
+              </div>
+              <div>Temp: {vitalSigns.vital_temp || "N/A"}°C</div>
+              <div>Pulse: {vitalSigns.vital_pulse || "N/A"}</div>
+              <div>RR: {vitalSigns.vital_RR || "N/A"}</div>
+              <div>Height: {bmiDetails.height || "N/A"} cm</div>
+              <div>Weight: {bmiDetails.weight || "N/A"} kg</div>
             </div>
           );
         }
@@ -338,79 +164,197 @@ export default function ForwardedCombinedHealthRecordsTable() {
     },
     {
       accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => (
-        <div className="flex justify-start px-2">
-          <div className="w-[250px] break-words">{row.original.patient.address || "No address provided"}</div>
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Address <ArrowUpDown size={15} />
         </div>
-      )
+      ),
+      cell: ({ row }) => {
+        const data = row.original.data;
+        let address = null;
+
+        if (row.original.record_type === "child-health") {
+          address = data.chrec_details?.patrec_details?.pat_details?.address;
+        } else {
+          address = data.patrec_details?.patient_details?.address;
+        }
+
+        return <div className="w-[200px] break-words text-sm">{address?.full_address || "No address provided"}</div>;
+      }
+    },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Created At <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-sm">{row.original.data.created_at ? new Date(row.original.data.created_at).toLocaleDateString() : "N/A"}</div>
     },
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <Link
-            to={row.original.recordType === "child-health" ? `/child-medical-consultation` : "/medical-consultation-flow"}
-            state={{
-              patientData: {
-                pat_id: row.original.patient.pat_id,
-                pat_type: row.original.patient.pat_type,
-                age: row.original.patient.age,
-                addressFull: row.original.patient.address,
-                address: {
-                  add_street: row.original.patient.street,
-                  add_barangay: row.original.patient.barangay,
-                  add_city: row.original.patient.city,
-                  add_province: row.original.patient.province,
-                  add_sitio: row.original.patient.sitio
-                },
-                households: [{ hh_id: row.original.patient.householdno }],
-                personal_info: {
-                  per_fname: row.original.patient.fname,
-                  per_mname: row.original.patient.mname,
-                  per_lname: row.original.patient.lname,
-                  per_dob: row.original.patient.dob,
-                  per_sex: row.original.patient.sex
-                }
-              },
-              ...(row.original.recordType === "child-health" ? { checkupData: row.original.checkup } : { MedicalConsultation: row.original.consultation })
-            }}
-          >
-            <Button variant="outline" size="sm">
-              View{" "}
-            </Button>
-          </Link>
-        </div>
-      )
+      cell: ({ row }) => {
+        const data = row.original.data;
+        let patientData = null;
+
+        if (row.original.record_type === "child-health") {
+          const patDetails = data.chrec_details?.patrec_details?.pat_details;
+          const personalInfo = patDetails?.personal_info || {};
+          const address = patDetails?.address || {};
+
+          patientData = {
+            pat_id: patDetails?.pat_id,
+            pat_type: patDetails?.pat_type,
+            age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
+            addressFull: address.full_address,
+            address: {
+              add_street: address.add_street,
+              add_barangay: address.add_barangay,
+              add_city: address.add_city,
+              add_province: address.add_province,
+              add_sitio: address.add_sitio
+            },
+            households: patDetails?.households || [],
+            personal_info: personalInfo
+          };
+        } else {
+          const patDetails = data.patrec_details?.patient_details;
+          const personalInfo = patDetails?.personal_info || {};
+          const address = patDetails?.address || {};
+
+          patientData = {
+            pat_id: data.patrec_details?.pat_id,
+            pat_type: patDetails?.pat_type,
+            age: personalInfo.per_dob ? calculateAge(personalInfo.per_dob).toString() : "",
+            addressFull: address.full_address,
+            address: {
+              add_street: address.add_street,
+              add_barangay: address.add_barangay,
+              add_city: address.add_city,
+              add_province: address.add_province,
+              add_sitio: address.add_sitio
+            },
+            households: patDetails?.households || [],
+            personal_info: personalInfo
+          };
+        }
+
+        return (
+          <div className="flex justify-center gap-2">
+            <ViewButton
+              onClick={() => {
+                navigate(row.original.record_type === "child-health" ? "/referred-patients/child" : "/referred-patients/adult", {
+                  state: {
+                    patientData,
+                    // Pass only the current row's data instead of combinedData
+                    recordData: row.original.data,
+                    recordType: row.original.record_type,
+                    // For child health, pass the specific checkup data
+                    ...(row.original.record_type === "child-health" ? { checkupData: row.original.data } : { MedicalConsultation: row.original.data })
+                  }
+                });
+              }}
+            />
+          </div>
+        );
+      }
     }
   ];
 
-  const isLoading = childHealthLoading || medConsultLoading;
-
   useEffect(() => {
-    if (isLoading) {
+    if (combinedLoading) {
       showLoading();
     } else {
       hideLoading();
     }
-  }, [isLoading]);
+  }, [combinedLoading, showLoading, hideLoading]);
+
+  const totalPages = Math.ceil((combinedData?.count || 0) / pageSize);
+  const totalCount = combinedData?.count || 0;
+
+  // Calculate resident and transient counts
+  const calculateCounts = useCallback(() => {
+    if (!combinedData?.results) return { residents: 0, transients: 0 };
+
+    let residents = 0;
+    let transients = 0;
+
+    combinedData.results.forEach((record: any) => {
+      let patType = "";
+
+      if (record.record_type === "child-health") {
+        patType = record.data.chrec_details?.patrec_details?.pat_details?.pat_type || "";
+      } else {
+        patType = record.data.patrec_details?.patient_details?.pat_type || "";
+      }
+
+      if (patType === "Resident") residents++;
+      if (patType === "Transient") transients++;
+    });
+
+    return { residents, transients };
+  }, [combinedData]);
+
+  const { residents, transients } = calculateCounts();
 
   return (
-    <>
-      <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
-            <ChevronLeft />
-          </Button>
-          <div className="flex-col items-center mb-4">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Combined Health Records</h1>
-            <p className="text-xs sm:text-sm text-darkGray">View and manage all health records in one place</p>
+   <MainLayoutComponent title="Medical Consultation" description="Forwarded records for Medical Consultation">
+     <div className="w-full h-full flex flex-col">
+        
+        {/* Summary Cards - Improved from reference design */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Total Card */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-full mr-4">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Records</p>
+                <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">All</span>
+            </div>
+          </div>
+
+          {/* Resident Card */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-full mr-4">
+                <Home className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Residents</p>
+                <p className="text-2xl font-bold text-gray-800">{residents}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">Resident</span>
+            </div>
+          </div>
+
+          {/* Transient Card */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 rounded-full mr-4">
+                <UserCheck className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Transients</p>
+                <p className="text-2xl font-bold text-gray-800">{transients}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">Transient</span>
+            </div>
           </div>
         </div>
-        <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+        {/* Filters Section - Improved styling */}
+        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
@@ -423,7 +367,8 @@ export default function ForwardedCombinedHealthRecordsTable() {
               options={[
                 { id: "all", name: "All Types" },
                 { id: "child-health", name: "Child Health" },
-                { id: "medical-consultation", name: "Medical Consultation" }
+                { id: "medical-consultation", name: "Medical Consultation" },
+                { id: "prenatal", name: "Prenatal" }
               ]}
               value={recordTypeFilter}
               onChange={(value) => setRecordTypeFilter(value)}
@@ -431,27 +376,18 @@ export default function ForwardedCombinedHealthRecordsTable() {
           </div>
         </div>
 
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+        <div className="h-full w-full ">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-14 h-8"
-                value={pageSize}
-                onChange={(e) => {
-                  const value = +e.target.value;
-                  setPageSize(value >= 1 ? value : 1);
-                }}
-                min="1"
-              />
+              <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => handlePageSizeChange(+e.target.value)} min="1" />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data">
-                    <FileInput className="mr-2 h-4 w-4" />
+                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
+                    <FileInput className="h-4 w-4" />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
@@ -463,28 +399,30 @@ export default function ForwardedCombinedHealthRecordsTable() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
+
+          <div className="bg-white w-full overflow-x-auto border">
+            {combinedLoading ? (
               <div className="w-full h-[100px] flex items-center text-gray-500 justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">loading....</span>
+                <span className="ml-2">Loading...</span>
               </div>
             ) : (
-              <DataTable columns={columns} data={paginatedData} />
+              <DataTable columns={columns} data={combinedData?.results || []} />
             )}
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-            </p>
 
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white  border">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing {(combinedData?.results || []).length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
+            </p>
             <div className="w-full sm:w-auto flex justify-center">
               <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>
       </div>
-      <Toaster />
-    </>
+
+
+   </MainLayoutComponent>
   );
 }

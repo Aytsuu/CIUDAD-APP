@@ -6,9 +6,14 @@ import {
 	getAllFollowUpVisits, 
 	getAllTransientAddresses,
 	getChildData,
-	checkPatientExistsGet
+	checkPatientExistsGet,
+	getChildren
  } from "../restful-api/get";
 import { AppointmentFilters } from "../restful-api/get";
+import { PatientFilters } from "../restful-api/get";
+
+
+
 
 export const useChildData = (id: any,) => {
 	return useQuery({
@@ -49,12 +54,13 @@ export const patientQueryKey = {
 	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
 }
 
-export const usePatients = (options = {}) => {
+export const usePatients = (filters: PatientFilters, options = {}) => {
 	return useQuery({
 		queryKey: patientQueryKey.lists(),
-		queryFn: getPatients,
+		queryFn: () => getPatients(filters),
 		staleTime: 30 * 1,
 		retry: 3,
+		refetchInterval: 3000,
 		...options
 	})
 }
@@ -84,6 +90,8 @@ export const useAllFollowUpVisits = (filters: AppointmentFilters, options = {}) 
     queryFn: () => getAllFollowUpVisits(filters),
     staleTime: 60 * 2,
     retry: 3,
+	refetchOnMount: false,
+	refetchInterval: 2 * 1000,
 	placeholderData: keepPreviousData,
     ...options,
   })
@@ -113,4 +121,14 @@ export const useCheckPatientExists = (rp_id: string) => {
 		staleTime: 300000, // 5 minutes
 	})
 }
+
+export const useGetChildren = (patientId: string) => {
+	return useQuery({
+		queryKey: ['getchildren', patientId],
+		queryFn: () => getChildren(patientId),
+		staleTime: 300000, // 5 minutes
+		enabled: !!patientId,
+	})
+}
+
 

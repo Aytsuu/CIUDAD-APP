@@ -108,7 +108,7 @@ export default function VaccineList() {
     if (recordToDelete) {
       deleteVaccineMutation.mutate({
         vaccineId: vaccineToDelete,
-        category: recordToDelete.category
+        category: "vaccine"
       });
     }
     setIsDeleteConfirmationOpen(false);

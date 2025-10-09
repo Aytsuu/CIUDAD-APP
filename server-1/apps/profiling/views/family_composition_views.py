@@ -67,7 +67,6 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         instances = []
-
         # Prepare model instances
         for item in serializer.validated_data:
             existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
@@ -75,12 +74,10 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
                 existing.delete()
             instances.append(FamilyComposition(**item))
 
-        created_instances = []
-        for instance in instances:
-            instance.save()
-            created_instances.append(instance)
+        created_instances = FamilyComposition.objects.bulk_create(instances)
 
         if len(created_instances) > 0:
+            
             # Perform double query
             double_queries = PostQueries()
             response = double_queries.family_composition(self.request.data)

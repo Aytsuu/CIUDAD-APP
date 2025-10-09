@@ -63,7 +63,7 @@ def get_patient_address_and_sitio(pat_obj):
             trans = pat_obj.trans_id
             if hasattr(trans, 'tradd_id') and trans.tradd_id:
                 address = trans.tradd_id.tradd_street or "N/A"
-                sitio = trans.tradd_id.tradd_sitio or "N/A"
+                sitio = trans.tradd_id.tradd_sitio or "N/A" 
     
     except Exception as e:
         print(f"Error fetching address for patient {pat_obj.pat_id}: {str(e)}")
@@ -71,18 +71,18 @@ def get_patient_address_and_sitio(pat_obj):
     return address, sitio
 
 def apply_patient_search_filter(queryset, search_query):
-    """Reusable search filter for patients"""
+    """Reusable search filter for patients with multiple term support"""
     search_terms = [term.strip() for term in search_query.split(',') if term.strip()]
     if not search_terms:
         return queryset
-    name_query = Q()
-    patient_id_query = Q()
-    person_ids = set()
-    transient_ids = set()
+    
+    combined_query = Q()
     
     for term in search_terms:
+        term_query = Q()
+        
         # Search by patient name (both resident and transient)
-        name_query |= (
+        term_query |= (
             Q(rp_id__per__per_fname__icontains=term) |
             Q(rp_id__per__per_mname__icontains=term) |
             Q(rp_id__per__per_lname__icontains=term) |
@@ -91,41 +91,35 @@ def apply_patient_search_filter(queryset, search_query):
             Q(trans_id__tran_lname__icontains=term)
         )
         
-        # Search by patient ID
-        patient_id_query |= Q(pat_id__icontains=term)
+        # Search by patient ID, resident profile ID, and transient ID
+        term_query |= (
+            Q(pat_id__icontains=term) |
+            Q(rp_id__rp_id__icontains=term) |
+            Q(trans_id__trans_id__icontains=term)
+        )
         
-        # Search by resident profile ID and transient ID
-        patient_id_query |= Q(rp_id__rp_id__icontains=term)
-        patient_id_query |= Q(trans_id__trans_id__icontains=term)
+        # Search by address for residents (direct relationship query - more efficient)
+        term_query |= (
+            Q(rp_id__per__personal_addresses__add__add_external_sitio__icontains=term) |
+            Q(rp_id__per__personal_addresses__add__add_province__icontains=term) |
+            Q(rp_id__per__personal_addresses__add__add_city__icontains=term) |
+            Q(rp_id__per__personal_addresses__add__add_street__icontains=term) |
+            Q(rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=term)
+        )
         
-        matching_person_ids = PersonalAddress.objects.filter(
-            Q(add__add_external_sitio__icontains=term) |
-            Q(add__add_province__icontains=term) |
-            Q(add__add_city__icontains=term) |
-            Q(add__add_street__icontains=term) |
-            Q(add__sitio__sitio_name__icontains=term)
-        ).values_list('per', flat=True)
-        person_ids.update(matching_person_ids)
+        # Search by address for transients (direct relationship query - more efficient)
+        term_query |= (
+            Q(trans_id__tradd_id__tradd_sitio__icontains=term) |
+            Q(trans_id__tradd_id__tradd_street__icontains=term) |
+            Q(trans_id__tradd_id__tradd_barangay__icontains=term) |
+            Q(trans_id__tradd_id__tradd_province__icontains=term) |
+            Q(trans_id__tradd_id__tradd_city__icontains=term)
+        )
         
-        # Search by sitio for transients
-        matching_transient_ids = Transient.objects.filter(
-            Q(tradd_id__tradd_sitio__icontains=term) |
-            Q(tradd_id__tradd_street__icontains=term) |
-            Q(tradd_id__tradd_barangay__icontains=term) |
-            Q(tradd_id__tradd_province__icontains=term) |
-            Q(tradd_id__tradd_city__icontains=term)  
-        ).values_list('trans_id', flat=True)
-        transient_ids.update(matching_transient_ids)
+        # Add this term's query to the combined OR query
+        combined_query |= term_query
     
-    # Combine all search queries
-    combined_query = name_query | patient_id_query 
-    
-    if person_ids:
-        combined_query |= Q(rp_id__per__in=person_ids)
-    if transient_ids:
-        combined_query |= Q(trans_id__in=transient_ids)
-    
-    return queryset.filter(combined_query)
+    return queryset.filter(combined_query).distinct()
 
 def apply_patient_type_filter(queryset, patient_type):
     """Reusable patient type filter"""

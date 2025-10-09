@@ -62,9 +62,9 @@ export default function HomeScreen() {
   //     </SafeAreaView>
   //   )
   // }
-  if (isLoading) {
-    return <LoadingModal visible={true} />;
-  }
+  // if (isLoading) {
+  //   return <LoadingModal visible={true} />;
+  // }
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (

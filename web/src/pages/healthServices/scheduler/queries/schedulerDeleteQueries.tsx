@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
-import { deleteService, deleteDay } from "../restful-api/schedulerDeleteAPI";
+import { deleteService, deleteDay, deleteScheduler } from "../restful-api/schedulerDeleteAPI";
 
 
 export const useDeleteService = () => {
@@ -45,6 +45,27 @@ export const useDeleteDay = () => {
 			toast.error('Failed to delete day.', {
 				icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
 			})
+		}
+	})
+}
+
+
+export const useDeleteScheduler = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: deleteScheduler,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['schedulers'] });
+			toast.success("Scheduler deleted successfully", {
+				icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+			});
+		},
+		onError: (error) => {
+			console.log("Error deleting scheduler:", error);
+			toast.error('Failed to delete scheduler.', {
+				icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+			});
 		}
 	})
 }

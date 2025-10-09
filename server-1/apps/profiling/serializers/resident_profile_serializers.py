@@ -214,8 +214,8 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers.staff_serializers import StaffAccountSerializer
-        return StaffAccountSerializer(obj.staff).data
+        from apps.administration.serializers.staff_serializers import StaffFullSerializer
+        return StaffFullSerializer(obj.staff).data
 
     def get_is_staff(self, obj):
         return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    

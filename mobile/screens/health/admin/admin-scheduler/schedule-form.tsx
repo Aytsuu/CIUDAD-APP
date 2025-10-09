@@ -1,21 +1,14 @@
-
 import React, { useEffect, useState } from "react"
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native" // Added ActivityIndicator for loading states
-import { Plus, X, Calendar, CheckSquare, Square } from "lucide-react-native" // Changed to lucide-react-native, added CheckSquare, Square for checkbox visual
-import type { ServiceScheduleFormProps,WeeklySchedule,DailySchedule,ServiceTimeSlots,} from "./schedule-types" // Adjusted path
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
+import { Plus, X, Calendar, CheckSquare, Square, ChevronLeft } from "lucide-react-native"
+import type { ServiceScheduleFormProps, WeeklySchedule, DailySchedule, ServiceTimeSlots } from "./schedule-types"
 import { useAddDay, useAddScheduler, useAddService } from "./queries/schedulerAddQueries"
 import { useGetDays, useGetServices } from "./queries/schedulerFetchQueries"
 import { useDeleteService, useDeleteDay } from "./queries/schedulerDeleteQueries"
+import PageLayout from "@/screens/_PageLayout"
+import { router } from "expo-router"
 
-
-// Placeholder for a React Native compatible toast notification
-// You'll need to implement or import a library like 'react-native-toast-message'
-const toast = {
-  success: (message: string) => console.log("Toast Success:", message),
-  error: (message: string) => console.log("Toast Error:", message),
-}
-
-// Custom Checkbox component for React Native
+// Custom Checkbox component with better visual feedback
 interface CustomCheckboxProps {
   id: string;
   checked: boolean;
@@ -25,10 +18,14 @@ interface CustomCheckboxProps {
 
 const CustomCheckbox: React.FC<CustomCheckboxProps> = ({ id, checked, onCheckedChange, label }) => (
   <TouchableOpacity
-    className="flex-row items-center space-x-2"
+    className="flex-row items-center space-x-2 p-2 rounded-md border border-gray-300 bg-white"
     onPress={() => onCheckedChange(!checked)}
     accessibilityRole="checkbox"
     accessibilityState={{ checked }}
+    style={{ 
+      borderColor: checked ? '#3B82F6' : '#D1D5DB',
+      backgroundColor: checked ? '#EFF6FF' : '#FFFFFF'
+    }}
   >
     {checked ? (
       <CheckSquare className="h-5 w-5 text-blue-600" />
@@ -119,12 +116,14 @@ export default function ServiceScheduleForm({
     setCurrentWeeklySchedule(initialSchedule)
   }, [initialSchedule])
 
-  const handleServiceToggle = (
+    const handleServiceToggle = (
     dayName: string,
     serviceName: string,
     timeSlot: keyof ServiceTimeSlots,
     checked: boolean,
   ) => {
+    console.log("Toggling:", dayName, serviceName, timeSlot, checked);
+    
     setCurrentWeeklySchedule((prevSchedule) => {
       const prevDailySchedule: DailySchedule = prevSchedule[dayName] || {}
       const prevServiceTimeSlots: ServiceTimeSlots = prevDailySchedule[serviceName] || { AM: false, PM: false }
@@ -158,7 +157,6 @@ export default function ServiceScheduleForm({
 
       } catch (error: any) {
         console.error("Error adding service: ", error)
-        toast.error(`Failed to add service: ${error.message || "Unknown error"}`)
       }
     }
   }
@@ -169,7 +167,6 @@ export default function ServiceScheduleForm({
         const serviceObj = servicesData?.find(s => s.service_name === service)
         if (!serviceObj) {
           console.error("Service not found: ", service)
-          toast.error("Service not found for deletion.")
           return
         }
 
@@ -192,14 +189,12 @@ export default function ServiceScheduleForm({
         console.log(`Removed service: ${service}`)
     } catch (error: any) {
       console.error("Error removing service:", error)
-      toast.error(`Failed to remove service: ${error.message || "Unknown error"}`)
     }
   }
 
   // add day
   const handleAddDay = async () => {
     if (days.length >= 7) { // Use local 'days' state for count
-      toast.error("Cannot add more than 7 days.")
       return
     }
 
@@ -212,7 +207,6 @@ export default function ServiceScheduleForm({
       console.log("Successfully added day: ", nextDay)
     } catch (error: any) {
       console.error("Error adding day: ", error)
-      toast.error(`Failed to add day: ${error.message || "Unknown error"}`)
     }
   }
 
@@ -223,7 +217,6 @@ export default function ServiceScheduleForm({
 
     if (!dayObj) {
           console.error("Day not found: ", day)
-          toast.error("Day not found for deletion.")
           return
         }
     
@@ -244,7 +237,6 @@ export default function ServiceScheduleForm({
     console.log(`Removed day: ${day}`)
   } catch (error: any) {
     console.error("Error removing day:", error)
-    toast.error(`Failed to remove day: ${error.message || "Unknown error"}`)
   }
 }
 
@@ -288,11 +280,9 @@ export default function ServiceScheduleForm({
       console.log("Created scheduler entries: ", createdEntries);
 
       onSave(currentWeeklySchedule) // Call parent save handler
-      toast.success("Weekly schedule saved successfully!")
       onClose && onClose(); // Close modal after successful save
     } catch (error: any){ 
       console.error("Error saving schedule: ", error)
-      toast.error(`Failed to save schedule: ${error.message || "Unknown error"}`)
     }
   }
 
@@ -307,14 +297,23 @@ export default function ServiceScheduleForm({
 
 
   return (
-    // Card
+     <PageLayout
+             leftAction={
+               <TouchableOpacity
+                 onPress={() => router.back()}
+                 className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+               >
+                 <ChevronLeft size={24} color="#374151" />
+               </TouchableOpacity>
+             }
+             headerTitle={<Text className="text-gray-900 text-lg font-semibold">Weekly Service Schedule Editor</Text>}
+             rightAction={<View className="w-10 h-10" />}
+           >
     <View className="w-full bg-white rounded-lg shadow-md overflow-hidden flex-1"> {/* flex-1 to allow ScrollView */}
       {/* CardHeader */}
       <View className="p-4 pb-2">
-        {/* CardTitle */}
-        <Text className="text-xl font-semibold text-gray-800">Weekly Service Schedule Editor</Text>
-        {/* CardDescription */}
-        <Text className="text-sm text-gray-500 mt-1">Manage service availability and add new services or days as needed.</Text>
+      
+        <Text className="text-sm text-gray-500">Manage service availability and add new services or days as needed.</Text>
       </View>
       
       <ScrollView className="flex-1 p-4"> {/* Scrollable content */}
@@ -483,7 +482,7 @@ export default function ServiceScheduleForm({
         <View className="h-px bg-gray-200 my-6" />
 
         {/* Schedule Grid */}
-        <View className="grid grid-cols-1 md:grid-cols-2 gap-6"> {/* Use flex-col for mobile, wrap for larger screens */}
+        <View className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {days.map((dayName) => {
             const currentDaySchedule: DailySchedule = currentWeeklySchedule[dayName] || {}
 
@@ -500,9 +499,9 @@ export default function ServiceScheduleForm({
                       const serviceTimeSlots: ServiceTimeSlots = currentDaySchedule[service] || { AM: false, PM: false }
 
                       return (
-                        <View key={`${dayName}-${service}`} className="flex-row items-center justify-between p-1">
+                        <View key={`${dayName}-${service}`} className="flex-row items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
                           <Text className="text-base font-medium flex-1">{service}</Text>
-                          <View className="flex-row items-center gap-4 pl-4">
+                          <View className="flex-row items-center gap-2 pl-4">
                             <CustomCheckbox
                               id={`${dayName}-${service}-am`}
                               checked={serviceTimeSlots.AM}
@@ -550,5 +549,6 @@ export default function ServiceScheduleForm({
         </TouchableOpacity>
       </ScrollView>
     </View>
+    </PageLayout>
   )
 }

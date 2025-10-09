@@ -21,18 +21,11 @@ from apps.patientrecords.serializers.findings_serializers import FindingSerializ
 from apps.patientrecords.serializers.physicalexam_serializers import PEResultSerializer
 from apps.medicineservices.models import FindingsPlanTreatment
 from apps.childhealthservices.models import ChildHealthVitalSigns,ChildHealth_History
+from apps.childhealthservices.serializers import ChildHealthHistoryFullSerializer
 from apps.inventory.models import MedicineInventory
 from pagination import *
 from apps.healthProfiling.models import *
-
-# ALL RECORDS
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
-from django.db.models import Count, Q
-from datetime import datetime, timedelta
-
-
+from apps.medicineservices.serializers import MedicineRequestItemSerializer
 
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
@@ -53,7 +46,7 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
             'rp_id__per', 
             'trans_id'
         ).prefetch_related(
-            'rp_id__per__personaladdress_set__add__sitio',
+            'rp_id__per__personal_addresses__add__sitio',
             'patient_records__medical_consultation_record'
         ).distinct().order_by('-medicalrec_count')
         
@@ -63,15 +56,12 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         # Combined search (patient name, patient ID, household number, and sitio)
         search_query = self.request.query_params.get('search', '').strip()
-        sitio_search = self.request.query_params.get('sitio', '').strip()
         
         # Combine search and sitio parameters
         combined_search_terms = []
         if search_query and len(search_query) >= 2:  # Allow shorter search terms
             combined_search_terms.append(search_query)
-        if sitio_search:
-            combined_search_terms.append(sitio_search)
-        
+    
         if combined_search_terms:
             filters_applied = True
             combined_search = ','.join(combined_search_terms)
@@ -115,41 +105,298 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         return Response(serializer.data)
     
     
-# USE FOR ADDING MEDICAL RECORD
-class MedicalConsultationRecordView(generics.CreateAPIView):
-    serializer_class = MedicalConsultationRecordSerializer
-    queryset  =MedicalConsultation_Record.objects.all()
     
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     
-class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
-    serializer_class = MedicalConsultationRecordSerializer
-    queryset = MedicalConsultation_Record.objects.all()
-    lookup_field = 'medrec_id'
+#================== MEDICAL CONSULTAION FORWARDED TABLE==================
+class CombinedHealthRecordsView(APIView):
+    pagination_class = StandardResultsPagination
+    
+    def get(self, request, assigned_to=None):
+        # Get query parameters
+        search_query = request.query_params.get('search', '')
+        record_type = request.query_params.get('record_type', 'all')
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
+        
+        # Prefetch related data for child health records with proper joins
+        child_health_queryset = ChildHealth_History.objects.select_related(
+            'chrec__patrec__pat_id__rp_id__per',
+            'chrec__patrec__pat_id__trans_id__tradd_id',
+            'assigned_to'
+        ).prefetch_related(
+            'child_health_vital_signs__vital',
+            'child_health_vital_signs__bm',  # Important: prefetch body measurements
+            'child_health_vital_signs__find',  # Important: prefetch findings
+            'child_health_notes',
+            'child_health_supplements__medrec',
+            'exclusive_bf_checks',
+            'immunization_tracking__vachist',
+            'supplements_statuses'
+        )
+        
+        # Prefetch related data for medical consultation records
+        med_consult_queryset = MedicalConsultation_Record.objects.select_related(
+            'patrec__pat_id__rp_id__per',
+            'patrec__pat_id__trans_id__tradd_id',
+            'vital',
+            'bm',
+            'find',
+            'staff__rp__per',
+            'assigned_to'
+        ).filter(medrec_status='pending')
+        
+        # Apply assigned_to filter
+        if assigned_to:
+            child_health_queryset = child_health_queryset.filter(assigned_to_id=assigned_to, status="check-up")
+            med_consult_queryset = med_consult_queryset.filter(assigned_to_id=assigned_to)
+        
+        # Apply search filter
+        if search_query:
+            child_health_queryset = child_health_queryset.filter(
+                Q(chrec__ufc_no__icontains=search_query) |
+                Q(chrec__family_no__icontains=search_query) |
+                Q(tt_status__icontains=search_query) |
+                Q(chrec__patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(chrec__patrec__pat_id__trans_id__tran_fname__icontains=search_query)
+            )
+            
+            med_consult_queryset = med_consult_queryset.filter(
+                Q(medrec_chief_complaint__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__per_lname__icontains=search_query) |
+                Q(patrec__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_lname__icontains=search_query) |
+                Q(patrec__pat_id__trans_id__tran_fname__icontains=search_query)
+            )
+        
+        # Apply record type filter
+        if record_type != 'all':
+            if record_type == 'child-health':
+                med_consult_queryset = MedicalConsultation_Record.objects.none()
+            elif record_type == 'medical-consultation':
+                child_health_queryset = ChildHealth_History.objects.none()
+        
+        combined_data = []
+        
+        # Process child health records using serializers
+        for record in child_health_queryset:
+            # Use the ChildHealthHistoryFullSerializer to get all related data properly
+            serializer = ChildHealthHistoryFullSerializer(record)
+            serialized_data = serializer.data
+            
+            # Extract patient details using your existing method
+            chrec = record.chrec
+            patrec = chrec.patrec
+            patient = patrec.pat_id
+            patient_details = self._get_patient_details(patient)
+            
+            # Add patient details to the serialized data
+            if 'chrec_details' not in serialized_data:
+                serialized_data['chrec_details'] = {}
+            if 'patrec_details' not in serialized_data['chrec_details']:
+                serialized_data['chrec_details']['patrec_details'] = {}
+            
+            serialized_data['chrec_details']['patrec_details']['pat_details'] = patient_details
+            
+            combined_data.append({
+                'record_type': 'child-health',
+                'data': serialized_data
+            })
+        
+        # Process medical consultation records
+        for record in med_consult_queryset:
+            patrec = record.patrec
+            patient = patrec.pat_id
+            serializer = MedicalConsultationRecordSerializer(record)
+            serialized_data = serializer.data
+            # Get patient details
+            patient_details = self._get_patient_details(patient)
+            
+            # Get staff details
+            staff_details = None
+            if record.staff and hasattr(record.staff, 'rp') and record.staff.rp:
+                staff_details = {
+                    'rp': {
+                        'per': {
+                            'per_fname': record.staff.rp.per.per_fname if hasattr(record.staff.rp.per, 'per_fname') else '',
+                            'per_lname': record.staff.rp.per.per_lname if hasattr(record.staff.rp.per, 'per_lname') else '',
+                            'per_mname': record.staff.rp.per.per_mname if hasattr(record.staff.rp.per, 'per_mname') else '',
+                            'per_suffix': record.staff.rp.per.per_suffix if hasattr(record.staff.rp.per, 'per_suffix') else '',
+                            'per_dob': record.staff.rp.per.per_dob.isoformat() if hasattr(record.staff.rp.per, 'per_dob') and record.staff.rp.per.per_dob else ''
+                        }
+                    }
+                }
+            
+            # Get vital signs
+            vital_data = {}
+            if record.vital:
+                vital_data = {
+                    'vital_bp_systolic': record.vital.vital_bp_systolic,
+                    'vital_bp_diastolic': record.vital.vital_bp_diastolic,
+                    'vital_temp': record.vital.vital_temp,
+                    'vital_pulse': record.vital.vital_pulse,
+                    'vital_RR': record.vital.vital_RR
+                }
+            
+            # Get BMI details
+            bmi_data = {}
+            if record.bm:
+                bmi_data = {
+                    'height': record.bm.height,
+                    'weight': record.bm.weight
+                }
+            
+            combined_data.append({
+                'record_type': 'medical-consultation',
+                'data': serialized_data  # This contains ALL attributes from your serializer
 
+            })
+        
+        # Sort by created_at (most recent first)
+        combined_data.sort(key=lambda x: x['data'].get('created_at', ''), reverse=True)
+        
+        # Manual pagination
+        total_count = len(combined_data)
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        paginated_data = combined_data[start_index:end_index]
+        
+        # Calculate totals
+        residents = 0
+        transients = 0
+        
+        for record in combined_data:
+            pat_details = None
+            if record['record_type'] == 'child-health':
+                pat_details = record['data'].get('chrec_details', {}).get('patrec_details', {}).get('pat_details', {})
+            else:
+                pat_details = record['data'].get('patrec_details', {}).get('patient_details', {})
+            
+            if pat_details and pat_details.get('pat_type') == 'Resident':
+                residents += 1
+            elif pat_details:
+                transients += 1
+        
+        total_patients = residents + transients
+        
+        # Build response
+        response_data = {
+            'count': total_count,
+            'next': None if end_index >= total_count else page + 1,
+            'previous': None if page == 1 else page - 1,
+            'results': paginated_data,
+            'totals': {
+                'residents': residents,
+                'transients': transients,
+                'total_patients': total_patients
+            }
+        }
+        
+        return Response(response_data)
+    
+    def _get_patient_details(self, patient):
+        """Helper method to extract patient details"""
+        if patient.pat_type == 'Resident' and patient.rp_id and hasattr(patient.rp_id, 'per'):
+            per = patient.rp_id.per
+            address = getattr(patient.rp_id, 'address', None)
+            
+            return {
+                'pat_id': patient.pat_id,
+                'pat_type': patient.pat_type,
+                'personal_info': {
+                    'per_fname': per.per_fname,
+                    'per_lname': per.per_lname,
+                    'per_mname': per.per_mname,
+                    'per_sex': per.per_sex,
+                    'per_dob': per.per_dob.isoformat() if per.per_dob else None
+                },
+                'address': {
+                    'add_street': address.add_street if address else '',
+                    'add_sitio': address.add_sitio if address else '',
+                    'add_barangay': address.add_barangay if address else '',
+                    'add_city': address.add_city if address else '',
+                    'add_province': address.add_province if address else '',
+                    'full_address': f"{address.add_street if address else ''}, {address.add_sitio if address else ''}, {address.add_barangay if address else ''}, {address.add_city if address else ''}, {address.add_province if address else ''}".strip(', ')
+                },
+                'households': [{'hh_id': hh.hh_id} for hh in patient.rp_id.households.all()] if hasattr(patient.rp_id, 'households') else []
+            }
+        
+        elif patient.pat_type == 'Transient' and patient.trans_id:
+            trans = patient.trans_id
+            
+            # Get address from TransientAddress if available
+            address = trans.tradd_id if hasattr(trans, 'tradd_id') else None
+            
+            return {
+                'pat_id': patient.pat_id,
+                'pat_type': patient.pat_type,
+                'personal_info': {
+                    'per_fname': trans.tran_fname,
+                    'per_lname': trans.tran_lname,
+                    'per_mname': trans.tran_mname,
+                    'per_sex': trans.tran_sex,
+                    'per_dob': trans.tran_dob.isoformat() if trans.tran_dob else None
+                },
+                'address': {
+                    'add_street': address.tradd_street if address else '',
+                    'add_sitio': address.tradd_sitio if address else '',
+                    'add_barangay': address.tradd_barangay if address else '',
+                    'add_city': address.tradd_city if address else '',
+                    'add_province': address.tradd_province if address else '',
+                    'full_address': f"{address.tradd_street if address else ''}, {address.tradd_sitio if address else ''}, {address.tradd_barangay if address else ''}, {address.tradd_city if address else ''}, {address.tradd_province if address else ''}".strip(', ')
+                } if address else {
+                    'add_street': '',
+                    'add_sitio': '',
+                    'add_barangay': '',
+                    'add_city': '',
+                    'add_province': '',
+                    'full_address': ''
+                },
+                'households': []  # Transients typically don't have households
+            }
+        
+        return {}
 
-# INDIVIDUAL PATIENT RECORDS
-# class ViewMedicalConsultationRecordView(generics.ListAPIView):
+# # USE FOR ADDING MEDICAL RECORD
+# class MedicalConsultationRecordView(generics.CreateAPIView):
 #     serializer_class = MedicalConsultationRecordSerializer
-#     def get_queryset(self):
-#         pat_id = self.kwargs['pat_id']
-#         return MedicalConsultation_Record.objects.filter(
-#             patrec__pat_id=pat_id,
-#             medrec_status='completed' 
-#         ).order_by('-created_at')
+#     queryset  =MedicalConsultation_Record.objects.all()
+    
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)
+    
+# class UpdateMedicalConsultationRecordView(generics.UpdateAPIView):
+#     serializer_class = MedicalConsultationRecordSerializer
+#     queryset = MedicalConsultation_Record.objects.all()
+#     lookup_field = 'medrec_id'
+
+
 class ViewMedicalConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
-        return MedicalConsultation_Record.objects.filter(
+        search_query = self.request.GET.get('search', '').strip()
+        
+        queryset = MedicalConsultation_Record.objects.filter(
             patrec__pat_id=pat_id,
             medrec_status='completed' 
         ).order_by('-created_at')
-
-
+        
+        # Add search functionality
+        if search_query:
+            queryset = queryset.filter(
+                Q(created_at__icontains=search_query) |
+                Q(find__assessment_summary__icontains=search_query) |
+                Q(find__subj_summary__icontains=search_query) |
+                Q(find__obj_summary__icontains=search_query) |
+                Q(find__plantreatment_summary__icontains=search_query) |
+                Q(medrec_chief_complaint__icontains=search_query)
+            )
+        
+        return queryset
 
 class PendingPatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = MedicalConsultationRecordSerializer
@@ -193,7 +440,6 @@ class PendingMedConCountView(APIView):
             .filter(status="check-up")
             .count()
         )
-        
         # Total count
         total_count = med_con_count + child_checkup_count
         
@@ -201,25 +447,27 @@ class PendingMedConCountView(APIView):
             "count": total_count
         })
     
-class MedicalConsultationTotalCountAPIView(APIView):
-    def get(self, request):
-        try:
-            # Count total unique medical consultation records
-            total_records = MedicalConsultation_Record.objects.count()
+    
+# class MedicalConsultationTotalCountAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             # Count total unique medical consultation records
+#             total_records = MedicalConsultation_Record.objects.count()
             
-            return Response({
-                'success': True,
-                'total_records': total_records
-            }, status=status.HTTP_200_OK)
+#             return Response({
+#                 'success': True,
+#                 'total_records': total_records
+#             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         except Exception as e:
+#             return Response({
+#                 'success': False,
+#                 'error': str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# CREATE STEP1
+
+#================================ CREATE STEP1
 class CreateMedicalConsultationView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -240,7 +488,7 @@ class CreateMedicalConsultationView(APIView):
                         "success": False,
                         "error": "Missing required fields",
                         "missing_fields": missing_fields,
-                        "received_data": data,   # ✅ so you see what was actually sent
+                        "received_data": data,
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -256,10 +504,19 @@ class CreateMedicalConsultationView(APIView):
                         {"error": f"Invalid staff ID: {staff_id}"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+            
+            # 🔹 Get Patient instance (ADD THIS)
+            try:
+                patient = Patient.objects.get(pat_id=data["pat_id"])
+            except Patient.DoesNotExist:
+                return Response(
+                    {"error": f"Invalid patient ID: {data['pat_id']}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # 1. Create PatientRecord
             patrec = PatientRecord.objects.create(
-                pat_id_id=data["pat_id"],
+                pat_id_id=data["pat_id"],  # This might also need fixing if it expects a Patient instance
                 patrec_type="Medical Consultation",
             )
 
@@ -275,14 +532,22 @@ class CreateMedicalConsultationView(APIView):
                 staff=staff,
             )
 
-            # 3. Create BodyMeasurement
+            # 3. Create BodyMeasurement - FIXED
             bm = BodyMeasurement.objects.create(
                 height=float(data.get("height", 0)),
                 weight=float(data.get("weight", 0)),
-                pat=pat_id,
+                pat=patient,  # ✅ Now passing Patient instance instead of string
                 staff=staff,
             )
 
+            assigned_staff = None
+            selected_staff_id = data.get('selectedDoctorStaffId')
+            if selected_staff_id:  # This checks for truthy values (not None, not empty string)
+                try:
+                    assigned_staff = Staff.objects.get(staff_id=selected_staff_id)
+                except Staff.DoesNotExist:
+                    print(f"Staff with ID {selected_staff_id} does not exist")
+       
             # 4. Create MedicalConsultation_Record
             medrec = MedicalConsultation_Record.objects.create(
                 patrec=patrec,
@@ -290,8 +555,8 @@ class CreateMedicalConsultationView(APIView):
                 bm=bm,
                 find=None,
                 medrec_chief_complaint=data["medrec_chief_complaint"],
-                
                 staff=staff,
+                assigned_to=assigned_staff
             )
 
             return Response(
@@ -309,13 +574,8 @@ class CreateMedicalConsultationView(APIView):
             return Response(
                 {"error": str(e), "received_data": data},
                 status=status.HTTP_400_BAD_REQUEST,
-            ) 
+            )
 
-
-
-from apps.medicineservices.serializers import MedicineRequestItemSerializer
-
-# ========MEDICAL CONSULTATION END SOAP FORM
 # ========MEDICAL CONSULTATION END SOAP FORM
 class SoapFormSubmissionView(APIView):
     @transaction.atomic
@@ -422,7 +682,12 @@ class SoapFormSubmissionView(APIView):
             # 5. Medical History
             if data.get('selected_illnesses'):
                 medical_history_data = [
-                    {'patrec_id': patrec_id, 'ill_id': ill_id, 'year': date.today().strftime('%y-%m-%d')}
+                    {
+                        'patrec_id': patrec_id,
+                        'ill_id': ill_id,
+                        'ill_date': date.today().strftime('%Y-%m-%d'),  # Corrected year format
+                        'is_for_surveillance': True  # Added field for surveillance
+                    }
                     for ill_id in data['selected_illnesses']
                 ]
                 MedicalHistory.objects.bulk_create([
@@ -480,8 +745,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
             if medicine_request_data and medicine_request_data.get("medicines"):
                 # Create MedicineRequest first
                 med_request_data = {
-                    'rp_id': medicine_request_data.get('rp_id'),  # Physician ID
-                    'pat_id': medicine_request_data.get('pat_id'),  # Patient ID
+                    'rp_id': medicine_request_data.get('rp_id'),  
+                    'pat_id': medicine_request_data.get('pat_id'), 
                     'status': 'pending',
                     'mode': medicine_request_data.get('mode', 'walk-in')
                 }
@@ -494,7 +759,7 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 # Create MedicineRequestItem for each medicine and update inventory
                 for medicine in medicine_request_data['medicines']:
                     minv_id = medicine.get('minv_id')
-                    requested_qty = medicine.get('quantity', 0)  # Note: using 'quantity' key for child health
+                    requested_qty = medicine.get('medrec_qty', 0)  # Note: using 'quantity' key for child health
                     
                     # Update MedicineInventory with temporary deduction
                     if minv_id and requested_qty > 0:
@@ -556,7 +821,8 @@ class ChildHealthSoapFormSubmissionView(APIView):
                     MedicalHistory(
                         patrec_id=patrec_id,
                         ill_id=ill_id,
-                        year=date.today().strftime('%y-%m-%d')
+                        ill_date=date.today().strftime('%y-%m-%d'),
+                        is_for_surveillance=True  
                     )
                     for ill_id in data["selected_illnesses"]
                 ])
@@ -577,3 +843,205 @@ class ChildHealthSoapFormSubmissionView(APIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+   
+
+
+
+
+# ===================FAMILY HISTORY===============================
+class FamilyPHIllnessCheckAPIView(APIView):
+    """
+    API view that checks family medical history for illnesses
+    Gets family members through FamilyComposition and checks their medical history
+    """
+    
+    def get(self, request, pat_id):
+        try: 
+            # Get search parameter from query string
+            search_query = request.GET.get('search', '').strip()
+            
+            # First, find the patient using the string ID
+            patient = Patient.objects.get(pat_id=pat_id)
+            
+            # Get the ResidentProfile for this patient
+            try:
+                resident_profile = ResidentProfile.objects.get(patients=patient)
+            except ResidentProfile.DoesNotExist:
+                return Response({
+                    'status': 'error',
+                    'message': 'Resident profile not found for patient',
+                    'error': f'No resident profile found for patient ID {pat_id}',
+                    'search_query': search_query if search_query else None
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get family compositions where this resident profile is involved
+            family_compositions = FamilyComposition.objects.filter(rp=resident_profile)
+            
+            if not family_compositions.exists():
+                return Response({
+                    'status': 'success',
+                    'message': 'No family members found',
+                    'patient_id': pat_id,
+                    'family_members_count': 0,
+                    'ph_illnesses': {
+                        'count': 0,
+                        'data': []
+                    },
+                    'other_illnesses': "None",
+                    'search_query': search_query if search_query else None
+                }, status=status.HTTP_200_OK)
+            
+            # Get all family members from the same families
+            family_ids = family_compositions.values_list('fam_id', flat=True)
+            
+            # Get all family members (excluding the patient themselves)
+            family_members_excluding_patient = FamilyComposition.objects.filter(
+                fam_id__in=family_ids
+            ).exclude(rp=resident_profile)
+            
+            # Get ResidentProfile IDs of family members
+            family_rp_ids_excluding_patient = family_members_excluding_patient.values_list('rp_id', flat=True)
+            
+            # Get Patient instances for family members
+            family_patients_excluding_patient = Patient.objects.filter(rp_id__in=family_rp_ids_excluding_patient)
+            family_patient_ids_excluding_patient = list(family_patients_excluding_patient.values_list('pat_id', flat=True))
+            
+            # Get PatientRecord instances for family members
+            family_patient_records = PatientRecord.objects.filter(
+                pat_id__in=family_patient_ids_excluding_patient
+            )
+            family_record_ids = list(family_patient_records.values_list('patrec_id', flat=True))
+            
+            # Get PatientRecord instance for the current patient
+            current_patient_record = PatientRecord.objects.filter(pat_id=pat_id).first()
+            current_patient_record_id = current_patient_record.patrec_id if current_patient_record else None
+            
+            # Get all PH illnesses (PH-1 to PH-20)
+            ph_codes = [f'PH-{i}' for i in range(1, 21)]
+            # Get all FP illnesses (FP-1 to FP-11)
+            fp_codes = [f'FP-{i}' for i in range(1, 12)]
+            
+            # Get PH illnesses with search filter if provided
+            ph_illnesses = Illness.objects.filter(ill_code__in=ph_codes)
+            
+            # Apply search filter to PH illnesses if search query is provided
+            if search_query:
+                ph_illnesses = ph_illnesses.filter(
+                    models.Q(illname__icontains=search_query) |
+                    models.Q(ill_code__icontains=search_query) |
+                    models.Q(ill_description__icontains=search_query)
+                )
+            
+            ph_illnesses = ph_illnesses.order_by('ill_code')
+            
+            # Get FP illnesses
+            fp_illnesses = Illness.objects.filter(ill_code__in=fp_codes)
+            
+            # Get family medical history from MedicalHistory (family members + current patient's is_from_famhistory records)
+            family_medical_history = MedicalHistory.objects.filter(
+                models.Q(patrec_id__in=family_record_ids) |  # Family members' medical history
+                models.Q(patrec_id=current_patient_record_id, is_from_famhistory=True)  # Current patient's family history records
+            ).select_related('ill')
+            
+            # Apply search filter to family medical history if search query is provided
+            if search_query:
+                family_medical_history = family_medical_history.filter(
+                    models.Q(ill__illname__icontains=search_query) |
+                    models.Q(ill__ill_code__icontains=search_query) |
+                    models.Q(ill__ill_description__icontains=search_query)
+                )
+            
+            # Combine all illness IDs that family members have (using set for distinct)
+            family_illness_ids = set()
+            # Also store illness names for checking FP codes
+            family_illness_names = set()
+            
+            # From MedicalHistory
+            for history in family_medical_history:
+                if history.ill_id:
+                    family_illness_ids.add(history.ill_id)
+                    if history.ill:
+                        family_illness_names.add(history.ill.illname)
+            
+            # Prepare PH illnesses data with check if family has them
+            ph_illnesses_data = []
+            for illness in ph_illnesses:
+                # Check if family has this PH illness by ID
+                has_family_history = illness.ill_id in family_illness_ids
+                
+                # Get year information if available
+                year_info = None
+                if has_family_history:
+                    # Check MedicalHistory
+                    med_history = family_medical_history.filter(ill_id=illness.ill_id).first()
+                    if med_history:
+                        year_info = med_history.ill_date
+                
+                ph_illnesses_data.append({
+                    'ill_id': illness.ill_id,
+                    'illname': illness.illname,
+                    'ill_description': illness.ill_description,
+                    'ill_code': illness.ill_code,
+                    'has_family_history': has_family_history,
+                    'year': year_info
+                })
+            
+            # Get other illnesses (illnesses that family has but are NOT in PH codes)
+            # This includes FP codes that don't have matching PH codes
+            other_illnesses_set = set()
+            
+            # From MedicalHistory - get distinct illnesses that family has
+            for history in family_medical_history:
+                if history.ill:
+                    illness_name = history.ill.illname
+                    illness_code = history.ill.ill_code
+                    
+                    # Check if this illness is a PH code
+                    is_ph_code = illness_code in ph_codes
+                    
+                    # If it's NOT a PH code, include it in other illnesses
+                    if not is_ph_code:
+                        other_illnesses_set.add(illness_name)
+            
+            # Convert set to sorted list for consistent ordering
+            other_illnesses_list = sorted(list(other_illnesses_set)) if other_illnesses_set else []
+            
+            # Format as comma-separated string (already distinct due to set)
+            other_illnesses_string = ", ".join(other_illnesses_list) if other_illnesses_list else "None"
+            
+            # Filter other illnesses by search query if provided
+            if search_query:
+                other_illnesses_list = [illness for illness in other_illnesses_list if search_query.lower() in illness.lower()]
+                other_illnesses_string = ", ".join(other_illnesses_list) if other_illnesses_list else "None"
+            
+            return Response({
+                'status': 'success',
+                'message': 'Family illness check completed successfully',
+                'patient_id': pat_id,
+                'family_members_count': len(family_patient_ids_excluding_patient),
+                'ph_illnesses': {
+                    'count': len([ill for ill in ph_illnesses_data if ill['has_family_history']]),
+                    'total_count': len(ph_illnesses_data),
+                    'data': ph_illnesses_data
+                },
+                'other_illnesses': other_illnesses_string,
+                'other_illnesses_distinct_count': len(other_illnesses_list),
+                'search_query': search_query if search_query else None,
+                'search_applied': bool(search_query)
+            }, status=status.HTTP_200_OK)
+            
+        except Patient.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Patient not found',
+                'error': f'Patient with ID {pat_id} does not exist',
+                'search_query': search_query if search_query else None
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': 'Failed to retrieve family illness data',
+                'error': str(e),
+                'search_query': search_query if search_query else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

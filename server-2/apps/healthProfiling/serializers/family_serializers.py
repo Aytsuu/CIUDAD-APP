@@ -9,6 +9,7 @@ class FamilyBaseSerializer(serializers.ModelSerializer):
     model = Family
     fields = '__all__'
   
+
 class FamilyTableSerializer(serializers.ModelSerializer):
   members = serializers.SerializerMethodField()
   household_no = serializers.CharField(source='hh.hh_id')
@@ -27,7 +28,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return FamilyComposition.objects.filter(fam=obj).count()
 
   def get_father(self, obj):
-    father = FamilyComposition.objects.filter(fam=obj, fc_role='Father').first()
+    father = FamilyComposition.objects.filter(fam=obj, fc_role='FATHER').first()
     if father: 
       info = father.rp.per
       return f"{info.per_fname}"
@@ -35,7 +36,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return ""
   
   def get_mother(self, obj):
-    mother = FamilyComposition.objects.filter(fam=obj, fc_role='Mother').first()
+    mother = FamilyComposition.objects.filter(fam=obj, fc_role='MOTHER').first()
     if mother: 
       info = mother.rp.per
       return f"{info.per_fname}"
@@ -43,7 +44,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     return ""
   
   def get_guardian(self, obj):
-    guardian = FamilyComposition.objects.filter(fam=obj, fc_role='Guardian').first()
+    guardian = FamilyComposition.objects.filter(fam=obj, fc_role='GUARDIAN').first()
     if guardian: 
       info = guardian.rp.per
       return f"{info.per_fname}"
@@ -103,6 +104,8 @@ class FamilyListSerializer(serializers.ModelSerializer):
   
   def get_total_members(self, obj):
     return FamilyComposition.objects.filter(fam=obj).count()
+
+
 
 
 # from rest_framework import serializers

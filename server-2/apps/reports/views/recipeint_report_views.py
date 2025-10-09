@@ -9,7 +9,11 @@ class MonthlyRCPReportView(generics.ListCreateAPIView):
     queryset = MonthlyRecipientListReport.objects.all()
 
 class UpdateMonthlyRCPReportDetailView(generics.RetrieveUpdateAPIView):
-    serializer_class = MonthlyRCPReportSerializer
+    serializer_class = UpdateMonthlyRecipientListReportSerializer
     queryset = MonthlyRecipientListReport.objects.all()
     lookup_field = 'monthlyrcplist_id'
     
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context

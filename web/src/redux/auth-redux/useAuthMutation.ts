@@ -61,13 +61,13 @@ export const useSendEmailOTPMutation = () => {
   
   return useMutation<{ message: string }, Error, Record<string, any>>({
     mutationFn: async (data) => {
-      try {
-        const response = await api.post('authentication/email/sendOtp/', data);
-        return response.data;
-      } catch (err) {
-        console.error(err)
-        throw err;
-      }
+      console.log(data)
+      const response = await api.post('authentication/email/sendOtp/', data);
+      return response.data;
+    },
+    onMutate: () => {
+      dispatch(setLoading(true));
+      dispatch(clearError());
     },
     // onMutate: () => {
     //   dispatch(setLoading(true));

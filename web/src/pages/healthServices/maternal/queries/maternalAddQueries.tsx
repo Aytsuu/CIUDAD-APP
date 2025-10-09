@@ -1,19 +1,17 @@
 "use client"
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPrenatalRecord, addPostpartumRecord } from "../restful-api/maternalPOST";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { addPrenatalRecord, addPostpartumRecord, addIllnessData, addCompletePregnancy, addPregnancyLoss } from "../restful-api/maternalPOST";
 
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+
 
 export const useAddPrenatalRecord = () => {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   return useMutation({
       mutationFn: addPrenatalRecord,
-      onSuccess: (pf_id) => {
+      onSuccess: () => {
           queryClient.invalidateQueries({
               queryKey: ['prenatalRecords']
           })
@@ -25,31 +23,21 @@ export const useAddPrenatalRecord = () => {
           })
 
 
-          toast("New record created successfully", {
-            icon: (
-              <CircleCheck size={24} className="fill-green-500 stroke-white" />
-            ),
-            action: {
-              label: "View",
-              onClick: () => navigate(-1),
-            },
-          });
-          console.log("Successfully added prenatal record ID: ", pf_id)
+          showSuccessToast("New Prenatal Record created successfully")
       },
-      onError: (error: Error) => {
-          console.error('Prenatal record error: ', error.message)
+      onError: () => {
+          showErrorToast("Failed to create prenatal record")
       }
   })
 }
-
+  
 
 export const useAddPostpartumRecord = () => {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: addPostpartumRecord,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["postpartumRecords"],
       })
@@ -63,18 +51,61 @@ export const useAddPostpartumRecord = () => {
         queryKey: ["spouses"],
       })
 
-      toast("Postpartum record created successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      })
-      console.log("Successfully added postpartum record ID: ", data.ppr_id)
+      showSuccessToast("New postpartum record created successfully")
     },
-    onError: (error: Error) => {
-      console.error("Postpartum record error: ", error.message)
-      toast.error("Failed to add postpartum record: " + error.message)
+    onError: () => {
+      showErrorToast("Failed to create postpartum record")
     },
   })
 }
+
+
+export const useAddIllnessData = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: addIllnessData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["illnessRecords"],
+      })
+
+      showSuccessToast("Illness added successfully")
+    },
+    onError: () => {
+      showErrorToast("Failed to add illness. Please try again.")
+    }
+  })
+}
+
+
+export const useAddCompletePregnancy = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addCompletePregnancy,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pregnancies"] });
+      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+      showSuccessToast("Pregnancy marked as completed successfully");
+    },
+    onError: () => {
+      showErrorToast("Failed to mark pregnancy as completed");
+    }
+  });
+};
+
+
+export const useAddPregnancyLoss = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addPregnancyLoss,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pregnancies"] });
+      queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
+      showSuccessToast("Pregnancy marked as completed successfully");
+    },
+    onError: () => {
+      showErrorToast("Failed to mark pregnancy as completed");
+    }
+  });
+};

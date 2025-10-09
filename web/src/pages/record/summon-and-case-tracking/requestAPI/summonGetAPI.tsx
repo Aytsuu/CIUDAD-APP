@@ -1,8 +1,8 @@
 import { api } from "@/api/api";
 
-export const getSummonCaseList = async () => {
+export const getServiceChargeRequest = async () => {
     try{
-        const res = await api.get('clerk/summon-case-list/')
+        const res = await api.get('clerk/service-charge-request/')
         console.log(res.data)
         return res.data
     }catch(err){
@@ -11,30 +11,14 @@ export const getSummonCaseList = async () => {
 }
 
 
-export const getServiceChargeReqDetails = async (sr_id: string) => {
+export const getCaseDetails = async (srId: string) => {
     try{
-        const res = await api.get(`clerk/service-charge-request-details/${sr_id}/`)
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
+        const res = await api.get(`clerk/case-details/${srId}/`)
 
+        console.log('complainants', res.data.complainant)
 
-export const getSummonScheduleList = async (sr_id: string) => {
-    try{
-        const res = await api.get( `clerk/summon-schedule-list/${sr_id}/`)
         return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-export const getSummonSuppDoc = async (ss_id: string) => {
-    try{
-        const res = await api.get( `clerk/summon-supp-doc/${ss_id}/`)
-        return res.data
-    }catch(err){
+    } catch(err){
         console.error(err)
     }
 }
@@ -104,16 +88,6 @@ export const getSummonReqRejectedList = async () => {
 }
 
 
-export const getSummonReqAcceptedList = async () => {
-    try{
-        const res = await api.get('clerk/service-charge-accepted-list/')
-        return res.data
-    }catch(err){
-        console.error(err)
-    }
-}
-
-
 export const getComplaintDetails = async (comp_id: string) => {
     try{
         const res = await api.get(`/complaint/${comp_id}/`)
@@ -124,17 +98,3 @@ export const getComplaintDetails = async (comp_id: string) => {
     }
 }
 
-
-// ================ MIGHT DELETE LATER ===================
-
-export const getCaseDetails = async (srId: string) => {
-    try{
-        const res = await api.get(`clerk/case-details/${srId}/`)
-
-        console.log('complainants', res.data.complainant)
-
-        return res.data
-    } catch(err){
-        console.error(err)
-    }
-}

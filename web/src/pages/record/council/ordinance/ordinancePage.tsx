@@ -1488,4 +1488,3 @@ function OrdinancePage() {
 }
 
 export default OrdinancePage;
-

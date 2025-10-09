@@ -217,8 +217,7 @@ class WasteTruck(models.Model):
 
 class WasteCollectionSched(models.Model):
     wc_num = models.BigAutoField(primary_key=True)
-    # wc_date = models.DateField(null=True)
-    wc_day = models.CharField(max_length=200, default="None")    
+    wc_date = models.DateField(null=True)
     wc_time = models.TimeField(null=True)
     wc_add_info = models.CharField(max_length=200, null=True)
     wc_is_archive = models.BooleanField(default=False)

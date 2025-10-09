@@ -38,6 +38,8 @@ import { clearances_router } from './clearances-router';
 import { team_router } from "./team-router";
 import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
+import { medicalConsultation } from "./med-consultation";
+import {healthreports_router} from "./health-reports-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -215,7 +217,9 @@ export const main_router: RouteObject[] = [
       ...firstaid_router,
       ...health_schedule_routes,
       ...viewprofile_router,
-      ...template_router,  
+      ...template_router, 
+      ...healthreports_router,
+      ...medicalConsultation,
       ])
     }
 ]

@@ -19,19 +19,9 @@ export default () => {
      route: "/(request)/certification-request/cert-choices"
   },
   {
-    title: "Blotter Request",
-    description: "",
-    route: "/(request)/complaint/complaint_req_form"
-  },
-  {
-    title: "Medicine Request",
-     description: "",
-     route: ""
-  },
-  {
     title: "Maternal Appointment",
-     description: "",
-     route: ""
+     description: "Request a prenatal appointment.",
+     route: "/(health)/maternal/bookingpage"
   },
   {
     title: "Medical Consultation Appointment",

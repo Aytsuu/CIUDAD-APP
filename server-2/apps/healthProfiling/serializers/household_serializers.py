@@ -56,7 +56,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
               'date_registered']
     
   def get_total_families(self, obj):
-    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
+    return Family.objects.filter(hh=obj).count()
   
   def get_head(self, obj):
     info = obj.rp.per

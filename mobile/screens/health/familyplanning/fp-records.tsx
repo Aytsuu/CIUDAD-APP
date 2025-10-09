@@ -1,296 +1,332 @@
-// "use client"
+"use client"
 
-// import { useState } from "react"
-// import { View, Text, FlatList, TouchableOpacity } from "react-native"
-// import { useQuery } from "@tanstack/react-query"
-// import {
-//   ArrowLeft,
-//   FileText,
-//   Calendar,
-//   Loader2,
-//   AlertCircle,
-//   Stethoscope,
-//   Heart,
-//   GitCompare, // Import GitCompare icon
-// } from "lucide-react-native"
-// import { router, useRouter } from "expo-router"
-// import { getFPRecordsForPatient } from "../admin/admin-familyplanning/GetRequest"
-// import { LoadingState } from "@/components/ui/loading-state"
-// import { useAuth } from "@/contexts/AuthContext"
+import React, { useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { FileText, Calendar, User, GitCompare, Loader2, AlertCircle, Stethoscope, ChevronRight, ChevronLeft, Heart } from "lucide-react-native";
+import { router, useRouter } from "expo-router";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query";
+import PageLayout from "@/screens/_PageLayout";
 
-// // Custom Components
-// const Card = ({ children, className = "", onPress = null }) => (
-//   <TouchableOpacity
-//     onPress={onPress}
-//     className={`bg-white rounded-xl shadow-sm border border-gray-100 ${className}`}
-//     activeOpacity={onPress ? 0.95 : 1}
-//   >
-//     {children}
-//   </TouchableOpacity>
-// )
+// Define FPRecord type
+interface FPRecord {
+  fprecord: number;
+  patient_id: string;
+  client_id: string;
+  patient_name: string;
+  patient_age: number;
+  sex: string;
+  method_used: string;
+  created_at: string;
+}
 
-// const CardContent = ({ children, className = "" }) => <View className={`p-4 ${className}`}>{children}</View>
+const InfoRow = ({ icon: Icon, label, value, iconColor = "#64748b" }: { icon: any; label: string; value: string; iconColor?: string }) => (
+  <View className="flex-row items-center py-2">
+    <View className="w-5 h-5 mr-3">
+      <Icon size={16} color={iconColor} />
+    </View>
+    <View className="flex-1">
+      <Text className="text-xs text-slate-500 uppercase tracking-wide">{label}</Text>
+      <Text className="text-sm font-medium text-slate-900 mt-1">{value}</Text>
+    </View>
+  </View>
+);
 
-// const Badge = ({ children, variant = "default", className = "" }) => {
-//   const variants = {
-//     default: "bg-blue-100 text-blue-800",
-//     secondary: "bg-gray-100 text-gray-700",
-//     success: "bg-green-100 text-green-800",
-//     warning: "bg-yellow-100 text-yellow-800",
-//   }
+export default function MyFpRecordsScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
+  // If 'resident' is not part of User type, add a type guard or update the type definition
+  const rp_id = user?.rp;
+  const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([]);
+  const [isComparing, setIsComparing] = useState(false);
 
-//   return (
-//     <View className={`px-3 py-1 rounded-full ${variants[variant]} ${className}`}>
-//       <Text className="text-xs font-medium">{children}</Text>
-//     </View>
-//   )
-// }
+  // Fetch patient to get pat_id
+  const {
+    data: patientData,
+    isLoading: isPatientLoading,
+    isError: isPatientError,
+    error: patientError,
+    refetch: refetchPatient,
+    isFetching: isPatientFetching
+  } = usePatientByResidentId(rp_id || "");
 
-// const Button = ({ children, onPress, variant = "default", disabled = false, className = "" }) => {
-//   const variants = {
-//     default: disabled ? "bg-gray-400" : "bg-blue-600",
-//     outline: "bg-transparent border-2 border-blue-600",
-//   }
+  const pat_id = patientData?.pat_id || null;
 
-//   return (
-//     <TouchableOpacity
-//       onPress={onPress}
-//       disabled={disabled}
-//       className={`${variants[variant]} rounded-xl py-4 px-6 items-center justify-center ${className}`}
-//       activeOpacity={disabled ? 1 : 0.8}
-//     >
-//       {children}
-//     </TouchableOpacity>
-//   )
-// }
+  // Fetch FP records using pat_id
+  const {
+    data: fpPatientRecords = [],
+    isLoading: isRecordsLoading,
+    isError: isRecordsError,
+    error: recordsError,
+    refetch: refetchRecords,
+    isFetching: isRecordsFetching
+  } = useFPRecordsByPatientId(pat_id);
 
-// const InfoRow = ({ icon: Icon, label, value, iconColor = "#6B7280" }) => (
-//   <View className="flex-row items-center mb-2">
-//     <View className="w-5 h-5 mr-3">
-//       <Icon size={16} color={iconColor} />
-//     </View>
-//     <View className="flex-1">
-//       <Text className="text-sm text-gray-600">{label}:</Text>
-//       <Text className="text-sm font-medium text-gray-900">{value}</Text>
-//     </View>
-//   </View>
-// )
+  const isLoading = isPatientLoading || isRecordsLoading;
+  const isError = isPatientError || isRecordsError;
+  const error = patientError || recordsError;
+  const isFetching = isPatientFetching || isRecordsFetching;
 
-// // Define FPRecord type
-// interface FPRecord {
-//   fprecord: number
-//   patient_id: string
-//   client_id: string
-//   patient_name: string
-//   patient_age: number
-//   sex: string
-//   method_used: string
-//   created_at: string
-// }
+  const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
+    setSelectedRecords((prevSelected) => {
+      if (isChecked) {
+        if (prevSelected.length >= 2) {
+          return prevSelected;
+        }
+        return [...prevSelected, record];
+      } else {
+        return prevSelected.filter((r) => r.fprecord !== record.fprecord);
+      }
+    });
+  };
 
-// export default function MyFpRecordsScreen() {
-//   const router = useRouter()
-//   const { user } = useAuth()
-//   const rp_id = user?.resident?.rp_id
-//   const [selectedRecords, setSelectedRecords] = useState<FPRecord[]>([])
+  const handleCompareRecords = async () => {
+    if (selectedRecords.length !== 2) {
+      alert("Please select exactly two records to compare.");
+      return;
+    }
 
-//   const {
-//     data: fpPatientRecords = [],
-//     isLoading,
-//     isError,
-//     error,
-//   } = useQuery<FPRecord[]>({
-//     queryKey: ["myFpRecords", rp_id],
-//     queryFn: () => getFPRecordsForPatient(rp_id),
-//     enabled: !!rp_id,
-//   })
+    setIsComparing(true);
+    try {
+      // Add your comparison logic here
+      // For now, just navigate to comparison screen with selected records
+      router.push({
+        pathname: "/(health)/admin/familyplanning/comparison",
+        params: { 
+          record1: JSON.stringify(selectedRecords[0]),
+          record2: JSON.stringify(selectedRecords[1])
+        }
+      });
+    } catch (error) {
+      console.error("Error preparing records for comparison:", error);
+      alert("Failed to prepare records for comparison. Please try again.");
+    } finally {
+      setIsComparing(false);
+    }
+  };
 
-//   const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
-//     setSelectedRecords((prevSelected) => {
-//       if (isChecked) {
-//         if (prevSelected.length >= 2) {
-//           return prevSelected
-//         }
-//         return [...prevSelected, record]
-//       } else {
-//         return prevSelected.filter((r) => r.fprecord !== record.fprecord)
-//       }
-//     })
-//   }
+  const handleRefresh = () => {
+    refetchPatient();
+    refetchRecords();
+  };
 
-//   const renderRecordItem = ({ item, index }: { item: FPRecord; index: number }) => {
-//     const isSelected = selectedRecords.some((r) => r.fprecord === item.fprecord)
+  const renderRecordItem = ({ item, index }: { item: FPRecord; index: number }) => {
+    const isSelected = selectedRecords.some(r => r.fprecord === item.fprecord);
+    
+    return (
+      <View className="px-4 mb-3">
+        <Card className="bg-white border border-slate-200">
+          <CardContent className="p-0">
+            <TouchableOpacity 
+              onPress={() => router.push({
+                pathname: "/(health)/family-planning/fp-details",
+                params: { fprecordId: item.fprecord }
+              })}
+              className="p-4"
+            >
+              {/* Header with Record ID and Selection */}
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center flex-1">
+                  <View className="w-12 h-12 bg-blue-50 rounded-xl items-center justify-center mr-3">
+                    <Heart size={20} color="#3b82f6" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold text-slate-900">Record #{item.fprecord}</Text>
+                  </View>
+                </View>
+                
+                {/* Selection Checkbox */}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCheckboxChange(item, !isSelected);
+                  }}
+                  className={`w-6 h-6 rounded border-2 items-center justify-center mr-2 ${
+                    isSelected ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
+                  }`}
+                >
+                  {isSelected && (
+                    <Text className="text-white text-xs font-bold">✓</Text>
+                  )}
+                </TouchableOpacity>
 
-//     return (
-//       <Card
-//         className="mb-4 relative"
-//         onPress={() =>
-//           router.push({
-//             pathname: "/(health)/family-planning/fp-details",
-//             params: { fprecordId: item.fprecord },
-//           })
-//         }
-//       >
-//         <CardContent>
-//           {/* Header with Record ID and Selection */}
-//           <View className="flex-row items-center justify-between mb-3">
-//             <View className="flex-row items-center">
-//               <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
-//                 <FileText size={20} color="#3B82F6" />
-//               </View>
-//               <View>
-//                 <Text className="text-lg font-bold text-gray-800">Record #{item.fprecord}</Text>
-//                 <Badge variant="secondary">{`Visit ${index + 1}`}</Badge>
-//               </View>
-//             </View>
+                <ChevronRight size={20} color="#64748b" />
+              </View>
 
-//             {/* Selection Checkbox */}
-//             <TouchableOpacity
-//               onPress={(e) => {
-//                 e.stopPropagation()
-//                 handleCheckboxChange(item, !isSelected)
-//               }}
-//               className={`w-6 h-6 rounded border-2 items-center justify-center ${
-//                 isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"
-//               }`}
-//             >
-//               {isSelected && <Text className="text-white text-xs font-bold">✓</Text>}
-//             </TouchableOpacity>
-//           </View>
+              {/* Patient Information */}
+              <View className="bg-slate-50 rounded-lg p-3 mb-3">
+                <InfoRow 
+                  icon={User} 
+                  label="Client ID" 
+                  value={item.client_id || "N/A"} 
+                  iconColor="#059669"
+                />
+                <View className="flex-row">
+                  <View className="flex-1 mr-2">
+                    <InfoRow 
+                      icon={Calendar} 
+                      label="Age" 
+                      value={`${item.patient_age || "N/A"} years`} 
+                      iconColor="#059669"
+                    />
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <InfoRow 
+                      icon={User} 
+                      label="Sex" 
+                      value={item.sex || "N/A"} 
+                      iconColor="#059669"
+                    />
+                  </View>
+                </View>
+              </View>
 
-//           {/* Method and Date - Removed patient info since it's the user's own records */}
-//           <View className="bg-gray-50 rounded-lg p-3 mb-3">
-//             <InfoRow
-//               icon={Stethoscope}
-//               label="Method Used"
-//               value={item.method_used || "Not specified"}
-//               iconColor="#10B981"
-//             />
-//             <InfoRow
-//               icon={Calendar}
-//               label="Created Date"
-//               value={new Date(item.created_at).toLocaleDateString()}
-//               iconColor="#10B981"
-//             />
-//           </View>
+              {/* Method and Date */}
+              <View className="space-y-2">
+                <InfoRow 
+                  icon={Stethoscope} 
+                  label="Method Used" 
+                  value={item.method_used || "Not specified"} 
+                  iconColor="#7c3aed"
+                />
+                <InfoRow 
+                  icon={Calendar} 
+                  label="Created Date" 
+                  value={new Date(item.created_at).toLocaleDateString()} 
+                  iconColor="#dc2626"
+                />
+              </View>
 
-//           {/* Action Indicator */}
-//           <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-gray-100">
-//             <Text className="text-sm text-gray-500">Tap to view full record</Text>
-//             <View className="w-6 h-6 bg-gray-100 rounded-full items-center justify-center">
-//               <Text className="text-gray-600 text-xs">→</Text>
-//             </View>
-//           </View>
-//         </CardContent>
-//       </Card>
-//     )
-//   }
+              {/* Action Indicator */}
+              <View className="mt-3 pt-3 border-t border-slate-100">
+                <Text className="text-sm text-slate-500">Tap to view full record</Text>
+              </View>
+            </TouchableOpacity>
+          </CardContent>
+        </Card>
+      </View>
+    );
+  };
 
-//   if (isLoading) {
-//     return <LoadingState/>}
+  const renderHeader = () => (
+    <View>
+      <PageLayout
+        leftAction={<TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-slate-700" />
+        </TouchableOpacity>}
+        headerTitle={<Text className="text-slate-900 text-[13px]">My Family Planning Records</Text>}
+        rightAction={<View className="w-10 h-10" />} 
+        children={undefined}
+      />
+      
+      {/* Summary Card */}
+      <View className="px-4 -mt-2 mb-4">
+        <Card className="bg-white border border-slate-200">
+          <CardContent className="p-4">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-lg font-bold text-slate-900">Your Records</Text>
+                <Text className="text-sm text-slate-600">
+                  {(fpPatientRecords as FPRecord[]).length} record{(fpPatientRecords as FPRecord[]).length !== 1 ? 's' : ''} found
+                </Text>
+              </View>
+              <View className="w-12 h-12 bg-blue-50 rounded-xl items-center justify-center">
+                <Heart size={20} color="#3b82f6" />
+              </View>
+            </View>
+            
+            {selectedRecords.length > 0 && (
+              <View className="mt-3 pt-3 border-t border-slate-100">
+                <Text className="text-sm text-slate-600">
+                  {selectedRecords.length} record{selectedRecords.length !== 1 ? 's' : ''} selected for comparison
+                </Text>
+              </View>
+            )}
+          </CardContent>
+        </Card>
+      </View>
+    </View>
+  );
 
-//   if (isError) {
-//     return (
-//       <View className="flex-1 bg-gray-50 items-center justify-center p-6">
-//         <AlertCircle size={32} color="#EF4444" />
-//         <Text className="text-lg text-red-600 mt-4 text-center">Failed to load records</Text>
-//         <Text className="text-sm text-gray-500 mt-2 text-center">{error?.message}</Text>
-//         <Button onPress={() => router.back()} className="mt-4">
-//           <Text className="text-white font-semibold">Go Back</Text>
-//         </Button>
-//       </View>
-//     )
-//   }
+  const renderEmpty = () => (
+    <View className="px-4">
+      <Card className="bg-white border border-slate-200">
+        <CardContent className="items-center justify-center py-12">
+          <Heart size={48} color="#94a3b8" />
+          <Text className="text-lg text-slate-500 mt-4 text-center">No Records Found</Text>
+          <Text className="text-sm text-slate-400 mt-2 text-center">
+            You don't have any Family Planning records yet.
+          </Text>
+        </CardContent>
+      </Card>
+    </View>
+  );
 
-//   return (
-//     <View className="flex-1 bg-gray-50">
-//       {/* Header */}
-//       <View className="bg-blue-600 px-6 pt-16 pb-6">
-//         <View className="flex-row items-center">
-//           <TouchableOpacity
-//             onPress={() => router.back()}
-//             className="mr-4 w-10 h-10 bg-white/20 rounded-full items-center justify-center"
-//           >
-//             <ArrowLeft size={20} color="white" />
-//           </TouchableOpacity>
-//           <View className="flex-1">
-//             <Text className="text-2xl font-bold text-white">My Family Planning Records</Text>
-//             <Text className="text-blue-100 mt-1">Your Family Planning History</Text>
-//           </View>
-//         </View>
-//       </View>
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-slate-50 items-center justify-center p-6">
+        <Loader2 size={32} color="#3b82f6" />
+        <Text className="text-lg text-slate-600 mt-4">Loading your records...</Text>
+      </View>
+    );
+  }
 
-//       <View className="flex-1 px-4 -mt-2">
-//         {/* Summary Card */}
-//         <Card className="mb-4">
-//           <CardContent>
-//             <View className="flex-row items-center justify-between">
-//               <View>
-//                 <Text className="text-lg font-bold text-gray-800">Your Records</Text>
-//                 <Text className="text-sm text-gray-600">
-//                   {fpPatientRecords.length} record{fpPatientRecords.length !== 1 ? "s" : ""} found
-//                 </Text>
-//               </View>
-//               <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center">
-//                 <Heart size={20} color="#3B82F6" />
-//               </View>
-//             </View>
+  if (isError) {
+    return (
+      <View className="flex-1 bg-slate-50 items-center justify-center p-6">
+        <AlertCircle size={32} color="#ef4444" />
+        <Text className="text-lg text-red-600 mt-4 text-center">Failed to load records</Text>
+        <Text className="text-sm text-slate-500 mt-2 text-center">{error?.message}</Text>
+        <Button onPress={() => router.back()} className="mt-4 bg-blue-600">
+          <Text className="text-white font-semibold">Go Back</Text>
+        </Button>
+      </View>
+    );
+  }
 
-//             {selectedRecords.length > 0 && (
-//               <View className="mt-3 pt-3 border-t border-gray-100">
-//                 <Text className="text-sm text-gray-600">
-//                   {selectedRecords.length} record{selectedRecords.length !== 1 ? "s" : ""} selected for comparison
-//                 </Text>
-//               </View>
-//             )}
-//           </CardContent>
-//         </Card>
+  return (
+    <View className="flex-1 bg-slate-50">
+      <FlatList
+        data={Array.isArray(fpPatientRecords) ? fpPatientRecords : []}
+        renderItem={renderRecordItem}
+        keyExtractor={(item) => item.fprecord ? item.fprecord.toString() : "0"}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching}
+            onRefresh={handleRefresh}
+            tintColor="#3b82f6"
+            colors={["#3b82f6"]}
+          />
+        }
+      />
 
-//         {/* Records List */}
-//         {fpPatientRecords.length === 0 ? (
-//           <Card className="flex-1">
-//             <CardContent className="flex-1 items-center justify-center py-12">
-//               <FileText size={48} color="#9CA3AF" />
-//               <Text className="text-lg text-gray-500 mt-4 text-center">No Records Found</Text>
-//               <Text className="text-sm text-gray-400 mt-2 text-center">
-//                 You don't have any Family Planning records yet.
-//               </Text>
-//             </CardContent>
-//           </Card>
-//         ) : (
-//           <FlatList
-//             data={Array.isArray(fpPatientRecords) ? fpPatientRecords : []}
-//             renderItem={renderRecordItem}
-//             keyExtractor={(item) => (item.fprecord ? item.fprecord.toString() : "0")}
-//             contentContainerStyle={{ paddingBottom: 100 }}
-//             showsVerticalScrollIndicator={false}
-//           />
-//         )}
-//       </View>
-
-//       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-//         <Button
-//           onPress={() => {
-//             if (selectedRecords.length !== 2) {
-//               alert("Please select exactly two records to compare.")
-//               return
-//             }
-//             // Navigate to user comparison screen
-//             // router.push({
-//             //   pathname: "/user/my-fp-comparison",
-//             //   params: {
-//             //     record1: JSON.stringify(selectedRecords[0]),
-//             //     record2: JSON.stringify(selectedRecords[1]),
-//             //   },
-//             // })
-//           }}
-//           disabled={selectedRecords.length !== 2}
-//           className="flex-row items-center justify-center"
-//         >
-//           <GitCompare size={20} color="white" />
-//           <Text className="text-white font-semibold ml-2">Compare Records ({selectedRecords.length}/2)</Text>
-//         </Button>
-//       </View>
-//     </View>
-//   )
-// }
+      {/* Compare Button */}
+      {(fpPatientRecords as FPRecord[]).length > 0 && (
+        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
+          <Button
+            onPress={handleCompareRecords}
+            disabled={selectedRecords.length !== 2 || isComparing}
+            className={`flex-row items-center justify-center ${
+              selectedRecords.length !== 2 || isComparing ? 'bg-slate-400' : 'bg-blue-600'
+            }`}
+          >
+            <GitCompare size={20} color="white" />
+            <Text className="text-white font-semibold ml-2">
+              {isComparing ? 'Comparing...' : `Compare Records (${selectedRecords.length}/2)`}
+            </Text>
+          </Button>
+        </View>
+      )}
+    </View>
+  );
+}

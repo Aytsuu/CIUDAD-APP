@@ -1,12 +1,12 @@
-// import React, { useMemo } from "react"
-// import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
-// import { ChevronLeft, User, FileText, AlertCircle, Package, Clock, Shield, Activity, ArrowLeft } from "lucide-react-native"
-// import { Text } from "@/components/ui/text"
-// import { Link, router, useLocalSearchParams } from "expo-router"
-// import { format } from "date-fns"
-// import { usePatientRecordsByPatId } from "./db-request/get-query"
-// import PageLayout from "@/screens/_PageLayout"
-// import { LoadingState } from "@/components/ui/loading-state"
+import React, { useMemo } from "react"
+import { View, ScrollView, TouchableOpacity, RefreshControl } from "react-native"
+import { ChevronLeft, User, FileText, AlertCircle, Package, Clock, Shield, Activity } from "lucide-react-native"
+import { Text } from "@/components/ui/text"
+import { router, useLocalSearchParams } from "expo-router"
+import { format } from "date-fns"
+import { usePatientRecordsByPatId } from "./db-request/get-query"
+import PageLayout from "@/screens/_PageLayout"
+import { LoadingState } from "@/components/ui/loading-state"
 
 
 // type PatientRecordDetail = {

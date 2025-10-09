@@ -52,7 +52,7 @@ class ChildHealthSupplementsMasterReport(generics.ListAPIView):
                 to_attr='prefetched_households'
             ),
             Prefetch(
-                'patrec__pat_id__rp_id__per__personaladdress_set',
+                'patrec__pat_id__rp_id__per__personal_addresses',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio'),
                 to_attr='prefetched_personal_addresses'
             )

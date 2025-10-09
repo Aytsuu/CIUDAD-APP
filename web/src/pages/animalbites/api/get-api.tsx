@@ -26,7 +26,7 @@ export const getAnimalbitePatients = async () => {
 }
 export const getAllPatients = async () => {
   try {
-    const res = await api2.get("patientrecords/patient/")
+    const res = await api2.get("patientrecords/patients/")
     console.log("✅ Patients fetched successfully:", res.data)
     return res.data
   } catch (error) {
@@ -87,7 +87,7 @@ export const getUniqueAnimalbitePatients = async () => {
 export const getPatientById = async (patientId: string) => {
   try {
     console.log(`🔍 Fetching patient with ID: ${patientId}...`)
-    const res = await api2.get(`patientrecords/patient/${patientId}/`)
+    const res = await api2.get(`patientrecords/patients/${patientId}/`)
     console.log("✅ Patient fetched successfully:", res.data)
     return res.data
   } catch (error) {
@@ -99,7 +99,7 @@ export const getPatientById = async (patientId: string) => {
 export const createPatient = async (patientData: any) => {
   try {
     console.log("📝 Creating new patient:", patientData)
-    const res = await api2.post("patientrecords/patient/", patientData)
+    const res = await api2.post("patientrecords/patients/", patientData)
     console.log("✅ Patient created successfully:", res.data)
     return res.data
   } catch (error) {

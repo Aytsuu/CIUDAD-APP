@@ -1,75 +1,117 @@
-import React, { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput } from "lucide-react";
-import { Link } from "react-router";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { ArrowUpDown, Search, FileInput, Users, Home, UserCheck, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
+import { useFirstaidRecords } from "../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { getFirstaidRecords } from "../restful-api/getAPI";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
-
-export interface FirstAidRecord {
-  pat_id: string;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  pat_type: string;
-  address: string;
-  firstaid_count: number;
-  dob: string;
-}
+import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
+import ViewButton from "@/components/ui/view-button";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { FilterSitio } from "../../reports/filter-sitio";
+import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function AllFirstAidRecords() {
+  const navigate = useNavigate();
+  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
 
-  // Fetch first aid records from API
-  const { data: firstAidRecords, isLoading } = useQuery<FirstAidRecord[]>({
-    queryKey: ["firstAidRecords"],
-    queryFn: getFirstaidRecords,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  // Fetch sitio data
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
-  const formatFirstAidData = React.useCallback((): FirstAidRecord[] => {
-    if (!firstAidRecords) return [];
+  // Debounce search query to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
+
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchQuery || "";
+
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+
+    return query || undefined;
+  }, [debouncedSearchQuery, selectedSitios]);
+
+  // Build query parameters
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: combinedSearchQuery,
+      patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
+    }),
+    [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
+  );
+
+  // Fetch data with parameters
+  const { data: apiResponse, isLoading, error } = useFirstaidRecords(queryParams);
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  // Handle API response structure
+  const {
+    firstAidRecords,
+    totalCount,
+    totalPages: apiTotalPages
+  } = useMemo(() => {
+    if (!apiResponse) {
+      return { firstAidRecords: [], totalCount: 0, totalPages: 1 };
+    }
+
+    if (apiResponse.results) {
+      return {
+        firstAidRecords: apiResponse.results,
+        totalCount: apiResponse.count || 0,
+        totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
+      };
+    } else if (Array.isArray(apiResponse)) {
+      return {
+        firstAidRecords: apiResponse,
+        totalCount: apiResponse.length,
+        totalPages: Math.ceil(apiResponse.length / pageSize)
+      };
+    } else {
+      return { firstAidRecords: [], totalCount: 0, totalPages: 1 };
+    }
+  }, [apiResponse, pageSize]);
+
+  const formatFirstAidData = useCallback((): any[] => {
+    if (!firstAidRecords || !Array.isArray(firstAidRecords)) {
+      return [];
+    }
     return firstAidRecords.map((record: any) => {
-      const info = record.patient_details.personal_info || {};
-      const address = record.patient_details.address || {};
-
-      // Construct address string
-      const addressParts = [
-        address.add_street,
-        address.add_barangay,
-        address.add_city,
-        address.add_province,
-      ]
-        .filter(Boolean)
-        .join(", ");
-
+      const details = record.patient_details || {};
+      const info = details.personal_info || {};
+      const address = details.address || {};
+      const addressParts = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ");
       const fullAddress = addressParts || "";
-
       return {
         pat_id: record.pat_id,
         fname: info.per_fname || "",
@@ -78,56 +120,69 @@ export default function AllFirstAidRecords() {
         sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob || "",
-        householdno: record.patient_details?.households?.[0]?.hh_id || "",
+        householdno: details.households?.[0]?.hh_id || "",
         street: address.add_street || "",
         sitio: address.add_sitio || "",
         barangay: address.add_barangay || "",
         city: address.add_city || "",
         province: address.add_province || "",
-        pat_type: record.patient_details.pat_type || "",
+        pat_type: details.pat_type || "",
         firstaid_count: record.firstaid_count || 0,
-        address: fullAddress,
+        address: fullAddress
       };
     });
   }, [firstAidRecords]);
 
-  // Filter data based on search query and patient type
-  const filteredData = React.useMemo(() => {
-    return formatFirstAidData().filter((record) => {
-      const searchText = `${record.pat_id} 
-        ${record.lname} 
-        ${record.fname} 
-        ${record.sitio}`.toLowerCase();
+  const formattedData = formatFirstAidData();
+  const totalPages = apiTotalPages || Math.ceil(totalCount / pageSize);
 
-      const typeMatches =
-        patientTypeFilter === "all" ||
-        record.pat_type.toLowerCase() === patientTypeFilter.toLowerCase();
-
-      return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
+  // Calculate resident and transient counts
+  const calculateCounts = useCallback(() => {
+    if (!firstAidRecords) return { residents: 0, transients: 0 };
+    let residents = 0;
+    let transients = 0;
+    firstAidRecords.forEach((record: any) => {
+      const details = record.patient_details || {};
+      const patType = details.pat_type || "";
+      if (patType === "Resident") residents++;
+      if (patType === "Transient") transients++;
     });
-  }, [searchQuery, formatFirstAidData, patientTypeFilter]);
+    return { residents, transients };
+  }, [firstAidRecords]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const { residents, transients } = calculateCounts();
 
-  const columns: ColumnDef<FirstAidRecord>[] = [
+  // Sitio filter handlers
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
+
+  const handleManualSitioSearch = (value: string) => {
+    // Not used since we're using the main search field
+  };
+
+  const columns: ColumnDef<any>[] = [
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
+        const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
@@ -138,36 +193,29 @@ export default function AllFirstAidRecords() {
             </div>
           </div>
         );
-      },
+      }
     },
     {
       accessorKey: "address",
       header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Address <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">
-            {row.original.address || "No address provided"}
-          </div>
+          <div className="w-full break-words">{row.original.address || "No address provided"}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "sitio",
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">
-            {row.original.sitio || "N/A"}
-          </div>
+          <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "type",
@@ -176,18 +224,16 @@ export default function AllFirstAidRecords() {
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.pat_type}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "firstaid_count",
       header: "No of Records",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">
-            {row.original.firstaid_count}
-          </div>
+          <div className="text-center w-full">{row.original.firstaid_count}</div>
         </div>
-      ),
+      )
     },
     {
       accessorKey: "action",
@@ -196,7 +242,7 @@ export default function AllFirstAidRecords() {
         <div className="flex justify-center gap-2">
           <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
             <Link
-              to="/indiv-firstaid-records"
+              to="/services/firstaid/records"
               state={{
                 params: {
                   patientData: {
@@ -232,76 +278,93 @@ export default function AllFirstAidRecords() {
   ];
 
   return (
-    <>
+    <MainLayoutComponent title="First Aid Records" description="Manage and view first aid records">
       <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-col items-center ">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              First Aid Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's first aid records
-            </p>
+        {/* Summary Cards - Updated with EnhancedCardLayout and dynamic icons */}
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <EnhancedCardLayout title="Total Records" description="All first aid records" value={totalCount} valueDescription="Total records" icon={<Users className="h-5 w-5 text-muted-foreground" />} cardClassName="border shadow-sm rounded-lg" headerClassName="pb-2" contentClassName="pt-0" />
+
+            <EnhancedCardLayout
+              title="Resident Patients"
+              description="Patients who are residents"
+              value={residents}
+              valueDescription="Total residents"
+              icon={<Home className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
+
+            <EnhancedCardLayout
+              title="Transient Patients"
+              description="Patients who are transients"
+              value={transients}
+              valueDescription="Total transients"
+              icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
           </div>
         </div>
-        <hr className="border-gray-300 mb-4" />
 
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
+        {/* Filters Section */}
+        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search by name, nature of request, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <SelectLayout
-              placeholder="Filter records"
+              placeholder="Patient Type"
               label=""
               className="bg-white w-full sm:w-48"
               options={[
                 { id: "all", name: "All Types" },
                 { id: "resident", name: "Resident" },
-                { id: "transient", name: "Transient" },
+                { id: "transient", name: "Transient" }
               ]}
               value={patientTypeFilter}
               onChange={(value) => setPatientTypeFilter(value)}
             />
+            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue="" />
           </div>
+          
 
-          <div className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">
-              <Link
-                to="/firstaid-request-form"
-                state={{
-                  params: {
-                    mode: "fromallrecordtable",
-                  },
-                }}
-              >
-                New Request
-              </Link>
-            </Button>
-          </div>
+          <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">
+                <Link
+                  to="/firstaid-request-form"
+                  state={{
+                    params: {
+                      mode: "fromallrecordtable"
+                    }
+                  }}
+                >
+                  New Request
+                </Link>
+              </Button>
+            </div>
+          </ProtectedComponentButton>
         </div>
 
-        {/* Table Container */}
+        {/* Selected Filters Chips */}
+        {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
+
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-3 justify-start items-center">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
                 type="number"
-                className="w-[70px] h-8 flex items-center justify-center text-center"
+                className="w-14 h-8"
                 value={pageSize}
                 onChange={(e) => {
                   const value = +e.target.value;
                   setPageSize(value >= 1 ? value : 1);
+                  setCurrentPage(1);
                 }}
                 min="1"
               />
@@ -310,12 +373,8 @@ export default function AllFirstAidRecords() {
             <div className="flex justify-end sm:justify-start">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    aria-label="Export data"
-                    className="flex items-center gap-2"
-                  >
-                    <FileInput />
+                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
+                    <FileInput size={16} />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
@@ -327,32 +386,30 @@ export default function AllFirstAidRecords() {
               </DropdownMenu>
             </div>
           </div>
-
-          <div className="bg-white w-full overflow-x-auto">
+          <div className="bg-white w-full overflow-x-auto border">
             {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading...</span>
+              </div>
+            ) : error ? (
+              <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+                <span>Error loading data. Please try again.</span>
+              </div>
             ) : (
-              <DataTable columns={columns} data={paginatedData} />
+              <DataTable columns={columns} data={formattedData} />
             )}
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>
-
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
         </div>
       </div>
-    </>
+    </MainLayoutComponent>
   );
 }

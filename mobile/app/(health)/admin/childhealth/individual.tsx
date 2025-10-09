@@ -1,6 +1,6 @@
-import InvChildHealthRecords from "@/screens/health/admin/admin-childhealth/tables/childHr_inv_records";
+// import InvChildHealthRecords from "@/screens/health/admin/admin-childhealth/tables/childHr_inv_records";
 
 
-export default () => {
-    return <InvChildHealthRecords/>;
-}
+// export default () => {
+//     return <InvChildHealthRecords/>;
+// }

@@ -19,6 +19,12 @@ export interface Medicine {
   pcs_per_box?: number
   inv_id?: string
   preFilledReason?: string
+  // Additional fields for enhanced medicine mapping
+  med_name?: string
+  display_id?: string
+  original_stock_id?: string
+  requested_qty?: number
+  pending_reason?: string
 }
 
 interface MedicineDisplayProps {
@@ -35,50 +41,73 @@ interface MedicineDisplayProps {
   isLoading?: boolean
   autoFillReasons?: boolean
   readOnlyReasons?: boolean
-  readonly?: boolean // New prop for view-only mode
+  readonly?: boolean
+  // New props for backend pagination and search
+  totalPages?: number
+  totalItems?: number
+  onSearch?: (searchTerm: string) => void
+  searchQuery?: string
+  isSearching?: boolean
 }
 
 export const MedicineDisplay = ({
   medicines: propMedicines,
   initialSelectedMedicines,
   onSelectedMedicinesChange,
-  itemsPerPage = 5,
+  itemsPerPage = 10,
   currentPage,
   onPageChange,
   isLoading = false,
   autoFillReasons = true,
   readOnlyReasons = false,
-  readonly = false, // Default to false for backward compatibility
+  readonly = false,
+  // New props for backend pagination
+  totalPages = 1,
+  totalItems = 0,
+  onSearch,
+  searchQuery = "",
+  isSearching = false,
 }: MedicineDisplayProps) => {
   const [internalSelectedMedicines, setInternalSelectedMedicines] = useState(initialSelectedMedicines)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery)
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const medicines = propMedicines || []
 
   useEffect(() => {
     setInternalSelectedMedicines(initialSelectedMedicines)
   }, [initialSelectedMedicines])
 
-  const filteredMedicines = useMemo(() => {
-    if (!searchQuery.trim()) return medicines
-    const lowerQuery = searchQuery.toLowerCase()
-    return medicines.filter(
-      (medicine) =>
-        medicine.name.toLowerCase().includes(lowerQuery) || 
-        medicine.dosage.toLowerCase().includes(lowerQuery) ||
-        (medicine.inv_id && medicine.inv_id.toLowerCase().includes(lowerQuery))
-    )
-  }, [medicines, searchQuery])
-
-  const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const currentMedicines = useMemo(
-    () => filteredMedicines.slice(startIndex, startIndex + itemsPerPage),
-    [filteredMedicines, startIndex, itemsPerPage],
-  )
-
   useEffect(() => {
-    onPageChange(1)
-  }, [searchQuery, onPageChange])
+    setLocalSearchQuery(searchQuery)
+  }, [searchQuery])
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearchQuery(value)
+    
+    // Debounce search to avoid too many API calls
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+    
+    const newTimeout = setTimeout(() => {
+      onSearch?.(value)
+    }, 500) // 500ms debounce
+    
+    setSearchTimeout(newTimeout)
+  }
+
+  const filteredMedicines = useMemo(() => {
+    // If we're using backend search, just return all medicines
+    // The filtering is done on the backend
+    return medicines
+  }, [medicines])
+
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentMedicines = useMemo(
+    () => filteredMedicines,
+    [filteredMedicines],
+  )
 
   const updateSelectedMedicines = useCallback(
     (updater: (prev: typeof internalSelectedMedicines) => typeof internalSelectedMedicines) => {
@@ -141,15 +170,15 @@ export const MedicineDisplay = ({
   const PaginationControls = () => (
     <div className="flex items-center justify-between px-6 py-3">
       <div className="text-sm text-gray-500">
-        Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredMedicines.length)} of{" "}
-        {filteredMedicines.length} medicines
+        Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of{" "}
+        {totalItems} medicines
       </div>
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1 || isLoading}
+          disabled={currentPage === 1 || isLoading || isSearching}
           className="px-3 py-1"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -161,7 +190,7 @@ export const MedicineDisplay = ({
           variant="outline"
           size="sm"
           onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages || isLoading}
+          disabled={currentPage === totalPages || isLoading || isSearching}
           className="px-3 py-1"
         >
           <ChevronRight className="h-4 w-4" />
@@ -211,7 +240,17 @@ export const MedicineDisplay = ({
   )
 
   // Calculate column span for empty state based on readonly mode
-  const emptyStateColSpan = readonly ? 5 : 8
+  const emptyStateColSpan = readonly ? 5 : 7
+
+  // Debug logging for troubleshooting
+  // console.log('MedicineDisplay Debug:', {
+  //   medicines: medicines,
+  //   totalItems: totalItems,
+  //   totalPages: totalPages,
+  //   currentPage: currentPage,
+  //   localSearchQuery: localSearchQuery,
+  //   isLoading: isLoading
+  // });
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">
@@ -231,7 +270,7 @@ export const MedicineDisplay = ({
                 View Only
               </span>
             )}
-            {isLoading && <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />}
+            {(isLoading || isSearching) && <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />}
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:flex-none sm:w-64">
@@ -239,11 +278,14 @@ export const MedicineDisplay = ({
               <Input
                 type="text"
                 placeholder="Search medicines..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={localSearchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 pr-4 py-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 w-full"
                 disabled={isLoading}
               />
+              {isSearching && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin" />
+              )}
             </div>
             <div className="text-sm text-gray-500">
               {isLoading ? (
@@ -251,8 +293,13 @@ export const MedicineDisplay = ({
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Loading...
                 </span>
+              ) : isSearching ? (
+                <span className="flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Searching...
+                </span>
               ) : (
-                `${filteredMedicines.length} medicines found`
+                `${totalItems} medicines found`
               )}
             </div>
           </div>
@@ -308,16 +355,16 @@ export const MedicineDisplay = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
-              Array.from({ length: itemsPerPage }).map((_, index) => <LoadingRow key={`loading-${index}`} />)
+              Array.from({ length: 4 }).map((_, index) => <LoadingRow key={`loading-${index}`} />)
             ) : currentMedicines.length === 0 ? (
               <tr>
                 <td colSpan={emptyStateColSpan} className="px-6 py-12 text-center">
                   <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                   <h3 className="text-base font-medium text-gray-900 mb-2">
-                    {searchQuery.trim() ? "No medicines found" : "No medicines available"}
+                    {localSearchQuery ? "No medicines found" : "No medicines available"}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {searchQuery.trim()
+                    {localSearchQuery
                       ? "Try adjusting your search query."
                       : "There are currently no medicines in the inventory."}
                   </p>
@@ -331,6 +378,9 @@ export const MedicineDisplay = ({
                 const lowStock = isLowStock(medicine.avail, medicine.unit, medicine.pcs_per_box || 0)
                 const hasPreFilledReason = autoFillReasons && !!medicine.preFilledReason
                 const isReasonReadOnly = readOnlyReasons && hasPreFilledReason
+                
+                // Use med_name if available (for enhanced mapping), otherwise fall back to name
+                const displayName = medicine.med_name || medicine.name
                 
                 return (
                   <tr
@@ -354,16 +404,17 @@ export const MedicineDisplay = ({
                     )}
                     <td className="px-6 py-4 text-center">
                       <div className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                        {medicine.inv_id || medicine.id}
+                        {medicine.inv_id || medicine.original_stock_id || medicine.id}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center gap-3 justify-center">
                         <div>
-                          <div className="font-medium text-gray-900">{medicine.name}</div>
+                          <div className="font-medium text-gray-900">{displayName}</div>
                           <div className="text-sm text-gray-500">
                             {medicine.dosage} • {medicine.form}
                           </div>
+                         
                         </div>
                       </div>
                     </td>
@@ -372,7 +423,9 @@ export const MedicineDisplay = ({
                     </td>
                     <td className="px-2 py-4 text-center">
                       <div>
-                        <div className="text-sm text-gray-600">Expiry Date: {medicine.expiry || "N/A"}</div>
+                        <div className="text-sm text-gray-600">
+                          {medicine.expiry ? `Expiry: ${medicine.expiry}` : "No expiry date"}
+                        </div>
                         {nearExpiry && <div className="text-sm text-red-500 font-semibold">Near Expiry</div>}
                       </div>
                     </td>
@@ -465,6 +518,11 @@ export const MedicineDisplay = ({
                                   Reason pre-filled from request
                                 </div>
                               )}
+                              {medicine.pending_reason && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Pending reason: {medicine.pending_reason}
+                                </div>
+                              )}
                             </div>
                           )}
                         </td>
@@ -477,7 +535,7 @@ export const MedicineDisplay = ({
           </tbody>
         </table>
       </div>
-      {!isLoading && filteredMedicines.length > itemsPerPage && <PaginationControls />}
+      {!isLoading && totalItems > 0 && totalPages > 1 && <PaginationControls />}
     </div>
   )
 }
