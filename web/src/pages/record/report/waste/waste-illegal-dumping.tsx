@@ -1,13 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Button } from "@/components/ui/button/button"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, ChevronRight } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
 import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueries";
@@ -15,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
+
 
 function WasteIllegalDumping() {
   const [activeTab, setActiveTab] = useState("pending");
@@ -112,30 +114,34 @@ function WasteIllegalDumping() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("rep_id")}</div>
+        <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
+            <p className="text-primary text-xs font-bold tracking-wider uppercase">
+                {row.getValue("rep_id")}
+            </p>
+        </div>             
       ),
     },
-    {
-      accessorKey: "rep_status",
-      header: "Report Status",
-      cell: ({row}) => (
-        <div className="flex justify-center">
-          {row.getValue("rep_status") === "resolved" ? (
-            <div className="flex-row items-center bg-green-50 px-2 py-1 rounded-full border border-green-600">
-              <div className="text-green-600 text-sm font-medium ml-1">Resolved</div>
-            </div>
-          ) : row.getValue("rep_status") === "cancelled" ? (
-            <div className="flex-row items-center bg-red-50 px-2 py-1 rounded-full border border-red-600">
-              <div className="text-red-600 text-sm font-medium ml-1">Cancelled</div>
-            </div>
-          ) : (
-            <div className="flex-row items-center bg-blue-50 px-3 py-1 rounded-full border border-primary">
-              <div className="text-primary text-sm font-medium">Pending</div>
-            </div>
-          )}               
-        </div>
-      )
-    },
+    // {
+    //   accessorKey: "rep_status",
+    //   header: "Report Status",
+    //   cell: ({row}) => (
+    //     <div className="flex justify-center">
+    //       {row.getValue("rep_status") === "resolved" ? (
+    //         <div className="flex-row items-center bg-green-50 px-2 py-1 rounded-full border border-green-600">
+    //           <div className="text-green-600 text-sm font-medium ml-1">Resolved</div>
+    //         </div>
+    //       ) : row.getValue("rep_status") === "cancelled" ? (
+    //         <div className="flex-row items-center bg-red-50 px-2 py-1 rounded-full border border-red-600">
+    //           <div className="text-red-600 text-sm font-medium ml-1">Cancelled</div>
+    //         </div>
+    //       ) : (
+    //         <div className="flex-row items-center bg-blue-50 px-3 py-1 rounded-full border border-primary">
+    //           <div className="text-primary text-sm font-medium">In progress</div>
+    //         </div>
+    //       )}               
+    //     </div>
+    //   )
+    // },
     {
       accessorKey: "rep_matter",
       header: "Report Matter",
@@ -172,8 +178,13 @@ function WasteIllegalDumping() {
           trigger={
             <DialogLayout
               trigger={
-                <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px] cursor-pointer">
-                  View
+                <div className="flex justify-center">
+                  <Button className="flex items-center text-primary bg-white shadow-none hover:bg-white group">
+                    <span className="text-sm font-medium group-hover:text-primary">View</span>
+                    <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
+                      <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
+                    </div>
+                  </Button>
                 </div>
               }
               className="max-w-[60%] max-h-[80%] overflow-auto p-7 verflow-y-auto"
@@ -275,7 +286,7 @@ function WasteIllegalDumping() {
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <div className='pl-5 pb-3'>
                 <TabsList className="grid w-full grid-cols-3 max-w-xs">
-                  <TabsTrigger value="pending">Pending</TabsTrigger>
+                  <TabsTrigger value="pending">In progress</TabsTrigger>
                   <TabsTrigger value="resolved">Resolved</TabsTrigger>
                   <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
                 </TabsList>

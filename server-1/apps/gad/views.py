@@ -746,7 +746,7 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 from apps.administration.models import Staff
                 
                 # Get staff member from the request or use default
-                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff_id = request.data.get('staff_id') or request.data.get('staff')
                 staff = Staff.objects.filter(staff_id=staff_id).first()
                 
                 if staff:
@@ -814,7 +814,7 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
                 from apps.administration.models import Staff
                 
                 # Get staff member from the request or use default
-                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
+                staff_id = request.data.get('staff_id') or request.data.get('staff')
                 staff = Staff.objects.filter(staff_id=staff_id).first()
                 
                 if staff:

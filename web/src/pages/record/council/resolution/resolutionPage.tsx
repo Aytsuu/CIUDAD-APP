@@ -23,6 +23,39 @@ import { useLoading } from "@/context/LoadingContext";
 
 
 
+export const getAreaFocusDisplayName = (focus: string): string => {
+  switch (focus) {
+    case "gad":
+      return "GAD"
+    case "finance":
+      return "Finance"
+    case "council":
+      return "Council"
+    case "waste":
+      return "Waste"
+    default:
+      return focus
+  }
+}
+
+export const getAreaFocusColor = (focus: string): string => {
+  switch (focus) {
+    case "gad":
+      return "bg-primary/10 text-primary"
+    case "finance":
+      return "bg-green-100 text-green-800"
+    case "council":
+      return "bg-purple-100 text-purple-800"
+    case "waste":
+      return "bg-orange-100 text-orange-800"
+    default:
+      return "bg-gray-100 text-gray-800"
+  }
+}
+
+
+
+
 function ResolutionPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false); 
     const [editingRowId, setEditingRowId] = useState<number | null>(null);
@@ -173,7 +206,12 @@ function ResolutionPage() {
                 </div>
             ),
             cell: ({row}) => (
-                <div className="flex w-full justify-center items-center">{row.getValue("res_num")}</div>
+                // <div className="flex w-full justify-center items-center">{row.getValue("res_num")}</div>
+                <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
+                    <p className="text-primary text-[13px] font-bold tracking-wider uppercase">
+                        {row.getValue("res_num")}
+                    </p>
+                </div>                 
             )
         },
         {
@@ -196,15 +234,20 @@ function ResolutionPage() {
             header: "Resolution Title", 
         },
         {
-            accessorKey: "res_area_of_focus",
-            header: "Area of Focus",
-            cell: ({ row }) => (
-                <div className="text-center max-w-[200px]">
-                    {row.original.res_area_of_focus.join("\n").split("\n").map((line, index) => (
-                        <div key={index} className="text-sm">{line}</div>
-                    ))}
+        accessorKey: "res_area_of_focus",
+        header: "Area of Focus",
+        cell: ({ row }) => (
+            <div className="flex flex-wrap justify-center gap-2">
+            {row.original.res_area_of_focus?.map((focus: string, index: number) => (
+                <div
+                key={index}
+                className={`text-xs px-3 py-1 rounded-full font-medium ${getAreaFocusColor(focus)}`}
+                >
+                {getAreaFocusDisplayName(focus)}
                 </div>
-            )
+            ))}
+            </div>
+        ),
         },
         {
             accessorKey: "resolution_supp",

@@ -1,7 +1,6 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
-import type { AIAnalysisResponse } from "../services/HuggingFaceAIService";
-
+import type { AIAnalysisResponse } from "../services/AIService";
 
 export interface Ordinance {
     ord_num: string;
@@ -14,6 +13,7 @@ export interface Ordinance {
     ord_repealed?: boolean;
     file?: any;
     staff?: any;
+    staff_id?: string;
     ord_parent?: string; // ord_num of the parent ordinance (if this is an amendment)
     ord_is_ammend?: boolean;
     ord_ammend_ver?: number;
@@ -83,17 +83,6 @@ export const getOrdinanceById = async (id: string) => {
     }
 };
 
-export const createOrdinance = async (data: Partial<Ordinance>) => {
-    try {
-        const response = await api.post('/council/ordinance/', data);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError) {
-            console.error('Error creating ordinance:', error.response?.data);
-        }
-        throw error;
-    }
-};
 
 export const updateOrdinance = async (id: string, data: Partial<Ordinance>) => {
     try {
@@ -143,17 +132,6 @@ export const getAllSupplementaryDocs = async () => {
     }
 };
 
-export const createSupplementaryDoc = async (data: Partial<SupplementaryDoc>) => {
-    try {
-        const response = await api.post('/council/ordinance-docs/', data);
-        return response.data;
-    } catch (error) {
-        if (error instanceof AxiosError) {
-            console.error('Error creating supplementary document:', error.response?.data);
-        }
-        throw error;
-    }
-};
 
 export const archiveSupplementaryDoc = async (id: string) => {
     try {

@@ -9,7 +9,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { Ordinance, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders, updateOrdinance } from './restful-api/OrdinanceGetAPI';
 import { useOrdinancesPaginated } from './queries/OrdinanceFetchQueries';
 import { useDebounce } from "@/hooks/use-debounce";
@@ -26,7 +26,7 @@ import { ordinanceUploadFormSchema } from '@/form-schema/council/ordinanceUpload
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useInsertOrdinanceUpload } from './queries/OrdinanceUploadInsertQueries.tsx';
 // import { OrdinanceAISummary } from './queries/OrdinanceAISummary.tsx';
-import { huggingFaceAIService, AIAnalysisResponse } from './services/HuggingFaceAIService';
+import { huggingFaceAIService, AIAnalysisResponse } from './services/AIService.ts';
 import { Badge } from '@/components/ui/badge';
 
 // Type for ordinances only
@@ -49,14 +49,15 @@ function OrdinancePage() {
     const debouncedPageSize = useDebounce(pageSize, 100);
     
     // Use paginated query
-    const { data: ordinancesData, isLoading: isOrdinancesLoading, error: _ordinancesError } = useOrdinancesPaginated(
+    const { data: ordinancesData, isLoading: isOrdinancesLoading } = useOrdinancesPaginated(
         currentPage,
         debouncedPageSize,
         debouncedSearchTerm
     );
-    
-    const ordinances = ordinancesData?.results || [];
-    const totalCount = ordinancesData?.count || 0;
+
+    // Handle both paginated and non-paginated API responses
+    const ordinances = Array.isArray(ordinancesData) ? ordinancesData : (ordinancesData?.results || []);
+    const totalCount = Array.isArray(ordinancesData) ? ordinancesData.length : (ordinancesData?.count || 0);
     const totalPagesFromAPI = ordinancesData?.total_pages || 1;
     
     // Reset to page 1 when search changes
@@ -66,7 +67,7 @@ function OrdinancePage() {
     
     // Process ordinances when data changes
     useEffect(() => {
-        if (ordinances.length > 0) {
+        if (Array.isArray(ordinances) && ordinances.length > 0) {
             // Apply filter
             let filtered = ordinances;
             if (filter !== "all" && filter !== "Template") {
@@ -74,7 +75,7 @@ function OrdinancePage() {
             }
 
             // Load existing AI analyses from localStorage
-            const ordinancesWithAnalyses = filtered.map(ordinance => {
+            const ordinancesWithAnalyses = filtered.map((ordinance: Ordinance) => {
                 const existingAnalysis = loadAnalysisFromStorage(ordinance.ord_num);
                 return existingAnalysis ? { ...ordinance, aiAnalysisResult: existingAnalysis } : ordinance;
             });
@@ -181,9 +182,9 @@ function OrdinancePage() {
         
         // Show success message based on whether it was an amendment
         if (selectedExistingOrdinance && selectedExistingOrdinance !== "new") {
-            toast.success('Amendment created successfully! It will appear in the same folder as the base ordinance.');
+            showSuccessToast('Amendment created successfully! It will appear in the same folder as the base ordinance.');
         } else {
-            toast.success('Ordinance created successfully!');
+            showSuccessToast('Ordinance created successfully!');
         }
         
         // Reset form and selected ordinance
@@ -254,13 +255,13 @@ function OrdinancePage() {
         try {
             const newValue = !ordinanceToToggle.ord_repealed;
             await updateOrdinance(ordinanceToToggle.ord_num, { ord_repealed: newValue });
-            toast.success(newValue ? 'Ordinance marked as repealed' : 'Ordinance un-repealed');
+            showSuccessToast(newValue ? 'Ordinance marked as repealed' : 'Ordinance un-repealed');
             setRepealDialogOpen(false);
             setOrdinanceToToggle(null);
             queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (e) {
             console.error('Failed to toggle repeal:', e);
-            toast.error('Failed to update ordinance repeal status');
+            showErrorToast('Failed to update ordinance repeal status');
         }
     };
 
@@ -285,7 +286,7 @@ function OrdinancePage() {
     // Function to handle AI analysis for ordinances (individual or amendment comparison)
     const handleOpenAIAnalysis = async (ordinance: OrdinanceItem) => {
         if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
+            showErrorToast("AI service is not available. Please try again later.");
             return;
         }
 
@@ -314,11 +315,11 @@ function OrdinancePage() {
         
         try {
             await deleteOrdinance(itemToDelete.ord_num);
-            toast.success('Ordinance deleted successfully');
+            showSuccessToast('Ordinance deleted successfully');
             queryClient.invalidateQueries({ queryKey: ["ordinancesPaginated"] });
         } catch (error) {
             console.error('Error deleting ordinance:', error);
-            toast.error('Failed to delete ordinance');
+            showErrorToast('Failed to delete ordinance');
         } finally {
             setDeleteDialogOpen(false);
             setItemToDelete(null);
@@ -334,7 +335,7 @@ function OrdinancePage() {
     //         link.click();
     //         document.body.removeChild(link);
     //     } else {
-    //         toast.error('PDF not available for download');
+    //         showErrorToast('PDF not available for download');
     //     }
     // };
 
@@ -349,13 +350,13 @@ function OrdinancePage() {
         // Based on creation mode
         if (creationMode === 'amend') {
             if (!selectedExistingOrdinance || selectedExistingOrdinance === 'new') {
-                toast.error('Please select an ordinance to amend.');
+                showErrorToast('Please select an ordinance to amend.');
                 setIsCreatingOrdinance(false);
                 return;
             }
             // If new ordinance marked repealed, block amendment creation
             if (values.ord_repealed) {
-                toast.error('A repealed ordinance cannot be created as an amendment.');
+                showErrorToast('A repealed ordinance cannot be created as an amendment.');
                 setIsCreatingOrdinance(false);
                 return;
             }
@@ -363,7 +364,7 @@ function OrdinancePage() {
             // Also block if selected parent is repealed (client-side check based on loaded data)
             const parent = ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance);
             if (parent && parent.ord_repealed) {
-                toast.error('Cannot amend a repealed ordinance.');
+                showErrorToast('Cannot amend a repealed ordinance.');
                 setIsCreatingOrdinance(false);
                 return;
             }
@@ -385,7 +386,7 @@ function OrdinancePage() {
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
         } else if (creationMode === 'repeal') {
             if (!selectedExistingOrdinance || selectedExistingOrdinance === 'new') {
-                toast.error('Please select an ordinance to repeal.');
+                showErrorToast('Please select an ordinance to repeal.');
                 setIsCreatingOrdinance(false);
                 return;
             }
@@ -434,7 +435,7 @@ function OrdinancePage() {
 
     const handleIndividualAIAnalysis = async (item: OrdinanceItem) => {
         if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
+            showErrorToast("AI service is not available. Please try again later.");
             return;
         }
 
@@ -490,7 +491,7 @@ function OrdinancePage() {
                 return folder;
             }));
             
-            toast.success("Document analysis completed successfully!");
+            showSuccessToast("Document analysis completed successfully!");
             
             // Open the AI analysis popup to show the results
             // Use the updated item with the new analysis result
@@ -499,7 +500,7 @@ function OrdinancePage() {
             setAiAnalysisOpen(true);
         } catch (error) {
             console.error("Error analyzing ordinance:", error);
-            toast.error("Failed to analyze ordinance. Please try again.");
+            showErrorToast("Failed to analyze ordinance. Please try again.");
         } finally {
             setIndividualAnalysisLoading(null);
             setFileExtractionLoading(null);
@@ -511,11 +512,11 @@ function OrdinancePage() {
     // New function to analyze and compare all amendments within a folder
     const handleFolderAmendmentComparison = async (folder: OrdinanceFolder) => {
         if (!aiService) {
-            toast.error("AI service is not available. Please try again later.");
+            showErrorToast("AI service is not available. Please try again later.");
             return;
         }
         if (folder.amendments.length === 0) {
-            toast.info("No amendments found to compare.");
+            showErrorToast("No amendments found to compare.");
             return;
         }
         
@@ -577,10 +578,10 @@ function OrdinancePage() {
             });
             setAiAnalysisOpen(true);
             
-            toast.success("Amendment comparison analysis completed successfully!");
+            showSuccessToast("Amendment comparison analysis completed successfully!");
         } catch (error) {
             console.error("Error comparing amendments:", error);
-            toast.error("Failed to compare amendments. Please try again.");
+            showErrorToast("Failed to compare amendments. Please try again.");
         } finally {
             setFolderAmendmentLoading(null);
         }
@@ -589,6 +590,11 @@ function OrdinancePage() {
     // Removed unused color functions for risk and compliance badges
 
     const filteredItems = ordinanceFolders.filter(folder => {
+        // If no search term, show all items
+        if (!searchTerm || searchTerm.trim() === '') {
+            return true;
+        }
+        
         const searchLower = searchTerm.toLowerCase();
         const baseOrdinance = folder.baseOrdinance;
         const amendments = folder.amendments;
@@ -605,6 +611,7 @@ function OrdinancePage() {
         
         return baseMatches || amendmentMatches;
     });
+
 
     return (
         <div className="w-full h-full px-2 md:px-4 lg:px-6">
@@ -794,7 +801,7 @@ function OrdinancePage() {
                                                             if (folder.baseOrdinance.file && folder.baseOrdinance.file.file_url) {
                                                                 window.open(folder.baseOrdinance.file.file_url, '_blank');
                                                             } else {
-                                                                toast.error('No file available to view');
+                                                                showErrorToast('No file available to view');
                                                             }
                                                         }}
                                                     >
@@ -1178,7 +1185,7 @@ function OrdinancePage() {
                                                                 if (selectedFolder.baseOrdinance.file && selectedFolder.baseOrdinance.file.file_url) {
                                                                     window.open(selectedFolder.baseOrdinance.file.file_url, '_blank');
                                                                 } else {
-                                                                    toast.error('No file available to view');
+                                                                    showErrorToast('No file available to view');
                                                                 }
                                                             }}
                                                             className="text-xs px-3 py-1 h-7"
@@ -1286,7 +1293,7 @@ function OrdinancePage() {
                                                                 if (amendment.file && amendment.file.file_url) {
                                                                     window.open(amendment.file.file_url, '_blank');
                                                                 } else {
-                                                                    toast.error('No file available to view');
+                                                                    showErrorToast('No file available to view');
                                                                 }
                                                             }}
                                                             className="text-xs px-3 py-1 h-7"
@@ -1347,7 +1354,7 @@ function OrdinancePage() {
                                                                         if (repeal.file && repeal.file.file_url) {
                                                                             window.open(repeal.file.file_url, '_blank');
                                                                         } else {
-                                                                            toast.error('No file available to view');
+                                                                            showErrorToast('No file available to view');
                                                                         }
                                                                     }}
                                                                     className="text-xs px-3 py-1 h-7"

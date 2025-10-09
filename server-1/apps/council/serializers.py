@@ -515,13 +515,14 @@ class OrdinanceFileSerializer(serializers.ModelSerializer):
 
 class OrdinanceSerializer(serializers.ModelSerializer):
     staff = serializers.PrimaryKeyRelatedField(read_only=True)
+    staff_id = serializers.CharField(write_only=True, required=False, source='staff')
     of_id = serializers.PrimaryKeyRelatedField(read_only=True)
     file = serializers.SerializerMethodField()
 
     class Meta:
         model = Ordinance
         fields = ['ord_num', 'ord_title', 'ord_date_created', 'ord_category',
-                  'ord_details', 'ord_year', 'ord_is_archive', 'ord_repealed', 'staff', 'of_id', 'file',
+                  'ord_details', 'ord_year', 'ord_is_archive', 'ord_repealed', 'staff', 'staff_id', 'of_id', 'file',
                   'ord_parent', 'ord_is_ammend', 'ord_ammend_ver']
         extra_kwargs = {
             'ord_num': {'required': False, 'allow_blank': True},
@@ -551,6 +552,42 @@ class OrdinanceSerializer(serializers.ModelSerializer):
         if value and value.strip() and Ordinance.objects.filter(ord_num=value).exists():
             raise serializers.ValidationError("An ordinance with this number already exists.")
         return value
+    
+    def create(self, validated_data):
+        """
+        Create ordinance with proper staff_id handling
+        """
+        # Get staff_id from initial_data (raw request data)
+        staff_id = self.initial_data.get('staff_id')
+        print(f"🔍 OrdinanceSerializer - staff_id from initial_data: {staff_id}")
+        print(f"🔍 OrdinanceSerializer - staff_id type: {type(staff_id)}")
+        print(f"🔍 OrdinanceSerializer - initial_data: {self.initial_data}")
+        print(f"🔍 OrdinanceSerializer - validated_data: {validated_data}")
+        
+        # Convert staff_id string to Staff object
+        if staff_id:
+            try:
+                Staff = apps.get_model('administration', 'Staff')
+                # Convert to string if it's a number
+                staff_id_str = str(staff_id)
+                print(f"🔍 Looking for staff with ID: {staff_id_str}")
+                staff = Staff.objects.get(staff_id=staff_id_str)
+                validated_data['staff'] = staff
+                print(f"✅ Found staff {staff_id_str}, setting in validated_data")
+            except Staff.DoesNotExist:
+                print(f"⚠️ Staff with ID {staff_id_str} not found")
+                logger.error(f"Staff with id {staff_id_str} does not exist")
+            except Exception as e:
+                print(f"❌ Error getting staff {staff_id_str}: {e}")
+                logger.error(f"Error getting staff: {str(e)}")
+        else:
+            print("⚠️ No staff_id provided in request")
+        
+        # Create the ordinance
+        ordinance = Ordinance.objects.create(**validated_data)
+        print(f"✅ Created ordinance {ordinance.ord_num} with staff: {ordinance.staff}")
+        
+        return ordinance
         
    
 

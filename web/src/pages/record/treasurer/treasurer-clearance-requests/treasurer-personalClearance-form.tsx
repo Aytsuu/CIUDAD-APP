@@ -4,7 +4,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { toast } from "sonner";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { createPersonalClearance, createNonResidentPersonalClearance } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/personalClearancePostApi";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -152,26 +152,26 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             setIsSubmitting(true);
             
             if (!staffId) {
-                toast.error("Missing staff ID. Please re-login and try again.");
+                showErrorToast("Missing staff ID. Please re-login and try again.");
                 return;
             }
 
             // Validate staff_id format
             if (staffId.length !== 11) {
-                toast.error(`Invalid staff ID format. Expected 11 digits, got ${staffId.length}. Please re-login and try again.`);
+                showErrorToast(`Invalid staff ID format. Expected 11 digits, got ${staffId.length}. Please re-login and try again.`);
                 console.error(`Invalid staff ID format: ${staffId} (length: ${staffId.length})`);
                 return;
             }
 
             // Validate that a resident is selected
             if (!values.rp_id) {
-                toast.error("Please select a resident from the list.");
+                showErrorToast("Please select a resident from the list.");
                 return;
             }
 
             // Validate that a purpose is selected
             if (!values.purpose) {
-                toast.error("Please select a purpose.");
+                showErrorToast("Please select a purpose.");
                 return;
             }
 
@@ -185,14 +185,14 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             
             await createPersonalClearance(payload, staffId);
             if (onSuccess) onSuccess();
-            toast.success("Personal clearance created successfully!");
+            showSuccessToast("Personal clearance created successfully!");
             
             residentForm.reset();
             await queryClient.invalidateQueries({ queryKey: ["residentReq"] });
             
         } catch (error: any) {
             console.error('Error creating personal clearance:', error);
-            toast.error(error.message || "Failed to create personal clearance. Please try again.");
+            showErrorToast(error.message || "Failed to create personal clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -212,7 +212,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             setIsSubmitting(true);
             
             if (!staffId) {
-                toast.error("Missing staff ID. Please re-login and try again.");
+                showErrorToast("Missing staff ID. Please re-login and try again.");
                 return;
             }
 
@@ -228,7 +228,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             
             console.log('Non-resident payload:', payload);
             await createNonResidentPersonalClearance(payload, staffId);
-            toast.success("Personal clearance created successfully!");
+            showSuccessToast("Personal clearance created successfully!");
             
             nonResidentForm.reset();
             await queryClient.invalidateQueries({ queryKey: ["nonResidentReq"] });
@@ -237,7 +237,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             
         } catch (error) {
             console.error('Error creating personal clearance:', error);
-            toast.error("Failed to create personal clearance. Please try again.");
+            showErrorToast("Failed to create personal clearance. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -290,7 +290,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                     // Validate that we have a valid rp_id
                                                     if (!item?.rp_id) {
                                                         console.error('No rp_id found in selected item:', item);
-                                                        toast.error("Invalid resident selected. Please try again.");
+                                                        showErrorToast("Invalid resident selected. Please try again.");
                                                         return;
                                                     }
                                                     
