@@ -31,27 +31,27 @@ const FamhistTable = ({ famhistData, isLoading, isError }: any) => {
                 Family Medical History
                 <br />
               </th>
-              <th className="text-center font-medium text-gray-900 w-12 border-r border-black">Y</th>
-              <th className="text-center font-medium text-gray-900 w-12 border-r border-black">N</th>
-              <th className="text-left font-medium text-gray-900 min-w-[150px]">REMARKS</th>
+              <th className="pb-1  text-center font-medium text-gray-900 w-12 border-r border-black">Y</th>
+              <th className="pb-1  text-center font-medium text-gray-900 w-12 border-r border-black">N</th>
+              <th className="pb-1  text-left font-medium text-gray-900 min-w-[150px]">REMARKS</th>
             </tr>
           </thead>
           <tbody>
             {ph_illnesses?.data?.map((illness: any) => (
               <tr key={illness.ill_id} className="border-b border-black">
-                <td className="text-sm text-gray-900 font-medium border-r border-black pr-20">{illness.illname}</td>
-                <td className="text-center border-r border-black">{illness.has_family_history ? <Check className="w-4 h-4 mx-auto text-black" /> : ""}</td>
-                <td className="text-center border-r border-black">{!illness.has_family_history ? <Check className="w-4 h-4 mx-auto text-black" /> : ""}</td>
-                <td className="text-sm text-gray-700">{illness.has_family_history && illness.year ? `Diagnosed in ${illness.year}` : ""}</td>
+                <td className="pb-1 text-sm text-gray-900 font-medium border-r border-black pr-20">{illness.illname}</td>
+                <td className="pb-1 text-center border-r border-black">{illness.has_family_history ? "✓ ": ""}</td>
+                <td className="pb-1 text-center border-r border-black">{!illness.has_family_history ? "✓ ": ""}</td>
+                <td className="pb-1 text-sm text-gray-700">{illness.has_family_history && illness.year ? `Diagnosed in ${illness.year}` : ""}</td>
               </tr>
             ))}
 
             {/* Others row */}
             <tr className="border-b border-black">
-              <td className="text-sm text-gray-900 font-medium border-r border-black">Others</td>
-              <td className="text-center border-r border-black">{other_illnesses && other_illnesses !== "None" ? <Check className="w-4 h-4 mx-auto text-black" /> : ""}</td>
-              <td className="text-center border-r border-black">{!other_illnesses || other_illnesses === "None" ? <Check className="w-4 h-4 mx-auto text-black" /> : ""}</td>
-              <td className="text-sm text-gray-700">{other_illnesses && other_illnesses !== "None" ? other_illnesses : ""}</td>
+              <td className="pb-1 text-sm text-gray-900 font-medium border-r border-black">Others</td>
+              <td className="pb-1 text-center border-r border-black">{other_illnesses && other_illnesses !== "None" ? "✓ ": ""}</td>
+              <td className="pb-1 text-center border-r border-black">{!other_illnesses || other_illnesses === "None" ? "✓ ": ""}</td>
+              <td className="pb-2 first-line:text-sm text-gray-700">{other_illnesses && other_illnesses !== "None" ? other_illnesses : ""}</td>
             </tr>
           </tbody>
         </table>

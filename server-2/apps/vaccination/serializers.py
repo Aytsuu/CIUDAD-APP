@@ -68,6 +68,7 @@ class VaccinationRecordSerializerBase(serializers.ModelSerializer):
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
+    latest_vaccination_date = serializers.SerializerMethodField()
     
     class Meta:
         model = Patient
@@ -80,3 +81,14 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         ).count()
         print(f"Completed vaccination history count for patient {obj.pat_id}: {count}")
         return count
+    
+    def get_latest_vaccination_date(self, obj):
+        # Get the most recent vaccination date for this patient
+        latest_vaccination = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=obj.pat_id,
+            vachist_status__in=['completed', 'partially vaccinated']
+        ).order_by('-date_administered').first()
+        
+        if latest_vaccination and latest_vaccination.date_administered:
+            return latest_vaccination.date_administered
+        return None

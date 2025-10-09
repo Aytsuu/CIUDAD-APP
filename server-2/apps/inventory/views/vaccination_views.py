@@ -296,7 +296,7 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
             if stock_count > 0:
                 return Response(
                     {
-                        "error": f"Cannot delete vaccine. It has {stock_count} stock record(s) associated with it.",
+                        "error": f"Cannot delete vaccine it has record(s) associated with it.",
                         "stock_records_count": stock_count,
                         "message": "Please remove all stock records first before deleting this vaccine."
                     },
@@ -308,7 +308,7 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
             if vaccination_history_count > 0:
                 return Response(
                     {
-                        "error": f"Cannot delete vaccine. It has {vaccination_history_count} vaccination history record(s) associated with it.",
+                        "error": f"Cannot delete vaccine.  record(s) associated with it.",
                         "vaccination_history_count": vaccination_history_count,
                         "message": "This vaccine has been used in vaccination records and cannot be deleted."
                     },

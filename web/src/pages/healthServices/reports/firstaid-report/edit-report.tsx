@@ -7,20 +7,15 @@ import { Combobox } from "@/components/ui/combobox";
 import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import {useUpdateMonthlyRecipientList} from "@/pages/healthServices/reports/firstaid-report/queries/post";
+import { useUpdateMonthlyRecipientList } from "./queries/post";
 
 export default function EditMonthlyRecipientList() {
   const location = useLocation();
-  const {
-    recordCount,
-    reports,
-    monthlyrcplist_id,
-    
-  } = location.state || {};
+  const { recordCount, reports, monthlyrcplist_id } = location.state || {};
   const navigate = useNavigate();
   const signatureRef = useRef<SignatureFieldRef>(null);
-    const { mutate: updateRecipientList, isPending: isSubmitting } = useUpdateMonthlyRecipientList();
-  
+  const { mutate: updateRecipientList, isPending: isSubmitting } = useUpdateMonthlyRecipientList();
+
   const setSignature = useState<string | null>(null)[1];
   const [office, setOffice] = useState("");
   const [control_no, setcontrol_no] = useState("");
@@ -28,19 +23,28 @@ export default function EditMonthlyRecipientList() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const { data: staffOptions, isLoading } = fetchStaffWithPositions();
-  
+  const [selectedStaffDisplay, setSelectedStaffDisplay] = useState(""); // For display in combobox
+
   // Safe access with optional chaining and fallbacks
   const passedStaffId = reports?.staff_details?.staff_id || "";
   const signatureBase64 = reports?.signature || null;
 
+ 
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
-      const staffExists = staffOptions.formatted.some((staff) => staff.id === passedStaffId);
-      if (staffExists) {
+      // Find the staff member in the options
+      const staffMember = staffOptions.formatted.find((staff) => {
+        // Extract ID from value (value is "ID-NAME-POSITION")
+        const staffIdFromValue = staff.id;
+        return staffIdFromValue === passedStaffId;
+      });
+      
+      if (staffMember) {
+        // Set both the display value and the actual ID
+        setSelectedStaffDisplay(`${staffMember.id}-${staffMember.rawName}-${staffMember.position}`);
         setSelectedStaffId(passedStaffId);
       }
     }
-    
     // Safe initialization from reports
     if (reports) {
       setOffice(reports.office || "");
@@ -75,7 +79,7 @@ export default function EditMonthlyRecipientList() {
     const file = event.target.files?.[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast.error("Please upload an image file");
         return;
       }
@@ -87,7 +91,7 @@ export default function EditMonthlyRecipientList() {
       }
 
       setLogoFile(file);
-      
+
       // Create preview and convert to base64
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -95,9 +99,9 @@ export default function EditMonthlyRecipientList() {
         setLogoPreview(base64);
       };
       reader.readAsDataURL(file);
-      
+
       // Reset the input to allow uploading the same file again
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
@@ -123,7 +127,7 @@ export default function EditMonthlyRecipientList() {
       signature: currentSignature,
       office: office.toUpperCase(),
       control_no: control_no,
-      total_records:recordCount
+      total_records: recordCount
     };
 
     // Add logo as base64 if selected
@@ -135,14 +139,14 @@ export default function EditMonthlyRecipientList() {
       };
     } else if (logoPreview === null) {
       // If logo is cleared, send empty value
-      payload.logo = '';
+      payload.logo = "";
     }
 
     // Use the mutation
     updateRecipientList(
-      { 
-        monthlyrcplist_id, 
-        data: payload 
+      {
+        monthlyrcplist_id,
+        data: payload
       },
       {
         onSuccess: () => {
@@ -174,32 +178,15 @@ export default function EditMonthlyRecipientList() {
               <div className="w-24 h-24 bg-gray-200 rounded-full relative flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300">
                 {logoPreview ? (
                   <div className="relative w-full h-full group">
-                    <img 
-                      src={logoPreview} 
-                      alt="Logo" 
-                      className="w-full h-full object-cover rounded-full"
-                    />
+                    <img src={logoPreview} alt="Logo" className="w-full h-full object-cover rounded-full" />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 flex gap-2">
                         <label htmlFor="logo-upload" className="cursor-pointer">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="text-xs bg-white text-black hover:bg-gray-100"
-                            disabled={isSubmitting}
-                          >
+                          <Button type="button" variant="secondary" size="sm" className="text-xs bg-white text-black hover:bg-gray-100" disabled={isSubmitting}>
                             Change
                           </Button>
                         </label>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={removeLogo}
-                          className="text-xs"
-                          disabled={isSubmitting}
-                        >
+                        <Button type="button" variant="destructive" size="sm" onClick={removeLogo} className="text-xs" disabled={isSubmitting}>
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
@@ -214,15 +201,8 @@ export default function EditMonthlyRecipientList() {
                     </div>
                   </label>
                 )}
-                
-                <input
-                  id="logo-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleLogoUpload}
-                  disabled={isSubmitting}
-                />
+
+                <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={isSubmitting} />
               </div>
 
               {/* Header Text */}
@@ -247,12 +227,7 @@ export default function EditMonthlyRecipientList() {
               <div className="space-y-1">
                 <Label className="font-medium">Office:</Label>
                 <div className="border-b border-black relative">
-                  <input 
-                    className="w-full bg-transparent focus:outline-none py-1" 
-                    value={office} 
-                    onChange={(e) => setOffice(e.target.value)} 
-                    disabled={isSubmitting} 
-                  />
+                  <input className="w-full bg-transparent focus:outline-none py-1" value={office} onChange={(e) => setOffice(e.target.value)} disabled={isSubmitting} />
                   <Edit className="absolute right-2 bottom-2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
@@ -260,12 +235,7 @@ export default function EditMonthlyRecipientList() {
               <div className="space-y-1">
                 <Label className="font-medium">Control No:</Label>
                 <div className="border-b border-black relative">
-                  <input 
-                    className="w-full bg-transparent focus:outline-none py-1" 
-                    value={control_no} 
-                    onChange={(e) => setcontrol_no(e.target.value)} 
-                    disabled={isSubmitting} 
-                  />
+                  <input className="w-full bg-transparent focus:outline-none py-1" value={control_no} onChange={(e) => setcontrol_no(e.target.value)} disabled={isSubmitting} />
                   <Edit className="absolute right-2 bottom-2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
@@ -280,45 +250,44 @@ export default function EditMonthlyRecipientList() {
             <div className="py-4 text-sm italic">Hereby certify that the names listed above are recipients of the item as indicated below</div>
 
             {/* Signature Field */}
-            <SignatureField 
-              ref={signatureRef} 
-              title="Authorized Signature" 
-              onSignatureChange={setSignature} 
-              initialSignature={signatureBase64} 
-              required={true} 
-            />
+            <SignatureField ref={signatureRef} title="Authorized Signature" onSignatureChange={setSignature} initialSignature={signatureBase64} required={true} />
 
             {/* Staff Selection */}
             <div className="mt-6">
               <Label className="block mb-2">Name</Label>
               <div className="relative">
-                <Combobox 
-                  options={staffOptions?.formatted || []} 
-                  value={selectedStaffId} 
-                  onChange={(value) => setSelectedStaffId(value || "")} 
-                  placeholder={isLoading ? "Loading staff..." : "Select staff member"} 
-                  emptyMessage="No available staff members" 
-                  triggerClassName="w-full"
-                />
+              <Combobox
+            options={staffOptions?.formatted || []}
+            value={selectedStaffDisplay}
+            onChange={(value) => {
+              console.log("Combobox selected value:", value);
+              
+              if (value) {
+                // Extract just the ID part (first part before first hyphen)
+                const staffId = value.split('-')[0];
+                console.log("Extracted staff ID:", staffId);
+                
+                setSelectedStaffDisplay(value); // Full display value for combobox
+                setSelectedStaffId(staffId);    // Just the ID for submission
+              } else {
+                setSelectedStaffDisplay("");
+                setSelectedStaffId("");
+              }
+            }}
+            placeholder={isLoading ? "Loading staff..." : "Select staff member"}
+            emptyMessage="No available staff members"
+            triggerClassName="w-full"
+          />
                 <Edit className="absolute right-3 top-3 h-4 w-4 text-gray-500" />
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
-              <Button 
-                onClick={() => navigate(-1)} 
-                variant="outline" 
-                className="px-8" 
-                disabled={isSubmitting}
-              >
+              <Button onClick={() => navigate(-1)} variant="outline" className="px-8" disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSubmit} 
-                className="px-8 bg-blue-600 hover:bg-blue-700" 
-                disabled={isSubmitting || isLoading}
-              >
+              <Button onClick={handleSubmit} className="px-8 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || isLoading}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

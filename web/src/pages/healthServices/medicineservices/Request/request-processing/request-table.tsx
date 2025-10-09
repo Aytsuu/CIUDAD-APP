@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { medicineRequestColumns } from "./columns";
 import { useProcessingMedrequest } from "../queries/fetch";
 
-export default function PendingCnfirmation() {
+export default function PickupTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);

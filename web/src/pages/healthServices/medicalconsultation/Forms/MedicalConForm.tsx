@@ -28,11 +28,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { ttStatusOptions } from "./options";
+import { usePrenatalPatientObsHistory } from "../../maternal/queries/maternalFetchQueries";
 
 export const civilStatusOptions = [
-  { id: "single", name: "Single" },
-  { id: "married", name: "Married" },
-  { id: "widowed", name: "Widowed" }
+  { id: "SINGLE", name: "Single" },
+  { id: "MARRIEED", name: "Married" },
+  { id: "WIDOWED", name: "Widowed" },
+  { id: "SEPARATED", name: "Separated" },
+  { id: "DIVORCED", name: "Divorced" }
+
 ];
 
 export default function MedicalConsultationForm() {
@@ -49,6 +53,7 @@ export default function MedicalConsultationForm() {
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const { data: latestVitals, isLoading: isVitalsLoading, error: vitalsError } = useLatestVitals(pat_id);
   const { data: previousMeasurements, isLoading: isMeasurementsLoading, error: measurementsError } = usePreviousBMI(pat_id);
+  const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(pat_id); //obstetric history
   const non_membersubmit = useSubmitMedicalConsultation();
 
   const form = useForm<nonPhilHealthType>({
@@ -61,73 +66,132 @@ export default function MedicalConsultationForm() {
       vital_bp_systolic: undefined,
       vital_bp_diastolic: undefined,
       vital_RR: undefined,
+      vital_o2:undefined,
       height: undefined,
       weight: undefined,
       medrec_chief_complaint: "",
       staff: staff || null,
-
       is_phrecord: false, // Default to false
       phil_pin: undefined,
+      civil_status: "",
+
       iswith_atc: false,
       dependent_or_member: "",
-      lmp: "",
-      obscore_g: "",
-      obscore_p: "",
-      tpal: "",
-      tt_status: "",
+      obs_abortions: 0,
+      obs_ch_born_alive: 0,
+      obs_fullterm: 0,
+      obs_gravida: 0,
+      obs_id: "",
+      obs_lg_babies: "",
+      obs_lg_babies_str: "",
+      obs_para: 0,
+      obs_preterm: 0,
+      obs_still_birth: 0,
+      obs_lmp: "",
+      tts_status: "",
+      tts_date_given: "",
       ogtt_result: "",
       contraceptive_used: "",
       smk_sticks_per_day: "",
       smk_years: "",
       is_passive_smoker: false,
       alcohol_bottles_per_day: "",
-
       selectedDoctorStaffId: ""
     }
   });
-  
+
   const { setValue, control, watch } = form;
   const isPhilhealthRecord = watch("is_phrecord"); // Watch the checkbox value
 
- useEffect(() => {
-  if (latestVitals) {
-    form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
-    form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
-    form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
-    form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
-    form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
-  }
-  if (previousMeasurements) {
-    form.setValue("height", previousMeasurements.height ?? 0);
-    form.setValue("weight", previousMeasurements.weight ?? 0);
-  }
-  if (selectedPatientData) {
-    // Corrected line - removed the duplicate fallback that doesn't exist
-    form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
-    form.setValue("tt_status", selectedPatientData?.additional_info?.mother_tt_status || "");
-    console.log("Selected Patient Data:", selectedPatientData);
-    console.log("PhilHealth ID:", selectedPatientData?.additional_info?.philhealth_id); // Debug log
-  }
-}, [latestVitals, previousMeasurements, form, selectedPatientData]);
+  useEffect(() => {
 
-const handlePatientSelect = async (patient: any, patientId: string) => {
-  setSelectedPatientId(patientId);
-  setSelectedPatientData(patient);
-  form.setValue("pat_id", patient?.pat_id || "");
-  
-  // Debug logs
-  console.log("Patient selected:", patient);
-  console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
-  console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
-};
-
-  const onSubmit = async (data: nonPhilHealthType) => {
-    if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData)) {
-      showErrorToast("Please select a patient first");
-      return;
+    console.log(patientData,"---------------------")
+    if (latestVitals) {
+      form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
+      form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
+      form.setValue("vital_bp_systolic", latestVitals.bp_systolic?.toString() ?? "");
+      form.setValue("vital_bp_diastolic", latestVitals.bp_diastolic?.toString() ?? "");
+      form.setValue("vital_RR", latestVitals.respiratory_rate?.toString() ?? "");
+      form.setValue("vital_o2", latestVitals.oxygen_saturation?.toString() ?? "");
     }
-    non_membersubmit.mutate({ data });
+    if (previousMeasurements) {
+      form.setValue("height", previousMeasurements.height ?? 0);
+      form.setValue("weight", previousMeasurements.weight ?? 0);
+    }
+    if (selectedPatientData) {
+      // Corrected line - removed the duplicate fallback that doesn't exist
+      form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
+      form.setValue("civil_status", selectedPatientData?.personal_info?.per_status || "");
+      form.setValue("tts_status", selectedPatientData?.additional_info?.mother_tt_status || "");
+      form.setValue("tts_date_given",selectedPatientData?.additional_info?.mother_tt_date_given ? format(new Date(selectedPatientData?.additional_info?.mother_tt_date_given), "yyyy-MM-dd") : "");
+      console.log("Selected Patient Data:", selectedPatientData);
+      console.log("PhilHealth ID:", selectedPatientData?.additional_info?.philhealth_id); // Debug log
+    }
+    if (obsHistoryData) {
+      form.setValue("obs_lmp", obsHistoryData?.obstetrical_history?.obs_lmp ? format(new Date(obsHistoryData?.obstetrical_history?.obs_lmp), "yyyy-MM-dd") : "");
+      form.setValue("obs_gravida", obsHistoryData?.obstetrical_history?.obs_gravida ?? 0);
+      form.setValue("obs_para", obsHistoryData?.obstetrical_history?.obs_para ?? 0);
+      form.setValue("obs_id", obsHistoryData?.obstetrical_history?.obs_id ?? "");
+      form.setValue("obs_fullterm", obsHistoryData?.obstetrical_history?.obs_fullterm ?? 0);
+      form.setValue("obs_preterm", obsHistoryData?.obstetrical_history?.obs_preterm ?? 0);
+      form.setValue("obs_abortions", obsHistoryData?.obstetrical_history?.obs_abortions ?? 0);
+      form.setValue("obs_living_ch", obsHistoryData?.obstetrical_history?.obs_living_ch ?? 0);
+      form.setValue("obs_ch_born_alive", obsHistoryData?.obstetrical_history?.obs_ch_born_alive ?? 0);
+      form.setValue("obs_still_birth", obsHistoryData?.obstetrical_history?.obs_still_birth ?? 0);
+      form.setValue("obs_lg_babies", obsHistoryData?.obstetrical_history?.obs_lg_babies ?? 0);
+      form.setValue("obs_lg_babies_str", obsHistoryData?.obstetrical_history?.obs_lg_babies_str ?? "");
+
+    }
+  }, [latestVitals, previousMeasurements, form, selectedPatientData, obsHistoryData]);
+// Add proper date formatting and validation
+useEffect(() => {
+  if (obsHistoryData?.obstetrical_history?.obs_lmp) {
+    // Ensure the date is properly formatted for HTML date input
+    const lmpDate = new Date(obsHistoryData.obstetrical_history.obs_lmp);
+    const formattedDate = format(lmpDate, "yyyy-MM-dd");
+    form.setValue("obs_lmp", formattedDate);
+  }
+}, [obsHistoryData, form]);
+
+
+// Add this to your component to see real-time validation errors
+useEffect(() => {
+  console.log('Form Errors:', form.formState.errors);
+  console.log('Is Form Valid:', form.formState.isValid);
+  console.log('Form Values:', form.getValues());
+}, [form.formState.errors, form.formState.isValid]);
+
+
+  const handlePatientSelect = async (patient: any, patientId: string) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientData(patient);
+    form.setValue("pat_id", patient?.pat_id || "");
+
+    // Debug logs
+    console.log("Patient selected:", patient);
+    console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
+    console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
   };
+
+
+  // Update your onSubmit to log more details
+const onSubmit = async (data: nonPhilHealthType) => {
+  console.log('🟢 Attempting submission with data:', data);
+  
+  if ((mode === "fromallrecordtable" && !selectedPatientId) || (mode === "fromindivrecord" && !patientData)) {
+    showErrorToast("Please select a patient first");
+    return;
+  }
+  
+  // Check if form is valid before submitting
+  if (!form.formState.isValid) {
+    console.log('🔴 Form is invalid, cannot submit');
+    showErrorToast("Please fix form errors before submitting");
+    return;
+  }
+  
+  non_membersubmit.mutate({ data });
+};
 
   return (
     <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
@@ -158,26 +222,15 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                       <FormItem className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 ">
                           <FormControl>
-                            <Checkbox 
-                              checked={field.value} 
-                              onCheckedChange={field.onChange} 
-                              className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                              disabled={mode === "addnewchildhealthrecord"} 
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={mode === "addnewchildhealthrecord"} />
                           </FormControl>
-                          <FormLabel className="text-lg font-semibold text-blue-800 cursor-pointer">
-                            PhilHealth Consultation
-                          </FormLabel>
+                          <FormLabel className="text-lg font-semibold text-blue-800 cursor-pointer">PhilHealth Consultation</FormLabel>
                         </div>
                       </FormItem>
                     )}
                   />
-                  
-                  {isPhilhealthRecord && (
-                    <div className="mt-2 text-sm text-blue-600">
-                      PhilHealth section is enabled.
-                    </div>
-                  )}
+
+                  {isPhilhealthRecord && <div className="mt-2 text-sm text-blue-600">PhilHealth section is enabled.</div>}
                 </div>
 
                 {/* Conditionally render Philhealth form section */}
@@ -191,27 +244,21 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           render={({ field }) => (
                             <FormItem className="flex items-center space-x-3">
                               <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                />
+                                <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                               </FormControl>
-                              <FormLabel className="text-sm font-medium text-gray-700">
-                                With ATC Walk-in?
-                              </FormLabel>
+                              <FormLabel className="text-sm font-medium text-gray-700">With ATC Walk-in?</FormLabel>
                             </FormItem>
                           )}
                         />
                       </div>
                       <div className="md:col-span-1">
-                        <FormInput 
-                          control={form.control} 
-                          name="phil_pin" 
-                          label="PhilHealth PIN" 
-                          placeholder="Enter 12-digit PIN" 
+                        <FormInput
+                          control={form.control}
+                          name="phil_pin"
+                          label="PhilHealth PIN"
+                          placeholder="Enter 12-digit PIN"
                           // maxLength={12}
-                          className="w-full" 
+                          className="w-full"
                         />
                       </div>
                       <div className="md:col-span-1">
@@ -226,8 +273,18 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           placeholder="Select type"
                         />
                       </div>
+
+                      <div className="md:col-span-1">
+                        <FormSelect
+                          control={form.control}
+                          name="civil_status"
+                          label="Civil Status"
+                          options={civilStatusOptions}
+                          placeholder="Select type"
+                        />
+                      </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Pregnancy Information Card */}
                       <div className="p-5 flex flex-col gap-4 border rounded-lg shadow-sm bg-white border-green-300">
@@ -235,29 +292,30 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           <MdPregnantWoman className="text-green-600" size={24} />
                           <Label className="text-lg font-semibold text-gray-700">Pregnancy Information</Label>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormDateTimeInput 
-                            control={form.control} 
-                            name="lmp" 
-                            label="Last Menstrual Period (LMP)" 
-                            type="date" 
-                          />
-                       
+                          <FormDateTimeInput control={form.control} name="obs_lmp" label="Last Menstrual Period (LMP)" type="date" />
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
-                          <FormInput control={form.control} name="obscore_g" label="Gravida (G)" placeholder="G" type="number" step={1} maxLength={2} />
-                          <FormInput control={form.control} name="obscore_p" label="Para (P)" placeholder="P" type="number" step={1} maxLength={2} />
+                          <FormInput control={form.control} name="obs_gravida" label="Gravida (G)" placeholder="G" type="number" step={1} maxLength={2} />
+                          <FormInput control={form.control} name="obs_para" label="Para (P)" placeholder="P" type="number" step={1} maxLength={2} />
                         </div>
-                        
-                        <FormInput control={form.control} name="tpal" label="TPAL Score" placeholder="Term, Preterm, Abortion, Living" />
-                        
+
+                        <Label>TPAL</Label>
+                        <div className="grid grid-cols-4 gap-4">
+                          <FormInput control={form.control} name="obs_fullterm" label="Full Term"  type="number" step={1} maxLength={2}  placeholder="No. of full term pregnancies" />
+                          <FormInput control={form.control} name="obs_preterm" label="Preterm"  type="number" step={1} maxLength={2}   placeholder="No. of preterm pregnancies" />
+                          <FormInput control={form.control} name="obs_abortions" label="Abortions"  type="number" step={1} maxLength={2}   placeholder="No. of abortions" />
+                          <FormInput control={form.control} name="obs_living_ch" label="Living Children"  type="number" step={1} maxLength={2}  placeholder="No. of living children" />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormSelect control={form.control} name="tt_status" label="Tetanus Toxoid Status" options={ttStatusOptions} placeholder="Select status" />
-                          <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Result" />
+                          <FormSelect control={form.control} name="tts_status" label="Tetanus Toxoid Status" options={ttStatusOptions} placeholder="Select status" />
+                          <FormDateTimeInput control={form.control} name="tts_date_given" label="TT date given" type="date" />
                         </div>
-                        
+                        <FormInput control={form.control} name="ogtt_result" label="OGTT Result" placeholder="Result" />
+
+
                         <FormInput control={form.control} name="contraceptive_used" label="Contraceptive Used" placeholder="Method used" />
                       </div>
 
@@ -267,7 +325,7 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                           <MdSmokingRooms className="text-blue-600" size={24} />
                           <Label className="text-lg font-semibold text-gray-700">Lifestyle Information</Label>
                         </div>
-                        
+
                         <div className="space-y-4">
                           <div>
                             <Label className="text-sm font-medium text-gray-700 mb-2 block">Smoking History</Label>
@@ -281,15 +339,10 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                                   render={({ field }) => (
                                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
                                       <FormControl>
-                                        <Checkbox
-                                          checked={field.value}
-                                          onCheckedChange={field.onChange}
-                                        />
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                       </FormControl>
                                       <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                          Passive Smoker
-                                        </FormLabel>
+                                        <FormLabel>Passive Smoker</FormLabel>
                                       </div>
                                     </FormItem>
                                   )}
@@ -297,20 +350,12 @@ const handlePatientSelect = async (patient: any, patientId: string) => {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 pt-2 border-t">
                             <MdLocalBar className="text-blue-600" size={20} />
                             <Label className="text-sm font-medium text-gray-700">Alcohol Consumption</Label>
                           </div>
-                          <FormInput 
-                            control={form.control} 
-                            name="alcohol_bottles_per_day" 
-                            label="Bottles per Day" 
-                            placeholder="0" 
-                            type="number" 
-                            step={1} 
-                            maxLength={2} 
-                          />
+                          <FormInput control={form.control} name="alcohol_bottles_per_day" label="Bottles per Day" placeholder="0" type="number" step={1} maxLength={2} />
                         </div>
                       </div>
                     </div>

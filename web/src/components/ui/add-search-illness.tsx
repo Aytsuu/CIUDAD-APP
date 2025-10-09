@@ -1,11 +1,18 @@
 "use client";
-
 import { useState } from "react";
 import { toast } from "sonner";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2, List } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog/dialog";
 
 interface Illness {
   ill_id: number;
@@ -48,6 +55,8 @@ export const IllnessComponent = ({
 }: IllnessComponentProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSearchTerm, setModalSearchTerm] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch illnesses with caching
@@ -71,24 +80,41 @@ export const IllnessComponent = ({
       
       const previousIllnesses = queryClient.getQueryData<Illness[]>(['illnesses']);
       
+      // Optimistically add the new illness
+      const optimisticIllness: Illness = {
+        ill_id: Date.now(),
+        illname: newIllnessName,
+        created_at: new Date().toISOString()
+      };
+      
       queryClient.setQueryData<Illness[]>(['illnesses'], (old = []) => [
-        { ill_id: Date.now(), illname: newIllnessName, created_at: new Date().toISOString() },
+        optimisticIllness,
         ...old,
       ]);
       
       return { previousIllnesses };
     },
-    onError: (context: any) => {
+    onError: (_error, _variables, context: any) => {
       queryClient.setQueryData(['illnesses'], context?.previousIllnesses);
       toast.error("Failed to add illness");
     },
     onSuccess: (createdIllness) => {
+      // Refetch to get the actual data from server
+      queryClient.invalidateQueries({ queryKey: ['illnesses'] });
+      
       // Automatically check the newly added illness
       const updatedSelected = [...selectedIllnesses, createdIllness.ill_id];
       onIllnessSelectionChange(updatedSelected);
       
-      // Update assessment
-      const selectedIllnessNames = [...illnesses, createdIllness]
+      // Get the current illnesses list from cache
+      const currentIllnesses = queryClient.getQueryData<Illness[]>(['illnesses']) || [];
+      
+      // Build assessment with the newly created illness included
+      const allIllnesses = currentIllnesses.some(i => i.ill_id === createdIllness.ill_id)
+        ? currentIllnesses
+        : [createdIllness, ...currentIllnesses];
+      
+      const selectedIllnessNames = allIllnesses
         .filter((illness) => updatedSelected.includes(illness.ill_id))
         .map((illness) => illness.illname)
         .join(", ");
@@ -121,7 +147,7 @@ export const IllnessComponent = ({
     const updatedSelected = checked
       ? [...selectedIllnesses, illnessId]
       : selectedIllnesses.filter((id) => id !== illnessId);
-
+    
     onIllnessSelectionChange(updatedSelected);
 
     const selectedIllnessNames = illnesses
@@ -136,9 +162,43 @@ export const IllnessComponent = ({
     illness.illname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Sort illnesses - selected ones first, then alphabetically
+  const sortedFilteredIllnesses = [...filteredIllnesses].sort((a, b) => {
+    const aSelected = selectedIllnesses.includes(a.ill_id);
+    const bSelected = selectedIllnesses.includes(b.ill_id);
+    
+    // If selection status is different, selected comes first
+    if (aSelected !== bSelected) {
+      return aSelected ? -1 : 1;
+    }
+    
+    // If both selected or both unselected, sort alphabetically
+    return a.illname.localeCompare(b.illname);
+  });
+
+  // Only show first 4 items in the main view
+  const displayedIllnesses = sortedFilteredIllnesses.slice(0, 4);
+  const hasMoreIllnesses = sortedFilteredIllnesses.length > 4;
+
+  // Sort modal illnesses the same way
+  const modalFilteredIllnesses = illnesses
+    .filter((illness) =>
+      illness.illname.toLowerCase().includes(modalSearchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aSelected = selectedIllnesses.includes(a.ill_id);
+      const bSelected = selectedIllnesses.includes(b.ill_id);
+      
+      if (aSelected !== bSelected) {
+        return aSelected ? -1 : 1;
+      }
+      
+      return a.illname.localeCompare(b.illname);
+    });
+
   const showAddButton = searchTerm && 
                        !illnessExists(searchTerm) && 
-                       !filteredIllnesses.length;
+                       !sortedFilteredIllnesses.length;
 
   if (isError) {
     return (
@@ -209,10 +269,10 @@ export const IllnessComponent = ({
             )}
           </div>
         ) : (
-          filteredIllnesses.map((illness) => (
+          displayedIllnesses.map((illness) => (
             <div
               key={illness.ill_id}
-              className="flex items-center  text-sm space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex items-center text-sm space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
             >
               <input
                 type="checkbox"
@@ -231,6 +291,94 @@ export const IllnessComponent = ({
           ))
         )}
       </div>
+
+      {/* Show More Button - only display if there are more than 4 illnesses */}
+      {(hasMoreIllnesses || illnesses.length > 4) && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full" size="sm">
+              <List className="h-4 w-4 mr-2" />
+              Show More ({illnesses.length} total)
+            </Button>
+          </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>All Illnesses</DialogTitle>
+            <DialogDescription>
+              Browse and select from all available illnesses
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search in all illnesses..."
+              value={modalSearchTerm}
+              onChange={(e) => setModalSearchTerm(e.target.value)}
+              className="pl-10 w-full p-2 border rounded-md"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          </div>
+
+          {/* Add button for modal search */}
+          {modalSearchTerm && !illnessExists(modalSearchTerm) && modalFilteredIllnesses.length === 0 && (
+            <Button
+              onClick={() => handleAddIllness(modalSearchTerm)}
+              disabled={isAdding}
+              className="w-full mb-4"
+            >
+              {isAdding ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Add "{modalSearchTerm}"
+            </Button>
+          )}
+
+          <div className="flex-1 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                <p className="text-muted-foreground">Loading illnesses...</p>
+              </div>
+            ) : modalFilteredIllnesses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <Search className="h-5 w-5 mb-2" />
+                <p className="text-center">
+                  {modalSearchTerm 
+                    ? `No illnesses found matching "${modalSearchTerm}"`
+                    : "No illnesses available"}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {modalFilteredIllnesses.map((illness) => (
+                  <div
+                    key={illness.ill_id}
+                    className="flex items-center text-sm space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`modal-illness-${illness.ill_id}`}
+                      checked={selectedIllnesses.includes(illness.ill_id)}
+                      onChange={(e) => handleIllnessCheckboxChange(illness.ill_id, e.target.checked)}
+                      className="w-5 h-5 text-blue-600 border-2 border-zinc-400 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer flex-shrink-0"
+                    />
+                    <label
+                      htmlFor={`modal-illness-${illness.ill_id}`}
+                      className="font-medium cursor-pointer flex-1 leading-tight"
+                    >
+                      {illness.illname}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      )}
     </div>
   );
 };
