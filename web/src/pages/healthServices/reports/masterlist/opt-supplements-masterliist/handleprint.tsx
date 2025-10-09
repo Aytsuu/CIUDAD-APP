@@ -1,4 +1,4 @@
-import { exportToPDF, exportToCSV, exportToExcel } from "../../firstaid-report/export-report";
+import { exportToPDF, exportToCSV, exportToExcel } from "../../export/export-report";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { getFullChildHealthSupplementsReport } from "./restful-api/fetch";
 import { formatDate, formatSupplementDate, formatMnpDates } from "@/helpers/dateHelper";

@@ -2,9 +2,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ViewButton from "@/components/ui/view-button";import { ChildHealthRecord } from "../../forms/multi-step-form/types";
+import ViewButton from "@/components/ui/view-button";
 
-export const childColumns: ColumnDef<ChildHealthRecord>[] = [
+export const childColumns: ColumnDef<any>[] = [
   {
     accessorKey: "child",
     header: ({ column }) => (
@@ -53,6 +53,28 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
     },
   },
   {
+    accessorKey: "father",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Father <ArrowUpDown size={15} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const fullName =
+        `${row.original.father_lname}, ${row.original.father_fname} ${row.original.father_mname}`.trim();
+      return (
+        <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex flex-col w-full">
+            <div className="font-medium truncate">{fullName}</div>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "address",
     header: ({ column }) => (
       <div
@@ -68,15 +90,8 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
       </div>
     ),
   },
-  {
-    accessorKey: "family_no",
-    header: "Family No.",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.family_no}</div>
-      </div>
-    ),
-  },
+ 
+
   {
     accessorKey: "sitio",
     header: ({ column }) => (
@@ -103,6 +118,18 @@ export const childColumns: ColumnDef<ChildHealthRecord>[] = [
         </div>
       </div>
     ),
+  },
+  {
+    accessorKey: "latest_child_history_date",
+    header:"Latest Record Date",
+    cell: ({ row }) => (
+      <div className="flex justify-center min-w-[100px] px-2">
+        <div className="text-center w-full">
+          {new Date(row.original.latest_child_history_date).toLocaleDateString()}
+        </div>
+      </div>
+    ),
+
   },
   {
     accessorKey: "action",

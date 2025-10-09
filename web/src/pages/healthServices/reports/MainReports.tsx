@@ -134,7 +134,7 @@ export default function HealthcareReports() {
       icon: <Heart className="w-6 h-6 text-pink-600" />,
       bgColor: "bg-gradient-to-br from-pink-50 to-rose-50",
       description: "Monthly Field Health Services Information System report",
-      link: "/fhis-monthly-reports"
+      link: "/reports/fhis-monthly-records"
     },
    
   ];

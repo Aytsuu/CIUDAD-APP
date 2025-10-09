@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Search, Plus, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,6 +16,8 @@ import { useArchiveCommodityStocks } from "../REQUEST/Archive/ArchivePutQueries"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import WastedModal from "../addstocksModal/WastedModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
 
@@ -79,6 +80,110 @@ export default function CommodityStocks() {
   const handleCloseWastedModal = () => {
     setIsWastedModalOpen(false);
     setSelectedRecord(null);
+  };
+
+  // Export functionality
+  // Corrected prepareExportData function for Commodity
+const prepareExportData = () => {
+  return commodityData.map((commodity: any) => {
+    const expired = commodity.isExpired;
+    const isLow = commodity.isLowStock;
+    const isOutOfStock = commodity.isOutOfStock;
+    const isNear = commodity.isNearExpiry;
+    const unit = commodity.cinv_qty_unit;
+    const pcs = commodity.qty?.cinv_pcs || 1;
+
+    // Format Total Qty based on unit type
+    let totalQtyDisplay = "";
+    if (unit.toLowerCase() === "boxes" && pcs > 1) {
+      totalQtyDisplay = `${commodity.qty_number} boxes (${commodity.qty_number * pcs} pcs)`;
+    } else {
+      totalQtyDisplay = `${commodity.qty_number} ${unit}`;
+    }
+
+    // Add expired indicator to Total Qty
+    if (expired) {
+      totalQtyDisplay += " (Expired)";
+    }
+
+    // Format Available Stock based on unit type
+    let availableStockDisplay = "";
+    if (unit.toLowerCase() === "boxes" && pcs > 1) {
+      const availablePcs = commodity.availableStock;
+      const fullBoxes = Math.floor(availablePcs / pcs);
+      const remainingPcs = availablePcs % pcs;
+      const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+      availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pcs)`;
+    } else {
+      availableStockDisplay = `${commodity.availableStock} ${unit}`;
+    }
+
+    // Add status indicators to Available Stock
+    if (expired) {
+      availableStockDisplay += " (Expired)";
+    } else {
+      if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+      if (isLow) availableStockDisplay += " (Low Stock)";
+    }
+
+    // Determine overall status
+    let status = "Normal";
+    if (expired) {
+      status = "Expired";
+    } else if (isOutOfStock) {
+      status = "Out of Stock";
+    } else if (isLow) {
+      status = "Low Stock";
+    } else if (isNear) {
+      status = "Near Expiry";
+    }
+
+    // Format Commodity Details with expired indicator
+    const commodityName = commodity.item?.com_name || "Unknown Commodity";
+    const commodityDetails = `${commodityName}${expired ? " (Expired)" : ""}`;
+
+    // Format Received From
+    const receivedFrom = commodity.recevFrom?.toUpperCase() || "OTHERS";
+
+    // Format Expiry Date
+    let expiryDateDisplay = commodity.expiryDate ? new Date(commodity.expiryDate).toLocaleDateString() : "N/A";
+    if (expired) {
+      expiryDateDisplay += " (Expired)";
+    } else if (isNear) {
+      expiryDateDisplay += " (Near Expiry)";
+    }
+
+    return {
+      "Date": commodity.created_at ? new Date(commodity.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }) : "N/A",
+      "ID": commodity.inv_id || "N/A",
+      "Commodity Details": commodityDetails,
+      "Received From": receivedFrom,
+      "Total Qty": totalQtyDisplay,
+      "Available Stock": availableStockDisplay,
+      "Qty Used": commodity.administered || 0,
+      "Expiry Date": expiryDateDisplay,
+      "Status": status
+    };
+  });
+};
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `commodity_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `commodity_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `commodity_stocks_${new Date().toISOString().slice(0, 10)}`, "Commodity Stocks Report");
   };
 
   const confirmArchiveInventory = async () => {
@@ -197,19 +302,12 @@ export default function CommodityStocks() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-transparent">
-                  <FileInput />
-                  Export Data
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ExportDropdown 
+              onExportCSV={handleExportCSV} 
+              onExportExcel={handleExportExcel} 
+              onExportPDF={handleExportPDF} 
+              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
+            />
           </div>
         </div>
 

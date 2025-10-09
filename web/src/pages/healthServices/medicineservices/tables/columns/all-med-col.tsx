@@ -6,21 +6,32 @@ import ViewButton from "@/components/ui/view-button";
 
 export const medicineColumns: ColumnDef<any>[] = [
   {
-    accessorKey: "patient",
+    accessorKey: "patient_no",
     header: ({ column }) => (
       <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Patient <ArrowUpDown size={15} />
+        Patient No. <ArrowUpDown size={15} />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-center min-w-[120px] px-2">
+        <div className="text-center w-full">{row.original.pat_id}</div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "patient",
+    header: ({ column }) => (
+      <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <span className="text-center">Patient</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => {
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {row.original.sex}, {row.original.age}
-            </div>
+        <div className="text-center py-2 px-4">
+          <div className="font-medium break-words ">{fullName}</div>
+          <div className="text-sm text-darkGray">
+            {row.original.sex}, {row.original.age}
           </div>
         </div>
       );
@@ -29,27 +40,13 @@ export const medicineColumns: ColumnDef<any>[] = [
   {
     accessorKey: "address",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Address <ArrowUpDown size={15} />
+      <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <span className="text-center">Address</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full">
-          {row.original.address ? (
-        row.original.address.length > 30 ? (
-          row.original.address.split(", ").map((line:any, index:any) => (
-            <div key={index} className="truncate">
-          {line}
-            </div>
-          ))
-        ) : (
-          <div className="truncate">{row.original.address}</div>
-        )
-          ) : (
-        "No address provided"
-          )}
-        </div>
+      <div className="text-center py-2 px-4 whitespace-pre-wrap break-words">
+        {row.original.address ? row.original.address : "No address provided"}
       </div>
     )
   },
@@ -77,6 +74,17 @@ export const medicineColumns: ColumnDef<any>[] = [
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
         <div className="text-center w-full">{row.original.medicine_count}</div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "latest_medicine_date",
+    header:"Latest Record Date",
+    cell: ({ row }) => (
+      <div className="flex justify-center min-w-[80px] px-2">
+        <div className="text-center w-full">
+          {new Date(row.original.latest_medicine_date).toLocaleDateString()}
+        </div>
       </div>
     )
   },

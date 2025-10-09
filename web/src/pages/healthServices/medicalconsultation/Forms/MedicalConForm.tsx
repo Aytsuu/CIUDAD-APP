@@ -89,6 +89,7 @@ export default function MedicalConsultationForm() {
       obs_still_birth: 0,
       obs_lmp: "",
       tts_status: "",
+      tts_date_given: "",
       ogtt_result: "",
       contraceptive_used: "",
       smk_sticks_per_day: "",
@@ -121,7 +122,8 @@ export default function MedicalConsultationForm() {
       // Corrected line - removed the duplicate fallback that doesn't exist
       form.setValue("phil_pin", selectedPatientData?.additional_info?.philhealth_id || "");
       form.setValue("civil_status", selectedPatientData?.personal_info?.per_status || "");
-      // form.setValue("tt_status", selectedPatientData?.additional_info?.mother_tt_status || "");
+      form.setValue("tts_status", selectedPatientData?.additional_info?.mother_tt_status || "");
+      form.setValue("tts_date_given",selectedPatientData?.additional_info?.mother_tt_date_given ? format(new Date(selectedPatientData?.additional_info?.mother_tt_date_given), "yyyy-MM-dd") : "");
       console.log("Selected Patient Data:", selectedPatientData);
       console.log("PhilHealth ID:", selectedPatientData?.additional_info?.philhealth_id); // Debug log
     }

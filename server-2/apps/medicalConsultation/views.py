@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import *
 from datetime import datetime, timedelta
-from django.db.models import Count, Q
+from django.db.models import Count, Q, OuterRef, Subquery, Max
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.models import *
 from .utils import *
@@ -27,11 +27,21 @@ from pagination import *
 from apps.healthProfiling.models import *
 from apps.medicineservices.serializers import MedicineRequestItemSerializer
 
+
+
+
 class PatientMedConsultationRecordView(generics.ListAPIView):
     serializer_class = PatientMedConsultationRecordSerializer
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
+        # Subquery to get the latest consultation date for each patient
+        latest_consultation_subquery = MedicalConsultation_Record.objects.filter(
+            patrec__pat_id=OuterRef('pat_id'),
+            medrec_status='completed'
+        ).order_by('-created_at').values('created_at')[:1]
+
+        # Base queryset with annotations for count and latest date
         queryset = Patient.objects.annotate(
             medicalrec_count=Count(
                 'patient_records__medical_consultation_record',
@@ -39,7 +49,8 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
                     patient_records__medical_consultation_record__medrec_status='completed'
                 ),
                 distinct=True
-            )
+            ),
+            latest_consultation_date=Subquery(latest_consultation_subquery)
         ).filter(
             patient_records__medical_consultation_record__medrec_status='completed'
         ).select_related(
@@ -48,7 +59,10 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         ).prefetch_related(
             'rp_id__per__personal_addresses__add__sitio',
             'patient_records__medical_consultation_record'
-        ).distinct().order_by('-medicalrec_count')
+        ).distinct()
+
+        # Order by latest consultation date (most recent first) then by count
+        queryset = queryset.order_by('-latest_consultation_date', '-medicalrec_count')
         
         # Track if any filter is applied
         filters_applied = False
@@ -89,7 +103,6 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
     
     def _apply_status_filter(self, queryset, status):
         """Filter by status - keep this in view if it's specific to this view"""
-        # Implement your status filter logic here
         return queryset.filter(patient_records__medical_consultation_record__medrec_status=status)
     
     def list(self, request, *args, **kwargs):
@@ -97,13 +110,11 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         page = self.paginate_queryset(queryset)
         
         if page is not None:
-            # You can add parents info and address to serialized data if needed
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-    
     
     
     
@@ -379,11 +390,29 @@ class ViewMedicalConsultationRecordView(generics.ListAPIView):
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
         search_query = self.request.GET.get('search', '').strip()
+        current_consultation_id = self.request.GET.get('current_consultation_id', '').strip()
         
         queryset = MedicalConsultation_Record.objects.filter(
             patrec__pat_id=pat_id,
             medrec_status='completed' 
         ).order_by('-created_at')
+        
+        # FILTER OUT CONSULTATIONS AFTER THE CURRENT ONE
+        if current_consultation_id:
+            try:
+                # Get the current consultation's date
+                current_consultation = MedicalConsultation_Record.objects.get(
+                    medrec_id=current_consultation_id,
+                    patrec__pat_id=pat_id
+                )
+                current_date = current_consultation.created_at
+                
+                # Only include consultations on or before the current consultation date
+                queryset = queryset.filter(created_at__lte=current_date)
+                
+            except MedicalConsultation_Record.DoesNotExist:
+                # If current consultation not found, return all
+                pass
         
         # Add search functionality
         if search_query:

@@ -16,13 +16,11 @@ import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { usePatientVaccinationDetails } from "../../vaccination/queries/fetch";
-import { useLoading } from "@/context/LoadingContext";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import { GrowthChart } from "./growth-chart";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function InvChildHealthRecords() {
-  const { showLoading, hideLoading } = useLoading();
   const location = useLocation();
   const navigate = useNavigate();
   const { ChildHealthRecord } = location.state || {};
@@ -51,14 +49,6 @@ export default function InvChildHealthRecords() {
     }
   }, [chrecId, navigate]);
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading]);
-
   // In your processedHistoryData useMemo
   const processedHistoryData = useMemo(() => {
     if (!historyData || historyData.length === 0) return [];
@@ -67,7 +57,7 @@ export default function InvChildHealthRecords() {
       return [];
     }
     const sortedHistories = [...mainRecord.child_health_histories].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return sortedHistories.map((record:any, index: number) => {
+    return sortedHistories.map((record: any, index: number) => {
       let bmi = "N/A";
       let findingsData = {
         subj_summary: "",
@@ -265,19 +255,7 @@ export default function InvChildHealthRecords() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput className="mr-2" size={16} />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+           
             <ProtectedComponentButton exclude={["DOCTOR"]}>
               <div className="flex flex-col sm:flex-row items-center justify-between w-full mb-4">
                 {latestRecord && !isLatestRecordFromToday && (

@@ -12,11 +12,22 @@ from apps.administration.models import *
 from apps.maternal.serializers.serializer import *
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     patient_details = PatientSerializer(source='*', read_only=True)
-    medicalrec_count = serializers.IntegerField(read_only=True)  # ✅ Add this line
+    medicalrec_count = serializers.IntegerField(read_only=True)
+    latest_consultation_date = serializers.SerializerMethodField()
  
     class Meta:
         model = Patient
         fields = "__all__"
+      
+    def get_latest_consultation_date(self, obj):
+        # Get the most recent medical consultation date for this patient
+        latest_consultation = MedicalConsultation_Record.objects.filter(
+            patrec__pat_id=obj.pat_id
+        ).order_by('-created_at').first()
+        
+        if latest_consultation and latest_consultation.created_at:
+            return latest_consultation.created_at
+        return None
       
       
 class PhilHealthLaboratorySerializer(serializers.ModelSerializer):

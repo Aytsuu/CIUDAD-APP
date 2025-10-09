@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics,status
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count,  OuterRef, Subquery
 from datetime import timedelta
 from django.utils.timezone import now
 import json
@@ -28,22 +28,28 @@ class PatientMedicineRecordsTableView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        # Base queryset with annotations for medicine count
+        # Subquery to get the latest medicine date for each patient
+        latest_medicine_subquery = MedicineRecord.objects.filter(
+            patrec_id__pat_id=OuterRef('pat_id')
+        ).order_by('-fulfilled_at').values('fulfilled_at')[:1]
+
+        # Base queryset with annotations for count and latest date
         queryset = Patient.objects.annotate(
             medicine_count=Count(
                 'patient_records__medicine_records',
                 distinct=True
-            )
+            ),
+            latest_medicine_date=Subquery(latest_medicine_subquery)
         ).filter(
             Q(patient_records__medicine_records__patrec_id__isnull=False)
         ).select_related(
-          'rp_id__per',         
-          'trans_id',             
+            'rp_id__per',         
+            'trans_id',             
             'trans_id__tradd_id'   
-        
-        ).distinct().order_by('-medicine_count')
-        
-       
+        ).distinct()
+
+        # Order by latest medicine date (most recent first) then by count
+        queryset = queryset.order_by('-latest_medicine_date', '-medicine_count')
         
         search_query = self.request.query_params.get('search', '').strip()
         if search_query and len(search_query) >= 2:
@@ -55,8 +61,6 @@ class PatientMedicineRecordsTableView(generics.ListAPIView):
             queryset = apply_patient_type_filter(queryset, patient_type_search)
         
         return queryset
-    
-    
  
     
     def list(self, request, *args, **kwargs):

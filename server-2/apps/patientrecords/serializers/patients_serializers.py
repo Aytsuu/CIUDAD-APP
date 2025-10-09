@@ -574,8 +574,15 @@ class PatientSerializer(serializers.ModelSerializer):
                             try:
                                 tt_status = self.get_mother_tt_status(mother_comp.rp.rp_id)
                                 additional_info['mother_tt_status'] = tt_status
+
+                                # Add TT status date (tts_date_given)
+                                tt_status_record = TT_Status.objects.filter(
+                                    pat_id__rp_id=mother_comp.rp.rp_id
+                                ).order_by('-tts_date_given', '-tts_id').first()
+                                additional_info['mother_tt_status_date'] = tt_status_record.tts_date_given if tt_status_record else None
                             except Exception as e:
                                 additional_info['mother_tt_status'] = None
+                                additional_info['mother_tt_status_date'] = None
 
                 # If we have at least one piece of additional info, return it
                 return additional_info if additional_info else None
@@ -595,11 +602,15 @@ class PatientSerializer(serializers.ModelSerializer):
                         pat_id=obj
                     ).select_related('pat_id').order_by('-tts_date_given', '-tts_id')
                     if tt_qs.exists():
-                        additional_info['mother_tt_status'] = tt_qs.first().tts_status
+                        latest_tt_status = tt_qs.first()
+                        additional_info['mother_tt_status'] = latest_tt_status.tts_status
+                        additional_info['mother_tt_status_date'] = latest_tt_status.tts_date_given
                     else:
                         additional_info['mother_tt_status'] = None
+                        additional_info['mother_tt_status_date'] = None
                 except Exception:
                     additional_info['mother_tt_status'] = None
+                    additional_info['mother_tt_status_date'] = None
 
                 return additional_info if additional_info else None
 

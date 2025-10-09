@@ -30,7 +30,9 @@ urlpatterns = [
     path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
     
     path('healthstaff/', HealthStaffListView.as_view(), name='administration-healthsatff-list'),
-    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),
+    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),
+    path('midwife/', MidwifeStaffListView.as_view(), name='midwife-list'),
+
     
  
 ]

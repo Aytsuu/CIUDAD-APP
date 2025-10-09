@@ -2,14 +2,13 @@ import { useState, useMemo, useEffect } from "react";
 import {  useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Printer, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "./export-report";
-import { ExportDropdown } from "./export-dropdown";
+import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
+import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import TableLayout from "@/components/ui/table/table-layout";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
 import { useFirstAidReports } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
@@ -17,14 +16,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyFirstAidDetails() {
   const location = useLocation();
-  const state = location.state as {
-    monthlyrcplist_id: string;
-    month: string;
-    monthName: string;
-    recordCount: number;
-  };
-
-  const { showLoading, hideLoading } = useLoading();
+  const state = location.state as { monthlyrcplist_id: string; month: string; monthName: string; recordCount: number;};
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +24,6 @@ export default function MonthlyFirstAidDetails() {
 
   const { data: apiResponse, isLoading, error } = useFirstAidReports(month, currentPage, pageSize, searchTerm);
 
-  // Safely access the nested data
   const results = apiResponse?.results || {
     data: [],
     records: [],
@@ -55,13 +46,7 @@ export default function MonthlyFirstAidDetails() {
   const staffName = staffDetails ? `${staffDetails.per_fname} ${staffDetails.per_mname || ""} ${staffDetails.per_lname}`.trim() : "—";
   const position = report?.staff_details?.pos?.pos_title || "—";
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
+
 
   useEffect(() => {
     if (error) {
@@ -131,6 +116,7 @@ export default function MonthlyFirstAidDetails() {
   const handleExportPDF = () => {
     exportToPDF(`first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
   };
+
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");

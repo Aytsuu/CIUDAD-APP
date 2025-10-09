@@ -1,11 +1,10 @@
-// MedicineStocks.tsx - Updated version
+// MedicineStocks.tsx - Updated version with export functionality
 "use client";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Search, Plus, Loader2, XCircle, Clock, CalendarOff } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,6 +16,8 @@ import { useArchiveMedicineStocks } from "../REQUEST/Archive/ArchivePutQueries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import WastedModal from "../addstocksModal/WastedModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expired";
 
@@ -72,6 +73,112 @@ export default function MedicineStocks() {
   const handleCloseWastedModal = () => {
     setIsWastedModalOpen(false);
     setSelectedRecord(null);
+  };
+
+  // Export functionality
+ // Corrected prepareExportData function for Medicine
+const prepareExportData = () => {
+  return medicineData.map((medicine: any) => {
+    const expired = medicine.isExpired;
+    const isLow = medicine.isLowStock;
+    const isOutOfStock = medicine.isOutOfStock;
+    const isNear = medicine.isNearExpiry;
+    const unit = medicine.minv_qty_unit;
+    const pcs = medicine.qty?.pcs || 1;
+
+    // Format Total Qty based on unit type
+    let totalQtyDisplay = "";
+    if (unit.toLowerCase() === "boxes" && pcs > 1) {
+      totalQtyDisplay = `${medicine.qty_number} boxes (${medicine.qty_number * pcs} pcs)`;
+    } else {
+      totalQtyDisplay = `${medicine.qty_number} ${unit}`;
+    }
+
+    // Add expired indicator to Total Qty
+    if (expired) {
+      totalQtyDisplay += " (Expired)";
+    }
+
+    // Format Available Stock based on unit type
+    let availableStockDisplay = "";
+    if (unit.toLowerCase() === "boxes" && pcs > 1) {
+      const availablePcs = medicine.availableStock;
+      const fullBoxes = Math.floor(availablePcs / pcs);
+      const remainingPcs = availablePcs % pcs;
+      const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+      availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pcs)`;
+    } else {
+      availableStockDisplay = `${medicine.availableStock} ${unit}`;
+    }
+
+    // Add status indicators to Available Stock
+    if (expired) {
+      availableStockDisplay += " (Expired)";
+    } else {
+      if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+      if (isLow) availableStockDisplay += " (Low Stock)";
+    }
+
+    // Determine overall status
+    let status = "Normal";
+    if (expired) {
+      status = "Expired";
+    } else if (isOutOfStock) {
+      status = "Out of Stock";
+    } else if (isLow) {
+      status = "Low Stock";
+    } else if (isNear) {
+      status = "Near Expiry";
+    }
+
+    // Format Medicine Details with dosage info
+    const medicineName = medicine.item?.medicineName || "Unknown Medicine";
+    const dosage = medicine.item?.dosage || 0;
+    const dsgUnit = medicine.item?.dsgUnit || "";
+    const form = medicine.item?.form || "";
+    const medicineDetails = `${medicineName}${expired ? " (Expired)" : ""} - ${dosage} ${dsgUnit}, ${form}`;
+
+    // Format Expiry Date
+    let expiryDateDisplay = medicine.expiryDate ? new Date(medicine.expiryDate).toLocaleDateString() : "N/A";
+    if (expired) {
+      expiryDateDisplay += " (Expired)";
+    } else if (isNear) {
+      expiryDateDisplay += " (Near Expiry)";
+    }
+
+    return {
+      "Date": medicine.created_at ? new Date(medicine.created_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      }) : "N/A",
+      "ID": medicine.inv_id || "N/A",
+      "Medicine Details": medicineDetails,
+      "Dosage": `${dosage} ${dsgUnit}`,
+      "Form": form,
+      "Category": medicine.category || "N/A",
+      "Total Qty": totalQtyDisplay,
+      "Available Stock": availableStockDisplay,
+      "Qty Used": medicine.administered || 0,
+      "Expiry Date": expiryDateDisplay,
+      "Status": status
+    };
+  });
+};
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `medicine_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `medicine_stocks_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `medicine_stocks_${new Date().toISOString().slice(0, 10)}`, "Medicine Stocks Report");
   };
 
   const confirmArchiveInventory = async () => {
@@ -192,19 +299,12 @@ export default function MedicineStocks() {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-transparent">
-                  <FileInput />
-                  Export Data
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ExportDropdown 
+              onExportCSV={handleExportCSV} 
+              onExportExcel={handleExportExcel} 
+              onExportPDF={handleExportPDF} 
+              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
+            />
           </div>
         </div>
 
