@@ -4,7 +4,6 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  ScrollView,
   Modal,
   Dimensions,
   RefreshControl,
@@ -34,6 +33,7 @@ import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useRouter } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
 import EmptyState from "@/components/ui/emptyState";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -246,10 +246,7 @@ const AttendanceSheets = () => {
           <TabsContent value="active" className="flex-1 mt-4">
             {isLoading ? (
               <View className="h-64 justify-center items-center">
-                <Loader2 size={24} color="#2a3a61" className="animate-spin" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  Loading attendance sheets...
-                </Text>
+                <LoadingState/>
               </View>
             ) : (
               <View className="flex-1">
@@ -282,10 +279,7 @@ const AttendanceSheets = () => {
           <TabsContent value="archive" className="flex-1 mt-4">
             {isLoading ? (
               <View className="h-64 justify-center items-center">
-                <Loader2 size={24} color="#2a3a61" className="animate-spin" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  Loading attendance sheets...
-                </Text>
+                <LoadingState/>
               </View>
             ) : (
               <View className="flex-1">

@@ -28,6 +28,7 @@ import BudgetTrackerSchema, {
 import PageLayout from "@/screens/_PageLayout";
 import { removeLeadingZeros } from "./gad-btracker-types";
 import { useAuth } from "@/contexts/AuthContext";
+import { BudgetYear } from "./gad-btracker-types";
 
 function GADAddEntryForm() {
   const { user } = useAuth();
@@ -56,14 +57,18 @@ function GADAddEntryForm() {
   const budgetEntries = budgetEntriesData?.results || [];
   const { data: projectProposals, isLoading: projectProposalsLoading } =
     useProjectProposalsAvailability(year);
-  const { mutate: createBudget } = useCreateGADBudget(
-    yearBudgets || [],
-    budgetEntries
-  );
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const {
+    mutate: createBudget,
+    isPending,
+    error: _createError,
+  } = useCreateGADBudget(yearBudgetsArray, budgetEntries);
 
   const calculateRemainingBalance = (): number => {
     if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -92,7 +97,7 @@ function GADAddEntryForm() {
       gbud_reference_num: null,
       gbud_remaining_bal: 0,
       gbudy: 0,
-      staff: null,
+      staff: user?.staff?.staff_id || '00001250924',
     },
     context: { calculateRemainingBalance },
   });
@@ -120,7 +125,9 @@ function GADAddEntryForm() {
 
   useEffect(() => {
     if (yearBudgets && !yearBudgetsLoading) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
       if (currentYearBudget) {
         form.setValue("gbudy", currentYearBudget.gbudy_num);
         form.setValue("gbud_remaining_bal", calculateRemainingBalance());
@@ -341,7 +348,7 @@ useEffect(() => {
       </View>}
     >
       <ScrollView
-        className="flex-1 p-4"
+        className="flex-1 p-4 px-6"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View className="space-y-4">

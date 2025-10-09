@@ -18,9 +18,12 @@ import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 
 function IncomeEditForm() {
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -108,6 +111,7 @@ function IncomeEditForm() {
             ...values,
             totalIncome,
             year: Number(year),
+            staff_id: user?.staff?.staff_id              
         }
         
         updateEntry(allValues);

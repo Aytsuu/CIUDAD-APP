@@ -16,6 +16,9 @@ import { SelectLayout } from '@/components/ui/select-layout';
 import { useInvoiceQuery, type Receipt } from './queries/receipt-getQueries';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
+
 
 const ReceiptPage = () => {
   const router = useRouter();
@@ -83,6 +86,15 @@ const ReceiptPage = () => {
   const handleFilterChange = (value: string) => {
     setSelectedFilterId(value);
   };
+
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );  
+
 
   const renderItem = ({ item }: { item: Receipt }) => {
     const colorScheme = getColorScheme(item.inv_nat_of_collection);
@@ -211,10 +223,11 @@ const ReceiptPage = () => {
 
         {/* Receipts List */}
         {isLoading ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#2a3a61" />
-            <Text className="text-sm text-gray-500 mt-2">Loading receipts...</Text>
-          </View>
+          // <View className="flex-1 justify-center items-center">
+          //   <ActivityIndicator size="large" color="#2a3a61" />
+          //   <Text className="text-sm text-gray-500 mt-2">Loading receipts...</Text>
+          // </View>
+          renderLoadingState()           
         ) : (
           <FlatList
             data={fetchedData}

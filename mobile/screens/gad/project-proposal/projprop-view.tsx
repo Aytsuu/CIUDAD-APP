@@ -4,11 +4,10 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
-  StatusBar,
   Image,
   Modal,
   Linking,
+  FlatList,
 } from "react-native";
 import {
   ChevronLeft,
@@ -17,6 +16,14 @@ import {
   Trash,
   X,
   Download,
+  FileText,
+  Image as ImageIcon,
+  User,
+  Calendar,
+  Target,
+  Users,
+  DollarSign,
+  PieChart,
 } from "lucide-react-native";
 import { useGetSupportDocs } from "./queries/projprop-fetchqueries";
 import { useAddSupportDocument } from "./queries/projprop-addqueries";
@@ -29,6 +36,11 @@ import MediaPicker from "@/components/ui/media-picker";
 import { SupportDoc, ProjectProposalViewProps } from "./projprop-types";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
+import { LoadingModal } from "@/components/ui/loading-modal";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   project,
@@ -36,20 +48,37 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
   customHeaderActions,
   disableDocumentManagement = false,
 }) => {
-
-  //add early return for undefined projects
+  // Add early return for undefined projects
   if (!project) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text className="text-gray-500">No project data available</Text>
-        <TouchableOpacity onPress={onBack || (() => router.back())} className="mt-4">
-          <Text className="text-blue-500">Go back</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={onBack}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="font-semibold text-lg text-[#2a3a61]">
+            Project Proposal
+          </Text>
+        }
+        rightAction={
+          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
+        }
+      >
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-gray-500">No project data available</Text>
+        </View>
+      </PageLayout>
     );
   }
-  
-  const [activeTab, setActiveTab] = useState<"soft" | "supporting">("soft");
+
+  const [activeTab, setActiveTab] = useState<"details" | "documents">(
+    "details"
+  );
   const [supportDocsViewMode, setSupportDocsViewMode] = useState<
     "active" | "archived"
   >("active");
@@ -75,21 +104,8 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
 
   const activeSupportDocs = supportDocs.filter((doc) => !doc.psd_is_archive);
   const archivedSupportDocs = supportDocs.filter((doc) => doc.psd_is_archive);
-  const imageDocs = (
-    supportDocsViewMode === "active" ? activeSupportDocs : archivedSupportDocs
-  ).filter((doc) => doc.psd_type?.startsWith("image/"));
 
   const handleUploadFiles = async () => {
-    console.log('Selected images:', selectedImages.map(file => ({
-      uri: file.uri,
-      id: file.id,
-      name: file.name,
-      type: file.type,
-      hasFile: !!file.file,
-      filePrefix: file.file ? file.file.substring(0, 20) : 'undefined'
-    })));
-    
-
     try {
       await addSupportDocMutation.mutateAsync({
         gprId: project.gprId!,
@@ -142,7 +158,6 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     setViewImageModalVisible(true);
   };
 
-  // Add download/open file function like in DisbursementView
   const handleDownloadFile = async (doc: SupportDoc) => {
     try {
       await Linking.openURL(doc.psd_url);
@@ -151,484 +166,623 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
     }
   };
 
-  const renderSupportingDocument = () => (
-    <ScrollView className="flex-1 bg-white p-4">
-      {!disableDocumentManagement && (
-        <View className="flex-row justify-between items-center mb-4">
-          {(project.status === "Pending" ||
-            project.status === "Amend" ||
-            project.status === "Rejected") && (
+  // Calculate total budget
+  const totalBudget =
+    project.budgetItems?.reduce((sum, item) => {
+      const amount = Number.parseFloat(item.amount?.toString()) || 0;
+      const paxCount =
+        typeof item.pax === "string"
+          ? parseInt(item.pax) ||
+            (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+          : 1;
+      return sum + paxCount * amount;
+    }, 0) || 0;
+
+  const formatNumber = (num: number) => {
+    return `₱${num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  // Budget Plan Style Components
+  const ProjectInfoCard = ({
+    title,
+    value,
+    icon: Icon,
+    color = "#1D4ED8",
+  }: {
+    title: string;
+    value: string;
+    icon: any;
+    color?: string;
+  }) => (
+    <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+      <CardContent className="p-4">
+        <View className="flex-row items-center gap-2 mb-3">
+          <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+            <Icon size={20} color={color} />
+          </View>
+          <Text className="text-sm font-medium text-gray-600 font-sans">
+            {title}
+          </Text>
+        </View>
+        <Text className="text-lg font-semibold text-gray-900 font-sans">
+          {value}
+        </Text>
+      </CardContent>
+    </Card>
+  );
+
+  const BudgetCard = () => (
+    <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+      <CardHeader className="pb-3">
+        <View className="flex-row items-center gap-3">
+          <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+            <DollarSign size={20} color="#15803D" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+              Budget Allocation
+            </Text>
+            <Text className="text-xs text-gray-500 mt-1 font-sans">
+              Detailed breakdown of budget items
+            </Text>
+          </View>
+        </View>
+      </CardHeader>
+      <CardContent className="pt-3 border-t border-gray-200">
+        <View className="space-y-4">
+          {project.budgetItems
+            ?.filter((item) => item.name && item.name.trim())
+            .map((item, index) => {
+              const amount = Number.parseFloat(item.amount?.toString()) || 0;
+              const paxCount =
+                typeof item.pax === "string"
+                  ? parseInt(item.pax) ||
+                    (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
+                  : 1;
+              const total = paxCount * amount;
+
+              return (
+                <View
+                  key={index}
+                  className="flex-row justify-between items-start py-2 border-b border-gray-100 last:border-b-0"
+                >
+                  <View className="flex-1 pr-4">
+                    <Text
+                      className="text-sm font-medium text-gray-900 font-sans mb-1"
+                      numberOfLines={2}
+                    >
+                      {item.name}
+                    </Text>
+                    <View className="w-6 h-1 bg-gray-200 rounded-full">
+                      <View className="w-4 h-1 bg-blue-500 rounded-full" />
+                    </View>
+                  </View>
+                  <View className="min-w-[120px] items-end">
+                    <Text
+                      className="text-base font-semibold text-[#2a3a61] font-sans"
+                      numberOfLines={1}
+                    >
+                      {formatNumber(total)}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+
+          {/* Total Row */}
+          <View className="flex-row justify-between items-center pt-3 border-t border-gray-200">
+            <Text className="text-sm font-semibold text-gray-700 font-sans">
+              TOTAL
+            </Text>
+            <Text className="text-lg font-bold text-green-700 font-sans">
+              {formatNumber(totalBudget)}
+            </Text>
+          </View>
+        </View>
+      </CardContent>
+    </Card>
+  );
+
+  const ParticipantsCard = () => (
+    <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+      <CardContent className="p-4">
+        <View className="flex-row items-center gap-2 mb-3">
+          <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+            <Users size={20} color="#7C3AED" />
+          </View>
+          <Text className="text-sm font-medium text-gray-600 font-sans">
+            Participants
+          </Text>
+        </View>
+        <View className="space-y-2">
+          {project.participants
+            ?.filter((p) => p.category && p.category.trim())
+            .map((participant, index) => (
+              <Text key={index} className="text-sm text-gray-800 font-sans">
+                {participant.count || "0"} {participant.category}
+              </Text>
+            ))}
+        </View>
+      </CardContent>
+    </Card>
+  );
+
+  const renderProjectDetails = () => (
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="px-6 py-4 space-y-4">
+        {/* Header */}
+        <View className="mb-4">
+          <Text className="text-xl font-semibold text-gray-900 font-sans mb-1">
+            Project Overview
+          </Text>
+          <Text className="text-sm text-gray-600 font-sans">
+            GAD Project Proposal Details
+          </Text>
+        </View>
+
+        {/* Project Info Cards */}
+        <ProjectInfoCard
+          title="Project Title"
+          value={project.projectTitle || "Untitled"}
+          icon={FileText}
+          color="#1D4ED8"
+        />
+
+        {project.date && (
+          <ProjectInfoCard
+            title="Project Date"
+            value={project.date}
+            icon={Calendar}
+            color="#0D9488"
+          />
+        )}
+
+        {/* Background */}
+        <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+          <CardContent className="p-4">
+            <View className="flex-row items-center gap-2 mb-3">
+              <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                <FileText size={20} color="#7C3AED" />
+              </View>
+              <Text className="text-sm font-medium text-gray-600 font-sans">
+                Background
+              </Text>
+            </View>
+            <Text className="text-sm text-gray-800 leading-5 font-sans">
+              {project.background || "No background provided"}
+            </Text>
+          </CardContent>
+        </Card>
+
+        {/* Objectives */}
+        {project.objectives?.filter((obj) => obj && obj.trim()).length > 0 && (
+          <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+            <CardContent className="p-4">
+              <View className="flex-row items-center gap-2 mb-3">
+                <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                  <Target size={20} color="#DC2626" />
+                </View>
+                <Text className="text-sm font-medium text-gray-600 font-sans">
+                  Objectives
+                </Text>
+              </View>
+              <View className="space-y-2">
+                {project.objectives
+                  .filter((obj) => obj && obj.trim())
+                  .map((obj, index) => (
+                    <View key={index} className="flex-row">
+                      <Text className="text-sm text-gray-800 mr-2">•</Text>
+                      <Text className="text-sm text-gray-800 flex-1 font-sans">
+                        {obj}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Participants */}
+        {project.participants?.filter((p) => p.category && p.category.trim())
+          .length > 0 && <ParticipantsCard />}
+
+        {/* Budget */}
+        {project.budgetItems?.filter((item) => item.name && item.name.trim())
+          .length > 0 && <BudgetCard />}
+
+        {/* Monitoring & Evaluation */}
+        {project.monitoringEvaluation && (
+          <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+            <CardContent className="p-4">
+              <View className="flex-row items-center gap-2 mb-3">
+                <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                  <PieChart size={20} color="#0D9488" />
+                </View>
+                <Text className="text-sm font-medium text-gray-600 font-sans">
+                  Monitoring & Evaluation
+                </Text>
+              </View>
+              <Text className="text-sm text-gray-800 leading-5 font-sans">
+                {project.monitoringEvaluation}
+              </Text>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Signatories */}
+        {project.signatories && project.signatories.length > 0 && (
+          <Card className="bg-white border-2 border-gray-200 rounded-lg shadow-sm mb-2">
+            <CardHeader className="pb-3">
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
+                  <User size={20} color="#1D4ED8" />
+                </View>
+                <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+                  Signatories
+                </Text>
+              </View>
+            </CardHeader>
+            <CardContent className="pt-3 border-t border-gray-200">
+              <View className="flex-row justify-between">
+                <View className="flex-1 mr-4">
+                  <Text className="text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Prepared by:
+                  </Text>
+                  {project.signatories
+                    .filter((s) => s.type === "prepared")
+                    .map((sig, index) => (
+                      <View key={index} className="mb-3 items-center">
+                        <Text className="text-sm text-gray-800 text-center mb-1 font-sans">
+                          {sig.name}
+                        </Text>
+                        <Text className="text-xs font-semibold text-gray-700 text-center font-sans">
+                          {sig.position || "N/A"}
+                        </Text>
+                      </View>
+                    ))}
+                </View>
+                <View className="flex-1 ml-4">
+                  <Text className="text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Approved by:
+                  </Text>
+                  {project.signatories
+                    .filter((s) => s.type === "approved")
+                    .map((sig, index) => (
+                      <View key={index} className="mb-3 items-center">
+                        <Text className="text-sm text-gray-800 text-center mb-1 font-sans">
+                          {sig.name}
+                        </Text>
+                        <Text className="text-xs font-semibold text-gray-700 text-center font-sans">
+                          {sig.position || "N/A"}
+                        </Text>
+                      </View>
+                    ))}
+                </View>
+              </View>
+            </CardContent>
+          </Card>
+        )}
+      </View>
+    </ScrollView>
+  );
+
+  const renderSupportingDocuments = () => (
+    <View className="flex-1">
+      <View className="px-6 py-4">
+        {!disableDocumentManagement && (
+          <View className="relative mb-4 flex-col items-center">
             <TouchableOpacity
-              className={`px-4 py-2 rounded-lg ${
-                project.gprIsArchive ? "bg-gray-300" : "bg-blue-500"
+              className={`rounded-xl w-full h-10 px-4 py-2 native:h-12 native:px-5 native:py-3 ${
+                project.gprIsArchive ? "bg-gray-300" : "bg-primaryBlue"
               }`}
               onPress={() => !project.gprIsArchive && setShowUploadModal(true)}
               disabled={project.gprIsArchive}
             >
               <Text
-                className={`font-medium ${
+                className={`font-medium font-sans text-center ${
                   project.gprIsArchive ? "text-gray-500" : "text-white"
                 }`}
               >
                 Add Documents
               </Text>
             </TouchableOpacity>
-          )}
-
-          <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
-            <TouchableOpacity
-              className={`px-4 py-2 ${
-                supportDocsViewMode === "active" ? "bg-white" : ""
-              }`}
-              onPress={() => setSupportDocsViewMode("active")}
-            >
-              <Text className="text-sm">Active</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`px-4 py-2 ${
-                supportDocsViewMode === "archived" ? "bg-white" : ""
-              }`}
-              onPress={() => setSupportDocsViewMode("archived")}
-            >
-              <Text className="text-sm">Archived</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      )}
+        )}
 
-      {project.gprIsArchive && (
-        <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-          <Text className="text-yellow-800 text-sm text-center">
-            This project is archived. Document modifications are disabled.
-          </Text>
-        </View>
-      )}
+        {project.gprIsArchive && (
+          <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <Text className="text-yellow-800 text-sm text-center font-sans">
+              This project is archived. Document modifications are disabled.
+            </Text>
+          </View>
+        )}
+
+        {/* Active/Archive Tabs for Documents - Using Budget Plan style */}
+        <Tabs
+          value={supportDocsViewMode}
+          onValueChange={(val) =>
+            setSupportDocsViewMode(val as "active" | "archived")
+          }
+        >
+          <TabsList className="bg-blue-50 flex-row justify-between">
+            <TabsTrigger
+              value="active"
+              className={`flex-1 mx-1 ${
+                supportDocsViewMode === "active"
+                  ? "bg-white border-b-2 border-primaryBlue"
+                  : ""
+              }`}
+            >
+              <Text
+                className={`${
+                  supportDocsViewMode === "active"
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-500"
+                }`}
+              >
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger
+              value="archived"
+              className={`flex-1 mx-1 ${
+                supportDocsViewMode === "archived"
+                  ? "bg-white border-b-2 border-primaryBlue"
+                  : ""
+              }`}
+            >
+              <Text
+                className={`${
+                  supportDocsViewMode === "archived"
+                    ? "text-primaryBlue font-medium"
+                    : "text-gray-500"
+                }`}
+              >
+                Archived
+              </Text>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </View>
 
       {(supportDocsViewMode === "active"
         ? activeSupportDocs
         : archivedSupportDocs
-      ).length === 0 ? (
+      ).length === 0 && !isLoadingSupportDocs ? (
         <View className="flex-1 justify-center items-center py-12">
-          <Text className="text-gray-500 text-center">
+          <Text className="text-gray-500 text-center font-sans">
             No {supportDocsViewMode === "active" ? "active" : "archived"}{" "}
             supporting documents found.
           </Text>
         </View>
+      ) : isLoadingSupportDocs ? (
+        <View className="flex-1 justify-center items-center py-12">
+          <LoadingState />
+        </View>
       ) : (
-        (supportDocsViewMode === "active"
-          ? activeSupportDocs
-          : archivedSupportDocs
-        ).map((doc, index) => (
-          <View
-            key={doc.psd_id}
-            className="mb-6 border border-gray-200 rounded-lg overflow-hidden"
-          >
-            {doc.psd_type?.startsWith("image/") && doc.psd_url ? (
-              <TouchableOpacity onPress={() => handleViewImage(doc, index)}>
-                <Image
-                  source={{ uri: doc.psd_url }}
-                  className="w-full h-96"
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            ) : (
-              <View className="bg-gray-100 p-8 items-center justify-center h-96">
-                <Text className="text-gray-600 text-center mb-2">
-                  {doc.psd_url || "Document"}
-                </Text>
-                <Text className="text-gray-500 text-sm">
-                  Document preview not available
-                </Text>
-                {/* Add download button for non-image files */}
-                {doc.psd_url && (
-                  <TouchableOpacity
-                    onPress={() => handleDownloadFile(doc)}
-                    className="flex-row items-center bg-blue-100 px-3 py-2 rounded-lg mt-3"
-                  >
-                    <Download size={16} color="#3b82f6" />
-                    <Text className="text-blue-600 text-sm ml-2">
-                      Open Document
+        <FlatList
+          data={
+            supportDocsViewMode === "active"
+              ? activeSupportDocs
+              : archivedSupportDocs
+          }
+          keyExtractor={(doc) => doc.psd_id.toString()}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16 }}
+          renderItem={({ item: doc, index }) => (
+            <Card className="bg-white border-2 border-gray-200 shadow-sm mb-2">
+              <CardHeader className="pb-3">
+                <View className="flex-row justify-between items-start">
+                  <View className="flex-1">
+                    <Text className="font-semibold text-lg text-[#1a2332] mb-1 font-sans">
+                      {doc.psd_name || "Document"}
                     </Text>
+                    <Text className="text-sm text-gray-500 font-sans">
+                      {doc.psd_type || "Unknown type"}
+                    </Text>
+                  </View>
+                </View>
+              </CardHeader>
+
+              <CardContent className="pt-3 border-t border-gray-200">
+                {doc.psd_type?.startsWith("image/") && doc.psd_url ? (
+                  <TouchableOpacity onPress={() => handleViewImage(doc, index)}>
+                    <Image
+                      source={{ uri: doc.psd_url }}
+                      className="w-full h-48 rounded-lg"
+                      resizeMode="cover"
+                    />
                   </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {!disableDocumentManagement && (
-              <View className="p-4 bg-white border-t gap-2 border-gray-200 flex-row justify-end space-x-2">
-                {supportDocsViewMode === "active"
-                  ? !project.gprIsArchive &&
-                    (project.status === "Pending" ||
-                      project.status === "Amend" ||
-                      project.status === "Rejected") && (
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="p-2 rounded-lg">
-                            <Archive size={20} color="#ef4444" />
-                          </TouchableOpacity>
-                        }
-                        title="Archive Document"
-                        description="Are you sure you want to archive this document?"
-                        actionLabel="Archive"
-                        onPress={() => handleArchiveSupportDoc(doc.psd_id)}
-                      />
-                    )
-                  : !project.gprIsArchive &&
-                    (project.status === "Pending" ||
-                      project.status === "Amend" ||
-                      project.status === "Rejected") && (
-                      <>
-                        <ConfirmationModal
-                          trigger={
-                            <TouchableOpacity className="p-2 bg-green-100 rounded-lg">
-                              <ArchiveRestore size={20} color="#10b981" />
-                            </TouchableOpacity>
-                          }
-                          title="Restore Document"
-                          description="Are you sure you want to restore this document?"
-                          actionLabel="Restore"
-                          onPress={() => handleRestoreSupportDoc(doc.psd_id)}
-                        />
-                        <ConfirmationModal
-                          trigger={
-                            <TouchableOpacity className="p-2 bg-red-100 rounded-lg">
-                              <Trash size={20} color="#ef4444" />
-                            </TouchableOpacity>
-                          }
-                          title="Delete Document"
-                          description="Are you sure you want to permanently delete this document?"
-                          actionLabel="Delete"
-                          variant="destructive"
-                          onPress={() => handleDeleteSupportDoc(doc.psd_id)}
-                        />
-                      </>
+                ) : (
+                  <View className="bg-gray-100 p-6 items-center justify-center rounded-lg">
+                    <FileText size={48} color="#6B7280" />
+                    <Text className="text-gray-600 text-center mt-2 font-sans">
+                      Document preview not available
+                    </Text>
+                    {doc.psd_url && (
+                      <TouchableOpacity
+                        onPress={() => handleDownloadFile(doc)}
+                        className="flex-row items-center bg-blue-100 px-4 py-2 rounded-lg mt-3"
+                      >
+                        <Download size={16} color="#3b82f6" />
+                        <Text className="text-blue-600 text-sm ml-2 font-sans">
+                          Open Document
+                        </Text>
+                      </TouchableOpacity>
                     )}
-              </View>
-            )}
-          </View>
-        ))
+                  </View>
+                )}
+
+                {!disableDocumentManagement && (
+                  <View className="flex-row justify-end space-x-2 mt-3">
+                    {supportDocsViewMode === "active"
+                      ? !project.gprIsArchive && (
+                          <ConfirmationModal
+                            trigger={
+                              <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
+                                <Archive size={16} color="#ef4444" />
+                              </TouchableOpacity>
+                            }
+                            title="Archive Document"
+                            description="Are you sure you want to archive this document?"
+                            actionLabel="Archive"
+                            onPress={() => handleArchiveSupportDoc(doc.psd_id)}
+                          />
+                        )
+                      : !project.gprIsArchive && (
+                          <>
+                            <ConfirmationModal
+                              trigger={
+                                <TouchableOpacity className="bg-green-50 p-2 rounded-lg">
+                                  <ArchiveRestore size={16} color="#10b981" />
+                                </TouchableOpacity>
+                              }
+                              title="Restore Document"
+                              description="Are you sure you want to restore this document?"
+                              actionLabel="Restore"
+                              onPress={() =>
+                                handleRestoreSupportDoc(doc.psd_id)
+                              }
+                            />
+                            <ConfirmationModal
+                              trigger={
+                                <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
+                                  <Trash size={16} color="#ef4444" />
+                                </TouchableOpacity>
+                              }
+                              title="Delete Document"
+                              description="Are you sure you want to permanently delete this document?"
+                              actionLabel="Delete"
+                              variant="destructive"
+                              onPress={() => handleDeleteSupportDoc(doc.psd_id)}
+                            />
+                          </>
+                        )}
+                  </View>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        />
       )}
-    </ScrollView>
+    </View>
   );
 
-  const renderSoftCopy = () => (
-    <ScrollView className="flex-1 bg-white">
-      <View className="bg-gray-100 p-4 items-center border-b border-gray-300">
-        {project.headerImage ? (
-          <Image
-            source={{ uri: project.headerImage }}
-            className="w-full h-16 mb-2"
-            resizeMode="contain"
-          />
-        ) : (
-          <View className="w-full h-12 bg-gray-200 rounded mb-2 justify-center items-center">
-            <Text className="text-gray-500 text-xs">📄</Text>
-          </View>
-        )}
-        <Text className="text-lg font-bold text-center text-gray-900">
-          PROJECT PROPOSAL
-        </Text>
-      </View>
-
-      <View className="p-4">
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">
-            Project Title:
+  if (isLoadingSupportDocs) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={onBack}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="font-semibold text-lg text-[#2a3a61]">
+            Project Proposal
           </Text>
-          <Text className="text-base text-gray-900">
-            {project.projectTitle}
-          </Text>
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">
-            Background:
-          </Text>
-          <Text className="text-sm text-gray-800 leading-5">
-            {project.background || "No background provided"}
-          </Text>
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">
-            Objectives:
-          </Text>
-          {!project.objectives ||
-          project.objectives.length === 0 ||
-          project.objectives.every((obj) => !obj || !obj.trim()) ? (
-            <Text className="text-sm text-gray-600 italic">
-              No objectives provided
-            </Text>
-          ) : (
-            <View>
-              {project.objectives
-                .filter((obj) => obj && obj.trim())
-                .map((obj, index) => (
-                  <View key={index} className="flex-row mb-1">
-                    <Text className="text-sm text-gray-800 mr-2">•</Text>
-                    <Text className="text-sm text-gray-800 flex-1">{obj}</Text>
-                  </View>
-                ))}
-            </View>
-          )}
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">
-            Participants:
-          </Text>
-          {!project.participants ||
-          project.participants.length === 0 ||
-          project.participants.every(
-            (p) => !p.category || !p.category.trim()
-          ) ? (
-            <Text className="text-sm text-gray-600 italic">
-              No participants provided
-            </Text>
-          ) : (
-            <View>
-              {project.participants
-                .filter((p) => p.category && p.category.trim())
-                .map((participant, index) => (
-                  <Text key={index} className="text-sm text-gray-800 mb-1">
-                    {participant.count || "0"} {participant.category}
-                  </Text>
-                ))}
-            </View>
-          )}
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-2">
-            Budgetary Requirements:
-          </Text>
-          <View className="flex-row bg-gray-100 border border-gray-300">
-            <View className="flex-1 p-2 border-r border-gray-300">
-              <Text className="text-xs font-semibold text-gray-700">Item</Text>
-            </View>
-            <View className="w-16 p-2 border-r border-gray-300">
-              <Text className="text-xs font-semibold text-gray-700">Pax</Text>
-            </View>
-            <View className="w-20 p-2 border-r border-gray-300">
-              <Text className="text-xs font-semibold text-gray-700">
-                Amount
-              </Text>
-            </View>
-            <View className="w-20 p-2">
-              <Text className="text-xs font-semibold text-gray-700">Total</Text>
-            </View>
-          </View>
-
-          {!project.budgetItems ||
-          project.budgetItems.length === 0 ||
-          project.budgetItems.every(
-            (item) => !item.name || !item.name.trim()
-          ) ? (
-            <View className="flex-row border-l border-r border-b border-gray-300">
-              <View className="flex-1 p-2">
-                <Text className="text-xs text-gray-600 italic">
-                  No budget items provided
-                </Text>
-              </View>
-            </View>
-          ) : (
-            project.budgetItems
-              .filter((item) => item.name && item.name.trim())
-              .map((item, index) => {
-                const amount = Number.parseFloat(item.amount?.toString()) || 0;
-                const paxCount = typeof item.pax === 'string' 
-                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
-                                    : 1;
-                const total = paxCount * amount;
-
-                return (
-                  <View
-                    key={index}
-                    className="flex-row border-l border-r border-b border-gray-300"
-                  >
-                    <View className="flex-1 p-2 border-r border-gray-300">
-                      <Text className="text-xs text-gray-800">{item.name}</Text>
-                    </View>
-                    <View className="w-16 p-2 border-r border-gray-300">
-                      <Text className="text-xs text-gray-800">{paxCount}</Text>
-                    </View>
-                    <View className="w-20 p-2 border-r border-gray-300">
-                      <Text className="text-xs text-gray-800">
-                        {amount.toFixed(2)}
-                      </Text>
-                    </View>
-                    <View className="w-20 p-2">
-                      <Text className="text-xs text-gray-800">
-                        {total.toFixed(2)}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })
-          )}
-
-          <View className="flex-row border-l border-r border-b border-gray-300 bg-gray-50">
-            <View className="flex-1 p-2 border-r border-gray-300">
-              <Text className="text-xs text-gray-800"></Text>
-            </View>
-            <View className="w-16 p-2 border-r border-gray-300">
-              <Text className="text-xs text-gray-800"></Text>
-            </View>
-            <View className="w-20 p-2 border-r border-gray-300">
-              <Text className="text-xs font-semibold text-gray-800">TOTAL</Text>
-            </View>
-            <View className="w-20 p-2">
-              <Text className="text-xs font-semibold text-gray-800">
-                {project.budgetItems
-                  ?.reduce((sum, item) => {
-                    const amount =
-                      Number.parseFloat(item.amount?.toString()) || 0;
-                    const paxCount = typeof item.pax === 'string' 
-                                    ? parseInt(item.pax) || (item.pax.includes("pax") ? parseInt(item.pax) || 1 : 1)
-                                    : 1;
-                    return sum + paxCount * amount;
-                  }, 0)
-                  .toFixed(2)}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View className="mb-5 mt-2">
-          <Text className="text-sm font-semibold text-gray-700 mb-1">
-            Monitoring Evaluation:
-          </Text>
-          <Text className="text-sm text-gray-800 leading-5">
-            {project.monitoringEvaluation || "No monitoring evaluation provided"}
-          </Text>
-        </View>
-
-        <View className="mb-4 mt-8">
-          <View className="flex-row justify-between">
-            <View className="flex-1 mr-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">
-                Prepared by:
-              </Text>
-              {project.signatories?.filter((s) => s.type === "prepared")
-                .length === 0 ? (
-                <Text className="text-xs text-gray-600 italic">
-                  No preparers assigned
-                </Text>
-              ) : (
-                project.signatories
-                  ?.filter((s) => s.type === "prepared")
-                  .map((sig, index) => (
-                    <View key={index} className="mb-3 items-center">
-                      <Text className="text-sm text-gray-800 text-center mb-1">
-                        {sig.name}
-                      </Text>
-                      <Text className="text-xs font-semibold text-gray-700 text-center">
-                        {sig.position || "N/A"}
-                      </Text>
-                    </View>
-                  ))
-              )}
-            </View>
-
-            <View className="flex-1 ml-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">
-                Approved by:
-              </Text>
-              {project.signatories?.filter((s) => s.type === "approved")
-                .length === 0 ? (
-                <Text className="text-xs text-gray-600 italic">
-                  No approvers assigned
-                </Text>
-              ) : (
-                project.signatories
-                  ?.filter((s) => s.type === "approved")
-                  .map((sig, index) => (
-                    <View key={index} className="mb-3 items-center">
-                      <Text className="text-sm text-gray-800 text-center mb-1">
-                        {sig.name}
-                      </Text>
-                      <Text className="text-xs font-semibold text-gray-700 text-center">
-                        {sig.position || "N/A"}
-                      </Text>
-                    </View>
-                  ))
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
-  );
+        }
+        rightAction={
+          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
+        }
+      >
+        <LoadingState />
+      </PageLayout>
+    );
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-
-      <View className="mt-16 flex-row justify-between items-center p-4 border-b border-gray-200">
-        <TouchableOpacity
-          onPress={onBack || (() => router.back())}
-          className="flex-row items-center flex-1"
-        >
-          <ChevronLeft color="#374151" size={20} />
-          <Text
-            className="ml-2 text-blue-500 font-medium flex-1"
-            numberOfLines={1}
+    <>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={onBack || (() => router.back())}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
           >
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="font-semibold text-lg text-[#2a3a61]">
             {project.projectTitle}
           </Text>
-        </TouchableOpacity>
-        {customHeaderActions}
-      </View>
+        }
+        rightAction={<View />}
+        wrapScroll={false}
+      >
+        <View className="flex-1">
+          <View className="pt-4">
+            <Tabs
+              value={activeTab}
+              onValueChange={(val) =>
+                setActiveTab(val as "details" | "documents")
+              }
+            >
+              <TabsList className="bg-white flex-row justify-between">
+                <TabsTrigger
+                  value="details"
+                  className={`flex-1 mx-1 ${
+                    activeTab === "details"
+                      ? " border-b-2 border-primaryBlue"
+                      : ""
+                  }`}
+                >
+                  <Text
+                    className={`${
+                      activeTab === "details" ? " font-medium" : "text-gray-500"
+                    }`}
+                  >
+                    Project Details
+                  </Text>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="documents"
+                  className={`flex-1 mx-1 ${
+                    activeTab === "documents"
+                      ? " border-b-2 border-primaryBlue"
+                      : ""
+                  }`}
+                >
+                  <Text
+                    className={`${
+                      activeTab === "documents"
+                        ? "font-medium"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    Documents
+                  </Text>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </View>
 
-      <View className="flex-row p-4">
-        <TouchableOpacity
-          onPress={() => setActiveTab("soft")}
-          className={`flex-1 py-2 px-4 rounded-l-lg border ${
-            activeTab === "soft"
-              ? "bg-gray-800 border-gray-800"
-              : "bg-white border-gray-300"
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === "soft" ? "text-white" : "text-gray-700"
-            }`}
-          >
-            Soft Copy
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setActiveTab("supporting")}
-          className={`flex-1 py-2 px-4 rounded-r-lg border-t border-r border-b ${
-            activeTab === "supporting"
-              ? "bg-gray-800 border-gray-800"
-              : "bg-white border-gray-300"
-          }`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              activeTab === "supporting" ? "text-white" : "text-gray-700"
-            }`}
-          >
-            Supporting Document
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {/* Content Area */}
+          <View className="flex-1">
+            {activeTab === "details"
+              ? renderProjectDetails()
+              : renderSupportingDocuments()}
+          </View>
+        </View>
+      </PageLayout>
 
-      {activeTab === "soft" ? renderSoftCopy() : renderSupportingDocument()}
-
+      {/* Upload Modal */}
       {!disableDocumentManagement && (
         <Modal
           visible={showUploadModal && !project.gprIsArchive}
           animationType="slide"
           onRequestClose={() => setShowUploadModal(false)}
         >
-          <SafeAreaView className="flex-1 bg-white">
+          <View className="flex-1 bg-white">
             <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
               <TouchableOpacity onPress={() => setShowUploadModal(false)}>
-                <Text className="text-blue-500">Cancel</Text>
+                <Text className="text-blue-500 font-sans">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold">
+              <Text className="text-lg font-semibold font-sans">
                 Add Supporting Documents
               </Text>
               <TouchableOpacity
@@ -636,14 +790,16 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 disabled={selectedImages.length === 0}
               >
                 <Text
-                  className={`${
-                    selectedImages.length === 0 ? "text-gray-400" : "text-blue-500"
+                  className={`font-sans ${
+                    selectedImages.length === 0
+                      ? "text-gray-400"
+                      : "text-blue-500"
                   }`}
                 >
                   Upload
                 </Text>
               </TouchableOpacity>
-              </View>
+            </View>
 
             <MediaPicker
               selectedImages={selectedImages}
@@ -652,10 +808,11 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               multiple={true}
               editable={true}
             />
-          </SafeAreaView>
+          </View>
         </Modal>
       )}
 
+      {/* Image View Modal */}
       <Modal
         visible={viewImageModalVisible}
         transparent={true}
@@ -676,7 +833,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 className="w-full h-4/5"
                 resizeMode="contain"
               />
-              <Text className="text-white mt-2">
+              <Text className="text-white mt-2 font-sans">
                 {(supportDocsViewMode === "active"
                   ? activeSupportDocs
                   : archivedSupportDocs)[currentImageIndex]?.psd_name ||
@@ -686,7 +843,17 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
           )}
         </View>
       </Modal>
-    </SafeAreaView>
+
+      {/* Loading Modal for mutations */}
+      <LoadingModal
+        visible={
+          addSupportDocMutation.isPending ||
+          archiveSupportDocMutation.isPending ||
+          restoreSupportDocMutation.isPending ||
+          deleteSupportDocMutation.isPending
+        }
+      />
+    </>
   );
 };
 

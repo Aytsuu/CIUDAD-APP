@@ -15,16 +15,26 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
+    staff_id = serializers.CharField(write_only=True, source='staff.staff_id')
     class Meta:
         model = CouncilScheduling
         fields = '__all__'
     
     @transaction.atomic
     def create(self, validated_data):
-        # Extract staff_id if it exists
         staff_id = self.initial_data.get('staff_id')
         
-        # Create the council event
+        # Convert staff_id string to Staff object
+        if staff_id:
+            try:
+                Staff = apps.get_model('administration', 'Staff')
+                staff = Staff.objects.get(staff_id=staff_id)
+                validated_data['staff'] = staff 
+            except Staff.DoesNotExist:
+                logger.error(f"Staff with id {staff_id} does not exist")
+            except Exception as e:
+                logger.error(f"Error getting staff: {str(e)}")
+                
         council_event = CouncilScheduling.objects.create(**validated_data)
         
         # Always create announcement on creation

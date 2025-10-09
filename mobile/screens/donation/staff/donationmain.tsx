@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   FlatList,
   TextInput,
 } from "react-native";
@@ -19,6 +18,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import EmptyState from "@/components/ui/emptyState";
 import { Button } from "@/components/ui/button"; 
+import { LoadingState } from "@/components/ui/loading-state";
 
 const DonationTracker = () => {
   const router = useRouter();
@@ -176,10 +176,7 @@ const DonationTracker = () => {
   // Loading state component
   const renderLoadingState = () => (
     <View className="h-64 justify-center items-center">
-      <ActivityIndicator size="large" color="#2a3a61" />
-      <Text className="text-sm text-gray-500 mt-2">
-        Loading donations...
-      </Text>
+      <LoadingState/>
     </View>
   );
 

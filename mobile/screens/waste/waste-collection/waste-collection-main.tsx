@@ -405,6 +405,8 @@ import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import PageLayout from '@/screens/_PageLayout';
 import { useCreateCollectionReminders } from './queries/waste-col-add-queries';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 // Day options for filtering
 const dayOptions = [
@@ -522,6 +524,15 @@ const WasteCollectionMain = () => {
   const handleRestore = (wc_num: number) => {
     restoreWasteSchedCol(wc_num);
   };
+
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );  
+
 
   const renderItem = ({ item }: { item: WasteCollectionSchedFull }) => (
     <View className="bg-white shadow-sm rounded-lg p-4 mb-3 mx-2 border border-gray-200">
@@ -686,17 +697,18 @@ const WasteCollectionMain = () => {
       {/* Content - simplified since backend handles filtering */}
       <View className="flex-1 px-6">
         {isLoading || isRestoring || isArchiving || isDeleting ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#2a3a61" />
-            <Text className="text-sm text-gray-500 mt-2 text-center">
-              {
-                isArchiving ? "Archiving Schedule..." : 
-                isRestoring ? "Restoring Schedule..." : 
-                isDeleting ? "Deleting Schedule..." :
-                "Loading..."
-              }
-            </Text>
-          </View>
+          // <View className="flex-1 justify-center items-center">
+          //   <ActivityIndicator size="large" color="#2a3a61" />
+          //   <Text className="text-sm text-gray-500 mt-2 text-center">
+          //     {
+          //       isArchiving ? "Archiving Schedule..." : 
+          //       isRestoring ? "Restoring Schedule..." : 
+          //       isDeleting ? "Deleting Schedule..." :
+          //       "Loading..."
+          //     }
+          //   </Text>
+          // </View>
+          renderLoadingState()           
         ) : groupedData.length > 0 ? (
           <SectionList
             sections={groupedData}

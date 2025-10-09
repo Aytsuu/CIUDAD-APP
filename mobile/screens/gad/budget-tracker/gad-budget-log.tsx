@@ -16,6 +16,7 @@ import PageLayout from "@/screens/_PageLayout";
 import { useGADBudgetLogs } from "./queries/btracker-fetch";
 import { BudgetLogTable } from "./gad-btracker-types";
 import { useDebounce } from "@/hooks/use-debounce";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const GADBudgetLogTable = () => {
   const router = useRouter();
@@ -169,7 +170,7 @@ const GADBudgetLogTable = () => {
         }
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <View className="p-2">
+        <View className="p-2 px-6">
           {/* Search Section */}
           <View className="mb-4">
             <View className="relative">
@@ -188,10 +189,7 @@ const GADBudgetLogTable = () => {
           {/* Loading State */}
           {isLoading ? (
             <View className="py-8">
-              <ActivityIndicator size="large" color="#2a3a61" />
-              <Text className="text-center text-gray-500 mt-2">
-                Loading budget logs...
-              </Text>
+              <LoadingState/>
             </View>
           ) : (
             <>

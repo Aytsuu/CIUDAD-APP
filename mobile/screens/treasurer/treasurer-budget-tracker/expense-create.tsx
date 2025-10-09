@@ -18,10 +18,12 @@ import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useCreateIncomeExpense } from './queries/income-expense-AddQueries';
 import { ChevronLeft, X } from 'lucide-react-native';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 function ExpenseCreateForm() {
   const router = useRouter();
+  const { user } = useAuth(); 
   const params = useLocalSearchParams();
   const year = params.budYear as string;
   // const totBud = parseFloat(params.totalBud as string) || 0;
@@ -156,7 +158,8 @@ function ExpenseCreateForm() {
       totalExpense,
       proposedBud,
       particularId,
-      files
+      files,
+      staff_id: user?.staff?.staff_id      
     };
 
     createExpense(allValues);
@@ -248,7 +251,7 @@ function ExpenseCreateForm() {
           ) : (
 
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
             >
               <Text className="text-white text-base font-semibold">Save Entry</Text>
@@ -260,7 +263,7 @@ function ExpenseCreateForm() {
       stickyFooter={true}
     >
       {/* Main Content */}
-      <View className="px-4">
+      <View className="px-6">
         {currentStep === 1 ? (
           <View className="space-y-4">
             <View className="pb-8">

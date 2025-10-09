@@ -17,12 +17,15 @@ import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { useCreateResolution } from './queries/resolution-add-queries';
 import { useApprovedProposals } from './queries/resolution-fetch-queries';
 import { useResolution } from './queries/resolution-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 interface ResolutionCreateFormProps {
     onSuccess?: () => void; 
 }
 
 function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
+    const { user } = useAuth(); 
     const router = useRouter();
     const [selectedDocuments, setSelectedDocuments] = React.useState<DocumentItem[]>([]);
     const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([]);
@@ -138,7 +141,8 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
         const allValues = {
             ...values,
             resFiles,
-            resSuppDocs
+            resSuppDocs,
+            staff_id: user?.staff?.staff_id      
         };
 
         createResolution(allValues);
@@ -187,7 +191,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
             loadingMessage="Saving resolution..."
             footer={
                 <TouchableOpacity
-                    className="bg-primaryBlue py-3 rounded-md w-full items-center"
+                    className="bg-primaryBlue py-4 rounded-xl w-full items-center"
                     onPress={form.handleSubmit(onSubmit)}
                     disabled={isPending}
                 >

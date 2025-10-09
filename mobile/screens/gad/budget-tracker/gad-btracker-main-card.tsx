@@ -5,35 +5,38 @@ import {
   TouchableOpacity,
   RefreshControl, 
   ScrollView,
-  ActivityIndicator
+  TextInput
 } from 'react-native';
 import { Calendar, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useGetGADYearBudgets } from './queries/btracker-yearqueries';
 import PageLayout from '@/screens/_PageLayout';
-import { SearchInput } from '@/components/ui/search-input';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from '@/components/ui/loading-state';
 
 const GADBudgetTrackerMain = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const { 
-    data: fetchedData = [], 
-    isLoading, 
+  const {
+    data: yearsData = { results: [], count: 0 },
+    isLoading,
+    isError,
     isFetching,
-    isError, 
-    refetch 
-  } = useGetGADYearBudgets(debouncedSearchQuery);
+    refetch
+  } = useGetGADYearBudgets(currentPage, pageSize, debouncedSearchQuery);
   const isSearching = isFetching && searchQuery !== debouncedSearchQuery;
-  const sortedData = [...fetchedData].sort((a, b) => 
-    parseInt(b.gbudy_year) - parseInt(a.gbudy_year)
+  const years = yearsData.results || [];
+  const sortedData = [...years].sort(
+    (a, b) => Number(b.gbudy_year) - Number(a.gbudy_year)
   );
 
   const handleCardClick = (year: string, totalBud: number, totalExp: number) => {
     router.push({
-      pathname: '/gad/budget-tracker/budget-tracker-record',
+      pathname: '/(gad)/budget-tracker/budget-tracker-record',
       params: {
         type: 'viewing',
         budYear: year,
@@ -88,25 +91,24 @@ const GADBudgetTrackerMain = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        className="flex-1 px-6"
       >
         {/* Search Bar */}
-        <View className="mb-4">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onSubmit={() => {
-              // Optional submit logic
-            }}
-          />
+        <View className="mb-8">
+          <View className="relative">
+            <TextInput
+              placeholder="Search"
+              className="pl-2 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
         </View>
 
         {/* Loading state for initial load */}
         {isLoading ? (
           <View className="h-64 justify-center items-center">
-            <ActivityIndicator size="large" color="#2a3a61" />
-            <Text className="text-sm text-gray-500 mt-2">
-              Loading budget records...
-            </Text>
+            <LoadingState/>
           </View>
         ) : (
           /* Content area */
@@ -114,10 +116,7 @@ const GADBudgetTrackerMain = () => {
             {/* Loading state for search operations */}
             {isSearching ? (
               <View className="h-32 justify-center items-center">
-                <ActivityIndicator size="small" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  Searching...
-                </Text>
+                <LoadingState/>
               </View>
             ) : (
               /* Budget Cards */
@@ -138,7 +137,7 @@ const GADBudgetTrackerMain = () => {
                       )}
                       activeOpacity={0.8}
                     >
-                      <View className="bg-white rounded-lg p-4 border border-gray-200">
+                      <View className="bg-white rounded-lg p-4 border border-gray-200 mb-2 shadow">
                         {/* Card Header */}
                         <View className="flex-row justify-between items-center mb-4">
                           <View className="flex-row items-center">

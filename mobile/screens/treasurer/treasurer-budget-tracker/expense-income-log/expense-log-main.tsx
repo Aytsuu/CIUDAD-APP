@@ -25,6 +25,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import PageLayout from '@/screens/_PageLayout';
 import { useExpenseLog, type ExpenseLog } from '../queries/income-expense-FetchQueries';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 const monthOptions = [
   { id: "All", name: "All" },
@@ -42,7 +44,7 @@ const monthOptions = [
   { id: "12", name: "December" }
 ];
 
-const ExpenseLogMain = () => {
+const ExpenseLogMain = () => {  
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.LogYear as string;
@@ -113,6 +115,15 @@ const ExpenseLogMain = () => {
   const handleBack = () => {
     router.back();
   };
+
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );  
+
 
   const renderItem = ({ item }: { item: any }) => {
     const amount = Number(item.el_proposed_budget);
@@ -203,10 +214,11 @@ const ExpenseLogMain = () => {
 
         {/* Data List */}
         {isLoading ? (
-          <View className="h-64 justify-center items-center">
-            <ActivityIndicator size="large" color="#2a3a61" />
-            <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
-          </View>
+          // <View className="h-64 justify-center items-center">
+          //   <ActivityIndicator size="large" color="#2a3a61" />
+          //   <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
+          // </View>
+          renderLoadingState()           
         ) : filteredData.length > 0 ? (
           <FlatList
             data={filteredData}

@@ -44,8 +44,10 @@ import {
   GADBudgetEntryUI,
   DropdownOption,
   GADBudgetFile,
+  BudgetYear
 } from "./gad-btracker-types";
 import { useDebounce } from "@/hooks/use-debounce";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const BudgetTrackerRecords = () => {
   const router = useRouter();
@@ -60,8 +62,6 @@ const BudgetTrackerRecords = () => {
   const [selectedMonth, setSelectedMonth] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-
   const {
     data: entriesData,
     isLoading,
@@ -75,7 +75,7 @@ const BudgetTrackerRecords = () => {
     activeTab === "archive"
   );
 
-  const { data: yearBudgets = [] } = useGetGADYearBudgets();
+  const { data: yearBudgets} = useGetGADYearBudgets();
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: deleteEntry } = usePermanentDeleteGADBudget();
@@ -89,8 +89,9 @@ const BudgetTrackerRecords = () => {
   // Extract entries from data structure like web
   const entries = entriesData?.results || [];
 
-  const currentYearBudget =
-    yearBudgets.find((budget) => budget.gbudy_year === year)?.gbudy_budget || 0;
+  const currentYearBudget = yearBudgets?.results?.find(
+    (budget: BudgetYear) => budget.gbudy_year === year
+  )?.gbudy_budget;
 
   // Remove frontend filtering - let backend handle it
   const filteredData = entries;
@@ -156,7 +157,7 @@ const BudgetTrackerRecords = () => {
 
   const handleCreate = () => {
     router.push({
-      pathname: "/gad/budget-tracker/budget-tracker-create-form",
+      pathname: "/(gad)/budget-tracker/budget-tracker-create-form",
       params: { budYear: year },
     });
   };
@@ -191,14 +192,14 @@ const BudgetTrackerRecords = () => {
     };
 
     router.push({
-      pathname: "/gad/budget-tracker/budget-tracker-edit-form",
+      pathname: "/(gad)/budget-tracker/budget-tracker-edit-form",
       params,
     });
   };
 
   const handleViewLogs = () => {
     router.push({
-      pathname: "/gad/budget-tracker/budget-tracker-log",
+      pathname: "/(gad)/budget-tracker/budget-tracker-log",
       params: { budYear: year },
     });
   };
@@ -244,10 +245,7 @@ const BudgetTrackerRecords = () => {
     if (!entries || entries.length === 0) return 0;
 
     return entries.reduce((total, entry) => {
-      // Skip archived or non-expense entries
       if (entry.gbud_is_archive) return total;
-
-      // Convert all values to numbers safely (handles strings like "0.00")
       const toNum = (val: any) => {
         if (val === undefined || val === null) return undefined;
         const num = +val; // Convert to number
@@ -373,7 +371,7 @@ const BudgetTrackerRecords = () => {
       headerTitle={<Text>{year} Budget Records</Text>}
       rightAction={<View />}
     >
-      <View className="flex p-2">
+      <View className="flex p-2 px-6">
         <View className="flex-row items-center">
           <Text className="text-gray-600">Budget:</Text>
           <Text className="text-blue-500 font-bold ml-2">
@@ -407,6 +405,7 @@ const BudgetTrackerRecords = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        className="px-6"
       >
         <View className="flex-row gap-2 p-2">
           <SelectLayout
@@ -450,10 +449,7 @@ const BudgetTrackerRecords = () => {
         </View>
         {isLoading ? (
           <View className="h-64 justify-center items-center">
-            <ActivityIndicator size="large" color="#3b82f6" />
-            <Text className="text-sm text-gray-500 mt-2">
-              Loading budget records...
-            </Text>
+            <LoadingState/>
           </View>
         ) : (
           <Tabs value={activeTab} onValueChange={handleTabChange}>

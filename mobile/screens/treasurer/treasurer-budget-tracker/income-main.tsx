@@ -28,6 +28,8 @@ import { useArchiveOrRestoreIncome, useDeleteIncome } from './queries/income-exp
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 // Add month options
 const monthOptions = [
@@ -177,6 +179,15 @@ const IncomeTracking = () => {
     refetch();
   };
 
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );  
+
+
   const renderItem = ({ item }: { item: any }) => (
     <Card className="mb-4 border border-gray-200">
       <CardHeader className="flex-row justify-between items-center">
@@ -322,7 +333,7 @@ const IncomeTracking = () => {
               <Search className="absolute left-3 top-3 text-gray-500" size={17} />
               <TextInput
                 placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
                 value={searchQuery}
                 onChangeText={handleSearchChange}
               />
@@ -393,14 +404,15 @@ const IncomeTracking = () => {
           {/* Active Entries */}
           <TabsContent value="active">
             {isLoading || isArchivePending || isDeletePending ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating entry..." : 
-                   isDeletePending ? "Deleting entry..." : 
-                   "Loading..."}
-                </Text>
-              </View>
+              // <View className="h-64 justify-center items-center">
+              //   <ActivityIndicator size="large" color="#2a3a61" />
+              //   <Text className="text-sm text-gray-500 mt-2">
+              //     {isArchivePending ? "Updating entry records..." : 
+              //      isDeletePending ? "Deleting entry..." : 
+              //      "Loading..."}
+              //   </Text>
+              // </View>
+              renderLoadingState() 
             ) : (
               <FlatList
                 data={filteredData} 
@@ -420,14 +432,15 @@ const IncomeTracking = () => {
           {/* Archived Entries */}
           <TabsContent value="archive">
             {isLoading || isArchivePending || isDeletePending ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating entry..." : 
-                   isDeletePending ? "Deleting entry..." : 
-                   "Loading..."}
-                </Text>
-              </View>
+              // <View className="h-64 justify-center items-center">
+              //   <ActivityIndicator size="large" color="#2a3a61" />
+              //   <Text className="text-sm text-gray-500 mt-2">
+              //     {isArchivePending ? "Updating entry..." : 
+              //      isDeletePending ? "Deleting entry..." : 
+              //      "Loading..."}
+              //   </Text>
+              // </View>
+              renderLoadingState()               
             ) : (
               <FlatList
                 data={filteredData} 

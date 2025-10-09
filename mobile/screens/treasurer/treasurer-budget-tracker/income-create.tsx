@@ -20,6 +20,7 @@ import { useDeleteParticular } from './request/particular-DeleteRequest';
 import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 // interface IncomeCreateFormProps {
@@ -29,6 +30,7 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 // }
 
 function IncomeCreateForm() {
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.budYear as string;
@@ -94,7 +96,8 @@ function IncomeCreateForm() {
     const AllValues = {
       ...values,
       totalIncome,
-      year: Number(year)
+      year: Number(year),
+      staff_id: user?.staff?.staff_id    
     }
 
     // console.log("ALL INCOME: ", AllValues)

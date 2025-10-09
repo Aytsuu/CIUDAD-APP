@@ -17,11 +17,12 @@ import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/inco
 import { useUpdateIncomeExpense } from './queries/income-expense-UpdateQueries';
 import { ChevronLeft, X, Loader2  } from 'lucide-react-native';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
 function ExpenseEdit() {
-
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   
@@ -298,7 +299,8 @@ function ExpenseEdit() {
       totalExpense,
       proposedBud,
       returnAmount,
-      particularId
+      particularId,
+      staff_id: user?.staff?.staff_id    
     });
   };
 

@@ -36,6 +36,8 @@ import { useArchiveOrRestoreExpense } from './queries/income-expense-DeleteQueri
 import { useDeleteIncomeExpense } from './queries/income-expense-DeleteQueries';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 const monthOptions = [
   { id: "All", name: "All" },
@@ -249,6 +251,14 @@ const ExpenseTracking = () => {
   const handleRefresh = () => {
     refetch();
   };
+
+  
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
 
   const renderItem = ({ item }: { item: any }) => (
     <Card className="mb-4 border border-gray-200">
@@ -488,14 +498,15 @@ const ExpenseTracking = () => {
             {/* Active Entries */}
             <TabsContent value="active">
               {isLoading || isArchivePending || isDeletePending ? (
-                <View className="h-64 justify-center items-center">
-                  <ActivityIndicator size="large" color="#2a3a61" />
-                  <Text className="text-sm text-gray-500 mt-2">
-                    {isArchivePending ? "Updating entry records..." : 
-                    isDeletePending ? "Deleting entry..." : 
-                    "Loading..."}
-                  </Text>
-                </View>
+                // <View className="h-64 justify-center items-center">
+                //   <ActivityIndicator size="large" color="#2a3a61" />
+                //   <Text className="text-sm text-gray-500 mt-2">
+                //     {isArchivePending ? "Updating entry records..." : 
+                //     isDeletePending ? "Deleting entry..." : 
+                //     "Loading..."}
+                //   </Text>
+                // </View>
+                renderLoadingState() 
               ) : (
                 <FlatList
                   data={fetchedData} // No filtering needed - backend already sent active records
@@ -515,14 +526,15 @@ const ExpenseTracking = () => {
             {/* Archived Entries */}
             <TabsContent value="archive">
               {isLoading || isArchivePending || isDeletePending ? (
-                <View className="h-64 justify-center items-center">
-                  <ActivityIndicator size="large" color="#2a3a61" />
-                  <Text className="text-sm text-gray-500 mt-2">
-                    {isArchivePending ? "Updating entry records..." : 
-                    isDeletePending ? "Deleting entry..." : 
-                    "Loading..."}
-                  </Text>
-                </View>
+                // <View className="h-64 justify-center items-center">
+                //   <ActivityIndicator size="large" color="#2a3a61" />
+                //   <Text className="text-sm text-gray-500 mt-2">
+                //     {isArchivePending ? "Updating entry records..." : 
+                //     isDeletePending ? "Deleting entry..." : 
+                //     "Loading..."}
+                //   </Text>
+                // </View>
+                renderLoadingState() 
               ) : (
                 <FlatList
                   data={fetchedData} // No filtering needed - backend already sent archived records
