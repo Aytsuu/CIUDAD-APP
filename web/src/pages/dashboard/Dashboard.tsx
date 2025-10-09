@@ -33,7 +33,7 @@ export default function Dashboard() {
 
   // Filter items based on user access
   const cardsWithAccess = React.useMemo(() => {
-    return instance.flatMap((item) =>
+    return (instance ?? []).flatMap((item) =>
       validateFeature(item.dashboard) && Array.isArray(item.card)
         ? item.card
         : []
@@ -41,7 +41,7 @@ export default function Dashboard() {
   }, [instance, user]);
 
   const chartsWithAccess = React.useMemo(() => {
-    const itemsWithCharts = instance.filter(
+    const itemsWithCharts = (instance ?? []).filter(
       (item) => item.chart && validateFeature(item.dashboard)
     );
     return itemsWithCharts.flatMap((item) =>
@@ -53,7 +53,7 @@ export default function Dashboard() {
   }, [instance, user]);
 
   const sidebarsWithAccess = React.useMemo(() => {
-    return instance.filter(
+    return (instance ?? []).filter(
       (item) => item.sidebar && validateFeature(item.dashboard)
     );
   }, [instance, user]);
