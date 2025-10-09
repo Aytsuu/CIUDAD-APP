@@ -1,16 +1,15 @@
 import {
-  Dimensions,
-  ScrollView,
   TouchableOpacity,
   View,
   Text,
   FlatList,
   RefreshControl,
-  StyleSheet
+  StyleSheet,
+  Image
 } from "react-native";
 import { Card } from "@/components/ui/card";
 import { features } from "./features";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from "../_PageLayout";
@@ -18,6 +17,10 @@ import React from "react";
 import ShowMore from '@/assets/icons/features/showmore.svg'
 import ShowLess from '@/assets/icons/features/showless.svg'
 import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
+import Svg, { Path } from "react-native-svg";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ChevronRight } from "@/lib/icons/ChevronRight";
+import { capitalize } from "@/helpers/capitalize";
 
 const styles = StyleSheet.create({
   container: {
@@ -39,32 +42,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const {user, isLoading} = useAuth();
   const [showMoreFeatures, setShowMoreFeatures] = React.useState<boolean>(false);
-   const [showSplash, setShowSplash] = React.useState(true);
-  const videoRef = React.useRef(null);
 
-  // if (true) {
-  //   return (
-  //     <SafeAreaView className="flex-1">
-  //       <Video 
-  //         source={require('@/assets/animated/splashscreen.mp4')}
-  //         ref={videoRef}
-  //         style={styles.video}
-  //         resizeMode="cover" // or 'contain', 'stretch'
-  //         repeat={true}
-  //         onError={(error) => {
-  //           console.log('Video error:', error);
+  console.log(user)
 
-  //         }}
-  //         muted={true} // Usually splash screens are silent
-  //         playInBackground={false}
-  //         playWhenInactive={false}
-  //       />
-  //     </SafeAreaView>
-  //   )
-  // }
-  // if (isLoading) {
-  //   return <LoadingModal visible={true} />;
-  // }
+  if (isLoading) {
+    return <LoadingModal visible={true} />;
+  }
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (
@@ -108,10 +91,11 @@ export default function HomeScreen() {
     const userStatus: any[] = []
 
     if(user?.rp) userStatus.push("RESIDENT")
+    if(user?.staff) userStatus.push(user?.staff?.pos)
 
     const INITIAL_FEATURES_COUNT = 5;
     const myFeatures = features.filter((feat: Record<string, any>) => {
-      if(feat.users.length == 0) return feat;
+      if(feat.users?.length == 0) return feat;
       if(userStatus.some((stat: string) => feat.users.includes(stat))) return feat;
     })
 
@@ -140,14 +124,12 @@ export default function HomeScreen() {
   };
 
   const RenderPage = React.memo(() => (
-    <View className="flex-1 mb-16 pt-6">
-      <View className="px-5 flex-1 justify-center">
-        {/* <Text className="font-PoppinsSemiBold text-lg text-blue-500"></Text> */}
+    <SafeAreaView className="flex-1 mb-16"> 
+      <View className="px-6 flex-1">
         <Ciudad width={80} height={70}/>
       </View>
-      
       {/* Header Card Section */}
-      <ScrollView
+      {/* <ScrollView
         className="flex-1"
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -169,10 +151,59 @@ export default function HomeScreen() {
             </Text>
           </Card>
         </TouchableOpacity>
-      </ScrollView>
+      </ScrollView> */}
+
+      <View className="flex-row px-6 mt-2 mb-6 items-center gap-4">
+        <Image
+          source={
+            user?.profile_image
+              ? { uri: user.profile_image }
+              : require("@/assets/images/Logo.png")
+          }
+          className="w-10 h-10 rounded-full"
+          style={{ backgroundColor: '#f3f4f6' }}
+        />
+        <Text className="text-md text-gray-700 font- mb-2">
+          Hi, {capitalize(user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname)}! 👋
+        </Text>
+      </View>
+
+      <View className="px-6">
+        <View className="flex-1 items-end relative bg-blue-100 overflow-hidden rounded-2xl">
+          <View className="absolute p-5 z-10 flex-1 left-0">
+            <View className="flex-1 mt-4">
+              <Text className="text-sm font-bold text-gray-700">Avail Services of</Text>
+              <Text className="text-lg text-primaryBlue leading-5" style={{fontWeight: 800}}>BARANGAY SAN ROQUE</Text>
+            </View>
+            <Ciudad width={40} height={20}/>
+          </View>
+          <View className="z-10">
+            <Image
+              source={require("@/assets/images/home/building.png")}
+              style={{ width: 120, height: 120 }}
+            />
+          </View>
+
+          <View className="absolute bg-blue-300 w-24 h-24 rounded-full right-0" />
+          <View className="absolute bg-blue-400 w-24 h-24 rounded-full right-10 bottom-0 opacity-70" />
+
+          {/* <Svg
+            height="160"
+            width="211"
+            viewBox="0 0 211 160"
+            style={{position: "absolute", left: 0}}
+          >
+            <Path
+              d="M0 0 L211 0 C211 0, 185 20, 185 40 S211 60, 211 80 S185 100, 185 120 S211 140, 211 160 L0 160 Z"
+              fill="#dbeafe"
+              opacity="1"
+            />
+          </Svg> */}
+        </View>
+      </View>
 
       {/* Features Section */}
-      <Card className="p-6 bg-white rounded-none border-b border-border">
+      <Card className="p-6 bg-white rounded-none">
         <View className="mb-6">
           <Text className="text-lg font-semibold text-gray-900">
             Features
@@ -189,7 +220,7 @@ export default function HomeScreen() {
       </Card>
 
       {/* What's New Section */}
-      <View className="px-6 py-6">
+      {/* <View className="px-6 py-6">
         <View className="mb-6">
           <Text className="text-xl font-semibold text-gray-900">
             What's New For You
@@ -255,8 +286,8 @@ export default function HomeScreen() {
             </Card>
           </TouchableOpacity>
         </View>
-      </View>
-    </View>
+      </View> */}
+    </SafeAreaView>
   ))  
 
   return (

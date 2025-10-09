@@ -63,6 +63,8 @@ class FamilyTableView(generics.ListCreateAPIView):
                 ),
                 Value('')
             )
+        ).filter(
+           members__gt=0
         ).only(
             'fam_id',
             'fam_date_registered',
@@ -102,6 +104,26 @@ class FamilyCreateView(generics.CreateAPIView):
   serializer_class = FamilyCreateSerializer
   queryset = Family.objects.all()
 
+class FamilyDataResidentSpecificView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = FamilyTableSerializer
+
+    def get(self, request, *args, **kwargs):
+        rp = request.query_params.get('residentId', None)
+        if not rp:
+            return Response(status=400)
+
+        comp = FamilyComposition.objects.filter(rp=rp).order_by("-fam__fam_date_registered").first()
+        if not comp:
+            return Response(status=404)
+
+        family = Family.objects.filter(fam_id=comp.fam.fam_id).first()
+        if not family:
+            return Response(status=404)
+
+        serializer = self.get_serializer(family)
+        return Response(serializer.data)
+
 class FamilyFilteredByHouseholdView(generics.ListAPIView):
   permission_classes = [AllowAny]
   serializer_class = FamilyListSerializer
@@ -109,7 +131,9 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
   
   def get_queryset(self):
     household_no = self.kwargs['hh']
-    return Family.objects.filter(hh=household_no)
+    return Family.objects.annotate(
+       members=Count('family_compositions')
+    ).filter(hh=household_no, members__gt=0)
   
 class FamilyUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [AllowAny]
@@ -136,6 +160,3 @@ class VerifyFamily(APIView):
          return Response(status=status.HTTP_200_OK)
       
       return Response(status=status.HTTP_404_NOT_FOUND)
-
-         
-    

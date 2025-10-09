@@ -27,6 +27,14 @@ class HouseholdDataView(generics.RetrieveAPIView):
    serializer_class = HouseholdListSerialzer
    queryset = Household.objects.all()
    lookup_field = 'hh_id'
+  
+class OwnedHousesListView(generics.ListAPIView):
+    serializer_class = HouseholdTableSerializer
+
+    def get_queryset(self):
+        rp = self.kwargs.get("rp")
+        return Household.objects.filter(rp=rp)
+
 
 class HouseholdTableView(generics.ListAPIView):
   serializer_class = HouseholdTableSerializer

@@ -178,6 +178,9 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator() ? [
+      {title: "Map", url: "/map"}
+    ] : []),
     ...(featureValidator("complaint")
       ? [
           {

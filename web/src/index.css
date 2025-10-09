@@ -277,6 +277,10 @@ p[data-margin] {
   display: none !important;
 }
 
+.slope-right {
+  clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
+}
+
 
 /* TODAY BUTTON IN CALENDAR */
 .rbc-toolbar .rbc-btn-group:first-of-type button:first-child {
