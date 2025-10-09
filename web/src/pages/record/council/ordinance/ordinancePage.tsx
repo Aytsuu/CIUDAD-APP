@@ -2,7 +2,7 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Plus, Search, Eye, FileText, Brain, Folder } from 'lucide-react';
+import { Plus, Search, Eye, FileText, Brain } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -22,8 +22,7 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx
 import { FormInput } from '@/components/ui/form/form-input';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { ordinanceUploadFormSchema } from '@/form-schema/council/ordinanceUploadSchema';
+import { ordinanceUploadFormSchema, amendOrdinanceUploadSchema, repealOrdinanceUploadSchema } from '@/form-schema/council/ordinanceUploadSchema';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useInsertOrdinanceUpload } from './queries/OrdinanceUploadInsertQueries.tsx';
 // import { OrdinanceAISummary } from './queries/OrdinanceAISummary.tsx';
@@ -202,16 +201,27 @@ function OrdinancePage() {
         setIsCreatingOrdinance(false);
     };
     
+    // Get the appropriate schema based on creation mode
+    const getSchemaForCreationMode = () => {
+        if (creationMode === 'amend') {
+            return amendOrdinanceUploadSchema;
+        } else if (creationMode === 'repeal') {
+            return repealOrdinanceUploadSchema;
+        }
+        return ordinanceUploadFormSchema;
+    };
+
     const form = useForm<any>({
-        resolver: zodResolver(ordinanceUploadFormSchema),
+        resolver: zodResolver(getSchemaForCreationMode()),
         defaultValues: {
-            ordinanceTitle: "",        
-            ordinanceDate: "",
-            ordinanceCategory: "",
-            ordinanceDetails: "",
+            ordTitle: "",        
+            ordDate: "",
+            ordAreaOfFocus: [],
+            ordDetails: "",
             ordinanceFile: "",
-            ord_repealed: false,
-            ordTag: ""
+            ordRepealed: false,
+            ordTag: "",
+            ordDesc: ""
         },
     });
 
@@ -369,7 +379,7 @@ function OrdinancePage() {
         // Based on creation mode
         if (creationMode === 'amend') {
             // If new ordinance marked repealed, block amendment creation
-            if (values.ord_repealed) {
+            if (values.ordRepealed) {
                 showErrorToast('A repealed ordinance cannot be created as an amendment.');
                 setIsCreatingOrdinance(false);
                 return;
@@ -391,6 +401,8 @@ function OrdinancePage() {
             const amendmentData = {
                 ...values,
                 ord_repealed: false,
+                // Use the same category as the original ordinance
+                ordinanceCategory: parent?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : ""),
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
@@ -399,9 +411,13 @@ function OrdinancePage() {
             console.log("Sending to addOrdinance:", { values: amendmentData, mediaFiles });
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
         } else if (creationMode === 'repeal') {
+            // Find the original ordinance to get its category
+            const originalOrdinance = ordinanceItems.find(o => o.ord_num === selectedOrdinance);
             const repealData = {
                 ...values,
                 ord_repealed: true,
+                // Use the same category as the original ordinance
+                ordinanceCategory: originalOrdinance?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : ""),
                 // Link to the ordinance being repealed (optional business rule)
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: false,
@@ -410,7 +426,11 @@ function OrdinancePage() {
             addOrdinance({ values: repealData, mediaFiles }, { onError: handleOrdinanceError });
         } else {
             console.log("Creating new standalone ordinance");
-            const newData = { ...values, ord_repealed: false } as any;
+            const newData = { 
+                ...values, 
+                ord_repealed: false,
+                ordinanceCategory: values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : ""
+            } as any;
             addOrdinance({ values: newData, mediaFiles }, { onError: handleOrdinanceError });
         }
     };
@@ -434,7 +454,16 @@ function OrdinancePage() {
     }, [form]);
 
     const resetUploadForm = () => {
-        form.reset();
+        form.reset({
+            ordTitle: "",        
+            ordDate: "",
+            ordAreaOfFocus: [],
+            ordDetails: "",
+            ordinanceFile: "",
+            ordRepealed: false,
+            ordTag: "",
+            ordDesc: ""
+        });
         setMediaFiles([]);
         setActiveVideoId("");
         setSelectedExistingOrdinance("new");
@@ -921,11 +950,11 @@ function OrdinancePage() {
                                                 setCreationMode(mode);
                                                 if (mode === 'new') {
                                                     setSelectedExistingOrdinance('new');
-                                                    form.setValue('ord_repealed', false);
+                                                    form.setValue('ordRepealed', false);
                                                 } else if (mode === 'amend') {
-                                                    form.setValue('ord_repealed', false);
+                                                    form.setValue('ordRepealed', false);
                                                 } else if (mode === 'repeal') {
-                                                    form.setValue('ord_repealed', true);
+                                                    form.setValue('ordRepealed', true);
                                                 }
                                             };
                                             return (
@@ -995,14 +1024,14 @@ function OrdinancePage() {
                                 {/* Title Field */}
                                 <FormInput
                                     control={form.control}
-                                    name="ordinanceTitle"
+                                    name="ordTitle"
                                     label="Ordinance Title"    
                                 />
 
                                 {/* Date Field */}
                                 <FormDateTimeInput
                                     control={form.control}
-                                    name="ordinanceDate"
+                                    name="ordDate"
                                     label="Date"
                                     type="date"    
                                 />
@@ -1010,13 +1039,13 @@ function OrdinancePage() {
                                 {/* Details Field */}
                                 <FormField
                                     control={form.control}
-                                    name="ordinanceDetails"
+                                    name="ordDetails"
                                     render={() => (
                                         <FormItem>
                                             <FormControl>
                                                 <FormTextArea
                                                     control={form.control}
-                                                    name="ordinanceDetails"
+                                                    name="ordDetails"
                                                     label="Ordinance Details"
                                                 />
                                             </FormControl>
@@ -1025,29 +1054,49 @@ function OrdinancePage() {
                                     )}
                                 />
 
-                                {/* Category Field */}
+                                {/* Area of Focus Field */}
                                 <FormField
                                     control={form.control}
-                                    name="ordinanceCategory"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <SelectLayout
-                                                    label="Select category"
-                                                    placeholder="Select category"
-                                                    options={ordinanceCategories}
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                    name="ordAreaOfFocus"
+                                    render={({ field }) => {
+                                        // For amend/repeal modes, get the original ordinance's category
+                                        const originalCategory = (creationMode === 'amend' || creationMode === 'repeal') && selectedExistingOrdinance 
+                                            ? ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance)?.ord_category
+                                            : null;
+                                        
+                                        // Set the form field value to the original category if it exists
+                                        if (originalCategory && (!field.value || field.value.length === 0)) {
+                                            field.onChange([originalCategory]);
+                                        }
+                                        
+                                        return (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <SelectLayout
+                                                        label="Select area of focus"
+                                                        placeholder="Select area of focus"
+                                                        options={ordinanceCategories}
+                                                        value={originalCategory || (field.value && field.value.length > 0 ? field.value[0] : "")}
+                                                        onChange={(value) => {
+                                                            if (originalCategory) {
+                                                                return; // Don't allow changes if using original category
+                                                            }
+                                                            field.onChange([value]);
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                {originalCategory && (
+                                                    <p className="text-xs text-blue-600 mt-1">
+                                                        Using the same category as the original ordinance: <strong>{originalCategory}</strong>
+                                                    </p>
+                                                )}
+                                                <FormMessage />
+                                            </FormItem>
+                                        );
+                                    }}
                                 />
 
-                                {/* Repealed flag is controlled by creation mode; no manual checkbox */}
-
-                                {/* File Upload Field */}
+                               
                                 <FormField
                                     control={form.control}
                                     name="ordinanceFile"

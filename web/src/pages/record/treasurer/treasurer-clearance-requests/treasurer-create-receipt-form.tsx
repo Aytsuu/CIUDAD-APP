@@ -107,7 +107,7 @@ import { Loader2 } from "lucide-react";
                     // Just update the existing payment request status to Paid
                     console.log('[Receipt onSubmit] updating service charge status to Paid');
                     await updateServiceChargeStatus({ 
-                        sr_id: id, 
+                        pay_id: spay_id, 
                         data: { 
                             status: "Paid" 
                         } 
@@ -120,14 +120,16 @@ import { Loader2 } from "lucide-react";
                         console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
                     } else {
                         console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
-                        await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                        const newPaymentRequest = await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                        const newSpayId = newPaymentRequest?.spay_id || newPaymentRequest?.pay_id;
+                        
                         // Auto-mark summon as Accepted
                         await acceptSummon(id.toString());
                         
                         // Update status to "Paid" - backend will generate sr_code automatically
                         console.log('[Receipt onSubmit] updating service charge status to Paid');
                         await updateServiceChargeStatus({ 
-                            sr_id: id, 
+                            pay_id: newSpayId, 
                             data: { 
                                 status: "Paid" 
                             } 

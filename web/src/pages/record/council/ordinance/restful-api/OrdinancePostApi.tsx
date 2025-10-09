@@ -1,7 +1,7 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
 import { z } from "zod";
-import ordinanceFormSchema from '@/form-schema/ordinanceFormSchema';
+import { ordinanceUploadFormSchema } from '@/form-schema/council/ordinanceUploadSchema';
 import type { SupplementaryDoc } from './OrdinanceGetAPI';
 
 // Backend API data structure (separate from frontend form schema)
@@ -16,7 +16,7 @@ export interface BackendOrdinanceData {
 
 // Transform frontend form data to backend API format
 export const transformFormDataToBackend = (
-    formData: z.infer<typeof ordinanceFormSchema>, 
+    formData: z.infer<typeof ordinanceUploadFormSchema>, 
     staffId: string
 ): BackendOrdinanceData => {
     console.log('🔍 Transform Debug:');

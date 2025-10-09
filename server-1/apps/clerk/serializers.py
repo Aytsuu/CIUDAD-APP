@@ -570,17 +570,32 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
     complainant_addresses = serializers.SerializerMethodField()
     accused_names = serializers.SerializerMethodField()
     accused_addresses = serializers.SerializerMethodField()
+    sr_id = serializers.SerializerMethodField()
+    sr_code = serializers.SerializerMethodField()
+    sr_type = serializers.SerializerMethodField()
+    sr_req_date = serializers.SerializerMethodField()
+    sr_req_status = serializers.SerializerMethodField()
+    sr_case_status = serializers.SerializerMethodField()
+    staff_id = serializers.SerializerMethodField()
     
     class Meta:
-        model = ServiceChargeRequest
+        from .models import ServiceChargePaymentRequest
+        model = ServiceChargePaymentRequest
         fields = [
+            'pay_id',
+            'pay_sr_type',
+            'pay_status',
+            'pay_date_req',
+            'pay_due_date',
+            'pay_date_paid',
+            'comp_id',
+            'pr_id',
             'sr_id',
             'sr_code', 
             'sr_type',
             'sr_req_date',
             'sr_req_status',
             'sr_case_status',
-            'comp_id',
             'staff_id',
             'complainant_name',
             'complainant_names',
@@ -591,59 +606,89 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
         ]
     
     def get_complainant_name(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 complainant = obj.comp_id.complaintcomplainant_set.select_related('cpnt').first()
                 return complainant.cpnt.cpnt_name if complainant and complainant.cpnt else None
-            except Exception:
-                return None
+        except Exception:
+            pass
         return None
 
     def get_complainant_names(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
                 return [cc.cpnt.cpnt_name for cc in complainants if getattr(cc, 'cpnt', None)]
-            except Exception:
-                return []
+        except Exception:
+            pass
         return []
 
     def get_complainant_addresses(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 complainants = obj.comp_id.complaintcomplainant_set.select_related('cpnt').all()
                 return [getattr(cc.cpnt, 'cpnt_address', None) or "N/A" for cc in complainants if getattr(cc, 'cpnt', None)]
-            except Exception:
-                return []
+        except Exception:
+            pass
         return []
 
     def get_accused_names(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
                 return [ca.acsd.acsd_name for ca in accused_list if getattr(ca, 'acsd', None)]
-            except Exception:
-                return []
+        except Exception:
+            pass
         return []
 
     def get_accused_addresses(self, obj):
-        if obj.comp_id:
-            try:
+        try:
+            if obj.comp_id:
                 accused_list = obj.comp_id.complaintaccused_set.select_related('acsd').all()
                 return [getattr(ca.acsd, 'acsd_address', None) or "N/A" for ca in accused_list if getattr(ca, 'acsd', None)]
-            except Exception:
-                return []
+        except Exception:
+            pass
         return []
     
+    def get_sr_id(self, obj):
+        # Generate a service request ID based on payment ID
+        return f"SR-{obj.pay_id}"
+    
+    def get_sr_code(self, obj):
+        # Return None for now, will be generated when payment is made
+        return None
+    
+    def get_sr_type(self, obj):
+        # Use the payment request type
+        return obj.pay_sr_type
+    
+    def get_sr_req_date(self, obj):
+        # Use payment request date
+        return obj.pay_date_req
+    
+    def get_sr_req_status(self, obj):
+        # Map payment status to service request status
+        if obj.pay_status == "Unpaid":
+            return "Pending"
+        return obj.pay_status
+    
+    def get_sr_case_status(self, obj):
+        # Default case status
+        return "Pending"
+    
+    def get_staff_id(self, obj):
+        # Return None for now
+        return None
+
     def get_payment_request(self, obj):
         try:
-            payment_request = obj.servicechargepaymentrequest
+            # Return payment request data directly
             return {
-                'spay_id': payment_request.spay_id,
-                'spay_status': payment_request.spay_status,
-                'spay_due_date': payment_request.spay_due_date,
-                'spay_date_paid': payment_request.spay_date_paid,
-                'pr_id': payment_request.pr_id.pr_id if payment_request.pr_id else None
+                'spay_id': obj.pay_id,
+                'spay_status': obj.pay_status,
+                'spay_due_date': obj.pay_due_date,
+                'spay_date_paid': obj.pay_date_paid,
+                'pr_id': obj.pr_id.pr_id if obj.pr_id else None
             }
         except Exception:
             return None

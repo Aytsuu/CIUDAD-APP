@@ -33,6 +33,7 @@ urlpatterns = [
     path('certificate/<str:cr_id>/cancel/', CancelCertificateView.as_view(), name='certificate_cancel'),
     path('issued-certificates/', IssuedCertificateListView.as_view(), name='issued-certificate-list'),
     path('mark-certificate-issued/', MarkCertificateAsIssuedView.as_view(), name='mark-certificate-issued'),
+    path('business-permit/upload/', BusinessPermitUploadView.as_view(), name='business-permit-upload'),
     path('business-permit/', BusinessPermitListView.as_view(), name='business-permit-list'),
     path('issued-business-permits/', IssuedBusinessPermitListView.as_view(), name='issued-business-permit-list'),
     path('mark-business-permit-issued/', MarkBusinessPermitAsIssuedView.as_view(), name='mark-business-permit-issued'),
@@ -50,6 +51,7 @@ urlpatterns = [
 
     # Treasurer - Service Charge Requests
     path('treasurer/service-charges/', ServiceChargeTreasurerListView.as_view(), name='treasurer-service-charges'),
+    path('treasurer/service-charge-payment/<int:pay_id>/', UpdateServiceChargePaymentStatusView.as_view(), name='update-service-charge-payment'),
     
     # Business Permit Files
     path('business-permit-files/<str:bpr_id>/', BusinessPermitFilesView.as_view(), name='business-permit-files'),

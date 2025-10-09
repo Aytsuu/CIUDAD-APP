@@ -26,6 +26,9 @@ from .models import (
 from rest_framework.generics import RetrieveAPIView
 from django.http import Http404 
 from django.db.models import Q
+from utils.supabase_client import upload_to_storage
+import base64
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -1354,21 +1357,34 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
 # ---------------------- Treasurer: Service Charge Requests ----------------------
 class ServiceChargeTreasurerListView(generics.ListAPIView):
     serializer_class = ServiceChargeTreasurerListSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Only Summon requests that do NOT have an sr_code yet (null or empty)
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_type='Summon'
-        ).filter(
-            Q(sr_code__isnull=True) | Q(sr_code__exact='')
+        # Get data directly from ServiceChargePaymentRequest table
+        from .models import ServiceChargePaymentRequest
+        
+        queryset = ServiceChargePaymentRequest.objects.filter(
+            pay_sr_type='Summon'
         ).select_related(
             'comp_id',
-            'servicechargepaymentrequest__pr_id'
+            'pr_id'
         ).prefetch_related(
-            'comp_id__complaintcomplainant_set__cpnt'
+            'comp_id__complaintcomplainant_set__cpnt',
+            'comp_id__complaintaccused_set__acsd'
         )
 
-        return queryset.order_by('-sr_req_date')
+        # Add search functionality
+        search_query = self.request.GET.get('search', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(pay_id__icontains=search_query) |
+                Q(pay_sr_type__icontains=search_query) |
+                Q(pay_status__icontains=search_query) |
+                Q(comp_id__comp_incident_type__icontains=search_query) |
+                Q(comp_id__comp_location__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('-pay_date_req')
 
 
 # ---------------------- Business Permit Files ----------------------
@@ -1410,4 +1426,100 @@ class BusinessPermitFilesView(generics.ListAPIView):
             return Response({
                 'error': str(e),
                 'detail': 'An error occurred while fetching business permit files'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessPermitUploadView(APIView):
+    """
+    Upload business permit files to S3 bucket
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        try:
+            # Get the uploaded file
+            uploaded_file = request.FILES.get('file')
+            if not uploaded_file:
+                return Response({
+                    'error': 'No file provided'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get file metadata
+            file_name = request.data.get('file_name', uploaded_file.name)
+            file_type = request.data.get('file_type', uploaded_file.content_type)
+            bucket_name = request.data.get('bucket_name', 'business-permit-file-bucket')
+            
+            # Generate unique filename
+            unique_id = str(uuid.uuid4())[:8]
+            timestamp = int(timezone.now().timestamp())
+            file_extension = file_name.split('.')[-1] if '.' in file_name else 'jpg'
+            unique_filename = f"business_permit_{unique_id}_{timestamp}.{file_extension}"
+            
+            # Convert file to base64 for Supabase upload
+            file_content = uploaded_file.read()
+            file_b64 = base64.b64encode(file_content).decode('utf-8')
+            
+            # Prepare file data for Supabase upload
+            file_data = {
+                'file': file_b64,
+                'name': unique_filename,
+                'type': file_type
+            }
+            
+            # Upload to Supabase storage
+            file_url = upload_to_storage(file_data, bucket_name, 'business-permits')
+            
+            if not file_url:
+                return Response({
+                    'error': 'Failed to upload file to storage'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Return success response
+            return Response({
+                'file_url': file_url,
+                'file_name': unique_filename,
+                'file_path': f'business-permits/{unique_filename}',
+                'bucket': bucket_name,
+                'message': 'File uploaded successfully'
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error uploading business permit file: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while uploading the file'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdateServiceChargePaymentStatusView(APIView):
+    """
+    Update the payment status of a ServiceChargePaymentRequest
+    """
+    def put(self, request, pay_id):
+        try:
+            from .models import ServiceChargePaymentRequest
+            
+            # Get the payment request
+            payment_request = ServiceChargePaymentRequest.objects.get(pay_id=pay_id)
+            
+            # Update the payment status
+            payment_request.pay_status = "Paid"
+            payment_request.pay_date_paid = timezone.now()
+            payment_request.save()
+            
+            return Response({
+                'message': 'Payment status updated successfully',
+                'pay_id': payment_request.pay_id,
+                'pay_status': payment_request.pay_status,
+                'pay_date_paid': payment_request.pay_date_paid
+            }, status=status.HTTP_200_OK)
+            
+        except ServiceChargePaymentRequest.DoesNotExist:
+            return Response({
+                'error': 'Payment request not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while updating payment status'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

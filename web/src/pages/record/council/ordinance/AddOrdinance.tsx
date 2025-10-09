@@ -18,7 +18,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import ordinanceFormSchema, { amendOrdinanceSchema, repealOrdinanceSchema } from '@/form-schema/ordinanceFormSchema';
+import { ordinanceUploadFormSchema, amendOrdinanceUploadSchema, repealOrdinanceUploadSchema } from '@/form-schema/council/ordinanceUploadSchema';
 import { createOrdinance, transformFormDataToBackend } from './restful-api/OrdinancePostApi';
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useAuth } from '@/context/AuthContext';
@@ -33,7 +33,7 @@ function AddOrdinancePage() {
     const [selectedOption, setSelectedOption] = useState<OrdinanceOption>(null);
     const [openDialog, setOpenDialog] = useState(false);
 
-    const form = useForm<z.infer<typeof ordinanceFormSchema>>({
+    const form = useForm<z.infer<typeof ordinanceUploadFormSchema>>({
         mode: 'onSubmit', // Only validate on submit
         reValidateMode: 'onSubmit', // Only re-validate on submit
         criteriaMode: 'all', // Show all validation errors
@@ -45,6 +45,8 @@ function AddOrdinancePage() {
             ordDate: "",
             ordDetails: "",
             ordAreaOfFocus: [],
+            ordRepealed: false,
+            ordinanceFile: "",
         },
     });
 
@@ -56,16 +58,16 @@ function AddOrdinancePage() {
     // Get the appropriate schema based on selected option
     const getSchemaForOption = (option: OrdinanceOption) => {
         if (option === 'amend') {
-            return amendOrdinanceSchema;
+            return amendOrdinanceUploadSchema;
         } else if (option === 'repeal') {
-            return repealOrdinanceSchema;
+            return repealOrdinanceUploadSchema;
         }
         // Default: new ordinance
-        return ordinanceFormSchema;
+        return ordinanceUploadFormSchema;
     };
 
 
-    async function onSubmit(values: z.infer<typeof ordinanceFormSchema>) {
+    async function onSubmit(values: z.infer<typeof ordinanceUploadFormSchema>) {
         try {
             setIsSubmitting(true);
             setHasAttemptedSubmit(true); // Mark that user has attempted to submit
