@@ -1,15 +1,12 @@
 import { Navigate } from 'react-router';
 import LandingLayout from '@/layout/LandingLayout';
-import BarangayCouncil from '@/pages/landing/BarangayCouncil';
 import MobileApp from '@/pages/landing/MobileApp';
 import { RouteObject } from 'react-router';
 import Health from '@/pages/landing/Health';
 // import ForgotPassword from '@/pages/landing/ForgotPass';
-import Services from '@/pages/landing/services';
-import About from '@/pages/landing/about';
-import Home from '@/pages/landing/home';
-import Donation from '@/pages/landing/donation';
-import Announcements from '@/pages/landing/announcements';
+import About from '@/pages/landing/About';
+import Home from '@/pages/landing/Home';
+import Announcements from '@/pages/landing/Announcements';
 import ForgotPassword from '@/pages/landing/ForgotPass';
 import SignIn from '@/pages/landing/signin/signin';
 export const landing_router: RouteObject[] = [
@@ -30,20 +27,8 @@ export const landing_router: RouteObject[] = [
         element: <About />
       },
       {
-        path: "services",
-        element: <Services />
-      },
-      {
         path: "health",
         element: <Health />
-      },
-      {
-        path: "donation",
-        element: <Donation />
-      },
-      {
-        path: "barangay-council",
-        element: <BarangayCouncil />
       },
       {
         path: "mobile-app",

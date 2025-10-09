@@ -1,12 +1,6 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import StrokePop from "@/assets/animated/StrokePop.json";
-import Popup from "@/assets/animated/PopUp.json";
-import CircletoMap from "@/assets/animated/CircletoMap.json";
-import MaptoMap from "@/assets/animated/MaptoMap.json";
-import SlideUpBrush from "@/assets/animated/SlideUpBrush.json";
-import PaintBrush from "@/assets/animated/PaintBrush.json";
-import LottieView from "lottie-react-native";
+import Video from "react-native-video";
 
 interface IntroScreenProps {
   onAnimationFinish: () => void;
@@ -16,19 +10,17 @@ const IntroScreen = ({ onAnimationFinish }: IntroScreenProps) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onAnimationFinish();
-    }, 5000); 
+    }, 3000);
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <View style={styles.container}>
-      <LottieView
-        source={CircletoMap}
-        autoPlay
-        speed={0.5}
-        loop={true}
-        onAnimationFinish={onAnimationFinish}
-        style={{ width: 300, height: 300 }}
+      <Video
+        source={require("@/assets/animated/ciudad_intro.mp4")}
+        style={{ width: "100%", height: 250 }}
+        controls={false}
+        resizeMode="contain"
       />
     </View>
   );
