@@ -44,7 +44,6 @@ export default () => {
   const [searchInputVal, setSearchInputVal] = React.useState<string>("");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState<number>(INITIAL_PAGE_SIZE);
-  const [hasScrolled, setHasScrolled] = React.useState(false);
   const [myAnnouncement, setMyAnnouncement] = React.useState<string | null>(
     null
   );
@@ -52,6 +51,8 @@ export default () => {
   const [filter, setFilter] = React.useState<string>("Type");
   const [recipient, setRecipient] = React.useState<string>("Recipient");
   const [viewMoreList, setViewMoreList] = React.useState<string[]>([]);
+  const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
+  const scrollTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   const {
     data: announcements,
@@ -92,6 +93,17 @@ export default () => {
     if (!isFetching && isLoadMore) setIsLoadMore(false);
   }, [isFetching, isLoadMore]);
 
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if(scrollTimeout.current){
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false)
+    }, 150)
+  }
+
   const handleSearch = React.useCallback(() => {
     setIsRefreshing(true);
     setSearchQuery(searchInputVal);
@@ -122,8 +134,10 @@ export default () => {
 
   // Load more items when user reaches end of list
   const handleLoadMore = () => {
-    setIsLoadMore(true);
-    if (hasNext && hasScrolled && !isFetching && !isRefreshing && !isLoading) {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+    if (hasNext && isScrolling && !isFetching && !isRefreshing && !isLoading) {
       setPageSize((prev) => prev + 5);
     }
   };
@@ -293,7 +307,7 @@ export default () => {
             }`}</Text>
           )}
         </View>
-        {isFetching && !isLoadMore && <LoadingState />}
+        {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
 
         {/* List */}
         {!isRefreshing && (
@@ -301,13 +315,13 @@ export default () => {
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
             overScrollMode="never"
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.3}
             maxToRenderPerBatch={5}
             initialNumToRender={5}
             windowSize={5}
             data={data}
-            onScroll={() => {
-              if (!hasScrolled) setHasScrolled(true);
-            }}
+            onScroll={handleScroll}
             renderItem={({ item }) => (
               <View className="">
                 {/* Header */}
@@ -407,8 +421,6 @@ export default () => {
               </View>
             )}
             keyExtractor={(item) => item.ann_id}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.3}
             ListFooterComponent={() =>
               isFetching && pageSize > INITIAL_PAGE_SIZE ? (
                 <View className="py-4 items-center">
