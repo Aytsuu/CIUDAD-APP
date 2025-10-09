@@ -3,13 +3,11 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Search, Loader2, FileInput, Users, Home, UserCheck } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+import { Search, Loader2, Users, Home, UserCheck } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
-import { useLoading } from "@/context/LoadingContext";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
@@ -19,10 +17,10 @@ import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function AllChildHealthRecords() {
-
-  const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,14 +66,6 @@ export default function AllChildHealthRecords() {
   // Fetch data with parameters
   const { data: apiResponse, isLoading, error } = useChildHealthRecords(queryParams);
 
-  useEffect(() => {
-    if (isLoading) {
-      showLoading();
-    } else {
-      hideLoading();
-    }
-  }, [isLoading, showLoading, hideLoading]);
-
   // Handle API response structure
   const {
     childRecords,
@@ -86,23 +76,19 @@ export default function AllChildHealthRecords() {
       return { childRecords: [], totalCount: 0, totalPages: 1 };
     }
 
-    // Check if response is paginated
     if (apiResponse.results) {
-      // Paginated response
       return {
         childRecords: apiResponse.results,
         totalCount: apiResponse.count || 0,
         totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
       };
     } else if (Array.isArray(apiResponse)) {
-      // Direct array response (fallback)
       return {
         childRecords: apiResponse,
         totalCount: apiResponse.length,
         totalPages: Math.ceil(apiResponse.length / pageSize)
       };
     } else {
-      // Unknown structure
       return { childRecords: [], totalCount: 0, totalPages: 1 };
     }
   }, [apiResponse, pageSize]);
@@ -113,14 +99,12 @@ export default function AllChildHealthRecords() {
     }
 
     return childRecords.map((record: any) => {
-      // Extract data from the backend response structure
       const patrecDetails = record.patrec_details || {};
       const patientDetails = patrecDetails.pat_details || {};
       const personalInfo = patientDetails.personal_info || {};
       const addressInfo = patientDetails.address || {};
       const familyHeadInfo = patientDetails.family_head_info || {};
       const familyHeads = familyHeadInfo.family_heads || {};
-
       const motherInfo = familyHeads.mother?.personal_info || {};
       const fatherInfo = familyHeads.father?.personal_info || {};
 
@@ -158,7 +142,8 @@ export default function AllChildHealthRecords() {
         pod_location_details: record.pod_location_details || "",
         health_checkup_count: record.health_checkup_count || 0,
         birth_order: record.birth_order || "",
-        tt_status: record.tt_status || ""
+        tt_status: record.tt_status || "",
+        latest_child_history_date: record.latest_child_history_date || ""
       };
     });
   }, [childRecords]);
@@ -168,7 +153,7 @@ export default function AllChildHealthRecords() {
 
   // Calculate resident and transient counts
   const calculateCounts = useCallback(() => {
-    if (!childRecords) return { residents: 0, transients: 0 };
+    if (!childRecords) return { residents: 0, transients: 0, totalCount: 0 };
 
     let residents = 0;
     let transients = 0;
@@ -182,10 +167,14 @@ export default function AllChildHealthRecords() {
       if (patType === "Transient") transients++;
     });
 
-    return { residents, transients };
+    return { 
+      residents, 
+      transients, 
+      totalCount: residents + transients 
+    };
   }, [childRecords]);
 
-  const { residents, transients } = calculateCounts();
+  const { residents, transients, totalCount: calculatedTotalCount } = calculateCounts();
 
   // Sitio filter handlers
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
@@ -204,13 +193,57 @@ export default function AllChildHealthRecords() {
     }
   };
 
+  // Export functionality - Same pattern as other modules
+  const prepareExportData = () => {
+    return formattedData.map((record) => ({
+      "Patient No": record.pat_id,
+      "Full Name": `${record.lname}, ${record.fname} ${record.mname ? record.mname : ""}`.trim(),
+      "Sex": record.sex,
+      "Age": record.age,
+      "Date of Birth": record.dob || "N/A",
+      "Patient Type": record.pat_type,
+      "Full Address": record.address,
+      "Sitio": record.sitio || "N/A",
+      "Mother's Name": `${record.mother_fname} ${record.mother_mname || ""} ${record.mother_lname}`.trim() || "N/A",
+      "Mother's Occupation": record.mother_occupation || "N/A",
+      "Father's Name": `${record.father_fname} ${record.father_mname || ""} ${record.father_lname}`.trim() || "N/A",
+      "Father's Occupation": record.father_occupation || "N/A",
+      "Health Checkup Count": record.health_checkup_count,
+     
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `child_health_records_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `child_health_records_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `child_health_records_${new Date().toISOString().slice(0, 10)}`, "Child Health Records");
+  };
+
   return (
     <MainLayoutComponent title="Child Health Record" description="Manage and View Child's Record">
       <div className="w-full h-full flex flex-col">
-        {/* Summary Cards - Updated with EnhancedCardLayout */}
+        {/* Summary Cards */}
         <div className="w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <EnhancedCardLayout title="Total Records" description="All child health records" value={totalCount} valueDescription="Total records" icon={<Users className="h-5 w-5 text-muted-foreground" />} cardClassName="border shadow-sm rounded-lg" headerClassName="pb-2" contentClassName="pt-0" />
+            <EnhancedCardLayout 
+              title="Total Records" 
+              description="All child health records" 
+              value={calculatedTotalCount} 
+              valueDescription="Total records" 
+              icon={<Users className="h-5 w-5 text-muted-foreground" />} 
+              cardClassName="border shadow-sm rounded-lg" 
+              headerClassName="pb-2" 
+              contentClassName="pt-0" 
+            />
 
             <EnhancedCardLayout
               title="Resident Children"
@@ -237,38 +270,76 @@ export default function AllChildHealthRecords() {
         </div>
 
         {/* Filters Section */}
-        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white no-print">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search by name, family no, UFC no, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <Input 
+                placeholder="Search by name, family no, UFC no, address, or sitio..." 
+                className="pl-10 bg-white w-full" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
             </div>
-            <SelectLayout placeholder="Patient Type" label="" className="bg-white w-full sm:w-48" options={filterOptions} value={patientTypeFilter} onChange={(value) => setPatientTypeFilter(value)} />
-            <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
+            <SelectLayout 
+              placeholder="Patient Type" 
+              label="" 
+              className="bg-white w-full sm:w-48" 
+              options={filterOptions} 
+              value={patientTypeFilter} 
+              onChange={(value) => setPatientTypeFilter(value)} 
+            />
+            <FilterSitio 
+              sitios={sitios} 
+              isLoading={isLoadingSitios} 
+              selectedSitios={selectedSitios} 
+              onSitioSelection={handleSitioSelection} 
+              onSelectAll={handleSelectAllSitios} 
+              manualSearchValue="" 
+            />
           </div>
 
-          <ProtectedComponentButton exclude={["DOCTOR"]}>
-            <div className="w-full sm:w-auto">
-              <Link
-                to="/services/childhealthrecords/form"
-                state={{
-                  params: {
-                    mode: "newchildhealthrecord"
-                  }
-                }}
-              >
-                <Button className="w-full sm:w-auto">New Record</Button>
-              </Link>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2">
+              <ExportDropdown 
+                onExportCSV={handleExportCSV} 
+                onExportExcel={handleExportExcel} 
+                onExportPDF={handleExportPDF} 
+                className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
+              />
             </div>
-          </ProtectedComponentButton>
+
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+              <div className="w-full sm:w-auto">
+                <Link
+                  to="/services/childhealthrecords/form"
+                  state={{
+                    params: {
+                      mode: "newchildhealthrecord"
+                    }
+                  }}
+                >
+                  <Button className="w-full sm:w-auto">New Record</Button>
+                </Link>
+              </div>
+            </ProtectedComponentButton>
+          </div>
         </div>
 
-
         {/* Selected Filters Chips */}
-        {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
+        {selectedSitios.length > 0 && (
+          <SelectedFiltersChips 
+            items={selectedSitios} 
+            onRemove={(sitio: any) => handleSitioSelection(sitio, false)} 
+            onClearAll={() => setSelectedSitios([])} 
+            label="Filtered by sitios" 
+            chipColor="bg-blue-100" 
+            textColor="text-blue-800" 
+          />
+        )}
 
         <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 no-print">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
               <Input
@@ -283,21 +354,6 @@ export default function AllChildHealthRecords() {
                 min="1"
               />
               <p className="text-xs sm:text-sm">Entries</p>
-            </div>
-            <div className="flex justify-end sm:justify-start">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                    <FileInput size={16} />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
@@ -316,7 +372,7 @@ export default function AllChildHealthRecords() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border no-print">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
             </p>

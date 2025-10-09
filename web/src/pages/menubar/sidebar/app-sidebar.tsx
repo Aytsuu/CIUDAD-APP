@@ -363,16 +363,17 @@ export function AppSidebar() {
           title: "Medical Consultation ",
           url: "/services/medical-consultation",
         },
-        { title: "Medicine", url: "/services/medicine" },
+        { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
     ...(featureValidator("inventory") ? [{
       title: "Inventory",
-      url: "/",
+      url:  "/" ,
       items: [
-        { title: "Inventory List", url: "/inventory/list" },
-        { title: "Inventory Stocks", url: "/inventory/stocks" },
+        { title: "Inventory List", url: "/inventory/list/medicine" },
+        { title: "Inventory Stocks", url: "/inventory-stocks/list/stocks/medicine" }
+
       ],
     }] : []),
     ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),

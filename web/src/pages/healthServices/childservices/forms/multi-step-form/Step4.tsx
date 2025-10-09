@@ -22,7 +22,7 @@ import { edemaSeverityOptions } from "./options";
 import { isToday } from "@/helpers/isToday";
 import { useChildLatestVitals } from "../queries/fetchQueries";
 import { VitalSignFormCard, VitalSignsCardView } from "./vitalsisgns-card";
-import { fetchStaffWithPositions } from "@/pages/healthServices/reports/firstaid-report/queries/fetch"; 
+import { fetchDoctor, fetchMidwife } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
 import { Combobox } from "@/components/ui/combobox";
 import { LastPageProps } from "./types";
 import { PendingFollowupsSection } from "./followupPending";
@@ -57,10 +57,9 @@ export default function LastPage({
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
   const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
-  const { data: staffOptions, isLoading } = fetchStaffWithPositions();
+  const { data: doctorOptions, isLoading: isDoctorLoading } = fetchDoctor();
+  const { data: midwifeOptions, isLoading: isMidwifeLoading } = fetchMidwife();
 
-
-  
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
@@ -69,8 +68,6 @@ export default function LastPage({
 
   const medicineStocksOptions = medicineData?.medicines || [];
   const medicinePagination = medicineData?.pagination;
-
-
 
   const handleMedicineSearch = (searchTerm: string) => {
     setMedicineSearchParams((prev: any) => ({
@@ -129,9 +126,9 @@ export default function LastPage({
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       age: currentAge,
-      wt: latestVitalsData.weight || undefined,
-      ht: latestVitalsData.height || undefined,
-      temp: latestVitalsData.vital_temp,
+      wt: latestVitalsData?.weight || undefined, // ✅ Add optional chaining
+      ht: latestVitalsData?.height || undefined, // ✅ Add optional chaining
+      temp: latestVitalsData?.vital_temp,
       follov_description: "",
       followUpVisit: "",
       followv_status: "pending",
@@ -141,15 +138,14 @@ export default function LastPage({
     }
   });
 
-
   const editVitalSignForm = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: {
       date: "",
       age: "",
-      wt: latestVitalsData.weight || undefined,
-      ht: latestVitalsData.height || undefined,
-      temp: latestVitalsData.vital_temp,
+      wt: latestVitalsData?.weight || undefined, // ✅ Add optional chaining here too
+      ht: latestVitalsData?.height || undefined, // ✅ Add optional chaining here too
+      temp: latestVitalsData?.vital_temp,
       follov_description: "",
       followUpVisit: "",
       notes: "",
@@ -157,6 +153,14 @@ export default function LastPage({
       remarks: ""
     }
   });
+
+  useEffect(() => {
+    if (latestVitalsData) {
+      vitalSignForm.setValue("wt", latestVitalsData.weight || undefined);
+      vitalSignForm.setValue("ht", latestVitalsData.height || undefined);
+      vitalSignForm.setValue("temp", latestVitalsData.vital_temp);
+    }
+  }, [latestVitalsData]);
 
   const supplementStatusEditForm = useForm<{
     date_completed: string | null;
@@ -226,7 +230,7 @@ export default function LastPage({
   const shouldShowNutritionalStatusCalculator = useMemo(() => {
     // Basic data check - show if we have age, weight, and height
     const hasRequiredData = currentAge && latestOverallVitalSign?.wt !== undefined && latestOverallVitalSign?.ht !== undefined;
-    
+
     return hasRequiredData;
   }, [currentAge, latestOverallVitalSign?.wt, latestOverallVitalSign?.ht]);
 
@@ -531,56 +535,55 @@ export default function LastPage({
             </div>
           )}
 
-            <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">Anemic and Birth Weight Status</h3>
-              </div>
-              <div className="space-y-6 p-6">
-                <div className="rounded-lg border border-gray-100  p-5">
-                  <div className="mb-4 flex items-center">
-                    <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
-                      <HeartPulse className="h-5 w-5 text-red-600" />
-                      Anemia Screening
-                    </h4>
-                  </div>
-                  <div className="space-y-4">
-                    <FormField
-                      control={control}
-                      name="anemic.is_anemic"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-3">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                          </FormControl>
-                          <FormLabel className="text-sm font-medium text-gray-700">Is the child anemic?</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    {watch("anemic.is_anemic") && (
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <FormDateTimeInput control={control} name="anemic.seen" label="Date Anemia Detected" type="date" />
-                        <FormDateTimeInput control={control} name="anemic.given_iron" label="Date Iron Given" type="date" />
-                      </div>
+          <div className="mb-10 rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Anemic and Birth Weight Status</h3>
+            </div>
+            <div className="space-y-6 p-6">
+              <div className="rounded-lg border border-gray-100  p-5">
+                <div className="mb-4 flex items-center">
+                  <h4 className="flex items-center gap-2 text-base font-medium text-gray-700">
+                    <HeartPulse className="h-5 w-5 text-red-600" />
+                    Anemia Screening
+                  </h4>
+                </div>
+                <div className="space-y-4">
+                  <FormField
+                    control={control}
+                    name="anemic.is_anemic"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-3">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} className="h-5 w-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        </FormControl>
+                        <FormLabel className="text-sm font-medium text-gray-700">Is the child anemic?</FormLabel>
+                      </FormItem>
                     )}
+                  />
+                  {watch("anemic.is_anemic") && (
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <FormDateTimeInput control={control} name="anemic.seen" label="Date Anemia Detected" type="date" />
+                      <FormDateTimeInput control={control} name="anemic.given_iron" label="Date Iron Given" type="date" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {latestOverallVitalSign && latestOverallVitalSign.wt !== undefined && Number(latestOverallVitalSign.wt) < 2.5 && (
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
+                  <div className="mb-4 flex items-center">
+                    <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
+                    <h4 className="text-base font-medium text-gray-700">Birth Weight Follow-up</h4>
+                    <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">Low Birth Weight: {latestOverallVitalSign.wt} kg</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
+                    <FormDateTimeInput control={control} name="birthwt.given_iron" label="Date Iron Given" type="date" />
                   </div>
                 </div>
-
-                {latestOverallVitalSign && latestOverallVitalSign.wt !== undefined && Number(latestOverallVitalSign.wt) < 2.5 && (
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-5">
-                    <div className="mb-4 flex items-center">
-                      <div className="mr-2 h-2 w-2 rounded-full bg-purple-500"></div>
-                      <h4 className="text-base font-medium text-gray-700">Birth Weight Follow-up</h4>
-                      <span className="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">Low Birth Weight: {latestOverallVitalSign.wt} kg</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                      <FormDateTimeInput control={control} name="birthwt.seen" label="Date Seen" type="date" />
-                      <FormDateTimeInput control={control} name="birthwt.given_iron" label="Date Iron Given" type="date" />
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          
+          </div>
 
           {/* FIXED: Nutritional Status Calculator - now shows when data is available */}
           {shouldShowNutritionalStatusCalculator && (
@@ -697,25 +700,49 @@ export default function LastPage({
                 )}
               />
 
-              {(currentStatus === "check-up" || currentStatus === "immunization") && passed_status !== "immunization" && (
-                <div className="mt-6">
-                  <Label className="block mb-2">Forward To</Label>
-                  <div className="relative">
-                    <Combobox
-                      options={staffOptions?.formatted || []}
-                      value={selectedStaffId}
-                      onChange={(value) => {
-                        setSelectedStaffId(value || "");
-                        setValue("selectedStaffId", value || "");
-                      }}
-                      placeholder={isLoading ? "Loading staff..." : "Select staff member"}
-                      emptyMessage="No available staff members"
-                      triggerClassName="w-full"
-                    />
-                  </div>
-                </div>
-              )}
+{currentStatus === "check-up" && (
+  <div className="mt-6">
+    <Label className="block mb-2">Forward To Doctor</Label>
+    <div className="relative">
+      <Combobox
+        options={doctorOptions?.formatted || []}
+        value={selectedStaffId}
+        onChange={(value) => {
+          // Set the full id value for the combobox to display
+          setSelectedStaffId(value ?? "");
+          // Extract just the staff_id for your form
+          const staffId = value?.split("-")[0] || "";
+          setValue("selectedStaffId", staffId);
+        }}
+        placeholder={isDoctorLoading ? "Loading staff..." : "Select staff member"}
+        emptyMessage="No available staff members"
+        triggerClassName="w-full"
+      />
+    </div>
+  </div>
+)}
 
+{currentStatus === "immunization" && passed_status !== "immunization" && (
+  <div className="mt-6">
+    <Label className="block mb-2">Forward To</Label>
+    <div className="relative">
+      <Combobox
+        options={midwifeOptions?.formatted || []}
+        value={selectedStaffId}
+        onChange={(value) => {
+          // Set the full id value for the combobox to display
+          setSelectedStaffId(value ?? "");
+          // Extract just the staff_id for your form
+          const staffId = value?.split("-")[0] || "";
+          setValue("selectedStaffId", staffId);
+        }}
+        placeholder={isMidwifeLoading ? "Loading staff..." : "Select staff member"}
+        emptyMessage="No available staff members"
+        triggerClassName="w-full"
+      />
+    </div>
+  </div>
+)}
               {!currentStatus && <div className="mt-4 text-sm italic text-gray-500">Please select the purpose for this health record.</div>}
             </div>
           ) : (
