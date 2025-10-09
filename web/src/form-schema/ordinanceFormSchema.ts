@@ -24,7 +24,7 @@ export const amendOrdinanceSchema = z.object({
 
 export const repealOrdinanceSchema = z.object({
     ordTitle: z.string().min(1, 'Ordinance title is required'),
-    ordTag: z.string().optional(),
+    ordTag: z.string().min(1, 'Please select an ordinance to repeal'),
     ordDesc: z.string().optional(),
     ordDate: z.string().min(1, 'Date is required'),
     ordDetails: z.string().optional(),

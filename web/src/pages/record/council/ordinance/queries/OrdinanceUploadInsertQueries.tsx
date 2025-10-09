@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { insertOrdinanceUpload } from '../restful-api/OrdinanceUploadAPI.tsx';
 import { updateOrdinance } from '../restful-api/OrdinanceGetAPI.tsx';
 import { MediaUploadType } from '@/components/ui/media-upload';
-import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { showErrorToast } from "@/components/ui/toast";
 import { useAuth } from '@/context/AuthContext';
 
 export interface OrdinanceUploadData {
@@ -33,7 +33,6 @@ export const useInsertOrdinanceUpload = (onSuccess?: () => void) => {
             return await insertOrdinanceUpload(values, mediaFiles, staffId);
         },
         onSuccess: async (_data, variables) => {
-            showSuccessToast('Ordinance uploaded successfully!');
             // If this upload was a repeal, mark the targeted base ordinance as repealed
             try {
                 const wasRepeal = Boolean(variables?.values?.ord_repealed);
