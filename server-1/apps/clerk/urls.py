@@ -17,13 +17,15 @@ urlpatterns = [
     path('remark/', RemarkView.as_view(), name='remark-create'),
     path('remark-supp-docs/', RemarkSuppDocCreateView.as_view(), name='remark-supp-doc-create'),
 
-    path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
+    # Summon date and time
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
     path('delete-summon-date/<int:sd_id>/', DeleteSummonDateAvailability.as_view(), name='delete-summon-date'),
     path('summon-time-availability/', SummonTimeAvailabilityView.as_view(), name='summon-time-availability'),
     path('summon-time-availability/<int:sd_id>/', SummonTimeAvailabilityByDateView.as_view(), name='summon-time-availability-by-date'),
     path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
     path('update-summon-time-availability/<str:st_id>/', UpdateSummonTimeAvailabilityView.as_view(), name='update-summon-time-availability'),
+
+    path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    
     # Certificate URLs

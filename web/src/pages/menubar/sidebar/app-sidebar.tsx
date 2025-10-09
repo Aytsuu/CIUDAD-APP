@@ -202,14 +202,6 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("lupon mediation")
-      ? [
-          {
-            title: "Conciliation Proceeding",
-            url: "/lupon-cases",
-          },
-        ]
-      : []),
     ...(featureValidator("summon remarks")
       ? [
           {
