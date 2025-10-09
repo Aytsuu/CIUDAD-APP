@@ -74,9 +74,9 @@ export default function MainMedicalConsultation() {
                 className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative"
               >
                 Appointments
-                {!isLoading && data?.data?.medrequest_count > 0 && (
+                {!isLoading && data?.data?.total_appointments_count > 0 && (
                   <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center absolute -top-1 -right-1 min-w-[20px]">
-                    {data.data.medrequest_count}
+                    {data.data.total_appointments_count}
                   </span>
                 )}
               </TabsTrigger>

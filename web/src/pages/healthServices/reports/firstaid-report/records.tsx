@@ -16,11 +16,26 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MonthlyFirstAidDetails() {
   const location = useLocation();
-  const state = location.state as { monthlyrcplist_id: string; month: string; monthName: string; recordCount: number;};
+  const state = location.state as { 
+    monthlyrcplist_id: string; 
+    month: string; 
+    monthName: string; 
+    recordCount: number;
+    itemName: string;  // This will be passed from the sidebar
+    reports: any 
+  };
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { monthlyrcplist_id, month, monthName } = state;
+  const { monthlyrcplist_id, month, monthName, itemName } = state;
+
+  // Auto-set search term when itemName is passed
+  useEffect(() => {
+    if (itemName) {
+      setSearchTerm(itemName);
+    }
+  }, [itemName]);
 
   const { data: apiResponse, isLoading, error } = useFirstAidReports(month, currentPage, pageSize, searchTerm);
 
@@ -46,8 +61,6 @@ export default function MonthlyFirstAidDetails() {
   const staffName = staffDetails ? `${staffDetails.per_fname} ${staffDetails.per_mname || ""} ${staffDetails.per_lname}`.trim() : "—";
   const position = report?.staff_details?.pos?.pos_title || "—";
 
-
-
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch report");
@@ -67,12 +80,12 @@ export default function MonthlyFirstAidDetails() {
       const personalInfo = patient?.pat_details?.personal_info;
       const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ").toLowerCase();
 
-      const itemName = record.finv_details?.fa_detail?.fa_name?.toLowerCase() || "";
+      const recordItemName = record.finv_details?.fa_detail?.fa_name?.toLowerCase() || "";
       const reason = record.reason?.toLowerCase() || "";
       const date = record.created_at ? new Date(record.created_at).toLocaleDateString().toLowerCase() : "";
       const address = record.patrec_details?.pat_details?.address?.full_address?.toLowerCase() || "";
 
-      return fullName.includes(searchLower) || itemName.includes(searchLower) || reason.includes(searchLower) || date.includes(searchLower) || address.includes(searchLower);
+      return fullName.includes(searchLower) || recordItemName.includes(searchLower) || reason.includes(searchLower) || date.includes(searchLower) || address.includes(searchLower);
     });
   }, [records, searchTerm]);
 
@@ -85,6 +98,9 @@ export default function MonthlyFirstAidDetails() {
   const totalItems = filteredRecords.length;
   const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalItems);
+
+  // Get the current search item for display
+  const currentSearchItem = searchTerm || "All Items";
 
   const prepareExportData = () => {
     return filteredRecords.map((record: any) => {
@@ -105,18 +121,26 @@ export default function MonthlyFirstAidDetails() {
 
   const handleExportCSV = () => {
     const dataToExport = prepareExportData();
-    exportToCSV(dataToExport, `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const fileName = searchTerm 
+      ? `first_aid_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      : `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
+    exportToCSV(dataToExport, fileName);
   };
 
   const handleExportExcel = () => {
     const dataToExport = prepareExportData();
-    exportToExcel(dataToExport, `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const fileName = searchTerm 
+      ? `first_aid_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      : `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
+    exportToExcel(dataToExport, fileName);
   };
 
   const handleExportPDF = () => {
-    exportToPDF(`first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const fileName = searchTerm 
+      ? `first_aid_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      : `first_aid_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
+    exportToPDF(fileName);
   };
-
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -219,6 +243,21 @@ export default function MonthlyFirstAidDetails() {
                   </Button>
                 )}
               </div>
+              {/* Show current filter info */}
+              {itemName && searchTerm === itemName && (
+                <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <span>Showing results for: <strong>{itemName}</strong></span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-4 w-4 p-0 hover:bg-blue-100" 
+                    onClick={() => setSearchTerm("")}
+                    title="Clear filter"
+                  >
+                    ×
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -283,6 +322,7 @@ export default function MonthlyFirstAidDetails() {
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <span className="text-sm text-gray-600">
               Showing {startIndex} to {endIndex} of {totalItems} entries
+              {searchTerm && ` for "${searchTerm}"`}
             </span>
             <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
           </div>
@@ -337,6 +377,9 @@ export default function MonthlyFirstAidDetails() {
               <div className="text-center py-2 mb-6 pb-4">
                 <Label className="text-lg font-bold uppercase tracking-widest underline block">FIRST AID RECORDS LEDGER</Label>
                 <Label className="font-medium text-gray-700 block text-sm">Month: {monthName}</Label>
+                {searchTerm && (
+                  <Label className="font-medium text-gray-700 block text-sm">Item: {searchTerm}</Label>
+                )}
               </div>
 
               {/* Report Info */}
@@ -348,7 +391,7 @@ export default function MonthlyFirstAidDetails() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Label className="font-medium text-sm whitespace-nowrap min-w-[120px]">Item Description:</Label>
-                    <div className="text-sm border-b flex-1 pb-1">{searchTerm || "All Items"}</div>
+                    <div className="text-sm border-b flex-1 pb-1">{currentSearchItem}</div>
                   </div>
                 </div>
 

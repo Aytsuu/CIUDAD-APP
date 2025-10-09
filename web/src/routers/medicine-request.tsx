@@ -41,7 +41,7 @@ export const medicineRequest = [
   //   element: <AllMedicineRecords />,
   // },
   {
-    path: "/services/medicine/records",
+    path: "/services/medicine/records/individual-records",
     element: <IndivMedicineRecord />
   },
 

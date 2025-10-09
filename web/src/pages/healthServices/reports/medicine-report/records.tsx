@@ -26,13 +26,21 @@ export default function MonthlyMedicineDetails() {
     recordCount: number;
     records: MedicineRecord[];
     report: any;
+    medicineName?: string;
   };
 
   const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const { monthlyrcplist_id, month, monthName } = state || {};
+  const { monthlyrcplist_id, month, monthName, medicineName } = state || {};
+
+  // Auto-set search term when medicineName is passed
+  useEffect(() => {
+    if (medicineName) {
+      setSearchTerm(medicineName);
+    }
+  }, [medicineName]);
 
   const { data: apiResponse, isLoading, error } = useMedicineDetailedReports(month);
   const monthlyData = apiResponse?.data as { records: MonthlyMedicineRecord[]; report: any } | undefined;
@@ -72,12 +80,12 @@ export default function MonthlyMedicineDetails() {
       const personalInfo = patient?.pat_details?.personal_info;
       const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ").toLowerCase();
 
-      const medicineName = record.minv_details?.med_detail?.med_name?.toLowerCase() || "";
+      const recordMedicineName = record.minv_details?.med_detail?.med_name?.toLowerCase() || "";
       const reason = record.reason?.toLowerCase() || "";
       const date = record.requested_at ? new Date(record.requested_at).toLocaleDateString().toLowerCase() : "";
       const patientId = patient?.pat_details?.pat_id?.toLowerCase() || "";
 
-      return fullName.includes(searchLower) || medicineName.includes(searchLower) || reason.includes(searchLower) || date.includes(searchLower) || patientId.includes(searchLower);
+      return fullName.includes(searchLower) || recordMedicineName.includes(searchLower) || reason.includes(searchLower) || date.includes(searchLower) || patientId.includes(searchLower);
     });
   }, [records, searchTerm]);
 
@@ -90,6 +98,9 @@ export default function MonthlyMedicineDetails() {
   const totalItems = filteredRecords.length;
   const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalItems);
+
+  // Get the current search medicine for display
+  const currentSearchMedicine = searchTerm || "All Medicines";
 
   const prepareExportData = () => {
     return filteredRecords.map((record: any) => {
@@ -110,16 +121,25 @@ export default function MonthlyMedicineDetails() {
 
   const handleExportCSV = () => {
     const dataToExport = prepareExportData();
-    exportToCSV(dataToExport, `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const fileName = searchTerm 
+      ? `medicine_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      : `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
+    exportToCSV(dataToExport, fileName);
   };
 
   const handleExportExcel = () => {
     const dataToExport = prepareExportData();
-    exportToExcel(dataToExport, `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const fileName = searchTerm 
+      ? `medicine_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      : `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
+    exportToExcel(dataToExport, fileName);
   };
 
   const handleExportPDF = () => {
-    exportToPDF(`medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    const fileName = searchTerm 
+      ? `medicine_${searchTerm.replace(/\s+/g, '_')}_${monthName}_${new Date().toISOString().slice(0, 10)}`
+      : `medicine_records_${monthName}_${new Date().toISOString().slice(0, 10)}`;
+    exportToPDF(fileName);
   };
 
   const handlePrint = () => {
@@ -207,13 +227,37 @@ export default function MonthlyMedicineDetails() {
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input type="text" placeholder="Search records..." className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input 
+                  type="text" 
+                  placeholder="Search records..." 
+                  className="w-full pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm rounded-lg transition-all duration-200" 
+                  value={searchTerm} 
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }} 
+                />
                 {searchTerm && (
                   <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100" onClick={() => setSearchTerm("")}>
                     ×
                   </Button>
                 )}
               </div>
+              {/* Show current filter info */}
+              {medicineName && searchTerm === medicineName && (
+                <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <span>Showing results for: <strong>{medicineName}</strong></span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-4 w-4 p-0 hover:bg-blue-100" 
+                    onClick={() => setSearchTerm("")}
+                    title="Clear filter"
+                  >
+                    ×
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -248,7 +292,7 @@ export default function MonthlyMedicineDetails() {
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex  items-center justify-between  border bg-gray-50 p-4  border-gray-200">
+        <div className="flex items-center justify-between border bg-gray-50 p-4 border-gray-200">
           {/* Page Size Selector */}
           <div className="flex items-center gap-2">
             <Label className="text-gray-700 text-sm whitespace-nowrap">Show</Label>
@@ -278,6 +322,7 @@ export default function MonthlyMedicineDetails() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
               Showing {startIndex} to {endIndex} of {totalItems} entries
+              {searchTerm && ` for "${searchTerm}"`}
             </span>
             <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
           </div>
@@ -311,14 +356,12 @@ export default function MonthlyMedicineDetails() {
                         alt="Department Logo"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          // Fallback if image fails to load
                           e.currentTarget.style.display = "none";
                         }}
                       />
                     ) : (
                       <div className="text-xs text-gray-500 text-center">No Logo</div>
                     )}
-                    {/* Fallback div that appears if image fails to load */}
                     <div className="text-xs text-gray-500 text-center hidden">Logo Error</div>
                   </div>
                 </div>
@@ -328,36 +371,39 @@ export default function MonthlyMedicineDetails() {
                   <Label className="text-xs block text-gray-600">General Maxilom Extension, Carreta, Cebu City</Label>
                   <Label className="text-xs block text-gray-600">(032) 232-6820; 232-6863</Label>
                 </div>
-                <div className="w-24"></div> {/* Spacer for balance */}
+                <div className="w-24"></div>
               </div>
 
               {/* Title */}
-              <div className="text-center py-2 mb-6   pb-4">
+              <div className="text-center py-2 mb-6 pb-4">
                 <Label className="text-lg font-bold uppercase tracking-widest underline block">MEDICINE DISTRIBUTION RECORDS</Label>
                 <Label className="font-medium text-gray-700 block text-sm">Month: {monthName}</Label>
+                {searchTerm && (
+                  <Label className="font-medium text-gray-700 block text-sm">Medicine: {searchTerm}</Label>
+                )}
               </div>
 
               {/* Report Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 ">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Label className="font-medium text-sm whitespace-nowrap min-w-[120px]">Office:</Label>
-                    <div className="text-sm border-b  flex-1 pb-1">{report?.office || "N/A"}</div>
+                    <div className="text-sm border-b flex-1 pb-1">{report?.office || "N/A"}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Label className="font-medium text-sm whitespace-nowrap min-w-[120px]">Medicine Description:</Label>
-                    <div className="text-sm border-b  flex-1 pb-1">{searchTerm || "All Medicines"}</div>
+                    <div className="text-sm border-b flex-1 pb-1">{currentSearchMedicine}</div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Label className="font-medium text-sm whitespace-nowrap min-w-[100px]">Control No:</Label>
-                    <div className="text-sm border-b  flex-1 pb-1">{report?.control_no || "N/A"}</div>
+                    <div className="text-sm border-b flex-1 pb-1">{report?.control_no || "N/A"}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Label className="font-medium text-sm whitespace-nowrap min-w-[100px]">Total Records:</Label>
-                    <div className="text-sm border-b  flex-1 pb-1">{filteredRecords.length}</div>
+                    <div className="text-sm border-b flex-1 pb-1">{filteredRecords.length}</div>
                   </div>
                 </div>
               </div>
@@ -370,7 +416,13 @@ export default function MonthlyMedicineDetails() {
                 </div>
               ) : (
                 <div className="w-full">
-                  <TableLayout header={tableHeader} rows={tableRows} tableClassName="border  rounded w-full" bodyCellClassName="border  text-center text-xs p-2" headerCellClassName="font-bold text-xs border  text-gray-900 text-center p-2" />
+                  <TableLayout 
+                    header={tableHeader} 
+                    rows={tableRows} 
+                    tableClassName="border rounded w-full" 
+                    bodyCellClassName="border text-center text-xs p-2" 
+                    headerCellClassName="font-bold text-xs border text-gray-900 text-center p-2" 
+                  />
                 </div>
               )}
 
@@ -380,14 +432,8 @@ export default function MonthlyMedicineDetails() {
               </div>
             </div>
 
-            {/* Signature Section - Always at bottom */}
-            <div
-              className="signature-section mt-auto pt-8"
-              style={{
-                marginTop: "auto",
-                paddingTop: "1rem"
-              }}
-            >
+            {/* Signature Section */}
+            <div className="signature-section mt-auto pt-8">
               <div className="flex flex-col items-center gap-6">
                 {signatureBase64 && (
                   <div className="mb-2">

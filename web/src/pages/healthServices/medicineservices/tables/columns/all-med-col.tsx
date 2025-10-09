@@ -118,7 +118,7 @@ export const medicineColumns: ColumnDef<any>[] = [
       return (
         <ViewButton
           onClick={() => {
-            navigate("/services/medicine/records", {
+            navigate("/services/medicine/records/individual-records", {
               state: {
                 params: {
                   patientData
