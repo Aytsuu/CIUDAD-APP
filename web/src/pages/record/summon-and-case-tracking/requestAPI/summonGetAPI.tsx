@@ -1,8 +1,20 @@
 import { api } from "@/api/api";
 
-export const getSummonCaseList = async () => {
+export const getSummonCaseList = async (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
     try{
-        const res = await api.get('clerk/summon-case-list/')
+        const params: Record<string, any> = {
+            page,
+            page_size: pageSize,
+            search: searchQuery,
+        };
+    
+        if (statusFilter && statusFilter !== "All") {
+                params.status = statusFilter;
+        }
+
+        const res = await api.get('clerk/summon-case-list/', {
+            params
+        })
         console.log(res.data)
         return res.data
     }catch(err){

@@ -1,6 +1,5 @@
-// import { Label } from "@/components/ui/label";
 // import { Link } from "react-router-dom";
-// import { Search } from 'lucide-react';
+// import { Search, ChevronRight, ArrowUpDown } from 'lucide-react';
 // import { Input } from "@/components/ui/input";
 // import { Spinner } from "@/components/ui/spinner";
 // import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -11,7 +10,9 @@
 // import { DataTable } from "@/components/ui/table/data-table";
 // import { ColumnDef} from "@tanstack/react-table";
 // import { Button } from "@/components/ui/button/button";
-// import { ChevronRight } from "lucide-react";
+// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+// import { useDebounce } from "@/hooks/use-debounce";
 
 // // Status color mapping
 // const getStatusColor = (status: string | null | undefined) => {
@@ -40,17 +41,52 @@
 //     );
 // }
 
-// // Format array data to display multiple items
-// const formatArrayData = (data: string[] | string | null | undefined): string => {
-//     if (!data) return "N/A";
-//     if (Array.isArray(data)) {
-//         return data.filter(item => item != null && item !== "").join(', ') || "N/A";
+// // Format array data to display multiple items as individual pills
+// const formatNamesAsPills = (data: string[] | string | null | undefined, pillColor: string) => {
+//     if (!data) {
+//         return (
+//             <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+//                 N/A
+//             </span>
+//         );
 //     }
-//     return String(data || "N/A");
+    
+//     const names = Array.isArray(data) ? data : [data];
+//     const validNames = names.filter(name => name != null && name !== "");
+    
+//     if (validNames.length === 0) {
+//         return (
+//             <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+//                 N/A
+//             </span>
+//         );
+//     }
+    
+//     return (
+//         <div className="flex flex-wrap gap-1">
+//             {validNames.map((name, index) => (
+//                 <span
+//                     key={index}
+//                     className={`px-2 py-1 rounded-full text-xs font-medium ${pillColor} whitespace-nowrap`}
+//                 >
+//                     {name}
+//                 </span>
+//             ))}
+//         </div>
+//     );
 // };
 
 // export default function SummonRemarksMain(){  
-//     const filter = [
+//     const { showLoading, hideLoading } = useLoading();
+    
+//     const [searchQuery, setSearchQuery] = useState("");
+//     const [selectedFilter, setSelectedFilter] = useState("All");
+//     const [pageSize, setPageSize] = useState(10);
+//     const [currentPage, setCurrentPage] = useState(1);
+
+//     const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+//     const filterOptions = [
 //         { id: "All", name: "All" },
 //         { id: "Ongoing", name: "Ongoing" },
 //         { id: "Resolved", name: "Resolved" },
@@ -58,11 +94,17 @@
 //         { id: "Waiting for Schedule", name: "Waiting for Schedule" },
 //     ];
 
-//     const { data: fetchedData = [], isLoading } = useGetSummonCaseList();
-//     const { showLoading, hideLoading } = useLoading();
-    
-//     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-//     const [searchTerm, setSearchTerm] = useState("");
+//     // Use the hook with pagination and filtering parameters
+//     const { data: summonCaseData = { results: [], count: 0 }, isLoading } = useGetSummonCaseList(
+//         currentPage, 
+//         pageSize, 
+//         debouncedSearchQuery, 
+//         selectedFilter
+//     );
+
+//     const summonCases = summonCaseData.results || [];
+//     const totalItems = summonCaseData.count || 0;
+//     const totalPages = Math.ceil(totalItems / pageSize);
 
 //     // Loading state management
 //     useEffect(() => {
@@ -73,37 +115,10 @@
 //         }
 //     }, [isLoading, showLoading, hideLoading]);
 
-//     // Filter data based on selected filter and search term
-//     const filteredData = fetchedData.filter(item => {
-//         const matchesFilter = selectedFilter === "All" || item.sc_mediation_status === selectedFilter;
-        
-//         if (searchTerm === "") return matchesFilter;
-        
-//         const searchTermLower = searchTerm.toLowerCase();
-        
-//         // Safe search across all fields
-//         const matchesCode = String(item.sc_code || '').toLowerCase().includes(searchTermLower);
-//         const matchesComplainant = String(item.complainant_names || '').toLowerCase().includes(searchTermLower);
-//         const matchesIncidentType = String(item.incident_type || '').toLowerCase().includes(searchTermLower);
-        
-//         // Safe accused names search
-//         let matchesAccused = false;
-        
-//         if (item.accused_names != null) {
-//             if (Array.isArray(item.accused_names)) {
-//                 matchesAccused = item.accused_names
-//                     .map(name => String(name || ''))
-//                     .some(name => name.toLowerCase().includes(searchTermLower));
-//             } else {
-//                 matchesAccused = String(item.accused_names).toLowerCase().includes(searchTermLower);
-//             }
-//         }
-        
-//         const matchesSearch = matchesCode || matchesComplainant || matchesAccused || 
-//                             matchesIncidentType;
-        
-//         return matchesFilter && matchesSearch;
-//     });
+//     // Reset to first page when filters change
+//     useEffect(() => {
+//         setCurrentPage(1);
+//     }, [debouncedSearchQuery, selectedFilter, pageSize]);
 
 //     const hasResidentComplainant = (item: SummonCaseList) => {
 //         if (!item.complainant_rp_ids) return false;
@@ -118,9 +133,17 @@
 //     const columns: ColumnDef<SummonCaseList>[] = [
 //         {
 //           accessorKey: "sc_code",
-//           header: "Case No.",
+//           header: ({ column }) => (
+//             <div
+//               className="flex w-full justify-center items-center gap-2 cursor-pointer"
+//               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+//             >
+//               Case No.
+//               <ArrowUpDown size={14} />
+//             </div>
+//           ),
 //           cell: ({ row }) => (
-//             <div className="flex items-center gap-2 justify-center">
+//             <div className="flex justify-center items-center gap-2">
 //                 <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
 //                     {row.original.sc_code}
 //                 </span>
@@ -132,10 +155,8 @@
 //           accessorKey: "complainant_names",
 //           header: "Complainant/s",
 //           cell: ({ row }) => (
-//             <div className="flex items-center justify-center">
-//                 <span className="text-sm line-clamp-2">
-//                     {formatArrayData(row.original.complainant_names)}
-//                 </span>
+//             <div className="min-w-[200px] justify-center items-center flex">
+//                 {formatNamesAsPills(row.original.complainant_names, "bg-purple-100 text-purple-800")}
 //             </div>
 //           ),
 //         },
@@ -143,10 +164,8 @@
 //           accessorKey: "accused_names",
 //           header: "Respondent/s",
 //           cell: ({ row }) => (
-//             <div className="flex items-center justify-center">
-//                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium line-clamp-2">
-//                     {formatArrayData(row.original.accused_names)}
-//                 </span>
+//             <div className="min-w-[200px] justify-center items-center flex">
+//                 {formatNamesAsPills(row.original.accused_names, "bg-blue-100 text-blue-800")}
 //             </div>
 //           ),
 //         },
@@ -154,7 +173,7 @@
 //           accessorKey: "incident_type",
 //           header: "Incident Type",
 //           cell: ({ row }) => (
-//             <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+//             <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
 //               {row.original.incident_type}
 //             </span>
 //           ),
@@ -221,14 +240,14 @@
 //     if (isLoading) {
 //         return (
 //             <div className="flex items-center justify-center py-12">
-//                 <Spinner size="lg" />
+//                 <Spinner size="md" />
 //                 <span className="ml-2 text-gray-600">Loading summon cases...</span>
 //             </div>
 //         );
 //     }
 
 //     return(
-//          <div className="w-full h-full flex flex-col">
+//         <div className="w-full h-full flex flex-col">
 //             {/* Header Section - Fixed height */}
 //             <div className="flex-shrink-0">
 //                 <div className="flex flex-col gap-3 mb-3">
@@ -244,59 +263,105 @@
 //                 <hr className="border-gray mb-7 sm:mb-8" />
 //             </div>
 
-//             {/* Search and Filter - Fixed height */}
-//             <div className="flex-shrink-0 mb-4">
-//                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full">
-//                     {/* Search */}
-//                     <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
-//                         <Search
-//                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-//                             size={17}
-//                         />
-//                         <Input 
-//                             placeholder="Search..." 
-//                             className="pl-10 w-full bg-white text-sm"
-//                             value={searchTerm}
-//                             onChange={(e) => setSearchTerm(e.target.value)}
-//                         />
-//                     </div>     
+//             {/* Main Content Area */}
+//             <div className="bg-white rounded-lg shadow-sm flex-1 overflow-hidden">
+//                 {/* Header with Count, Search, and Filters */}
+//                 <div className="flex flex-col gap-4 p-6">
+//                     {/* Filters Row */}
+//                     <div className="flex flex-col md:flex-row justify-between gap-4 w-full">
+//                         {/* Left Group - Search and Status Filter */}
+//                         <div className="flex flex-col md:flex-row gap-4 flex-1 max-w-3xl">
+//                             {/* Search Input */}
+//                             <div className="relative flex-1 max-w-[500px]">
+//                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+//                                 <Input
+//                                     placeholder="Search cases..."
+//                                     className="pl-10 bg-white w-full"
+//                                     value={searchQuery}
+//                                     onChange={(e) => setSearchQuery(e.target.value)}
+//                                 />
+//                             </div>
 
-//                     {/* Filter */}
-//                     <div className='flex flex-row items-center gap-4 w-full sm:w-auto'>
-//                         <Label className="whitespace-nowrap">Filter: </Label>
-//                         <SelectLayout 
-//                             className="bg-white w-full sm:w-[200px]" 
-//                             options={filter} 
-//                             placeholder="Filter" 
-//                             value={selectedFilter} 
-//                             label="Status" 
-//                             onChange={setSelectedFilter}
-//                         />
+//                             {/* Status Filter */}
+//                             <div className="w-full md:w-[250px]">
+//                                 <SelectLayout
+//                                     className="w-full bg-white"
+//                                     placeholder="Filter by Status"
+//                                     options={filterOptions}
+//                                     value={selectedFilter}
+//                                     label=""
+//                                     onChange={(value) => setSelectedFilter(value)}
+//                                 />
+//                             </div>
+//                         </div>
+
+//                         {/* Right Group - Page Size Control */}
+//                         <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+//                             <span className="text-sm whitespace-nowrap">Show</span>
+//                             <Select 
+//                                 value={pageSize.toString()} 
+//                                 onValueChange={(value) => {
+//                                     setPageSize(Number.parseInt(value))
+//                                     setCurrentPage(1)
+//                                 }}
+//                             >
+//                                 <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+//                                     <SelectValue />
+//                                 </SelectTrigger>
+//                                 <SelectContent>
+//                                     <SelectItem value="5">5</SelectItem>
+//                                     <SelectItem value="10">10</SelectItem>
+//                                     <SelectItem value="25">25</SelectItem>
+//                                     <SelectItem value="50">50</SelectItem>
+//                                     <SelectItem value="100">100</SelectItem>
+//                                 </SelectContent>
+//                             </Select>
+//                             <span className="text-sm whitespace-nowrap">entries</span>
+//                         </div>
 //                     </div>
 //                 </div>
-//             </div>
 
-//             {/* DataTable Area - This will scroll independently */}
-//             <div className="flex-1 overflow-y-auto">
-//                 {filteredData.length === 0 ? (
-//                     <div className="flex flex-col items-center justify-center py-10">
-//                         <p className="text-gray-500 text-lg">No summon cases found</p>
-//                         <p className="text-sm text-gray-400 mt-2">
-//                             {searchTerm ? `No results for "${searchTerm}"` : "Try changing your filters"}
-//                         </p>
-//                     </div>
-//                 ) : (
-//                     <div className="pb-6 bg-white">
-//                         <DataTable columns={columns} data={filteredData}/>
-//                     </div>
-//                 )}
+//                 {/* DataTable Container */}
+//                 <div className="p-6 pt-0">
+//                     {totalItems === 0 ? (
+//                         <div className="text-center py-12">
+//                             <p className="text-gray-500">
+//                                 {searchQuery || selectedFilter !== "All" 
+//                                     ? "No summon cases found matching your criteria." 
+//                                     : "No summon cases found."
+//                                 }
+//                             </p>
+//                         </div>
+//                     ) : (
+//                         <>
+//                             <div className="space-y-3">
+//                                 <DataTable columns={columns} data={summonCases}/>
+//                             </div>
+                            
+//                             {/* Pagination Footer */}
+//                             <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4 mt-6">
+//                                 <p className="text-gray-600">
+//                                     Showing {totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+//                                     {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+//                                 </p>
+//                                 {totalItems > 0 && (
+//                                     <PaginationLayout 
+//                                         currentPage={currentPage} 
+//                                         totalPages={totalPages} 
+//                                         onPageChange={setCurrentPage} 
+//                                     />
+//                                 )}
+//                             </div>
+//                         </>
+//                     )}
+//                 </div>
 //             </div>
 //         </div>
-//     )
+//     );
 // }
-import { Label } from "@/components/ui/label";
+
 import { Link } from "react-router-dom";
-import { Search } from 'lucide-react';
+import { Search, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -307,7 +372,9 @@ import { useLoading } from "@/context/LoadingContext";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef} from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { ChevronRight } from "lucide-react";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Status color mapping
 const getStatusColor = (status: string | null | undefined) => {
@@ -372,7 +439,16 @@ const formatNamesAsPills = (data: string[] | string | null | undefined, pillColo
 };
 
 export default function SummonRemarksMain(){  
-    const filter = [
+    const { showLoading, hideLoading } = useLoading();
+    
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedFilter, setSelectedFilter] = useState("All");
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+    const filterOptions = [
         { id: "All", name: "All" },
         { id: "Ongoing", name: "Ongoing" },
         { id: "Resolved", name: "Resolved" },
@@ -380,11 +456,17 @@ export default function SummonRemarksMain(){
         { id: "Waiting for Schedule", name: "Waiting for Schedule" },
     ];
 
-    const { data: fetchedData = [], isLoading } = useGetSummonCaseList();
-    const { showLoading, hideLoading } = useLoading();
-    
-    const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-    const [searchTerm, setSearchTerm] = useState("");
+    // Use the hook with pagination and filtering parameters
+    const { data: summonCaseData = { results: [], count: 0 }, isLoading } = useGetSummonCaseList(
+        currentPage, 
+        pageSize, 
+        debouncedSearchQuery, 
+        selectedFilter
+    );
+
+    const summonCases = summonCaseData.results || [];
+    const totalItems = summonCaseData.count || 0;
+    const totalPages = Math.ceil(totalItems / pageSize);
 
     // Loading state management
     useEffect(() => {
@@ -395,37 +477,10 @@ export default function SummonRemarksMain(){
         }
     }, [isLoading, showLoading, hideLoading]);
 
-    // Filter data based on selected filter and search term
-    const filteredData = fetchedData.filter(item => {
-        const matchesFilter = selectedFilter === "All" || item.sc_mediation_status === selectedFilter;
-        
-        if (searchTerm === "") return matchesFilter;
-        
-        const searchTermLower = searchTerm.toLowerCase();
-        
-        // Safe search across all fields
-        const matchesCode = String(item.sc_code || '').toLowerCase().includes(searchTermLower);
-        const matchesComplainant = String(item.complainant_names || '').toLowerCase().includes(searchTermLower);
-        const matchesIncidentType = String(item.incident_type || '').toLowerCase().includes(searchTermLower);
-        
-        // Safe accused names search
-        let matchesAccused = false;
-        
-        if (item.accused_names != null) {
-            if (Array.isArray(item.accused_names)) {
-                matchesAccused = item.accused_names
-                    .map(name => String(name || ''))
-                    .some(name => name.toLowerCase().includes(searchTermLower));
-            } else {
-                matchesAccused = String(item.accused_names).toLowerCase().includes(searchTermLower);
-            }
-        }
-        
-        const matchesSearch = matchesCode || matchesComplainant || matchesAccused || 
-                            matchesIncidentType;
-        
-        return matchesFilter && matchesSearch;
-    });
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchQuery, selectedFilter, pageSize]);
 
     const hasResidentComplainant = (item: SummonCaseList) => {
         if (!item.complainant_rp_ids) return false;
@@ -440,8 +495,15 @@ export default function SummonRemarksMain(){
     const columns: ColumnDef<SummonCaseList>[] = [
         {
           accessorKey: "sc_code",
-          header: "Case No.",
-          size: 150, // Fixed width for case number
+          header: ({ column }) => (
+            <div
+              className="flex w-full justify-center items-center gap-2 cursor-pointer"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              Case No.
+              <ArrowUpDown size={14} />
+            </div>
+          ),
           cell: ({ row }) => (
             <div className="flex justify-center items-center gap-2">
                 <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
@@ -454,7 +516,6 @@ export default function SummonRemarksMain(){
         {
           accessorKey: "complainant_names",
           header: "Complainant/s",
-          size: 250, // Wider space for complainants
           cell: ({ row }) => (
             <div className="min-w-[200px] justify-center items-center flex">
                 {formatNamesAsPills(row.original.complainant_names, "bg-purple-100 text-purple-800")}
@@ -464,7 +525,6 @@ export default function SummonRemarksMain(){
         {
           accessorKey: "accused_names",
           header: "Respondent/s",
-          size: 250, // Wider space for respondents
           cell: ({ row }) => (
             <div className="min-w-[200px] justify-center items-center flex">
                 {formatNamesAsPills(row.original.accused_names, "bg-blue-100 text-blue-800")}
@@ -474,9 +534,8 @@ export default function SummonRemarksMain(){
         {
           accessorKey: "incident_type",
           header: "Incident Type",
-          size: 180, // Fixed width for incident type
           cell: ({ row }) => (
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
               {row.original.incident_type}
             </span>
           ),
@@ -484,7 +543,6 @@ export default function SummonRemarksMain(){
         {
             accessorKey: "",
             header: "Case Status",
-            size: 150, // Fixed width for status
             cell: ({ row }) => {
                 const status = row.original.sc_conciliation_status || row.original.sc_mediation_status;
                 const statusColor = getStatusColor(status);
@@ -501,7 +559,6 @@ export default function SummonRemarksMain(){
         {
             accessorKey: "",
             header: " ",
-            size: 120, // Fixed width for action button
             cell: ({row}) => {
                 const item = row.original;
                 return (
@@ -545,14 +602,14 @@ export default function SummonRemarksMain(){
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Spinner size="lg" />
+                <Spinner size="md" />
                 <span className="ml-2 text-gray-600">Loading summon cases...</span>
             </div>
         );
     }
 
     return(
-         <div className="w-full h-full flex flex-col">
+        <div className="w-full h-full flex flex-col">
             {/* Header Section - Fixed height */}
             <div className="flex-shrink-0">
                 <div className="flex flex-col gap-3 mb-3">
@@ -568,53 +625,99 @@ export default function SummonRemarksMain(){
                 <hr className="border-gray mb-7 sm:mb-8" />
             </div>
 
-            {/* Search and Filter - Fixed height */}
-            <div className="flex-shrink-0 mb-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full">
-                    {/* Search */}
-                    <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
-                        <Search
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                            size={17}
-                        />
-                        <Input 
-                            placeholder="Search..." 
-                            className="pl-10 w-full bg-white text-sm"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>     
+            {/* Main Content Area - REMOVED flex-1 and overflow-hidden */}
+            <div className="bg-white rounded-lg shadow-sm">
+                {/* Header with Count, Search, and Filters */}
+                <div className="flex flex-col gap-4 p-6">
+                    {/* Filters Row */}
+                    <div className="flex flex-col md:flex-row justify-between gap-4 w-full">
+                        {/* Left Group - Search and Status Filter */}
+                        <div className="flex flex-col md:flex-row gap-4 flex-1 max-w-3xl">
+                            {/* Search Input */}
+                            <div className="relative flex-1 max-w-[500px]">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+                                <Input
+                                    placeholder="Search cases..."
+                                    className="pl-10 bg-white w-full"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
 
-                    {/* Filter */}
-                    <div className='flex flex-row items-center gap-4 w-full sm:w-auto'>
-                        <Label className="whitespace-nowrap">Filter: </Label>
-                        <SelectLayout 
-                            className="bg-white w-full sm:w-[200px]" 
-                            options={filter} 
-                            placeholder="Filter" 
-                            value={selectedFilter} 
-                            label="Status" 
-                            onChange={setSelectedFilter}
-                        />
+                            {/* Status Filter */}
+                            <div className="w-full md:w-[250px]">
+                                <SelectLayout
+                                    className="w-full bg-white"
+                                    placeholder="All Status"
+                                    options={filterOptions}
+                                    value={selectedFilter}
+                                    label=""
+                                    onChange={(value) => setSelectedFilter(value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Right Group - Page Size Control */}
+                        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                            <span className="text-sm whitespace-nowrap">Show</span>
+                            <Select 
+                                value={pageSize.toString()} 
+                                onValueChange={(value) => {
+                                    setPageSize(Number.parseInt(value))
+                                    setCurrentPage(1)
+                                }}
+                            >
+                                <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="5">5</SelectItem>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <span className="text-sm whitespace-nowrap">entries</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* DataTable Area - This will scroll independently */}
-            <div className="flex-1 overflow-y-auto">
-                {filteredData.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10">
-                        <p className="text-gray-500 text-lg">No summon cases found</p>
-                        <p className="text-sm text-gray-400 mt-2">
-                            {searchTerm ? `No results for "${searchTerm}"` : "Try changing your filters"}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="pb-6 bg-white">
-                        <DataTable columns={columns} data={filteredData}/>
-                    </div>
-                )}
+                {/* DataTable Container */}
+                <div className="p-6 pt-0">
+                    {totalItems === 0 ? (
+                        <div className="text-center py-12">
+                            <p className="text-gray-500">
+                                {searchQuery || selectedFilter !== "All" 
+                                    ? "No summon cases found matching your criteria." 
+                                    : "No summon cases found."
+                                }
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-3">
+                                <DataTable columns={columns} data={summonCases}/>
+                            </div>
+                            
+                            {/* Pagination Footer */}
+                            <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4 mt-6">
+                                <p className="text-gray-600">
+                                    Showing {totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+                                    {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+                                </p>
+                                {totalItems > 0 && (
+                                    <PaginationLayout 
+                                        currentPage={currentPage} 
+                                        totalPages={totalPages} 
+                                        onPageChange={setCurrentPage} 
+                                    />
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
-    )
+    );
 }

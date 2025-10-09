@@ -5,10 +5,10 @@ import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList } from 
 
 
 
-export const useGetSummonCaseList = () => {
-    return useQuery<SummonCaseList[]>({
-        queryKey: ['summonCases'],
-        queryFn: getSummonCaseList,
+export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    return useQuery<{results: SummonCaseList[], count: number}>({
+        queryKey: ['summonCases', page, pageSize, searchQuery, statusFilter],
+        queryFn:() => getSummonCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
     })
 }
