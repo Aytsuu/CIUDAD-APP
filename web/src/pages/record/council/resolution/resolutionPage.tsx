@@ -207,11 +207,11 @@ function ResolutionPage() {
             ),
             cell: ({row}) => (
                 // <div className="flex w-full justify-center items-center">{row.getValue("res_num")}</div>
-                <div className="bg-primary px-3 py-0.5 rounded-sm inline-block shadow-sm">
-                    <p className="text-white tracking-wider uppercase">
+                <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
+                    <p className="text-primary text-[13px] font-bold tracking-wider uppercase">
                         {row.getValue("res_num")}
                     </p>
-                </div>                
+                </div>                 
             )
         },
         {
