@@ -43,7 +43,7 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
                 'error': 'An error occurred while creating the appointment request',
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 
 class PrenatalAppointmentRequestView(generics.ListAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
@@ -111,6 +111,47 @@ class PrenatalAppointmentRequestView(generics.ListAPIView):
             logger.error(f"Error retrieving prenatal appointment requests: {str(e)}")
             return Response({
                 'error': 'An error occurred while retrieving appointment requests',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# prenatal appointment cancellation view
+class PrenatalAppointmentCancellationView(generics.UpdateAPIView):
+    serializer_class = PrenatalAppointmentCancellationSerializer
+    queryset = PrenatalAppointmentRequest.objects.all()
+    lookup_field = 'par_id'
+
+    def update(self, request, *args, **kwargs):
+        par_id = kwargs.get('par_id')
+        logger.info(f"Attempting to cancel prenatal appointment with ID: {par_id}")
+
+        try:
+            appointment = self.get_object()
+
+            if appointment.status in ['cancelled', 'completed', 'rejected']:
+                logger.warning(f"Cannot cancel appointment with ID {par_id} as it is already {appointment.status}")
+                return Response({
+                    'error': f'Cannot cancel an appointment that is already {appointment.status}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update the appointment status to 'cancelled' and set the cancelled_at date and reason
+            appointment.status = 'cancelled'
+            appointment.cancelled_at = request.data.get('cancelled_at')
+            appointment.reason = request.data.get('reason', '')  # Get reason from request
+            appointment.save()
+
+            serializer = self.get_serializer(appointment)
+            logger.info(f"Appointment with ID {par_id} cancelled successfully with reason: {appointment.reason}")
+
+            return Response({
+                'message': 'Prenatal appointment cancelled successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error cancelling prenatal appointment with ID {par_id}: {str(e)}")
+            return Response({
+                'error': 'An error occurred while cancelling the appointment',
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -14,6 +14,7 @@ import PregnancyVisitTracker from "../admin-maternal/prenatal/visit-tracker"
 import { PregnancyAccordion } from "../admin-maternal/prenatal/pregnancy-accordion"
 
 import { usePregnancyDetails } from "./queries/maternalFETCH"
+import { useDebounce } from "@/hooks/use-debounce"
 
 interface Patient {
   pat_id: string
@@ -90,7 +91,6 @@ interface PregnancyDataDetails {
   pat_id: string
   prenatal_form?: {
     pf_id: string
-    pf_lmp: string
     pf_edc: string
     created_at: string
   }[]
@@ -195,18 +195,52 @@ export default function IndividualMaternalRecordScreen() {
   const [selectedFilter, setSelectedFilter] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+  const debouncedSearchTerm = useDebounce(searchQuery, 300)
 
-  const {
-    data: pregnancyData,
-    isLoading: pregnancyDataLoading,
-    refetch,
-  } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(
+    selectedPatient?.pat_id || "",
+    page,
+    pageSize,
+    selectedFilter,
+    debouncedSearchTerm
+  )
+
+  const getLatestFollowupVisit = () => {
+    let followUpData = [];
+    
+    if (pregnancyData && typeof pregnancyData === 'object' && 'results' in pregnancyData) {
+      // Handle paginated response structure: { count, next, previous, results: [...] }
+      const results = (pregnancyData as any).results;
+      if (Array.isArray(results) && results.length > 0) {
+        followUpData = results[0]?.follow_up || [];
+      }
+    } else if (Array.isArray(pregnancyData) && pregnancyData.length > 0) {
+      // Handle direct array response
+      followUpData = pregnancyData[0]?.follow_up || [];
+    }
+    
+    return followUpData;
+  };
+
+  const latestFollowupVisit = getLatestFollowupVisit();
+  const nextFollowVisit = [...latestFollowupVisit]
+    .filter(visit => visit.followv_status === 'pending') // Only show pending visits
+    .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
+
+  const dateWords = () => {
+    return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
 
   useEffect(() => {
     if (params.patientData) {
       try {
         const patientData = JSON.parse(params.patientData as string)
-        console.log("Parsed patient data:", patientData) // Debug log
         setSelectedPatient(patientData)
       } catch (error) {
       }
@@ -226,9 +260,6 @@ export default function IndividualMaternalRecordScreen() {
     }
   }, [params])
 
-  useEffect(() => {
-  }, [pregnancyData, pregnancyDataLoading])
-
   const groupPregnancies = useCallback(
     (
       pregnancies: PregnancyDataDetails[],
@@ -239,14 +270,12 @@ export default function IndividualMaternalRecordScreen() {
 
       // Add explicit checks for array and valid data
       if (!pregnancies || !Array.isArray(pregnancies) || pregnancies.length === 0) {
-        console.log("No valid pregnancies data:", pregnancies)
         return []
       }
 
       pregnancies.forEach((pregnancy) => {
         // Add null checks for pregnancy object
         if (!pregnancy || !pregnancy.pregnancy_id) {
-          console.warn("Invalid pregnancy object:", pregnancy)
           return
         }
 
@@ -465,12 +494,25 @@ export default function IndividualMaternalRecordScreen() {
             </View>
           )}
 
-          <View className="mb-5">
-            <Card className="bg-white border-gray-200">
-              <CardContent className="p-4">
-                <Text className="font-semibold text-gray-900">Upcoming follow-up visit</Text>
-              </CardContent>
-            </Card>
+          {/* Upcoming Follow-up Visit */}
+          <View className="flex rounded-md w-full border border-blue-400 mb-5 bg-blue-200 shadow-md">
+            {nextFollowVisit ? (
+              <View className="p-3 flex-row justify-between items-center w-full">
+                <View className="flex-row items-center">
+                  <Clock size={18} color="#2563eb" style={{ marginRight: 5 }} />
+                  <Text className="font-semibold text-blue-700">Upcoming follow-up visit</Text>
+                </View>
+                <View className="items-center">
+                  <Text className="font-semibold italic text-blue-700">{dateWords()}</Text>
+                  <Text className="text-blue-700 text-sm">{nextFollowVisit.followv_description}</Text>
+                </View>
+               
+              </View>
+            ) : (
+              <View className="p-3">
+                <Text className="font-semibold text-white">No follow-up visit</Text>
+              </View>
+            )}
           </View>
 
           {/* Controls */}

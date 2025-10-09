@@ -51,7 +51,7 @@ export default function MyFpRecordsScreen() {
     error: patientError,
     refetch: refetchPatient,
     isFetching: isPatientFetching
-  } = usePatientByResidentId(rp_id);
+  } = usePatientByResidentId(rp_id || "");
 
   const pat_id = patientData?.pat_id || null;
 

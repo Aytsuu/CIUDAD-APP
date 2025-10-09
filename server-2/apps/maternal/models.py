@@ -31,7 +31,6 @@ class PrenatalAppointmentRequest(models.Model):
         ('approved', 'Approved'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
-        ('completed', 'Completed'),
         ('rejected', 'Rejected'),
         ('missed', 'Missed'),
     ], default='pending')

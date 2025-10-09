@@ -138,7 +138,7 @@ export default function Records() {
       id: 3,
       name: "Maternal Records",
       description: "Access your maternal health records",
-      route: "/maternal-records",
+      route: "/admin/maternal/individual",
       icon: Baby,
       image: require("@/assets/images/Health/Home/Maternal.jpg"),
       color: "#1E40AF"

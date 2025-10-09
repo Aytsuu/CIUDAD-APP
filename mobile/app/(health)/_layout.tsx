@@ -40,10 +40,9 @@ export default () => {
             <Stack.Screen name="family-planning/fp-record" options={{ headerShown: false }} />
             <Stack.Screen name="animalbite/my-records" options={{ headerShown: false }} />
             <Stack.Screen name="animalbite/animalbite" options={{ headerShown: false }} />
-            <Stack.Screen name="maternal/maternal-landing" options={{ headerShown: false }} />
+            
             <Stack.Screen name="appointments/schedules" options={{ headerShown: false }} />
             <Stack.Screen name="my-records/all-records" options={{ headerShown: false }} />
-            <Stack.Screen name="maternal/bookingpage" options={{ headerShown: false }} />
             <Stack.Screen name="medicine-request/request-page" options={{ headerShown: false }} />
             <Stack.Screen name="vaccination/my-records" options={{ headerShown: false }} />
             <Stack.Screen name="my-schedules/my-schedules" options={{ headerShown: false }} />
@@ -53,9 +52,11 @@ export default () => {
             <Stack.Screen name="medconsultation/my-records" options={{ headerShown: false }} />
             <Stack.Screen name="medconsultation/current-history" options={{ headerShown: false }} />
 
-
-
-      
+            <Stack.Screen name="maternal/maternal-landing" options={{ headerShown: false }} />
+            <Stack.Screen name="maternal/bookingpage" options={{ headerShown: false }} />
+            <Stack.Screen name="maternal/postpartum" options={{ headerShown: false }} />
+            <Stack.Screen name="maternal/prenatal" options={{ headerShown: false }} />
+            {/* <Stack.Screen name="maternal/my-records" options={{ headerShown: false }} /> */}
 
         {/* Admin Screens (accessible only to admins) */}
         {/* {isAdmin && ( */}

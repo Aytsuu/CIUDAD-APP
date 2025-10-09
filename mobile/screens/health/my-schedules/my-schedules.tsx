@@ -204,48 +204,61 @@ export default function MyAppointmentsScreen() {
     return currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)
   }
 
-  // Transform API data to match ScheduleRecord type (for logged-in user only)
   const userAppointments = useMemo(() => {
-    if (!appointments || appointments.length === 0) {
-      console.warn("No appointments data")
-      return []
-    }
+  if (!appointments || Object.keys(appointments).length === 0) {
+    console.warn("No appointments data")
+    return []
+  }
 
+  console.log("Raw appointments data:", appointments)
 
-  
+  const transformed: ScheduleRecord[] = []
 
-    const transformed = appointments.map((visit: any) => {
-      console.log("Processing visit:", visit)
+  // Process follow-up appointments
+  if (appointments.follow_up_appointments && appointments.follow_up_appointments.length > 0) {
+    appointments.follow_up_appointments.forEach((visit: any) => {
       try {
         const record: ScheduleRecord = {
-          id: visit.followv_id || 0,
-          // patient: {
-          //   firstName: user?.resident?.per_fname || user?.resident?.firstName || "Unknown",
-          //   lastName: user?.resident?.per_lname || user?.resident?.lastName || "Unknown",
-          //   middleName: user?.resident?.per_mname || user?.resident?.middleName || "",
-          //   gender: user?.resident?.per_sex || user?.resident?.gender || "Unknown",
-         
-          //   patientId: rp_id || "", // Use rp_id as patientId for consistency
-          // },
+          id: visit.followv_id || visit.id || 0,
           scheduledDate: visit.followv_date || "",
           purpose: visit.followv_description || "Follow-up Visit",
           status: (visit.followv_status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
-          sitio: "", // Default; response lacks address—fetch separately if needed
-          type: "Resident", // Assuming resident user
+          sitio: "", // Default; response lacks address
+          type: "Resident",
           patrecType: "Follow-up",
         }
-
-        console.log("Transformed record:", record)
-        return record
+        console.log("Transformed follow-up record:", record)
+        transformed.push(record)
       } catch (error) {
-        console.error("Error transforming visit data:", error, visit)
-        return null
+        console.error("Error transforming follow-up visit data:", error, visit)
       }
-    }).filter(Boolean)
+    })
+  }
 
-    console.log("Transformed user appointments:", transformed)
-    return transformed
-  }, [appointments, rp_id, user])
+  // Process medical consultation appointments
+  if (appointments.med_consult_appointments && appointments.med_consult_appointments.length > 0) {
+    appointments.med_consult_appointments.forEach((consult: any) => {
+      try {
+        const record: ScheduleRecord = {
+          id: consult.id || 0,
+          scheduledDate: consult.scheduled_date || "",
+          purpose: consult.chief_complaint || "Medical Consultation",
+          status: (consult.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
+          sitio: "", // Default; response lacks address
+          type: "Resident",
+          patrecType: "Consultation",
+        }
+        console.log("Transformed consultation record:", record)
+        transformed.push(record)
+      } catch (error) {
+        console.error("Error transforming consultation data:", error, consult)
+      }
+    })
+  }
+
+  console.log("All transformed appointments:", transformed)
+  return transformed
+}, [appointments, rp_id, user])
 
   // Filter and sort appointments based on search and active tab
   const filteredAppointments = useMemo(() => {

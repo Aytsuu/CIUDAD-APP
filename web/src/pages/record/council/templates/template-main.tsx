@@ -2087,6 +2087,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_filename: "Indigency (for minors)",
       temp_w_sign_right: false,
       temp_w_sign_left: false,
+      temp_applicantName: `${fname} ${lname}`,    
       temp_w_sign_applicant: true,
       temp_w_seal: true,
       temp_body: "This serves as certification to the accuracy of details on one of our residents in the barangay of San Roque Ciudad:\n\n" +
@@ -2101,7 +2102,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*PWD FINANCIAL ASSISTANCE PURPOSES ONLY.*/   " +
       "Affixed below is the name and signature of the above-mentioned name. They belong to an /*indigent family, no income/low income.*/\n\n" +
       "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
-    },   
+    },      
     {
       temp_id: "Indigency (for minors)",
       temp_title: "CERTIFICATE OF INDIGENCY",
