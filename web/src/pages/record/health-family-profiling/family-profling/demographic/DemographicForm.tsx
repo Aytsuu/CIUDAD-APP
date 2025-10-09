@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { FormInput } from "@/components/ui/form/form-input";
 import { useHouseholdData, usePersonalInfo } from "../../family-profling/queries/profilingFetchQueries";
 
 export default function DemographicForm({
@@ -23,17 +22,17 @@ export default function DemographicForm({
   onSubmit: () => void;
 }) {
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
-  
+
   // Watch the selected household ID
   const selectedHouseholdId = form.watch("demographicInfo.householdNo");
-  
+
   // Fetch household data when household is selected
-  const { data: householdData, isLoading: isLoadingHousehold, error: householdError } = useHouseholdData(selectedHouseholdId);
-  
+  const { data: householdData, isLoading: isLoadingHousehold } = useHouseholdData(selectedHouseholdId);
+
   // Extract household head ID from household data - try multiple possible property names
   const householdHeadId = React.useMemo(() => {
     if (!householdData) return null;
-    
+
     // Try different possible property names for household head ID
     const possibleIds = [
       householdData.rp_id,
@@ -45,13 +44,13 @@ export default function DemographicForm({
       Array.isArray(householdData) && householdData.length > 0 ? householdData[0].rp_id : null,
       Array.isArray(householdData) && householdData.length > 0 ? householdData[0].head_id : null,
     ];
-    
+
     // Return the first non-null/undefined value
     return possibleIds.find(id => id != null) || null;
   }, [householdData]);
-  
+
   // Fetch personal info of household head
-  const { data: personalInfo, isLoading: isLoadingPersonal, error: personalError } = usePersonalInfo(householdHeadId);
+  const { data: personalInfo, isLoading: isLoadingPersonal } = usePersonalInfo(householdHeadId);
 
   // Populate form fields when personal info is fetched
   React.useEffect(() => {
@@ -98,7 +97,7 @@ export default function DemographicForm({
     (value: any) => {
       form.setValue("demographicInfo.householdNo", value);
       setInvalidHousehold(false); // Reset validation error
-      
+
       // Clear previous data when changing household
       form.setValue("householdHead.per_lname", "");
       form.setValue("householdHead.per_fname", "");
@@ -109,17 +108,6 @@ export default function DemographicForm({
   );
 
   const isLoadingData = isLoadingHousehold || isLoadingPersonal;
-
-  const getStatusMessage = () => {
-    if (isLoadingHousehold) return "Loading household information...";
-    if (isLoadingPersonal) return "Loading household head information...";
-    if (householdError) return "Error loading household data";
-    if (personalError) return "Error loading personal information";
-    if (!selectedHouseholdId) return "Select a household to view head information";
-    if (!householdHeadId) return "No household head ID found";
-    if (!personalInfo) return "No personal info found for household head";
-    return "Household head information loaded";
-  };
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
@@ -186,8 +174,6 @@ export default function DemographicForm({
               readOnly={false}
             />
           </div>
-          
-          
 
           {/* Submit Button */}
           <div className="mt-8 sm:mt-auto flex justify-end">
