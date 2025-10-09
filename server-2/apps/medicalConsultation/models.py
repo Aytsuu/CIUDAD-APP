@@ -6,6 +6,80 @@ from django.core.validators import MinValueValidator
 from django.utils import timezone
 from apps.servicescheduler.models import *
 from apps.healthProfiling.models import *
+from apps.maternal.models import *
+from django.db import models
+
+class PhilHealthLaboratory(models.Model):
+    lab_id = models.BigAutoField(primary_key=True)
+    
+    # Laboratory test flags
+    is_cbc = models.BooleanField(default=False, verbose_name="Complete Blood Count")
+    is_urinalysis = models.BooleanField(default=False, verbose_name="Urinalysis")
+    is_fecalysis = models.BooleanField(default=False, verbose_name="Fecalysis")
+    is_sputum_microscopy = models.BooleanField(default=False, verbose_name="Sputum Microscopy")
+    is_creatine = models.BooleanField(default=False, verbose_name="Creatinine")
+    is_hba1c = models.BooleanField(default=False, verbose_name="HbA1c")
+    is_chestxray = models.BooleanField(default=False, verbose_name="Chest X-ray")
+    is_papsmear = models.BooleanField(default=False, verbose_name="Pap Smear")
+    is_fbs = models.BooleanField(default=False, verbose_name="Fasting Blood Sugar")
+    is_oralglucose = models.BooleanField(default=False, verbose_name="Oral Glucose Tolerance Test")
+    is_lipidprofile = models.BooleanField(default=False, verbose_name="Lipid Profile")
+    is_fecal_occult_blood = models.BooleanField(default=False, verbose_name="Fecal Occult Blood")
+    is_ecg = models.BooleanField(default=False)
+    # Other fields
+    others = models.TextField(null=True, blank=True, verbose_name="Other Laboratory Tests")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.others:
+            self.others = self.others.title()
+        super().save(*args, **kwargs)
+    class Meta:
+        db_table = 'philhealth_laboratory'
+        verbose_name = "Philhealth Laboratory"
+        verbose_name_plural = "Philhealth Laboratories"
+        ordering = ['-created_at']
+
+
+class PhilhealthDetails(models.Model):
+    phil_id = models.BigAutoField(primary_key=True)
+    
+    # ✅ ADDED: ForeignKey to MedicalConsultation_Record
+    medrec = models.OneToOneField(
+        'MedicalConsultation_Record',
+        on_delete=models.CASCADE,
+        related_name='philhealth_details'  # ✅ UNIQUE related_name
+    )
+    
+    # PhilHealth fields
+    iswith_atc = models.BooleanField(default=False)
+    marital_status = models.CharField(max_length=50, null=True, blank=True)
+    dependent_or_member = models.CharField(max_length=50, null=True, blank=True)
+    ogtt_result = models.CharField(max_length=100, null=True, blank=True)
+    contraceptive_used = models.CharField(max_length=100, null=True, blank=True)
+    smk_sticks_per_day = models.IntegerField(null=True, blank=True)
+    smk_years = models.IntegerField(null=True, blank=True)
+    is_passive_smoker = models.BooleanField(default=False)
+    alcohol_bottles_per_day =  models.IntegerField(null=True, blank=True)
+    civil_status = models.CharField(max_length=100, null=True, blank=True)
+   
+    tts = models.ForeignKey(TT_Status, on_delete=models.SET_NULL,  related_name='philhealth_details',   null=True,  blank=True)
+    obs = models.ForeignKey( Obstetrical_History,on_delete=models.SET_NULL,  related_name='philhealth_details',  null=True,    blank=True )
+    lab = models.ForeignKey(PhilHealthLaboratory,   on_delete=models.SET_NULL,  related_name='philhealth_details', null=True,  blank=True)
+
+    class Meta:
+        db_table = 'philhealth_details'
+        
+    
+    def save(self, *args, **kwargs):
+        for field in ['marital_status', 'dependent_or_member', 'ogtt_result', 
+                      'contraceptive_used', 'civil_status']:
+            value = getattr(self, field, None)
+            if value:
+                setattr(self, field, value.title())
+        super().save(*args, **kwargs)
+
+
 
 class MedicalConsultation_Record(models.Model):
     medrec_id = models.BigAutoField(primary_key=True)
@@ -14,35 +88,24 @@ class MedicalConsultation_Record(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Core foreign keys
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_consultation_record')
     vital = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='medical_consultation_record')
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='medical_consultation_record')
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True)
-    medreq = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True)
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True)
+    medreq = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True, blank=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record', null=True, blank=True)
     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medical_consultation_record_assigned', null=True, blank=True)
-    
-    # Optional fields
+   
+    # PhilHealth flag only
     is_phrecord = models.BooleanField(default=False)
-    iswith_atc = models.BooleanField(default=False)
-    marital_status = models.CharField(max_length=50, null=True, blank=True)
-    dependent_or_member = models.CharField(max_length=50, null=True, blank=True)
-    lmp = models.DateField(null=True, blank=True)
-    obgscore_g = models.CharField(max_length=100, null=True, blank=True)
-    obgscore_p = models.CharField(max_length=100, null=True, blank=True)
-    tpal = models.CharField(max_length=100, null=True, blank=True)
-    tt_status = models.CharField(max_length=100, null=True, blank=True)
-    ogtt_result = models.CharField(max_length=100, null=True, blank=True)
-    contraceptive_used = models.CharField(max_length=100, null=True, blank=True)
-    smk_sticks_per_day = models.CharField(max_length=100, null=True, blank=True)
-    smk_years = models.CharField(max_length=100, null=True, blank=True)
-    is_passive_smoker = models.BooleanField(default=False)
-    alcohol_bottles_per_day = models.CharField(max_length=100, null=True, blank=True)
-    phil_pin = models.CharField(max_length=100, null=True, blank=True)
+
 
     class Meta:
         db_table = 'medical_consultation_record'
-
+        
+    def __str__(self):
+        return f"Medical Consultation {self.medrec_id}"
 
 class DateSlots(models.Model):
     id = models.BigAutoField(primary_key=True)

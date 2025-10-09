@@ -358,21 +358,22 @@ export function AppSidebar() {
         { title: "Child Health", url: "/services/childhealthrecords" },
         { title: "Firstaid", url: "/services/firstaid" },
         { title: "Family Planning", url: "/services/familyplanning" },
-        { title: "Maternal", url: "/services/maternalrecords" },
+        { title: "Maternal", url: "/services/maternal" },
         {
           title: "Medical Consultation ",
           url: "/services/medical-consultation",
         },
-        { title: "Medicine", url: "/services/medicine" },
+        { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
     ...(featureValidator("inventory") ? [{
       title: "Inventory",
-      url: "/",
+      url:  "/" ,
       items: [
-        { title: "Inventory List", url: "/inventory/list" },
-        { title: "Inventory Stocks", url: "/inventory/stocks" },
+        { title: "Inventory List", url: "/inventory/list/medicine" },
+        { title: "Inventory Stocks", url: "/inventory-stocks/list/stocks/medicine" }
+
       ],
     }] : []),
     ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/health-appointments" }] : []),

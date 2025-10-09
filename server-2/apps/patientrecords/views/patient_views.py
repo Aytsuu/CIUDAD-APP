@@ -565,6 +565,74 @@ def get_patient_by_resident_id(request, rp_id):
             {"detail": f"An error occurred: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@api_view(['POST'])
+def check_or_create_patient(request):
+    """
+    Check if a patient exists for the given rp_id.
+    If not, automatically create one.
+    Returns the patient data in both cases.
+    """
+    rp_id = request.data.get('rp_id')
+    
+    if not rp_id:
+        return Response(
+            {'error': 'rp_id is required'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Check if resident profile exists
+        try:
+            resident_profile = ResidentProfile.objects.get(rp_id=rp_id)
+        except ResidentProfile.DoesNotExist:
+            return Response(
+                {'error': f'Resident profile with rp_id {rp_id} does not exist'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if patient already exists for this resident
+        existing_patient = Patient.objects.filter(
+            rp_id=rp_id, 
+            pat_status='Active'
+        ).select_related('rp_id__per').first()
+        
+        if existing_patient:
+            # Patient exists, return it
+            serializer = PatientSerializer(existing_patient)
+            return Response({
+                'exists': True,
+                'created': False,
+                'patient': serializer.data,
+                'message': 'Patient record already exists'
+            }, status=status.HTTP_200_OK)
+        
+        # Patient doesn't exist, create new one
+        patient_data = {
+            'pat_type': 'Resident',
+            'rp_id': resident_profile,
+            'pat_status': 'Active'
+        }
+        
+        new_patient = Patient.objects.create(**patient_data)
+        
+        # Fetch the created patient with relationships
+        created_patient = Patient.objects.select_related('rp_id__per').get(pat_id=new_patient.pat_id)
+        serializer = PatientSerializer(created_patient)
+        
+        return Response({
+            'exists': False,
+            'created': True,
+            'patient': serializer.data,
+            'message': 'Patient record created successfully'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        print(f"Error in check_or_create_patient: {str(e)}")
+        return Response(
+            {'error': f'Failed to process request: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
         
 @api_view(['GET'])
 def get_appointments_by_resident_id(request, rp_id):

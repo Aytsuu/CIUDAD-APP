@@ -625,7 +625,6 @@ const handleSaveNotes = (data: VitalSignType) => {
             vaccines={vaccines}
             vaccineColumns={vaccineColumns}
           />
-         // In your Immunization component, update the NotesDialog section:
 <NotesDialog
   isOpen={isNotesDialogOpen}
   onClose={() => {

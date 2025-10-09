@@ -38,6 +38,11 @@ class ReportsCount(APIView):
                 mode='app',
                 items__status='pending'
             ).distinct().count()
+            
+            pending_appointments_count = MedConsultAppointment.objects.filter(status='pending').count()
+            confirmed_appointments_count = MedConsultAppointment.objects.filter(status='confirmed').count()
+            total_appointments_count = pending_appointments_count + confirmed_appointments_count
+            total_medicine_requests =  medrequest_count + apprequest_count
         
             # Total count
             antigen_count =  vaccine_count + immunization_count
@@ -65,7 +70,11 @@ class ReportsCount(APIView):
                     'family_planning_count': family_planning_count,
                     'animal_bites_count': animabites_count,
                     'medrequest_count': medrequest_count,
-                    'apprequest_count': apprequest_count
+                    'apprequest_count': apprequest_count,
+                    'total_medicine_requests': total_medicine_requests,
+                    'pending_appointments_count': pending_appointments_count,
+                    'confirmed_appointments_count': confirmed_appointments_count,
+                    'total_appointments_count': total_appointments_count,
                     
                     
                 }

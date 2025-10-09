@@ -10,8 +10,6 @@ import { usePatientPostpartumCompleteRecord } from "../../../queries/maternalFet
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-// Static form configuration removed - now using dynamic data from API
-
 // input line component
 export const InputLine = ({
   className,

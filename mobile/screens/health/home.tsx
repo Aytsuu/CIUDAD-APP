@@ -68,6 +68,9 @@ const Homepage = () => {
     { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
     { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
     { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
+    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
+    // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
+    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
     { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
     { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
   ];

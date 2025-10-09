@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Search, Loader2, Printer } from "lucide-react";
-import { ExportDropdown } from "../../firstaid-report/export-dropdown";
+import { ExportDropdown } from "../../export/export-dropdown";
 
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { toast } from "sonner";

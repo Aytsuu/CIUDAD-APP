@@ -74,7 +74,16 @@ export function FirstAidDistributionSidebar() {
                 const percentage = ((item.count / totalUses) * 100).toFixed(1);
 
                 return (
-                  <Link to="/inventory/stocks">
+                  <Link to="/reports/monthly-firstaid/records"
+                  state={{
+                    // Pass the same state structure as your monthly records
+                    itemName: item.name,
+                    itemCount: item.count,
+                    month: initialMonth,
+                    monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy"),
+                    // You can add any other relevant data here
+                  }}
+                  >
                     <div key={item.name} className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: color }}>
@@ -82,7 +91,7 @@ export function FirstAidDistributionSidebar() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.count} total</p>
+                          <p className="text-xs text-muted-foreground">{item.count} reords</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

@@ -1,14 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { getConsultationHistory, getconfirmedAppointments, getpendingAppointments, getMedicalRecord, getPreviousBMI, getMedConPHHistory, getFamHistory } from "../restful-api/get";
 
-export const useConsultationHistory = (patientId?: string, page?: number, pageSize?: number, searchQuery?: string) => {
+export const useConsultationHistory = ( patientId?: string, page?: number, 
+  pageSize?: number, 
+  searchQuery?: string,
+  currentConsultationId?: number
+) => {
   return useQuery<any>({
-    queryKey: ["consultationHistory", patientId, page, pageSize, searchQuery],
-    queryFn: () => getConsultationHistory(patientId, page, pageSize, searchQuery),
+    queryKey: ["consultationHistory", patientId, page, pageSize, searchQuery, currentConsultationId],
+    queryFn: () => getConsultationHistory(patientId, page, pageSize, searchQuery, currentConsultationId),
     enabled: !!patientId
   });
 };
-
 export const useMedicalRecord = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string }) => {
   return useQuery({
     queryKey: ["MedicalRecord", params],

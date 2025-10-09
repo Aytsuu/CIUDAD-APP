@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F, Prefetch
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth,Coalesce
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
 from apps.patientrecords.models import VitalSigns
@@ -45,7 +45,13 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        # Base queryset with annotations for vaccination count
+        # Subquery to get the latest vaccination date for each patient
+        latest_vaccination_subquery = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=OuterRef('pat_id'),
+            vachist_status__in=['completed', 'partially vaccinated']
+        ).order_by('-date_administered').values('date_administered')[:1]
+
+        # Base queryset with annotations for vaccination count and latest date
         queryset = Patient.objects.annotate(
             vaccination_count=Count(
                 'patient_records__vaccination_records__vaccination_histories',
@@ -53,7 +59,8 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
                     patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated']
                 ),
                 distinct=True
-            )
+            ),
+            latest_vaccination_date=Subquery(latest_vaccination_subquery)
         ).filter(
             Q(patient_records__patrec_type='Vaccination Record'),
             Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
@@ -61,11 +68,12 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
             'rp_id__per',         
             'trans_id',             
             'trans_id__tradd_id'   
-       
-        ).distinct().order_by('-vaccination_count')
+        ).distinct()
+
+        # Default ordering by latest vaccination date (most recent first)
+        queryset = queryset.order_by('-latest_vaccination_date', '-vaccination_count')
         
         # Track if any filter is applied
-       
         search_query = self.request.query_params.get('search', '').strip()
         if search_query and len(search_query) >= 2:
             queryset = apply_patient_search_filter(queryset, search_query)
@@ -77,19 +85,6 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         
         return queryset
     
-    
-   
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
 # Fixed version of your TobeAdministeredVaccinationView
 class TobeAdministeredVaccinationView(generics.ListAPIView):
     serializer_class = VaccinationHistorySerializer
@@ -1077,6 +1072,7 @@ class VaccinationSubmissionView(APIView):
                 vital_temp=form_data.get('temp', ''),
                 vital_o2=form_data.get('o2', ''),
                 vital_pulse=form_data.get('pr', ''),
+                vital_RR=form_data.get('vital_RR', ''),
                 staff_id=staff_id,
                 patrec=patient_record
             )
@@ -1137,6 +1133,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=patient_record
                 )
@@ -1202,6 +1199,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=old_vaccination_record.patrec_id
                 )
@@ -1257,6 +1255,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=patient_record
                 )
@@ -1324,6 +1323,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=old_vaccination_record.patrec_id
                 )
@@ -1545,3 +1545,467 @@ class VaccinationTotalCountAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+            
+class MaternalVaccinationSubmissionView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        try:
+            data = request.data
+            
+            # Extract data from request - fixed structure
+            form_data = data.get('form_data', {})
+            signature = data.get('signature')
+            vacStck_id = data.get('vacStck_id')
+            vac_id = data.get('vac_id')
+            vac_name = data.get('vac_name')
+            expiry_date = data.get('expiry_date')
+            follow_up_data = data.get('follow_up_data', {})
+            vaccination_history = data.get('vaccination_history', [])
+            assigned_to_id=form_data.get("selectedStaffId")  # This can be None
+            print("staff",form_data.get("staff_id"))
+            print("form",form_data)
+            
+            # Get staff_id from request user
+            staff_id = form_data.get("staff_id") or None
+            if not staff_id:
+                return Response(
+                    {'error': 'Staff ID not found'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            assigned_to_instance = None
+            if assigned_to_id:
+                try:
+                    assigned_to_instance = Staff.objects.get(staff_id=assigned_to_id)
+                except Staff.DoesNotExist:
+                    return Response(
+                        {'error': 'Assigned staff not found'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
+            # Get vaccine stock
+            try:
+                vaccine_stock = VaccineStock.objects.select_related('vac_id').get(vacStck_id=vacStck_id)
+            except VaccineStock.DoesNotExist:
+                return Response(
+                    {'error': 'Vaccine stock not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            vac_type = vaccine_stock.vac_id.vac_type_choices
+            
+            # Update vaccine stock quantity
+            if vaccine_stock.vacStck_qty_avail < 1:
+                return Response(
+                    {'error': 'Insufficient vaccine stock available'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            vaccine_stock.vacStck_qty_avail -= 1
+            vaccine_stock.save()
+            
+            # Create antigen transaction with appropriate unit
+            if vaccine_stock.solvent == 'diluent':
+                antt_qty = "1 container"
+            else:
+                antt_qty = "1 dose"
+            
+            AntigenTransaction.objects.create(
+                antt_qty=antt_qty,
+                antt_action="Vaccination administered",
+                vacStck_id=vaccine_stock,
+                staff_id=staff_id
+            )
+            
+            # Update inventory timestamp
+            if vaccine_stock.inv_id:
+                inventory = vaccine_stock.inv_id
+                inventory.updated_at = timezone.now()
+                inventory.save()
+            
+            # Determine status - removed assignment_option since it's not in frontend
+            status_val = "completed"  # Default to completed since no assignment option
+            
+            # Get patient ID from request or data - you need to determine how this is passed
+            pat_id = form_data.get("pat_id")  # You need to ensure this is passed from frontend
+            
+            if not pat_id:
+                return Response(
+                    {'error': 'Patient ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Process based on vaccine type
+            if vac_type == "routine":
+                result = self.process_routine_vaccination(
+                    data, form_data, signature, pat_id,
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,assigned_to_instance
+                )
+            elif vac_type == "primary":
+                result = self.process_primary_vaccination(
+                    data, form_data, signature, pat_id,
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
+                    vaccination_history,assigned_to_instance
+                )
+            elif vac_type == "conditional":
+                result = self.process_conditional_vaccination(
+                    data, form_data, signature, pat_id,
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
+                    vaccination_history,assigned_to_instance
+                )
+            else:
+                return Response(
+                    {'error': f'Unknown vaccine type: {vac_type}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            return Response(result, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def process_routine_vaccination(self, data, form_data, signature, pat_id, 
+                                  vaccine_stock, status_val, follow_up_data, 
+                                  vac_name, staff_id,assigned_to_instance):
+    
+        # Check if there's an existing vaccination record for this patient and vaccine
+        existing_vacrec = None
+        try:
+            # First find patient records for this patient
+            patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
+            
+            # Look for a vaccination record that has history with the same vaccine
+            for patrec in patient_records:
+                try:
+                    vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
+                    # Check if this vacrec has any history with the same vaccine
+                    if VaccinationHistory.objects.filter(
+                        vacrec=vacrec, 
+                        vacStck_id__vac_id=vaccine_stock.vac_id,
+                        
+                    ).exists():
+                        existing_vacrec = vacrec
+                        existing_patrec = patrec
+                        break
+                except VaccinationRecord.DoesNotExist:
+                    continue
+                    
+        except (PatientRecord.DoesNotExist, VaccinationRecord.DoesNotExist):
+            existing_vacrec = None
+        
+        # Create or use existing patient record
+        if existing_vacrec:
+            patient_record = existing_patrec
+            vaccination_record = existing_vacrec
+        else:
+            # Create new patient record if no existing record found
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            # Create new vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=int(form_data.get('vacrec_totaldose', 1))
+            )
+        
+        # Create vital signs - always create if data is available
+        vital = None
+        if form_data:  # Check if form_data exists
+            vital = VitalSigns.objects.create(
+                vital_bp_systolic=form_data.get('bpsystolic', ''),
+                vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                vital_temp=form_data.get('temp', ''),
+                vital_o2=form_data.get('o2', ''),
+                vital_pulse=form_data.get('pr', ''),
+                vital_RR=form_data.get('vital_RR', ''),
+                staff_id=staff_id,
+                patrec=patient_record
+            )
+        
+        # Create follow-up visit if needed
+        followv = None
+        if follow_up_data:
+            followv = FollowUpVisit.objects.create(
+                followv_date=follow_up_data.get('followv_date'),
+                followv_status='pending',
+                followv_description=follow_up_data.get('followv_description') or 
+                                f"Follow-up visit for {vac_name}",
+                patrec=patient_record
+            )
+        
+        # Create vaccination history - convert to integer
+        vachist = VaccinationHistory.objects.create(
+            vacrec=vaccination_record,
+            vacStck_id=vaccine_stock,  # Removed assigned_to field
+            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
+            vachist_status=status_val,
+            staff_id=staff_id,
+            vital=vital,
+            followv=followv,
+            signature=signature,
+            date_administered=timezone.now().date(),
+            assigned_to= assigned_to_instance
+        )
+        
+        return {
+            'patrec_id': patient_record.patrec_id,
+            'vacrec_id': vaccination_record.vacrec_id,
+            'vachist_id': vachist.vachist_id,
+            'vital_id': vital.vital_id if vital else None,
+            'followv_id': followv.followv_id if followv else None,
+            'is_new_record': not existing_vacrec
+        }
+
+    def process_primary_vaccination(self, data, form_data, signature, pat_id, 
+                                   vaccine_stock, status_val, follow_up_data, 
+                                   vac_name, staff_id, vaccination_history,assigned_to_instance):
+        # Convert to integers for comparison
+        dose_no = int(form_data.get('vachist_doseNo', 1))
+        total_dose = int(form_data.get('vacrec_totaldose', 0))
+        
+        if dose_no == 1:
+            # First dose - create new records
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=patient_record
+                )
+            
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=total_dose
+            )
+            
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=patient_record
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
+            )
+            
+            return {
+                'patrec_id': patient_record.patrec_id,
+                'vacrec_id': vaccination_record.vacrec_id,
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }
+            
+        else:
+            # Subsequent doses - use existing records
+            if not vaccination_history:
+                raise Exception("Previous vaccination history not found for subsequent dose")
+            
+            # Get the latest vaccination history record
+            latest_history = vaccination_history[0] if isinstance(vaccination_history, list) and vaccination_history else vaccination_history
+            
+            old_vacrec_id = latest_history.get('vacrec_id') or latest_history.get('vacrec')
+            if not old_vacrec_id:
+                raise Exception("Previous vaccination record ID not found")
+            
+            try:
+                old_vaccination_record = VaccinationRecord.objects.get(vacrec_id=old_vacrec_id)
+            except VaccinationRecord.DoesNotExist:
+                raise Exception("Previous vaccination record not found")
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            followv = None
+            # FIXED: Use integer comparison
+            if dose_no < total_dose and follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=old_vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
+            )
+            
+            return {
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }
+
+    def process_conditional_vaccination(self, data, form_data, signature, pat_id, 
+                                      vaccine_stock, status_val, follow_up_data, 
+                                      vac_name, staff_id, vaccination_history,assigned_to_instance):
+        # Convert to integer
+        dose_no = int(form_data.get('vachist_doseNo', 1))
+        
+        if dose_no == 1:
+            # First dose
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=patient_record
+                )
+            
+            # Convert to integer for the vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=int(form_data.get('vacrec_totaldose', 0))
+            )
+            
+            # Create follow-up visit if needed for first dose
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=patient_record
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to=assigned_to_instance
+            )
+            
+            return {
+                'patrec_id': patient_record.patrec_id,
+                'vacrec_id': vaccination_record.vacrec_id,
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }
+            
+        else:
+            # Subsequent doses
+            if not vaccination_history:
+                raise Exception("Previous vaccination history not found for subsequent dose")
+            
+            # Get the latest vaccination history record
+            latest_history = vaccination_history[0] if isinstance(vaccination_history, list) and vaccination_history else vaccination_history
+            
+            old_vacrec_id = latest_history.get('vacrec_id') or latest_history.get('vacrec')
+            if not old_vacrec_id:
+                raise Exception("Previous vaccination record ID not found")
+            
+            try:
+                old_vaccination_record = VaccinationRecord.objects.get(vacrec_id=old_vacrec_id)
+            except VaccinationRecord.DoesNotExist:
+                raise Exception("Previous vaccination record not found")
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=old_vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
+            )
+            
+            return {
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }

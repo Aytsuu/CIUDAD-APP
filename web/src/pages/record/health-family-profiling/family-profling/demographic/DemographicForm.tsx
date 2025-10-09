@@ -51,6 +51,7 @@ export default function DemographicForm({
 
   // Fetch personal info of household head
   const { data: personalInfo, isLoading: isLoadingPersonal } = usePersonalInfo(householdHeadId);
+  const { data: personalInfo, isLoading: isLoadingPersonal } = usePersonalInfo(householdHeadId);
 
   // Populate form fields when personal info is fetched
   React.useEffect(() => {

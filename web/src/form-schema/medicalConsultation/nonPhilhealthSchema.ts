@@ -114,25 +114,48 @@ export const nonPhilHealthSchema = z.object({
       .refine(val => val % 1 === 0, "Must be whole number")
   ),
   vital_RR: respiratoryRateSchema,
+  vital_o2: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number()
+      .min(50, { message: "Oxygen saturation cannot be <50%" })
+      .max(100, { message: "Oxygen saturation cannot be >100%" })
+      .refine(val => val % 1 === 0, "Must be whole number")
+  ),
   height: heightSchema,
   weight: weightSchema,
   vital_temp: temperatureSchema,
-  medrec_chief_complaint: z.string().default(""),
+  medrec_chief_complaint: z.string().min(1, "Chief complaint is required"),
   
   // PhilHealth membership status - changed to boolean for radio button
   
   // Additional fields that show when PhilHealth member is selected
-  
-  selectedDoctorStaffId: z.string().optional().default(""),
+  obs_id: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
+  selectedDoctorStaffId: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
   is_phrecord: z.boolean().optional().default(false),
   phil_pin:z.string().optional(),
   iswith_atc: z.boolean().optional().default(false),
   dependent_or_member: z.string().optional().default(""),
-  lmp: z.string().optional().default(""),
-  obscore_g: z.string().optional().default(""),
-  obscore_p: z.string().optional().default(""),
-  tpal: z.string().optional().default(""),
-  tt_status: z.string().optional().default(""),
+  civil_status: z.string().optional().default(""),
+
+  obs_lmp: z.string().optional().default(""),
+  // obscore_g: z.string().optional().default(""),
+  // obscore_p: z.string().optional().default(""),
+  // tpal: z.string().optional().default(""),
+  tts_id: z.string().optional().default(""),
+  tts_status: z.string().optional().default(""),
+  tts_date_given: z.string().optional().default(""),
+  obs_ch_born_alive: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_living_ch: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_abortions: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_still_birth: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_lg_babies: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
+  obs_lg_babies_str: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
+  obs_gravida: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_para: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_fullterm:  z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+  obs_preterm: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
+
+
   ogtt_result: z.string().optional().default(""),
   contraceptive_used: z.string().optional().default(""),
   smk_sticks_per_day: z.string().optional().default(""),

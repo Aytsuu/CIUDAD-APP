@@ -51,13 +51,8 @@ export default function InvMedicalConRecords() {
     }
   }, [patientData]);
 
-  // Use the consultation history hook with search
   const { data: medicalRecordsResponse, isLoading: isMedicalRecordsLoading, isError: isMedicalRecordsError } = useConsultationHistory(patientData?.pat_id, currentPage, pageSize, searchQuery);
-  
-  // Use medical history hook with search
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError } = usePrenatalPatientMedHistory(patientData?.pat_id, medHistorySearch);
-
-  // Use Family History hook with search
   const { data: famHistoryData, isLoading: isFamHistoryLoading, isError: isFamHistoryError } = useFamHistory(patientData?.pat_id || "", famHistorySearch);
 
   const medicalRecords = useMemo(() => {
@@ -67,13 +62,11 @@ export default function InvMedicalConRecords() {
   const totalCount = medicalRecordsResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
-  // Handle consultation search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
   };
 
-  // Handle medical history search
   const handleMedHistorySearchChange = useCallback((value: string) => {
     setMedHistorySearch(value);
   }, []);

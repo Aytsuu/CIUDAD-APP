@@ -79,6 +79,7 @@ export default function PendingDisplayMedicalConsultation({
 
       <PatientSummarySection recordsToDisplay={fullHistoryData.length > 0 ? [fullHistoryData.find((record) => record.chhist_id === chhistId) || fullHistoryData[0]] : []} fullHistoryData={fullHistoryData} chhistId={chhistId} />
 
+
       {/* Navigation Buttons */}
       <div className="flex justify-end mt-6 sm:mt-8">
         <Button onClick={onNext} className={`w-[100px] flex items-center justify-center gap-2 ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`} disabled={isLoading}>
