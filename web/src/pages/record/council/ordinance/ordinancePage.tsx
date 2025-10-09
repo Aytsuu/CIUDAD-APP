@@ -9,6 +9,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import CardLayout from '@/components/ui/card/card-layout';
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { Ordinance, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders, updateOrdinance } from './restful-api/OrdinanceGetAPI';
 import { useOrdinancesPaginated } from './queries/OrdinanceFetchQueries';
@@ -180,9 +181,11 @@ function OrdinancePage() {
         // Set loading state to false
         setIsCreatingOrdinance(false);
         
-        // Show success message based on whether it was an amendment
-        if (selectedExistingOrdinance && selectedExistingOrdinance !== "new") {
+        // Show success message based on creation mode
+        if (creationMode === 'amend') {
             showSuccessToast('Amendment created successfully! It will appear in the same folder as the base ordinance.');
+        } else if (creationMode === 'repeal') {
+            showSuccessToast('Ordinance repealed successfully! The original ordinance has been marked as repealed.');
         } else {
             showSuccessToast('Ordinance created successfully!');
         }
@@ -199,7 +202,7 @@ function OrdinancePage() {
         setIsCreatingOrdinance(false);
     };
     
-    const form = useForm<z.infer<typeof ordinanceUploadFormSchema>>({
+    const form = useForm<any>({
         resolver: zodResolver(ordinanceUploadFormSchema),
         defaultValues: {
             ordinanceTitle: "",        
@@ -207,7 +210,8 @@ function OrdinancePage() {
             ordinanceCategory: "",
             ordinanceDetails: "",
             ordinanceFile: "",
-            ord_repealed: false
+            ord_repealed: false,
+            ordTag: ""
         },
     });
 
@@ -339,21 +343,31 @@ function OrdinancePage() {
     //     }
     // };
 
-    const handleUploadSubmit = (values: z.infer<typeof ordinanceUploadFormSchema>) => {
+    const handleUploadSubmit = (values: any) => {
         console.log("Form values:", values);
         console.log('Media Files:', mediaFiles);
         console.log('Selected existing ordinance:', selectedExistingOrdinance);
+        console.log('Creation mode:', creationMode);
+        console.log('ordTag value:', values.ordTag);
         
         // Set loading state to true
         setIsCreatingOrdinance(true);
         
+        // Manual validation for ordTag based on creation mode
+        // Check both form value and state value for validation
+        const selectedOrdinance = values.ordTag || selectedExistingOrdinance;
+        console.log('Selected ordinance for validation:', selectedOrdinance);
+        
+        if ((creationMode === 'amend' || creationMode === 'repeal') && (!selectedOrdinance || selectedOrdinance === 'new' || selectedOrdinance === '')) {
+            const errorMessage = creationMode === 'amend' ? 'Please select an ordinance to amend.' : 'Please select an ordinance to repeal.';
+            showErrorToast(errorMessage);
+            (form as any).setError('ordTag', { type: 'manual', message: errorMessage });
+            setIsCreatingOrdinance(false);
+            return;
+        }
+        
         // Based on creation mode
         if (creationMode === 'amend') {
-            if (!selectedExistingOrdinance || selectedExistingOrdinance === 'new') {
-                showErrorToast('Please select an ordinance to amend.');
-                setIsCreatingOrdinance(false);
-                return;
-            }
             // If new ordinance marked repealed, block amendment creation
             if (values.ord_repealed) {
                 showErrorToast('A repealed ordinance cannot be created as an amendment.');
@@ -362,7 +376,7 @@ function OrdinancePage() {
             }
 
             // Also block if selected parent is repealed (client-side check based on loaded data)
-            const parent = ordinanceItems.find(o => o.ord_num === selectedExistingOrdinance);
+            const parent = ordinanceItems.find(o => o.ord_num === selectedOrdinance);
             if (parent && parent.ord_repealed) {
                 showErrorToast('Cannot amend a repealed ordinance.');
                 setIsCreatingOrdinance(false);
@@ -370,14 +384,14 @@ function OrdinancePage() {
             }
             // Count existing amendments for this parent
             const existingAmendments = ordinanceItems.filter(ord => 
-                ord.ord_parent === selectedExistingOrdinance || 
-                ord.ord_num === selectedExistingOrdinance
+                ord.ord_parent === selectedOrdinance || 
+                ord.ord_num === selectedOrdinance
             ).length;
             
             const amendmentData = {
                 ...values,
                 ord_repealed: false,
-                ord_parent: selectedExistingOrdinance,
+                ord_parent: selectedOrdinance,
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
             };
@@ -385,16 +399,11 @@ function OrdinancePage() {
             console.log("Sending to addOrdinance:", { values: amendmentData, mediaFiles });
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
         } else if (creationMode === 'repeal') {
-            if (!selectedExistingOrdinance || selectedExistingOrdinance === 'new') {
-                showErrorToast('Please select an ordinance to repeal.');
-                setIsCreatingOrdinance(false);
-                return;
-            }
             const repealData = {
                 ...values,
                 ord_repealed: true,
                 // Link to the ordinance being repealed (optional business rule)
-                ord_parent: selectedExistingOrdinance,
+                ord_parent: selectedOrdinance,
                 ord_is_ammend: false,
             };
             console.log("Creating repeal with data:", repealData);
@@ -683,56 +692,48 @@ function OrdinancePage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
                         {filteredItems.map((folder) => (
-                            <Card key={folder.id} className="hover:shadow-lg transition-shadow duration-300 border border-gray-200">
-                                {/* Folder Header */}
-                                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 p-3">
+                            <CardLayout
+                                key={folder.id}
+                                title={
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            {folder.totalOrdinances > 1 && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleFolderView(folder)}
-                                                    className="h-7 px-2 text-xs hover:bg-blue-50"
-                                                >
-                                                    <Eye className="h-3 w-3 mr-1" />
-                                                    View All
-                                                </Button>
-                                            )}
-                                            <div className="flex items-center gap-2">
-                                                <Folder className="h-3 w-3 text-gray-600" />
-                                                <span className="text-xs font-medium text-gray-700">
-                                                    Ordinance Folder
-                                                </span>
-                                                <Badge 
-                                                    variant="secondary" 
-                                                    className={`text-xs px-2 py-0.5 ${getFolderStatus(folder).bgColor} ${getFolderStatus(folder).color}`}
-                                                >
-                                                    {getFolderStatus(folder).text}
-                                                </Badge>
+                                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
+                                                <FileText className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 text-lg">{folder.baseOrdinance.ord_title}</h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-xs text-gray-500">ORD: {folder.baseOrdinance.ord_num}</span>
+                                                    {folder.baseOrdinance.ord_repealed && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            Repealed
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
+                                        {folder.totalOrdinances > 1 && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleFolderView(folder)}
+                                                className="h-7 px-2 text-xs hover:bg-blue-50"
+                                            >
+                                                <Eye className="h-3 w-3 mr-1" />
+                                                View All
+                                            </Button>
+                                        )}
                                     </div>
-                                </div>
-
-                                {/* AI Analysis Summary removed - now shown in analyze button popup */}
-
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base font-bold text-black mb-2">
-                                        {folder.baseOrdinance.ord_title}
-                                    </CardTitle>
+                                }
+                                description={
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                <span className="font-semibold">ORD:</span> {folder.baseOrdinance.ord_num}
-                                            </span>
-                                            {folder.baseOrdinance.ord_repealed && (
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                    Repealed
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
+                                            <Badge 
+                                                variant="secondary" 
+                                                className={`text-xs px-2 py-0.5 ${getFolderStatus(folder).bgColor} ${getFolderStatus(folder).color}`}
+                                            >
+                                                {getFolderStatus(folder).text}
+                                            </Badge>
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                 folder.baseOrdinance.ord_category === 'Council' ? 'bg-purple-100 text-purple-800' :
                                                 folder.baseOrdinance.ord_category === 'Waste Committee' ? 'bg-green-100 text-green-800' :
@@ -744,9 +745,10 @@ function OrdinancePage() {
                                             </span>
                                         </div>
                                     </div>
-                                </CardHeader>
-                                <CardContent className="pt-0 pb-4">
-                                    <div className="space-y-3">
+                                }
+                                content={
+                                    <div className="space-y-4">
+                                        {/* Ordinance Details */}
                                         <div className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <FileText size={14} className="text-blue-500" />
@@ -763,7 +765,8 @@ function OrdinancePage() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-end gap-2 pt-3">
+                                        {/* Action Buttons */}
+                                        <div className="flex items-center justify-end gap-2">
                                             <TooltipLayout
                                                 trigger={
                                                     <Button
@@ -790,7 +793,6 @@ function OrdinancePage() {
                                                 content={folder.baseOrdinance.aiAnalysisResult ? 'View AI Analysis Results' : 'Run AI Analysis'}
                                             />
 
-
                                             <TooltipLayout
                                                 trigger={
                                                     <Button
@@ -810,28 +812,13 @@ function OrdinancePage() {
                                                 }
                                                 content="View File"
                                             />
-
-                                            
-                                            {/* <TooltipLayout
-                                                trigger={
-                                                    <Button
-                                                        onClick={() => handleDeleteItem(folder.baseOrdinance)}
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-300"
-                                                    >
-                                                        <Trash size={14} className="text-red-600" />
-                                                    </Button>
-                                                }
-                                                content="Delete Ordinance"
-                                            /> */}
                                         </div>
                                     </div>
-                                </CardContent>
-
-
-
-                            </Card>
+                                }
+                                cardClassName="border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow duration-200"
+                                headerClassName="pb-3"
+                                contentClassName="pt-0"
+                            />
                         ))}
                     </div>
                 )}
@@ -971,18 +958,32 @@ function OrdinancePage() {
                                     </div>
 
                                     {(creationMode === 'amend' || creationMode === 'repeal') && ordinanceOptions.length > 0 && (
-                                        <div className="w-full">
-                                            <SelectLayout
-                                                className="w-full"
-                                                label={creationMode === 'amend' ? 'Select ordinance to amend' : 'Select ordinance to repeal'}
-                                                placeholder={creationMode === 'amend' ? 'Choose ordinance to amend' : 'Choose ordinance to repeal'}
-                                                options={ordinanceOptions}
-                                                value={selectedExistingOrdinance === 'new' ? '' : selectedExistingOrdinance}
-                                                onChange={(value) => {
-                                                    setSelectedExistingOrdinance(value || 'new');
-                                                }}
-                                            />
-                                        </div>
+                                        <FormField
+                                            control={form.control}
+                                            name="ordTag"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <SelectLayout
+                                                            className="w-full"
+                                                            label={creationMode === 'amend' ? 'Select ordinance to amend' : 'Select ordinance to repeal'}
+                                                            placeholder={creationMode === 'amend' ? 'Choose ordinance to amend' : 'Choose ordinance to repeal'}
+                                                            options={ordinanceOptions}
+                                                            value={field.value || ''}
+                                                            onChange={(value) => {
+                                                                field.onChange(value);
+                                                                setSelectedExistingOrdinance(value || 'new');
+                                                                // Clear any existing error when a value is selected
+                                                                if (value && value !== 'new' && value !== '') {
+                                                                    (form as any).clearErrors('ordTag');
+                                                                }
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     )}
                                     {(creationMode === 'amend' || creationMode === 'repeal') && ordinanceOptions.length === 0 && (
                                         <div className="text-xs text-red-600">
