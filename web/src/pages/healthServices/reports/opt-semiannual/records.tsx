@@ -457,8 +457,10 @@ export default function SemiAnnualOPTDetails() {
                           </td>
                         </tr>
                         <tr key={`${index}-remarks`} className="hover:bg-gray-50">
-                          <td className="border border-black p-1 text-left">Remarks:</td>
-                          <td className="border border-black p-1 text-left bg-green-25">Remarks:</td>
+                          <td className="border border-black p-1 text-left">Remarks:
+                          <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.remarks || ""}</span>
+
+                          </td>
                         </tr>
                       </>
                     ))}
