@@ -322,7 +322,7 @@ const IncomeTracking = () => {
               <Search className="absolute left-3 top-3 text-gray-500" size={17} />
               <TextInput
                 placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
                 value={searchQuery}
                 onChangeText={handleSearchChange}
               />
@@ -396,7 +396,7 @@ const IncomeTracking = () => {
               <View className="h-64 justify-center items-center">
                 <ActivityIndicator size="large" color="#2a3a61" />
                 <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating entry..." : 
+                  {isArchivePending ? "Updating entry records..." : 
                    isDeletePending ? "Deleting entry..." : 
                    "Loading..."}
                 </Text>
