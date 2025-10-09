@@ -90,7 +90,6 @@ interface PregnancyDataDetails {
   pat_id: string
   prenatal_form?: {
     pf_id: string
-    pf_lmp: string
     pf_edc: string
     created_at: string
   }[]

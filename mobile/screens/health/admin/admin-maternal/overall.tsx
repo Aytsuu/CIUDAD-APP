@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import PageLayout from "@/screens/_PageLayout";
 import { AgeCalculation } from "@/helpers/ageCalculator";
@@ -261,36 +262,16 @@ const PaginationFooter = React.memo<{
 
 export default function OverallMaternalRecordsScreen() {
   const [searchInput, setSearchInput] = useState(""); 
-  const [searchQuery, setSearchQuery] = useState(""); 
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
-  const pageSize = 20; // Increased page size for better performance
-
-  // Use ref for search debouncing to prevent unnecessary re-renders
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const pageSize = 20; 
+  const debouncedSearchTerm = useDebounce(searchInput, 300);
 
   // Optimized search debouncing with useCallback
   const handleSearchChange = useCallback((text: string) => {
     setSearchInput(text);
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      setSearchQuery(text);
-      setPage(1);
-    }, 300); // Slightly increased debounce time
-  }, []);
-
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
+    setPage(1);
   }, []);
 
   const getStatusForAPI = useCallback((tab: TabType) => {
@@ -301,11 +282,16 @@ export default function OverallMaternalRecordsScreen() {
   const queryParams = useMemo(() => ({
     page,
     page_size: pageSize,
-    search: searchQuery || undefined,
+    search: debouncedSearchTerm || undefined,
     status: getStatusForAPI(activeTab),
-  }), [page, pageSize, searchQuery, activeTab, getStatusForAPI]);
+  }), [page, pageSize, debouncedSearchTerm, activeTab, getStatusForAPI]);
 
-  const { data: maternalData, isLoading, isError, refetch, isFetching } = useMaternalRecords(queryParams);
+  const { data: maternalData, isLoading, isError, refetch, isFetching } = useMaternalRecords(
+    queryParams.page,
+    queryParams.page_size,
+    queryParams.search || '',
+    queryParams.status || ''
+  );
   const { data: maternalCount } = useMaternalCount();
   
   const maternalRecordss = maternalData?.results || [];
@@ -363,7 +349,7 @@ export default function OverallMaternalRecordsScreen() {
   const keyExtractor = useCallback((item: maternalRecords) => `mat-${item.pat_id}`, []);
 
   // Show loading only on initial load, not when searching or paginating
-  const showInitialLoading = isLoading && !maternalRecordss.length && !searchQuery;
+  const showInitialLoading = isLoading && !maternalRecordss.length && !debouncedSearchTerm;
 
   if (showInitialLoading) {
     return <LoadingState />;
@@ -436,7 +422,7 @@ export default function OverallMaternalRecordsScreen() {
 
         {/* Records List */}
         {maternalRecordss.length === 0 ? (
-          <EmptyState searchQuery={searchQuery} activeTab={activeTab} />
+          <EmptyState searchQuery={debouncedSearchTerm} activeTab={activeTab} />
         ) : (
           <FlatList
             data={maternalRecordss}
