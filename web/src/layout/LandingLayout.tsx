@@ -16,6 +16,7 @@ const NavItemList = [
   { path: "/donation", title: "Donation" },
   { path: "/barangay-council", title: "Barangay Council" },
   { path: "/mobile-app", title: "Mobile App" },
+  { path: "/announcements", title: "Announcement" },
 ];
 
 export default function LandingLayout() {
