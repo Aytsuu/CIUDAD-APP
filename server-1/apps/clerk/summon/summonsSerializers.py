@@ -75,6 +75,7 @@ class SummonCasesSerializer(serializers.ModelSerializer):
             'sc_id', 
             'sc_code',
             'sc_mediation_status', 
+            'sc_conciliation_status',
             'sc_date_marked', 
             'sc_reason', 
             'comp_id', 
@@ -206,7 +207,8 @@ class SummonCaseDetailSerializer(serializers.ModelSerializer):
         fields = [
             'sc_id', 
             'sc_code',
-            'sc_mediation_status', 
+            'sc_mediation_status',
+            'sc_conciliation_status',
             'sc_date_marked', 
             'sc_reason', 
             'comp_id',
