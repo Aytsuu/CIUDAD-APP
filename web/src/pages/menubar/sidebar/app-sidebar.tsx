@@ -358,7 +358,7 @@ export function AppSidebar() {
         { title: "Child Health", url: "/services/childhealthrecords" },
         { title: "Firstaid", url: "/services/firstaid" },
         { title: "Family Planning", url: "/services/familyplanning" },
-        { title: "Maternal", url: "/services/maternalrecords" },
+        { title: "Maternal", url: "/services/maternal" },
         {
           title: "Medical Consultation ",
           url: "/services/medical-consultation",
