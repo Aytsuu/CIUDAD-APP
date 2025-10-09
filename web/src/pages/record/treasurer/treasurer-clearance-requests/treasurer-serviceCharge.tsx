@@ -1,12 +1,11 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, FileInput, ReceiptText, Search } from 'lucide-react';
+import { X, FileInput, Search } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import ReceiptForm from "./treasurer-create-receipt-form";
 import { Button } from "@/components/ui/button/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";

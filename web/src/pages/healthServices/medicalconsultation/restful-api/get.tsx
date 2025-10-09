@@ -86,3 +86,49 @@ export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
     throw error;
   }
 };
+
+
+export const getpendingAppointments = async (page: number, pageSize: number, search: string = "", dateFilter: string = "all"): Promise<any> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("page_size", pageSize.toString());
+    if (search) {
+      params.append("search", search);
+    }
+    if (dateFilter && dateFilter !== "all") {
+      params.append("date_filter", dateFilter);
+    }
+
+    const response = await api2.get("/medical-consultation/pending-medicalcon-appointments/", { params: params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching processing medicine requests:", error);
+    throw error;
+  }
+};
+
+
+
+
+
+export const getconfirmedAppointments = async (page: number, pageSize: number, search: string = "", dateFilter: string = "all"): Promise<any> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("page", page.toString());
+    params.append("page_size", pageSize.toString());
+    if (search) {
+      params.append("search", search);
+    }
+    if (dateFilter && dateFilter !== "all") {
+      params.append("date_filter", dateFilter);
+    }
+
+    const response = await api2.get("/medical-consultation/confirmed-medicalcon-appointments/", { params: params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching processing medicine requests:", error);
+    throw error;
+  }
+};
+

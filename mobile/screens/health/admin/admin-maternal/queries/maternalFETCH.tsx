@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
-import { getMaternalRecords, getMaternalCount, getPregnancyDetails } from "../restful-api/maternalGET";
+import { getMaternalCount, getPatientPostpartumAllRecords,
+	getPatientPostpartumCompleteRecord,
+	getPrenatalRecordComplete
+ } from "../restful-api/maternalGET";
 
-import { MaternalPatientFilters } from "../restful-api/maternalGET";
 
 // for getMaternalRecords
 export const useMaternalRecords = (page: number, pageSize: number, searchcQuery: string, status: string) => {
@@ -43,13 +45,51 @@ export const useMaternalCount = () => {
 }
 
 // for getPregnancyDetails
-export const usePregnancyDetails = (patientId: string, filters: Partial<MaternalPatientFilters> = {}) => {
+export const usePregnancyDetails = (patientId: string, page: number, pageSize: number, status: string, search: string) => {
 	return useQuery({
-		queryKey: ["pregnancyDetails", { patientId, ...filters }],
-		queryFn: () => getPregnancyDetails({ patientId, ...filters }),
+		queryKey: ["pregnancyDetails", { patientId, page, pageSize, status, search }],
+		queryFn: async () => {
+			try {
+				const res = await api2.get(`maternal/pregnancy/${patientId}/details/`, {
+					params: {
+						page,
+						pageSize,
+						status,
+						search,
+					}
+				})
+				return res.data
+			} catch (error) {
+				throw error;
+			}
+		},
 		enabled: !!patientId,
 		staleTime: 30 * 1,
 		refetchInterval: 2000,
 		retry: 2,
 	})
 }
+
+// for getPrenatalRecordComplete
+export const usePrenatalRecordComplete = (patientId: string) => {
+	return useQuery({
+		queryKey: ["prenatalRecordComplete", patientId],
+		queryFn: () => getPrenatalRecordComplete(patientId),
+		enabled: !!patientId,
+		staleTime: 30 * 1,
+		retry: 2
+	})
+}
+
+// for getPatientPostpartumCompleteRecord
+export const usePatientPostpartumCompleteRecord = (pprId: string) => {
+	return useQuery({
+		queryKey: ['postpartumRecordComplete', pprId],
+		queryFn: () => getPatientPostpartumCompleteRecord(pprId),
+		enabled: !!pprId && pprId !== "undefined" && pprId !== "null",
+		staleTime: 30 * 1,
+		retry: 2,
+		refetchInterval: 2000,
+	})
+}
+

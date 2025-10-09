@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAnimalBitePatientDetails } from "./api/get-api";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
+import { Printer, PawPrint, Calendar, MapPin, Stethoscope, ShieldCheck, User, Building, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -178,7 +178,6 @@ const IndividualPatientHistory: React.FC = () => {
     setPrintModalOpen(true);
   };
 
-  const navigate = useNavigate();
   const tableColumns = useMemo<ColumnDef<PatientRecordDetail>[]>(
     () => [
       { accessorKey: "referral_date", header: "Date", cell: ({ row }) => new Date(row.original.referral_date).toLocaleDateString() },

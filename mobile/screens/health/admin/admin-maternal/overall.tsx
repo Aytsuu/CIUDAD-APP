@@ -279,18 +279,12 @@ export default function OverallMaternalRecordsScreen() {
     return tab.charAt(0).toUpperCase() + tab.slice(1);
   }, []);
 
-  const queryParams = useMemo(() => ({
-    page,
-    page_size: pageSize,
-    search: debouncedSearchTerm || undefined,
-    status: getStatusForAPI(activeTab),
-  }), [page, pageSize, debouncedSearchTerm, activeTab, getStatusForAPI]);
 
-  const { data: maternalData, isLoading, isError, refetch, isFetching } = useMaternalRecords(
-    queryParams.page,
-    queryParams.page_size,
-    queryParams.search || '',
-    queryParams.status || ''
+  const { data: maternalData, isLoading, isError, refetch } = useMaternalRecords(
+    page,
+    pageSize,
+    debouncedSearchTerm || '',
+    getStatusForAPI(activeTab) || ''
   );
   const { data: maternalCount } = useMaternalCount();
   

@@ -9,6 +9,7 @@ import AddVaccineStock from "@/pages/healthInventory/inventoryStocks/addstocksMo
 import AddImzSupplyStock from "@/pages/healthInventory/inventoryStocks/addstocksModal/ImmunizationSupplies";
 import MainInventory from "@/pages/healthInventory/inventoryStocks/tables/MainTable";
 import ArchiveMainInventoryStocks from "@/pages/healthServices/archive/Inventory/tables/MainArchiveInventoryStocks";
+import AgeGroup from "@/pages/healthServices/agegroup/AgeGroup";
 
 export const healthinventory = [
   { path: "/inventory/list", element: <MainInventoryList /> },
@@ -24,5 +25,6 @@ export const healthinventory = [
   { path: "/inventory/stocks/add-vaccine", element: <AddVaccineStock /> },
   { path: "/inventory/stocks/add-immunization-supply", element: <AddImzSupplyStock /> },
 
-  { path: "/archiveMainInventoryStocks", element: <ArchiveMainInventoryStocks /> }
+  { path: "/archiveMainInventoryStocks", element: <ArchiveMainInventoryStocks /> },
+  { path: "age-group", element: <AgeGroup /> }
 ];

@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getFPRecordsForPatient } from "@/pages/familyplanning/request-db/GetRequest";
@@ -146,16 +146,7 @@ const IndividualFamPlanningTable: React.FC = () => {
   const location = useLocation();
   const { patientId } = location.state || {};
   const [selectedRecords, setSelectedRecords] = useState<IndividualFPRecordDetail[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date()); // For countdown timer
-
-  // Update time every minute for countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, []);
+  // Removed unused currentTime state and its related logic
 
   const {
     data: fpPatientRecords = [],

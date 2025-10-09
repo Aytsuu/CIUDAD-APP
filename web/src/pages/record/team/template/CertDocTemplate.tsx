@@ -315,7 +315,6 @@ export const CertDocTemplate = ({
               }))}
               onChange={(value: string) => setMonth(value)}
               placeholder={month}
-              withRest={false}
             />
           </div>
         </div>

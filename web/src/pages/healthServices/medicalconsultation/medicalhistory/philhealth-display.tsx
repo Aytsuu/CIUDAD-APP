@@ -7,7 +7,7 @@ import PHIllnessTable from "../medicalhistory/past-medical-history";
 import FamhistTable from "./family-history";
 
 
-export default function PhysicalExamTable({ consultation, patientData, examSections, isPhysicalExamLoading, phHistoryData, isLoading, isError, famHistoryData }: any) {
+export default function PhysicalExamTable({ consultation, patientData, examSections, isPhysicalExamLoading, phHistoryData, famHistoryData }: any) {
   const splitOptionsIntoColumns = (options: any[]) => {
     const midIndex = Math.ceil(options.length / 2);
     const firstColumn = options.slice(0, midIndex);

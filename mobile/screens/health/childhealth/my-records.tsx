@@ -30,9 +30,9 @@ export default function InvChildHealthRecords() {
   const [patId, setPatientId] = useState("");
 
   // Parse the parameters from strings to objects with proper error handling
-  const childrenID = useMemo(() => {
+  const passed_pat_id = useMemo(() => {
     try {
-      const parsedId = typeof params.patId === "string" ? params.patId : "";
+      const parsedId = typeof params.pat_id === "string" ? params.pat_id : "";
       return parsedId;
     } catch (error) {
       console.error("Error parsing record:", error);
@@ -41,32 +41,17 @@ export default function InvChildHealthRecords() {
   }, [params.patId]);
 
   const mode = typeof params.mode === "string" ? params.mode : null;
-  let ChildHealthRecord = null;
 
   // Get patient ID from route params with safe access
   useEffect(() => {
-    console.log(" CHILD ID:", childrenID);
-    console.log(" MODE:", mode);
-    if (mode == "parents") {
-      setPatientId(childrenID || "");
-    } else if (mode == "admin") {
-      if (params && params.ChildHealthRecord) {
-        ChildHealthRecord = JSON.parse(params.ChildHealthRecord as string);
-        if (!ChildHealthRecord?.chrec_id || !ChildHealthRecord?.pat_id || !ChildHealthRecord?.dob) {
-          console.error("Parsed ChildHealthRecord is missing required fields", {
-            chrec_id: ChildHealthRecord?.chrec_id,
-            pat_id: ChildHealthRecord?.pat_id
-          });
-          setPatientId(ChildHealthRecord?.pat_id);
-        }
-      } else {
-        console.error("Params or ChildHealthRecord is missing", { params });
-      }
+    console.log("CHILD ID:", passed_pat_id);
+    console.log("MODE:", mode);
+    if (mode === "admin" || mode === "parents") {
+      setPatientId(passed_pat_id || "");
     } else if (pat_id) {
       setPatientId(pat_id || "");
     }
-  }, [childrenID, mode]);
-  const [childDatafromAdmin] = useState(ChildHealthRecord);
+  }, [passed_pat_id, mode]);
 
   const { data: childData, isLoading: isChildDataLoading, isError: isChildDataError, error: childDataError, refetch: refetchChildData } = useChildData(patId || "");
   const [activeTab, setActiveTab] = useState("status");
@@ -657,7 +642,7 @@ export default function InvChildHealthRecords() {
                     </ScrollView>
 
                     {/* Pagination Controls */}
-                    {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages}  onPageChange={handlePageChange} />}
+                    {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
                   </>
                 )}
               </View>

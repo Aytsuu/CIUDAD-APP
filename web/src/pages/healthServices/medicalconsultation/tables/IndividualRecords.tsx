@@ -1,16 +1,16 @@
 // InvMedicalConRecords.tsx
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ChevronLeft, HeartPulse, Calendar, Search, Users, X, Syringe, AlertCircle } from "lucide-react";
+import { Loader2, ChevronLeft, HeartPulse, Search, Users, Syringe, AlertCircle } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { Patient } from "../../restful-api-patient/type";
-import { useConsultationHistory, useFamHistory } from "../queries/fetchQueries";
+import { useConsultationHistory, useFamHistory } from "../queries/fetch";
 import { usePrenatalPatientMedHistory } from "../../maternal/queries/maternalFetchQueries";
 import { getMedicalConsultationColumns } from "./columns/indiv_col";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";

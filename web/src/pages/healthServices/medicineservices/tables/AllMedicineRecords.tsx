@@ -13,7 +13,7 @@ import { MedicineRecord } from "../types";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
 import { medicineColumns } from "./columns/all-med-col";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+// import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";

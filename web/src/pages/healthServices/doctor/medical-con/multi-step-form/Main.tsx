@@ -4,8 +4,7 @@ import PendingDisplayMedicalConsultation from "./pending-display";
 import SoapForm from "./soap-form";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Link } from "react-router-dom";
-import { History } from "lucide-react";
+
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 interface Medicine {
   minv_id: string;
@@ -143,13 +142,13 @@ export default function MedicalConsultationFlow() {
   return (
     <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
       <>
-        <div className="flex justify-end mb-4">
+        {/* <div className="flex justify-end mb-4">
           <Link to="/services/medical-consultation/records" state={{ params: { patientData, mode: "doctor" } }}>
             <Button className="flex gap-2 items-center text-white">
               <History className="w-4 h-4" /> View History
             </Button>
           </Link>
-        </div>
+        </div> */}
 
         <CardLayout
           cardClassName="px-6"

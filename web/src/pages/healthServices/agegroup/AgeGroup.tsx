@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button/button";
 import { Users, Trash2, Edit2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { deleteAgeroup } from "./restful-api/api";
 import { useAgeGroups } from "./queries/fetch";
 import { AgeGroupForm } from "./AgeGroupForm";
@@ -143,6 +143,10 @@ export default function AgeGroup() {
     });
   };
 
+  const handleCancelDelete = () => {
+    setDeleteConfirmation({ isOpen: false, ageGroup: null, isLoading: false });
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center">
@@ -236,15 +240,17 @@ export default function AgeGroup() {
         )}
       </div>
 
-      <ConfirmationDialog
-        isOpen={deleteConfirmation.isOpen}
+      <ConfirmationModal
+        open={deleteConfirmation.isOpen}
         onOpenChange={(open) => setDeleteConfirmation(prev => ({ ...prev, isOpen: open }))}
         title="Delete Age Group"
         description={`Are you sure you want to delete "${deleteConfirmation.ageGroup?.agegroup_name}"? This action cannot be undone.`}
-        onConfirm={handleDelete}
-        isLoading={deleteConfirmation.isLoading}
-        confirmText={deleteConfirmation.isLoading ? "Deleting..." : "Delete"}
-        cancelText="Cancel"
+        onClick={handleDelete}
+        onCancel={handleCancelDelete}
+        actionLabel={deleteConfirmation.isLoading ? "Deleting..." : "Delete"}
+        cancelLabel="Cancel"
+        variant="destructive"
+        showCloseButton={true}
       />
 
       <AgeGroupForm isOpen={modalState.isOpen} onClose={closeModal} mode={modalState.mode} ageGroupData={modalState.ageGroup} />

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
-import { CheckCircle, Clock, Calendar, FileText, Loader2 } from "lucide-react";
+import { Clock, Calendar, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useChildNotesFollowup } from "../queries/fetchQueries";
 import { useUpdateFollowupStatus } from "../queries/update";

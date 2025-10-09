@@ -238,7 +238,7 @@ export default function PatientsRecord() {
 
 const handleRecordPress = (pat_id: string) => {
   console.log("[DEBUG] Navigating to /records with pat_id:", pat_id);
-  router.push({ pathname: "/my-records/all-records", params: { pat_id } });
+  router.push({ pathname: "/my-records/all-records", params: { pat_id:pat_id, mode:"admin"} });
 };
 
   const handlePageChange = (newPage: number) => {

@@ -323,7 +323,7 @@ export default function AllChildHealthRecords() {
     router.push({
       pathname: '/(health)/childhealth/my-records',
       params: { 
-        ChildHealthRecord: JSON.stringify(child),
+        pat_id: child.pat_id,
         mode: "admin"
       },
     });

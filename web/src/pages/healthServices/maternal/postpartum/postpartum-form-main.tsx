@@ -6,15 +6,13 @@ import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLocation } from "react-router"
 
-import { Patient } from "@/pages/record/health/patientsRecord/patient-types";
-
 import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
 import PostpartumFormFirstPg from "./postpartum-form"
 
 
 export default function PostpartumForm() {
   const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
-  const [preselectedPatient, setPreselectedPatient] = useState<Patient | null>(null)
+  const [preselectedPatient, setPreselectedPatient] = useState<any | null>(null)
   const [pregnancyId, setPregnancyId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 

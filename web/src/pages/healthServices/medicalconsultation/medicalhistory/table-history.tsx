@@ -5,7 +5,7 @@ import { DataTable } from "@/components/ui/table/history-table-col";
 import { History, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useConsultationHistory } from "../queries/fetchQueries";
+import { useConsultationHistory } from "../queries/fetch";
 
 export function ConsultationHistoryTable({
   patientId,
@@ -16,7 +16,7 @@ export function ConsultationHistoryTable({
   currentConsultationId: number | undefined;
 }) {
 
-  let   pageSize = 3;
+  const   pageSize = 3;
   const [currentPage, setCurrentPage] = useState(1);
 
   // Call the hook directly here

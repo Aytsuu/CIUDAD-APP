@@ -1,5 +1,5 @@
-import BHWReportsMainTable from "@/pages/healthServices/reports/bhw-report/bhw-main-table";
-import BHWReportsForm from "@/pages/healthServices/reports/bhw-report/bhw-m-accmplshmnt-form";
+// import BHWReportsMainTable from "@/pages/healthServices/reports/bhw-report/bhw-main-table";
+// import BHWReportsForm from "@/pages/healthServices/reports/bhw-report/bhw-m-accmplshmnt-form";
 
 import HealthcareReports from "@/pages/healthServices/reports/MainReports";
 import MonthlyMedicineRecords from "@/pages/healthServices/reports/medicine-report/monthly";
@@ -35,25 +35,22 @@ import FirstAidProblemDetails from "@/pages/healthServices/reports/inventory/fir
 import CommodityProblemDetails from "@/pages/healthServices/reports/inventory/commodity/expoutstock/records";
 import AntigenProblemDetails from "@/pages/healthServices/reports/inventory/antigen/expoutstock/records";
 
-
 import MedicineInventoryReportsTabs from "@/pages/healthServices/reports/inventory/medicine/Main";
 import CommodityInventoryReportsTabs from "@/pages/healthServices/reports/inventory/commodity/Main";
 import FirstAidInventoryReportsTabs from "@/pages/healthServices/reports/inventory/firstaid/Main";
 import AntigenInventoryReportsTabs from "@/pages/healthServices/reports/inventory/antigen/Main";
 
-
-
 import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/newchildren-list-report/records";
 export const healthreports_router = [
-  {
-    path: "/bhw-monthly-reports",
-    element: <BHWReportsMainTable />,
-  },
-  {
-    path:"/bhw-accomplishment-reports",
-    element: <BHWReportsForm />,
-  },
+  // {
+  //   path: "/bhw-monthly-reports",
+  //   element: <BHWReportsMainTable />,
+  // },
+  // {
+  //   path:"/bhw-accomplishment-reports",
+  //   element: <BHWReportsForm />,
+  // },
   {
     path: "/reports",
     element: <HealthcareReports />
@@ -81,7 +78,6 @@ export const healthreports_router = [
     element: <MonthlyVaccinationDetails />
   },
 
-  
   //  INVENTORY REPORTS
   { path: "/reports/monthly-inventory-medicine", element: <InventoryMonthlyMedicineRecords /> },
   {
@@ -153,7 +149,6 @@ export const healthreports_router = [
     element: <FirstAidProblemDetails />
   },
 
- 
   {
     path: "/antigen-expired-out-of-stock-summary/details",
     element: <AntigenProblemDetails />
@@ -174,7 +169,6 @@ export const healthreports_router = [
     path: "/reports/inventory/monthly-commodity/expoutstock-records",
     element: <CommodityProblemDetails />
   },
-
 
   {
     path: "/firstaid-inventory-reports",

@@ -38,7 +38,7 @@ export const medicineColumns: ColumnDef<any>[] = [
         <div className="w-full">
           {row.original.address ? (
         row.original.address.length > 30 ? (
-          row.original.address.split(", ").map((line, index) => (
+          row.original.address.split(", ").map((line:any, index:any) => (
             <div key={index} className="truncate">
           {line}
             </div>

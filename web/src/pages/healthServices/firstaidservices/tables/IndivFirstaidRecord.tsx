@@ -14,7 +14,6 @@ import { Heart } from "lucide-react";
 import { FirstAidRecord } from "../types";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { firstAidColumns } from "./columns/indiv-records-col";
-import { useAuth } from "@/context/AuthContext";
 import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function IndivFirstAidRecords() {

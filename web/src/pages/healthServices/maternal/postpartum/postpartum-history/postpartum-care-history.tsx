@@ -1,4 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
+import { Badge } from "@/components/ui/badge";
 import { FileText, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -115,94 +117,219 @@ export default function PostpartumCareHistory({ pregnancyId: propPregnancyId }: 
 
   if (error) {
     return (
-      <div className="text-center text-red-600 p-4">
-        Failed to load postpartum records. Please try again.
-      </div>
+      <Card className="border-slate-200 shadow-sm font-poppins">
+        <CardContent className="p-8 text-center">
+          <p className="text-red-600">Failed to load postpartum care history. Please try again.</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  const hasData = postpartumRecords && postpartumRecords.length > 0;
+  // Sort data from most recent to oldest
+  const sortedData = [...postpartumRecords].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateB.getTime() - dateA.getTime();
+  });
 
-  const fieldLabels = [
-    { key: 'date', label: 'Date' },
-    { key: 'familyNo', label: 'Family No.' },
-    { key: 'name', label: 'Name' },
-    { key: 'age', label: 'Age' },
-    { key: 'husbandName', label: "Husband's Name" },
-    { key: 'address', label: 'Address' },
-    { key: 'dateTimeOfDelivery', label: 'Date and Time of Delivery' },
-    { key: 'placeOfDelivery', label: 'Place of Delivery' },
-    { key: 'attendedBy', label: 'Attended By' },
-    { key: 'outcome', label: 'Outcome' },
-    { key: 'ttStatus', label: 'TT Status' },
-    { key: 'ironSupplementationDate', label: 'Iron Supplementation Date' },
-    { key: 'lochialDischarges', label: 'Lochial Discharges' },
-    { key: 'vitASupplementation', label: 'Vit A Supplementation' },
-    { key: 'numOfPadsPerDay', label: 'No. of Pad / Day' },
-    { key: 'mebendazoleGiven', label: 'Mebendazole Given' },
-    { key: 'dateTimeInitiatedBF', label: 'Date and Time Initiated BF' },
-    { key: 'bloodPressure', label: 'B/P' },
-    { key: 'feeding', label: 'Feeding' },
-    { key: 'findings', label: 'Findings' },
-    { key: 'nursesNotes', label: 'Nurses Notes' }
+  if (!postpartumRecords || postpartumRecords.length === 0) {
+    return (
+      <Card className="border-slate-200 shadow-sm font-poppins">
+        <CardContent className="p-8 text-center">
+          <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-700 mb-2">
+            No Postpartum Records Available
+          </h3>
+          <p className="text-slate-500">
+            No postpartum records have been documented for this patient.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasMoreRecords = sortedData.length > 3;
+
+  interface TableRowConfig {
+    label: string;
+    icon?: React.ReactNode;
+    accessor: (record: PostpartumRecord) => string | React.ReactNode;
+    cellClassName?: string;
+  }
+
+  const tableRows: TableRowConfig[] = [
+    {
+      label: "Date",
+      accessor: (record) => new Date(record.date).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }),
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Family No.",
+      accessor: (record) => (
+        <Badge variant="outline" className="font-poppins text-sm">
+          {record.familyNo}
+        </Badge>
+      ),
+      cellClassName: "text-center"
+    },
+    {
+      label: "Name",
+      accessor: (record) => record.name,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Age",
+      accessor: (record) => record.age,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Husband's Name",
+      accessor: (record) => record.husbandName,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Address",
+      accessor: (record) => record.address,
+      cellClassName: "font-poppins text-sm text-center max-w-xs"
+    },
+    {
+      label: "Date & Time of Delivery",
+      accessor: (record) => record.dateTimeOfDelivery,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Place of Delivery",
+      accessor: (record) => record.placeOfDelivery,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Attended By",
+      accessor: (record) => record.attendedBy,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Outcome",
+      accessor: (record) => record.outcome,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "TT Status",
+      accessor: (record) => record.ttStatus,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Iron Supplementation Date",
+      accessor: (record) => record.ironSupplementationDate,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Lochial Discharges",
+      accessor: (record) => record.lochialDischarges,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Vit A Supplementation",
+      accessor: (record) => record.vitASupplementation,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "No. of Pad / Day",
+      accessor: (record) => record.numOfPadsPerDay,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Mebendazole Given",
+      accessor: (record) => record.mebendazoleGiven,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Date & Time Initiated BF",
+      accessor: (record) => record.dateTimeInitiatedBF,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "B/P",
+      accessor: (record) => record.bloodPressure,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Feeding",
+      accessor: (record) => record.feeding,
+      cellClassName: "font-poppins text-sm text-center"
+    },
+    {
+      label: "Findings",
+      accessor: (record) => (
+        <div className="text-sm leading-relaxed">
+          <div className="p-2 rounded border-blue-200">
+            {record.findings}
+          </div>
+        </div>
+      ),
+      cellClassName: "text-center max-w-xs"
+    },
+    {
+      label: "Nurses Notes",
+      accessor: (record) => (
+        <div className="text-sm leading-relaxed">
+          <div className="p-2 rounded border-green-200">
+            {record.nursesNotes}
+          </div>
+        </div>
+      ),
+      cellClassName: "text-center max-w-sm"
+    }
   ];
 
   return (
-    <div className="space-y-4">
-      {hasData ? (
-        <div className="space-y-4">
-          {/* <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">
-                {postpartumRecords.length} Postpartum Record{postpartumRecords.length !== 1 ? 's' : ''} Found
-              </span>
-            </div>
-          </div> */}
-          
-          {/* Postpartum Records - Each record displayed vertically */}
-          <div className="space-y-6">
-            {postpartumRecords.map((record, recordIndex) => (
-              <div key={recordIndex} className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
-                <div className="bg-blue-50 px-4 py-3 border-b border-gray-300">
-                  <h3 className="text-sm font-semibold text-gray-800">
-                    Postpartum Record #{recordIndex + 1} - {record.name}
-                  </h3>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <tbody>
-                      {fieldLabels.map((field, fieldIndex) => (
-                        <tr key={fieldIndex} className={fieldIndex % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-700 border-r border-gray-300 w-1/3">
-                            {field.label}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {record[field.key as keyof PostpartumRecord] || "N/A"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-          </div>
+    <Card className="border-slate-300 shadow-sm font-poppins">
+      <CardContent className="p-0">
+        <div className={hasMoreRecords ? "overflow-x-auto" : ""}>
+          <Table className={hasMoreRecords ? "w-max" : "w-full"}>
+            <TableHeader className="bg-slate-100">
+              <TableRow className="border-slate-200">
+                <TableHead className={`font-semibold text-slate-700 text-xs uppercase tracking-wide w-44 ${hasMoreRecords ? 'sticky left-0 bg-slate-100 z-10' : ''}`}>
+                  Clinical Parameter
+                </TableHead>
+                {sortedData.map((_, index) => (
+                  <TableHead 
+                    key={index} 
+                    className={`font-semibold text-slate-700 p-5 text-xs uppercase tracking-wide text-center ${hasMoreRecords ? 'min-w-48' : 'w-auto'}`}
+                  >
+                    Visit {sortedData.length - index}
+                    {index === 0 && <span className="text-blue-500 ml-1">[CURRENT]</span>}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableRows.map((row, rowIndex) => (
+                <TableRow key={rowIndex} className="border-slate-100 hover:bg-slate-50/50">
+                  <TableCell className={`font-semibold text-slate-700 bg-slate-50 align-middle p-5 ${hasMoreRecords ? 'sticky left-0 z-5' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      {row.icon}
+                      <span>{row.label}</span>
+                    </div>
+                  </TableCell>
+                  {sortedData.map((record, recordIndex) => (
+                    <TableCell 
+                      key={recordIndex} 
+                      className={`${row.cellClassName} ${hasMoreRecords ? 'min-w-48' : ''}`}
+                    >
+                      {row.accessor(record)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      ) : (
-        <Card className="text-center py-16 border-slate-200">
-          <CardContent>
-            <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-700 mb-2">
-              No Postpartum Records Available
-            </h3>
-            <p className="text-slate-500">
-              No postpartum records have been documented for this patient.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        {hasMoreRecords && (
+          <div className="bg-slate-50 border-t border-slate-200 p-3 text-center text-sm text-slate-600">
+            Showing all {sortedData.length} records. Scroll left/right to see all records.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

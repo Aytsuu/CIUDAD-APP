@@ -14,6 +14,7 @@ import PregnancyVisitTracker from "../admin-maternal/prenatal/visit-tracker"
 import { PregnancyAccordion } from "../admin-maternal/prenatal/pregnancy-accordion"
 
 import { usePregnancyDetails } from "./queries/maternalFETCH"
+import { useDebounce } from "@/hooks/use-debounce"
 
 interface Patient {
   pat_id: string
@@ -194,12 +195,17 @@ export default function IndividualMaternalRecordScreen() {
   const [selectedFilter, setSelectedFilter] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+  const debouncedSearchTerm = useDebounce(searchQuery, 300)
 
-  const {
-    data: pregnancyData,
-    isLoading: pregnancyDataLoading,
-    refetch,
-  } = usePregnancyDetails(selectedPatient?.pat_id || "")
+  const { data: pregnancyData, isLoading: pregnancyDataLoading, refetch } = usePregnancyDetails(
+    selectedPatient?.pat_id || "",
+    page,
+    pageSize,
+    selectedFilter,
+    debouncedSearchTerm
+  )
 
   const getLatestFollowupVisit = () => {
     let followUpData = [];
@@ -222,7 +228,6 @@ export default function IndividualMaternalRecordScreen() {
   const nextFollowVisit = [...latestFollowupVisit]
     .filter(visit => visit.followv_status === 'pending') // Only show pending visits
     .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
-  console.log('Next Follow-up Visit:', nextFollowVisit);
 
   const dateWords = () => {
     return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
@@ -236,7 +241,6 @@ export default function IndividualMaternalRecordScreen() {
     if (params.patientData) {
       try {
         const patientData = JSON.parse(params.patientData as string)
-        console.log("Parsed patient data:", patientData) // Debug log
         setSelectedPatient(patientData)
       } catch (error) {
       }
@@ -256,9 +260,6 @@ export default function IndividualMaternalRecordScreen() {
     }
   }, [params])
 
-  useEffect(() => {
-  }, [pregnancyData, pregnancyDataLoading])
-
   const groupPregnancies = useCallback(
     (
       pregnancies: PregnancyDataDetails[],
@@ -269,14 +270,12 @@ export default function IndividualMaternalRecordScreen() {
 
       // Add explicit checks for array and valid data
       if (!pregnancies || !Array.isArray(pregnancies) || pregnancies.length === 0) {
-        console.log("No valid pregnancies data:", pregnancies)
         return []
       }
 
       pregnancies.forEach((pregnancy) => {
         // Add null checks for pregnancy object
         if (!pregnancy || !pregnancy.pregnancy_id) {
-          console.warn("Invalid pregnancy object:", pregnancy)
           return
         }
 

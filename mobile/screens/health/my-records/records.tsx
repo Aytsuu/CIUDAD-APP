@@ -1,22 +1,22 @@
 import * as React from "react";
 import { View, TouchableOpacity, ScrollView, StatusBar, SafeAreaView, Image, ActivityIndicator } from "react-native";
-import { ChevronLeft, ChevronRight, Baby } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Baby, Dog, Heart, Cross, Activity, BriefcaseMedical, Syringe } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
 import { useGetChildren } from "./queries.tsx/fetch";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 interface Service {
   id: number;
   name: string;
   description: string;
   route: string;
+  icon: any;
   image?: any;
   color: string;
 }
-
-
 
 // Helper function to calculate age
 const calculateAge = (dob: string) => {
@@ -31,20 +31,33 @@ const calculateAge = (dob: string) => {
 
   return age;
 };
-9
+
 export default function Records() {
-  const{pat_id}=useAuth()
-  // Get patient ID from route params with safe access
+  const { pat_id } = useAuth();
+  const params = useLocalSearchParams();
+  const mode = params.mode || "parents";
   const [patId, setPatientId] = useState("");
 
+  // Parse the parameters from strings to objects with proper error handling
+  const passed_pat_id = useMemo(() => {
+    try {
+      const parsedId = typeof params.pat_id === "string" ? params.pat_id : "";
+      return parsedId;
+    } catch (error) {
+      console.error("Error parsing record:", error);
+      return null;
+    }
+  }, [params.patId]);
 
-React.useEffect(() => {
-    if (pat_id) {
+  useEffect(() => {
+    if (mode == "admin") {
+      setPatientId(passed_pat_id || "");
+    } else if (pat_id) {
       setPatientId(pat_id);
     }
-  }
-, [pat_id]);
-  const { data: childrenData, isLoading: childrenLoading } = useGetChildren(patId);
+  }, [pat_id]);
+
+  const { data: childrenData, isLoading: childrenLoading } = useGetChildren(patId || "");
 
   // Format children data using useMemo for optimization
   const formattedChildren = useMemo(() => {
@@ -103,80 +116,89 @@ React.useEffect(() => {
   console.log("Formatted Children:", formattedChildren);
 
   const services: Service[] = [
-   {
-       id: 1,
-      name: 'Animal Bites',
-      description: 'View animal bite referral records',
-      route: '/animalbite/my-records',
-      image: require('@/assets/images/Health/Home/animalbites.jpg'),
-      color: '#059669'
+    {
+      id: 1,
+      name: "Animal Bites",
+      description: "View animal bite referral records",
+      route: "/animalbite/my-records",
+      icon: Dog,
+      image: require("@/assets/images/Health/Home/animalbites.jpg"),
+      color: "#059669"
     },
     {
       id: 2,
       name: "Family Planning",
       description: "View your family planning records and track status",
       route: "/(health)/family-planning/fp-dashboard",
+      icon: Heart,
       image: require("@/assets/images/Health/Home/Famplanning.jpg"),
-      color: "#059669"
+      color: "#DC2626"
     },
     {
       id: 3,
       name: "Maternal Records",
       description: "Access your maternal health records",
-      route: "/maternal/my-records",
+      route: "/admin/maternal/individual",
+      icon: Baby,
       image: require("@/assets/images/Health/Home/Maternal.jpg"),
-      color: "#DC2626"
+      color: "#1E40AF"
     },
     {
       id: 4,
       name: "Animal Bite Records",
       description: "View animal bite treatment records",
       route: "/animalbite/my-records/",
+      icon: Dog,
       image: require("@/assets/images/Health/Home/animalbites.jpg"),
-      color: "#1E40AF"
+      color: "#10B981"
     },
     {
       id: 5,
       name: "Medical Consultation",
       description: "View medical consultation records",
       route: "/medconsultation/my-records",
+      icon: Activity,
       image: require("@/assets/images/Health/Home/medicalconsultation.jpg"),
-      color: "#10B981"
+      color: "#8B5CF6"
     },
     {
       id: 6,
       name: "Vaccination Records",
       description: "View vaccination records",
       route: "/vaccination/my-records/",
+      icon: Syringe,
       image: require("@/assets/images/Health/Home/vaccination.jpg"),
-      color: "#8B5CF6"
+      color: "#EC4899"
     },
     {
       id: 7,
       name: "First Aid Records",
       description: "View first aid treatment records",
       route: "/first-aid/my-records",
+      icon: Cross,
       image: require("@/assets/images/Health/Home/first-aid.jpg"),
-      color: "#EF4444"
+      color: "#F59E0B"
     },
     {
       id: 8,
       name: "Child Health Records",
       description: "View Child Health records",
       route: "/childhealth/my-records/",
+      icon: Baby,
       image: require("@/assets/images/Health/Home/child-health.jpg"),
-      color: "#EC4899"
+      color: "#059669"
     },
     {
       id: 9,
       name: "Medicine Records",
       description: "View medicine treatment records",
       route: "/medicine-records/my-records",
+      icon: BriefcaseMedical,
       image: require("@/assets/images/Health/Home/child-health.jpg"),
-      color: "#F59E0B"
+      color: "#7C3AED"
     }
   ];
-  
+
   return (
     <PageLayout
       leftAction={
@@ -192,7 +214,7 @@ React.useEffect(() => {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Header */}
         <View className="px-6 mt-1">
-          <Text className="text-2xl font-semibold text-gray-900 mb-2">My Health Records</Text>
+          <Text className="text-2xl font-semibold text-gray-900 mb-2">{patId ? "Health Records" : "My Health Records"}</Text>
           <Text className="text-gray-500 text-sm">Access your medical records across different services</Text>
         </View>
 
@@ -200,13 +222,28 @@ React.useEffect(() => {
         <View className="px-6 pt-6">
           <View className="gap-4">
             {services.map((service) => {
+              const IconComponent = service.icon;
               return (
-                <TouchableOpacity key={service.id} onPress={() => router.push(service.route as any)} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <TouchableOpacity
+                  key={service.id}
+                  onPress={() => {
+                    console.log("[DEBUG] Navigating to:", service.route, "with pat_id:", patId);
+                    router.push({
+                      pathname: service.route as any,
+                      params: { pat_id: patId, mode: mode }
+                    });
+                  }}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                >
                   <View className="flex-row">
                     {service.image && <Image source={service.image} className="w-24 h-24" resizeMode="cover" />}
 
                     <View className="flex-1 p-4">
                       <View className="flex-row items-center mb-2">
+                        {/* Icon added here */}
+                        <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: service.color + "20" }}>
+                          <IconComponent size={16} color={service.color} />
+                        </View>
                         <Text className="text-lg font-semibold text-gray-900 flex-1">{service.name}</Text>
                         <ChevronRight size={16} color="#9CA3AF" />
                       </View>
@@ -220,7 +257,7 @@ React.useEffect(() => {
           </View>
 
           {/* Children Section - Mobile Optimized */}
-          {(childrenLoading || formattedChildren.length > 0) && (
+          {mode === "parents" && (childrenLoading || formattedChildren.length > 0) && (
             <View className="mt-6">
               <View className="bg-white rounded-xl border border-indigo-100 p-4 shadow-sm">
                 {/* Header */}
@@ -250,19 +287,19 @@ React.useEffect(() => {
                 {!childrenLoading && formattedChildren.length > 0 && (
                   <View className="space-y-3">
                     {formattedChildren.map((child: any) => (
-                        <TouchableOpacity
+                      <TouchableOpacity
                         key={child.pat_id}
                         onPress={() => {
                           router.push({
-                          pathname: "/childhealth/my-records",
-                          params: {
-                            patId: child.pat_id,
-                            mode: "parents"
-                          }
+                            pathname: "/childhealth/my-records",
+                            params: {
+                              pat_id: child.pat_id,
+                              mode: "admin"
+                            }
                           });
                         }}
                         className="bg-gray-50 rounded-lg p-3 border border-gray-200 active:bg-gray-100"
-                        >
+                      >
                         <View className="flex-row items-center justify-between">
                           <View className="flex-row items-center space-x-3 flex-1">
                             <View className="flex-1">
@@ -308,7 +345,7 @@ React.useEffect(() => {
         {/* Additional Info */}
         <View className="px-6 pt-6">
           <View className="bg-blue-50 rounded-lg p-4">
-            <Text className="text-blue-800 text-sm">💡 Your medical records are securely stored and only accessible to you and authorized healthcare providers.</Text>
+            <Text className="text-blue-800 text-sm">💡 "Medical records are securely stored and only accessible to authorized healthcare providers." : "Your medical records are securely stored and only accessible to you and authorized healthcare providers."</Text>
           </View>
         </View>
       </ScrollView>

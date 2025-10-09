@@ -54,7 +54,7 @@ export default function IndividualMedicineRecords() {
   useEffect(() => {
     console.log("MODE:", mode);
     if (mode === "admin") {
-      const adminPatId = params.patId as string;
+      const adminPatId = params.pat_id as string;
       if (adminPatId) {
         setPatientId(adminPatId);
       }

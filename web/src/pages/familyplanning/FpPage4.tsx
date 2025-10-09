@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button/button"
 import { page4Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 
+// Utility function to format dates
+const formatDate = (dateString: string): string => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
 // Add props type to the component
 type Page4Props = {
   onPrevious3: () => void
