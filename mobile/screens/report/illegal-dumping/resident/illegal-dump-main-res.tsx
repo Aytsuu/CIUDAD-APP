@@ -8,6 +8,8 @@ import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 import { useDebounce } from '@/hooks/use-debounce'; 
 import { useAuth } from '@/contexts/AuthContext';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 
 export default function WasteIllegalDumpingResMain() {
@@ -93,6 +95,15 @@ export default function WasteIllegalDumpingResMain() {
   const handleRefresh = () => {
     refetch();
   };
+
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );  
+
 
   const renderReportCard = (item: WasteReport) => (
     <Pressable
@@ -308,10 +319,11 @@ export default function WasteIllegalDumpingResMain() {
             </View>
 
             {isLoading ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
-              </View>
+              // <View className="h-64 justify-center items-center">
+              //   <ActivityIndicator size="large" color="#2a3a61" />
+              //   <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
+              // </View>
+              renderLoadingState()               
             ) : (    
               <FlatList
                 data={fetchedData}
