@@ -159,6 +159,12 @@ class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
     queryset = PrenatalAppointmentRequest.objects.all()
 
+    def get_queryset(self):
+        """Optimize query with select_related to fetch related personal info"""
+        return PrenatalAppointmentRequest.objects.select_related(
+            'rp_id__per'  # Fetch ResidentProfile and Personal in one query
+        ).all()
+
     def list(self, request, *args, **kwargs):
         """Handle list with proper error handling for no requests"""
         try:
@@ -182,9 +188,28 @@ class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
                     'status_counts': status_counts
                 }, status=status.HTTP_200_OK)
 
-            # Manual serialization to handle date fields properly
+            # Manual serialization to include personal info
             requests_data = []
             for appointment in queryset:
+                # Get personal info through rp_id -> per relationship
+                personal_info = None
+                if appointment.rp_id and appointment.rp_id.per:
+                    per = appointment.rp_id.per
+                    personal_info = {
+                        'per_id': per.per_id,
+                        'per_fname': per.per_fname,
+                        'per_mname': per.per_mname,
+                        'per_lname': per.per_lname,
+                        'per_suffix': per.per_suffix,
+                        'per_dob': per.per_dob.strftime('%Y-%m-%d') if per.per_dob else None,
+                        'per_sex': per.per_sex,
+                        'per_status': per.per_status,
+                        'per_contact': per.per_contact,
+                        'per_religion': per.per_religion,
+                        'per_edAttainment': per.per_edAttainment,
+                        'per_disability': per.per_disability,
+                    }
+                
                 appointment_data = {
                     'par_id': appointment.par_id,
                     'requested_at': appointment.requested_at.strftime('%Y-%m-%d') if appointment.requested_at else None,
@@ -198,6 +223,7 @@ class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
                     'status': appointment.status,
                     'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
                     'pat_id': appointment.pat_id.pat_id if appointment.pat_id else None,
+                    'personal_info': personal_info,
                 }
                 requests_data.append(appointment_data)
             
