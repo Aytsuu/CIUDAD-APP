@@ -8,19 +8,19 @@ import { useAnimalBitePatientSummary } from "./db-request/get-query"
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
 
-type PatientSummary = {
-  patient_id: string
-  patient_fname: string
-  patient_lname: string
-  patient_mname?: string
-  patient_sex: string
-  patient_age: number
-  patient_type: string
-  patient_address: string
-  record_count: number
-  record_created_at: string
-  first_record_date: string
-}
+// type PatientSummary = {
+//   patient_id: string
+//   patient_fname: string
+//   patient_lname: string
+//   patient_mname?: string
+//   patient_sex: string
+//   patient_age: number
+//   patient_type: string
+//   patient_address: string
+//   record_count: number
+//   record_created_at: string
+//   first_record_date: string
+// }
 
 type TabType = "all" | "resident" | "transient"
 
@@ -167,12 +167,12 @@ export default function AnimalBiteOverallScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
-  const { data: patientSummary, isLoading, isError, error, refetch, isFetching } = useAnimalBitePatientSummary()
+//   const { data: patientSummary, isLoading, isError, error, refetch, isFetching } = useAnimalBitePatientSummary()
 
-  const patients: PatientSummary[] = useMemo(() => {
-    if (!patientSummary) return []
-    return patientSummary
-  }, [patientSummary])
+//   const patients: PatientSummary[] = useMemo(() => {
+//     if (!patientSummary) return []
+//     return patientSummary
+//   }, [patientSummary])
 
   const filteredData = useMemo(() => {
     let result = patients

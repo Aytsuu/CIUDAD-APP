@@ -40,8 +40,12 @@ import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 import { medicalConsultation } from "./med-consultation";
 import {healthreports_router} from "./health-reports-router";
-import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 import TrackerMap from "@/pages/map/TrackerMap";
+import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
+<<<<<<< HEAD
+import TrackerMap from "@/pages/map/TrackerMap";
+=======
+>>>>>>> 0f1ee3772af599f1a3e9423333740f432b97517c
 
 export const main_router: RouteObject[] = [
   {

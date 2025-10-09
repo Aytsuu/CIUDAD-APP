@@ -101,7 +101,6 @@ class CompleteRegistrationView(APIView):
     if account:
         self.create_account(account, rp)
 
-
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 
@@ -271,5 +270,3 @@ class CompleteRegistrationView(APIView):
           BusinessFile.objects.bulk_create(business_files)
 
     return business
-
-  

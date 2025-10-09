@@ -62,7 +62,7 @@ const Homepage = () => {
     { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
     { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
     // { name: "Medical Consultation", route: "(health)/medicine-request/my-requests" as Href, icon: Stethoscope },
-    // { name: "Profiling", route: "admin/medicinerequest/medicinerequest" as Href, icon: UserRoundPlus },
+    { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus },
     { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
     { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
     { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },

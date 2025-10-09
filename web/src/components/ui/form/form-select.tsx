@@ -55,11 +55,11 @@ export const FormSelect = React.memo(({
                                 placeholder={placeholder || "Select"}
                                 className="w-full"
                                 options={selectOptions}
-                                value={field.value}
+                                value={(field.value ?? '') as string}
                                 onChange={(value) => {
                                     // Prevent selection of loading/empty messages
                                     if (value !== "__loading__" && value !== "__empty__") {
-                                        field.onChange(value);
+                                        field.onChange(value ?? "");
                                     }
                                 }}
                             />

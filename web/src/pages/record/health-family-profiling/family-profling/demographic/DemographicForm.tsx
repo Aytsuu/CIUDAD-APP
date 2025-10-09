@@ -187,49 +187,7 @@ export default function DemographicForm({
             />
           </div>
           
-          <div className="">
-            <h2 className="text-lg font-semibold">Household Head Information</h2>
-            <p className="text-xs text-black/50">
-              {getStatusMessage()}
-            </p>
-          </div>
           
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <FormInput 
-              control={form.control} 
-              name="householdHead.per_lname" 
-              label="Last Name" 
-              readOnly 
-              placeholder={isLoadingData ? "Loading..." : "Last Name"}
-              className={isLoadingData ? "opacity-50" : ""}
-            />
-            <FormInput 
-              control={form.control} 
-              name="householdHead.per_fname" 
-              label="First Name" 
-              readOnly 
-              placeholder={isLoadingData ? "Loading..." : "First Name"}
-              className={isLoadingData ? "opacity-50" : ""}
-            />
-            <FormInput 
-              control={form.control} 
-              name="householdHead.per_mname" 
-              label="Middle Name" 
-              readOnly 
-              placeholder={isLoadingData ? "Loading..." : "Middle Name"}
-              className={isLoadingData ? "opacity-50" : ""}
-            />
-            <FormSelect 
-              control={form.control} 
-              name="householdHead.per_sex"
-              label="Sex" 
-              options={[
-                { id: 'male', name: 'Male' },
-                { id: 'female', name: 'Female' },
-              ]}
-              readOnly
-            />
-          </div>
 
           {/* Submit Button */}
           <div className="mt-8 sm:mt-auto flex justify-end">

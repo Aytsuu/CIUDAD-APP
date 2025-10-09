@@ -316,13 +316,18 @@ class MedicalHistory(models.Model):
     medhist_id = models.BigAutoField(primary_key=True)
     ill = models.ForeignKey(Illness, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='ill_id')
     ill_date = models.CharField(max_length=255, null=True, blank=True, default=timezone.now().year)
+    ill_date = models.CharField(max_length=255, null=True, blank=True, default=timezone.now().year)
     patrec =models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_history', null=True, db_column='patrec_id')
     created_at = models.DateTimeField(auto_now_add=True)
     remarks = models.TextField(default="", blank=True, null=True)
     is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
     is_from_famhistory=models.BooleanField(default=False)
+    remarks = models.TextField(default="", blank=True, null=True)
+    is_for_surveillance = models.BooleanField(default=False)  # New field for surveillance
+    is_from_famhistory=models.BooleanField(default=False)
     class Meta:
-        db_table = 'medical_history'   
+        db_table = 'medical_history' 
+        
 class Diagnosis(models.Model):
     diag_id = models.BigAutoField(primary_key=True)
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True,db_column='find_id')
