@@ -5,13 +5,6 @@ const MobileDownloadPage: React.FC = () => {
     window.location.href = 'https://drive.google.com/file/d/1iKXyQLFXsNgqePynS768_KBsOdrswAM4/view?usp=drive_link';
   };
 
-  const handleContinueToWebsite = () => {
-    // You can implement logic to hide the mobile page temporarily
-    // For example, using localStorage to remember user's choice
-    localStorage.setItem('hideMobilePrompt', 'true');
-    window.location.reload();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-800 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto">
@@ -53,14 +46,6 @@ const MobileDownloadPage: React.FC = () => {
             </svg>
             Download Mobile App
           </div>
-        </button>
-
-        {/* Continue to Website Button */}
-        <button
-          onClick={handleContinueToWebsite}
-          className="w-full border-2 border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium py-3 px-6 rounded-xl transition-all duration-200 mb-8"
-        >
-          Continue to Website
         </button>
 
         {/* Features List */}
