@@ -19,9 +19,25 @@ export type ServiceCharge = {
   } | null;
 };
 
-export async function getTreasurerServiceCharges(): Promise<ServiceCharge[]> {
-  const { data } = await api.get<ServiceCharge[]>('/clerk/treasurer/service-charges/');
-  return (data ?? []).filter(item => !item.sr_code || String(item.sr_code).trim() === '');
+export type ServiceChargeResponse = {
+  results: ServiceCharge[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+};
+
+export async function getTreasurerServiceCharges(
+  search?: string,
+  page?: number,
+  pageSize?: number
+): Promise<ServiceChargeResponse> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (page) params.append('page', page.toString());
+  if (pageSize) params.append('page_size', pageSize.toString());
+  
+  const { data } = await api.get<ServiceChargeResponse>(`/clerk/treasurer/service-charges/?${params.toString()}`);
+  return data ?? { results: [], count: 0, next: null, previous: null };
 }
 
 export type PurposeRate = {

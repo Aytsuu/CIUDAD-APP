@@ -4,7 +4,7 @@ export function filterComplaints(
   complaints: Complaint[],
   _query: string,
 ): Complaint[] {
-  let result = [...complaints];
+  const result = [...complaints];
 
   // if (query.trim()) {
   //   const q = query.toLowerCase();

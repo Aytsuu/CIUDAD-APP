@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getTreasurerServiceCharges, getServiceChargeRate, ServiceCharge, PurposeRate, createServiceChargePaymentRequest, acceptSummonRequest } from '../restful-api/serviceChargeGetAPI';
+import { getTreasurerServiceCharges, getServiceChargeRate, PurposeRate, createServiceChargePaymentRequest, acceptSummonRequest, ServiceChargeResponse } from '../restful-api/serviceChargeGetAPI';
 import { updateServiceChargeStatus } from '../restful-api/serviceChargePostAPI';
 
-export function useTreasurerServiceCharges() {
-  return useQuery<ServiceCharge[]>({
-    queryKey: ['treasurer-service-charges'],
-    queryFn: getTreasurerServiceCharges,
+export function useTreasurerServiceCharges(search?: string, page?: number, pageSize?: number) {
+  return useQuery<ServiceChargeResponse>({
+    queryKey: ['treasurer-service-charges', search, page, pageSize],
+    queryFn: () => getTreasurerServiceCharges(search, page, pageSize),
     staleTime: 60 * 1000,
   });
 }
@@ -34,8 +34,8 @@ export function useServiceChargeRate() {
 
 export function useUpdateServiceChargeStatus(onSuccess?: () => void) {
   return useMutation({
-    mutationFn: ({ sr_id, data }: { sr_id: string | number; data: { sr_code?: string; status?: string } }) => 
-      updateServiceChargeStatus(sr_id, data),
+    mutationFn: ({ pay_id, data }: { pay_id: string | number; data: { sr_code?: string; status?: string } }) => 
+      updateServiceChargeStatus(pay_id, data),
     onSuccess,
   });
 }

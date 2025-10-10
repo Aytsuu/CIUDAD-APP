@@ -10,7 +10,7 @@ import { CertificationRequestSchema } from "@/form-schema/certificates/certifica
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
-import { uploadMultipleFiles, prepareFileForUpload, type FileUploadData } from "@/helpers/fileUpload";
+import { uploadMultipleBusinessPermitFiles, prepareBusinessPermitFileForUpload, type BusinessPermitFileData } from "@/helpers/businessPermitUpload";
 
 const CertPermit: React.FC = () => {
   const router = useRouter();
@@ -263,38 +263,40 @@ const CertPermit: React.FC = () => {
     if ((previousPermitImage || assessmentImage) && (permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0))) {
       try {
         setIsUploadingFiles(true);
-        setUploadProgress("Preparing files for upload...");
+        setUploadProgress("Preparing business permit files for upload...");
         
-        const filesToUpload: FileUploadData[] = [];
+        const filesToUpload: BusinessPermitFileData[] = [];
         
         // Add previous permit image if exists
         if (previousPermitImage && isBusinessOld) {
-          filesToUpload.push(prepareFileForUpload(previousPermitImage, 'permit', businessName));
+          filesToUpload.push(prepareBusinessPermitFileForUpload(previousPermitImage, 'permit', businessName));
         }
         
         // Add assessment image if exists
         if (assessmentImage) {
-          filesToUpload.push(prepareFileForUpload(assessmentImage, 'assessment', businessName));
+          filesToUpload.push(prepareBusinessPermitFileForUpload(assessmentImage, 'assessment', businessName));
         }
         
         if (filesToUpload.length > 0) {
-          setUploadProgress(`Uploading ${filesToUpload.length} file(s)...`);
+          setUploadProgress(`Uploading ${filesToUpload.length} business permit file(s) to S3...`);
           
-          const uploadedFiles = await uploadMultipleFiles(filesToUpload);
+          const uploadedFiles = await uploadMultipleBusinessPermitFiles(filesToUpload);
           
           // Add uploaded file URLs to payload
           const previousPermitFile = uploadedFiles.find(file => file.file_name.includes('permit'));
           const assessmentFile = uploadedFiles.find(file => file.file_name.includes('assessment'));
           
+          // Store the business permit file URL in bpf_id field
+          payload.bpf_id = assessmentFile?.file_url || previousPermitFile?.file_url || null;
           payload.previous_permit_image = previousPermitFile?.file_url || null;
           payload.assessment_image = assessmentFile?.file_url || null;
           
-          setUploadProgress("Files uploaded successfully!");
+          setUploadProgress("Business permit files uploaded successfully to S3!");
         }
         
       } catch (uploadError) {
-        console.error("File upload failed:", uploadError);
-        setError("Failed to upload files. Please try again.");
+        console.error("Business permit file upload failed:", uploadError);
+        setError("Failed to upload business permit files. Please try again.");
         setIsUploadingFiles(false);
         setUploadProgress("");
         return;

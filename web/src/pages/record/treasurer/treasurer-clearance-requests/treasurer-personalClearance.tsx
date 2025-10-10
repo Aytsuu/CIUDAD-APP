@@ -18,7 +18,7 @@ import { formatDate } from "@/helpers/dateHelper";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 function PersonalClearance() {
-    // const { user } = useAuth();
+    
     const { showLoading, hideLoading } = useLoading();
 
     const [currentPage, setCurrentPage] = useState(1); 
