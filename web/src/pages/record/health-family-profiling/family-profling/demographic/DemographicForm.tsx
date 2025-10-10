@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { useHouseholdData, usePersonalInfo } from "../../family-profling/queries/profilingFetchQueries";
+import { useHouseholdData } from "../../family-profling/queries/profilingFetchQueries";
 
 export default function DemographicForm({
   form,
@@ -28,51 +28,6 @@ export default function DemographicForm({
 
   // Fetch household data when household is selected
   const { data: householdData, isLoading: isLoadingHousehold } = useHouseholdData(selectedHouseholdId);
-
-  // Extract household head ID from household data - try multiple possible property names
-  const householdHeadId = React.useMemo(() => {
-    if (!householdData) return null;
-
-    // Try different possible property names for household head ID
-    const possibleIds = [
-      householdData.rp_id,
-      householdData.head_id,
-      householdData.household_head_id,
-      householdData.resident_id,
-      householdData.hh_head_id,
-      // If householdData is an array, get the first item's ID
-      Array.isArray(householdData) && householdData.length > 0 ? householdData[0].rp_id : null,
-      Array.isArray(householdData) && householdData.length > 0 ? householdData[0].head_id : null,
-    ];
-
-    // Return the first non-null/undefined value
-    return possibleIds.find(id => id != null) || null;
-  }, [householdData]);
-
-  // Fetch personal info of household head
-  const { data: personalInfo, isLoading: isLoadingPersonal } = usePersonalInfo(householdHeadId);
-  const { data: personalInfo, isLoading: isLoadingPersonal } = usePersonalInfo(householdHeadId);
-
-  // Populate form fields when personal info is fetched
-  React.useEffect(() => {
-    if (personalInfo && selectedHouseholdId) {
-      // Use the correct field paths from the updated schema
-      form.setValue("householdHead.per_lname", personalInfo.per_lname || "");
-      form.setValue("householdHead.per_fname", personalInfo.per_fname || "");
-      form.setValue("householdHead.per_mname", personalInfo.per_mname || "");
-      form.setValue("householdHead.per_sex", personalInfo.per_sex || "");
-    }
-  }, [personalInfo, selectedHouseholdId, form]);
-
-  // Clear personal info fields when household changes or is cleared
-  React.useEffect(() => {
-    if (!selectedHouseholdId) {
-      form.setValue("householdHead.per_lname", "");
-      form.setValue("householdHead.per_fname", "");
-      form.setValue("householdHead.per_mname", "");
-      form.setValue("householdHead.per_sex", "");
-    }
-  }, [selectedHouseholdId, form]);
 
   const submit = async () => {
     const formIsValid = await form.trigger("demographicInfo");
@@ -98,17 +53,11 @@ export default function DemographicForm({
     (value: any) => {
       form.setValue("demographicInfo.householdNo", value);
       setInvalidHousehold(false); // Reset validation error
-
-      // Clear previous data when changing household
-      form.setValue("householdHead.per_lname", "");
-      form.setValue("householdHead.per_fname", "");
-      form.setValue("householdHead.per_mname", "");
-      form.setValue("householdHead.per_sex", "");
     },
     [form]
   );
 
-  const isLoadingData = isLoadingHousehold || isLoadingPersonal;
+  const isLoadingData = isLoadingHousehold;
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
