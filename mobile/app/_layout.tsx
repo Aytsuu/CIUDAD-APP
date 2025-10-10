@@ -72,6 +72,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(gad)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(summon)" options = {{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="(my-request)" options = {{headerShown: false, animation: 'fade'}} />
+                <Stack.Screen name="(certificates)" options = {{headerShown: false, animation: 'fade'}} />
                 <Stack.Screen name="+not-found" options = {{ headerShown: false, animation: 'fade' }}/>
               </Stack>
             </ToastProvider>

@@ -44,12 +44,12 @@ const AnnualDevPlanMain = () => {
   const handleFolderPress = (folder: FolderItem) => {
     if (folder.isCreate) {
       console.log('Create new plan');
-      router.push('/gad/annual-dev-plan/create-plan');
+      router.push('/(gad)/annual-dev-plan/create-plan');
     } else {
       console.log(`Opening year: ${folder.name}`);
       // Navigate to view plan for the selected year
       router.push({
-        pathname: '/gad/annual-dev-plan/view-plan',
+        pathname: '/(gad)/annual-dev-plan/view-plan',
         params: { year: folder.id }
       });
     }

@@ -777,6 +777,7 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
 
 # GET years with data
 class GADDevelopmentPlanYears(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         # Add search functionality for years
         search = request.query_params.get('search', None)

@@ -50,13 +50,13 @@ const ViewPlan = () => {
 
   const handleEdit = (devId: number) => {
     router.push({
-      pathname: '/gad/annual-dev-plan/update-plan',
+      pathname: '/(gad)/annual-dev-plan/update-plan',
       params: { planId: devId.toString() }
     });
   };
 
   const handleCreate = () => {
-    router.push('/gad/annual-dev-plan/create-plan');
+    router.push('/(gad)/annual-dev-plan/create-plan');
   };
 
   const formatDate = (dateString: string) => {
