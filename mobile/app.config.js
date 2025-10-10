@@ -61,6 +61,15 @@ export default () => ({
           savePhotosPermission: "Allow $(PRODUCT_NAME) to save photos.",
           isAccessMediaLocationEnabled: true
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            edgeToEdgeEnabled: true,
+            suppressNativeLinking: ["react-native-worklets"],
+          }
+        }
       ]
     ],
     experiments: {
