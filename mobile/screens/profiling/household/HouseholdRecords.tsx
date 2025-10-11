@@ -111,7 +111,6 @@ export default function HouseholdRecords() {
             },
           });
         }}
-        className="mb-3"
         activeOpacity={0.7}
       >
         <Card className="p-4 bg-white shadow-sm border border-gray-100">
@@ -198,36 +197,38 @@ export default function HouseholdRecords() {
       )}
       <View className="flex-1 px-6">
         {!isRefreshing && (
-          <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${households.length} of ${totalCount} families`}</Text>
+          <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${households.length} of ${totalCount} houses`}</Text>
         )}
         {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
-        <FlatList
-          maxToRenderPerBatch={10}
-          initialNumToRender={10}
-          overScrollMode="never"
-          windowSize={21}
-          removeClippedSubviews
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingTop: 0,
-            paddingBottom: 20,
-            gap: 20,
-          }}
-          data={households}
-          onScroll={handleScroll}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.3}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.hh_id}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={["#00a8f0"]}
-            />
-          }
-        />
+        {!isRefreshing && (
+          <FlatList
+            maxToRenderPerBatch={10}
+            initialNumToRender={10}
+            overScrollMode="never"
+            windowSize={21}
+            removeClippedSubviews
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: 0,
+              paddingBottom: 20,
+              gap: 15,
+            }}
+            data={households}
+            onScroll={handleScroll}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.3}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.hh_id}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={["#00a8f0"]}
+              />
+            }
+          />
+        )}
       </View>
     </PageLayout>
   );

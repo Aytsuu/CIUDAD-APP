@@ -12,11 +12,9 @@ import React from "react";
 import { Search } from "@/lib/icons/Search";
 import { useFamiliesTable } from "../queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
-import { Calendar } from "@/lib/icons/Calendar";
 import { UserRound } from "@/lib/icons/UserRound";
 import { LoadingState } from "@/components/ui/loading-state";
 
@@ -121,7 +119,6 @@ export default function FamilyRecords() {
             },
           });
         }}
-        className="mb-3"
         activeOpacity={0.7}
       >
         <Card className="p-4 bg-white border border-gray-100 rounded-xl">
@@ -241,53 +238,55 @@ export default function FamilyRecords() {
           <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${families.length} of ${totalCount} families`}</Text>
         )}
         {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
-        <FlatList
-          maxToRenderPerBatch={10}
-          overScrollMode="never"
-          initialNumToRender={10}
-          contentContainerStyle={{
-            paddingTop: 0,
-            paddingBottom: 20,
-            gap: 20,
-          }}
-          windowSize={21}
-          removeClippedSubviews
-          data={families}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.3}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.fam_id.toString()}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={["#00a8f0"]}
-            />
-          }
-          ListFooterComponent={() =>
-            isFetching ? (
-              <View className="py-4 items-center">
-                <ActivityIndicator size="small" color="#3B82F6" />
-                <Text className="text-xs text-gray-500 mt-2">
-                  Loading more...
-                </Text>
-              </View>
-            ) : (
-              !hasNext &&
-              families.length > 0 && (
+        {!isRefreshing && (
+          <FlatList
+            maxToRenderPerBatch={10}
+            overScrollMode="never"
+            initialNumToRender={10}
+            contentContainerStyle={{
+              paddingTop: 0,
+              paddingBottom: 20,
+              gap: 15,
+            }}
+            windowSize={21}
+            removeClippedSubviews
+            data={families}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.3}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.fam_id.toString()}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={["#00a8f0"]}
+              />
+            }
+            ListFooterComponent={() =>
+              isFetching ? (
                 <View className="py-4 items-center">
-                  <Text className="text-xs text-gray-400">
-                    No more family records
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text className="text-xs text-gray-500 mt-2">
+                    Loading more...
                   </Text>
                 </View>
+              ) : (
+                !hasNext &&
+                families.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more family records
+                    </Text>
+                  </View>
+                )
               )
-            )
-          }
-          ListEmptyComponent={<View></View>}
-        />
+            }
+            ListEmptyComponent={<View></View>}
+          />
+        )}
       </View>
     </PageLayout>
   );

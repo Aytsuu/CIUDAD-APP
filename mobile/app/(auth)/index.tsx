@@ -7,12 +7,13 @@ import ResidentRecords from '@/screens/profiling/resident/ResidentRecords';
 import Announcement from '../(announcement)';
 import FamilyRecords from '@/screens/profiling/family/FamilyRecords';
 import HouseholdRecords from '@/screens/profiling/household/HouseholdRecords';
+import Profiling from '@/screens/profiling';
 
 if (__DEV__) {
   LogBox.ignoreAllLogs(true);
 }
 
 export default () => {
-    return <Announcement/>
+    return <Profiling/>
 }
  

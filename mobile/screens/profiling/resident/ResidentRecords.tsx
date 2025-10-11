@@ -213,7 +213,7 @@ export default function ResidentRecords() {
             contentContainerStyle={{
               paddingTop: 0,
               paddingBottom: 20,
-              gap: 20,
+              gap: 15,
             }}
             refreshControl={
               <RefreshControl
