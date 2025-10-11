@@ -57,7 +57,6 @@ export default function AnnouncementCreate() {
     try {
       return JSON.parse(params.data as string);
     } catch (error) {
-      console.error("Error parsing business data:", error);
       return null;
     }
   }, [params.data]);
@@ -423,8 +422,7 @@ export default function AnnouncementCreate() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={2}
+                limit={2}
               />
             </View>
 

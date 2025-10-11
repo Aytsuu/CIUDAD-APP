@@ -2,7 +2,7 @@ import React from 'react';
 
 const MobileDownloadPage: React.FC = () => {
   const handleDownload = () => {
-    window.location.href = 'https://drive.google.com/file/d/1iKXyQLFXsNgqePynS768_KBsOdrswAM4/view?usp=drive_link';
+    window.location.href = 'https://drive.google.com/file/d/1B3YFKTchZ7YBloeG5r65zmnuxUf0svHo/view?usp=sharing';
   };
 
   return (

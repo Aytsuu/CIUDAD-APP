@@ -36,7 +36,7 @@ export default function MediaPicker({
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
-      allowsEditing: true,
+      allowsEditing: limit == 1,
       aspect: [4, 3],
       quality: 1,
       selectionLimit: limit,
