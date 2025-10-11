@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getWasteEvents } from "../../waste-scheduling/waste-event/queries/wasteEventQueries";
 import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries";
 import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries";
-import { hotspotColumns, wasteColColumns } from "../../waste-scheduling/event-columns/event-cols";
+import { wasteColColumns } from "../../waste-scheduling/event-columns/event-cols";
 import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 import { useLoading } from "@/context/LoadingContext";
@@ -204,14 +204,14 @@ const getCalendarSources = (
   wasteEventData: any[],
   calendarEvents: any[],
   hotspotData: any[],
-  wasteCollectionData: any[]
+  // wasteCollectionData: any[]
 ) => {
   // Ensure all data arrays are properly initialized
   const safeTransformedAnnualDevPlans = Array.isArray(transformedAnnualDevPlans) ? transformedAnnualDevPlans : [];
   const safeWasteEventData = Array.isArray(wasteEventData) ? wasteEventData : [];
   const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
   const safeHotspotData = Array.isArray(hotspotData) ? hotspotData : [];
-  const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
+  // const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
 
   return [
   {
@@ -241,25 +241,25 @@ const getCalendarSources = (
     timeAccessor: "ce_time",
     defaultColor: "#191970", // midnight blue for council events
   },
-  {
-    name: "Hotspot Assignment",
-    data: safeHotspotData,
-    columns: hotspotColumns,
-    titleAccessor: "watchman",
-    dateAccessor: "wh_date",
-    timeAccessor: "wh_start_time",
-    endTimeAccessor: "wh_end_time",
-    defaultColor: "#3b82f6", // blue
-  },
-  {
-    name: "Waste Collection",
-    data: safeWasteCollectionData,
-    columns: wasteColColumns,
-    titleAccessor: "sitio_name",
-    dateAccessor: "wc_day",
-    timeAccessor: "wc_time",
-    defaultColor: "#10b981", // emerald
-  }
+  // {
+  //   name: "Hotspot Assignment",
+  //   data: safeHotspotData,
+  //   columns: hotspotColumns,
+  //   titleAccessor: "watchman",
+  //   dateAccessor: "wh_date",
+  //   timeAccessor: "wh_start_time",
+  //   endTimeAccessor: "wh_end_time",
+  //   defaultColor: "#3b82f6", // blue
+  // },
+  // {
+  //   name: "Waste Collection",
+  //   data: safeWasteCollectionData,
+  //   columns: wasteColColumns,
+  //   titleAccessor: "sitio_name",
+  //   dateAccessor: "wc_day",
+  //   timeAccessor: "wc_time",
+  //   defaultColor: "#10b981", // emerald
+  // }
 ];
 };
 
@@ -323,7 +323,7 @@ function GADActivityPage() {
     filterWasteEvents(wasteEventData),
     calendarEvents,
     hotspotData,
-    wasteCollectionData
+    // wasteCollectionData
   );
 
   if (isLoading || isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
