@@ -110,7 +110,7 @@ export const useAddRemarks = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: async (data: {
             hs_id: string;
-            st_id: string;
+            st_id: string | number;
             sc_id: string;
             remarks: string;
             close: boolean

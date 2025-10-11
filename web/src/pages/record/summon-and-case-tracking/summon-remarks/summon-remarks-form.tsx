@@ -8,7 +8,7 @@ import { useAddRemarks } from "../queries/summonInsertQueries";
 
 export default function SummonRemarksForm({hs_id, st_id, sc_id, onSuccess}:{
     hs_id: string;
-    st_id: string;
+    st_id: string | number;
     sc_id: string;
     onSuccess?: () => void
 }){
