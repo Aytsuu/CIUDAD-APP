@@ -16,7 +16,7 @@ export default function SummonRemarksForm({hs_id, st_id, sc_id, onSuccess}:{
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [remarks, setRemarks] = useState<string>("");
     const [close, setClose] = useState(false);
-    const {mutate: Addremarks, isPending} = useAddRemarks()
+    const {mutate: Addremarks, isPending} = useAddRemarks(onSuccess)
 
     const isSubmitDisabled = isPending || mediaFiles.length === 0 || remarks.trim() === "";
 
