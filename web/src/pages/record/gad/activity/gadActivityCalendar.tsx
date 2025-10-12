@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getWasteEvents } from "../../waste-scheduling/waste-event/queries/wasteEventQueries";
 import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries";
 import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries";
-import { hotspotColumns, wasteColColumns } from "../../waste-scheduling/event-columns/event-cols";
+import { wasteColColumns, hotspotColumns } from "../../waste-scheduling/event-columns/event-cols";
 import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 import { useLoading } from "@/context/LoadingContext";
@@ -243,14 +243,14 @@ const getCalendarSources = (
   wasteEventData: any[],
   calendarEvents: any[],
   hotspotData: any[],
-  wasteCollectionData: any[]
+  // wasteCollectionData: any[]
 ) => {
   // Ensure all data arrays are properly initialized
   const safeTransformedAnnualDevPlans = Array.isArray(transformedAnnualDevPlans) ? transformedAnnualDevPlans : [];
   const safeWasteEventData = Array.isArray(wasteEventData) ? wasteEventData : [];
   const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
   const safeHotspotData = Array.isArray(hotspotData) ? hotspotData : [];
-  const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
+  // const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
 
   return [
   {
@@ -292,14 +292,10 @@ const getCalendarSources = (
   },
   {
     name: "Waste Collection",
-    data: safeWasteCollectionData.map(item => ({
-      ...item,
-      // Convert day name to a proper date for this week
-      wc_date: getDateForDayOfWeek(item.wc_day)
-    })),
+    data: safeWasteCollectionData,
     columns: wasteColColumns,
     titleAccessor: "sitio_name",
-    dateAccessor: "wc_date",
+    dateAccessor: "wc_day",
     timeAccessor: "wc_time",
     defaultColor: "#10b981", // emerald
   }
@@ -385,7 +381,7 @@ function GADActivityPage() {
     filterWasteEvents(wasteEventData),
     calendarEvents,
     hotspotData,
-    Array.isArray(wasteCollectionData) ? wasteCollectionData : wasteCollectionData?.results || []
+    wasteCollectionData
   );
 
   if (isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {

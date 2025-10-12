@@ -403,7 +403,7 @@ const SummonCalendar = () => {
                                               <Trash2 size={12} color="red" />
                                             </Button>
                                           }
-                                          onClick={() => deleteTimeSlot(slot?.st_id || 0)}
+                                          onClick={() => deleteTimeSlot(Number(slot.st_id))}
                                           actionLabel="Confirm"
                                         />
                                       </div>

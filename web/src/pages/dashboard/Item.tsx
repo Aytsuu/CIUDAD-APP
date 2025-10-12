@@ -12,13 +12,21 @@ import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illnes
 import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report"; 
+import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar"; 
+import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
+import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
   administrationCards: ReturnType<typeof useAdminSectionCards>,
   reportCards: ReturnType<typeof useReportSectionCards>,
-  healthCards: ReturnType<typeof useHealthServicesSectionCards>
+  healthCards: ReturnType<typeof useHealthServicesSectionCards>,
+  wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
+  donationCards: ReturnType<typeof useDonationSectionCards>,
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -35,6 +43,8 @@ export const getItemsConfig = (
     familyPlanning,
     maternal,
   } = healthCards;
+  const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
+  const { cashDonations } = donationCards;
 
   if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
     return [
@@ -76,21 +86,45 @@ export const getItemsConfig = (
       },
       {
         dashboard: "GAD",
+         chart: [
+          {
+            title: "GAD Budget Overview",
+            element: <GADQuarterlyBudgetChart />,
+          },
+        ],
+        sidebar: [
+          {
+            title: "GAD Recent Expenses",
+            element: <GADExpenseSidebar />,
+          },
+          {
+            title: "Recent Project Proposal",
+            element: <ProjectProposalSidebar />,
+          },
+        ],
       },
       {
         dashboard: "COUNCIL",
       },
       {
         dashboard: "FINANCE",
+        sidebar: [
+          {
+            title: "Recent Disbursement Voucher",
+            element: <DisbursementSidebar />,
+          },
+        ],
       },
       {
         dashboard: "CERTIFICATE & CLEARANCES",
       },
       {
         dashboard: "DONATION",
+         card: [cashDonations],
       },
       {
         dashboard: "WASTE",
+        card: [driverLoaders, wasteLoaders, collectionVehicles], 
       },
     ];
   }
