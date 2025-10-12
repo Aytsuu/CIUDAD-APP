@@ -134,7 +134,7 @@ export function GADQuarterlyBudgetChart() {
 
         {/* Remaining Balance */}
         <div className="px-6 py-4">
-          <div className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Remaining Balance</div>
+          <div className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Remaining Bal.</div>
           <div className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             ₱{Math.abs(remainingBudget).toLocaleString()}
           </div>
@@ -206,7 +206,14 @@ export function GADQuarterlyBudgetChart() {
                       tickMargin={12}
                       className="text-xs"
                       tick={{ fill: '#6b7280' }}
-                      tickFormatter={(value) => `₱${value.toLocaleString()}`}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) {
+                          return `₱${(value / 1000000).toFixed(1)}M`;
+                        } else if (value >= 1000) {
+                          return `₱${(value / 1000).toFixed(0)}K`;
+                        }
+                        return `₱${value}`;
+                      }}
                     />
                     <ChartTooltip
                       cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
