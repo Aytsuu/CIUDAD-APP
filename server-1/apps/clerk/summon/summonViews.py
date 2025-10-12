@@ -23,6 +23,48 @@ from apps.pagination import StandardResultsPagination
         
 #         return queryset.order_by('sc_code')
 
+
+class LuponCasesView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCasesSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = SummonCase.objects.filter(
+            sc_conciliation_status__isnull=False
+        ).exclude(
+            sc_conciliation_status__exact=''
+        ).select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintcomplainant_set__cpnt__rp_id'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            Prefetch('hearing_schedules'),
+            Prefetch('hearing_schedules__hearing_minutes'),
+            Prefetch('hearing_schedules__remark'),
+            Prefetch('hearing_schedules__remark__supporting_documents')
+        )
+
+        status_filter = self.request.query_params.get('status', '').strip()
+        if status_filter and status_filter.lower() != 'all':
+            queryset = queryset.filter(
+                sc_conciliation_status__iexact=status_filter
+            )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(sc_code__icontains=search_query) |
+                Q(comp_id__comp_incident_type__icontains=search_query) |
+                Q(comp_id__comp_location__icontains=search_query) |
+                Q(comp_id__comp_allegation__icontains=search_query) |
+                Q(comp_id__complaintcomplainant__cpnt__cpnt_name__icontains=search_query) |
+                Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('sc_code')
+
 class SummonCasesView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCasesSerializer

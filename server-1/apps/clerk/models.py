@@ -169,7 +169,7 @@ class SummonTimeAvailability(models.Model):
         db_table = 'summon_time_availability'
         managed = False
 
-# ====================== MIGHT DELETE THIS LATER ============================
+# ====================== MIGHT DELETE THESE LATER ============================
 
 class ServiceChargeRequest(models.Model):
     sr_id = models.CharField(primary_key=True, max_length = 200)

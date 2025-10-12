@@ -16,6 +16,9 @@ urlpatterns = [
     path('update-hearing-schedule/<str:hs_id>/', UpdateHearingScheduleView.as_view(), name='hearing-sched-update'),
     path('remark/', RemarkView.as_view(), name='remark-create'),
     path('remark-supp-docs/', RemarkSuppDocCreateView.as_view(), name='remark-supp-doc-create'),
+    
+    # Lupon
+    path('lupon-case-list/', LuponCasesView.as_view(), name='lupon-case-list'),
 
     # Summon date and time
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),
