@@ -212,7 +212,7 @@ function SummonCases(){
                             {summonCases.map((item: SummonCaseList) => (
                                 <Link 
                                     key={item.sc_id}
-                                    to='/view-case'  
+                                    to='/view-mediation-details'  
                                     state={{ 
                                         sc_id: item.sc_id, 
                                         incident_type: item.incident_type,

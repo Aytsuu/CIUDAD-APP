@@ -1,5 +1,4 @@
 import CardLayout from "@/components/ui/card/card-layout";
-import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -213,7 +212,7 @@ function LuponCases(){
                             {luponCases.map((item: SummonCaseList) => (
                                 <Link 
                                     key={item.sc_id}
-                                    to='/view-case'  
+                                    to='/view-conciliation-details'  
                                     state={{ 
                                         sc_id: item.sc_id, 
                                         incident_type: item.incident_type,
