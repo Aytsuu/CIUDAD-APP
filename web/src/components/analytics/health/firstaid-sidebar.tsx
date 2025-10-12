@@ -80,8 +80,8 @@ export function FirstAidDistributionSidebar() {
                     itemName: item.name,
                     itemCount: item.count,
                     month: initialMonth,
+                    monthlyrcplist_id: data.monthly_report_id,
                     monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy"),
-                    // You can add any other relevant data here
                   }}
                   >
                     <div key={item.name} className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
