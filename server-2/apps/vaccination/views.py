@@ -61,13 +61,11 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
             'rp_id__per',         
             'trans_id',             
             'trans_id__tradd_id'   
-       
         ).distinct().order_by('-vaccination_count')
         
         # Track if any filter is applied
-       
         search_query = self.request.query_params.get('search', '').strip()
-        if search_query and len(search_query) >= 2:
+        if search_query:
             queryset = apply_patient_search_filter(queryset, search_query)
         
         # Patient type filter
@@ -77,18 +75,60 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         
         return queryset
     
+    def get_counts_by_type(self, search_query=None):
+        """Get total counts for each patient type"""
+        base_queryset = Patient.objects.annotate(
+            vaccination_count=Count(
+                'patient_records__vaccination_records__vaccination_histories',
+                filter=Q(
+                    patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated']
+                ),
+                distinct=True
+            )
+        ).filter(
+            Q(patient_records__patrec_type='Vaccination Record'),
+            Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
+        ).select_related(
+            'rp_id__per',         
+            'trans_id',             
+            'trans_id__tradd_id'   
+        ).distinct()
+        
+        # Apply search filter if provided
+        if search_query:
+            base_queryset = apply_patient_search_filter(base_queryset, search_query)
+        
+        # Get counts for each type
+        all_count = base_queryset.count()
+        resident_count = base_queryset.filter(pat_type='Resident').count()
+        transient_count = base_queryset.filter(pat_type='Transient').count()
+        
+        return {
+            'all': all_count,
+            'resident': resident_count,
+            'transient': transient_count
+        }
     
-   
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         
+        # Get counts by type
+        search_query = self.request.query_params.get('search', '').strip()
+        counts_by_type = self.get_counts_by_type(search_query)
+        
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            response = self.get_paginated_response(serializer.data)
+            # Add counts to response
+            response.data['counts_by_type'] = counts_by_type
+            return response
         
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            'results': serializer.data,
+            'counts_by_type': counts_by_type
+        })
 
 # Fixed version of your TobeAdministeredVaccinationView
 class TobeAdministeredVaccinationView(generics.ListAPIView):

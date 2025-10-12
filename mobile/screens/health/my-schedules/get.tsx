@@ -102,7 +102,38 @@ export const getAllTransientAddresses = async () => {
 }
 
 
+export interface AllAppointmentsFilters {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  search?: string;
+  time_frame?: string;
+  type?: string; // 'all', 'follow-up', 'medical', 'prenatal'
+}
 
+export const getAllAppointments = async (filters: AllAppointmentsFilters = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    if(filters.page) params.append('page', filters.page.toString());
+    if(filters.page_size) params.append('page_size', filters.page_size.toString());
+    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
+    if(filters.search) params.append('search', filters.search);
+    if(filters.time_frame) params.append('time_frame', filters.time_frame);
+    if(filters.type && filters.type !== 'all') params.append('type', filters.type);
+
+    const queryString = params.toString();
+    const url = queryString 
+      ? `patientrecords/all-appointments/?${queryString}` 
+      : "patientrecords/all-appointments/";
+
+    const res = await api2.get(url);
+    return res.data || {count: 0, next: null, previous: null, results: []};
+  } catch (error) {
+    console.error("Error fetching all appointments:", error);
+    return {count: 0, next: null, previous: null, results: []};
+  }
+}
 
 
 

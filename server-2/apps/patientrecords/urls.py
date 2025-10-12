@@ -84,6 +84,6 @@ urlpatterns = [
     path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
     path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
     path('parent-children/<str:pat_id>/', MyChildrenSimpleAPIView.as_view(), name='parent-children-simple'),
-
+    path('all-appointments/', AllAppointmentsView.as_view(), name='all-appointments'),
     # path('patient-by-resident/<str:rp_id>/', get_patient_by_resident_id, name='patient-by-resident-id'),
 ]

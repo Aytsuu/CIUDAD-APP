@@ -322,9 +322,9 @@ export default function InvMedicalConRecords() {
 
           {/* Search Bar */}
           <View className="flex-row items-center space-x-2 mb-4">
-            <View className="flex-1 flex-row items-center px-2 border border-gray-300 bg-gray-50 rounded-lg">
+            <View className="flex-1 p-2 flex-row items-center  border border-gray-300 bg-gray-50 rounded-lg">
               <Search size={20} color="#6B7280" />
-              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by date, diagnosis, or findings..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={handleSearchChange} />
+              <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={handleSearchChange} />
             </View>
           </View>
 

@@ -226,7 +226,7 @@ export default function IndividualVaccinationRecords() {
             </View>
           </View>
           {isVaccinationRecordsLoading || isSearching ? (
-            <View className="flex-1 items-center justify-center py-8">
+            <View className="flex-1 items-center justify-center  py-8 ">
               <View className="items-center justify-center">
                 <RefreshCw size={32} color="#3B82F6" className="animate-spin" />
                 <Text className="text-gray-600 mt-2">{isSearching ? "Searching records..." : "Loading vaccination records..."}</Text>
@@ -242,7 +242,7 @@ export default function IndividualVaccinationRecords() {
                 renderItem={({ item }) => <VaccinationRecordCard record={item} />}
                 ListFooterComponent={
                   isVaccinationFetching ? (
-                    <View className="py-4 items-center">
+                    <View className="py-4 items-center ">
                       <RefreshCw size={20} color="#3B82F6" className="animate-spin" />
                       <Text className="text-gray-600 text-sm mt-1">Loading more records...</Text>
                     </View>

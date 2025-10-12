@@ -4,7 +4,7 @@ import { Search,AlertCircle,Calendar,User,FileText,ChevronLeft,MapPin,RefreshCw}
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
-import { useAllFollowUpVisits } from "../../my-schedules/fetch"
+import { useAllAppointments } from "../../my-schedules/fetch"
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
 
@@ -25,6 +25,7 @@ type ScheduleRecord = {
   sitio: string
   type: "Transient" | "Resident"
   patrecType: string
+  appoint_type: string
 }
 
 type FilterType = "All" | "Pending" | "Completed" | "Missed" | "Cancelled"
@@ -195,8 +196,17 @@ const AppointmentCard: React.FC<{
             <Text className="text-sm text-gray-600">
               {appointment.type}
             </Text>
+            
           </View>
+          
         </View>
+
+        <View className="flex-row items-center">
+            <Text className="text-sm text-gray-600">
+              {appointment.appoint_type}
+            </Text>
+            
+          </View>
       </View>
     </TouchableOpacity>
   )
@@ -211,10 +221,12 @@ export default function AdminAppointmentsScreen() {
   const appointmentsPerPage = 1000
 
   // Fetch data using the API hook
-  const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
-    page: 1,
-    page_size: appointmentsPerPage,
-  })
+const { data: paginatedData, isLoading, error, refetch } = useAllAppointments({
+  page: 1,
+  page_size: appointmentsPerPage,
+  status: 'all', // or filter by status
+  type: 'all',   // or filter by type: 'follow-up', 'medical', 'prenatal'
+})
 
   // Utility functions
   const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
@@ -231,82 +243,84 @@ export default function AdminAppointmentsScreen() {
 
   // Transform API data to match ScheduleRecord type
   const appointments = useMemo(() => {
-    if (!paginatedData?.results) {
-      return []
-    }
+  if (!paginatedData?.results) {
+    return []
+  }
 
-    const transformed = paginatedData.results
-      .map((visit: any) => {
-        try {
-          const patientDetails = visit.patient_details
-          if (!patientDetails) {
-            return null
-          }
-
-          const patientInfo = patientDetails.personal_info || {}
-          const address = patientDetails.address || {}
-
-          const calculateAge = (dob: string) => {
-            if (!dob) {
-              return { age: 0, ageTime: "yrs" }
-            }
-            try {
-              const birthDate = new Date(dob)
-              const today = new Date()
-              let age = today.getFullYear() - birthDate.getFullYear()
-              const monthDiff = today.getMonth() - birthDate.getMonth()
-
-              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--
-              }
-              return { age: Math.max(0, age), ageTime: "yrs" }
-            } catch (e) {
-              return { age: 0, ageTime: "yrs" }
-            }
-          }
-
-          const ageInfo = calculateAge(patientInfo.per_dob)
-
-          const formatDate = (dateStr: string) => {
-            if (!dateStr) {
-              return new Date().toISOString().split("T")[0]
-            }
-            try {
-              return new Date(dateStr).toISOString().split("T")[0]
-            } catch (e) {
-              return dateStr
-            }
-          }
-
-          const record: ScheduleRecord = {
-            id: visit.followv_id || visit.id || 0,
-            patient: {
-              firstName: patientInfo.per_fname || "Unknown",
-              lastName: patientInfo.per_lname || "Unknown",
-              middleName: patientInfo.per_mname || "",
-              gender: patientInfo.per_sex || "Unknown",
-              age: ageInfo.age,
-              ageTime: ageInfo.ageTime,
-              patientId: patientDetails.pat_id || patientInfo.pat_id || "",
-            },
-            scheduledDate: formatDate(visit.followv_date || visit.date),
-            purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-            status: (visit.followv_status || visit.status || "Pending").charAt(0).toUpperCase() +
-              (visit.followv_status || visit.status || "Pending").slice(1) as "Pending" | "Completed" | "Missed" | "Cancelled",
-            sitio: address.add_sitio || address.location || "Unknown",
-            type: patientDetails.pat_type === "Transient" ? "Transient" : "Resident",
-            patrecType: patientDetails.patrec_type || "Unknown",
-          }
-
-          return record
-        } catch (error) {
+  const transformed = paginatedData.results
+    .map((appointment: any) => {
+      try {
+        const patientDetails = appointment.patient_details
+        if (!patientDetails) {
           return null
         }
-      })
-      .filter(Boolean)
 
-    return transformed
-  }, [paginatedData])
+        const patientInfo = patientDetails.personal_info || {}
+        const address = patientDetails.address || {}
+
+        const calculateAge = (dob: string) => {
+          if (!dob) {
+            return { age: 0, ageTime: "yrs" }
+          }
+          try {
+            const birthDate = new Date(dob)
+            const today = new Date()
+            let age = today.getFullYear() - birthDate.getFullYear()
+            const monthDiff = today.getMonth() - birthDate.getMonth()
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--
+            }
+            return { age: Math.max(0, age), ageTime: "yrs" }
+          } catch (e) {
+            return { age: 0, ageTime: "yrs" }
+          }
+        }
+
+        const ageInfo = calculateAge(patientInfo.per_dob)
+
+        const formatDate = (dateStr: string) => {
+          if (!dateStr) {
+            return new Date().toISOString().split("T")[0]
+          }
+          try {
+            return new Date(dateStr).toISOString().split("T")[0]
+          } catch (e) {
+            return dateStr
+          }
+        }
+
+        const record: ScheduleRecord = {
+          id: appointment.id,
+          patient: {
+            firstName: patientInfo.per_fname || "Unknown",
+            lastName: patientInfo.per_lname || "Unknown",
+            middleName: patientInfo.per_mname || "",
+            gender: patientInfo.per_sex || "Unknown",
+            age: ageInfo.age,
+            ageTime: ageInfo.ageTime,
+            patientId: patientDetails.pat_id || "",
+          },
+          scheduledDate: formatDate(appointment.scheduled_date),
+          purpose: appointment.purpose || "Appointment",
+          status: (appointment.status || "Pending").charAt(0).toUpperCase() +
+            (appointment.status || "Pending").slice(1) as "Pending" | "Completed" | "Missed" | "Cancelled",
+          sitio: address.add_sitio || address.location || "Unknown",
+          type: patientDetails.pat_type === "Transient" ? "Transient" : "Resident",
+          patrecType: appointment.type === 'prenatal' ? 'Prenatal' : 
+                     appointment.type === 'medical-consultation' ? 'Consultation' : 'Follow-up',
+        }
+
+        return record
+      } catch (error) {
+        console.error("Error transforming appointment:", error, appointment)
+        return null
+      }
+    })
+    .filter(Boolean)
+
+  return transformed
+}, [paginatedData])
 
   // Filter appointments based on active tab and search query
   const filteredAppointments = useMemo(() => {
