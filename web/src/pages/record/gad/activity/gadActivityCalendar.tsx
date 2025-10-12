@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAnnualDevPlansByYear } from "../annual_development_plan/queries/annualDevPlanFetchQueries";
@@ -16,23 +16,33 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
   if (!Array.isArray(annualDevPlans)) {
     return [];
   }
-  return annualDevPlans
-    .filter((plan: any) => Boolean(plan?.dev_mandated) || devIdsWithProposals.has(plan.dev_id))
-    .map((plan: any) => ({
-      id: plan.dev_id,
-      title: plan.dev_client,
-      date: plan.dev_date,
-      time: "09:00", // Default time since plans don't have specific times
-      place: "Municipal Office", // Default place
-      description: plan.dev_issue,
-      project: plan.dev_project,
-      activity: plan.dev_activity,
-      indicator: plan.dev_indicator,
-      responsible_person: plan.dev_res_person,
-      staff: plan.staff,
-      total: plan.total,
-      type: "annual_development_plan"
-    }));
+  
+  
+  const filteredPlans = annualDevPlans.filter((plan: any) => {
+    const isMandated = Boolean(plan?.dev_mandated);
+    const hasProposal = devIdsWithProposals.has(plan.dev_id);
+    const shouldInclude = isMandated || hasProposal;
+    
+    
+    return shouldInclude;
+  });
+  
+  
+  return filteredPlans.map((plan: any) => ({
+    id: plan.dev_id,
+    title: plan.dev_client,
+    date: plan.dev_date,
+    time: "09:00", // Default time since plans don't have specific times
+    place: "Municipal Office", // Default place
+    description: plan.dev_issue,
+    project: plan.dev_project,
+    activity: plan.dev_activity,
+    indicator: plan.dev_indicator,
+    responsible_person: plan.dev_res_person,
+    staff: plan.staff,
+    total: plan.total,
+    type: "annual_development_plan"
+  }));
 };
 
 const createDevIdsWithProposals = (projectProposals: any[], resolutions: any[]) => {
@@ -154,6 +164,35 @@ const formatDate = (date: string) => {
   });
 };
 
+// Helper function to convert day name to actual date for current week
+const getDateForDayOfWeek = (dayName: string) => {
+  const today = new Date();
+  const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  const dayMap: { [key: string]: number } = {
+    'Sunday': 0,
+    'Monday': 1,
+    'Tuesday': 2,
+    'Wednesday': 3,
+    'Thursday': 4,
+    'Friday': 5,
+    'Saturday': 6
+  };
+  
+  const targetDay = dayMap[dayName];
+  if (targetDay === undefined) {
+    // If day name is not recognized, use today's date
+    return today.toISOString().split('T')[0];
+  }
+  
+  // Calculate the date for the target day of this week
+  const daysUntilTarget = (targetDay - currentDay + 7) % 7;
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + daysUntilTarget);
+  
+  return targetDate.toISOString().split('T')[0];
+};
+
 // Column definitions and constants moved from constants directory
 const annualDevPlanColumns = [
   { accessorKey: "title", header: "GAD Mandate" },
@@ -253,10 +292,14 @@ const getCalendarSources = (
   },
   {
     name: "Waste Collection",
-    data: safeWasteCollectionData,
+    data: safeWasteCollectionData.map(item => ({
+      ...item,
+      // Convert day name to a proper date for this week
+      wc_date: getDateForDayOfWeek(item.wc_day)
+    })),
     columns: wasteColColumns,
     titleAccessor: "sitio_name",
-    dateAccessor: "wc_day",
+    dateAccessor: "wc_date",
     timeAccessor: "wc_time",
     defaultColor: "#10b981", // emerald
   }
@@ -275,11 +318,30 @@ const legendItems = [
 
 function GADActivityPage() {
   const { showLoading, hideLoading } = useLoading();
-  const [isLoading] = useState(false);
   
 
-  const currentYear = new Date().getFullYear();
-  const { data: annualDevPlans = [], isLoading: isAnnualDevPlansLoading } = useGetAnnualDevPlansByYear(currentYear);
+  // Fetch plans for multiple years (2024, 2025, 2026, 2027, 2028, 2029) to ensure 2024 is included
+  const yearsToFetch = [2024, 2025, 2026, 2027, 2028, 2029];
+  
+  const { data: year1Plans = [], isLoading: isYear1Loading } = useGetAnnualDevPlansByYear(yearsToFetch[0]);
+  const { data: year2Plans = [], isLoading: isYear2Loading } = useGetAnnualDevPlansByYear(yearsToFetch[1]);
+  const { data: year3Plans = [], isLoading: isYear3Loading } = useGetAnnualDevPlansByYear(yearsToFetch[2]);
+  const { data: year4Plans = [], isLoading: isYear4Loading } = useGetAnnualDevPlansByYear(yearsToFetch[3]);
+  const { data: year5Plans = [], isLoading: isYear5Loading } = useGetAnnualDevPlansByYear(yearsToFetch[4]);
+  const { data: year6Plans = [], isLoading: isYear6Loading } = useGetAnnualDevPlansByYear(yearsToFetch[5]);
+  
+  // Safely handle array responses - some APIs return objects with results property
+  const safeYear1Plans = Array.isArray(year1Plans) ? year1Plans : year1Plans?.results || [];
+  const safeYear2Plans = Array.isArray(year2Plans) ? year2Plans : year2Plans?.results || [];
+  const safeYear3Plans = Array.isArray(year3Plans) ? year3Plans : year3Plans?.results || [];
+  const safeYear4Plans = Array.isArray(year4Plans) ? year4Plans : year4Plans?.results || [];
+  const safeYear5Plans = Array.isArray(year5Plans) ? year5Plans : year5Plans?.results || [];
+  const safeYear6Plans = Array.isArray(year6Plans) ? year6Plans : year6Plans?.results || [];
+  
+  // Combine plans from all years
+  const annualDevPlans = [...safeYear1Plans, ...safeYear2Plans, ...safeYear3Plans, ...safeYear4Plans, ...safeYear5Plans, ...safeYear6Plans];
+  const isAnnualDevPlansLoading = isYear1Loading || isYear2Loading || isYear3Loading || isYear4Loading || isYear5Loading || isYear6Loading;
+  
   
   // Fetch project proposals and resolutions to filter annual dev plans
   const { data: projectProposals = [], isLoading: isProjectProposalsLoading } = useGetProjectProposals();
@@ -323,10 +385,10 @@ function GADActivityPage() {
     filterWasteEvents(wasteEventData),
     calendarEvents,
     hotspotData,
-    wasteCollectionData
+    Array.isArray(wasteCollectionData) ? wasteCollectionData : wasteCollectionData?.results || []
   );
 
-  if (isLoading || isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
+  if (isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">

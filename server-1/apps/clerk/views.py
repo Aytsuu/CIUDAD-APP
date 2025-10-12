@@ -157,12 +157,12 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
             )
 
         # Status filter - matching web version
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(cr_req_status=status_filter)
 
         # Payment status filter - matching web version
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(cr_req_payment_status=payment_status)
 
@@ -256,7 +256,7 @@ class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
         queryset = NonResidentCertificateRequest.objects.select_related('pr_id').all()
         
         # Search functionality
-        search = self.request.query_params.get('search', None)
+        search = self.request.GET.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(nrc_id__icontains=search) |
@@ -268,12 +268,12 @@ class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
             )
         
         # Status filter
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(nrc_req_status=status_filter)
         
         # Payment status filter
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(nrc_req_payment_status=payment_status)
         
@@ -720,12 +720,12 @@ class BusinessPermitListView(ActivityLogMixin, generics.ListCreateAPIView):
             )
 
         # Status filter - matching web version
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(req_status=status_filter)
 
         # Payment status filter - matching web version
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(req_payment_status=payment_status)
 
@@ -774,7 +774,7 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
         queryset = BusinessPermitRequest.objects.select_related('bus_id').all()
         
         # Search functionality
-        search = self.request.query_params.get('search', None)
+        search = self.request.GET.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(bpr_id__icontains=search) |
@@ -786,12 +786,12 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
             )
 
         # Status filter
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(req_status=status_filter)
 
         # Payment status filter
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(req_payment_status=payment_status)
 
@@ -1075,7 +1075,7 @@ class PersonalClearancesView(generics.ListAPIView):
         ).all()
 
         # Search functionality
-        search = self.request.query_params.get('search', None)
+        search = self.request.GET.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(cr_id__icontains=search) |
@@ -1087,12 +1087,12 @@ class PersonalClearancesView(generics.ListAPIView):
             )
 
         # Status filter
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(cr_req_status=status_filter)
 
         # Payment status filter
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(cr_req_payment_status=payment_status)
 
@@ -1362,6 +1362,10 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
     def get_queryset(self):
         # Get data directly from ServiceChargePaymentRequest table
         from .models import ServiceChargePaymentRequest
+        from datetime import timedelta
+        
+        # Check for and auto-decline overdue charges before returning data
+        self._auto_decline_overdue_charges()
         
         queryset = ServiceChargePaymentRequest.objects.filter(
             pay_sr_type='Summon'
@@ -1385,6 +1389,38 @@ class ServiceChargeTreasurerListView(generics.ListAPIView):
             ).distinct()
 
         return queryset.order_by('-pay_date_req')
+    
+    def _auto_decline_overdue_charges(self):
+        """
+        Automatically decline unpaid service charges that are 7 days overdue
+        This method is called every time the service charges are fetched
+        """
+        try:
+            from .models import ServiceChargePaymentRequest
+            from datetime import timedelta
+            
+            # Calculate the cutoff date (7 days ago)
+            cutoff_date = timezone.now() - timedelta(days=7)
+            
+            # Find overdue unpaid charges
+            overdue_charges = ServiceChargePaymentRequest.objects.filter(
+                pay_status='Unpaid',
+                pay_date_req__lt=cutoff_date,
+                pay_sr_type='Summon'
+            )
+            
+            if overdue_charges.exists():
+                # Update all overdue charges to declined
+                updated_count = overdue_charges.update(
+                    pay_status='Declined',
+                    pay_date_paid=timezone.now()
+                )
+                
+                if updated_count > 0:
+                    logger.info(f'Auto-declined {updated_count} overdue service charges via API call')
+                    
+        except Exception as e:
+            logger.error(f'Error in auto_decline_overdue_charges: {str(e)}')
 
 
 # ---------------------- Business Permit Files ----------------------

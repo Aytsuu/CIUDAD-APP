@@ -15,7 +15,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { DocumentViewer } from "./components/DocumentViewer";
 import { useLoading } from "@/context/LoadingContext";
 
-
 const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
         header: ({ column }) => (

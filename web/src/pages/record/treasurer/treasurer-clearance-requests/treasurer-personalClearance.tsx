@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban } from 'lucide-react';
+import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban, Clock, CheckCircle } from 'lucide-react';
 import { useState, useEffect } from "react";
 import PersonalClearanceForm from "./treasurer-personalClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
@@ -552,27 +552,29 @@ function PersonalClearance() {
                              <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-300">
                                  <button
                                      onClick={() => setActiveTab("unpaid")}
-                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "unpaid"
                                              ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
+                                     <Clock size={14} />
                                      Unpaid
                                  </button>
                                  <button
                                      onClick={() => setActiveTab("paid")}
-                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "paid"
                                              ? "bg-[#eaffea] text-[#15803d] border-[#b6e7c3] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                      }`}
                                  >
+                                     <CheckCircle size={14} />
                                      Paid
                                  </button>
                                  <button
                                      onClick={() => setActiveTab("declined")}
-                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-1 ${
+                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                          activeTab === "declined"
                                              ? "bg-[#f3f3f3] text-[#6b7280] border-[#e5e7eb] shadow-sm"
                                              : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
