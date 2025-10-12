@@ -14,7 +14,7 @@ export default () => {
       showExitButton={false}
       headerBetweenAction={<Text className="text-[13px]">Inbox</Text>}
     >
-      <View className="flex-1">
+      <View className="flex-1 px-6">
         {/* Announcement Card */}
         <TouchableOpacity
           onPress={() => router.push("/(announcement)")}
@@ -24,7 +24,7 @@ export default () => {
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
               <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center mr-3">
-                <Megaphone className="text-blue-600" size={20} />
+                <Megaphone className="text-primaryBlue" size={20} />
               </View>
 
               <View className="flex-1">

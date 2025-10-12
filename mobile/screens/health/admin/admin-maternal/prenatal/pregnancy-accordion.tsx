@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { View, TouchableOpacity } from "react-native"
 import { Calendar, CheckCircle2, Eye, HeartHandshake } from "lucide-react-native"
+import { router } from "expo-router"
 
 import { Text } from "@/components/ui/text"
 import { Card } from "@/components/ui/card"
@@ -206,7 +207,30 @@ export function PregnancyAccordion({
                             
                             </View>
                             <View className="flex-row gap-2 mb-3 justify-end">
-                                <TouchableOpacity className="flex-row items-center bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg">
+                                <TouchableOpacity 
+                                    className="flex-row items-center bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg"
+                                    onPress={() => {
+                                        if (record.recordType === "Postpartum Care") {
+                                            // Navigate to postpartum screen with postpartum record ID
+                                            console.log("To postpartum with pprId:", record.id)
+                                            router.push({
+                                                pathname: "/(health)/maternal/postpartum",
+                                                params: { 
+                                                    pprId: record.id 
+                                                }
+                                            })
+                                        } else if (record.recordType === "Prenatal") {
+                                            // Navigate to prenatal screen with prenatal form ID
+                                            console.log("To prenatal with pfId:", record.id)
+                                            router.push({
+                                                pathname: "/(health)/maternal/prenatal",
+                                                params: { 
+                                                    pfId: record.id 
+                                                }
+                                            })
+                                        }
+                                    }}
+                                >
                                     <Eye size={14} color="#374151" />
                                     <Text className="ml-1 text-sm text-gray-700">View</Text>
                                 </TouchableOpacity>

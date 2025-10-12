@@ -4,9 +4,14 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import MaternalTab from "./tabs";
 import MaternalAllRecords from "./maternal-all-records";
 import MaternalAppointmentsMain from "./appointments/maternal-appointments";
+import { usePrenatalAppointmentRequest } from "../queries/maternalFetchQueries";
 
 export default function MaternalMain() {
    const [selectedTab, setSelectedTab] = useState("records");
+
+   // Fetch appointment requests to get pending count
+   const { data: appointmentRequests } = usePrenatalAppointmentRequest()
+   const pendingCount = appointmentRequests?.status_counts?.pending || 0
 
    const handleTabChange = (tab: string) => {
       setSelectedTab(tab);
@@ -17,7 +22,7 @@ export default function MaternalMain() {
          <div className="w-full h-full flex flex-col bg-white p-4">
             {/* tabs */}
             <div className="w-full">
-               <MaternalTab onTabChange={handleTabChange} />
+               <MaternalTab onTabChange={handleTabChange} pendingCount={pendingCount} />
             </div>
 
             {/* content */}

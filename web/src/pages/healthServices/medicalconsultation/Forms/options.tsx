@@ -11,11 +11,11 @@ export const maritalStatusOptions = [
   ];
   
 export const ttStatusOptions = [
-    { id: "T1", name: "T1" },
-    { id: "T2", name: "T2" },
-    { id: "T3", name: "T3" },
-    { id: "T4", name: "T4" },
-    { id: "T5", name: "T5" }
+    { id: "TT1", name: "TT1" },
+    { id: "TT2", name: "TT2" },
+    { id: "TT3", name: "TT3" },
+    { id: "TT4", name: "TT4" },
+    { id: "TT5", name: "TT5" }
   ];
   
 export const contraceptiveOptions = [

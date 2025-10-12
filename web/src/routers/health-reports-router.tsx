@@ -42,6 +42,10 @@ import AntigenInventoryReportsTabs from "@/pages/healthServices/reports/inventor
 
 import MonthlyNewChildrenRecords from "@/pages/healthServices/reports/newchildren-list-report/monthly";
 import MonthlyNewChildrenRecordsDetails from "@/pages/healthServices/reports/newchildren-list-report/records";
+
+import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/main"
+import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
+
 export const healthreports_router = [
   // {
   //   path: "/bhw-monthly-reports",
@@ -186,5 +190,15 @@ export const healthreports_router = [
   {
     path: "/monthly-new-children-records/details",
     element: <MonthlyNewChildrenRecordsDetails />
+  },
+
+  // ------FHIS
+  {
+    path: "/reports/fhis-monthly-records"
+    , element: <FHSISMonthlyRecords />
+  },
+  {
+    path: "/reports/fhis-monthly-records/details",
+    element: <MultiStepFormFHIS />
   }
 ];

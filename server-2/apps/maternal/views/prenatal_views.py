@@ -44,6 +44,7 @@ class PrenatalAppointmentRequestCreateListView(generics.CreateAPIView):
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class PrenatalAppointmentRequestView(generics.ListAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
     queryset = PrenatalAppointmentRequest.objects.all()
@@ -113,9 +114,56 @@ class PrenatalAppointmentRequestView(generics.ListAPIView):
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+# prenatal appointment cancellation view
+class PrenatalAppointmentCancellationView(generics.UpdateAPIView):
+    serializer_class = PrenatalAppointmentCancellationSerializer
+    queryset = PrenatalAppointmentRequest.objects.all()
+    lookup_field = 'par_id'
+
+    def update(self, request, *args, **kwargs):
+        par_id = kwargs.get('par_id')
+        logger.info(f"Attempting to cancel prenatal appointment with ID: {par_id}")
+
+        try:
+            appointment = self.get_object()
+
+            if appointment.status in ['cancelled', 'completed', 'rejected']:
+                logger.warning(f"Cannot cancel appointment with ID {par_id} as it is already {appointment.status}")
+                return Response({
+                    'error': f'Cannot cancel an appointment that is already {appointment.status}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update the appointment status to 'cancelled' and set the cancelled_at date and reason
+            appointment.status = 'cancelled'
+            appointment.cancelled_at = request.data.get('cancelled_at')
+            appointment.reason = request.data.get('reason', '')  # Get reason from request
+            appointment.save()
+
+            serializer = self.get_serializer(appointment)
+            logger.info(f"Appointment with ID {par_id} cancelled successfully with reason: {appointment.reason}")
+
+            return Response({
+                'message': 'Prenatal appointment cancelled successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error cancelling prenatal appointment with ID {par_id}: {str(e)}")
+            return Response({
+                'error': 'An error occurred while cancelling the appointment',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
     serializer_class = PrenatalRequestAppointmentSerializer
     queryset = PrenatalAppointmentRequest.objects.all()
+
+    def get_queryset(self):
+        """Optimize query with select_related to fetch related personal info"""
+        return PrenatalAppointmentRequest.objects.select_related(
+            'rp_id__per'  # Fetch ResidentProfile and Personal in one query
+        ).all()
 
     def list(self, request, *args, **kwargs):
         """Handle list with proper error handling for no requests"""
@@ -140,9 +188,28 @@ class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
                     'status_counts': status_counts
                 }, status=status.HTTP_200_OK)
 
-            # Manual serialization to handle date fields properly
+            # Manual serialization to include personal info
             requests_data = []
             for appointment in queryset:
+                # Get personal info through rp_id -> per relationship
+                personal_info = None
+                if appointment.rp_id and appointment.rp_id.per:
+                    per = appointment.rp_id.per
+                    personal_info = {
+                        'per_id': per.per_id,
+                        'per_fname': per.per_fname,
+                        'per_mname': per.per_mname,
+                        'per_lname': per.per_lname,
+                        'per_suffix': per.per_suffix,
+                        'per_dob': per.per_dob.strftime('%Y-%m-%d') if per.per_dob else None,
+                        'per_sex': per.per_sex,
+                        'per_status': per.per_status,
+                        'per_contact': per.per_contact,
+                        'per_religion': per.per_religion,
+                        'per_edAttainment': per.per_edAttainment,
+                        'per_disability': per.per_disability,
+                    }
+                
                 appointment_data = {
                     'par_id': appointment.par_id,
                     'requested_at': appointment.requested_at.strftime('%Y-%m-%d') if appointment.requested_at else None,
@@ -156,6 +223,7 @@ class PrenatalAppointmentRequestViewAll(generics.ListAPIView):
                     'status': appointment.status,
                     'rp_id': appointment.rp_id.rp_id if appointment.rp_id else None,
                     'pat_id': appointment.pat_id.pat_id if appointment.pat_id else None,
+                    'personal_info': personal_info,
                 }
                 requests_data.append(appointment_data)
             

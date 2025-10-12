@@ -422,7 +422,7 @@ export default function PatientsRecord() {
               <DataTable columns={columns} data={transformedPatients} />
             )}
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <div className="bg-white border flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows

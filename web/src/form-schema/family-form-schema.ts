@@ -115,6 +115,7 @@ export const motherHealthInfo = z.object({
   immunizationStatus: z.string().optional(),
   method: z.array(z.string()).optional(), 
   source: z.string().optional(),
+  lmpDate: z.string().optional(),
 });
 
 export const environmentalFormSchema = z.object({

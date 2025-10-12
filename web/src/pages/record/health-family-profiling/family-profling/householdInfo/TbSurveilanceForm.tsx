@@ -333,10 +333,10 @@ export default function TbSurveilanceForm({
               name={`${prefix}.new.tbSurveilanceSchema.tbStatus`} 
               label="TB Status"
               options={[
-                { id: "Positive", name: "Positive" },
-                { id: "Negative", name: "Negative" },
-                { id: "Under Treatment", name: "Under Treatment" },
-                { id: "Treatment Completed", name: "Treatment Completed" },
+                { id: "TREATMENT ONGOING", name: "Treatment Ongoing" },
+                { id: "COMPLETED", name: "Completed" },
+                { id: "NOT COMPLETED", name: "Not Completed" },
+
               ]}
             />
            

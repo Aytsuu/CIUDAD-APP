@@ -32,6 +32,7 @@ import {
   getSurveyIdentificationByFamily,
   getSurveyIdentificationFormData,
   getSurveyIdentificationDataByHousehold,
+  fetchIllnesses,
 } from "../restful-api/profilingGetAPI";
 
 // ================ FAMILY HEALTH PROFILING ================ (Status: New)
@@ -366,5 +367,16 @@ export const useSurveyIdentificationDataByHousehold = (hhId: string | null) => {
     queryFn: () => getSurveyIdentificationDataByHousehold(hhId!),
     enabled: !!hhId,
     staleTime: 5000,
+  })
+}
+// ================ ILLNESSES ================ (Status: New)
+export const useIllnessesList = () => {
+  return useQuery({
+    queryKey: ['illnessesList'],
+    queryFn: fetchIllnesses,
+    select: (data) => ({
+      data: data?.illnesses || []
+    }),
+    staleTime: 300000, // 5 minutes - illnesses don't change often
   })
 }

@@ -136,7 +136,7 @@ class MonthlyOPTSummaryDetailedReport(generics.ListAPIView):
     STATUS_CATEGORIES = {
         "WFA": ["N", "UW", "SUW", "OW"],
         "HFA": ["N", "ST", "SST", "T"],
-        "WFH": ["N", "W", "SW", "OW"]
+         "WFH": ["N", "W", "SW", "OW", "OB"]  # Added OB
     }
 
     def get_queryset(self):
