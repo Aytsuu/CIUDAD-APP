@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, Search, ReceiptText } from 'lucide-react';
+import { X, Search, ReceiptText, Clock, CheckCircle, Ban } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
@@ -246,32 +246,35 @@ function ServiceCharge(){
                             <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-300">
                                 <button
                                     onClick={() => setActiveTab("pending")}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                         activeTab === "pending"
                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
                                             : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                     }`}
                                 >
+                                    <Clock size={14} />
                                     Pending
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("paid")}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                         activeTab === "paid"
                                             ? "bg-[#e6f7e6] text-[#16a34a] border-[#d1f2d1] shadow-sm"
                                             : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                     }`}
                                 >
+                                    <CheckCircle size={14} />
                                     Paid
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("declined")}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors border flex items-center gap-2 ${
                                         activeTab === "declined"
                                             ? "bg-[#ffeaea] text-[#b91c1c] border-[#f3dada] shadow-sm"
                                             : "text-gray-600 hover:text-gray-900 border-transparent hover:bg-gray-200"
                                     }`}
                                 >
+                                    <Ban size={14} />
                                     Declined
                                 </button>
                             </div>

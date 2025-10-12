@@ -49,10 +49,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const [isLoading, setIsLoading] = useState(true);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [_isPdfLoading, setIsPdfLoading] = useState(true);
   const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
   const [selectedResolution, setSelectedResolution] = useState<any>(null);
-  const [_isResolutionLoading, setIsResolutionLoading] = useState(true);
 
   // Fetch GAD Project Proposals and Resolutions to determine links per mandate
   const { data: proposals = [] } = useGetProjectProposals();
@@ -92,7 +90,8 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
 
   const resolutionByGprId = useMemo(() => {
     const map = new Map<number, any>();
-    (resolutions || []).forEach((r: any) => {
+    const resolutionsList = Array.isArray(resolutions) ? resolutions : resolutions?.results || [];
+    resolutionsList.forEach((r: any) => {
       if (r && typeof r.gpr_id === 'number' && validGprIds.has(r.gpr_id)) {
         map.set(r.gpr_id, r);
       }
@@ -107,7 +106,9 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
   const fetchPlans = async () => {
     try {
       const data = await getAnnualDevPlansByYear(year);
-      setPlans(data);
+      // Handle both array and paginated response formats
+      const plansData = Array.isArray(data) ? data : data?.results || [];
+      setPlans(plansData);
     } catch (error) {
       console.error("Error fetching plans:", error);
       showErrorToast("Failed to fetch annual development plans");
@@ -172,7 +173,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
         <div className="flex items-center justify-center h-64">
           <Spinner size="lg" />
         </div>
-      ) : plans.length === 0 ? (
+      ) : !Array.isArray(plans) || plans.length === 0 ? (
         <div className="flex items-center justify-center h-64">
           <p>No development plans found for this year.</p>
         </div>
@@ -207,7 +208,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               </tr>
             </thead>
             <tbody>
-              {plans.map((plan) => (
+              {Array.isArray(plans) && plans.map((plan) => (
                 <tr key={plan.dev_id}>
                   <td className="px-3 py-2 align-top border border-gray-200">
                     <div>
@@ -432,7 +433,7 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
               <tr className="bg-gray-50 font-semibold">
                 <td className="px-3 py-2 text-right border border-gray-200" colSpan={6}>Total</td>
                 <td className="px-3 py-2 border border-gray-200">
-                  ₱{plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2)}
+                  ₱{Array.isArray(plans) ? plans.reduce((sum, plan) => sum + parseFloat(plan.total || '0'), 0).toFixed(2) : '0.00'}
                 </td>
                 <td className="px-3 py-2 border border-gray-200"></td>
                 <td className="px-3 py-2 border border-gray-200"></td>
@@ -472,8 +473,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
             {selectedProject && (
               <ViewProjectProposal
                 project={detailedProject || selectedProject}
-                onLoad={() => setIsPdfLoading(false)}
-                onError={() => setIsPdfLoading(false)}
               />
             )}
           </div>
@@ -501,8 +500,6 @@ export default function AnnualDevelopmentPlanView({ year, onBack }: AnnualDevelo
             {selectedResolution && (
               <ViewResolution
                 resolution={selectedResolution}
-                onLoad={() => setIsResolutionLoading(false)}
-                onError={() => setIsResolutionLoading(false)}
               />
             )}
           </div>

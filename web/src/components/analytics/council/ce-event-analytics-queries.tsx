@@ -13,12 +13,6 @@ export type CouncilEvent = {
   staff_id: string | null;
 };
 
-export interface StaffAttendanceRanking {
-  atn_name: string;
-  atn_designation: string;
-  attendance_count: number;
-}
-
 export const getCouncilEvents = async () => {
   try {
     const res = await api.get('council/event-meeting/', {
@@ -40,28 +34,5 @@ export const useGetCouncilEvents = () => {
       throw error;
     }),
     staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
-
-export const getStaffAttendanceRanking = async (): Promise<StaffAttendanceRanking[]> => {
-  try {
-    const res = await api.get('council/staff-attendance-ranking/');
-    const data = res.data?.data ?? res.data ?? [];
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error("API Error fetching staff attendance ranking:", err);
-    return [];
-  }
-};
-
-export const useGetStaffAttendanceRanking = () => {
-  return useQuery<StaffAttendanceRanking[], Error>({
-    queryKey: ["staffAttendanceRanking"],
-    queryFn: async () => {
-      const data = await getStaffAttendanceRanking();
-      console.log("Fetched ranking data:", data);
-      return data;
-    },
-    staleTime: 1000 * 60 * 5,
   });
 };

@@ -682,13 +682,25 @@ class ServiceChargeTreasurerListSerializer(serializers.ModelSerializer):
 
     def get_payment_request(self, obj):
         try:
+            # Calculate due date (7 days from request date)
+            from datetime import timedelta
+            due_date = obj.pay_date_req + timedelta(days=7) if obj.pay_date_req else None
+            
+            # Check if overdue
+            from django.utils import timezone
+            is_overdue = False
+            if due_date and obj.pay_status == 'Unpaid':
+                is_overdue = timezone.now() > due_date
+            
             # Return payment request data directly
             return {
                 'spay_id': obj.pay_id,
                 'spay_status': obj.pay_status,
                 'spay_due_date': obj.pay_due_date,
                 'spay_date_paid': obj.pay_date_paid,
-                'pr_id': obj.pr_id.pr_id if obj.pr_id else None
+                'pr_id': obj.pr_id.pr_id if obj.pr_id else None,
+                'calculated_due_date': due_date,
+                'is_overdue': is_overdue
             }
         except Exception:
             return None
