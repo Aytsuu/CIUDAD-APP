@@ -10,7 +10,8 @@ import { useAcceptRequest, useAcceptNonResRequest } from "./queries/personalClea
 import { useAddPersonalReceipt } from "../Receipts/queries/receipts-insertQueries";
 import { useMemo } from "react";
 import { useAuth } from '@/context/AuthContext';
-import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate } from "./queries/serviceChargeQueries";
+import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServiceChargeRate, useUpdateServiceChargeStatus } from "./queries/serviceChargeQueries";
+import { Loader2 } from "lucide-react";
 
 // function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
    function ReceiptForm({
@@ -27,7 +28,8 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
     onComplete,
     onRequestDiscount,
     discountedAmount,
-    discountReason
+    discountReason,
+    spay_id
 }: {
     id: string;
     purpose: string | undefined;
@@ -43,6 +45,7 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
     onRequestDiscount: () => void;
     discountedAmount?: string;
     discountReason?: string;
+    spay_id?: number;
 }){
    const { user } = useAuth();
     const staffId = user?.staff?.staff_id;
@@ -52,6 +55,7 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
     const { data: scRate } = useServiceChargeRate();
     const { mutateAsync: createScPayReq } = useCreateServiceChargePaymentRequest();
     const { mutateAsync: acceptSummon } = useAcceptSummonRequest();
+    const { mutateAsync: updateServiceChargeStatus } = useUpdateServiceChargeStatus();
 
    console.log('stat', pay_status, 'staffId', staffId)
    // Derive resident status defensively: certificate flow (nat_col === 'Certificate') with null voter_id should be resident (paid)
@@ -87,15 +91,38 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
             console.log('[Receipt onSubmit] context:', { id, is_resident, effectiveIsResident, voter_id, isFree, nat_col, staffId, purpose, rate });
             
             if (nat_col === 'Service Charge'){
-                const prId = scRate?.pr_id;
-                const amount = scRate?.pr_rate != null ? Number(scRate.pr_rate) : undefined;
-                if (prId == null){
-                    console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
+                // Check if payment request already exists
+                if (spay_id) {
+                    console.log('[Receipt onSubmit] Payment request already exists with spay_id:', spay_id);
+                    // Just update the existing payment request status to Paid
+                    console.log('[Receipt onSubmit] updating service charge status to Paid');
+                    await updateServiceChargeStatus({ 
+                        sr_id: id, 
+                        data: { 
+                            status: "Paid" 
+                        } 
+                    });
                 } else {
-                    console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
-                    await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
-                    // Auto-mark summon as Accepted
-                    await acceptSummon(id.toString());
+                    // Create new payment request only if it doesn't exist
+                    const prId = scRate?.pr_id;
+                    const amount = scRate?.pr_rate != null ? Number(scRate.pr_rate) : undefined;
+                    if (prId == null){
+                        console.warn('[Receipt onSubmit] Service Charge rate not found; skipping payment request creation');
+                    } else {
+                        console.log('[Receipt onSubmit] creating ServiceChargePaymentRequest with', { sr_id: id, pr_id: prId, spay_amount: amount });
+                        await createScPayReq({ sr_id: id.toString(), pr_id: prId, spay_amount: amount });
+                        // Auto-mark summon as Accepted
+                        await acceptSummon(id.toString());
+                        
+                        // Update status to "Paid" - backend will generate sr_code automatically
+                        console.log('[Receipt onSubmit] updating service charge status to Paid');
+                        await updateServiceChargeStatus({ 
+                            sr_id: id, 
+                            data: { 
+                                status: "Paid" 
+                            } 
+                        });
+                    }
                 }
             } else {
                 // Certificate flow
@@ -115,11 +142,26 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
                 inv_amount: parseFloat(values.inv_amount || (discountedAmount || rate || '0')),
                 inv_nat_of_collection: values.inv_nat_of_collection,
                 inv_serial_num: values.inv_serial_num || 'N/A',
-                cr_id: nat_col !== 'Service Charge' && effectiveIsResident ? id.toString() : undefined,
-                nrc_id: nat_col !== 'Service Charge' && !effectiveIsResident ? Number(id) : undefined,
             };
+            
+            // Add the appropriate ID field based on the type
+            if (nat_col === 'Service Charge') {
+                if (!spay_id) {
+                    console.warn('[Receipt onSubmit] Cannot create invoice for service charge without spay_id');
+                    return;
+                }
+                payload.spay_id = spay_id;
+                console.log('[Receipt onSubmit] Added spay_id to payload:', spay_id);
+            } else if (effectiveIsResident) {
+                payload.cr_id = id.toString();
+            } else {
+                payload.nrc_id = Number(id);
+            }
+            
+            // Clean up undefined/empty values
             Object.keys(payload).forEach((k) => (payload[k] === undefined || payload[k] === '') && delete payload[k]);
-            console.log('[Receipt onSubmit] creating invoice with payload:', payload);
+            console.log('[Receipt onSubmit] Final payload before sending:', payload);
+            console.log('[Receipt onSubmit] spay_id value:', spay_id, 'type:', typeof spay_id);
             await receipt(payload as any);
 
             console.log('Receipt mutation called successfully');
@@ -205,7 +247,7 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
                     
                     {/* Discount Button (hidden for free/voter requests) */}
                     {!isFree && !isAlreadyPaid && (
-                        <Button 
+                        <Button
                             type="button"
                             variant="outline"
                             disabled={nat_col === "Service Charge"}
@@ -218,7 +260,7 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
                             onClick={onRequestDiscount}
                             >
                             Apply Discount
-                        </Button>
+                            </Button>
                     )}
                 </div>
 
@@ -301,13 +343,18 @@ import { useAcceptSummonRequest, useCreateServiceChargePaymentRequest, useServic
                     disabled={isPending || isAcceptPending || isAcceptNonResPending || isAlreadyPaid || (!is_resident && isAmountInsufficient())}
                     className={isAlreadyPaid ? "opacity-50 cursor-not-allowed" : ""}
                 >
-                    {isPending || isAcceptPending || isAcceptNonResPending
-                    ? "Processing..." 
-                    : isAlreadyPaid 
-                        ? "Cannot Proceed" 
-                        : is_resident 
-                        ? "Accept" 
-                        : "Create Receipt"}
+                    {isPending || isAcceptPending || isAcceptNonResPending ? (
+                        <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Processing...</span>
+                        </div>
+                    ) : isAlreadyPaid ? (
+                        "Cannot Proceed"
+                    ) : is_resident ? (
+                        "Accept"
+                    ) : (
+                        "Create Receipt"
+                    )}
                 </Button>
                 </div>
             </form>

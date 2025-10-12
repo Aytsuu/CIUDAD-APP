@@ -1,20 +1,21 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { X, FileInput, Search } from 'lucide-react';
+import { X, Search, Loader2 } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Button } from "@/components/ui/button/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+// import ReceiptForm from "./treasurer-create-receipt-form";
 import { useServiceChargeRate, useTreasurerServiceCharges } from "./queries/serviceChargeQueries";
 import type { ServiceCharge } from "./restful-api/serviceChargeGetAPI";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useQueryClient } from "@tanstack/react-query";
 
 
-export const columns: ColumnDef<ServiceCharge>[] = [
-    { accessorKey: "caseNo",
+// Create columns function that accepts the handlePaymentSuccess callback
+const createColumns = (): ColumnDef<ServiceCharge>[] => [
+    { accessorKey: "sr_id",
         header: ({ column }) => (
               <div
                 className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -25,15 +26,12 @@ export const columns: ColumnDef<ServiceCharge>[] = [
               </div>
         ),
         cell: ({row}) => (
-            <div className="">{row.getValue("caseNo")}</div>
+            <div className="">{row.getValue("sr_id")}</div>
         )
     },
-    {accessorKey: "name", header: "Name"},
-    {accessorKey: "address1", header: "Address"},
-    {accessorKey: "respondent", header: "Respondent Name"},
-    {accessorKey: "address2", header: "Address"},
-    {accessorKey: "reason", header: "Reason"},
-    {accessorKey: "reqDate",
+    {accessorKey: "complainant_name", header: "Complainant Name"},
+    {accessorKey: "sr_type", header: "Type"},
+    {accessorKey: "sr_req_date",
         header: ({ column }) => (
               <div
                 className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -43,10 +41,19 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                 <ArrowUpDown size={14}/>
               </div>
         ),
-        cell: ({row}) => (
-            <div className="">{row.getValue("reqDate")}</div>
-        )
+        cell: ({row}) => {
+            const dateValue = row.getValue("sr_req_date") as string;
+            const formattedDate = dateValue ? new Date(dateValue).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : '';
+            return (
+                <div className="">{formattedDate}</div>
+            );
+        }
     },
+    {accessorKey: "sr_req_status", header: "Request Status"},
     { accessorKey: "action", 
         header: "Action",
         cell: ({  }) =>(
@@ -61,16 +68,29 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                     mainContent={
                         (() => {
                           const sc = row.original as ServiceCharge;
+                          const receiptData = {
+                            id: String(sc.sr_id),
+                            purpose: sc.sr_type || "Service Charge",
+                            rate: (window as any).__serviceChargeRate || "0",
+                            requester: sc.complainant_name || "Unknown",
+                            pay_status: sc.payment_request?.spay_status || "Unpaid",
+                            nat_col: "Service Charge",
+                            is_resident: false,
+                            spay_id: sc.payment_request?.spay_id
+                          };
+                          console.log("ReceiptForm data being passed:", receiptData);
+                          console.log("Full ServiceCharge object:", sc);
                           return (
                             <ReceiptForm
-                              id={String(sc.sr_id)}
-                              purpose={sc.reason}
-                              rate={(window as any).__serviceChargeRate || "0"}
-                              requester={sc.name}
-                              pay_status={"Unpaid"}
-                              nat_col={"Service Charge"}
-                              is_resident={false}
-                              onSuccess={() => {}}
+                              id={receiptData.id}
+                              purpose={receiptData.purpose}
+                              rate={receiptData.rate}
+                              requester={receiptData.requester}
+                              pay_status={receiptData.pay_status}
+                              nat_col={receiptData.nat_col}
+                              is_resident={receiptData.is_resident}
+                              spay_id={receiptData.spay_id}
+                              onSuccess={handlePaymentSuccess}
                             />
                           );
                         })()
@@ -91,10 +111,15 @@ export const columns: ColumnDef<ServiceCharge>[] = [
         )},
 ];
 
-
 function ServiceCharge(){
-    const { data = [], isLoading } = useTreasurerServiceCharges();
+    const queryClient = useQueryClient();
+    const { data = [], isLoading, refetch } = useTreasurerServiceCharges();
     const { data: rateObj } = useServiceChargeRate();
+    
+    // Console log the fetched data
+    console.log("Fetched ServiceCharge data:", data);
+    console.log("Fetched rate data:", rateObj);
+    
     // Expose to receipt dialog content renderer (string value)
     (window as any).__serviceChargeRate = rateObj?.pr_rate != null ? String(rateObj.pr_rate) : "0";
     const [currentPage, setCurrentPage] = useState(1);
@@ -102,24 +127,36 @@ function ServiceCharge(){
     const [activeTab, setActiveTab] = useState<"pending" | "declined">("pending");
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Function to refresh data after successful payment
+    const handlePaymentSuccess = async () => {
+        console.log("Payment successful, refreshing data...");
+        // Invalidate and refetch the service charges data
+        await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
+        await refetch();
+        console.log("Data refreshed successfully");
+    };
+
+    
+    const columns = useMemo(() => createColumns(), [handlePaymentSuccess]);
+
     // Filter data based on active tab
     const filteredData = useMemo(() => {
-        const base = (activeTab === "pending")
-            ? (data || []).filter(item => item.status !== "Declined")
-            : (data || []).filter(item => item.status === "Declined");
+        // Show all fetched rows (already filtered by sr_code=null on server/client)
+        const base = data || [];
 
         const q = searchQuery.trim().toLowerCase();
         if (!q) return base;
 
         return base.filter((item) => {
             const fields: Array<unknown> = [
-                (item as any).caseNo,
-                (item as any).name,
-                (item as any).address1,
-                (item as any).address2,
-                (item as any).respondent,
-                (item as any).reason,
-                (item as any).reqDate,
+                item.sr_code,
+                item.sr_id,
+                item.sr_type,
+                item.sr_req_date,
+                item.sr_req_status,
+                item.sr_case_status,
+                item.comp_id,
+                item.complainant_name,
             ];
             return fields.some((v) => String(v ?? "").toLowerCase().includes(q));
         });
@@ -206,28 +243,17 @@ function ServiceCharge(){
                                 </button>
                             </div>
                         </div>
-
-                        <div>
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                <FileInput />
-                                Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                            </DropdownMenuContent>
-                            </DropdownMenu>                    
-                        </div>
                     </div>
 
                     {isLoading ? (
-                        <div className="p-6 text-sm text-darkGray">Loading service charges...</div>
+                        <div className="p-6 flex items-center justify-center">
+                            <div className="flex items-center gap-3 text-darkGray">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span className="text-sm">Loading service charges...</span>
+                            </div>
+                        </div>
                     ) : paginatedData.length === 0 ? (
-                        <div className="p-6 text-sm text-darkGray">
+                        <div className="p-6 text-sm text-darkGray text-center">
                             {activeTab === "pending" ? "No pending service charge records found." : "No declined service charge records found."}
                         </div>
                     ) : (
