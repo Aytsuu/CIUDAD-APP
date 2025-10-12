@@ -86,7 +86,7 @@ export function MedicineDistributionSidebar() {
                       // Pass the same state structure as your monthly records
                       medicineName: medicine.name,
                       itemCount: medicine.count,
-                      monthlyrcplist_id: data.monthlyrcplist_id,
+                      monthlyrcplist_id: data.monthly_report_id,
                       month: initialMonth,
                       monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy")
                       // You can add any other relevant data here
