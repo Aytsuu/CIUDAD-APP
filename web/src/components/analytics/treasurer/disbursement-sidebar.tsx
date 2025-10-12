@@ -1,75 +1,56 @@
 import { Card } from "@/components/ui/card";
-import {
-  ChevronRight,
-  FileText,
-  Calendar,
-  Users,
-  MapPin,
-} from "lucide-react";
+import { ChevronRight, Calendar, User, Banknote, Building } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
-import { useGetProjectProposals } from "@/pages/record/gad/project-proposal/queries/projprop-fetchqueries";
-import { ProjectProposal } from "@/pages/record/gad/project-proposal/projprop-types";
+import { useGetDisbursementVouchers } from "@/pages/record/treasurer/treasurer-disbursement/queries/incDisb-fetchqueries";
+import { DisbursementVoucher } from "@/pages/record/treasurer/treasurer-disbursement/incDisb-types";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 
-export const ProjectProposalSidebar = () => {
+export const DisbursementSidebar = () => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear().toString();
-  const { data: proposalsData, isLoading } = useGetProjectProposals(
+  const { data: disbursementsData, isLoading } = useGetDisbursementVouchers(
     1,
     10,
     "",
-    false,
-    currentYear
+    currentYear,
+    false
   );
-  const [_selectedProposal, setSelectedProposal] =
-    useState<ProjectProposal | null>(null);
+  const [_selectedDisbursement, setSelectedDisbursement] =
+    useState<DisbursementVoucher | null>(null);
 
-    // Sort proposals by ID
-    const proposals = proposalsData?.results 
-    ? [...proposalsData.results].sort((a, b) => 
-        (b.gprId || 0) - (a.gprId || 0)
-        )
+  // Sort disbursements by ID (highest ID first, assuming higher ID = newer)
+  const disbursements = disbursementsData?.results
+    ? [...disbursementsData.results].sort(
+        (a, b) => (b.dis_num || 0) - (a.dis_num || 0)
+      )
     : [];
 
   const truncateText = (text: string, maxLength: number = 40) => {
-    if (!text) return "No title";
+    if (!text) return "No payee";
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
   };
 
-  // Calculate total participants
-  const getTotalParticipants = (
-    participants: { category: string; count: string | number }[] = []
-  ) => {
-    return participants.reduce((total, participant) => {
-      const count =
-        typeof participant.count === "string"
-          ? parseInt(participant.count) || 0
-          : participant.count || 0;
-      return total + count;
-    }, 0);
-  };
-
-  // Calculate total budget
-  const getTotalBudget = (budgetItems: any[] = []) => {
-    return budgetItems.reduce((total, item) => {
+  // Calculate total amount from particulars
+  const getTotalAmount = (particulars: any[] = []) => {
+    return particulars.reduce((total, particular) => {
       const amount =
-        typeof item.amount === "string"
-          ? parseFloat(item.amount) || 0
-          : item.amount || 0;
+        typeof particular.amount === "string"
+          ? parseFloat(particular.amount) || 0
+          : particular.amount || 0;
       return total + amount;
     }, 0);
   };
 
-  const handleProposalClick = (proposal: ProjectProposal) => {
-    setSelectedProposal(proposal);
+  const handleDisbursementClick = (disbursement: DisbursementVoucher) => {
+    setSelectedDisbursement(disbursement);
   };
 
   const handleViewAll = () => {
-    navigate("/gad-project-proposal");
+    navigate("/treasurer-disbursement");
   };
 
   return (
@@ -87,31 +68,28 @@ export const ProjectProposalSidebar = () => {
               </div>
             ))}
           </div>
-        ) : proposals && proposals.length > 0 ? (
+        ) : disbursements && disbursements.length > 0 ? (
           <div className="p-4 space-y-3">
-            {proposals.slice(0, 1).map((proposal) => {
-              const totalParticipants = getTotalParticipants(
-                proposal.participants
-              );
-              const totalBudget = getTotalBudget(proposal.budgetItems);
+            {disbursements.slice(0, 1).map((disbursement) => {
+              const totalAmount = getTotalAmount(disbursement.dis_particulars);
 
               return (
                 <DialogLayout
-                  key={proposal.gprId}
+                  key={disbursement.dis_num}
                   trigger={
                     <Card
                       className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
-                      onClick={() => handleProposalClick(proposal)}
+                      onClick={() => handleDisbursementClick(disbursement)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <FileText className="w-4 h-4 text-blue-600" />
+                            <Banknote className="w-4 h-4 text-blue-600" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-2">
                               <h3 className="text-sm font-medium text-gray-700 line-clamp-2">
-                                {truncateText(proposal.projectTitle, 50)}
+                                {truncateText(disbursement.dis_payee, 50)}
                               </h3>
                             </div>
 
@@ -120,9 +98,9 @@ export const ProjectProposalSidebar = () => {
                               <div className="flex items-center gap-2">
                                 <Calendar className="w-3 h-3" />
                                 <span>
-                                  {proposal.date
+                                  {disbursement.dis_date
                                     ? new Date(
-                                        proposal.date
+                                        disbursement.dis_date
                                       ).toLocaleDateString("en-US", {
                                         year: "numeric",
                                         month: "long",
@@ -132,28 +110,28 @@ export const ProjectProposalSidebar = () => {
                                 </span>
                               </div>
 
-                              {/* Participants */}
-                              {totalParticipants > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <Users className="w-3 h-3" />
-                                  <span>{totalParticipants} participants</span>
-                                </div>
-                              )}
+                              {/* Payee */}
+                              <div className="flex items-center gap-2">
+                                <User className="w-3 h-3" />
+                                <span className="truncate">
+                                  {disbursement.dis_payee}
+                                </span>
+                              </div>
 
-                              {/* Venue */}
-                              {proposal.venue && (
+                              {/* Bank */}
+                              {disbursement.dis_bank && (
                                 <div className="flex items-center gap-2">
-                                  <MapPin className="w-3 h-3" />
+                                  <Building className="w-3 h-3" />
                                   <span className="truncate">
-                                    {proposal.venue}
+                                    {disbursement.dis_bank}
                                   </span>
                                 </div>
                               )}
 
-                              {/* Budget */}
-                              {totalBudget > 0 && (
-                                <div className="flex items-center gap-2 text-blue-600 font-medium">
-                                  <span>₱{totalBudget.toLocaleString()}</span>
+                              {/* Amount */}
+                              {totalAmount > 0 && (
+                                <div className="flex items-center gap-2 text-blue-500 font-medium">
+                                  <span>₱{totalAmount.toLocaleString()}</span>
                                 </div>
                               )}
                             </div>
@@ -164,7 +142,7 @@ export const ProjectProposalSidebar = () => {
                       </div>
                     </Card>
                   }
-                  title="Project Proposal Details"
+                  title="Disbursement Voucher Details"
                   description={""}
                   mainContent={
                     <div className="space-y-6">
@@ -172,10 +150,10 @@ export const ProjectProposalSidebar = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <Label className="text-sm font-medium text-gray-700">
-                            Project Title
+                            Payee
                           </Label>
                           <p className="text-sm text-gray-900 mt-1">
-                            {proposal.projectTitle}
+                            {disbursement.dis_payee}
                           </p>
                         </div>
                         <div>
@@ -183,75 +161,71 @@ export const ProjectProposalSidebar = () => {
                             Date
                           </Label>
                           <p className="text-sm text-gray-900 mt-1">
-                            {proposal.date
-                              ? new Date(proposal.date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  }
-                                )
+                            {disbursement.dis_date
+                              ? new Date(
+                                  disbursement.dis_date
+                                ).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })
                               : "Not specified"}
                           </p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Venue */}
-                        {proposal.venue && (
+                        {/* Bank */}
+                        {disbursement.dis_bank && (
                           <div>
                             <Label className="text-sm font-medium text-gray-700">
-                              Venue
+                              Bank
                             </Label>
                             <p className="text-sm text-gray-900 mt-1">
-                              {proposal.venue}
+                              {disbursement.dis_bank}
                             </p>
                           </div>
                         )}
 
-                        {/* Budget Information */}
-                        {totalBudget > 0 && (
+                        {/* Check Number */}
+                        {disbursement.dis_checknum && (
                           <div>
                             <Label className="text-sm font-medium text-gray-700">
-                              Total Budget
+                              Check Number
                             </Label>
-                            <p className="text-2xl font-bold text-blue-600 mt-1">
-                              ₱{totalBudget.toLocaleString()}
+                            <p className="text-sm text-gray-900 mt-1">
+                              {disbursement.dis_checknum}
                             </p>
                           </div>
                         )}
                       </div>
 
-                      {/* Participants */}
-                      {proposal.participants &&
-                        proposal.participants.length > 0 && (
+                      {/* Particulars */}
+                      {disbursement.dis_particulars &&
+                        disbursement.dis_particulars.length > 0 && (
                           <div>
                             <Label className="text-sm font-medium text-gray-700">
-                              Participants
+                              Particulars
                             </Label>
                             <div className="mt-2 space-y-2">
-                              {proposal.participants.map(
-                                (participant, index) => (
+                              {disbursement.dis_particulars.map(
+                                (particular, index) => (
                                   <div
                                     key={index}
-                                    className="flex justify-between text-sm"
+                                    className="flex-col items-center justify-between gap-2 text-sm border-b pb-2 last:border-b-0"
                                   >
-                                    <span className="text-gray-600">
-                                      {participant.category}
+                                    <span className="text-gray-600 flex-1 pr-4">
+                                      {particular.forPayment || "Payment"} -
                                     </span>
-                                    <span className="font-medium">
-                                      {participant.count}
+                                    <span className="font-medium text-blue-500 whitespace-nowrap">
+                                      ₱
+                                      {(
+                                        particular.amount || 0
+                                      ).toLocaleString()}
                                     </span>
                                   </div>
                                 )
                               )}
-                              <div className="border-t pt-2 mt-2">
-                                <div className="flex justify-between font-semibold">
-                                  <span>Total Participants</span>
-                                  <span>{totalParticipants}</span>
-                                </div>
-                              </div>
                             </div>
                           </div>
                         )}
@@ -264,27 +238,27 @@ export const ProjectProposalSidebar = () => {
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-blue-500" />
+              <Banknote className="w-8 h-8 text-blue-500" />
             </div>
             <h3 className="text-sm font-medium text-blue-700 mb-1">
-              No project proposals
+              No disbursement vouchers
             </h3>
             <p className="text-sm text-gray-500">
-              Project proposals will appear here once created
+              Disbursement vouchers will appear here once created
             </p>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      {proposals && proposals.length > 0 && (
+      {disbursements && disbursements.length > 0 && (
         <div className="p-4 border-t border-gray-100">
           <Button
             variant={"link"}
             onClick={handleViewAll}
-            className="text-blue-600 hover:text-blue-700"
+            className="text-blue-500 hover:text-blue-700"
           >
-            View All Proposals
+            View All Disbursements
           </Button>
         </div>
       )}

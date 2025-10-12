@@ -17,6 +17,7 @@ import { useDonationSectionCards } from "@/components/analytics/donation/donatio
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report"; 
 import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar"; 
 import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
+import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -107,6 +108,12 @@ export const getItemsConfig = (
       },
       {
         dashboard: "FINANCE",
+        sidebar: [
+          {
+            title: "Recent Disbursement Voucher",
+            element: <DisbursementSidebar />,
+          },
+        ],
       },
       {
         dashboard: "CERTIFICATE & CLEARANCES",
