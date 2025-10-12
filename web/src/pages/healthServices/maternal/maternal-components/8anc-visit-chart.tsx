@@ -111,15 +111,29 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
     let secondTrimester = 0
     let thirdTrimester = 0
 
-    // Process each pregnancy (usually just one active pregnancy)
+    // Process each pregnancy (including all statuses, not just "active")
     pregnanciesArray.forEach((pregnancy) => {
-      // Only process active pregnancies
-      if (pregnancy.status.toLowerCase() !== "active") {
-        return
-      }
-
       const pregnancyStartDate = pregnancy.created_at
       const followUps = pregnancy.follow_up || []
+      const prenatalForms = pregnancy.prenatal_form || []
+
+      // Count only the FIRST prenatal form creation as the initial visit
+      if (prenatalForms.length > 0) {
+        const firstPrenatalForm = prenatalForms[0]
+        const trimester = getFollowUpTrimester(firstPrenatalForm.created_at, pregnancyStartDate)
+        
+        switch (trimester) {
+          case "1-3 months":
+            firstTrimester++
+            break
+          case "4-6 months":
+            secondTrimester++
+            break
+          case "7-9 months":
+            thirdTrimester++
+            break
+        }
+      }
 
       // Count completed follow-ups by trimester
       followUps.forEach((visit) => {

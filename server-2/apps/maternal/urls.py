@@ -8,6 +8,7 @@ from .views.pregnancy_views import *
 
 urlpatterns=[
     # Maternal
+    path('maternal-patients/charts/<str:month>/', MaternalPatientsListView.as_view(), name='maternal-patients-charts'),
     path('maternal-patients/', MaternalPatientListView.as_view(), name='get-maternal-patients'),
 	path('counts/', MaternalCountView.as_view(), name='maternal-count'),
    
@@ -19,7 +20,6 @@ urlpatterns=[
     path('prenatal/appointment/requests/<str:rp_id>/', PrenatalAppointmentRequestView.as_view(), name='prenatal-appointment-requests-detail-list'),
     path('prenatal/appointment/request/<int:par_id>/approve/', PrenatalAppointmentRequestApproveView.as_view(), name='prenatal-appointment-approve'),
     path('prenatal/appointment/request/<int:par_id>/reject/', PrenatalAppointmentRequestRejectView.as_view(), name='prenatal-appointment-reject'),
-    # path('prenatal/appointment/request/<int:par_id>/cancel/', PrenatalAppointmentRequestCancelView.as_view(), name='prenatal-appointment-cancel'),
     # path('prenatal/appointment/request/<int:par_id>/complete/', PrenatalAppointmentRequestCompleteView.as_view(), name='prenatal-appointment-complete'),
     # path('prenatal/appointment/request/<int:par_id>/missed/', PrenatalAppointmentRequestMissedView.as_view(), name='prenatal-appointment-missed'),
 
