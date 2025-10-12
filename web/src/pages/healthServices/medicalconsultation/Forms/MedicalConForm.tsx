@@ -53,7 +53,7 @@ export default function MedicalConsultationForm() {
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const { data: latestVitals, isLoading: isVitalsLoading, error: vitalsError } = useLatestVitals(pat_id);
   const { data: previousMeasurements, isLoading: isMeasurementsLoading, error: measurementsError } = usePreviousBMI(pat_id);
-  const { data: obsHistoryData, isLoading: obsLoading } = usePrenatalPatientObsHistory(pat_id); //obstetric history
+  const { data: obsHistoryData } = usePrenatalPatientObsHistory(pat_id); //obstetric history
   const non_membersubmit = useSubmitMedicalConsultation();
 
   const form = useForm<nonPhilHealthType>({
