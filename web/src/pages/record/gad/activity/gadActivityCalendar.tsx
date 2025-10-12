@@ -164,34 +164,6 @@ const formatDate = (date: string) => {
   });
 };
 
-// Helper function to convert day name to actual date for current week
-const getDateForDayOfWeek = (dayName: string) => {
-  const today = new Date();
-  const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  
-  const dayMap: { [key: string]: number } = {
-    'Sunday': 0,
-    'Monday': 1,
-    'Tuesday': 2,
-    'Wednesday': 3,
-    'Thursday': 4,
-    'Friday': 5,
-    'Saturday': 6
-  };
-  
-  const targetDay = dayMap[dayName];
-  if (targetDay === undefined) {
-    // If day name is not recognized, use today's date
-    return today.toISOString().split('T')[0];
-  }
-  
-  // Calculate the date for the target day of this week
-  const daysUntilTarget = (targetDay - currentDay + 7) % 7;
-  const targetDate = new Date(today);
-  targetDate.setDate(today.getDate() + daysUntilTarget);
-  
-  return targetDate.toISOString().split('T')[0];
-};
 
 // Column definitions and constants moved from constants directory
 const annualDevPlanColumns = [
@@ -243,14 +215,14 @@ const getCalendarSources = (
   wasteEventData: any[],
   calendarEvents: any[],
   hotspotData: any[],
-  // wasteCollectionData: any[]
+  wasteCollectionData: any[]
 ) => {
   // Ensure all data arrays are properly initialized
   const safeTransformedAnnualDevPlans = Array.isArray(transformedAnnualDevPlans) ? transformedAnnualDevPlans : [];
   const safeWasteEventData = Array.isArray(wasteEventData) ? wasteEventData : [];
   const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
   const safeHotspotData = Array.isArray(hotspotData) ? hotspotData : [];
-  // const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
+  const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
 
   return [
   {
@@ -381,7 +353,7 @@ function GADActivityPage() {
     filterWasteEvents(wasteEventData),
     calendarEvents,
     hotspotData,
-    wasteCollectionData
+    Array.isArray(wasteCollectionData) ? wasteCollectionData : wasteCollectionData?.results || []
   );
 
   if (isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
