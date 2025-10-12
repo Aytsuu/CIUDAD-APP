@@ -23,10 +23,7 @@ class CardAnalyticsView(APIView):
   
 class SidebarAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):
-    today = date.today()
-    three_days_ago = today - timedelta(days=3)
     queryset = IncidentReport.objects.all()
-    
     return Response(IRTableSerializer(queryset, many=True).data)
   
 class ChartAnalyticsView(APIView):

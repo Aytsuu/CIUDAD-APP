@@ -127,8 +127,6 @@ export default function PageLayout({
     //   availableHeight -= responsiveFooterHeight
     // }
 
-    console.log(contentHeight, availableHeight)
-
     const scrollable = contentHeight > availableHeight
     setIsScrollable(scrollable)
     setShowScrollArrow(scrollable)

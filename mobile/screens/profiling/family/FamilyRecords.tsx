@@ -17,6 +17,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
 import { UserRound } from "@/lib/icons/UserRound";
 import { LoadingState } from "@/components/ui/loading-state";
+import { capitalize } from "@/helpers/capitalize";
 
 const INITIAL_PAGE_SIZE = 15;
 
@@ -53,12 +54,16 @@ export default function FamilyRecords() {
   }, [searchQuery, searchInputVal]);
 
   React.useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  React.useEffect(() => {
     if (!isLoading && isInitialRender) setIsInitialRender(false);
   }, [isLoading, isInitialRender]);
 
   React.useEffect(() => {
-    if (!isFetching && isRefreshing) setIsRefreshing(false);
-  }, [isFetching, isRefreshing]);
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   // ============ HANDLERS ============
   const handleRefresh = async () => {
@@ -95,7 +100,7 @@ export default function FamilyRecords() {
     const sitio = item.sitio || "N/A";
     const street = item.street || "N/A";
     const building = item.fam_building || "N/A";
-    const isIndigenous = item.fam_indigenous;
+    const isIndigenous = item.fam_indigenous == "YES";
 
     // Parent information
     const mother = item.mother || "N/A";
@@ -121,70 +126,65 @@ export default function FamilyRecords() {
         }}
         activeOpacity={0.7}
       >
-        <Card className="p-4 bg-white border border-gray-100 rounded-xl">
+        <Card className="bg-white border border-gray-100 rounded-xl">
           {/* Header with Family ID and Status */}
-          <View className="flex-row items-center justify-between mb-3">
+          <View className=" p-4 flex-row items-center justify-between mb-3">
             <View className="flex-1">
               <Text
-                className="text-gray-900 font-bold text-lg"
+                className="text-gray-900 font-medium text-md"
                 numberOfLines={1}
               >
                 {item.fam_id}
               </Text>
-              <Text className="text-gray-500 text-sm mt-1">Family Record</Text>
+              <Text className="text-gray-500 text-xs font-medium">
+                {isIndigenous ? "Indigenous" : "Not Indigenous"}
+              </Text>
+
             </View>
 
             <View className="flex-row items-center">
-              {isIndigenous && (
-                <View className="bg-orange-100 px-3 py-1 rounded-full mr-2">
-                  <Text className="text-orange-700 text-xs font-semibold">
-                    Indigenous
-                  </Text>
-                </View>
-              )}
-              <ChevronRight size={20} className="text-gray-400" />
+              <ChevronRight size={20} className="text-primaryBlue" />
             </View>
           </View>
 
           {/* Family Head */}
           {primaryHead !== "N/A" && (
-            <View className="flex-row items-center mb-3 bg-gray-50 p-3 rounded-lg">
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
-                <UserRound size={18} className="text-blue-600" />
-              </View>
+            <View className="mx-4 flex-row items-center mb-3 bg-blue-50 p-3 rounded-lg">
               <View className="flex-1">
                 <Text className="text-gray-500 text-xs font-medium uppercase tracking-wide">
                   Family Head
                 </Text>
                 <Text
-                  className="text-gray-900 font-semibold text-base mt-1"
+                  className="text-gray-700 font-semibold text-sm mt-1"
                   numberOfLines={1}
                 >
-                  {primaryHead}
+                  {capitalize(primaryHead)}
                 </Text>
               </View>
             </View>
           )}
 
           {/* Key Information Row */}
-          <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
+          <View className="p-3 flex-row gap-2 items-center pt-3 border-t border-gray-100">
             {/* Members Count */}
-            <View className="flex-">
-              <Text className="text-gray-500 text-xs">Members</Text>
-              <Text className="text-gray-900 font-semibold text-sm">
-                {memberCount}
-              </Text>
+            <View>
+              <View className="flex-1 bg-blue-50 px-4 rounded-full">
+                <Text className="text-primaryBlue font-semibold text-xs">
+                  {memberCount} {memberCount > 1 ? "Members" : "Member"}
+                </Text>
+              </View>
             </View>
 
             {/* Location */}
-            <View className="flex-1 ml-4">
-              <Text className="text-gray-500 text-xs">Location</Text>
-              <Text
-                className="text-gray-900 font-medium text-sm"
-                numberOfLines={1}
-              >
-                {location}
-              </Text>
+            <View>
+              <View className="flex-1 bg-blue-50 px-4 rounded-full">
+                <Text
+                  className="text-primaryBlue font-medium text-xs"
+                  numberOfLines={1}
+                >
+                  {location}
+                </Text>
+              </View>
             </View>
           </View>
         </Card>

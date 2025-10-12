@@ -159,7 +159,6 @@ export default function AnnouncementCreate() {
         staff,
         ...announcementData
       } = values;
-      console.log(announcementData);
 
       const files = selectedImages.map((file) => ({
         name: file.name,

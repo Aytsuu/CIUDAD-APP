@@ -111,10 +111,9 @@ export default function ResidentRecords() {
             },
           });
         }}
-        className="mb-3"
         activeOpacity={0.7}
       >
-        <Card className="p-4 bg-white shadow-sm border border-gray-100">
+        <View className="p-4 bg-white border-t border-gray-100">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <View className="flex-row items-center mb-2">
@@ -132,18 +131,18 @@ export default function ResidentRecords() {
               </View>
 
               <View className="flex-row items-center mt-2">
-                <View className="bg-gray-100 px-2 py-1 rounded-full mr-2">
-                  <Text className="text-gray-700 text-xs">Age: {item.age}</Text>
+                <View className="bg-blue-50 px-2 py-1 rounded-full mr-2">
+                  <Text className="text-primaryBlue text-xs font-medium">Age: {item.age}</Text>
                 </View>
-                <View className="bg-gray-100 px-2 py-1 rounded-full">
-                  <Text className="text-gray-700 text-xs">{item.sex}</Text>
+                <View className="bg-blue-50 px-2 py-1 rounded-full">
+                  <Text className="text-primaryBlue font-medium text-xs">{item.sex}</Text>
                 </View>
               </View>
             </View>
 
-            <ChevronRight size={20} className="text-gray-400 ml-2" />
+            <ChevronRight size={20} className="text-primaryBlue ml-2" />
           </View>
-        </Card>
+        </View>
       </TouchableOpacity>
     );
   });

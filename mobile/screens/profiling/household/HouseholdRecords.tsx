@@ -125,8 +125,8 @@ export default function HouseholdRecords() {
                   Household {item.hh_id}
                 </Text>
                 <Text className="text-gray-500 text-sm">
-                  {item.total_families}{" "}
-                  {item.total_families === 1 ? "Family" : "Families"}
+                  {item.total_families > 0 ? `${item.total_families} ` : ""}
+                  {item.total_families > 0 ? item.total_families === 1 ? "family" : "families" : "No family registered"}
                 </Text>
               </View>
             </View>
@@ -143,9 +143,8 @@ export default function HouseholdRecords() {
 
           {/* Household Head */}
           <View className="flex-row items-center mb-2">
-            <UsersRound size={16} className="text-gray-400 mr-2" />
-            <Text className="text-gray-600 text-sm font-medium">Head: </Text>
-            <Text className="text-gray-900 text-sm flex-1" numberOfLines={1}>
+            <Text className="text-gray-600 text-sm font-medium">Owner: </Text>
+            <Text className="text-gray-900 text-sm truncate" numberOfLines={1}>
               {item.head || "Not specified"}
             </Text>
           </View>
