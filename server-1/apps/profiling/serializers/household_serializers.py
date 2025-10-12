@@ -83,8 +83,16 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     household.save()
 
     # Perform double query
+    # Convert model instances to IDs for JSON serialization
+    double_query_data = {
+      'hh_nhts': validated_data['hh_nhts'],
+      'add': validated_data['add'].add_id,  # Get the ID from Address instance
+      'rp': validated_data['rp'].rp_id,      # Get the ID from ResidentProfile instance
+      'staff': validated_data['staff'].staff_id  # Get the ID from Staff instance
+    }
+    
     double_queries = PostQueries()
-    response = double_queries.household(validated_data)
+    response = double_queries.household(double_query_data)
     if not response.ok:
       try:
           error_detail = response.json()

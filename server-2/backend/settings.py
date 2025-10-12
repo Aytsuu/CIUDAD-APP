@@ -352,6 +352,7 @@ INSTALLED_APPS = [
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
+    "simple_history",
 ]
 
 # REST_FRAMEWORK = {
@@ -617,6 +618,7 @@ INSTALLED_APPS = [
     'apps.reports',
 ]
 
+SCHEDULER_AUTOSTART = True
 
 
 MIDDLEWARE = [

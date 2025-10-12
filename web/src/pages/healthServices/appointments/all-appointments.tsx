@@ -379,9 +379,9 @@ const handleTimeFrameChange = (timeFrame: string) => {
           </div>
 
           {/* defaulters tracking */}
-          <div className="flex justify-center items-center">
+          {/* <div className="flex justify-center items-center">
             <Button variant="link" className="rounded-none border-b-2 border-blue-500">View Defaulters</Button>
-          </div>
+          </div> */}
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           <div className="flex flex-col md:flex-row gap-4 w-full">

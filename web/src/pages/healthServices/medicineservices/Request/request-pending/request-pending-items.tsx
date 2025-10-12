@@ -314,7 +314,7 @@ export default function MedicineRequestPendingItems() {
             ) : (
               <div className="flex items-center gap-3">
                 <Link
-                  to="/services/medicine/records"
+                  to="/services/medicine/records/individual-records"
                   state={{
                     params: {
                       patientData: patientData,

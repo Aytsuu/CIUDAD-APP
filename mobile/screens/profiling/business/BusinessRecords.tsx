@@ -55,8 +55,6 @@ export default function BusinessRecords() {
   };
 
   const RenderBusinessCard = React.memo(({ item, index }: { item: any; index: number }) => {
-    const businessAddress = `${item.bus_street || ''}, Sitio ${item.sitio || ''}`;
-    
     return (
       <TouchableOpacity
         onPress={() => {
@@ -97,10 +95,10 @@ export default function BusinessRecords() {
                 )}
 
                 {/* Location */}
-                {businessAddress && (
+                {item?.bus_location && (
                   <View className="flex-row items-center">
                     <Text className="text-gray-600 text-sm flex-1" numberOfLines={1}>
-                      {businessAddress}
+                      {item?.bus_location}
                     </Text>
                   </View>
                 )}
@@ -219,6 +217,7 @@ export default function BusinessRecords() {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

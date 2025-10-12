@@ -97,20 +97,20 @@ export const useHealthServicesSectionCards = () => {
     animalBites: (
       <HealthCard 
         title="Animal Bites" 
-        value={healthCardAnalytics?.data?.animalbite_records_count} 
+        value={healthCardAnalytics?.data?.animal_bites_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/animal-bites")
+          navigate("/services/animalbites")
         }}
       />
     ),
     familyPlanning: (
       <HealthCard 
         title="Family Planning" 
-        value={healthCardAnalytics?.data?.familyplanning_records_count} 
+        value={healthCardAnalytics?.data?.family_planning_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/family-planning")
+          navigate("/services/familyplanning")
         }}
       />
     ),

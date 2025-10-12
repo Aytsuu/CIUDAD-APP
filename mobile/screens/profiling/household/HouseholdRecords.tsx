@@ -159,6 +159,7 @@ export default function HouseholdRecords() {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

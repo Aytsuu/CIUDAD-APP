@@ -1,8 +1,6 @@
 import "@/global.css"
 import React from "react"
-import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Dimensions } from "react-native"
-import { useRouter } from "expo-router"
-import { Button } from "@/components/ui/button"
+import { View, Text, TouchableOpacity } from "react-native"
 import _ScreenLayout from "@/screens/_ScreenLayout"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
@@ -105,10 +103,10 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
       return;
     }
 
-    // if(addresses.length === 0) {
-    //   setAddressesError(true);
-    //   return;
-    // }
+    if(addresses.length === 0) {
+      setAddressesError(true);
+      return;
+    }
     
     params?.submit();
   }
@@ -177,7 +175,7 @@ const PersonalInformation = React.memo(({ params } : {params: Record<string, any
           <Text className="text-sm text-gray-600 font-PoppinsRegular">How we can reach you</Text>
         </View>
 
-        <FormInput control={control} label="Contact Number" name={`${params.name}.per_contact`} keyboardType="phone-pad" />
+        <FormInput control={control} label="Contact Number" name={`${params.name}.per_contact`} placeholder="09XX XXX XXXX" keyboardType="phone-pad" />
 
         <View className="mt-4">
           <Text className="text-[14px] font-PoppinsRegular mb-2">Addresses</Text>

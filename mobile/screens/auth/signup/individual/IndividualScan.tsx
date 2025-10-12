@@ -31,12 +31,12 @@ export default function IndividualScan() {
     account: Record<string, any>
   ) => {
     const {email, ...acc} = account;
+    const {per_id, ...new_per} = per;
     try {
       await addRequest(
         { comp: [{
             per: {
-              ...capitalizeAllFields(per),
-              per_id: +per.per_id
+              ...new_per,
             },
             acc: {
               ...acc,

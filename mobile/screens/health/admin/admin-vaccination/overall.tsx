@@ -32,7 +32,7 @@ interface VaccinationRecord {
   province: string;
   pat_type: string;
   address: string;
-  vaccination_count: number;
+  count: number;
   patient_details?: {
     personal_info: {
       per_fname: string;

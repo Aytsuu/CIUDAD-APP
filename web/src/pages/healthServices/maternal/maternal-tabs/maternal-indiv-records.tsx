@@ -21,6 +21,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { PregnancyAccordion } from "../maternal-components/pregnancy-accordion"
 import PregnancyChart from "../maternal-components/pregnancy-chart"
 import PregnancyVisitTracker from "../maternal-components/8anc-visit-chart"
+import { formatDate } from "./appointments/columns"
 
 import { usePregnancyDetails } from "../queries/maternalFetchQueries"
 import { useAddCompletePregnancy, useAddPregnancyLoss } from "../queries/maternalAddQueries"
@@ -198,14 +199,6 @@ export default function MaternalIndivRecords() {
     .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0];
   console.log('Next Follow-up Visit:', nextFollowVisit);
 
-  const dateWords = () => {
-    return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
-
   useEffect(() => {
     if (location.state?.params?.patientData) {
       const patientData = location.state.params.patientData
@@ -277,7 +270,7 @@ export default function MaternalIndivRecords() {
         gestationalFormatted: gestationalFormatted,
         expectedDueDate: pf.pf_edc,
         prenatal_end_date: pregnancy.prenatal_end_date,
-        notes: `Prenatal visit on ${pf.created_at ? pf.created_at.split("T")[0] : "Unknown"}`,
+        notes: `${pf.created_at ? formatDate(pf.created_at) : "Unknown"}`,
       })
       currPregnancyGroup.hasPrenatal = true
       if(pf.pf_edc && !currPregnancyGroup.expectedDueDate) {
@@ -504,7 +497,7 @@ const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
             <div className="p-3 flex justify-between items-center w-full text-blue-700">
               <h3 className="flex items-center font-semibold"><ClockAlert className="mr-2"/> Upcoming follow-up visit</h3>
               <p className="text-sm italic"> 
-                {nextFollowVisit?.followv_description} on <b>{dateWords()}</b>
+                {nextFollowVisit?.followv_description} on <b>{formatDate(nextFollowVisit?.followv_date)}</b>
               </p>
             </div>
           ) : (

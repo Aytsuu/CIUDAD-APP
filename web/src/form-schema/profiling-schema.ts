@@ -78,6 +78,7 @@ export const motherHealthInfo = z.object({
   immunizationStatus: z.string().optional(),
   method: z.array(z.string()).optional(), 
   source: z.string().optional(),
+  lmpDate: z.string().optional(),
 });
 
 const parentInfoSchema = z.object({
@@ -109,6 +110,8 @@ export const dependentSchema = z.object({
   suffix: z.string(),
   dateOfBirth: z.string(),
   sex: z.string(),
+  relationshipToHead: z.string().optional(),
+  perAddDetails: perAddDetails.optional(),
   dependentUnderFiveSchema: dependentUnderFiveSchema.optional(),
 });
 

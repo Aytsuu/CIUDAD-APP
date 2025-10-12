@@ -43,38 +43,30 @@ export const FaceRecognition = React.forwardRef<FaceRecognitionCamHandle, FaceRe
           try {
             const photo = await camera.current.takePhoto();
             const photoUri = `file://${photo?.path}`;
-            const base64Data = await FileSystem.readAsStringAsync(photoUri, {
-              encoding: FileSystem.EncodingType.Base64
-            })
 
             try {
               const values = type == "business" ? 
                         getValues('businessRespondent') : 
                         getValues('personalInfoSchema') as any
-  
-              switch(type) {
-                case 'business':
-                  const busRespondentMatchFace = await postFaceData({
-                    lname: values.br_lname.toUpperCase().trim(),
-                    fname: values.br_fname.toUpperCase().trim(),
-                    ...(values.br_mname != "" && {mname: values.br_mname?.toUpperCase().trim()}),
-                    dob: values.br_dob,
-                    image: `data:image/jpeg;base64,${base64Data}`
-                  });
-  
-                  return busRespondentMatchFace
-                default:
-                  const residentMatchFace = await postFaceData({
-                    lname: values.per_lname.toUpperCase().trim(),
-                    fname: values.per_fname.toUpperCase().trim(),
-                    ...(values.per_mname != "" && {mname: values.per_mname?.toUpperCase().trim()}),
-                    dob: values.per_dob,
-                    image: `data:image/jpeg;base64,${base64Data}`
-                  });
-  
-                  return residentMatchFace
-              }
               
+              const formData = new FormData();
+              formData.append("image", {
+                uri: photoUri,
+                type: "image/jpeg",
+                name: "face_image.jpg",
+              } as any);
+  
+              formData.append('lname', type == "business" ? values.br_lname.toUpperCase().trim() : values.per_lname.toUpperCase().trim())
+              formData.append('fname', type == "business" ? values.br_fname.toUpperCase().trim() : values.per_fname.toUpperCase().trim())
+              formData.append('dob', type == "business" ? values.br_dob.toUpperCase().trim() : values.per_dob.toUpperCase().trim())
+              if(type == "business" && values?.br_mname != "")
+                formData.append('mname', values.br_mname.toUpperCase().trim())
+              else if (values?.per_mname != "")
+                formData.append('mname', values.per_mname.toUpperCase().trim())
+  
+              const result = await postFaceData(formData)
+              return result;
+
             } catch (err) {
               console.log(err)
             }

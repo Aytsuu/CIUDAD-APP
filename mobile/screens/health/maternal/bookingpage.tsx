@@ -19,15 +19,27 @@ interface User {
 
 interface PrenatalAppointmentData {
   requested_at: string;
-  approved_at: string | null;
-  cancelled_at: string | null;
-  completed_at: string | null;
-  rejected_at: string | null;
-  reason: string | null;
   status: string;
   rp_id: string;
   pat_id: string;
+  approved_at?: string | null;
+  cancelled_at?: string | null;
+  completed_at?: string | null;
+  rejected_at?: string | null;
+  reason?: string | null;
 }
+
+// Helper function to calculate age from DOB
+const calculateAge = (dob: string): number => {
+  const birthDate = new Date(dob);
+  const today = new Date('2025-09-28'); // Current date
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 const PrenatalBookingPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -58,7 +70,6 @@ const PrenatalBookingPage: React.FC = () => {
   );
 
   
-
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
@@ -73,7 +84,7 @@ const PrenatalBookingPage: React.FC = () => {
     } else {
       // Fallback to Thursdays if no services are defined
       const dayOfWeek = date.getDay();
-      return dayOfWeek !== 4
+      return dayOfWeek !== 4;
     }
   };
 
@@ -81,8 +92,13 @@ const PrenatalBookingPage: React.FC = () => {
     setShowDatePicker(false);
     if (selected) {
       if (isDateDisabled(selected)) {
-        Alert.alert('Unavailable Date', 'Prenatal appointments are only available on Thursdays. Please select another date.');
-        return; 
+        Alert.alert(
+          'Unavailable Date',
+          availableDays.size > 0
+            ? 'Prenatal appointments are only available on scheduled days.'
+            : 'Prenatal appointments are only available on Thursdays.'
+        );
+        return;
       }
       setSelectedDate(selected);
     }
@@ -163,12 +179,8 @@ const PrenatalBookingPage: React.FC = () => {
 
   const proceedWithAppointment = (patientId: string): void => {
     const payload = {
-      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`, 
-      approved_at: null,
-      cancelled_at: null,
-      completed_at: null,
-      rejected_at: null,
-      reason: null,
+      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`,
+      // confirmed_at: null,
       status: 'pending',
       rp_id: rp_id || '',
       pat_id: patientId,

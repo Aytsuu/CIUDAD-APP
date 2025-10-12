@@ -13,7 +13,7 @@ from .views.inv_medicine_views import MonthlyMedicineRecordsDetailAPIView, Medic
 from .views.counts import ReportsCount
 from .views.monthly_illnesschart import MedicalHistoryMonthlyChart
 from .views.recipeint_report_views import UpdateMonthlyRCPReportDetailView
-
+from .views.fhis_report import FHISMonthlyView  
 
 urlpatterns=[
         path('healthstaff/', HealthStaffListView.as_view(), name='healthstaff-list'),
@@ -60,4 +60,5 @@ urlpatterns=[
         
 
         # path('medicine/records/<str:month>/', MonthlyMedicineRecordsDetailAPIView.as_view(), name='medicine-monthly-records'),
+        path('fhis/monthly/', FHISMonthlyView.as_view(), name='fhis-monthly-report'),
 ]

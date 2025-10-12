@@ -180,7 +180,7 @@ const Overall: React.FC = () => {
               <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
               <div className="text-sm text-darkGray">
                 {p.gender}, {p.age} years old
-                {p.recordCount > 1 && <span className="ml-2 bg-green-100 text-green-800 text-sm font-bold p-1 rounded">{p.recordCount} records</span>}
+                {/* {p.recordCount > 1 && <span className="ml-2 bg-green-100 text-green-800 text-sm font-bold p-1 rounded">{p.recordCount} records</span>} */}
               </div>
             </div>
           </div>
@@ -278,7 +278,7 @@ const Overall: React.FC = () => {
       accessorKey: "norecords",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          No if Records <ArrowUpDown size={15} />
+          No of Records <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
@@ -292,25 +292,26 @@ const Overall: React.FC = () => {
       header: "Action",
       cell: ({ row }) => {
         const p = row.original;
-        const patientData = {
-          pat_id: p.id,
-          pat_type: p.patientType,
-          age: p.age,
-          personal_info: {
-            per_fname: p.fname,
-            per_lname: p.lname,
-            per_sex: p.gender
-          }
-        };
+        
 
         return (
           <ViewButton
             onClick={() => {
-              navigate(`/Animalbite_individual/${p.id}`, {
+              const patientData = {
+                pat_id: p.id,
+                pat_type: p.patientType,
+                age: p.age,
+                personal_info: {
+                  per_fname: p.fname,
+                  per_lname: p.lname,
+                  per_sex: p.gender
+                }
+              };
+
+              navigate("/services/animalbites/records", {
                 state: {
-                  params: {
-                    patientData
-                  }
+                  patientId: p.id,
+                  patientData
                 }
               });
             }}

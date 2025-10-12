@@ -615,17 +615,17 @@ const MultiRecordComparisonPage: React.FC = () => {
                   isBoolean
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.medicalHistory.smoker))}
                 />
-                <FieldRow
+                {/* <FieldRow
                   label="With disability?"
                   values={recordsToDisplay.map(r => r.medicalHistory.disability)}
                   isBoolean
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.medicalHistory.disability))}
-                />
-                <FieldRow
+                /> */}
+                {/* <FieldRow
                   label="Disability Details"
                   values={recordsToDisplay.map(r => r.medicalHistory.disabilityDetails)}
                   hasDifferences={hasDifferences(recordsToDisplay.map(r => r.medicalHistory.disabilityDetails))}
-                />
+                /> */}
               </Section>
 
               {/* Obstetrical History */}

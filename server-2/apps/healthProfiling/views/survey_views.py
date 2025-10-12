@@ -8,7 +8,8 @@ from ..models import SurveyIdentification, Family
 from ..serializers.survey_serializers import (
     SurveyIdentificationSerializer, 
     SurveyIdentificationListSerializer,
-    SurveyIdentificationDetailSerializer
+    SurveyIdentificationDetailSerializer,
+    SurveyIdentificationUpdateSerializer
 )
 import logging
 
@@ -68,11 +69,13 @@ class SurveyIdentificationDetailView(RetrieveAPIView):
 
 class SurveyIdentificationUpdateView(UpdateAPIView):
     """Update a specific survey identification"""
-    serializer_class = SurveyIdentificationSerializer
     lookup_field = 'si_id'
     
     def get_queryset(self):
         return SurveyIdentification.objects.all()
+    
+    def get_serializer_class(self):
+        return SurveyIdentificationUpdateSerializer
     
     def update(self, request, *args, **kwargs):
         try:

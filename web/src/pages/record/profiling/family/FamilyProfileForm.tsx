@@ -16,6 +16,7 @@ import { DependentRecord } from "../ProfilingTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useHouseholdsList, useResidentsList } from "../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const registrationSteps = [
   { label: "Demographic", minProgress: 30, icon: MdGroupWork },
@@ -35,8 +36,9 @@ export default function FamilyProfileForm() {
     []
   );
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 50)
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
-    searchQuery
+    debouncedSearchQuery
   );
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(); 
   const form = useForm<z.infer<typeof familyFormSchema>>({
