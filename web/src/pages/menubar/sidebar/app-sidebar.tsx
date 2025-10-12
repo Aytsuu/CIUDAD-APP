@@ -210,6 +210,14 @@ export function AppSidebar() {
           },
         ]
       : []),
+    ...(featureValidator("conciliation proceedings")
+    ? [
+        {
+          title: "Conciliation Proceedings",
+          url: "/conciliation-proceedings",
+        },
+      ]
+    : []),
     ...(featureValidator("gad")
       ? [
           {

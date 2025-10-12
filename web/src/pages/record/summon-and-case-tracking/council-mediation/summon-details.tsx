@@ -107,7 +107,7 @@ export default function SummonDetails() {
                                 !isThirdMediation // Hide if it's 3rd mediation and closed
 
   // Determine if Resolve button should be shown
-  const shouldShowResolveButton = !isCaseClosed && case_status !== "Waiting for Schedule";
+  const shouldShowResolveButton = !isCaseClosed
 
   const handleResolve = () => resolve(sc_id)
   // const handleEscalate = () => escalate(sc_id)
