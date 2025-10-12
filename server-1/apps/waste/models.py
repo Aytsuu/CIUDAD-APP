@@ -421,7 +421,7 @@ class Pickup_Confirmation(models.Model):
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
         db_column='garb_id',
-        related_name='pickup_confirmations'
+        related_name='pickup_confirmation'
     )
 
     class Meta:

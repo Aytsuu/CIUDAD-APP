@@ -19,6 +19,7 @@ export default () => {
         <Stack.Screen name="resolution/res-create" options={{ headerShown: false }} />
         <Stack.Screen name="resolution/res-edit" options={{ headerShown: false }} />    
 
+        <Stack.Screen name="minutes-of-meeting/mom-main" options={{ headerShown: false }} />    
         <Stack.Screen name="minutes-of-meeting/mom-view" options={{ headerShown: false }} />
         <Stack.Screen name="minutes-of-meeting/mom-create" options={{ headerShown: false }} />        
         <Stack.Screen name="minutes-of-meeting/mom-edit" options={{ headerShown: false }} />            

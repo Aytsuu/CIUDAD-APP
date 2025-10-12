@@ -8,19 +8,26 @@ import { useGetAcceptedDetailsResident } from "./queries/garbagePickupFetchQueri
 import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { Button } from "@/components/ui/button"
 import { useUpdateGarbReqStatusResident } from "./queries/garbagePickupUpdateQueries"
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default function ResidentAcceptedDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
-  const { data: requestDetails, isPending } = useGetAcceptedDetailsResident(garb_id)
+  const { data: requestDetails, isLoading } = useGetAcceptedDetailsResident(garb_id)
   const {mutate: confirm} = useUpdateGarbReqStatusResident(() => {}, true)
   
-  console.log("Request Details:", requestDetails)
-
   const handleConfirmCompletion = (garb_id: any) => {
     confirm(garb_id)
   }
+
+   if (isLoading) {
+        return (
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
+        );
+    }
 
   // Check if we should show the confirmation button
   const showConfirmationButton = 
@@ -37,10 +44,8 @@ export default function ResidentAcceptedDetails() {
       headerBetweenAction={<Text className="text-[13px]">Request Details</Text>}
       showBackButton={false}
       showExitButton={false}
-      loading={isPending}
-      loadingMessage="Loading..."
     >
-      <ScrollView className="flex-1 p-4" >
+      <ScrollView className="flex-1 p-6" >
         {/* Request Info Card */}
         <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
           <View className="flex-row items-center mb-4 gap-2">

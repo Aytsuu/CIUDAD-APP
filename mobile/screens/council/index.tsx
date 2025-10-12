@@ -40,7 +40,7 @@ export default () => {
     },
     {
       title: "Minutes of Meeting",
-      route: "/(council)/minutes-of-meeting/mom-view",
+      route: "/(council)/minutes-of-meeting/mom-main",
       icon: "",
       gradient: ['#0ea5e9', '#0284c7'],
     },

@@ -80,7 +80,7 @@ export default () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity> 
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Treasurer Portal</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Finance Portal</Text>}
       rightAction={<View className="w-10 h-10" />}
       wrapScroll={false}
     >

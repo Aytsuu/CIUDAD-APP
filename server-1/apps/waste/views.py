@@ -813,6 +813,8 @@ class WatchmanView(generics.GenericAPIView):
 # ============== GARBAGE PICKUP ================
 
 class GarbagePickupRequestAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request, format=None):
         counts = {
             'pending': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='pending').count(),
@@ -826,10 +828,12 @@ class GarbagePickupRequestAnalyticsView(APIView):
     
 
 class GarbagePickupFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupFileSerializer
     queryset = GarbagePickupRequestFile.objects.all()
      
 class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestPendingSerializer
     pagination_class = StandardResultsPagination
 
@@ -878,6 +882,7 @@ class GarbagePickupRequestPendingView(generics.ListCreateAPIView):
 
 
 class GarbagePickupRequestRejectedView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestRejectedSerializer
     pagination_class = StandardResultsPagination
 
@@ -936,6 +941,7 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
 
 
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestAcceptedSerializer
     pagination_class = StandardResultsPagination
     
@@ -994,6 +1000,7 @@ class GarbagePickupRequestAcceptedView(generics.ListAPIView):
         return queryset.order_by('-garb_created_at')
     
 class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestAcceptedSerializer
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'  
@@ -1004,6 +1011,7 @@ class GarbagePickupAcceptedRequestDetailView(generics.RetrieveAPIView):
 
 
 class GarbagePickupRequestsByDriverView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestAcceptedSerializer
 
     def get_queryset(self):
@@ -1022,6 +1030,7 @@ class GarbagePickupRequestsByDriverView(generics.ListAPIView):
         )
 
 class GarbagePickupRequestCompletedView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestCompletedSerializer
     pagination_class = StandardResultsPagination
 
@@ -1039,7 +1048,7 @@ class GarbagePickupRequestCompletedView(generics.ListAPIView):
                 'pickup_assignments__wstp_id__staff_id__rp__per',
                 'pickup_assignments__collectors',
                 'pickup_assignments__collectors__wstp_id__staff_id__rp__per',
-                'pickup_confirmations',
+                'pickup_confirmation',
             )
         )
 
@@ -1075,6 +1084,7 @@ class GarbagePickupRequestCompletedView(generics.ListAPIView):
         return queryset.order_by('-garb_created_at')
 
 class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestCompletedSerializer
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'  # or 'id' depending on your model
@@ -1084,6 +1094,7 @@ class GarbagePickupCompletedRequestDetailView(generics.RetrieveAPIView):
         return obj
     
 class GarbagePickupCompletedByDriverView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestCompletedSerializer
 
     def get_queryset(self):
@@ -1100,6 +1111,7 @@ class GarbagePickupCompletedByDriverView(generics.ListAPIView):
         ).distinct()
 
 class UpdateGarbagePickupRequestStatusView(ActivityLogMixin, generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestPendingSerializer
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'
@@ -1113,6 +1125,7 @@ class UpdateGarbagePickupRequestStatusView(ActivityLogMixin, generics.UpdateAPIV
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UpdatePickupAssignmentView(ActivityLogMixin, generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = PickupAssignmentSerializer
     queryset = Pickup_Assignment.objects.all()
     lookup_field = 'pick_id'
@@ -1126,23 +1139,28 @@ class UpdatePickupAssignmentView(ActivityLogMixin, generics.UpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class PickupRequestDecisionView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
 
 class PickupAssignmentView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = PickupAssignmentSerializer
     queryset = Pickup_Assignment.objects.all()
 
 class AssignmentCollectorView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = AssignmentCollectorSerializer
     queryset = Assignment_Collector.objects.all()
 
 class PickupConfirmationView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = PickupConfirmationSerializer
     queryset = Pickup_Confirmation.objects.all()
 
     
 class UpdatePickupConfirmationView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = PickupConfirmationSerializer
     queryset = Pickup_Confirmation.objects.all()
     lookup_field = 'garb_id'
@@ -1156,6 +1174,7 @@ class UpdatePickupConfirmationView(ActivityLogMixin, generics.RetrieveUpdateAPIV
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AssignmentCollectorDeleteView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = AssignmentCollectorSerializer
     queryset = Assignment_Collector.objects.all()
     lookup_field = 'acl_id'  # Or the primary key field name for Assignment_Collector
@@ -1165,6 +1184,7 @@ class AssignmentCollectorDeleteView(generics.DestroyAPIView):
         return get_object_or_404(Assignment_Collector, acl_id=acl_id)
     
 class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestPendingSerializer
     
     def get_queryset(self):
@@ -1179,6 +1199,7 @@ class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
 
 
 class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestRejectedSerializer
     
     def get_queryset(self):
@@ -1196,6 +1217,7 @@ class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
         )
     
 class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentAcceptedPickupRequestsSerializer
         
     def get_queryset(self):
@@ -1229,6 +1251,7 @@ class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
     
 
 class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentAcceptedPickupRequestsSerializer
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'
@@ -1239,6 +1262,7 @@ class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
     
 
 class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResidentCompletedPickupRequestSerializer
     
     def get_queryset(self):
@@ -1262,6 +1286,7 @@ class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
         ).distinct()
 
 class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestRejectedSerializer
 
     def get_queryset(self):

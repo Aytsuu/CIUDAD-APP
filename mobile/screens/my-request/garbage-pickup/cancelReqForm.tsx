@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Button } from '@/components/ui/button';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { useForm } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import {z} from "zod"
 import { useCancelRequest } from './queries/garbagePickupInsertQueries';
 import { useLocalSearchParams } from 'expo-router';
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function GarbageCancelRequestForm() {
   const router = useRouter();
@@ -30,17 +31,6 @@ export default function GarbageCancelRequestForm() {
     cancelRequest(values)
   };
 
-  if (isPending) {
-    return (
-      <_ScreenLayout>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-4">Loading...</Text>
-        </View>
-      </_ScreenLayout>
-    );
-  }
-
   return (
     <_ScreenLayout
       showExitButton={false}
@@ -50,8 +40,6 @@ export default function GarbageCancelRequestForm() {
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Request a Garbage Pickup</Text>}
-      loading={isPending}
-      loadingMessage='Loading...'
       stickyFooter={true}
       footer={
          <Button
@@ -63,7 +51,7 @@ export default function GarbageCancelRequestForm() {
       }
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8 p-4">
+        <View className="mb-8 p-6">
           <View className="space-y-4">
             <FormTextArea
                 control={control}
@@ -73,6 +61,7 @@ export default function GarbageCancelRequestForm() {
             />
           </View>
         </View>
+      <LoadingModal visible={isPending} />
       </ScrollView>
     </_ScreenLayout>
   );

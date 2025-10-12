@@ -7,16 +7,15 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { useGetGarbageRejectedResident } from "../queries/garbagePickupFetchQueries";
 import { formatTime } from "@/helpers/timeFormatter";
 import { useAuth } from "@/contexts/AuthContext";
+import { LoadingState } from "@/components/ui/loading-state"; // ✅ Import your reusable loading component
 
 export default function ResidentRejected() {
-  const {user} = useAuth()  
-  const { data: rejectedRequests = [], isLoading: isDataLoading} = useGetGarbageRejectedResident(user?.resident?.rp_id)
+  const { user } = useAuth();
+  const { data: rejectedRequests = [], isLoading: isDataLoading } = useGetGarbageRejectedResident(String(user?.rp));
   const [searchQuery, setSearchQuery] = useState("");
   const [viewImageModalVisible, setViewImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState("");
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
-
-  console.log('Rejected:', rejectedRequests)
 
   const filteredData = rejectedRequests.filter((request) => {
     const searchString = `
@@ -35,7 +34,7 @@ export default function ResidentRejected() {
   };
 
   return (
-    <View className="flex-1 p-4">
+    <View className="flex-1 p-6">
       {/* Header */}
       <Text className="text-lg font-semibold text-gray-800 mb-2">
         Rejected Requests ({filteredData.length})
@@ -55,18 +54,18 @@ export default function ResidentRejected() {
         </View>
       )}
 
-      {/* List */}
+      {/* Loading / Empty / List */}
       {isDataLoading ? (
-        <View className="justify-center items-center py-8">
-          <Text className="text-center text-gray-500">Loading rejected requests...</Text>
+        <View className="h-64 justify-center items-center">
+          <LoadingState /> {/* ✅ Unified loading animation */}
         </View>
       ) : filteredData.length === 0 ? (
         <View className="justify-center items-center py-8">
           <View className="bg-blue-50 p-6 rounded-lg items-center">
             <Info size={24} color="#3b82f6" className="mb-2" />
             <Text className="text-center text-gray-600">
-              {rejectedRequests.length === 0 
-                ? "No rejected requests available" 
+              {rejectedRequests.length === 0
+                ? "No rejected requests available"
                 : "No matching rejected requests found"}
             </Text>
             {searchQuery && (
@@ -98,34 +97,35 @@ export default function ResidentRejected() {
                     </View>
                   </View>
                 </CardHeader>
+
                 <CardContent className="p-4">
                   <View className="gap-3">
                     {/* Waste Type */}
                     <View className="flex-row justify-between">
                       <Text className="text-sm text-gray-600">Waste Type:</Text>
-                      <Text className="text-sm font-semibold ">{request.garb_waste_type}</Text>
+                      <Text className="text-sm font-semibold">{request.garb_waste_type}</Text>
                     </View>
 
                     {/* Preferred Date */}
                     <View className="flex-row justify-between">
-                        <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
-                        <Text className="text-sm">{request.garb_pref_date}, {formatTime(request.garb_pref_time)}</Text>
+                      <Text className="text-sm text-gray-600">Preferred Date & Time:</Text>
+                      <Text className="text-sm">
+                        {request.garb_pref_date}, {formatTime(request.garb_pref_time)}
+                      </Text>
                     </View>
 
                     {/* Additional Notes */}
                     {request.garb_additional_notes && (
-                        <View className="mt-2">
+                      <View className="mt-2">
                         <Text className="text-sm text-gray-600">Notes:</Text>
                         <Text className="text-sm text-gray-800">{request.garb_additional_notes}</Text>
-                        </View>
+                      </View>
                     )}
 
                     {/* Attached File Link */}
                     {request.file_url && (
                       <View className="mt-3">
-                        <TouchableOpacity
-                          onPress={() => handleViewImage(request.file_url)}
-                        >
+                        <TouchableOpacity onPress={() => handleViewImage(request.file_url)}>
                           <Text className="text-sm font-medium text-blue-600 underline">
                             View Attached Image
                           </Text>
@@ -137,7 +137,7 @@ export default function ResidentRejected() {
                     {request.dec_reason && (
                       <View className="mt-3 pt-3 border-t border-gray-100">
                         <Text className="text-sm font-medium text-gray-700 mb-1">Rejection Reason:</Text>
-                        <Text className="text-sm font-semibold text-red-700 ">
+                        <Text className="text-sm font-semibold text-red-700">
                           {request.dec_reason}
                         </Text>
                       </View>

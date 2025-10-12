@@ -622,10 +622,6 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     serializer_class = PurposeRatesListViewSerializer
     
 # =================== MINUTES OF MEETING VIEWS ======================
-
-# class MinutesOfMeetingView(generics.ListCreateAPIView):
-#     serializer_class = MinutesOfMeetingSerializer
-#     queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
 class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     pagination_class = StandardResultsPagination
@@ -671,7 +667,7 @@ class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
 class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     pagination_class = StandardResultsPagination
-    permission_classes = [AllowAny]  # Add appropriate permissions
+    permission_classes = [AllowAny]  
 
     def get_queryset(self):
         # Filter out archived records and select related staff data
@@ -711,11 +707,13 @@ class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
         return queryset.order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny] 
     queryset = MinutesOfMeeting.objects.all()
     serializer_class = MinutesOfMeetingSerializer
     lookup_field = 'mom_id'
 
 class MOMFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
 
@@ -727,6 +725,7 @@ class MOMFileView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
 class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
     lookup_field = 'mom_id'
@@ -740,6 +739,7 @@ class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer    
     queryset = MinutesOfMeeting.objects.all()
 
@@ -749,6 +749,7 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
     
 
 class DeleteMOMFileView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMFileViewSerializer    
     queryset = MOMFile.objects.all()
 
@@ -756,18 +757,8 @@ class DeleteMOMFileView(generics.DestroyAPIView):
         mom_id = self.kwargs.get('mom_id')
         return get_object_or_404(MOMFile, mom_id=mom_id)
 
-
-class DeleteMOMAreaOfFocusView(APIView):
-    def delete(self, request, mom_id):
-        get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
-        deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
-
-        return Response(
-            {"detail": f"{deleted_count} area(s) of focus deleted."},
-            status=status.HTTP_204_NO_CONTENT
-        )
-
 class MeetingSuppDocsView(generics.ListAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMSuppDocViewSerializer
     
     def get_queryset(self):
@@ -775,11 +766,13 @@ class MeetingSuppDocsView(generics.ListAPIView):
         return MOMSuppDoc.objects.filter(mom_id=mom_id)
 
 class DeleteMOMSuppDocView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     queryset = MOMSuppDoc.objects.all()
     serializer_class = MOMSuppDocViewSerializer
     lookup_field = 'momsp_id'
 
 class MOMSuppDocView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMSuppDocCreateSerializer
     query_set = MOMSuppDoc.objects.all()
 

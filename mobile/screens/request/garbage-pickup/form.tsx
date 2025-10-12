@@ -17,6 +17,8 @@ import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetSitio } from './queries/garbagePickupResidentFetchQueries';
 import { useAddaGarbagePickupRequest } from './queries/garbagePickupResidentInsertQueries';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoadingState } from '@/components/ui/loading-state';
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function GarbagePickupForm() {
   const {user} = useAuth()  
@@ -48,7 +50,7 @@ export default function GarbagePickupForm() {
       garb_pref_time: '',
       garb_waste_type: '',
       garb_additional_notes: '',
-      rp_id: user.resident.rp_id
+      rp_id: String(user?.rp)
     }
   });
 
@@ -65,12 +67,9 @@ export default function GarbagePickupForm() {
 
   if (isLoadingSitio) {
     return (
-      <_ScreenLayout>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-4">Loading...</Text>
-        </View>
-      </_ScreenLayout>
+      <View className="flex-1 justify-center items-center">
+          <LoadingState/>
+      </View>    
     );
   }
 
@@ -83,11 +82,9 @@ export default function GarbagePickupForm() {
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Request a Garbage Pickup</Text>}
-      loading={isPending}
-      loadingMessage='Loading...'
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="mb-8 p-4">
+        <View className="mb-8 p-6">
           <View className="space-y-4">
             <FormSelect
               control={control}
@@ -129,12 +126,6 @@ export default function GarbagePickupForm() {
 
             <View className="mb-3 mt-3">
               <Text className="text-[12px] font-PoppinsRegular pb-1">Add a Photo of Items for Pickup</Text>
-              {/* {errors.selectedImages && (
-                <Text className="text-red-500 text-xs">
-                  {errors.selectedImages.message}
-                </Text>
-              )} */}
-              
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
@@ -160,6 +151,8 @@ export default function GarbagePickupForm() {
             </View>
           </View>
         </View>
+        
+        <LoadingModal visible={isPending} />
       </ScrollView>
     </_ScreenLayout>
   );
