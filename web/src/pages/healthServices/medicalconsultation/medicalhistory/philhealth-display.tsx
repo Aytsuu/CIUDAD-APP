@@ -1,4 +1,5 @@
 // components/PhysicalExamTable.tsx
+
 import { Label } from "@/components/ui/label";
 import { Printer } from "lucide-react";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
@@ -11,12 +12,13 @@ import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button/button";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
-
-
 export default function PhysicalExamTable({ consultation, patientData, examSections, isPhysicalExamLoading, phHistoryData, famHistoryData }: any) {
   const printRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
+  // Add helper variable for civil status
+  const civilStatus = (consultation.philhealth_details?.civil_status || "").toUpperCase();
+
   const splitOptionsIntoColumns = (options: any[]) => {
     const midIndex = Math.ceil(options.length / 2);
     const firstColumn = options.slice(0, midIndex);
@@ -96,11 +98,11 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
                 <Label className="font-bold">Assessment Date: </Label>
                 <span className="text-sm">{localDateFormatter(consultation.created_at)}</span>
               </td>
-              <td className="w-1/3 border border-black pb-1 px-2 align-top">
+              <td className="w-1/4 border border-black pb-1 px-2 align-top">
                 <Label className="font-bold">PIN: </Label>
                 <span className="text-sm">{consultation.patrec_details?.patient_details?.additional_info?.philhealth_id?.replace(/(\d{4})(\d{4})(\d{4})/, "$1-$2-$3") || ""}</span>
               </td>
-              <td className="w-1/3 border border-black pb-3 px-3 align-top">
+              <td className="w-1/4 border border-black pb-3 px-3 align-top">
                 <div className="flex flex-col pb-1 items-start">
                   <div className="flex">
                     <span>{consultation.philhealth_details?.dependent_or_member === "MEMBER" ? "(✓)" : "( )"}</span>
@@ -132,19 +134,19 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
                   </div>
                   <div className="flex gap-2 pb-1">
                     <div className="flex items-center">
-                      <span>{consultation.philhealth_details?.civil_status.toUpperCase() === "SINGLE" ? "(✓)" : "( )"}</span>
+                      <span>{civilStatus === "SINGLE" ? "(✓)" : "( )"}</span>
                       <Label className="ml-2 text-black">Single</Label>
                     </div>
                     <div className="flex items-center">
-                      <span>{consultation.philhealth_details?.civil_status.toUpperCase() === "MARRIED" ? "(✓)" : "( )"}</span>
+                      <span>{civilStatus === "MARRIED" ? "(✓)" : "( )"}</span>
                       <Label className="ml-2 text-black">Married</Label>
                     </div>
                     <div className="flex items-center">
-                      <span>{consultation.philhealth_details?.civil_status.toUpperCase() === "WIDOWER" ? "(✓)" : "( )"}</span>
+                      <span>{civilStatus === "WIDOWER" ? "(✓)" : "( )"}</span>
                       <Label className="ml-2 text-black">Widow/er</Label>
                     </div>
                     <div className="flex items-center">
-                      <span>{!["SINGLE", "MARRIED", "WIDOWER"].includes(consultation.philhealth_details?.civil_status.toUpperCase()) ? "(✓)" : "( )"}</span>
+                      <span>{!["SINGLE", "MARRIED", "WIDOWER"].includes(civilStatus) ? "(✓)" : "( )"}</span>
                       <Label className="ml-2 text-black">Others</Label>
                     </div>
                   </div>

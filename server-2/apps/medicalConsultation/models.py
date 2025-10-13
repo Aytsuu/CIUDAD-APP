@@ -40,7 +40,6 @@ class PhilHealthLaboratory(models.Model):
         verbose_name_plural = "Philhealth Laboratories"
         ordering = ['-created_at']
 
-
 class PhilhealthDetails(models.Model):
     phil_id = models.BigAutoField(primary_key=True)
     
@@ -53,33 +52,42 @@ class PhilhealthDetails(models.Model):
     
     # PhilHealth fields
     iswith_atc = models.BooleanField(default=False)
-    marital_status = models.CharField(max_length=50, null=True, blank=True)
     dependent_or_member = models.CharField(max_length=50, null=True, blank=True)
     ogtt_result = models.CharField(max_length=100, null=True, blank=True)
     contraceptive_used = models.CharField(max_length=100, null=True, blank=True)
     smk_sticks_per_day = models.IntegerField(null=True, blank=True)
     smk_years = models.IntegerField(null=True, blank=True)
     is_passive_smoker = models.BooleanField(default=False)
-    alcohol_bottles_per_day =  models.IntegerField(null=True, blank=True)
+    alcohol_bottles_per_day = models.IntegerField(null=True, blank=True)
     civil_status = models.CharField(max_length=100, null=True, blank=True)
    
-    tts = models.ForeignKey(TT_Status, on_delete=models.SET_NULL,  related_name='philhealth_details',   null=True,  blank=True)
-    obs = models.ForeignKey( Obstetrical_History,on_delete=models.SET_NULL,  related_name='philhealth_details',  null=True,    blank=True )
-    lab = models.ForeignKey(PhilHealthLaboratory,   on_delete=models.SET_NULL,  related_name='philhealth_details', null=True,  blank=True)
+    tts = models.ForeignKey(TT_Status, on_delete=models.SET_NULL, related_name='philhealth_details', null=True, blank=True)
+    obs = models.ForeignKey(Obstetrical_History, on_delete=models.SET_NULL, related_name='philhealth_details', null=True, blank=True)
+    lab = models.ForeignKey(PhilHealthLaboratory, on_delete=models.SET_NULL, related_name='philhealth_details', null=True, blank=True)
 
     class Meta:
         db_table = 'philhealth_details'
         
-    
     def save(self, *args, **kwargs):
-        for field in ['marital_status', 'dependent_or_member', 'ogtt_result', 
-                      'contraceptive_used', 'civil_status']:
-            value = getattr(self, field, None)
-            if value:
-                setattr(self, field, value.title())
-        super().save(*args, **kwargs)
-
-
+        # Only capitalize non-empty string fields that aren't numeric
+        char_fields = [f.name for f in self._meta.get_fields() if isinstance(f, models.CharField)]
+        
+        for field_name in char_fields:
+            value = getattr(self, field_name)
+            if value and isinstance(value, str) and value.strip():
+                # Don't capitalize if it's a numeric string
+                if not value.replace('.', '').isdigit():
+                    setattr(self, field_name, value.upper())
+        
+        print(f"DEBUG: Saving PhilhealthDetails with medrec_id: {self.medrec_id}")
+        print(f"DEBUG: Fields - civil_status: {self.civil_status}, dependent_or_member: {self.dependent_or_member}")
+        
+        try:
+            super().save(*args, **kwargs)
+            print(f"DEBUG: PhilhealthDetails saved successfully with ID: {self.phil_id}")
+        except Exception as e:
+            print(f"DEBUG: Error saving PhilhealthDetails: {str(e)}")
+            raise e
 
 class MedicalConsultation_Record(models.Model):
     medrec_id = models.BigAutoField(primary_key=True)

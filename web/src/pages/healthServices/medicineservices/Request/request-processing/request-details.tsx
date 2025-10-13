@@ -78,7 +78,7 @@ export default function MedicineRequestDetail() {
   useEffect(() => {
     const patientData = patientExists as any;
     if (patientData?.exists && patientData?.pat_id) {
-      setCurrentPatId(patientData.pat_id);
+      setCurrentPatId(patientData.pat_id || request.pat_id || null);
     }
   }, [patientExists]);
 

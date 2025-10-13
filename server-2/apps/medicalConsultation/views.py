@@ -607,14 +607,13 @@ class PendingMedConCountView(APIView):
 #             )
       
 
-
 class CreateMedicalConsultationView(APIView):
     @transaction.atomic
     def post(self, request):
         data = request.data
         try:
             # 🔹 Required fields (excluding staff if optional)
-            required_fields = ["pat_id", "medrec_chief_complaint", "height", "weight"]
+            required_fields = ["pat_id", "medrec_chief_complaint"]
 
             missing_fields = []
             for field in required_fields:
@@ -632,6 +631,17 @@ class CreateMedicalConsultationView(APIView):
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            # 🔹 FIX: Add proper boolean parsing function
+            def parse_boolean(value):
+                if isinstance(value, bool):
+                    return value
+                if isinstance(value, str):
+                    if value.lower() in ['true', '1', 'yes', 'on']:
+                        return True
+                    elif value.lower() in ['false', '0', 'no', 'off', 'null', 'undefined', '']:
+                        return False
+                return bool(value)
 
             # 🔹 Handle staff (optional)
             staff = None
@@ -688,8 +698,11 @@ class CreateMedicalConsultationView(APIView):
                 except Staff.DoesNotExist:
                     print(f"Staff with ID {selected_staff_id} does not exist")
 
-            # 🔹 DEFAULT: is_phrecord is False unless explicitly provided as True
-            is_phrecord = data.get('is_phrecord', False)
+            # 🔹 FIX: Use the boolean parsing function
+            is_phrecord = parse_boolean(data.get('is_phrecord', False))
+            
+            print(f"DEBUG: is_phrecord value: {is_phrecord}, type: {type(is_phrecord)}")
+            print(f"DEBUG: Raw is_phrecord from data: {data.get('is_phrecord')}")
             
             # Only process PhilHealth data if explicitly marked as PhilHealth record
             tts_instance = None
@@ -697,6 +710,8 @@ class CreateMedicalConsultationView(APIView):
             phil_details_instance = None
 
             if is_phrecord:
+                print("DEBUG: Processing PhilHealth record")
+                
                 # 🔹 Handle TT Status - only if PhilHealth record
                 tts_status = data.get('tts_status')
                 tts_date_given = data.get('tts_date_given')
@@ -713,11 +728,11 @@ class CreateMedicalConsultationView(APIView):
                         # Use existing TT Status
                         tts_instance = existing_tts
                     else:
-                        # Create new TT Status
+                        # Create new TT Status - ✅ FIX: Parse boolean
                         tts_instance = TT_Status.objects.create(
                             tts_status=tts_status,
                             tts_date_given=tts_date_given if tts_date_given else None,
-                            tts_tdap=data.get('tts_tdap', False),
+                            tts_tdap=parse_boolean(data.get('tts_tdap', False)),
                             pat_id=patient
                         )
                 elif tts_id and tts_id.strip():
@@ -734,7 +749,7 @@ class CreateMedicalConsultationView(APIView):
                     'obs_abortion': data.get('obs_abortions'),
                     'obs_still_birth': data.get('obs_still_birth'),
                     'obs_lg_babies': data.get('obs_lg_babies'),
-                    'obs_lg_babies_str': data.get('obs_lg_babies_str'),
+                    'obs_lg_babies_str': data.get('obs_lg_babies_str'),  # BooleanField!
                     'obs_gravida': data.get('obs_gravida'),
                     'obs_para': data.get('obs_para'),
                     'obs_fullterm': data.get('obs_fullterm'),
@@ -750,6 +765,9 @@ class CreateMedicalConsultationView(APIView):
                 )
                 
                 if has_obs_data:
+                    # ✅ FIX: Parse the boolean field FIRST
+                    obs_data['obs_lg_babies_str'] = parse_boolean(obs_data.get('obs_lg_babies_str', False))
+                    
                     # Convert string numbers to integers where applicable
                     for field in ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 
                                  'obs_still_birth', 'obs_lg_babies', 'obs_gravida', 
@@ -776,33 +794,72 @@ class CreateMedicalConsultationView(APIView):
                 is_phrecord=is_phrecord,
             )
 
+            # 🔹 Create MedicalHistory records for FAMILY illnesses
+            famselected_illnesses = data.get('famselectedIllnesses', [])
+            if famselected_illnesses:
+                print(f"DEBUG: Creating MedicalHistory records for {len(famselected_illnesses)} family illnesses")
+                for illness_id in famselected_illnesses:
+                    try:
+                        illness = Illness.objects.get(ill_id=illness_id)
+                        MedicalHistory.objects.create(
+                            ill=illness,
+                            patrec=patrec,
+                            is_from_famhistory=True,  # This is family history
+                            is_for_surveillance=False,
+                            remarks="Family medical history",
+                            ill_date=str(timezone.now().year)  # Current year as string
+                        )
+                        print(f"DEBUG: Created family medical history for illness ID: {illness_id}")
+                    except Illness.DoesNotExist:
+                        print(f"DEBUG: Illness with ID {illness_id} does not exist")
+                    except Exception as e:
+                        print(f"DEBUG: Error creating family medical history for illness {illness_id}: {str(e)}")
+
+            # 🔹 Create MedicalHistory records for PERSONAL illnesses  
+            myselected_illnesses = data.get('myselectedIllnesses', [])
+            if myselected_illnesses:
+                print(f"DEBUG: Creating MedicalHistory records for {len(myselected_illnesses)} personal illnesses")
+                for illness_id in myselected_illnesses:
+                    try:
+                        illness = Illness.objects.get(ill_id=illness_id)
+                        MedicalHistory.objects.create(
+                            ill=illness,
+                            patrec=patrec,
+                            is_from_famhistory=False,  # This is personal medical history
+                            is_for_surveillance=False,
+                            remarks="Personal medical history",
+                            ill_date=str(timezone.now().year)  # Current year as string
+                        )
+                        print(f"DEBUG: Created personal medical history for illness ID: {illness_id}")
+                    except Illness.DoesNotExist:
+                        print(f"DEBUG: Illness with ID {illness_id} does not exist")
+                    except Exception as e:
+                        print(f"DEBUG: Error creating personal medical history for illness {illness_id}: {str(e)}")
+
             # 🔹 Create PhilhealthDetails ONLY if it's explicitly a PhilHealth record
             if is_phrecord:
-                # ✅ FIX: Clean data to ensure empty strings become None for foreign keys
-                def clean_foreign_key_value(value):
-                    """Convert empty strings to None for foreign key fields"""
-                    if value in [None, "", "null", "undefined"]:
-                        return None
-                    return value
+                print("DEBUG: Creating PhilhealthDetails")
                 
+                # ✅ FIX: Parse all boolean fields using the function
                 phil_details_data = {
-                    'iswith_atc': data.get('iswith_atc', False),
-                    'marital_status': data.get('marital_status'),
+                    'iswith_atc': parse_boolean(data.get('iswith_atc', False)),
+                    'civil_status': data.get('civil_status'),
                     'dependent_or_member': data.get('dependent_or_member'),
                     'ogtt_result': data.get('ogtt_result'),
                     'contraceptive_used': data.get('contraceptive_used'),
                     'smk_sticks_per_day': data.get('smk_sticks_per_day'),
                     'smk_years': data.get('smk_years'),
-                    'is_passive_smoker': data.get('is_passive_smoker', False),
+                    'is_passive_smoker': parse_boolean(data.get('is_passive_smoker', False)),
                     'alcohol_bottles_per_day': data.get('alcohol_bottles_per_day'),
-                    # ✅ FIX: Ensure foreign keys are properly cleaned
-                    'tts': clean_foreign_key_value(tts_instance),
-                    'obs': clean_foreign_key_value(obs_instance),
-                    'lab': None,  # ✅ ALWAYS NULL
+                    'tts': tts_instance,
+                    'obs': obs_instance,
+                    'lab': None,  
                 }
                 
+                print(f"DEBUG: PhilhealthDetails data: {phil_details_data}")
+                
                 # ✅ FIX: Clean string fields to ensure empty strings become None
-                string_fields = ['marital_status', 'dependent_or_member', 'ogtt_result', 
+                string_fields = ['civil_status', 'dependent_or_member', 'ogtt_result', 
                                'contraceptive_used', 'smk_sticks_per_day', 'smk_years', 
                                'alcohol_bottles_per_day']
                 
@@ -811,10 +868,15 @@ class CreateMedicalConsultationView(APIView):
                         phil_details_data[field] = None
                 
                 # Create PhilhealthDetails linked to the consultation
-                phil_details_instance = PhilhealthDetails.objects.create(
-                    medrec=medrec,
-                    **phil_details_data
-                )
+                try:
+                    phil_details_instance = PhilhealthDetails.objects.create(
+                        medrec=medrec,
+                        **phil_details_data
+                    )
+                    print(f"DEBUG: PhilhealthDetails created with ID: {phil_details_instance.phil_id}")
+                except Exception as e:
+                    print(f"DEBUG: Error creating PhilhealthDetails: {str(e)}")
+                    raise e
 
             response_data = {
                 "success": True,
@@ -823,6 +885,8 @@ class CreateMedicalConsultationView(APIView):
                 "bm_id": bm.bm_id,
                 "medrec_id": medrec.medrec_id,
                 "is_phrecord": is_phrecord,
+                "family_illnesses_count": len(famselected_illnesses),
+                "personal_illnesses_count": len(myselected_illnesses),
             }
 
             # Add PhilHealth details info ONLY if it's a PhilHealth record
@@ -830,7 +894,7 @@ class CreateMedicalConsultationView(APIView):
                 response_data["phil_details_id"] = phil_details_instance.phil_id
                 
                 if tts_instance:
-                    response_data["tts_id"] = tts_instance.tts_id
+                    response_data["tts_id"] = tts_inst.tts_id
                     response_data["tts_status"] = tts_instance.tts_status
 
                 if obs_instance:
@@ -850,7 +914,7 @@ class CreateMedicalConsultationView(APIView):
                     "received_data": data
                 },
                 status=status.HTTP_400_BAD_REQUEST,
-            )                
+            )
 
 
 # ========MEDICAL CONSULTATION END SOAP FORM

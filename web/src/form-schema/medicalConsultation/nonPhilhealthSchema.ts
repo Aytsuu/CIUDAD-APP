@@ -23,10 +23,9 @@ export const temperatureSchema = positiveNumberWith2Decimals
   .refine((temp) => temp <= 43, {
     message: "Temperature too high (hyperthermia risk)",
   })
-  .refine((temp) => temp >= 36.5 || temp <= 37.5, {
+  .refine((temp) => temp < 36.5 || temp > 37.5, {
     message: "Temperature outside normal range (36.5°C-37.5°C)",
   });
-
 export const heightSchema = z.preprocess(
   (val) => (val !== '' ? Number(val) : undefined),
   z.number()
@@ -113,22 +112,13 @@ export const nonPhilHealthSchema = z.object({
       .max(200, { message: "Diastolic cannot be >200 mmHg" })
       .refine(val => val % 1 === 0, "Must be whole number")
   ),
+  
   vital_RR: respiratoryRateSchema,
-  vital_o2: z.preprocess(
-    (val) => (val === "" ? undefined : Number(val)),
-    z.number()
-      .min(50, { message: "Oxygen saturation cannot be <50%" })
-      .max(100, { message: "Oxygen saturation cannot be >100%" })
-      .refine(val => val % 1 === 0, "Must be whole number")
-  ),
+  vital_o2: z.string().optional(),
   height: heightSchema,
   weight: weightSchema,
   vital_temp: temperatureSchema,
   medrec_chief_complaint: z.string().min(1, "Chief complaint is required"),
-  
-  // PhilHealth membership status - changed to boolean for radio button
-  
-  // Additional fields that show when PhilHealth member is selected
   obs_id: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
   selectedDoctorStaffId: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
   is_phrecord: z.boolean().optional().default(false),
@@ -136,11 +126,7 @@ export const nonPhilHealthSchema = z.object({
   iswith_atc: z.boolean().optional().default(false),
   dependent_or_member: z.string().optional().default(""),
   civil_status: z.string().optional().default(""),
-
   obs_lmp: z.string().optional().default(""),
-  // obscore_g: z.string().optional().default(""),
-  // obscore_p: z.string().optional().default(""),
-  // tpal: z.string().optional().default(""),
   tts_id: z.string().optional().default(""),
   tts_status: z.string().optional().default(""),
   tts_date_given: z.string().optional().default(""),
@@ -149,7 +135,7 @@ export const nonPhilHealthSchema = z.object({
   obs_abortions: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
   obs_still_birth: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
   obs_lg_babies: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
-  obs_lg_babies_str: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
+  obs_lg_babies_str:  z.boolean().optional().default(false),
   obs_gravida: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
   obs_para: z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
   obs_fullterm:  z.preprocess((val) => (val !== '' ? Number(val) : undefined), z.number().optional()),
@@ -162,6 +148,12 @@ export const nonPhilHealthSchema = z.object({
   smk_years: z.string().optional().default(""),
   is_passive_smoker: z.boolean().optional().default(false),
   alcohol_bottles_per_day: z.string().optional().default(""),
+  famselectedIllnesses: z.array(z.number()).optional(),
+  myselectedIllnesses: z.array(z.number()).optional(),
+
+ 
+ 
+
 });
 
 export type nonPhilHealthType = z.infer<typeof nonPhilHealthSchema>;
