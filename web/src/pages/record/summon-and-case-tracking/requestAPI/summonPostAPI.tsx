@@ -87,7 +87,7 @@ export const addSchedule = async (schedule: Record<string, any>, status_type: st
 }
 
 
-export const addHearingMinutes = async ( hs_id: string, sc_id: string, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_type: string, files: { name: string; type: string; file: string | undefined }[]) => {
     try{
         const data = {
             hs_id,
@@ -105,9 +105,15 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, files: { 
                 hs_is_closed: true,
             })
 
-            await api.put(`clerk/update-summon-case/${sc_id}/`, {
-                sc_mediation_status: "Waiting for Schedule",
-            })
+            if(status_type == "Council"){
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_mediation_status: "Waiting for Schedule",
+                })
+            } else {
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_conciliation_status: "Waiting for Schedule",
+                })
+            }
 
         }
 
@@ -120,7 +126,7 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, files: { 
 }
 
 
-export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, status_type: string, files: { name: string; type: string; file: string | undefined }[]) => {
     try{
 
         // insert the remark
@@ -157,9 +163,16 @@ export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: s
                 st_is_booked: false,
             })
 
-            await api.put(`clerk/update-summon-case/${sc_id}/`, {
-                sc_mediation_status: "Waiting for Schedule",
-            })
+            if(status_type == "Council"){
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_mediation_status: "Waiting for Schedule",
+                })
+            } else {
+                await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                    sc_conciliation_status: "Waiting for Schedule",
+                })
+            }
+            
         }
 
         return response.data

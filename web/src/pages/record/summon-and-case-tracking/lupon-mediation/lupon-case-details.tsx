@@ -93,7 +93,7 @@ export default function LuponCaseDetails() {
 
   // Use conciliation status if not null, otherwise use mediation status
   const displayStatus = sc_conciliation_status || sc_mediation_status
-  const isCaseClosed = displayStatus === "Resolved" || displayStatus === "Forwarded to Lupon"
+  const isCaseClosed = displayStatus === "Resolved" || displayStatus === "Escalated"
   
   const lastScheduleIsRescheduled = hearing_schedules.length > 0 
     ? hearing_schedules[hearing_schedules.length - 1].hs_is_closed 
@@ -117,7 +117,13 @@ export default function LuponCaseDetails() {
   const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
 
   const handleResolve = () => resolve(sc_id)
-  const handleEscalate = () => escalate(sc_id)
+  const handleEscalate = () => {
+    if (caseDetails?.comp_id) {
+      escalate({sc_id, comp_id});
+    } else {
+      console.error("Cannot escalate: comp_id is undefined");
+    }
+  }
 
   // Function to handle minutes view click
   const handleMinutesClick = (hearingMinutes: any[], hs_id: string) => {
@@ -237,6 +243,7 @@ export default function LuponCaseDetails() {
                 <HearingMinutesForm 
                   hs_id={row.original.hs_id}
                   sc_id={sc_id}
+                  status_type = "Lupon"
                   onSuccess={() => setEditingRowId(null)}
                 />
               }

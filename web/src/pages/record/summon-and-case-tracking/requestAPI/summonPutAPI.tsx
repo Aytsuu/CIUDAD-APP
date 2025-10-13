@@ -26,20 +26,28 @@ export const forwardCase = async(sc_id:string) => {
 }
 
 
-export const escalateCase = async (sr_id: string) => {
+export const escalateCase = async (sc_id: string, comp_id: string) => {
     try{
-        //  const res2 = await api.post('clerk/file-action-request/', {
-        //     comp: comp_id,
-        //     sr_type: 'File Action',
-        //     sr_request_date: new Date().toISOString(),
-        //     sr_payment_status: "Unpaid",
-        //     parent_summon: sr_id
-        // })
+        const currentDate = new Date();
+        const dueDate = new Date(currentDate);
+        dueDate.setDate(currentDate.getDate() + 7);
 
-        console.log('sr_id', sr_id)
-        const res = await api.put(`clerk/update-summon-request/${sr_id}/`, {
-            sc_mediation_status: "Escalated",
-            sr_date_marked: new Date().toISOString(),
+        const response = await api.get('clerk/file-action-id/')
+
+        if(response){
+            await api.post('clerk/service-charge-payment-req/', {
+                comp_id: comp_id,
+                pay_sr_type: "File Action",
+                pay_status: "Unpaid",
+                pay_date_req: new Date().toISOString(),
+                pay_due_date: dueDate.toISOString().split('T')[0],
+                pr_id: response.data.pr_id
+            })
+        }
+
+        const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
+            sc_conciliation_status: "Escalated",
+            sc_date_marked: new Date().toISOString(),
         })
 
         return res.data

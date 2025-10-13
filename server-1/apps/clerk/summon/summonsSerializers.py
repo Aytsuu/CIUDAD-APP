@@ -60,6 +60,11 @@ class SummonCaseSerializer(serializers.ModelSerializer):
         model = SummonCase
         fields = '__all__'  
 
+class ServiceChargePaymentReqSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceChargePaymentRequest
+        fields = '__all__'  
+
 class SummonCasesSerializer(serializers.ModelSerializer):
     complainant_names = serializers.SerializerMethodField()
     complainant_addresses = serializers.SerializerMethodField()

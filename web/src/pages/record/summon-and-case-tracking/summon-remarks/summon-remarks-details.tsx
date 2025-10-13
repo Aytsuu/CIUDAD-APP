@@ -457,6 +457,7 @@ export default function SummonRemarksDetails() {
                   hs_id={row.original.hs_id}
                   st_id={row.original.summon_time.st_id}
                   sc_id = {sc_id}
+                  schedCount = {hearing_schedules.length}
                   onSuccess={() => setEditingRowId(null)}
                 />
               }

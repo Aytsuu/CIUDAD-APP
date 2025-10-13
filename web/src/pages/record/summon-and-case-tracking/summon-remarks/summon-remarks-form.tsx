@@ -6,10 +6,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAddRemarks } from "../queries/summonInsertQueries";
 
-export default function SummonRemarksForm({hs_id, st_id, sc_id, onSuccess}:{
+export default function SummonRemarksForm({hs_id, st_id, sc_id, schedCount, onSuccess}:{
     hs_id: string;
     st_id: string | number;
     sc_id: string;
+    schedCount: number;
     onSuccess?: () => void
 }){
     const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
@@ -31,8 +32,10 @@ export default function SummonRemarksForm({hs_id, st_id, sc_id, onSuccess}:{
             'type': media.type,
             'file': media.file
         }))
+
+        const status_type = schedCount > 3 ? "Lupon": "Council"
         
-        Addremarks({hs_id, st_id, sc_id, remarks, close, files});
+        Addremarks({hs_id, st_id, sc_id, remarks, close, status_type, files});
     }
 
     const handleCheckboxChange = (checked: boolean) => {

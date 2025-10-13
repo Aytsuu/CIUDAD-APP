@@ -33,6 +33,10 @@ urlpatterns = [
     path('delete-summon-time-availability/<int:st_id>/', DeleteSummonTimeAvailabilityView.as_view(), name='delete-summon-time-availability'),
     path('update-summon-time-availability/<str:st_id>/', UpdateSummonTimeAvailabilityView.as_view(), name='update-summon-time-availability'),
 
+    # Payment req
+    path('service-charge-payment-req/', ServiceChargePaymentReqView.as_view(), name='service-charge-payment-req'),
+    path('file-action-id/', FileActionIdView.as_view(), name='file-action-id'),
+
     path('service-charge-decision/', ServiceChargeDecisionView.as_view(), name='service-charge-decision'),
     path('case-tracking/<str:comp_id>/', CaseTrackingView.as_view(), name='case-tracking'),
    

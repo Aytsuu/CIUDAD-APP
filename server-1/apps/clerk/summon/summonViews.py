@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from apps.act_log.utils import ActivityLogMixin
 from apps.pagination import StandardResultsPagination
-
+from apps.treasurer.serializers import Purpose_And_RatesSerializers
+from apps.treasurer.models import Purpose_And_Rates
 
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
 class LuponCasesView(generics.ListAPIView):
@@ -295,3 +296,20 @@ class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# =================== PAYMENT REQ =========================
+
+class ServiceChargePaymentReqView(generics.ListCreateAPIView):
+    serializer_class = ServiceChargePaymentReqSerializer
+    queryset = ServiceChargePaymentRequest.objects.all()
+
+
+class FileActionIdView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Purpose_And_RatesSerializers
+    
+    def get_object(self):
+        return Purpose_And_Rates.objects.filter(
+            pr_purpose="File Action", 
+            pr_is_archive=False
+        ).order_by('-pr_date').first()

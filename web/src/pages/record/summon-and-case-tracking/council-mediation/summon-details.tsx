@@ -231,6 +231,7 @@ export default function SummonDetails() {
                 <HearingMinutesForm 
                   hs_id={row.original.hs_id}
                   sc_id={sc_id}
+                  status_type = "Council"
                   onSuccess={() => setEditingRowId(null)}
                 />
               }
