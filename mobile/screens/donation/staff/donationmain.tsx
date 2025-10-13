@@ -115,13 +115,15 @@ const DonationTracker = () => {
               <Text className="font-semibold text-lg text-[#1a2332] mb-1">
                 {item.don_item_name}
               </Text>
-              <Text className="text-sm text-gray-500">
+              <View className="bg-blue-50 border border-blue-600 px-3 py-1 rounded-full self-start">
+              <Text className="text-sm tracking-wide">
                 Reference No: {item.don_num}
               </Text>
+              </View>    
             </View>
             <View className="flex-row items-center">
               <Text
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                className={`px-2 py-1 rounded-md text-xs font-medium ${
                   item.don_status === "Stashed"
                     ? "bg-yellow-100 text-yellow-800"
                     : "bg-green-100 text-green-800"

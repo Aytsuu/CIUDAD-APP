@@ -10,8 +10,7 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
             businessId = null;
         }
         
-        const clearancePayload = {
-            requestor: payload.requestor,
+        const clearancePayload: any = {
             req_request_date: new Date().toISOString().split('T')[0], // Current date
             req_status: 'Pending',
             req_payment_status: 'Unpaid',
@@ -20,16 +19,16 @@ export const createPermitClearance = async (payload: any, staffId: string) => {
             staff_id: staffId, // Staff ID (who is processing the request)
             bus_id: businessId, // Business ID from form
             rp_id: payload.rp_id || null, // Resident profile ID from form
-            req_amount: 0.0 // Set default amount, will be calculated by backend
+            req_amount: 0.0, // Set default amount, will be calculated by backend
         };
 
-        console.log("Creating permit clearance with payload:", clearancePayload);
-        console.log("Original payload received:", payload);
-        console.log("Business ID from payload.businessName:", payload.businessName);
-        console.log("Purpose ID from payload.purposes:", payload.purposes);
-        console.log("Gross Sales from payload:", payload.grossSales);
-        console.log("Payload keys:", Object.keys(payload));
-        console.log("Payload values:", Object.values(payload));
+        // Only include bus_permit_name and bus_permit_address for new businesses (no bus_id)
+        if (!businessId) {
+            clearancePayload.bus_permit_name = payload.requestor || null;
+            clearancePayload.bus_permit_address = payload.address || null;
+        }
+
+
         const response = await api.post('/clerk/permit-clearances/', clearancePayload);
         return response.data;
     } catch (error: any) {

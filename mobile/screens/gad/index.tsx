@@ -32,6 +32,12 @@ export default () => {
       icon: "",
       gradient: ['#2563eb', '#1e40af'],
     },
+    {
+      title: "Activity Calendar",
+      route: "/(gad)/activity/gad-activity",
+      icon: "",
+      gradient: ['#8b5cf6', '#7c3aed'],
+    },
   ];
   
   // ============== SIDE EFFECTS ==============

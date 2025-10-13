@@ -7,7 +7,6 @@ import {
   useWindowDimensions,
   TouchableOpacity,
   ActivityIndicator,
-  TextInput,
   RefreshControl,
   FlatList,
 } from "react-native";
@@ -32,11 +31,13 @@ import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import PageLayout from "@/screens/_PageLayout";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/emptyState";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { LoadingState } from "@/components/ui/loading-state";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
 
 export default function WastePersonnelMain() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function WastePersonnelMain() {
   const [selectedRole, setSelectedRole] = useState<Role>("LOADER");
   const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSearch, setShowSearch] = useState(false);
 
   const {
     control: searchControl,
@@ -327,11 +329,30 @@ return (
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Waste Personnel & Vehicles</Text>}
-      rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Waste Personnel & Vehicles</Text>}
+      rightAction={
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
+      }
       wrapScroll={false}
     >
-      <View className="flex-1">
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={(text) => {
+              setSearchValue("searchQuery", text);
+              setCurrentPage(1);
+            }}
+            onSubmit={() => {}} // No additional submission needed since it's debounced
+          />
+        )}
+
         {/* Role Selection Buttons */}
         <View className="bg-white border-b border-gray-300">
           <View className="flex-row justify-between items-center gap-x-2 px-6 py-3">
@@ -358,22 +379,8 @@ return (
           </View>
         </View>
 
-        {/* Search and Filter Section - Styled like Resolution */}
+        {/* Truck Tabs and Add Button */}
         <View className="px-6 pt-4 pb-3 bg-white">
-          <View className="flex-row items-center gap-2 pb-3">
-            <View className="relative flex-1">
-              <TextInput
-                placeholder={`Search ${selectedRole === "Trucks" ? "trucks" : "personnel"}...`}
-                className="pl-2                                                 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={(text) => {
-                  setSearchValue("searchQuery", text);
-                  setCurrentPage(1);
-                }}
-              />
-            </View>
-          </View>
-
           {/* Truck Tabs - Styled like Budget Plan */}
           {selectedRole === "Trucks" && (
             <View className="pb-3">

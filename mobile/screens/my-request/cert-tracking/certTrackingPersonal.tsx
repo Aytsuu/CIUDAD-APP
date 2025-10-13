@@ -78,7 +78,7 @@ export default function CertTrackingPersonal() {
       headerBetweenAction={<Text className="text-[13px]">Personal Requests</Text>}
       customRightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {/* Status Tabs: Pending, Approved, Completed */}
         <View className="bg-white border-b border-gray-200 mb-3 -mx-5 px-5">
           <ScrollView

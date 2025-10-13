@@ -70,10 +70,10 @@ export const useGetGrossSales = () => {
 }
 
 // Hook for permit clearances list
-export const useGetPermitClearances = () => {
+export const useGetPermitClearances = (page: number = 1, pageSize: number = 10, search: string = '', status: string = '', paymentStatus: string = '') => {
     return useQuery<any[]>({
-        queryKey: ["permitClearances"],
-        queryFn: () => getPermitClearances(),
+        queryKey: ["permitClearances", page, pageSize, search, status, paymentStatus],
+        queryFn: () => getPermitClearances(search, page, pageSize, status, paymentStatus),
         staleTime: 1000 * 60 * 30,
     });
 }

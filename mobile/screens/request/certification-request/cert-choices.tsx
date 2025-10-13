@@ -36,7 +36,7 @@ const CertChoices = () => {
       headerBetweenAction={<Text className="text-[13px]">Certification Requests</Text>}
       customRightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {menuItem.map((item: any, index: number) => (
           <TouchableOpacity
             key={index}

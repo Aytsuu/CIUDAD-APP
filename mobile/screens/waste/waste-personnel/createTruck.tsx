@@ -40,7 +40,7 @@ export default function WasteTruckCreate() {
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Add New Truck</Text>}
+      headerBetweenAction={<Text className="text-gray-900 text-[13px]">Add New Truck</Text>}
       showExitButton={false}
       headerAlign="left"
       scrollable={true}

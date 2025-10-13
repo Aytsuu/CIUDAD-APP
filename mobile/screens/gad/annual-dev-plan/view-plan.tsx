@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getAnnualDevPlansByYear } from './restful-api/annualDevPlanGetAPI';
+import PageLayout from '@/screens/_PageLayout';
 
 interface BudgetItem {
   gdb_id?: number;
@@ -48,16 +49,6 @@ const ViewPlan = () => {
     }
   };
 
-  const handleEdit = (devId: number) => {
-    router.push({
-      pathname: '/(gad)/annual-dev-plan/update-plan',
-      params: { planId: devId.toString() }
-    });
-  };
-
-  const handleCreate = () => {
-    router.push('/(gad)/annual-dev-plan/create-plan');
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', { 
@@ -72,46 +63,40 @@ const ViewPlan = () => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-blue-50 justify-center items-center">
-        <Text className="text-gray-600 text-lg">Loading data...</Text>
-      </View>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Ionicons name="chevron-back" size={20} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-[13px]">Annual Development Plan</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 p-6 justify-center items-center">
+          <Text className="text-gray-600 text-lg">Loading data...</Text>
+        </View>
+      </PageLayout>
     );
   }
 
   return (
-    <ScrollView className="flex-1 bg-blue-50">
-      <View className="p-4">
-        {/* Header */}
-        <View className="flex-row items-center mb-4 pt-12">
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            className="mr-3 p-2"
-          >
-            <Ionicons name="chevron-back" size={24} color="#374151" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-xl font-bold text-gray-800">
-              Annual Development Plan
-            </Text>
-            <Text className="text-lg font-semibold text-blue-600">
-              Year {year}
-            </Text>
-          </View>
-        </View>
-
-        {/* Create Button */}
-        <View className="mb-4">
-          <TouchableOpacity
-            className="bg-orange-500 rounded-xl py-3 px-4 shadow-sm"
-            onPress={handleCreate}
-            activeOpacity={0.8}
-          >
-            <View className="flex-row items-center justify-center">
-              <Ionicons name="add" size={20} color="white" />
-              <Text className="text-white font-semibold ml-2">Create New Plan</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+    <PageLayout
+      leftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Ionicons name="chevron-back" size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-[13px]">Year {year}</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <ScrollView className="flex-1">
+        <View className="p-6">
 
         {/* Plans List */}
         {plans.length === 0 ? (
@@ -135,12 +120,6 @@ const ViewPlan = () => {
                       {formatDate(plan.dev_date)}
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => handleEdit(plan.dev_id)}
-                    className="bg-blue-500 rounded-lg p-2 ml-2"
-                  >
-                    <Ionicons name="create-outline" size={16} color="white" />
-                  </TouchableOpacity>
                 </View>
 
                 {/* Gender Issue */}
@@ -231,8 +210,9 @@ const ViewPlan = () => {
             </View>
           </View>
         )}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </PageLayout>
   );
 };
 

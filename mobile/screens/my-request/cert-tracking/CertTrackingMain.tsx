@@ -128,7 +128,7 @@ export default function CertTrackingMain() {
       headerBetweenAction={<Text className="text-[13px]">Track Requests</Text>}
       customRightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {isLoading && (
           <View className="items-center justify-center py-10">
             <ActivityIndicator />
