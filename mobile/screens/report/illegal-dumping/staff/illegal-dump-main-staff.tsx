@@ -4,9 +4,9 @@ import {
   Text,
   TextInput,
   Pressable,
-  ActivityIndicator,
   FlatList,
   TouchableOpacity,
+  ScrollView
 } from 'react-native';
 import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
 import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
@@ -200,10 +200,34 @@ export default function WasteIllegalDumping() {
       rightAction={<View className="w-10 h-10 rounded-full items-center justify-center" />}
       wrapScroll={false}
     >
+
+      {/*TABS*/}
+      <View className="bg-white border-b border-gray-200 mb-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+          {[
+            { key: "pending", label: "Reports" },
+            { key: "resolved", label: "Resolved" },
+            { key: "cancelled", label: "Cancelled" },
+          ].map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => handleTabChange(tab.key)}
+              className={`flex-1 px-4 py-4 items-center border-b-2 ${
+                activeTab === tab.key ? "border-blue-500" : "border-transparent"
+              }`}
+            >
+              <Text className={`text-sm font-medium ${activeTab === tab.key ? "text-blue-600" : "text-gray-500"}`}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>      
+
       <View className="flex-1 px-6">
         {/* Search and Filters */}
         <View className="mb-4">
-          <View className="relative mb-3">
+          <View className="relative mb-3 ">
             <Search className="absolute left-3 top-3 text-gray-500" size={17} />
             <TextInput
               placeholder="Search..."
@@ -222,61 +246,31 @@ export default function WasteIllegalDumping() {
           />
         </View>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
-          <TabsList className="bg-blue-50 mb-5 mt-2 flex-row justify-between">
-            <TabsTrigger
-              value="pending"
-              className={`flex-1 mx-1 ${activeTab === 'pending' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'pending' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Reports</Text>
-            </TabsTrigger>
-            <TabsTrigger
-              value="resolved"
-              className={`flex-1 mx-1 ${activeTab === 'resolved' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'resolved' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Resolved</Text>
-            </TabsTrigger>
-            <TabsTrigger
-              value="cancelled"
-              className={`flex-1 mx-1 ${activeTab === 'cancelled' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-            >
-              <Text className={`${activeTab === 'cancelled' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>Cancelled</Text>
-            </TabsTrigger>
-          </TabsList>
+        {/* Tab Content */}
+        <View className="mb-2">
+          <Text className="text-sm text-gray-500">
+            {fetchedData.length} report{fetchedData.length !== 1 ? 's' : ''} found
+          </Text>
+        </View>
 
-          {/* Shared FlatList for all tabs */}
-          <TabsContent value={activeTab} className="flex-1">
-            <View className="mb-2">
-              <Text className="text-sm text-gray-500">
-                {fetchedData.length} report{fetchedData.length !== 1 ? 's' : ''} found
-              </Text>
-            </View>
-
-            {isLoading ? (
-              // <View className="h-64 justify-center items-center">
-              //   <ActivityIndicator size="large" color="#2a3a61" />
-              //   <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
-              // </View>
-              renderLoadingState()               
-            ) : (
-              <FlatList
-                data={fetchedData}
-                renderItem={({ item }) => renderReportCard(item)}
-                keyExtractor={(item) => item.rep_id.toString()}
-                contentContainerStyle={{ paddingBottom: 20 }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <View className="py-8 items-center">
-                    <Text className="text-gray-500 text-center">
-                      No {activeTab} reports found
-                    </Text>
-                  </View>
-                }
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+        {isLoading ? (
+          renderLoadingState()               
+        ) : (
+          <FlatList
+            data={fetchedData}
+            renderItem={({ item }) => renderReportCard(item)}
+            keyExtractor={(item) => item.rep_id.toString()}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View className="py-8 items-center">
+                <Text className="text-gray-500 text-center">
+                  No {activeTab} reports found
+                </Text>
+              </View>
+            }
+          />
+        )}       
       </View>
     </PageLayout>
   );
