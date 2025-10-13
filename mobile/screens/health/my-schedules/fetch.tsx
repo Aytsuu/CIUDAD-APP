@@ -72,11 +72,11 @@ export const followUpVisitQueryKey = {
 
 export const useAllFollowUpVisits = (filters: AppointmentFilters, options = {}) => {
   return useQuery({
-    queryKey: ['followUpVisits', filters],
+    queryKey: ['followUpVisits', filters], // Filters in query key for proper caching
     queryFn: () => getAllFollowUpVisits(filters),
-    staleTime: 60 * 2,
+    staleTime: 60 * 1000, // 1 minute
     retry: 3,
-	placeholderData: keepPreviousData,
+    placeholderData: keepPreviousData,
     ...options,
   })
 }

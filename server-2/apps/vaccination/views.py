@@ -75,7 +75,7 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         
         # Track if any filter is applied
         search_query = self.request.query_params.get('search', '').strip()
-        if search_query and len(search_query) >= 2:
+        if search_query:
             queryset = apply_patient_search_filter(queryset, search_query)
         
         # Patient type filter

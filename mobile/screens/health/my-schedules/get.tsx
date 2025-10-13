@@ -49,29 +49,47 @@ export const getPatientDetails = async (patientId: string) => {
 
 
 export interface AppointmentFilters {
-	page?: number;
-	page_size?: number;
-	status?: string;
-	search?: string;
-	time_frame?: string;
+  page?: number;
+  page_size?: number;
+  status?: string;
+  search?: string;
+  time_frame?: string;
+  tab?: string; // Add this for active tab filtering
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
 }
 
-// fetch all follow-up visits
+// Enhanced getAllFollowUpVisits with backend filtering
 export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => {
   try {
-	const params = new URLSearchParams();
+    const params = new URLSearchParams();
 
-	if(filters.page) params.append('page', filters.page.toString());
-	if(filters.page_size) params.append('page_size', filters.page_size.toString());
-	if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-	if(filters.search) params.append('search', filters.search);
-	if(filters.time_frame) params.append('time_frame', filters.time_frame);
+    // Pagination
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.page_size) params.append('page_size', filters.page_size.toString());
+    
+    // Search (send to backend)
+    if (filters.search) params.append('search', filters.search);
+    
+    // Status filtering (send active tab to backend)
+    if (filters.tab && filters.tab !== 'all') {
+      params.append('status', filters.tab);
+    }
+    
+    // Time frame filtering
+    if (filters.time_frame) params.append('time_frame', filters.time_frame);
+    
+    // Sorting
+    if (filters.sort_by) params.append('sort_by', filters.sort_by);
+    if (filters.sort_order) params.append('sort_order', filters.sort_order);
 
-	const queryString = params.toString();
-	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}/` 
-		: "patientrecords/follow-up-visits-all/";
+    const queryString = params.toString();
+    const url = queryString 
+      ? `/patientrecords/follow-up-visits-all/?${queryString}`
+      : "/patientrecords/follow-up-visits-all/";
 
+    console.log('Fetching URL:', url);
+    
     const res = await api2.get(url)
     return res.data || {count: 0, next: null, previous: null, results: []}
   } catch (error) {
@@ -79,6 +97,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
     return {count: 0, next: null, previous: null, results: []}
   }
 }
+
 
 export const getAppointmentsByResidentId = async (rp_id: string) => {
   try {
@@ -90,6 +109,7 @@ export const getAppointmentsByResidentId = async (rp_id: string) => {
     return [];
   }
 };
+
 // fetch all transient addresses
 export const getAllTransientAddresses = async () => {
 	try {
@@ -100,8 +120,6 @@ export const getAllTransientAddresses = async () => {
 		return []
 	}
 }
-
-
 
 
 

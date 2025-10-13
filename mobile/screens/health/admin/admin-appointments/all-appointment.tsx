@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from "react"
-import { View,TouchableOpacity,TextInput,RefreshControl,FlatList} from "react-native"
-import { Search,AlertCircle,Calendar,User,FileText,ChevronLeft,MapPin,RefreshCw} from "lucide-react-native"
+import React, { useState, useMemo, useCallback, useEffect } from "react"
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native"
+import { Search, AlertCircle, Calendar, User, FileText, ChevronLeft, MapPin, RefreshCw, ChevronRight, ChevronLeft as ChevronLeftIcon } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
 import { format } from "date-fns"
@@ -27,10 +27,146 @@ type ScheduleRecord = {
   patrecType: string
 }
 
-type FilterType = "All" | "Pending" | "Completed" | "Missed" | "Cancelled"
 type TabType = "pending" | "completed" | "missed" | "cancelled"
 
-// Components
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Pagination Component
+const Pagination: React.FC<{
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  isLoading: boolean
+}> = ({ currentPage, totalPages, onPageChange, isLoading }) => {
+  if (totalPages <= 1) return null
+
+  const getVisiblePages = () => {
+    const delta = 2 // Number of pages to show on each side of current page
+    const range = []
+    const rangeWithDots = []
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i)
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...')
+    } else {
+      rangeWithDots.push(1)
+    }
+
+    rangeWithDots.push(...range)
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages)
+    } else {
+      rangeWithDots.push(totalPages)
+    }
+
+    return rangeWithDots
+  }
+
+  const visiblePages = getVisiblePages()
+
+  return (
+    <View className="flex-row items-center justify-center py-4 px-2 bg-white border-t border-gray-200">
+      {/* Previous Button */}
+      <TouchableOpacity
+        onPress={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1 || isLoading}
+        className={`flex-row items-center px-3 py-2 rounded-lg mr-2 ${
+          currentPage === 1 || isLoading ? 'opacity-50' : 'bg-gray-100'
+        }`}
+      >
+        <ChevronLeftIcon size={16} color="#374151" />
+        <Text className="ml-1 text-sm font-medium text-gray-700">Prev</Text>
+      </TouchableOpacity>
+
+      {/* Page Numbers */}
+      <View className="flex-row items-center mx-2">
+        {visiblePages.map((page, index) => (
+          <React.Fragment key={index}>
+            {page === '...' ? (
+              <Text className="px-3 py-2 text-gray-500">...</Text>
+            ) : (
+              <TouchableOpacity
+                onPress={() => onPageChange(page as number)}
+                disabled={isLoading}
+                className={`px-3 py-2 rounded-lg mx-1 min-w-10 items-center ${
+                  currentPage === page
+                    ? 'bg-blue-600'
+                    : 'bg-gray-100'
+                } ${isLoading ? 'opacity-50' : ''}`}
+              >
+                <Text
+                  className={`text-sm font-medium ${
+                    currentPage === page ? 'text-white' : 'text-gray-700'
+                  }`}
+                >
+                  {page}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </React.Fragment>
+        ))}
+      </View>
+
+      {/* Next Button */}
+      <TouchableOpacity
+        onPress={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages || isLoading}
+        className={`flex-row items-center px-3 py-2 rounded-lg ml-2 ${
+          currentPage === totalPages || isLoading ? 'opacity-50' : 'bg-gray-100'
+        }`}
+      >
+        <Text className="mr-1 text-sm font-medium text-gray-700">Next</Text>
+        <ChevronRight size={16} color="#374151" />
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+// Results Info Component
+const ResultsInfo: React.FC<{
+  currentPage: number
+  pageSize: number
+  totalCount: number
+  isLoading: boolean
+}> = ({ currentPage, pageSize, totalCount, isLoading }) => {
+  if (isLoading || totalCount === 0) return null
+
+  const startItem = (currentPage - 1) * pageSize + 1
+  const endItem = Math.min(currentPage * pageSize, totalCount)
+
+  return (
+    <View className="bg-blue-50 px-4 py-2 border-b border-blue-200">
+      <Text className="text-blue-800 text-sm text-center">
+        Showing {startItem}-{endItem} of {totalCount.toLocaleString()} appointments
+      </Text>
+    </View>
+  )
+}
+
+// Keep your existing StatusBadge, TabBar, and AppointmentCard components the same...
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const getStatusConfig = (status: string) => {
     switch (status.toLowerCase()) {
@@ -120,9 +256,8 @@ const TabBar: React.FC<{
 
 const AppointmentCard: React.FC<{
   appointment: ScheduleRecord
-  actualStatus: string
   onPress: () => void
-}> = ({ appointment, actualStatus, onPress }) => {
+}> = ({ appointment, onPress }) => {
   const formatDateSafely = (dateString: string) => {
     if (!dateString) return "N/A"
     try {
@@ -155,7 +290,7 @@ const AppointmentCard: React.FC<{
             </View>
           </View>
           <View className="items-end">
-            <StatusBadge status={actualStatus} />
+            <StatusBadge status={appointment.status} />
             <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2">
               <Text className="text-blue-700 font-bold text-xs">#{appointment.id}</Text>
             </View>
@@ -206,148 +341,126 @@ export default function AdminAppointmentsScreen() {
   const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("pending")
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10 // Records per page
 
-  // Large page size to fetch all data
-  const appointmentsPerPage = 1000
+  // Debounced search to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
-  // Fetch data using the API hook
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchQuery, activeTab])
+
+  // Backend-powered API call with pagination
   const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
-    page: 1,
-    page_size: appointmentsPerPage,
+    page: currentPage,
+    page_size: pageSize,
+    search: debouncedSearchQuery,
+    tab: activeTab,
+    sort_by: 'followv_date',
+    sort_order: 'desc'
   })
 
-  // Utility functions
-  const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const appointmentDate = new Date(scheduledDate)
-    appointmentDate.setHours(0, 0, 0, 0)
+  // Calculate total pages
+  const totalPages = useMemo(() => {
+    if (!paginatedData?.count) return 0
+    return Math.ceil(paginatedData.count / pageSize)
+  }, [paginatedData?.count, pageSize])
 
-    if (appointmentDate < today && currentStatus === "Pending") {
-      return "Missed"
-    }
-    return currentStatus
-  }
-
-  // Transform API data to match ScheduleRecord type
+  // Simple data transformation
   const appointments = useMemo(() => {
-    if (!paginatedData?.results) {
-      return []
-    }
+    if (!paginatedData?.results) return []
+    
+    const transformed = paginatedData.results.map((visit: any) => {
+      try {
+        const patientDetails = visit.patient_details
+        if (!patientDetails) return null
 
-    const transformed = paginatedData.results
-      .map((visit: any) => {
-        try {
-          const patientDetails = visit.patient_details
-          if (!patientDetails) {
-            return null
-          }
+        const patientInfo = patientDetails.personal_info || {}
+        const address = patientDetails.address || {}
+        const rpIdInfo = patientDetails.rp_id || {}
 
-          const patientInfo = patientDetails.personal_info || {}
-          const address = patientDetails.address || {}
+        // Calculate age safely
+        const calculateAge = (dob: string) => {
+          if (!dob) return { age: 0, ageTime: "yrs" }
+          try {
+            const birthDate = new Date(dob)
+            const today = new Date()
+            let age = today.getFullYear() - birthDate.getFullYear()
+            const monthDiff = today.getMonth() - birthDate.getMonth()
 
-          const calculateAge = (dob: string) => {
-            if (!dob) {
-              return { age: 0, ageTime: "yrs" }
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--
             }
-            try {
-              const birthDate = new Date(dob)
-              const today = new Date()
-              let age = today.getFullYear() - birthDate.getFullYear()
-              const monthDiff = today.getMonth() - birthDate.getMonth()
-
-              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--
-              }
-              return { age: Math.max(0, age), ageTime: "yrs" }
-            } catch (e) {
-              return { age: 0, ageTime: "yrs" }
-            }
+            return { age: Math.max(0, age), ageTime: "yrs" }
+          } catch (e) {
+            return { age: 0, ageTime: "yrs" }
           }
-
-          const ageInfo = calculateAge(patientInfo.per_dob)
-
-          const formatDate = (dateStr: string) => {
-            if (!dateStr) {
-              return new Date().toISOString().split("T")[0]
-            }
-            try {
-              return new Date(dateStr).toISOString().split("T")[0]
-            } catch (e) {
-              return dateStr
-            }
-          }
-
-          const record: ScheduleRecord = {
-            id: visit.followv_id || visit.id || 0,
-            patient: {
-              firstName: patientInfo.per_fname || "Unknown",
-              lastName: patientInfo.per_lname || "Unknown",
-              middleName: patientInfo.per_mname || "",
-              gender: patientInfo.per_sex || "Unknown",
-              age: ageInfo.age,
-              ageTime: ageInfo.ageTime,
-              patientId: patientDetails.pat_id || patientInfo.pat_id || "",
-            },
-            scheduledDate: formatDate(visit.followv_date || visit.date),
-            purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-            status: (visit.followv_status || visit.status || "Pending").charAt(0).toUpperCase() +
-              (visit.followv_status || visit.status || "Pending").slice(1) as "Pending" | "Completed" | "Missed" | "Cancelled",
-            sitio: address.add_sitio || address.location || "Unknown",
-            type: patientDetails.pat_type === "Transient" ? "Transient" : "Resident",
-            patrecType: patientDetails.patrec_type || "Unknown",
-          }
-
-          return record
-        } catch (error) {
-          return null
         }
-      })
-      .filter(Boolean)
+
+        const ageInfo = calculateAge(patientInfo.per_dob)
+
+        // Normalize status
+        const rawStatus = visit.followv_status || "pending"
+        let normalizedStatus: "Pending" | "Completed" | "Missed" | "Cancelled"
+        
+        switch (rawStatus.toLowerCase()) {
+          case 'completed':
+            normalizedStatus = "Completed"
+            break
+          case 'pending':
+            normalizedStatus = "Pending"
+            break
+          case 'missed':
+            normalizedStatus = "Missed"
+            break
+          case 'cancelled':
+            normalizedStatus = "Cancelled"
+            break
+          default:
+            normalizedStatus = "Pending"
+        }
+
+        // Get patient type
+        const patientType = patientDetails.pat_type === "Transient" ? "Transient" : "Resident"
+
+        const record: ScheduleRecord = {
+          id: visit.followv_id || visit.id || 0,
+          patient: {
+            firstName: patientInfo.per_fname || "Unknown",
+            lastName: patientInfo.per_lname || "Unknown",
+            middleName: patientInfo.per_mname || "",
+            gender: patientInfo.per_sex || "Unknown",
+            age: ageInfo.age,
+            ageTime: ageInfo.ageTime,
+            patientId: patientDetails.pat_id || rpIdInfo.rp_id || "Unknown",
+          },
+          scheduledDate: visit.followv_date || new Date().toISOString().split("T")[0],
+          purpose: visit.followv_description || "Follow-up Visit",
+          status: normalizedStatus,
+          sitio: address.add_sitio || "Unknown Sitio",
+          type: patientType,
+          patrecType: patientDetails.pat_type || "Unknown",
+        }
+
+        return record
+      } catch (error) {
+        console.error('Error transforming visit:', visit.followv_id, error)
+        return null
+      }
+    }).filter(Boolean) as ScheduleRecord[]
 
     return transformed
   }, [paginatedData])
 
-  // Filter appointments based on active tab and search query
-  const filteredAppointments = useMemo(() => {
-    let result = appointments
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page)
+  }, [])
 
-    // Filter by search query first
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase()
-      result = result.filter(
-        (appointment: any) =>
-          appointment.patient.firstName.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.patient.lastName.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.patient.patientId.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.purpose.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.sitio.toLowerCase().includes(lowerCaseQuery)
-      )
-    }
-
-    // Filter by active tab
-    result = result.filter((appointment: any) => {
-      const actualStatus = getAppointmentStatus(appointment.scheduledDate, appointment.status)
-      return actualStatus.toLowerCase() === activeTab
-    })
-
-    // Sort by date (most recent first)
-    result.sort((a: any, b: any) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
-
-    return result
-  }, [appointments, searchQuery, activeTab])
-
-  // Calculate stats for tabs
-  const counts = useMemo(() => {
-    return {
-      pending: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Pending").length,
-      completed: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Completed").length,
-      missed: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Missed").length,
-      cancelled: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Cancelled").length,
-    }
-  }, [appointments])
-
-  const onRefresh = React.useCallback(async () => {
+  // Refresh function
+  const onRefresh = useCallback(async () => {
     setRefreshing(true)
     try {
       await refetch()
@@ -357,12 +470,44 @@ export default function AdminAppointmentsScreen() {
     setRefreshing(false)
   }, [refetch])
 
-  const handleAppointmentPress = (appointment: ScheduleRecord) => {
-    console.log("View appointment:", { id: appointment.id, patient: appointment.patient.patientId })
-    // Navigate to appointment details or perform action
-  }
+  // Handle tab change
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab)
+  }, [])
 
-  if (isLoading) { return <LoadingState/>}
+  // Handle appointment press
+  const handleAppointmentPress = useCallback((appointment: ScheduleRecord) => {
+    console.log("View appointment:", { 
+      id: appointment.id, 
+      patientId: appointment.patient.patientId,
+      patientName: `${appointment.patient.firstName} ${appointment.patient.lastName}`
+    })
+  }, [])
+
+  // Get counts from backend or calculate from current data
+  const counts = useMemo(() => {
+    if (paginatedData?.counts) {
+      return {
+        pending: paginatedData.counts.pending || 0,
+        completed: paginatedData.counts.completed || 0,
+        missed: paginatedData.counts.missed || 0,
+        cancelled: paginatedData.counts.cancelled || 0,
+      }
+    } else {
+      // For page-based pagination, we might not have all counts
+      // You could make a separate API call to get counts, or estimate from current data
+      return {
+        pending: 0,
+        completed: 0,
+        missed: 0,
+        cancelled: 0,
+      }
+    }
+  }, [paginatedData?.counts])
+
+  if (isLoading) {
+    return <LoadingState />
+  }
 
   if (error) {
     return (
@@ -406,8 +551,7 @@ export default function AdminAppointmentsScreen() {
         </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-lg font-semibold">All Appointments</Text>}
-      rightAction={<View className="w-10 h-10" />
-      }
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
@@ -416,59 +560,80 @@ export default function AdminAppointmentsScreen() {
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search appointments..."
+              placeholder="Search by name, ID, or purpose..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              returnKeyType="search"
             />
           </View>
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} counts={counts} />
+
+        {/* Results Info */}
+        <ResultsInfo
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalCount={paginatedData?.count || 0}
+          isLoading={isLoading}
+        />
 
         {/* Appointments List */}
-        {appointments.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-6">
-            <Calendar size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No appointments found</Text>
-            <Text className="text-gray-600 text-center mt-2">
-              There are no appointments scheduled yet.
-            </Text>
-          </View>
-        ) : (
+        <View className="flex-1">
           <FlatList
-            data={filteredAppointments}
-            keyExtractor={(item) => `appointment-${item.id}`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            data={appointments}
+            keyExtractor={(item) => `appointment-${item.id}-${currentPage}`}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                colors={['#3B82F6']} 
+              />
+            }
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
-            windowSize={21}
-            renderItem={({ item }) => {
-              const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
-              return (
-                <AppointmentCard
-                  appointment={item}
-                  actualStatus={actualStatus}
-                  onPress={() => handleAppointmentPress(item)}
-                />
-              )
-            }}
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">
                 <Calendar size={48} color="#D1D5DB" />
-                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No appointments in this category</Text>
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
+                  {searchQuery || activeTab !== 'pending' ? 'No appointments found' : 'No appointments scheduled'}
+                </Text>
                 <Text className="text-gray-500 text-center">
                   {searchQuery
-                    ? `No ${activeTab} appointments match your search.`
-                    : `No ${activeTab} appointments found.`}
+                    ? `No ${activeTab} appointments match "${searchQuery}"`
+                    : `No ${activeTab} appointments found`}
                 </Text>
+                {(searchQuery || activeTab !== 'pending') && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSearchQuery('')
+                      setActiveTab('pending')
+                    }}
+                    className="mt-4 bg-blue-600 px-4 py-2 rounded-lg"
+                  >
+                    <Text className="text-white font-medium">Show All Appointments</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
+            renderItem={({ item }) => (
+              <AppointmentCard
+                appointment={item}
+                onPress={() => handleAppointmentPress(item)}
+              />
+            )}
           />
-        )}
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            isLoading={isLoading}
+          />
+        </View>
       </View>
     </PageLayout>
   )

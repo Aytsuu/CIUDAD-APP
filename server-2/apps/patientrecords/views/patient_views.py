@@ -637,46 +637,77 @@ def check_or_create_patient(request):
 @api_view(['GET'])
 def get_appointments_by_resident_id(request, rp_id):
     try:
-        # Get follow-up visits
+        # First, check if resident exists
+        try:
+            resident = ResidentProfile.objects.get(rp_id=rp_id)
+        except ResidentProfile.DoesNotExist:
+            return Response(
+                {"detail": "Resident not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get follow-up visits with select_related to optimize queries
         follow_up_appointments = FollowUpVisit.objects.filter(
             patrec__pat_id__rp_id=rp_id
-        ).order_by('-followv_date', '-created_at')
-        
+        ).select_related('patrec').order_by('-followv_date', '-created_at')
+
         # Get medical consultation appointments
         med_consult_appointments = MedConsultAppointment.objects.filter(
             rp__rp_id=rp_id
-        ).order_by('-scheduled_date', '-created_at')
-        
+        ).select_related('rp').order_by('-scheduled_date', '-created_at')
+
         # Get prenatal appointments
         prenatal_appointments = PrenatalAppointmentRequest.objects.filter(
             rp_id=rp_id
         ).order_by('-requested_at')
-        
-        # Check if any appointments exist
-        if not any([follow_up_appointments.exists(), med_consult_appointments.exists(), prenatal_appointments.exists()]):
-            return Response(
-                {"detail": "No appointments found for this resident."},
-                status=status.HTTP_404_NOT_FOUND
-            )
 
-        # Serialize all appointment types
-        follow_up_serializer = FollowUpVisitSerializer(follow_up_appointments, many=True)
-        med_consult_serializer = MedConsultAppointmentSerializer(med_consult_appointments, many=True)
-        prenatal_serializer = PrenatalRequestAppointmentSerializer(prenatal_appointments, many=True)
-        
+        # Check if any appointments exist
+        has_appointments = any([
+            follow_up_appointments.exists(),
+            med_consult_appointments.exists(), 
+            prenatal_appointments.exists()
+        ])
+
+        if not has_appointments:
+            return Response({
+                "follow_up_appointments": [],
+                "med_consult_appointments": [],
+                "prenatal_appointments": [],
+                "detail": "No appointments found for this resident."
+            }, status=status.HTTP_200_OK)
+
+        # Serialize data with error handling for each serializer
+        try:
+            follow_up_data = FollowUpVisitSerializer(follow_up_appointments, many=True).data
+        except Exception as e:
+            print(f"Error serializing follow-up appointments: {str(e)}")
+            follow_up_data = []
+
+        try:
+            med_consult_data = MedConsultAppointmentSerializer(med_consult_appointments, many=True).data
+        except Exception as e:
+            print(f"Error serializing med consult appointments: {str(e)}")
+            med_consult_data = []
+
+        try:
+            prenatal_data = PrenatalRequestAppointmentSerializer(prenatal_appointments, many=True).data
+        except Exception as e:
+            print(f"Error serializing prenatal appointments: {str(e)}")
+            prenatal_data = []
+
         return Response({
-            "follow_up_appointments": follow_up_serializer.data,
-            "med_consult_appointments": med_consult_serializer.data,
-            "prenatal_appointments": prenatal_serializer.data
+            "follow_up_appointments": follow_up_data,
+            "med_consult_appointments": med_consult_data,
+            "prenatal_appointments": prenatal_data,
+            "resident_info": {
+                "rp_id": resident.rp_id,
+                "name": f"{resident.per.per_fname} {resident.per.per_lname}"
+            }
         }, status=status.HTTP_200_OK)
-    
-    except ResidentProfile.DoesNotExist:
-        return Response(
-            {"detail": "Resident not found."},
-            status=status.HTTP_404_NOT_FOUND
-        )
+
     except Exception as e:
+        print(f"Unexpected error in get_appointments_by_resident_id: {str(e)}")
         return Response(
-            {"detail": f"An error occurred: {str(e)}"},
+            {"detail": "An internal server error occurred."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

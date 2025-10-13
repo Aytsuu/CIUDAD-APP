@@ -4,7 +4,6 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "rea
 import { Search, ChevronLeft, AlertCircle, FileText, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
@@ -80,9 +79,7 @@ export default function AllMedicalRecord() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-
-  const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 600);
 
   // Build query parameters
   const queryParams = useMemo(
@@ -224,12 +221,12 @@ export default function AllMedicalRecord() {
       headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medical Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1">
+      <View className="flex-1 ">
         {/* Search Bar */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
+        <View className="bg-white px-4 py-3  border-b border-gray-200">
+          <View className="flex-row p-2 items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
-            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, patient ID, household number, address, or sitio..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 
