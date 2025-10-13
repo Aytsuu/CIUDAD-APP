@@ -334,7 +334,7 @@ const CouncilCalendarPage = () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="font-semibold text-lg text-[#2a3a61]">Council Events</Text>}
+      headerBetweenAction={<Text className="text-gray-900 text-[13px]">Council Events</Text>}
       showExitButton={false}
       headerAlign="left"
       keyboardAvoiding={true}
@@ -342,7 +342,7 @@ const CouncilCalendarPage = () => {
       scrollable={false}
     >
       {/* Calendar Header */}
-      <View className="bg-white shadow-sm py-4">
+      <View className="bg-white shadow-sm py-4 px-6">
         <View className="flex-row justify-between items-center mb-4 px-2">
           <TouchableOpacity
             onPress={() => handleMonthChange(-1)}

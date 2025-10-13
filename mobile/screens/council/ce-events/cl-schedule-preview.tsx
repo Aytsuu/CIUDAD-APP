@@ -100,7 +100,7 @@ const CLSchedulePreview = () => {
             <ChevronLeft size={30} color="black" className="text-black" />
           </TouchableOpacity>
         }
-        headerTitle={<Text>Schedule Events</Text>}
+        headerTitle={<Text className="text-gray-900 text-[13px]">Schedule Events</Text>}
         rightAction={
           <TouchableOpacity>
             <ChevronLeft size={30} color="black" className="text-white" />

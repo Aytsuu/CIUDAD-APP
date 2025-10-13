@@ -156,7 +156,7 @@ const DonationView = () => {
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>{isEditing ? "Edit Donation" : "View Donation"}</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Donation" : "View Donation"}</Text>}
       rightAction={
         <TouchableOpacity>
           <ChevronLeft size={30} color="black" className="text-white" />

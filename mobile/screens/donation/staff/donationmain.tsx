@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   FlatList,
-  TextInput,
 } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -19,16 +18,20 @@ import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import EmptyState from "@/components/ui/emptyState";
 import { Button } from "@/components/ui/button"; 
 import { LoadingState } from "@/components/ui/loading-state";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
 
 const DonationTracker = () => {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const debouncedSearchTerm = useDebounce(searchQuery, 500);
 
   // Use backend search and filtering
   const { 
@@ -61,6 +64,11 @@ const DonationTracker = () => {
       pathname: "/(donation)/staffDonationView",
       params: { don_num: donationNum.toString() },
     });
+  };
+
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
   };
 
   // Category options matching web
@@ -162,7 +170,7 @@ const DonationTracker = () => {
 
   // Empty state component
   const renderEmptyState = () => {
-    const emptyMessage = searchTerm || categoryFilter !== "all" || statusFilter !== "all"
+    const emptyMessage = searchQuery || categoryFilter !== "all" || statusFilter !== "all"
       ? 'No donation records found. Try adjusting your search terms.'
       : 'No donation records available yet.';
     
@@ -187,30 +195,31 @@ const DonationTracker = () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Donation Records</Text>}
-      rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Donation Records</Text>}
+      rightAction={
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
+      }
       wrapScroll={false}
     >
-      <View className="flex-1 px-6">
-        {/* Search and Filter Section - Styled like Resolution */}
-        <View className="mb-4">
-          <View className="flex-row items-center gap-2 pb-3">
-            <View className="relative flex-1"> 
-              <TextInput
-                placeholder="Search donation records..."
-                className="pl-2 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchTerm}
-                onChangeText={(text) => {
-                  setSearchTerm(text);
-                  setCurrentPage(1);
-                }}
-              />
-            </View>
-          </View>
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
 
-          {/* Filter Dropdowns - Styled like Resolution */}
-          <View className="flex-row gap-3 pb-3">
-            <View className="flex-1">
+        <View className="flex-1 px-6">
+          {/* Filter Dropdowns */}
+          {/* <View className="flex-row gap-3 py-3"> */}
+            <View className="flex mb-2">
               <SelectLayout
                 options={categoryOptions}
                 selectedValue={categoryFilter}
@@ -220,7 +229,7 @@ const DonationTracker = () => {
                 isInModal={false}
               />
             </View>
-            <View className="flex-1">
+            <View className="flex mb-2">
               <SelectLayout
                 options={statusOptions}
                 selectedValue={statusFilter}
@@ -230,46 +239,46 @@ const DonationTracker = () => {
                 isInModal={false}
               />
             </View>
-          </View>
+          {/* </View> */}
 
-          {/* Add Button - Styled like Resolution's Create Button */}
+          {/* Add Button */}
           <Button 
             onPress={handleAddDonation} 
-            className="bg-primaryBlue mt-3 rounded-xl"
+            className="bg-primaryBlue rounded-xl"
           >
             <Text className="text-white text-[17px]">Add Donation</Text>
           </Button>
-        </View>
 
-        {/* Content Area */}
-        <View className="flex-1">
-          {isLoading ? (
-            renderLoadingState()
-          ) : (
-            <View className="flex-1">
-              {donations.length === 0 ? (
-                renderEmptyState()
-              ) : (
-                <FlatList
-                  data={donations}
-                  renderItem={({ item }) => <RenderDonationCard item={item} />}
-                  keyExtractor={(item) => item.don_num}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={onRefresh}
-                      colors={['#00a8f0']}
-                    />
-                  }
-                  contentContainerStyle={{ 
-                    paddingBottom: 16,
-                    paddingTop: 16
-                  }}
-                />
-              )}
-            </View>
-          )}
+          {/* Content Area */}
+          <View className="flex-1 mt-4">
+            {isLoading ? (
+              renderLoadingState()
+            ) : (
+              <View className="flex-1">
+                {donations.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={donations}
+                    renderItem={({ item }) => <RenderDonationCard item={item} />}
+                    keyExtractor={(item) => item.don_num}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )}
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </PageLayout>

@@ -79,7 +79,7 @@ const DonationAdd = () => {
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>Add Donation</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Add Donation</Text>}
       rightAction={
         <TouchableOpacity>
           <ChevronLeft size={30} color="black" className="text-white" />

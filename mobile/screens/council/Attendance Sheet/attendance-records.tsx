@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   FlatList,
-  TextInput,
 } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -22,13 +21,18 @@ import { SelectLayout } from "@/components/ui/select-layout";
 import EmptyState from "@/components/ui/emptyState";
 import { formatTableDate } from "@/helpers/dateHelpers";
 import { LoadingState } from "@/components/ui/loading-state";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
 
 const AttendanceRecord = () => {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [showSearch, setShowSearch] = useState(false);
+  
+  const debouncedSearchTerm = useDebounce(searchQuery, 500);
   const { data: availableYears = [] } = useGetCouncilEventYears();
 
   // Fetch council events with backend search and filtering
@@ -88,8 +92,8 @@ const AttendanceRecord = () => {
     })),
   ];
 
-  const handleSearchChange = (text: string) => {
-    setSearchTerm(text);
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
   };
 
   const handleFilterChange = (option: { label: string; value: string }) => {
@@ -157,7 +161,7 @@ const AttendanceRecord = () => {
 
   // Empty state component
   const renderEmptyState = () => {
-    const emptyMessage = searchTerm
+    const emptyMessage = searchQuery
       ? 'No records found. Try adjusting your search terms.'
       : 'No attendance records available yet.';
     
@@ -184,7 +188,14 @@ const AttendanceRecord = () => {
           </TouchableOpacity>
         }
         headerTitle={<Text className="text-gray-900 text-[13px]">Attendance Records</Text>}
-        rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        }
       >
         <View className="flex-1 justify-center items-center px-4">
           <Text className="text-lg font-semibold text-gray-700 mb-2 text-center">
@@ -214,26 +225,30 @@ const AttendanceRecord = () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Attendance Records</Text>}
-      rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Attendance Records</Text>}
+      rightAction={
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
+      }
       wrapScroll={false}
     >
-      <View className="flex-1 px-6">
-       
-        <View className="mb-4">
-          <View className="flex-row items-center gap-2 pb-3">
-            <View className="relative flex-1">
-              <TextInput
-                placeholder="Search attendance records..."
-                className="pl-2 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchTerm}
-                onChangeText={handleSearchChange}
-              />
-            </View>
-          </View>
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
+        )}
 
-         
-          <View className="pb-3">
+        <View className="flex-1 px-6">
+          {/* Filter Section */}
+          <View className="py-3">
             <SelectLayout
               options={filterOptions}
               className="h-8"
@@ -243,37 +258,37 @@ const AttendanceRecord = () => {
               isInModal={false}
             />
           </View>
-        </View>
 
-        
-        <View className="flex-1 mt-4">
-          {isLoading ? (
-            renderLoadingState()
-          ) : (
-            <View className="flex-1">
-              {tableData.length === 0 ? (
-                renderEmptyState()
-              ) : (
-                <FlatList
-                  data={tableData}
-                  renderItem={({ item }) => <RenderAttendanceCard item={item} />}
-                  keyExtractor={(item) => item.ceId.toString()}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={refreshing}
-                      onRefresh={onRefresh}
-                      colors={['#00a8f0']}
-                    />
-                  }
-                  contentContainerStyle={{ 
-                    paddingBottom: 16,
-                    paddingTop: 16
-                  }}
-                />
-              )}
-            </View>
-          )}
+          {/* Content Section */}
+          <View className="flex-1">
+            {isLoading ? (
+              renderLoadingState()
+            ) : (
+              <View className="flex-1">
+                {tableData.length === 0 ? (
+                  renderEmptyState()
+                ) : (
+                  <FlatList
+                    data={tableData}
+                    renderItem={({ item }) => <RenderAttendanceCard item={item} />}
+                    keyExtractor={(item) => item.ceId.toString()}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#00a8f0']}
+                      />
+                    }
+                    contentContainerStyle={{ 
+                      paddingBottom: 16,
+                      paddingTop: 16
+                    }}
+                  />
+                )}
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </PageLayout>

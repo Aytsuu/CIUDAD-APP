@@ -206,7 +206,7 @@ const AttendanceSheets = () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="font-semibold text-lg text-[#2a3a61]">Attendance Sheets</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Attendance Sheets</Text>}
       rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
       wrapScroll={false}
     >
