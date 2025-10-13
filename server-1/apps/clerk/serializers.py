@@ -475,6 +475,17 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             seq = existing_count + 1
             validated_data['bpr_id'] = f"BPR{seq:03d}-{year_suffix:02d}"
         
+        # Handle business name and address logic
+        bus_id = validated_data.get('bus_id')
+        
+        if bus_id:
+            # Existing business - set to null, data will be fetched via bus_id in datatable
+            validated_data['bus_permit_name'] = None
+            validated_data['bus_permit_address'] = None
+        else:
+            # New business - use the provided bus_permit_name and bus_permit_address
+            # These should already be in validated_data from the request
+            pass
         
         # Create the BusinessPermitRequest
         permit_request = BusinessPermitRequest.objects.create(**validated_data)

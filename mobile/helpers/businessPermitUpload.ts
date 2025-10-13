@@ -13,7 +13,7 @@ export interface BusinessPermitUploadResult {
 }
 
 /**
- * Upload business permit file to S3 bucket
+ * Upload business permit file to Supabase Storage
  */
 export const uploadBusinessPermitFile = async (
     fileData: BusinessPermitFileData
@@ -34,15 +34,15 @@ export const uploadBusinessPermitFile = async (
         formData.append('file_type', fileData.type);
         formData.append('bucket_name', 'business-permit-file-bucket');
 
-        console.log("🚀 Making POST request to: business-permit/upload/");
+        console.log("🚀 Making POST request to: clerk/business-permit/upload/");
 
-        const response = await api.post('business-permit/upload/', formData, {
+        const response = await api.post('clerk/business-permit/upload/', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
 
-        console.log("✅ Business permit file uploaded successfully:", response.data);
+        console.log("✅ Business permit file uploaded", response.data);
         return response.data;
     } catch (error) {
         console.error("❌ Business permit file upload failed:", error);
@@ -62,7 +62,7 @@ export const uploadMultipleBusinessPermitFiles = async (
         const uploadPromises = files.map(file => uploadBusinessPermitFile(file));
         const results = await Promise.all(uploadPromises);
 
-        console.log("✅ All business permit files uploaded successfully");
+        console.log("✅ All business permit files uploaded");
         return results;
     } catch (error) {
         console.error("❌ Multiple business permit file upload failed:", error);

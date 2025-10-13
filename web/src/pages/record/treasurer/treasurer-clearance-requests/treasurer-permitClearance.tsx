@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { ReceiptText, Search, Ban, Eye } from 'lucide-react';
-import React, { useState } from "react";
+import React, { useState,  useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
@@ -12,8 +12,67 @@ import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/t
 import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAndRates } from "./queries/permitClearanceFetchQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Spinner } from "@/components/ui/spinner";
-import { DocumentViewer } from "./components/DocumentViewer";
+import { DocumentViewer } from "@/components/ui/document-viewer";
+import { getBusinessPermitFiles } from "./restful-api/permitClearanceGetAPI";
 import { useLoading } from "@/context/LoadingContext";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+
+
+const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; businessName: string }) => {
+  const [files, setFiles] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getBusinessPermitFiles(bprId);
+        setFiles(response.files || []);
+      } catch (err: any) {
+        console.error("Error fetching files:", err);
+        setError(err.message || "Failed to load documents");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFiles();
+  }, [bprId]);
+
+  const handleRetry = () => {
+    const fetchFiles = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getBusinessPermitFiles(bprId);
+        setFiles(response.files || []);
+      } catch (err: any) {
+        console.error("Error fetching files:", err);
+        setError(err.message || "Failed to load documents");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchFiles();
+  };
+
+  return (
+    <DocumentViewer
+      files={files.map(file => ({
+        id: file.bpf_id,
+        type: file.bpf_type,
+        url: file.bpf_url
+      }))}
+      title={businessName}
+      subtitle={`Business Permit ID: ${bprId}`}
+      isLoading={isLoading}
+      error={error}
+      onRetry={handleRetry}
+    />
+  );
+};
 
 const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<PermitClearance>[] => [
     { accessorKey: "businessName",
@@ -149,8 +208,8 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
           header: "Action",
           cell: ({row}: {row: any}) =>(
             <div className="flex justify-center gap-0.5">
-                {/* View Documents Icon - Only show if bpf_id exists */}
-                {row.original.bpf_id && (
+                {/* View Documents Icon - Always reserve space, show placeholder if no files */}
+                {row.original.has_files ? (
                     <TooltipLayout
                         trigger={
                             <DialogLayout
@@ -161,9 +220,8 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                 }
                                 className="max-w-6xl"
                                 title="Business Permit Documents"
-                                description={`View documents for ${row.original.businessName}`}
                                 mainContent={
-                                    <DocumentViewer 
+                                    <BusinessPermitDocumentViewer 
                                         bprId={row.original.bpr_id} 
                                         businessName={row.original.businessName}
                                     />
@@ -172,6 +230,10 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                         } 
                         content="View Documents"
                     />
+                ) : (
+                    <div className="bg-gray-100 border border-gray-200 text-gray-400 px-4 py-2 rounded cursor-not-allowed">
+                        <Eye size={16}/>
+                    </div>
                 )}
                 
                 <TooltipLayout
@@ -247,7 +309,7 @@ type PermitClearance = {
     req_purpose?: string,
     cr_id?: string,
     bpr_id?: string, // Add bpr_id field
-    bpf_id?: number | null, // Add bpf_id field for document viewing
+    has_files?: boolean, // Add has_files field to check if files exist
     req_payment_status?: string,
     pr_id?: number,
     ags_id?: number,
@@ -277,9 +339,18 @@ function PermitClearance(){
     const { showLoading, hideLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"paid" | "unpaid" | "declined">("unpaid");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
     
     // Fetch data from backend using custom hooks
-    const { data: permitClearances, isLoading, error } = useGetPermitClearances();
+    const { data: permitClearances, isLoading, error } = useGetPermitClearances(
+        currentPage, 
+        pageSize, 
+        searchTerm, 
+        '', 
+        activeTab === "paid" ? "Paid" : activeTab === "unpaid" ? "Unpaid" : ""
+    );
     const { data: annualGrossSalesResponse, isLoading: grossSalesLoading } = useGetAnnualGrossSalesForPermit();
     const { data: purposesResponse, isLoading: purposesLoading } = useGetPurposesAndRates();
 
@@ -301,7 +372,25 @@ function PermitClearance(){
         : (purposesResponse as any)?.results || [];
 
 
-    const filteredData = (Array.isArray(permitClearances) ? permitClearances : []).filter((item: any) => {
+    // Handle paginated response
+    const permitClearancesData = Array.isArray(permitClearances) 
+        ? permitClearances 
+        : (permitClearances as any)?.results || [];
+    
+    const totalCount = Array.isArray(permitClearances) 
+        ? permitClearances.length 
+        : (permitClearances as any)?.count || 0;
+    
+    const totalPages = Array.isArray(permitClearances) 
+        ? 1 
+        : Math.ceil(((permitClearances as any)?.count || 0) / pageSize);
+
+    // Reset to page 1 when tab changes
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
+
+    const filteredData = permitClearancesData.filter((item: any) => {
         if (activeTab === "declined") {
             // Show only declined requests
             return item.req_status === "Declined";
@@ -342,7 +431,7 @@ function PermitClearance(){
             amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
             req_amount: item.req_amount || 0, // Include req_amount field
             bpr_id: item.bpr_id || "", // Include bpr_id field
-            bpf_id: item.bpf_id || null, // Include bpf_id field for document viewing
+            has_files: item.has_files || false, // Include has_files field from API
             req_declined_reason: item.req_declined_reason || "", // Include declined reason
             ags_id: item.ags_id, // Include ags_id
             pr_id: item.pr_id, // Include pr_id
@@ -372,7 +461,15 @@ function PermitClearance(){
                                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                                 size={17}
                             />
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                            <Input 
+                                placeholder="Search..." 
+                                className="pl-10 w-full bg-white text-sm" 
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1); // Reset to first page when searching
+                                }}
+                            /> {/* Adjust padding and text size */}
                         </div>
                                                     
                     </div>
@@ -398,7 +495,15 @@ function PermitClearance(){
                              <div className="flex gap-x-4 items-center">
                                  <div className="flex gap-x-2 items-center">
                                      <p className="text-xs sm:text-sm">Show</p>
-                                     <Input type="number" className="w-14 h-8" defaultValue="10" />
+                                     <Input 
+                                         type="number" 
+                                         className="w-14 h-8" 
+                                         value={pageSize}
+                                         onChange={(e) => {
+                                             setPageSize(parseInt(e.target.value) || 10);
+                                             setCurrentPage(1); // Reset to first page when changing page size
+                                         }}
+                                     />
                                      <p className="text-xs sm:text-sm">Entries</p>
                                  </div>
                                  
@@ -451,11 +556,18 @@ function PermitClearance(){
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3 sm:gap-0">
                     <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing 1-10 of 150 rows
+                        Showing {totalCount > 0 ? ((currentPage - 1) * pageSize) + 1 : 0}-
+                        {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                     </p>
 
                     <div className="w-full sm:w-auto flex justify-center">
-                        {/* <PaginationLayout className="" /> */}
+                        {totalCount > 0 && (
+                            <PaginationLayout 
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
                     </div>
                 </div>  
             </div>

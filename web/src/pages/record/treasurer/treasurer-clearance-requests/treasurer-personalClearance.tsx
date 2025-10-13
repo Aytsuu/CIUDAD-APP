@@ -62,18 +62,12 @@ function PersonalClearance() {
     const totalCount = residentType === "non-resident" ? (nonResidentData?.count || 0) : (residentData?.count || 0);
     const totalPages = Math.ceil(totalCount / pageSize);
 
-    console.log('resident', residentClearanceRequests)
     
     // Select data based on resident type
     const clearanceRequests = residentType === "non-resident" ? nonResidentClearanceRequests : residentClearanceRequests;
     const isLoading = residentType === "non-resident" ? nonResidentLoading : residentLoading;
     const error = residentType === "non-resident" ? nonResidentError : residentError;
 
-    useEffect(() => {
-        if (clearanceRequests) {
-            console.log("Personal clearances data:", clearanceRequests);
-        }
-    }, [clearanceRequests]);
 
     useEffect(() => {
         if (error) {
@@ -651,11 +645,7 @@ function PersonalClearance() {
             <DialogLayout
                 trigger={<></>}
                 isOpen={isDiscountModalOpen}
-                onOpenChange={(open) => {
-                    console.log('Discount modal onOpenChange:', open);
-                    setIsDiscountModalOpen(open);
-                    // Note: Receipt form opening is now handled directly in onAuthorize and onCancel handlers
-                }}
+                onOpenChange={setIsDiscountModalOpen}
                 title="Authorize Discount"
                 description="Enter authorization code to apply a discount"
                 mainContent={
@@ -663,11 +653,8 @@ function PersonalClearance() {
                         <DiscountAuthorizationForm
                             originalAmount={currentReceipt.rate}
                             onAuthorize={(amount: string, reason: string) => {
-                                console.log('Discounted amount applied:', amount);
-                                console.log('Discount reason:', reason);
                                 setAppliedDiscountAmount(amount);
                                 setAppliedDiscountReason(reason);
-                                console.log('Setting discount amount and showing receipt form');
                                 setIsDiscountModalOpen(false);
                                 // Use setTimeout to ensure the discount modal closes before opening receipt modal
                                 setTimeout(() => {
@@ -675,7 +662,6 @@ function PersonalClearance() {
                                 }, 100);
                             }}
                             onCancel={() => {
-                                console.log('Discount cancelled, showing receipt form');
                                 setAppliedDiscountAmount(undefined);
                                 setAppliedDiscountReason(undefined);
                                 setIsDiscountModalOpen(false);

@@ -18,7 +18,7 @@ urlpatterns = [
     path('remark-supp-docs/', RemarkSuppDocCreateView.as_view(), name='remark-supp-doc-create'),
     
     # Lupon
-    path('lupon-case-list/', LuponCasesView.as_view(), name='lupon-case-list'),
+    # path('lupon-case-list/', LuponCasesView.as_view(), name='lupon-case-list'),
 
     # Summon date and time
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),

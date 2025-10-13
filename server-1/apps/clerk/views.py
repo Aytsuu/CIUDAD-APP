@@ -734,7 +734,7 @@ class BusinessPermitListView(ActivityLogMixin, generics.ListCreateAPIView):
         if business_type:
             queryset = queryset.filter(bus_id__bus_type=business_type)
 
-        return queryset.order_by('-req_request_date')
+        return queryset.order_by('-req_request_date', '-bpr_id')
 
     def list(self, request, *args, **kwargs):
         try:
@@ -795,7 +795,7 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
         if payment_status:
             queryset = queryset.filter(req_payment_status=payment_status)
 
-        return queryset.order_by('-req_request_date')
+        return queryset.order_by('-req_request_date', '-bpr_id')
     
     def list(self, request, *args, **kwargs):
         try:
@@ -804,10 +804,18 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
             
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
+                # Add file information to each permit clearance
+                data = serializer.data
+                for item in data:
+                    item['has_files'] = self._check_has_files(item['bpr_id'])
+                return self.get_paginated_response(data)
             
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            data = serializer.data
+            # Add file information to each permit clearance
+            for item in data:
+                item['has_files'] = self._check_has_files(item['bpr_id'])
+            return Response(data)
         except Exception as e:
             logger.error(f"Error in PermitClearanceView.list: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
@@ -819,35 +827,47 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    def _check_has_files(self, bpr_id):
+        """Check if a business permit request has files"""
+        try:
+            from .models import BusinessPermitFile
+            return BusinessPermitFile.objects.filter(bpr_id=bpr_id).exists()
+        except Exception:
+            return False
+    
     def create(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 permit_clearance = serializer.save()
+                
                 # Create BusinessPermitFile rows if provided
                 try:
                     from .models import BusinessPermitFile
                     create_payload = []
-                    prev_url = request.data.get('previous_permit_image')
+                    prev_url = request.data.get('permit_image')
                     assess_url = request.data.get('assessment_image')
+                    
                     if prev_url:
-                        prev_name = str(prev_url).split('/')[-1] if isinstance(prev_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=prev_name or 'previous_permit',
-                            bpf_type='previous_permit',
+                            bpf_type='permit',
                             bpf_url=prev_url,
                             bpr_id=permit_clearance
                         ))
                     if assess_url:
-                        assess_name = str(assess_url).split('/')[-1] if isinstance(assess_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=assess_name or 'assessment',
                             bpf_type='assessment',
                             bpf_url=assess_url,
                             bpr_id=permit_clearance
                         ))
                     if create_payload:
-                        BusinessPermitFile.objects.bulk_create(create_payload)
+                        # Create files individually to ensure they get proper IDs
+                        for file_data in create_payload:
+                            BusinessPermitFile.objects.create(
+                                bpf_type=file_data.bpf_type,
+                                bpf_url=file_data.bpf_url,
+                                bpr_id=file_data.bpr_id
+                            )
                 except Exception as file_err:
                     logger.error(f"Failed creating BusinessPermitFile entries: {str(file_err)}")
                 
@@ -1159,30 +1179,34 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 clearance_request = serializer.save()
+                
                 # Create BusinessPermitFile rows if provided
                 try:
                     from .models import BusinessPermitFile
                     create_payload = []
-                    prev_url = request.data.get('previous_permit_image')
+                    prev_url = request.data.get('permit_image')
                     assess_url = request.data.get('assessment_image')
+                    
                     if prev_url:
-                        prev_name = str(prev_url).split('/')[-1] if isinstance(prev_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=prev_name or 'previous_permit',
-                            bpf_type='previous_permit',
+                            bpf_type='permit',
                             bpf_url=prev_url,
                             bpr_id=clearance_request
                         ))
                     if assess_url:
-                        assess_name = str(assess_url).split('/')[-1] if isinstance(assess_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=assess_name or 'assessment',
                             bpf_type='assessment',
                             bpf_url=assess_url,
                             bpr_id=clearance_request
                         ))
                     if create_payload:
-                        BusinessPermitFile.objects.bulk_create(create_payload)
+                        # Create files individually to ensure they get proper IDs
+                        for file_data in create_payload:
+                            BusinessPermitFile.objects.create(
+                                bpf_type=file_data.bpf_type,
+                                bpf_url=file_data.bpf_url,
+                                bpr_id=file_data.bpr_id
+                            )
                 except Exception as file_err:
                     logger.error(f"Failed creating BusinessPermitFile entries: {str(file_err)}")
                 
@@ -1432,6 +1456,8 @@ class BusinessPermitFilesView(generics.ListAPIView):
     
     def get(self, request, bpr_id):
         try:
+            from .models import BusinessPermitFile
+            
             # Fetch all files for this business permit request
             files = BusinessPermitFile.objects.filter(bpr_id=bpr_id)
             
@@ -1446,9 +1472,7 @@ class BusinessPermitFilesView(generics.ListAPIView):
             for file in files:
                 files_data.append({
                     'bpf_id': file.bpf_id,
-                    'bpf_name': file.bpf_name,
                     'bpf_type': file.bpf_type,
-                    'bpf_path': file.bpf_path,
                     'bpf_url': file.bpf_url,
                 })
             
@@ -1466,9 +1490,7 @@ class BusinessPermitFilesView(generics.ListAPIView):
 
 
 class BusinessPermitUploadView(APIView):
-    """
-    Upload business permit files to S3 bucket
-    """
+    
     permission_classes = [AllowAny]
     
     def post(self, request):

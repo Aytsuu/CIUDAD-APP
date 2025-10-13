@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
@@ -88,7 +87,10 @@ const CertPermit: React.FC = () => {
   
   const permitPurposes = purposeAndRates.filter(purpose => 
     purpose.pr_category.toLowerCase().includes('permit') || 
-    purpose.pr_purpose.toLowerCase().includes('permit')
+    purpose.pr_purpose.toLowerCase().includes('permit') ||
+    purpose.pr_purpose.toLowerCase().includes('clearance') ||
+    purpose.pr_purpose.toLowerCase().includes('barangay') ||
+    purpose.pr_category.toLowerCase().includes('barangay')
   );
 
   
@@ -108,13 +110,10 @@ const CertPermit: React.FC = () => {
         index === self.findIndex(p => p.pr_purpose === purpose.pr_purpose)
       );
       
-      return [
-        { label: 'Business Clearance', value: 'Business Clearance' },
-        ...uniquePurposes.map(purpose => ({
-          label: `${purpose.pr_purpose}`,
-          value: purpose.pr_purpose
-        }))
-      ];
+      return uniquePurposes.map(purpose => ({
+        label: `${purpose.pr_purpose}`,
+        value: purpose.pr_purpose
+      }));
     }
   }, [isLoadingBusiness, businessData.length, permitPurposes]);
 
@@ -208,7 +207,7 @@ const CertPermit: React.FC = () => {
       business_address: businessAddress || "",
       gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
       rp_id: user?.rp || "",
-      previous_permit_image: previousPermitImage || undefined,
+      permit_image: previousPermitImage || undefined,
       assessment_image: assessmentImage || undefined,
     });
     
@@ -223,8 +222,13 @@ const CertPermit: React.FC = () => {
     // Calculate the amount to be paid and get the annual gross sales ID
     let reqAmount = 0;
     let agsId = null;
+    let prId = null;
+    
+    // Set pr_id for all permit types
+    prId = selectedPurpose?.pr_id || null;
     
     if (permitType === 'Business Clearance') {
+      // For Business Clearance, use ags_rate (Annual Gross Sales rate)
       if (businessData.length === 0) {
         // For residents without business, use rate from selected gross sales range
         const selectedGrossSales = annualGrossSales.find(sales => 
@@ -253,7 +257,7 @@ const CertPermit: React.FC = () => {
       business_address: businessAddress,
       gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
-      pr_id: selectedPurpose?.pr_id,
+      pr_id: prId,
       rp_id: user?.rp || "",
       req_amount: reqAmount,
       ags_id: agsId || undefined,
@@ -278,20 +282,32 @@ const CertPermit: React.FC = () => {
         }
         
         if (filesToUpload.length > 0) {
-          setUploadProgress(`Uploading ${filesToUpload.length} business permit file(s) to S3...`);
+          setUploadProgress(`Uploading...`);
           
           const uploadedFiles = await uploadMultipleBusinessPermitFiles(filesToUpload);
           
           // Add uploaded file URLs to payload
-          const previousPermitFile = uploadedFiles.find(file => file.file_name.includes('permit'));
-          const assessmentFile = uploadedFiles.find(file => file.file_name.includes('assessment'));
+          let previousPermitFile = null;
+          let assessmentFile = null;
           
-          // Store the business permit file URL in bpf_id field
-          payload.bpf_id = assessmentFile?.file_url || previousPermitFile?.file_url || null;
-          payload.previous_permit_image = previousPermitFile?.file_url || null;
-          payload.assessment_image = assessmentFile?.file_url || null;
+          if (filesToUpload.length === 1) {
+            // Only one file uploaded - check if it's permit or assessment
+            if (filesToUpload[0].type === 'permit') {
+              previousPermitFile = uploadedFiles[0];
+            } else {
+              assessmentFile = uploadedFiles[0];
+            }
+          } else if (filesToUpload.length === 2) {
+            // Two files uploaded - first is permit, second is assessment
+            previousPermitFile = uploadedFiles[0];
+            assessmentFile = uploadedFiles[1];
+          }
           
-          setUploadProgress("Business permit files uploaded successfully to S3!");
+          // Store the file URLs in the appropriate fields
+          payload.permit_image = previousPermitFile?.file_url;
+          payload.assessment_image = assessmentFile?.file_url;
+          
+          setUploadProgress("Business permit files uploaded successfully to Supabase Storage!");
         }
         
       } catch (uploadError) {
@@ -575,6 +591,7 @@ const CertPermit: React.FC = () => {
               <Text className="text-green-700 text-lg font-bold">
                 {(() => {
                   if (permitType === 'Business Clearance') {
+                    // For Business Clearance, use ags_rate (Annual Gross Sales rate)
                     if (businessData.length === 0) {
                       // For residents without business, use rate from selected gross sales range
                       const selectedGrossSales = annualGrossSales.find(sales => 

@@ -102,7 +102,7 @@ class BusinessPermitRequest(models.Model):
     rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
-    bpf_id = models.ForeignKey('BusinessPermitFile', on_delete=models.CASCADE, db_column='bpf_id', related_name='business_permits', null=True)
+
     
     class Meta:
         db_table = 'business_permit_request'
@@ -110,14 +110,12 @@ class BusinessPermitRequest(models.Model):
 
 class BusinessPermitFile(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
-    bpf_name = models.CharField(max_length=255)
     bpf_type = models.CharField(max_length=100, null=True, blank=True)
-    bpf_path = models.CharField(max_length=500, null=True, blank=True)
     bpf_url = models.CharField(max_length=500)
     bpr_id = models.ForeignKey('BusinessPermitRequest', on_delete=models.CASCADE, null=True, related_name='permit_files', db_column='bpr_id')
     class Meta:
         db_table = 'business_permit_file'
-        managed = False
+        managed = True
 
 class IssuedBusinessPermit(models.Model):
     ibp_id = models.CharField(max_length=10, primary_key=True)

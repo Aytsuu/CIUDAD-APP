@@ -97,7 +97,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 bus_permit_name: requestInfo.business_name || '', // Business name field
                 bus_permit_address: requestInfo.business_address || '', // Business address field
                 // Image fields for business_permit_file table (handled by backend)
-                previous_permit_image: requestInfo.previous_permit_image || null,
+                permit_image: requestInfo.permit_image || null,
                 assessment_image: requestInfo.assessment_image || null
             };
 
