@@ -6,7 +6,7 @@ import { ComplaintRecordForSummon } from "../complaint-record"
 import { Button } from "@/components/ui/button/button"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { ChevronLeft, Check, CircleAlert  } from "lucide-react"
+import { ChevronLeft, Check, CircleAlert, Forward  } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import SummonPreview from "./summon-preview"
@@ -15,7 +15,7 @@ import { useGetTemplateRecord } from "../../council/templates/queries/template-F
 import { formatTime } from "@/helpers/timeFormatter"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { useResolveCase } from "../queries/summonUpdateQueries"
+import { useResolveCase, useForwardcase } from "../queries/summonUpdateQueries"
 import { useGetSummonCaseDetails } from "../queries/summonFetchQueries"
 import type { HearingSchedule } from "../summon-types"
 import { formatTimestamp } from "@/helpers/timestampformatter"
@@ -58,6 +58,7 @@ export default function SummonDetails() {
   const { data: caseDetails, isLoading: isDetailLoading } = useGetSummonCaseDetails(sc_id)
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
   const { mutate: resolve } = useResolveCase()
+  const { mutate: forward } = useForwardcase()
   // const { mutate: escalate } = useEscalateCase()
   const { data: templates = [], isLoading: isLoadingTemplate } = useGetTemplateRecord()
   const { showLoading, hideLoading } = useLoading()
@@ -89,7 +90,7 @@ export default function SummonDetails() {
     hearing_schedules = [],
   } = caseDetails || {}
 
-  const isCaseClosed = case_status === "Resolved" || case_status === "Escalated"
+  const isCaseClosed = case_status === "Resolved" || case_status === "Forwarded to Lupon"
   
   const lastScheduleIsRescheduled = hearing_schedules.length > 0 
     ? hearing_schedules[hearing_schedules.length - 1].hs_is_closed 
@@ -110,7 +111,7 @@ export default function SummonDetails() {
   const shouldShowResolveButton = !isCaseClosed
 
   const handleResolve = () => resolve(sc_id)
-  // const handleEscalate = () => escalate(sc_id)
+  const handleForward = () => forward(sc_id)
 
   // Function to handle minutes view click
   const handleMinutesClick = (hearingMinutes: any[], hs_id: string) => {
@@ -349,12 +350,14 @@ export default function SummonDetails() {
         <hr className="border-gray mb-7 sm:mb-8" />
 
         {/* Lupon Tagapamayapa Notice for 3rd Mediation */}
-        {isThirdMediation && (
+        {case_status == "Forwarded to Lupon" && (
           <Alert className="bg-amber-50 border-amber-200 mb-6">
-            <InfoIcon className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <strong>Case Forwarded:</strong> This case has completed the 3rd council mediation and has been forwarded to the Office of Lupon Tagapamayapa for further action.
-            </AlertDescription>
+            <div className="flex items-center gap-2">
+              <InfoIcon className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                <strong>Case Forwarded:</strong> This case has completed the 3rd council mediation and has been forwarded to the Office of Lupon Tagapamayapa for further action.
+              </AlertDescription>
+            </div>
           </Alert>
         )}
 
@@ -437,7 +440,7 @@ export default function SummonDetails() {
               mainContent={
                 <div className="flex flex-col h-full overflow-y-hidden">
                   <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
-                    <ComplaintRecordForSummon comp_id={comp_id || ""} isPending={false} />
+                    <ComplaintRecordForSummon comp_id={comp_id || ""} />
                   </div>
                 </div>
               }
@@ -459,6 +462,19 @@ export default function SummonDetails() {
                     description="Are you sure you want to mark this case as resolved?"
                     actionLabel="Confirm"
                     onClick={handleResolve}
+                  />
+                )}
+                {isThirdMediation && (
+                  <ConfirmationModal
+                    trigger={
+                      <Button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 flex items-center gap-2">
+                        <Forward className="w-4 h-4" /> Forward to Lupon
+                      </Button>
+                    }
+                    title="Forward to Lupon"
+                    description="Are you sure you want to forward this case to Lupon for further action?"
+                    actionLabel="Confirm Forward"
+                    onClick={handleForward}
                   />
                 )}
                 {/* {shouldShowEscalateButton && (

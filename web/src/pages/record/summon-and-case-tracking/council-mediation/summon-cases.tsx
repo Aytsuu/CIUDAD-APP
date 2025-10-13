@@ -29,7 +29,7 @@ function getStatusColor(status: string) {
             return styles.statusOngoing;
         case "Resolved":
             return styles.statusResolved;
-        case "Escalated":
+        case "Forwarded to Lupon":
             return styles.statusEscalated;
         case "Waiting for Schedule":
             return styles.statusWaiting;
@@ -73,7 +73,7 @@ function SummonCases(){
         { id: "All", name: "All" },
         { id: "Ongoing", name: "Ongoing" },
         { id: "Resolved", name: "Resolved" },
-        { id: "Escalated", name: "Escalated" },
+        { id: "Forwarded to Lupon", name: "Forwarded to Lupon" },
         { id: "Waiting for Schedule", name: "Waiting for Schedule" },
     ];
 
