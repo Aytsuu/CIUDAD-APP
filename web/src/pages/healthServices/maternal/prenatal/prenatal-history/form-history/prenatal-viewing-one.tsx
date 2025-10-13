@@ -167,7 +167,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   // Get pending follow-up information for advises
   const getPendingFollowUp = () => {
     if (followUpDetails && followUpDetails.followv_status === 'pending' && followUpDetails.followv_date) {
-      return `Follow-up visit scheduled: ${new Date(followUpDetails.followv_date).toLocaleDateString('en-US', {
+      return `Follow-up visit scheduled on: ${new Date(followUpDetails.followv_date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
@@ -596,6 +596,14 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                 </div>
               </div>
             </div>
+            <div className="">
+              {getPendingFollowUp() && (
+                <div className="flex mt-2">
+                  <Label className="font-semibold mt-4">Next Follow-Up:</Label>
+                  <InputLine className="w-3/4 ml-2 " value={getPendingFollowUp()} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -665,6 +673,14 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
                 </div>
               </div>
             </div>
+          </div>
+          <div>
+            {getAllLabRemarks() && (
+              <div className="flex mt-2">
+                <Label className="font-semibold mt-4">Laboratory Remarks:</Label>
+                <InputLineLonger className="w-3/4 ml-2 text-sm" value={getAllLabRemarks()} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -829,42 +845,6 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
               <Label className="mt-4">DEWORMING TAB: (PREFERABLY 3RD TRIMESTER) DATE GIVEN:</Label>
               <InputLine className="w-[150px]" value="" />
             </div>
-          </div>
-        </div>
-
-        {/* Advises and Follow-Up */}
-        <div className="w-full">
-          <h6 className="text-sm mt-4 underline"><b>ADVISES:</b></h6>
-          <div className="flex flex-col">
-            {/* Show pending follow-up */}
-            {getPendingFollowUp() && (
-              <div className="flex mt-2">
-                <Label className="font-semibold">Next Follow-Up:</Label>
-                <InputLineLonger className="w-3/4 ml-2" value={getPendingFollowUp()} />
-              </div>
-            )}
-            
-            {/* Show lab remarks */}
-            {getAllLabRemarks() && (
-              <div className="flex mt-2">
-                <Label className="font-semibold">Laboratory Remarks:</Label>
-                <InputLineLonger className="w-3/4 ml-2" value={getAllLabRemarks()} />
-              </div>
-            )}
-
-            {/* Show general advises from prenatal care entries */}
-            {prenatalCareEntries.some((entry: any) => entry.pfpc_advises) && (
-              <div className="flex mt-2">
-                <Label className="font-semibold">General Advises:</Label>
-                <InputLineLonger 
-                  className="w-3/4 ml-2" 
-                  value={prenatalCareEntries
-                    .filter((entry: any) => entry.pfpc_advises)
-                    .map((entry: any) => entry.pfpc_advises)
-                    .join('; ')} 
-                />
-              </div>
-            )}
           </div>
         </div>
 
