@@ -4,6 +4,10 @@ from .summon.summonViews import *
 from apps.complaint.view import ComplaintDetailView
 
 urlpatterns = [ 
+    # Council Mediation
+    path('council-case-list/', CouncilMediationCasesView.as_view(), name='council-case-list'),
+    path('council-case-detail/<str:sc_id>/', CouncilCaseDetailView.as_view(), name='council-case-detail'),
+
     # Case List and details
     path('summon-case-list/', SummonCasesView.as_view(), name='summon-case-list'),
     path('summon-case-detail/<str:sc_id>/', SummonCaseDetailView.as_view(), name='summon-case-detail'),
@@ -18,7 +22,8 @@ urlpatterns = [
     path('remark-supp-docs/', RemarkSuppDocCreateView.as_view(), name='remark-supp-doc-create'),
     
     # Lupon
-    # path('lupon-case-list/', LuponCasesView.as_view(), name='lupon-case-list'),
+    path('lupon-case-list/', LuponCasesView.as_view(), name='lupon-case-list'),
+    path('lupon-case-detail/<str:sc_id>/', LuponCaseDetailView.as_view(), name='lupon-case-detail'),
 
     # Summon date and time
     path('summon-date-availability/', SummonDateAvailabilityView.as_view(), name='summon-dates'),

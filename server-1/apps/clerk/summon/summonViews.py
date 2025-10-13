@@ -8,22 +8,6 @@ from apps.pagination import StandardResultsPagination
 
 
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
-# class SummonCasesView(generics.ListAPIView):
-#     permission_classes = [AllowAny]
-#     serializer_class = SummonCasesSerializer
-
-#     def get_queryset(self):
-#         queryset = SummonCase.objects.all().select_related(
-#             'comp_id'
-#         ).prefetch_related(
-#             Prefetch('comp_id__complaintcomplainant_set__cpnt'),
-#             Prefetch('comp_id__complaintcomplainant_set__cpnt__rp_id'),  # Add this
-#             Prefetch('comp_id__complaintaccused_set__acsd')
-#         )
-        
-#         return queryset.order_by('sc_code')
-
-
 class LuponCasesView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = SummonCasesSerializer
@@ -52,6 +36,43 @@ class LuponCasesView(generics.ListAPIView):
                 sc_conciliation_status__iexact=status_filter
             )
 
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(sc_code__icontains=search_query) |
+                Q(comp_id__comp_incident_type__icontains=search_query) |
+                Q(comp_id__comp_location__icontains=search_query) |
+                Q(comp_id__comp_allegation__icontains=search_query) |
+                Q(comp_id__complaintcomplainant__cpnt__cpnt_name__icontains=search_query) |
+                Q(comp_id__complaintaccused__acsd__acsd_name__icontains=search_query)
+            ).distinct()
+
+        return queryset.order_by('sc_code')
+
+class CouncilMediationCasesView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCasesSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        queryset = SummonCase.objects.all().select_related(
+            'comp_id'
+        ).prefetch_related(
+            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
+            Prefetch('comp_id__complaintcomplainant_set__cpnt__rp_id'),
+            Prefetch('comp_id__complaintaccused_set__acsd'),
+            Prefetch('hearing_schedules'),
+            Prefetch('hearing_schedules__hearing_minutes'),
+            Prefetch('hearing_schedules__remark'),
+            Prefetch('hearing_schedules__remark__supporting_documents')
+        )
+
+        # Status filter - only use sc_mediation_status
+        status_filter = self.request.query_params.get('status', '').strip()
+        if status_filter and status_filter.lower() != 'all':
+            queryset = queryset.filter(sc_mediation_status__iexact=status_filter)
+
+        # Search functionality
         search_query = self.request.query_params.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
@@ -113,6 +134,46 @@ class SummonCaseDetailView(generics.RetrieveAPIView):
     serializer_class = SummonCaseDetailSerializer
     queryset = SummonCase.objects.all().prefetch_related(
         'hearing_schedules',  # Now uses the related_name
+        'hearing_schedules__remark',
+        'hearing_schedules__remark__supporting_documents',
+        'hearing_schedules__hearing_minutes',
+        'hearing_schedules__sd_id',
+        'hearing_schedules__st_id'
+    )
+    lookup_field = 'sc_id'
+    lookup_url_kwarg = 'sc_id'
+
+
+class CouncilCaseDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCaseDetailSerializer
+    queryset = SummonCase.objects.all().prefetch_related(
+        Prefetch(
+            'hearing_schedules',
+            queryset=HearingSchedule.objects.filter(
+                hs_level__icontains='Mediation'
+            )
+        ),
+        'hearing_schedules__remark',
+        'hearing_schedules__remark__supporting_documents',
+        'hearing_schedules__hearing_minutes',
+        'hearing_schedules__sd_id',
+        'hearing_schedules__st_id'
+    )
+    lookup_field = 'sc_id'
+    lookup_url_kwarg = 'sc_id'
+
+
+class LuponCaseDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = SummonCaseDetailSerializer
+    queryset = SummonCase.objects.all().prefetch_related(
+        Prefetch(
+            'hearing_schedules',
+            queryset=HearingSchedule.objects.filter(
+                hs_level__icontains='Conciliation Proceedings'
+            )
+        ),
         'hearing_schedules__remark',
         'hearing_schedules__remark__supporting_documents',
         'hearing_schedules__hearing_minutes',

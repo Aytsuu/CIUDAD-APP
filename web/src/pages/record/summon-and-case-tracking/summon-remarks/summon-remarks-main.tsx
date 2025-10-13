@@ -318,7 +318,7 @@ export default function SummonRemarksMain(){
                         // Loading state - shows spinner but keeps header and filters visible
                         <div className="flex items-center justify-center py-12">
                             <Spinner size="md" />
-                            <span className="ml-2 text-gray-600">Loading summon cases...</span>
+                            <span className="ml-2 text-gray-600">Loading cases...</span>
                         </div>
                     ) : totalItems === 0 ? (
                         // Empty state
