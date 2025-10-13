@@ -123,7 +123,7 @@ export default function WasteTruckEdit() {
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+      headerBetweenAction={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
       showExitButton={false}
       headerAlign="left"
       scrollable={true}
