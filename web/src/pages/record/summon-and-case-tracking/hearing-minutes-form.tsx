@@ -1,7 +1,7 @@
 import { MediaUpload, type MediaUploadType } from "@/components/ui/media-upload";
 import { Button } from "@/components/ui/button/button";
 import { useState } from "react";
-import { useAddHearingMinutes } from "../queries/summonInsertQueries";
+import { useAddHearingMinutes } from "./queries/summonInsertQueries";
 
 export default function HearingMinutesForm({hs_id, sc_id, onSuccess}: {
     hs_id: string;

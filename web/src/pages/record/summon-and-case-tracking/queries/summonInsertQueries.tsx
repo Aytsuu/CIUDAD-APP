@@ -11,9 +11,11 @@ export const useAddSummonSchedule = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
      return useMutation({
-            mutationFn: (values: z.infer<typeof SummonSchema>) => addSchedule(values),
+            mutationFn: (data: {status_type: string, values: z.infer<typeof SummonSchema>}) => addSchedule(data.values, data.status_type),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });
+                queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
+                queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
+                queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
 
                 toast.loading('Submitting Record...', {id: "createCase"});
         
@@ -92,7 +94,9 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
             return addHearingMinutes(data.hs_id, data.sc_id, data.file);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
 
             showSuccessToast('Hearing Minutes uploaded successfully!')
             onSuccess?.();
@@ -119,7 +123,9 @@ export const useAddRemarks = (onSuccess?: () => void) => {
             return addRemarks(data.hs_id, data.st_id, data.sc_id, data.remarks, data.close, data.files);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] });
+            queryClient.invalidateQueries({ queryKey: ['summonCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['luponCaseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['councilCaseDetails'] })
 
             showSuccessToast('Remarks added successfully!')
             onSuccess?.();

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState, useEffect } from "react";
-import { useGetSummonCaseList } from "../queries/summonFetchQueries";
+import { useGetCouncilCaseList } from "../queries/summonFetchQueries";
 import type { SummonCaseList } from "../summon-types";
 import { useLoading } from "@/context/LoadingContext";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -78,7 +78,7 @@ function SummonCases(){
     ];
 
     // Use the hook with pagination and filtering parameters
-    const { data: summonCaseData = { results: [], count: 0 }, isLoading } = useGetSummonCaseList(
+    const { data: summonCaseData = { results: [], count: 0 }, isLoading } = useGetCouncilCaseList(
         currentPage, 
         pageSize, 
         debouncedSearchQuery, 
@@ -192,7 +192,7 @@ function SummonCases(){
                     // Loading state - shows spinner but keeps header and filters visible
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="md" />
-                        <span className="ml-2 text-gray-600">Loading summon cases...</span>
+                        <span className="ml-2 text-gray-600">Loading cases...</span>
                     </div>
                 ) : totalItems === 0 ? (
                     // Empty state

@@ -32,7 +32,6 @@ class AccusedDetailsSerializer(serializers.ModelSerializer):
             'acsd_description',
             # 'address'
         ]
-        
 
 # ======================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
 class HearingScheduleSerializer(serializers.ModelSerializer):

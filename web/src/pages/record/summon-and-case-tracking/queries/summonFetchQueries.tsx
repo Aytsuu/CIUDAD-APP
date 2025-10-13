@@ -1,14 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getSummonCaseDetail, getSummonTemplate, getSuppDoc, getSummonDates, 
-    getSummonTimeSlots, getComplaintDetails, getLuponCaseList} from "../requestAPI/summonGetAPI";
+    getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail} from "../requestAPI/summonGetAPI";
 import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList } from "../summon-types";
-
 
 
 export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
     return useQuery<{results: SummonCaseList[], count: number}>({
         queryKey: ['summonCases', page, pageSize, searchQuery, statusFilter],
         queryFn:() => getSummonCaseList(page, pageSize, searchQuery, statusFilter),
+        staleTime: 5000,
+    })
+}
+
+export const useGetCouncilCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
+    return useQuery<{results: SummonCaseList[], count: number}>({
+        queryKey: ['councilCases', page, pageSize, searchQuery, statusFilter],
+        queryFn:() => getCouncilCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
     })
 }
@@ -25,6 +32,24 @@ export const useGetSummonCaseDetails = (sc_id: string) => {
     return useQuery<SummonCaseDetails>({
         queryKey: ['summonCaseDetails', sc_id],
         queryFn: () => getSummonCaseDetail(sc_id),
+        staleTime: 5000,
+        enabled: !!sc_id, 
+    });
+}
+
+export const useGetCouncilCaseDetails = (sc_id: string) => {
+    return useQuery<SummonCaseDetails>({
+        queryKey: ['councilCaseDetails', sc_id],
+        queryFn: () => getCouncilCaseDetail(sc_id),
+        staleTime: 5000,
+        enabled: !!sc_id, 
+    });
+}
+
+export const useGetLuponCaseDetails = (sc_id: string) => {
+    return useQuery<SummonCaseDetails>({
+        queryKey: ['luponCaseDetails', sc_id],
+        queryFn: () => getLuponCaseDetail(sc_id),
         staleTime: 5000,
         enabled: !!sc_id, 
     });

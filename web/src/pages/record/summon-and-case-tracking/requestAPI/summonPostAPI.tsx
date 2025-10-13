@@ -45,7 +45,7 @@ export const addSummonTimeSlots = async (timeSlots: Array<{
 }
 
 
-export const addSchedule = async (schedule: Record<string, any>) => {
+export const addSchedule = async (schedule: Record<string, any>, status_type: string) => {
     try{
         console.log('data:', {
             sd_id: schedule.sd_id,
@@ -64,9 +64,15 @@ export const addSchedule = async (schedule: Record<string, any>) => {
         })
 
         if(res){
-            await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
-                sc_mediation_status: "Ongoing",
-            })
+            if(status_type == "Council"){
+                await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
+                    sc_mediation_status: "Ongoing",
+                })
+            } else {
+                await api.put(`clerk/update-summon-case/${schedule.sc_id}/`, {
+                    sc_conciliation_status: "Ongoing",
+                })
+            }
 
             await api.put(`clerk/update-summon-time-availability/${schedule.st_id}/`, {
                 st_is_booked: true,

@@ -16,12 +16,12 @@ import { formatTime } from "@/helpers/timeFormatter"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { useResolveCase, useForwardcase } from "../queries/summonUpdateQueries"
-import { useGetSummonCaseDetails } from "../queries/summonFetchQueries"
+import { useGetCouncilCaseDetails } from "../queries/summonFetchQueries"
 import type { HearingSchedule } from "../summon-types"
 import { formatTimestamp } from "@/helpers/timestampformatter"
-import CreateSummonSched from "./summon-create"
+import CreateSummonSched from "../summon-create"
 import { useLoading } from "@/context/LoadingContext"
-import HearingMinutesForm from "./hearing-minutes-form"
+import HearingMinutesForm from "../hearing-minutes-form"
 import { formatDate } from "@/helpers/dateHelper"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { InfoIcon } from "lucide-react"
@@ -55,7 +55,7 @@ export default function SummonDetails() {
     hasResident = false,
   } = location.state || {}
 
-  const { data: caseDetails, isLoading: isDetailLoading } = useGetSummonCaseDetails(sc_id)
+  const { data: caseDetails, isLoading: isDetailLoading } = useGetCouncilCaseDetails(sc_id)
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
   const { mutate: resolve } = useResolveCase()
   const { mutate: forward } = useForwardcase()
@@ -321,7 +321,7 @@ export default function SummonDetails() {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner size="lg" />
-        <span className="ml-2 text-gray-600">Loading summon case details...</span>
+        <span className="ml-2 text-gray-600">Loading   case details...</span>
       </div>
     );
   }
