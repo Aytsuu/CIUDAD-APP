@@ -40,6 +40,8 @@ import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 import { medicalConsultation } from "./med-consultation";
 import {healthreports_router} from "./health-reports-router";
+import TrackerMap from "@/pages/map/TrackerMap";
+import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
 export const main_router: RouteObject[] = [
   {
@@ -201,6 +203,10 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
+      {
+        path: "map",
+        element: <TrackerMap />
+      },
       ...vaccination,
       ...childHealthServices,
       ...gad_router,
@@ -220,6 +226,7 @@ export const main_router: RouteObject[] = [
       ...template_router, 
       ...healthreports_router,
       ...medicalConsultation,
+      ...bhw_daily_notes_router
       ])
     }
 ]

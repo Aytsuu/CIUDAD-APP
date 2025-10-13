@@ -263,6 +263,9 @@ class YearlyMonthlyOPTChildHealthReportAPIView(generics.ListAPIView):
                     child_fname = personal_info.get('per_fname', '')
                     child_mname = personal_info.get('per_mname', '')
                     child_lname = personal_info.get('per_lname', '')
+                    child_fname = child_fname or ''
+                    child_mname = child_mname or ''
+                    child_lname = child_lname or ''
                     child_name = f"{child_fname} {child_mname} {child_lname}".strip()
 
                     # Initialize child data if not exists

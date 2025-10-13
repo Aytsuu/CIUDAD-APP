@@ -116,7 +116,7 @@ const FirstAidRecordCard: React.FC<{
         <View className="flex-row items-start justify-between">
           <View className="flex-1 mr-3">
             <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-red-600 rounded-full items-center justify-center mr-3">
+              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
                 <User color="white" size={20} />
               </View>
               <View className="flex-1">

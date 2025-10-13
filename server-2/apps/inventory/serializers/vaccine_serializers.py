@@ -49,10 +49,17 @@ class VaccineStockSerializer(serializers.ModelSerializer):
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     vac_id = serializers.PrimaryKeyRelatedField(queryset=VaccineList.objects.all())
     # age_group = AgegroupSerializer(source='ageGroup', read_only=True)  # Read-only field for age group
+    
+    # Check if this vaccine is conditional (user must input total dose manually)
+    is_conditional = serializers.SerializerMethodField()
 
     class Meta:
         model = VaccineStock
         fields = '__all__'
+    
+    def get_is_conditional(self, obj):
+        """Check if this vaccine is marked as conditional"""
+        return ConditionalVaccine.objects.filter(vac_id=obj.vac_id).exists()
 
         
 class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):

@@ -1,5 +1,4 @@
 import IncomeandExpenseTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-expense-tracker-main";
-// import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-main";
 import PersonalClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-personalClearance";
 import PermitClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permitClearance";
 import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-serviceCharge";
@@ -9,7 +8,7 @@ import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/viewAB
 import RatesForm from "@/pages/record/treasurer/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
 import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main"; 
-import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-main";
+import TreasurerDisbursementVouchers from "@/pages/record/treasurer/treasurer-disbursement/disbursement-main";
 import ReceiptPage from "@/pages/record/treasurer/Receipts/receipts-main";
 import BudgetPlanParent from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanParent";
 import ExpenseLogMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/expense-income-log/treasurer-expense-log-main";
@@ -40,8 +39,8 @@ export const treasurer_router = [
         element: <IncomeTracking/>
     },
     {
-        path: 'treasurer-income-and-disbursement',
-        element: <IncomeandDisbursementView/>
+        path: 'treasurer-disbursement',
+        element: <TreasurerDisbursementVouchers/>
     },
     {
         path: 'treasurer-personal-and-others',

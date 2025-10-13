@@ -10,6 +10,7 @@ import { useMedicineRecords } from "../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { medicineColumns } from "./columns/all-med-col";
+// import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";

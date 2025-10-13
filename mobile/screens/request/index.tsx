@@ -27,31 +27,26 @@ export default () => {
       gradient: ['#3b82f6', '#2563eb'],
     },
     {
-      title: "Blotter",
-      route: "/(request)/complaint/complaint_req_form",
-      icon: "",
+      title: "Medicine Request",
+      description: "",
+      route: "/(health)/medicine-request/med-request",
       gradient: ['#2563eb', '#1e40af'],
     },
-    {
-      title: "Medicine",
-      route: "",
-      icon: "",
-      gradient: ['#06b6d4', '#0891b2'],
-    },
+   
     {
       title: "Maternal Appointment",
-      route: "",
+      route: "maternal/bookingpage",
       icon: "",
       gradient: ['#0ea5e9', '#0284c7'],
     },
     {
       title: "Medical Consultation",
-      route: "",
+      route: "medconsultation/setschedule",
       icon: "",
       gradient: ['#0284c7', '#0369a1'],
     },
   ];
-  
+
   // ============== SIDE EFFECTS ==============
   React.useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
@@ -62,11 +57,11 @@ export default () => {
   }, [user])
 
   // ============== RENDER ==============
-  if(!user?.rp) {
+  if (!user?.rp) {
     return (isReady && <NoAccessScreen
-        title="Resident Access Required"
-        description="The request feature is only available to registered residents."
-      />
+      title="Resident Access Required"
+      description="The request feature is only available to registered residents."
+    />
     )
   }
 
@@ -78,7 +73,7 @@ export default () => {
           className="w-10 h-10 rounded-full items-center justify-center"
         >
           <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity> 
+        </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Request</Text>}
       rightAction={<View className="w-10 h-10" />}
@@ -90,8 +85,8 @@ export default () => {
             <TouchableOpacity
               key={index}
               className="rounded-2xl overflow-hidden"
-              style={{ 
-                width: '48%', 
+              style={{
+                width: '48%',
                 aspectRatio: 1,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -114,7 +109,7 @@ export default () => {
                       <Text className="text-3xl">{item.icon}</Text>
                     </View>
                   </View>
-                  
+
                   <View>
                     <Text className="text-white font-bold text-base leading-tight">
                       {item.title}

@@ -2,19 +2,26 @@ import { api } from '@/api/api';
 
 export type ServiceCharge = {
   sr_id: string;
-  caseNo: number;
-  name: string;
-  address1: string;
-  respondent: string;
-  address2: string;
-  reason: string;
-  reqDate: string;
-  status?: string;
+  sr_code: string | null;
+  sr_type: string;
+  sr_req_date: string;
+  sr_req_status: string;
+  sr_case_status: string;
+  comp_id: number;
+  staff_id: number | null;
+  complainant_name: string | null;
+  payment_request: {
+    spay_id: number;
+    spay_status: string;
+    spay_due_date: string;
+    spay_date_paid: string | null;
+    pr_id: number | null;
+  } | null;
 };
 
 export async function getTreasurerServiceCharges(): Promise<ServiceCharge[]> {
   const { data } = await api.get<ServiceCharge[]>('/clerk/treasurer/service-charges/');
-  return data ?? [];
+  return (data ?? []).filter(item => !item.sr_code || String(item.sr_code).trim() === '');
 }
 
 export type PurposeRate = {
@@ -22,15 +29,21 @@ export type PurposeRate = {
   pr_purpose: string;
   pr_category: string;
   pr_rate: string | number;
+  pr_is_archive?: boolean;
 };
 
-// Use existing endpoint: /treasurer/get-pr-id/?pr_purpose=Summons&pr_category=Service Charge&pr_is_archive=false
+// Use existing endpoint: /treasurer/purpose-and-rate/
 export async function getServiceChargeRate(): Promise<PurposeRate | null> {
-  const { data } = await api.get<PurposeRate>(
-    '/treasurer/get-pr-id/',
-    { params: { pr_purpose: 'Summons', pr_category: 'Service Charge', pr_is_archive: false } }
+  const { data } = await api.get<PurposeRate[]>(
+    '/treasurer/purpose-and-rate/'
   );
-  return (data as any) ?? null;
+  // Filter for Service Charge purpose and return the first match
+  const serviceChargeRate = data?.find(item => 
+    item.pr_purpose === 'Summons' && 
+    item.pr_category === 'Service Charge' && 
+    !item.pr_is_archive
+  );
+  return serviceChargeRate ?? null;
 }
 
 export async function createServiceChargePaymentRequest(params: { sr_id: string; pr_id: number | string; spay_amount?: number; spay_status?: string; }): Promise<any> {

@@ -14,8 +14,10 @@ from ..serializers.patients_serializers import *
 from ..serializers.followvisits_serializers import *
 from ..models import   Patient, PatientRecord, Transient, TransientAddress
 from ...pagination import StandardResultsPagination
-from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
-
+from apps.medicalConsultation.models import *
+from apps.medicalConsultation.serializers import *
+from apps.maternal.models import *
+from apps.maternal.serializers.prenatal_serializer import *
 
 @api_view(['GET'])
 def get_resident_profile_list(request):
@@ -132,8 +134,10 @@ class PatientView(generics.ListCreateAPIView):
             )
 
     def get_queryset(self):
+        # Base queryset: include resident and transient address relations to avoid extra queries
         queryset = Patient.objects.select_related(
             'rp_id__per',
+            'trans_id__tradd_id',
         ).prefetch_related(
             Prefetch(
                 'rp_id__per__personal_addresses',
@@ -149,27 +153,47 @@ class PatientView(generics.ListCreateAPIView):
         from django.db.models import Q
         filters = Q()
 
+        # Filter by pat_type when a specific status is requested (and not 'all')
         if status and status.lower() not in ["all", ""]:
             filters &= Q(pat_type=status)
 
+        # If a search term is provided, build a set of ORed search conditions
         if search:
             search = search.strip()
             if search:
                 search_filters = Q()
+
+                # Resident name fields
                 search_filters |= (
                     Q(rp_id__per__per_fname__icontains=search) |
                     Q(rp_id__per__per_mname__icontains=search) |
                     Q(rp_id__per__per_lname__icontains=search)
                 )
+
+                # Resident address fields (sitio name and street)
+                search_filters |= (
+                    Q(rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=search) |
+                    Q(rp_id__per__personal_addresses__add__add_street__icontains=search)
+                )
+
+                # Transient name fields
                 search_filters |= (
                     Q(trans_id__tran_fname__icontains=search) |
-                    Q(trans_id__tran_lname__icontains=search) |
-                    Q(trans_id__tran_mname__icontains=search)
+                    Q(trans_id__tran_mname__icontains=search) |
+                    Q(trans_id__tran_lname__icontains=search)
                 )
+
+                # Transient address fields (street and sitio)
+                search_filters |= (
+                    Q(trans_id__tradd_id__tradd_street__icontains=search) |
+                    Q(trans_id__tradd_id__tradd_sitio__icontains=search)
+                )
+
                 filters &= search_filters
 
+        # apply filters and ensure distinct results when joins are present
         if filters:
-            queryset = queryset.filter(filters)
+            queryset = queryset.filter(filters).distinct()
 
         return queryset
 
@@ -541,25 +565,110 @@ def get_patient_by_resident_id(request, rp_id):
             {"detail": f"An error occurred: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@api_view(['POST'])
+def check_or_create_patient(request):
+    """
+    Check if a patient exists for the given rp_id.
+    If not, automatically create one.
+    Returns the patient data in both cases.
+    """
+    rp_id = request.data.get('rp_id')
+    
+    if not rp_id:
+        return Response(
+            {'error': 'rp_id is required'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Check if resident profile exists
+        try:
+            resident_profile = ResidentProfile.objects.get(rp_id=rp_id)
+        except ResidentProfile.DoesNotExist:
+            return Response(
+                {'error': f'Resident profile with rp_id {rp_id} does not exist'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if patient already exists for this resident
+        existing_patient = Patient.objects.filter(
+            rp_id=rp_id, 
+            pat_status='Active'
+        ).select_related('rp_id__per').first()
+        
+        if existing_patient:
+            # Patient exists, return it
+            serializer = PatientSerializer(existing_patient)
+            return Response({
+                'exists': True,
+                'created': False,
+                'patient': serializer.data,
+                'message': 'Patient record already exists'
+            }, status=status.HTTP_200_OK)
+        
+        # Patient doesn't exist, create new one
+        patient_data = {
+            'pat_type': 'Resident',
+            'rp_id': resident_profile,
+            'pat_status': 'Active'
+        }
+        
+        new_patient = Patient.objects.create(**patient_data)
+        
+        # Fetch the created patient with relationships
+        created_patient = Patient.objects.select_related('rp_id__per').get(pat_id=new_patient.pat_id)
+        serializer = PatientSerializer(created_patient)
+        
+        return Response({
+            'exists': False,
+            'created': True,
+            'patient': serializer.data,
+            'message': 'Patient record created successfully'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        print(f"Error in check_or_create_patient: {str(e)}")
+        return Response(
+            {'error': f'Failed to process request: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
         
 @api_view(['GET'])
 def get_appointments_by_resident_id(request, rp_id):
-    """
-    Retrieves all appointments (FollowUpVisit) for a specific resident based on their rp_id.
-    """
     try:
-        # Step 1: Query FollowUpVisit directly using the correct lookup chain
-        # The chain is patrec -> pat_id -> rp_id
-        appointments = FollowUpVisit.objects.filter(patrec__pat_id__rp_id=rp_id).order_by('-followv_date', '-created_at')
+        # Get follow-up visits
+        follow_up_appointments = FollowUpVisit.objects.filter(
+            patrec__pat_id__rp_id=rp_id
+        ).order_by('-followv_date', '-created_at')
         
-        if not appointments.exists():
+        # Get medical consultation appointments
+        med_consult_appointments = MedConsultAppointment.objects.filter(
+            rp__rp_id=rp_id
+        ).order_by('-scheduled_date', '-created_at')
+        
+        # Get prenatal appointments
+        prenatal_appointments = PrenatalAppointmentRequest.objects.filter(
+            rp_id=rp_id
+        ).order_by('-requested_at')
+        
+        # Check if any appointments exist
+        if not any([follow_up_appointments.exists(), med_consult_appointments.exists(), prenatal_appointments.exists()]):
             return Response(
                 {"detail": "No appointments found for this resident."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = FollowUpVisitSerializer(appointments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Serialize all appointment types
+        follow_up_serializer = FollowUpVisitSerializer(follow_up_appointments, many=True)
+        med_consult_serializer = MedConsultAppointmentSerializer(med_consult_appointments, many=True)
+        prenatal_serializer = PrenatalRequestAppointmentSerializer(prenatal_appointments, many=True)
+        
+        return Response({
+            "follow_up_appointments": follow_up_serializer.data,
+            "med_consult_appointments": med_consult_serializer.data,
+            "prenatal_appointments": prenatal_serializer.data
+        }, status=status.HTTP_200_OK)
     
     except ResidentProfile.DoesNotExist:
         return Response(

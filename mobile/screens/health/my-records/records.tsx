@@ -114,90 +114,81 @@ export default function Records() {
 
   console.log("Children Data:", childrenData);
   console.log("Formatted Children:", formattedChildren);
-
-  const services: Service[] = [
-    {
-      id: 1,
-      name: "Animal Bites",
-      description: "View animal bite referral records",
-      route: "/animalbite/my-records",
+ const services: Service[] = [
+   {
+         id: 1,
+      name: 'Animal Bites',
+      description: 'View animal bite referral records',
+      route: '/animalbite/my-records',
       icon: Dog,
-      image: require("@/assets/images/Health/Home/animalbites.jpg"),
-      color: "#059669"
+      image: require('@/assets/images/Health/Home/animalbites.jpg'),
+      color: '#059669'
     },
     {
       id: 2,
-      name: "Family Planning",
-      description: "View your family planning records and track status",
-      route: "/(health)/family-planning/fp-dashboard",
-      icon: Heart,
-      image: require("@/assets/images/Health/Home/Famplanning.jpg"),
-      color: "#DC2626"
+      name: 'Child Health',
+      description: 'View child health records',
+      route: '/childhealth/my-records',
+      icon: Baby,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#059669'
     },
     {
       id: 3,
-      name: "Maternal Records",
-      description: "Access your maternal health records",
-      route: "/maternal-records",
-      icon: Baby,
-      image: require("@/assets/images/Health/Home/Maternal.jpg"),
-      color: "#1E40AF"
+      name: 'Family Planning',
+      description: 'View family planning records',
+      route: '/(health)/family-planning/fp-dashboard',
+      icon: Heart,
+      image: require('@/assets/images/Health/Home/Famplanning.jpg'),
+      color: '#059669'
     },
     {
       id: 4,
-      name: "Animal Bite Records",
-      description: "View animal bite treatment records",
-      route: "/animalbite/my-records/",
-      icon: Dog,
-      image: require("@/assets/images/Health/Home/animalbites.jpg"),
-      color: "#10B981"
+      name: 'First Aid',
+      description: 'View first aid treatment records',
+      route: '/first-aid/my-records',
+      icon: Cross,
+      image: require('@/assets/images/Health/Home/first-aid.jpg'),
+      color: '#059669'
     },
     {
       id: 5,
-      name: "Medical Consultation",
-      description: "View medical consultation records",
-      route: "/medconsultation/my-records",
-      icon: Activity,
-      image: require("@/assets/images/Health/Home/medicalconsultation.jpg"),
-      color: "#8B5CF6"
+      name: 'Maternal',
+      description: 'Access your maternal health records',
+      route: '/maternal/my-records',
+      icon: Baby,
+      image: require('@/assets/images/Health/Home/Maternal1.jpg'),
+      color: '#059669'
     },
     {
       id: 6,
-      name: "Vaccination Records",
-      description: "View vaccination records",
-      route: "/vaccination/my-records/",
-      icon: Syringe,
-      image: require("@/assets/images/Health/Home/vaccination.jpg"),
-      color: "#EC4899"
+      name: 'Medical Consultation',
+      description: 'View medical consultation records',
+      route: '/medconsultation/my-records',
+      icon: Activity,
+      image: require('@/assets/images/Health/Home/medicalconsultation.jpg'),
+      color: '#059669'
     },
     {
       id: 7,
-      name: "First Aid Records",
-      description: "View first aid treatment records",
-      route: "/first-aid/my-records",
-      icon: Cross,
-      image: require("@/assets/images/Health/Home/first-aid.jpg"),
-      color: "#F59E0B"
+      name: 'Medicine Records',
+      description: 'View medicine records',
+      route: '/medicine-records/my-records',
+      icon: BriefcaseMedical,
+      image: require('@/assets/images/Health/Home/child-health.jpg'),
+      color: '#059669'
     },
     {
       id: 8,
-      name: "Child Health Records",
-      description: "View Child Health records",
-      route: "/childhealth/my-records/",
-      icon: Baby,
-      image: require("@/assets/images/Health/Home/child-health.jpg"),
-      color: "#059669"
+      name: 'Vaccination',
+      description: 'View vaccination records',
+      route: '/vaccination/my-records',
+      icon: Syringe,
+      image: require('@/assets/images/Health/Home/vaccination.jpg'),
+      color: '#059669'
     },
-    {
-      id: 9,
-      name: "Medicine Records",
-      description: "View medicine treatment records",
-      route: "/medicine-records/my-records",
-      icon: BriefcaseMedical,
-      image: require("@/assets/images/Health/Home/child-health.jpg"),
-      color: "#7C3AED"
-    }
   ];
+  
 
   return (
     <PageLayout
@@ -257,7 +248,7 @@ export default function Records() {
           </View>
 
           {/* Children Section - Mobile Optimized */}
-          {mode === "parents" && (childrenLoading || formattedChildren.length > 0) && (
+          {(childrenLoading || formattedChildren.length > 0) && (
             <View className="mt-6">
               <View className="bg-white rounded-xl border border-indigo-100 p-4 shadow-sm">
                 {/* Header */}
@@ -345,7 +336,7 @@ export default function Records() {
         {/* Additional Info */}
         <View className="px-6 pt-6">
           <View className="bg-blue-50 rounded-lg p-4">
-            <Text className="text-blue-800 text-sm">💡 "Medical records are securely stored and only accessible to authorized healthcare providers." : "Your medical records are securely stored and only accessible to you and authorized healthcare providers."</Text>
+            <Text className="text-blue-800 text-sm">💡 Medical records are securely stored and only accessible to authorized healthcare providers.</Text>
           </View>
         </View>
       </ScrollView>

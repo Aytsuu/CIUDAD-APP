@@ -477,6 +477,16 @@ class MonthlyFirstAidChart(APIView):
                     'error': 'Invalid month format. Use YYYY-MM.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Get the monthly recipient list ID for FirstAid type
+            try:
+                monthly_report = MonthlyRecipientListReport.objects.get(
+                    month_year=month,
+                    rcp_type='FirstAid'
+                )
+                monthly_id = monthly_report.monthlyrcplist_id
+            except MonthlyRecipientListReport.DoesNotExist:
+                monthly_id = None
+
             # Count first aid records for the specified month (don't sum quantities)
             queryset = FirstAidRecord.objects.filter(
                 created_at__year=year,
@@ -496,6 +506,7 @@ class MonthlyFirstAidChart(APIView):
             return Response({
                 'success': True,
                 'month': month,
+                'monthly_report_id': monthly_id,
                 'first_aid_counts': item_counts,
                 'total_records': sum(item_counts.values())
             }, status=status.HTTP_200_OK)

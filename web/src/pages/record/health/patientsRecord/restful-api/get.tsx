@@ -24,29 +24,6 @@ export const getResident = async () => {
 	 }
 }
 
-
-// fetch patients
-export const getPatients = async (filters: PatientFilters = {}) => {
-    try {
-		const params = new URLSearchParams();
-
-		if(filters.page) params.append('page', filters.page.toString());
-		if(filters.page_size) params.append('page_size', filters.page_size.toString());
-		if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-		if(filters.search) params.append('search', filters.search);
-
-		const queryString = params.toString();
-		const url = queryString ? `/patientrecords/patient/view/create/?${queryString}` : "/patientrecords/patient/view/create/"
-
-        const res = await api2.get(url);
-        return res.data || {count: 0, next: null, previous: null, results: []}; 
-    } catch (error) {
-        console.error("Network Error:", error);
-        return {count: 0, next: null, previous: null, results: []}; 
-    }
-};
-
-
 // fetch patient details
 export const getPatientDetails = async (patientId: string) => {
 	try {
@@ -64,40 +41,6 @@ export const getPatientDetails = async (patientId: string) => {
 		throw error
 	}
 }
-
-
-export interface AppointmentFilters {
-	page?: number;
-	page_size?: number;
-	status?: string;
-	search?: string;
-	time_frame?: string;
-}
-
-// fetch all follow-up visits
-export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => {
-  try {
-	const params = new URLSearchParams();
-
-	if(filters.page) params.append('page', filters.page.toString());
-	if(filters.page_size) params.append('page_size', filters.page_size.toString());
-	if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-	if(filters.search) params.append('search', filters.search);
-	if(filters.time_frame) params.append('time_frame', filters.time_frame);
-
-	const queryString = params.toString();
-	const url = queryString 
-		? `patientrecords/follow-up-visits-all/?${queryString}` 
-		: "patientrecords/follow-up-visits-all/";
-
-    const res = await api2.get(url)
-    return res.data || {count: 0, next: null, previous: null, results: []}
-  } catch (error) {
-    console.error("Error fetching all follow-up visits:", error)
-    return {count: 0, next: null, previous: null, results: []}
-  }
-}
-
 
 // fetch all transient addresses
 export const getAllTransientAddresses = async () => {

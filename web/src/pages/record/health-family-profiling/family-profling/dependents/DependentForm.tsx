@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { useFieldArray, UseFormReturn } from 'react-hook-form';
+import { useFieldArray, UseFormReturn, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
 import { FormInput } from '@/components/ui/form/form-input';
@@ -37,36 +37,66 @@ export default function DependentForm({ form, residents, selectedParents, depend
     })
   }, [residents.formatted, selectedParents, dependents])
 
-  React.useEffect(() => {
+  // React to resident selection instantly
+  const selectedResidentId = useWatch({ control: form.control, name: 'dependentsInfo.new.id' });
+  const prevSelectedRpRef = React.useRef<string | null>(null);
 
-    // Get values
-    const selectedResident = form.watch('dependentsInfo.new.id')
-    const searchedResident = residents.default.find((value: any) => 
-      value.rp_id === selectedResident?.split(" ")[0]  
-    );
+  React.useEffect(() => {
+    const rpId = selectedResidentId?.split(' ')[0] || '';
+    const prevRp = prevSelectedRpRef.current;
+    const searchedResident = residents.default.find((value: any) => value.rp_id === rpId);
     const personalInfo = searchedResident?.personal_info;
 
-    // Condition to populate the fields if true, otherwise empty
-    if (personalInfo && !selectedParents.includes(selectedResident?.split(" ")[0] as string)) {
-      form.setValue('dependentsInfo.new', {
-        id: selectedResident || '',
-        lastName: personalInfo.per_lname || '',
-        firstName: personalInfo.per_fname || '',
-        middleName: personalInfo.per_mname || '',
-        suffix: personalInfo.per_suffix || '',
-        dateOfBirth: personalInfo.per_dob || '',
-        sex: personalInfo.per_sex || '',
-      });
-    } else {
+    if (!selectedResidentId) {
+      prevSelectedRpRef.current = null;
       resetForm();
+      return;
     }
-  }, [form.watch('dependentsInfo.new.id'), selectedParents]);
+
+    // Only initialize/overwrite when the selected resident actually changes
+    if (personalInfo && !selectedParents.includes(rpId) && rpId !== prevRp) {
+      // Update each field to ensure RHF watchers trigger immediately
+      form.setValue('dependentsInfo.new.lastName', personalInfo.per_lname || '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      form.setValue('dependentsInfo.new.firstName', personalInfo.per_fname || '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      form.setValue('dependentsInfo.new.middleName', personalInfo.per_mname || '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      form.setValue('dependentsInfo.new.suffix', personalInfo.per_suffix || '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      form.setValue('dependentsInfo.new.dateOfBirth', personalInfo.per_dob || '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+      form.setValue('dependentsInfo.new.sex', personalInfo.per_sex || '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+
+      // Initialize dynamic groups to defaults only on resident change
+      form.setValue('dependentsInfo.new.relationshipToHead', form.getValues('dependentsInfo.new.relationshipToHead') || '', { shouldDirty: false });
+      // Initialize under-five fields individually (avoid replacing whole object)
+      const ufBase = 'dependentsInfo.new.dependentUnderFiveSchema';
+      if (form.getValues(`${ufBase}.fic`) === undefined) {
+        form.setValue(`${ufBase}.fic`, '', { shouldDirty: false });
+      }
+      if (form.getValues(`${ufBase}.nutritionalStatus`) === undefined) {
+        form.setValue(`${ufBase}.nutritionalStatus`, '', { shouldDirty: false });
+      }
+      if (form.getValues(`${ufBase}.exclusiveBf`) === undefined) {
+        form.setValue(`${ufBase}.exclusiveBf`, '', { shouldDirty: false });
+      }
+      // Initialize 6+ fields individually
+      const padBase = 'dependentsInfo.new.perAddDetails';
+      if (form.getValues(`${padBase}.bloodType`) === undefined) {
+        form.setValue(`${padBase}.bloodType`, '', { shouldDirty: false });
+      }
+      if (form.getValues(`${padBase}.philHealthId`) === undefined) {
+        form.setValue(`${padBase}.philHealthId`, '', { shouldDirty: false });
+      }
+      if (form.getValues(`${padBase}.covidVaxStatus`) === undefined) {
+        form.setValue(`${padBase}.covidVaxStatus`, '', { shouldDirty: false });
+      }
+
+      prevSelectedRpRef.current = rpId;
+    }
+  }, [selectedResidentId, residents.default, selectedParents]);
 
   // Handle adding dependent to the list
   const handleAddDependent = () => {
     const newDependent = form.getValues('dependentsInfo.new');
-    const isDefault = Object.values(newDependent).every((value) => value === '')
-    if (isDefault) {
+    const hasSelection = !!newDependent.id;
+    if (!hasSelection) {
       toast('Please select a resident to add as a dependent.', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
         style: {
@@ -92,8 +122,51 @@ export default function DependentForm({ form, residents, selectedParents, depend
       suffix: '',
       dateOfBirth: '',
       sex: '',
+      relationshipToHead: '',
+      dependentUnderFiveSchema: {
+        fic: '',
+        nutritionalStatus: '',
+        exclusiveBf: '',
+      },
+      perAddDetails: {
+        bloodType: '',
+        philHealthId: '',
+        covidVaxStatus: '',
+      }
     });
   }
+
+  // Compute age to determine conditional fields
+  const watchedDOB = useWatch({ control: form.control, name: 'dependentsInfo.new.dateOfBirth' });
+  const age = React.useMemo(() => {
+    const dob = watchedDOB;
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let years = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      years--;
+    }
+    return years;
+  }, [watchedDOB]);
+
+  // When age changes, clear fields that don't apply
+  React.useEffect(() => {
+    if (typeof age !== 'number') return;
+    if (age >= 0 && age <= 5) {
+      // Clear 6+ fields
+      form.setValue('dependentsInfo.new.perAddDetails.bloodType', '', { shouldDirty: false });
+      form.setValue('dependentsInfo.new.perAddDetails.philHealthId', '', { shouldDirty: false });
+      form.setValue('dependentsInfo.new.perAddDetails.covidVaxStatus', '', { shouldDirty: false });
+    } else if (age >= 6) {
+      // Clear under-five fields
+      form.setValue('dependentsInfo.new.dependentUnderFiveSchema.fic', '', { shouldDirty: false });
+      form.setValue('dependentsInfo.new.dependentUnderFiveSchema.nutritionalStatus', '', { shouldDirty: false });
+      form.setValue('dependentsInfo.new.dependentUnderFiveSchema.exclusiveBf', '', { shouldDirty: false });
+    }
+  }, [age]);
 
   return (
     <div className="grid gap-3">
@@ -132,6 +205,71 @@ export default function DependentForm({ form, residents, selectedParents, depend
                 { id: 'female', name: 'Female' },
             ]} readOnly/>
             <FormDateTimeInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" type="date" readOnly />
+            {/* Common field for all ages */}
+            <FormInput control={form.control} name="dependentsInfo.new.relationshipToHead" label="Relationship to household head" placeholder="e.g., Son, Daughter, None" />
+
+            {/* Conditional fields for ages 0-5 */}
+            {typeof age === 'number' && age >= 0 && age <= 5 && (
+              <>
+                <FormSelect
+                  control={form.control}
+                  name="dependentsInfo.new.dependentUnderFiveSchema.fic"
+                  label="FIC"
+                  options={[{ id: 'yes', name: 'Yes' }, { id: 'no', name: 'No' }]}
+                />
+                <FormInput
+                  control={form.control}
+                  name="dependentsInfo.new.dependentUnderFiveSchema.nutritionalStatus"
+                  label="Nutritional status"
+                  placeholder="e.g., Normal, Underweight"
+                />
+                <FormSelect
+                  control={form.control}
+                  name="dependentsInfo.new.dependentUnderFiveSchema.exclusiveBf"
+                  label="Exclusive breastfeeding"
+                  options={[{ id: 'yes', name: 'Yes' }, { id: 'no', name: 'No' }]}
+                />
+              </>
+            )}
+
+            {/* Conditional fields for ages 6+ */}
+            {typeof age === 'number' && age >= 6 && (
+              <>
+                <FormSelect
+                  control={form.control}
+                  name="dependentsInfo.new.perAddDetails.bloodType"
+                  label="Blood Type"
+                  options={[
+                    { id: 'A+', name: 'A+' },
+                    { id: 'A-', name: 'A-' },
+                    { id: 'B+', name: 'B+' },
+                    { id: 'B-', name: 'B-' },
+                    { id: 'AB+', name: 'AB+' },
+                    { id: 'AB-', name: 'AB-' },
+                    { id: 'O+', name: 'O+' },
+                    { id: 'O-', name: 'O-' },
+                    { id: 'unknown', name: 'Unknown' },
+                  ]}
+                />
+                <FormInput
+                  control={form.control}
+                  name="dependentsInfo.new.perAddDetails.philHealthId"
+                  label="PhilHealth ID"
+                  placeholder="Enter PhilHealth ID"
+                />
+                <FormSelect
+                  control={form.control}
+                  name="dependentsInfo.new.perAddDetails.covidVaxStatus"
+                  label="COVID Vaccination Status"
+                  options={[
+                    { id: 'notVaccinated', name: 'Not Vaccinated' },
+                    { id: 'firstdose', name: '1st Dose' },
+                    { id: 'seconddose', name: '2nd Dose' },
+                    { id: 'booster', name: 'Booster Shot' },
+                  ]}
+                />
+              </>
+            )}
             <div className="flex items-end">
               <Button type="button" onClick={handleAddDependent} className="bg-green-600 hover:bg-green-700 text-white">
                 <Plus /> Dependent

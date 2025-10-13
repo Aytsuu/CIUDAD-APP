@@ -16,7 +16,8 @@ import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } fro
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails, useFamilyDataHealth } from "./family-profling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
-import { useSubmitEnvironmentalForm, useSubmitSurveyIdentificationForm, useSubmitNCDRecord, useSubmitTBRecord } from "./family-profling/queries/profilingAddQueries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { submitEnvironmentalForm, submitSurveyIdentificationForm, createNCDRecord, createTBRecord } from "./family-profling/restful-api/profiingPostAPI";
 // These imports are currently unused but may be needed when implementing step 4
 import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
 import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
@@ -26,6 +27,24 @@ import SurveyIdentificationForm, { SurveyIdentificationFormHandle } from "./fami
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
+import { CircleAlert } from "lucide-react";
+import { BeforeUnloadDialog, BeforeUnloadDialogRef } from "@/components/ui/before-unload-dialog";
+// Import validation utilities
+import { 
+  validateStep4, 
+  validateStep5, 
+  validateForSubmission,
+  groupValidationErrors
+} from "./family-profling/validation";
+import { 
+  prepareNCDRecordForSubmission
+} from "./family-profling/validation/ncdValidation";
+import { 
+  prepareTBRecordForSubmission
+} from "./family-profling/validation/tbValidation";
+import { 
+  prepareSurveyDataForSubmission
+} from "./family-profling/validation/surveyValidation";
 
 export default function HealthFamilyForm() {
   const { showLoading, hideLoading } = useLoading();
@@ -46,21 +65,81 @@ export default function HealthFamilyForm() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isValidating, setIsValidating] = React.useState<boolean>(false);
   
-  // State to track survey submission (no longer needed with integrated approach)
-  // const [surveySubmitted, setSurveySubmitted] = React.useState<boolean>(false);
+  // Before unload dialog ref and state
+  const beforeUnloadRef = React.useRef<BeforeUnloadDialogRef>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState<boolean>(false);
   
   // Ref for survey form to access its data
   const surveyFormRef = React.useRef<SurveyIdentificationFormHandle>(null);
   
-  // Mutation hooks for data submission
-  const submitEnvironmentalMutation = useSubmitEnvironmentalForm();
-  const submitSurveyMutation = useSubmitSurveyIdentificationForm();
-  const submitNCDMutation = useSubmitNCDRecord();
-  const submitTBMutation = useSubmitTBRecord();
+  // Mutation hooks for data submission (custom versions without individual toasts)
+  const queryClient = useQueryClient();
+  
+  const submitEnvironmentalMutation = useMutation({
+    mutationFn: (payload: {
+      household_id: string;
+      water_supply?: { type: 'level1' | 'level2' | 'level3' };
+      sanitary_facility?: { facility_type: string; toilet_facility_type: string };
+      waste_management?: { waste_management_type: string; description?: string };
+    }) => submitEnvironmentalForm(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['environmentalData'] });
+      // No individual toast - will show consolidated toast at the end
+    }
+  });
+  
+  const submitSurveyMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => submitSurveyIdentificationForm(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["surveyIdentificationList"] });
+      queryClient.invalidateQueries({ queryKey: ["surveyIdentificationByFamily"] });
+      queryClient.invalidateQueries({ queryKey: ["surveyIdentificationFormData"] });
+      // No individual toast - will show consolidated toast at the end
+    },
+  });
+  
+  const submitNCDMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => createNCDRecord(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ncdRecordsList"] });
+      queryClient.invalidateQueries({ queryKey: ["ncdRecordsByFamily"] });
+      // No individual toast - will show consolidated toast at the end
+    },
+  });
+  
+  const submitTBMutation = useMutation({
+    mutationFn: (data: Record<string, any>) => createTBRecord(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tbRecordsList"] });
+      queryClient.invalidateQueries({ queryKey: ["tbRecordsByFamily"] });
+      // No individual toast - will show consolidated toast at the end
+    },
+  });
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
     defaultValues: defaultValues.current,
   });
+
+  // Track form changes to determine if there are unsaved changes
+  React.useEffect(() => {
+    const subscription = form.watch(() => {
+      if (!isSubmitting) {
+        setHasUnsavedChanges(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, isSubmitting]);
+
+  // Also track changes in other state variables that represent form data
+  React.useEffect(() => {
+    if (selectedMotherId || selectedFatherId || selectedResidentId || 
+        selectedRespondentId || famId || dependentsList.length > 0) {
+      if (!isSubmitting) {
+        setHasUnsavedChanges(true);
+      }
+    }
+  }, [selectedMotherId, selectedFatherId, selectedResidentId, selectedRespondentId, 
+      famId, dependentsList, isSubmitting]);
  
   // Optimize: Only format residents data when needed and memoize properly
   const formattedResidents = React.useMemo(() => {
@@ -192,159 +271,47 @@ export default function HealthFamilyForm() {
     }
   }, [currentStep, famId, shouldFetchFamilyData]);
   
-  // Validation function for step 4
-  const validateStep4 = React.useCallback(() => {
-    const formData = form.getValues();
-    const errors: string[] = [];
-
-    // Validate Environmental Form
-    if (!formData.environmentalForm?.waterSupply) {
-      errors.push("Water supply type is required");
-    }
-    if (!formData.environmentalForm?.facilityType) {
-      errors.push("Facility type is required");
-    }
-    if (!formData.environmentalForm?.toiletFacilityType) {
-      errors.push("Toilet facility type is required");
-    }
-    if (!formData.environmentalForm?.wasteManagement) {
-      errors.push("Waste management type is required");
-    }
-    
-    // Validate "others" fields if selected
-    if (formData.environmentalForm?.wasteManagement === "others" && 
-        !formData.environmentalForm?.wasteManagementOthers?.trim()) {
-      errors.push("Please specify waste management type");
-    }
-
-    // Check if environmental form has any data at all
-    const hasEnvironmentalData = formData.environmentalForm && (
-      formData.environmentalForm.waterSupply ||
-      formData.environmentalForm.facilityType ||
-      formData.environmentalForm.toiletFacilityType ||
-      formData.environmentalForm.wasteManagement
-    );
-
-    if (!hasEnvironmentalData) {
-      errors.push("Environmental form must be completed");
-    }
-
-    // Validate NCD Records - check if any records have incomplete required fields
-    if (formData.ncdRecords?.list && formData.ncdRecords.list.length > 0) {
-      formData.ncdRecords.list.forEach((record, index) => {
-        if (record.ncdFormSchema) {
-          if (!record.ncdFormSchema.riskClassAgeGroup) {
-            errors.push(`NCD Record ${index + 1}: Risk class age group is required`);
-          }
-          if (!record.ncdFormSchema.comorbidities) {
-            errors.push(`NCD Record ${index + 1}: Comorbidities is required`);
-          }
-          if (!record.ncdFormSchema.lifestyleRisk) {
-            errors.push(`NCD Record ${index + 1}: Lifestyle risk is required`);
-          }
-          if (!record.ncdFormSchema.inMaintenance) {
-            errors.push(`NCD Record ${index + 1}: Maintenance status is required`);
-          }
-          
-          // Check "others" fields
-          if (record.ncdFormSchema.comorbidities === "Others" && 
-              !record.ncdFormSchema.comorbiditiesOthers?.trim()) {
-            errors.push(`NCD Record ${index + 1}: Please specify comorbidities`);
-          }
-          if (record.ncdFormSchema.lifestyleRisk === "Others" && 
-              !record.ncdFormSchema.lifestyleRiskOthers?.trim()) {
-            errors.push(`NCD Record ${index + 1}: Please specify lifestyle risk`);
-          }
-        }
-      });
-    }
-
-    // Validate TB Records - check if any records have incomplete required fields
-    if (formData.tbRecords?.list && formData.tbRecords.list.length > 0) {
-      formData.tbRecords.list.forEach((record, index) => {
-        if (record.tbSurveilanceSchema) {
-          if (!record.tbSurveilanceSchema.srcAntiTBmeds) {
-            errors.push(`TB Record ${index + 1}: Source of anti-TB medication is required`);
-          }
-          if (!record.tbSurveilanceSchema.noOfDaysTakingMeds) {
-            errors.push(`TB Record ${index + 1}: Number of days taking medication is required`);
-          }
-          if (!record.tbSurveilanceSchema.tbStatus) {
-            errors.push(`TB Record ${index + 1}: TB status is required`);
-          }
-          
-          // Check "others" field
-          if (record.tbSurveilanceSchema.srcAntiTBmeds === "Others" && 
-              !record.tbSurveilanceSchema.srcAntiTBmedsOthers?.trim()) {
-            errors.push(`TB Record ${index + 1}: Please specify source of anti-TB medication`);
-          }
-        }
-      });
-    }
-
-    return errors;
-  }, [form]);
-
-  // Validation function for step 5
-  const validateStep5 = React.useCallback(() => {
-    const errors: string[] = [];
-
-    if (surveyFormRef.current) {
-      const surveyData = surveyFormRef.current.getFormData();
-      
-      if (!surveyData.filledBy?.trim()) {
-        errors.push("Filled by field is required");
-      }
-      if (!surveyData.informant?.trim()) {
-        errors.push("Informant/Conforme field is required");
-      }
-      if (!surveyData.checkedBy?.trim()) {
-        errors.push("Checked by field is required");
-      }
-      if (!surveyData.date) {
-        errors.push("Date is required");
-      }
-      if (!surveyData.signature?.trim()) {
-        errors.push("Signature is required");
-      }
-    } else {
-      errors.push("Survey form is not available");
-    }
-
-    return errors;
-  }, []);
-
   // Enhanced next step function with validation
   const nextStep = React.useCallback(async () => {
     setIsValidating(true);
     
     try {
-      let errors: string[] = [];
+      const formData = form.getValues();
+      let hasErrors = false;
 
-      // Validate based on current step
       if (currentStep === 4) {
-        errors = validateStep4();
+        const step4Result = validateStep4(formData);
+        if (!step4Result.isValid) {
+          const grouped = groupValidationErrors({
+            isValid: false,
+            step4: step4Result,
+            step5: { isValid: true, survey: { isValid: true, errors: [], errorMessages: [] }, allErrors: [] },
+            allErrors: step4Result.allErrors
+          });
+
+          // Show grouped error messages
+          if (grouped.environmentalCount > 0) {
+            toast.error(`Environmental Form: ${grouped.environmentalCount} field(s) required`);
+          }
+          if (grouped.ncdCount > 0) {
+            toast.error(`NCD Records: ${grouped.ncdCount} validation error(s)`);
+          }
+          if (grouped.tbCount > 0) {
+            toast.error(`TB Records: ${grouped.tbCount} validation error(s)`);
+          }
+          
+          hasErrors = true;
+        }
       } else if (currentStep === 5) {
-        errors = validateStep5();
+        const surveyData = surveyFormRef.current?.getFormData() || null;
+        const step5Result = validateStep5(surveyData);
+        if (!step5Result.isValid) {
+          toast.error(`Survey Form: ${step5Result.allErrors.length} field(s) required`);
+          hasErrors = true;
+        }
       }
 
-      if (errors.length > 0) {
-        // Group errors by category for better UX
-        const environmentalErrors = errors.filter(e => !e.includes('NCD Record') && !e.includes('TB Record'));
-        const ncdErrors = errors.filter(e => e.includes('NCD Record'));
-        const tbErrors = errors.filter(e => e.includes('TB Record'));
-
-        // Show grouped error messages
-        if (environmentalErrors.length > 0) {
-          toast.error(`Environmental Form: ${environmentalErrors.join(', ')}`);
-        }
-        if (ncdErrors.length > 0) {
-          toast.error(`NCD Records: ${ncdErrors.length} record(s) have incomplete fields`);
-        }
-        if (tbErrors.length > 0) {
-          toast.error(`TB Records: ${tbErrors.length} record(s) have incomplete fields`);
-        }
-        
+      if (hasErrors) {
         // Trigger form validation to show field-level errors
         form.trigger();
         return; // Don't proceed to next step
@@ -355,7 +322,7 @@ export default function HealthFamilyForm() {
     } finally {
       setIsValidating(false);
     }
-  }, [currentStep, validateStep4, validateStep5, form]);
+  }, [currentStep, form]);
 
   // Handler for going to the previous step
   const prevStep = React.useCallback(() => {
@@ -365,49 +332,52 @@ export default function HealthFamilyForm() {
   // Comprehensive submission handler for step 4 and 5 data
   const handleFinalSubmission = React.useCallback(async () => {
     if (!famId) {
-      toast.error("Family ID is required for submission");
+      console.log("❌ Family ID is required for submission");
       return;
     }
 
     setIsValidating(true);
     
     try {
-      // Validate all required fields before submission
-      const step4Errors = validateStep4();
-      const step5Errors = validateStep5();
-      const allErrors = [...step4Errors, ...step5Errors];
+      // Get all form data and survey data
+      const formData = form.getValues();
+      const surveyData = surveyFormRef.current?.getFormData() || null;
+      
+      console.log('=== SUBMISSION DEBUG START ===');
+      console.log('Family ID:', famId);
+      console.log('Survey form ref exists:', !!surveyFormRef.current);
+      console.log('Survey data extracted:', surveyData);
+      console.log('Form data:', formData);
+      
+      // Validate all required fields before submission using new validation system
+      const validationResult = validateForSubmission(formData, surveyData);
+      
+      if (!validationResult.isValid) {
+        const grouped = groupValidationErrors(validationResult);
 
-      if (allErrors.length > 0) {
-        // Group errors by category for better UX
-        const environmentalErrors = step4Errors.filter(e => !e.includes('NCD Record') && !e.includes('TB Record'));
-        const ncdErrors = step4Errors.filter(e => e.includes('NCD Record'));
-        const tbErrors = step4Errors.filter(e => e.includes('TB Record'));
-
-        // Show grouped error messages
-        if (environmentalErrors.length > 0) {
-          toast.error(`Environmental Form incomplete: ${environmentalErrors.length} field(s) required`);
+        // Log grouped error messages instead of showing toasts
+        if (grouped.environmentalCount > 0) {
+          console.log(`❌ Environmental Form: ${grouped.environmentalCount} field(s) required`);
         }
-        if (ncdErrors.length > 0) {
-          toast.error(`NCD Records incomplete: ${ncdErrors.length} validation error(s)`);
+        if (grouped.ncdCount > 0) {
+          console.log(`❌ NCD Records: ${grouped.ncdCount} validation error(s)`);
         }
-        if (tbErrors.length > 0) {
-          toast.error(`TB Records incomplete: ${tbErrors.length} validation error(s)`);
+        if (grouped.tbCount > 0) {
+          console.log(`❌ TB Records: ${grouped.tbCount} validation error(s)`);
         }
-        if (step5Errors.length > 0) {
-          toast.error(`Survey Form incomplete: ${step5Errors.length} field(s) required`);
+        if (grouped.surveyCount > 0) {
+          console.log(`❌ Survey Form: ${grouped.surveyCount} field(s) required`);
         }
         
         // Trigger form validation to show field-level errors
         form.trigger();
-        toast.error("Please complete all required fields before submitting");
+        console.log("❌ Please complete all required fields before submitting");
         return; // Don't proceed with submission
       }
 
       setIsSubmitting(true);
       showLoading();
 
-      // Get all form data
-      const formData = form.getValues();
       console.log('Full form data for submission:', formData);
 
       // 1. Submit Environmental Form Data (Step 4)
@@ -419,18 +389,27 @@ export default function HealthFamilyForm() {
           } : undefined,
           sanitary_facility: formData.environmentalForm.facilityType ? {
             facility_type: formData.environmentalForm.facilityType,
+            // pass the specific subtype based on facility type so backend can resolve sf_desc
+            ...(formData.environmentalForm.facilityType === 'SANITARY'
+              ? { sanitary_facility_type: formData.environmentalForm.sanitaryFacilityType || undefined }
+              : {}),
+            ...(formData.environmentalForm.facilityType === 'UNSANITARY'
+              ? { unsanitary_facility_type: formData.environmentalForm.unsanitaryFacilityType || undefined }
+              : {}),
             toilet_facility_type: formData.environmentalForm.toiletFacilityType || ''
           } : undefined,
           waste_management: formData.environmentalForm.wasteManagement ? {
-            waste_management_type: formData.environmentalForm.wasteManagement === "others"
+            waste_management_type: (formData.environmentalForm.wasteManagement || "").toUpperCase() === "OTHERS"
+              ? formData.environmentalForm.wasteManagementOthers || "OTHERS"
+              : formData.environmentalForm.wasteManagement,
+            description: (formData.environmentalForm.wasteManagement || "").toUpperCase() === "OTHERS"
               ? formData.environmentalForm.wasteManagementOthers || ""
-              : formData.environmentalForm.wasteManagement
+              : undefined
           } : undefined
         };
 
         console.log('Submitting environmental data:', environmentalPayload);
         await submitEnvironmentalMutation.mutateAsync(environmentalPayload);
-        toast.success("Environmental data submitted successfully!");
       }
 
       // 2. Submit NCD Records (Step 4) - if any records exist
@@ -438,34 +417,21 @@ export default function HealthFamilyForm() {
         console.log('NCD Records to submit:', formData.ncdRecords.list);
         
         for (const ncdRecord of formData.ncdRecords.list) {
-          if (ncdRecord.ncdFormSchema && ncdRecord.id) {
-            const ncdPayload = {
-              rp_id: ncdRecord.id,
-              ncd_riskclass_age: ncdRecord.ncdFormSchema.riskClassAgeGroup || null,
-              ncd_comorbidities: ncdRecord.ncdFormSchema.comorbidities === "Others" 
-                ? ncdRecord.ncdFormSchema.comorbiditiesOthers || null
-                : ncdRecord.ncdFormSchema.comorbidities || null,
-              ncd_lifestyle_risk: ncdRecord.ncdFormSchema.lifestyleRisk === "Others"
-                ? ncdRecord.ncdFormSchema.lifestyleRiskOthers || null
-                : ncdRecord.ncdFormSchema.lifestyleRisk || null,
-              ncd_maintenance_status: ncdRecord.ncdFormSchema.inMaintenance || null
-            };
-            
+          const ncdPayload = prepareNCDRecordForSubmission(ncdRecord);
+          
+          if (ncdPayload) {
             console.log('Submitting NCD record with payload:', ncdPayload);
-            console.log('NCD record resident ID check:', ncdRecord.id);
-            console.log('NCD form schema data:', ncdRecord.ncdFormSchema);
             
             try {
               await submitNCDMutation.mutateAsync(ncdPayload);
               console.log('NCD record submitted successfully for resident:', ncdRecord.id);
             } catch (ncdError) {
               console.error('Error submitting NCD record for resident', ncdRecord.id, ':', ncdError);
-              toast.error(`Failed to submit NCD record for resident ${ncdRecord.id}`);
+              console.log(`❌ Failed to submit NCD record for resident ${ncdRecord.id}`);
               throw ncdError; // Re-throw to stop the submission process
             }
           }
         }
-        toast.success(`${formData.ncdRecords.list.length} NCD records submitted successfully!`);
       }
 
       // 3. Submit TB Records (Step 4) - if any records exist
@@ -473,79 +439,121 @@ export default function HealthFamilyForm() {
         console.log('TB Records to submit:', formData.tbRecords.list);
         
         for (const tbRecord of formData.tbRecords.list) {
-          if (tbRecord.tbSurveilanceSchema && tbRecord.id) {
-            const tbPayload = {
-              rp_id: tbRecord.id,
-              tb_meds_source: tbRecord.tbSurveilanceSchema.srcAntiTBmeds === "Others"
-                ? tbRecord.tbSurveilanceSchema.srcAntiTBmedsOthers || null
-                : tbRecord.tbSurveilanceSchema.srcAntiTBmeds || null,
-              tb_days_taking_meds: parseInt(tbRecord.tbSurveilanceSchema.noOfDaysTakingMeds) || 0,
-              tb_status: tbRecord.tbSurveilanceSchema.tbStatus || null
-            };
-            
+          const tbPayload = prepareTBRecordForSubmission(tbRecord);
+          
+          if (tbPayload) {
             console.log('Submitting TB record:', tbPayload);
             await submitTBMutation.mutateAsync(tbPayload);
           }
         }
-        toast.success(`${formData.tbRecords.list.length} TB surveillance records submitted successfully!`);
       }
 
-      // 4. Submit Survey Identification Form (Step 5)
       if (surveyFormRef.current) {
-        const surveyData = surveyFormRef.current.getFormData();
-        console.log('Survey identification data:', surveyData);
+        const isFormValid = surveyFormRef.current.isFormValid();
+        console.log('Survey form validation result:', isFormValid);
         
-        if (surveyFormRef.current.isFormValid()) {
-          // Prepare survey data for backend submission
-          const surveyPayload = {
-            fam_id: famId,
-            filledBy: surveyData.filledBy,
-            informant: surveyData.informant,
-            checkedBy: surveyData.checkedBy,
-            date: surveyData.date?.toISOString().split('T')[0], // Format as YYYY-MM-DD
-            signature: surveyData.signature
-          };
+        if (surveyData && isFormValid) {
+          const surveyPayload = prepareSurveyDataForSubmission(surveyData, famId);
           
-          console.log('Submitting survey data:', surveyPayload);
-          await submitSurveyMutation.mutateAsync(surveyPayload);
-          toast.success("Survey identification submitted successfully!");
+          if (surveyPayload) {
+            console.log('Submitting survey data with payload:', surveyPayload);
+            
+            try {
+              const result = await submitSurveyMutation.mutateAsync(surveyPayload);
+              console.log('✅ Survey identification submitted successfully:', result);
+            } catch (surveyError) {
+              console.error('❌ Error submitting survey identification:', surveyError);
+              console.log("❌ Failed to submit survey identification form");
+              throw surveyError;
+            }
+          } else {
+            console.log('❌ Failed to prepare survey data for submission');
+            console.log("❌ Invalid survey data format");
+          }
         } else {
-          console.log('Survey form is not valid');
-          toast.warning("Please complete the survey identification form");
+          console.log('❌ Survey form validation failed or no data:', {
+            hasData: !!surveyData,
+            isValid: isFormValid,
+            surveyData
+          });
+          console.log("❌ Please complete the survey identification form");
         }
       } else {
-        console.log('Survey form ref not available');
-        toast.warning("Survey identification form not available");
+        console.log('❌ Survey form ref not available');
+        console.log("❌ Survey identification form not available");
       }
 
       // 5. Final success message and navigation
-      const allCompleted = 
-        (formData.environmentalForm && householdId) || 
-        (formData.ncdRecords?.list?.length > 0) || 
-        (formData.tbRecords?.list?.length > 0) || 
-        (surveyFormRef.current?.isFormValid());
-        
-      if (allCompleted) {
-        toast.success("Health family profiling data submitted successfully!");
-        console.log('Health Family Profiling completed successfully!');
+      console.log('=== FINAL SUBMISSION SUMMARY ===');
+      const submissionSummary = [];
+      
+      if (formData.environmentalForm && householdId) {
+        submissionSummary.push("Environmental data");
+        console.log('✅ Environmental data was submitted');
+      } else {
+        console.log('❌ Environmental data was NOT submitted');
+      }
+      
+      if (formData.ncdRecords?.list?.length > 0) {
+        submissionSummary.push(`${formData.ncdRecords.list.length} NCD record(s)`);
+        console.log('✅ NCD records were submitted:', formData.ncdRecords.list.length);
+      } else {
+        console.log('❌ No NCD records to submit');
+      }
+      
+      if (formData.tbRecords?.list?.length > 0) {
+        submissionSummary.push(`${formData.tbRecords.list.length} TB surveillance record(s)`);
+        console.log('✅ TB records were submitted:', formData.tbRecords.list.length);
+      } else {
+        console.log('❌ No TB records to submit');
+      }
+      
+      const surveyFormValid = surveyFormRef.current?.isFormValid();
+      console.log('Survey form valid for summary?', surveyFormValid);
+      
+      if (surveyFormValid) {
+        submissionSummary.push("Survey identification");
+        console.log('✅ Survey identification was included in summary');
+      } else {
+        console.log('❌ Survey identification was NOT included in summary');
+      }
+      
+      console.log('Final submission summary array:', submissionSummary);
+      
+      if (submissionSummary.length > 0) {
+        // Use the specific toast style instead of showing summary text
+        toast("Record added successfully", {
+          icon: <CircleAlert size={24} className="fill-green-500 stroke-white" />,
+          style: {
+            border: '1px solid rgb(187, 222, 251)',
+            padding: '16px',
+            color: '#1e3a8a',
+            background: '#eff6ff',
+          },
+        });
+        console.log('✅ SUCCESS: Health Family Profiling completed successfully!');
+        console.log('✅ Submitted components:', submissionSummary.join(", "));
         
         // Navigate back to family page after a short delay to show success message
         setTimeout(() => {
-          navigate("/family");
+          // Clear unsaved changes flag before navigation since we successfully submitted
+          setHasUnsavedChanges(false);
+          navigate("/profiling/family");
         }, 2000); // 2 second delay
       } else {
-        toast.info("Please fill out the required forms before submitting");
+        console.log('❌ No components were submitted successfully');
+        console.log('❌ ERROR: Please fill out the required forms before submitting');
       }
       
     } catch (error) {
-      console.error('Error during submission:', error);
-      toast.error("Failed to submit health family profiling data. Please try again.");
+      console.error('❌ Error during submission:', error);
+      console.log("❌ Failed to submit health family profiling data. Please try again.");
     } finally {
       setIsSubmitting(false);
       setIsValidating(false);
       hideLoading();
     }
-  }, [famId, householdId, form, submitEnvironmentalMutation, submitSurveyMutation, submitNCDMutation, submitTBMutation, showLoading, hideLoading, navigate, validateStep4, validateStep5]);
+  }, [famId, householdId, form, submitEnvironmentalMutation, submitSurveyMutation, submitNCDMutation, submitTBMutation, showLoading, hideLoading, navigate]);
 
 
   // Calculate progress based on current step (4 steps)
@@ -581,6 +589,19 @@ export default function HealthFamilyForm() {
       title="Family Profile"
       description="Provide your details to complete the registration process."
     >
+      {/* Before Unload Dialog */}
+      <BeforeUnloadDialog
+        ref={beforeUnloadRef}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onConfirmLeave={() => {
+          console.log('User confirmed navigation despite unsaved changes');
+          setHasUnsavedChanges(false);
+        }}
+        onCancelLeave={() => {
+          console.log('User cancelled navigation to preserve unsaved changes');
+        }}
+      />
+      
         <Card className="w-full">
           <div className="pt-10">
             <ProgressWithIcon 
@@ -662,9 +683,7 @@ export default function HealthFamilyForm() {
                   
                   {/* Navigation Buttons for Step 4 */}
                   <div className="mt-8 flex justify-end gap-2 sm:gap-3 p-4 md:p-10">
-                    <Button variant="outline" className="w-full sm:w-32" onClick={() => prevStep()}>
-                      Back
-                    </Button>
+                    
                     <Button 
                       onClick={() => {
                         // Trigger form validation first

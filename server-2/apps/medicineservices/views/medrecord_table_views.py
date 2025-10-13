@@ -107,7 +107,7 @@ class MedicineRecordTableView(APIView):
                     Q(minv_id__med_id__med_name__icontains=search_query) |
                     Q(reason__icontains=search_query) |
                     Q(medrec_id__icontains=search_query) |
-                    Q(status__icontains=search_query) |
+                    # Q(status__icontains=search_query) |
                     Q(minv_id__med_id__cat__cat_name__icontains=search_query)
                 )
             

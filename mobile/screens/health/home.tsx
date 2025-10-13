@@ -56,21 +56,21 @@ const Homepage = () => {
   // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
 
   const modules: Module[] = [
+    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
     { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
     { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
-    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
+    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
     { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
-    { name: "Medical Consultation", route: "(health)/medicine-request/my-requests" as Href, icon: Stethoscope },
-    { name: "Profiling", route: "admin/medicinerequest/medicinerequest" as Href, icon: UserRoundPlus },
+    { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus },
+    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
+    { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
+    { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
     { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
     { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
     { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
-    { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
     { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
     { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
-    { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
-
-    { name: "Medicine", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
+    { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
   ];
 
   const quickActions: QuickAction[] = [
@@ -122,7 +122,7 @@ const Homepage = () => {
 
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
-          <Text className="text-white text-3xl font-PoppinsSemiBold">Welcome</Text>
+          <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
           <Text className="text-white text-base mt-1">How can we help you today?</Text>
         </View>
         <Image
@@ -206,7 +206,7 @@ const Homepage = () => {
               className="bg-blue-700 p-1 rounded-xl relative"
               onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
-              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
+              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My schedules</Text>
               {/* Notification Badge */}
               {/* <NotificationBadge count={pendingCount} showBadge={!isLoadingPending && pendingCount > 0} /> */}
             </TouchableOpacity>
@@ -217,7 +217,7 @@ const Homepage = () => {
               <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <View className="h-32 relative">
                   <Image
-                    source={require("@/assets/images/Health/Home/Maternal.jpg")}
+                    source={require("@/assets/images/Health/Home/Maternal1.jpg")}
                     className="w-full h-full"
                     resizeMode="cover"
                   />
@@ -275,7 +275,7 @@ const Homepage = () => {
               })}
             </View>
           </View>
-        )} 
+         )}
       </ScrollView>
     </SafeAreaView>
   );

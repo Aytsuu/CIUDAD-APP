@@ -2,14 +2,14 @@
   import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
   import { Outlet, useNavigate, useLocation } from "react-router-dom";
   import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-  import { useAuth } from "@/context/AuthContext";
+  // import { useAuth } from "@/context/AuthContext";
   import { ProtectedComponentButton } from "@/ProtectedComponentButton";
   import { useReportsCount } from "../count-return/count";
 
   export default function MainMedicine() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
+    // const { user } = useAuth();
     const { data, isLoading } = useReportsCount();
 
     // Get current view from URL path - FIXED VERSION
