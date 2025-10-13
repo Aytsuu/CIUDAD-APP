@@ -93,7 +93,7 @@ const CertList = () => {
       rightAction={<View className="w-10 h-10" />}
       wrapScroll={false}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {loading && (
           <View className="items-center justify-center py-10">
             <ActivityIndicator />

@@ -85,13 +85,18 @@ const CertPermit: React.FC = () => {
 
 
   
+  // Separate permit purposes and barangay clearance
   const permitPurposes = purposeAndRates.filter(purpose => 
-    purpose.pr_category.toLowerCase().includes('permit') || 
-    purpose.pr_purpose.toLowerCase().includes('permit') ||
-    purpose.pr_purpose.toLowerCase().includes('clearance') ||
-    purpose.pr_purpose.toLowerCase().includes('barangay') ||
-    purpose.pr_category.toLowerCase().includes('barangay')
+    purpose.pr_category.toLowerCase().includes('permit') &&
+    !purpose.pr_purpose.toLowerCase().includes('clearance') &&
+    !purpose.pr_category.toLowerCase().includes('clearance')
   );
+  
+  const barangayClearancePurposes = purposeAndRates.filter(purpose => 
+    purpose.pr_purpose.toLowerCase().includes('clearance') ||
+    purpose.pr_category.toLowerCase().includes('clearance')
+  );
+
 
   
   // Memoize permit type options to prevent re-renders
@@ -101,21 +106,24 @@ const CertPermit: React.FC = () => {
     }
     
     if (businessData.length === 0) {
-      // No business - only allow Business Clearance
-      return [{ label: 'Business Clearance', value: 'Business Clearance' }];
+      // No business - only allow Barangay Clearance
+      return barangayClearancePurposes.map(purpose => ({
+        label: purpose.pr_purpose,
+        value: purpose.pr_purpose
+      }));
     } else {
-      // Has business - allow both Business Clearance (for renewal) and permit types
-      // Remove duplicates by using a Set to track unique values
-      const uniquePurposes = permitPurposes.filter((purpose, index, self) => 
+      // Has business - allow both Barangay Clearance and permit types
+      const allPurposes = [...permitPurposes, ...barangayClearancePurposes];
+      const uniquePurposes = allPurposes.filter((purpose, index, self) => 
         index === self.findIndex(p => p.pr_purpose === purpose.pr_purpose)
       );
       
       return uniquePurposes.map(purpose => ({
-        label: `${purpose.pr_purpose}`,
+        label: purpose.pr_purpose,
         value: purpose.pr_purpose
       }));
     }
-  }, [isLoadingBusiness, businessData.length, permitPurposes]);
+  }, [isLoadingBusiness, businessData.length, permitPurposes, barangayClearancePurposes]);
 
   // Memoize gross sales options to prevent re-renders
   const grossSalesOptions: DropdownOption[] = useMemo(() => {
@@ -132,34 +140,39 @@ const CertPermit: React.FC = () => {
       }));
   }, [annualGrossSales]);
 
+  // Check if selected type is barangay clearance
+  const isBarangayClearance = useMemo(() => {
+    return barangayClearancePurposes.some(purpose => purpose.pr_purpose === permitType);
+  }, [permitType, barangayClearancePurposes]);
+
   // Text input handlers
   const handleBusinessNameChange = (text: string) => {
-    if (permitType === 'Business Clearance' && businessData.length === 0) {
+    if (isBarangayClearance && businessData.length === 0) {
       setBusinessName(text);
     }
   };
 
   const handleBusinessAddressChange = (text: string) => {
-    if (permitType === 'Business Clearance' && businessData.length === 0) {
+    if (isBarangayClearance && businessData.length === 0) {
       setBusinessAddress(text);
     }
   };
 
   // Memoize editable state
   const isBusinessNameEditable = useMemo(() => {
-    return permitType === 'Business Clearance' && businessData.length === 0;
-  }, [permitType, businessData.length]);
+    return isBarangayClearance && businessData.length === 0;
+  }, [isBarangayClearance, businessData.length]);
 
   const isBusinessAddressEditable = useMemo(() => {
-    return permitType === 'Business Clearance' && businessData.length === 0;
-  }, [permitType, businessData.length]);
+    return isBarangayClearance && businessData.length === 0;
+  }, [isBarangayClearance, businessData.length]);
 
   
   const handleSubmit = async () => {
     setError(null);
     
-    // Prevent submission if no business exists (except for Business Clearance)
-    if (businessData.length === 0 && permitType !== 'Business Clearance') {
+    // Prevent submission if no business exists (except for barangay clearance)
+    if (businessData.length === 0 && !isBarangayClearance) {
       setError("Cannot submit request: No business registered under this resident");
       return;
     }
@@ -173,18 +186,17 @@ const CertPermit: React.FC = () => {
       setError("Business address is required");
       return;
     }
-    if (businessData.length === 0 && !selectedGrossSalesRange) {
+    if (isBarangayClearance && businessData.length === 0 && !selectedGrossSalesRange) {
       setError("Please select a gross sales range");
       return;
     }
-    if (businessData.length > 0 && !grossSales) {
+    if (isBarangayClearance && businessData.length > 0 && !grossSales) {
       setError("Gross sales information is missing");
       return;
     }
 
-    // Validate required images
-    if (permitType !== 'Business Clearance') {
-      // For other permit types
+    // Validate required images - only for barangay clearance
+    if (isBarangayClearance) {
       if (isBusinessOld && !previousPermitImage) {
         setError("Previous permit image is required for existing businesses");
         return;
@@ -193,22 +205,16 @@ const CertPermit: React.FC = () => {
         setError("Assessment image is required");
         return;
       }
-    } else if (permitType === 'Business Clearance' && businessData.length === 0) {
-      // For Business Clearance with new businesses
-      if (!assessmentImage) {
-        setError("Assessment document is required for new businesses");
-        return;
-      }
     }
     
     const result = CertificationRequestSchema.safeParse({
       cert_type: "permit",
       business_name: businessName || "",
       business_address: businessAddress || "",
-      gross_sales: businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || ""),
+      gross_sales: isBarangayClearance ? (businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || "")) : "N/A",
       rp_id: user?.rp || "",
-      permit_image: previousPermitImage || undefined,
-      assessment_image: assessmentImage || undefined,
+      permit_image: isBarangayClearance ? (previousPermitImage || undefined) : undefined,
+      assessment_image: isBarangayClearance ? (assessmentImage || undefined) : undefined,
     });
     
     if (!result.success) {
@@ -227,8 +233,8 @@ const CertPermit: React.FC = () => {
     // Set pr_id for all permit types
     prId = selectedPurpose?.pr_id || null;
     
-    if (permitType === 'Business Clearance') {
-      // For Business Clearance, use ags_rate (Annual Gross Sales rate)
+    if (isBarangayClearance) {
+      // For Barangay Clearance, use ags_rate (Annual Gross Sales rate)
       if (businessData.length === 0) {
         // For residents without business, use rate from selected gross sales range
         const selectedGrossSales = annualGrossSales.find(sales => 
@@ -246,7 +252,7 @@ const CertPermit: React.FC = () => {
         agsId = matchingGrossSales?.ags_id || null;
       }
     } else {
-      // For other permit types, use rate from purpose and rates
+      // For permit types, use rate from purpose and rates
       reqAmount = selectedPurpose?.pr_rate || 0;
     }
 
@@ -255,7 +261,7 @@ const CertPermit: React.FC = () => {
       cert_type: "permit",
       business_name: businessName,
       business_address: businessAddress,
-      gross_sales: businessData.length === 0 ? selectedGrossSalesRange : grossSales,
+      gross_sales: isBarangayClearance ? (businessData.length === 0 ? selectedGrossSalesRange : grossSales) : "N/A",
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: prId,
       rp_id: user?.rp || "",
@@ -263,8 +269,8 @@ const CertPermit: React.FC = () => {
       ags_id: agsId || undefined,
     };
 
-    // Handle file uploads if images are provided
-    if ((previousPermitImage || assessmentImage) && (permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0))) {
+    // Handle file uploads if images are provided - only for barangay clearance
+    if ((previousPermitImage || assessmentImage) && isBarangayClearance) {
       try {
         setIsUploadingFiles(true);
         setUploadProgress("Preparing business permit files for upload...");
@@ -362,7 +368,7 @@ const CertPermit: React.FC = () => {
       headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {/* Loading Overlay */}
         {addBusinessPermit.status === 'pending' && (
           <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
@@ -411,8 +417,8 @@ const CertPermit: React.FC = () => {
               businessData.length === 0 ? 'text-blue-600' : 'text-green-600'
             }`}>
               {businessData.length === 0 
-                ? 'You can only request Business Clearance' 
-                : 'You can request Business Clearance (renewal) or various permit types for your business'
+                ? 'You can only request Barangay Clearance' 
+                : 'You can request Barangay Clearance or various permit types for your business'
               }
             </Text>
           </View>
@@ -428,7 +434,7 @@ const CertPermit: React.FC = () => {
             isLoadingBusiness || !!isLoading
               ? "Loading business information..." 
               : businessData.length === 0 
-                ? "Business Clearance available" 
+                ? "Barangay Clearance available" 
                 : "Select permit type"
           }
           disabled={isLoadingBusiness || isLoadingPurposes || !!isLoading}
@@ -442,12 +448,12 @@ const CertPermit: React.FC = () => {
             <Text className="text-sm font-medium text-gray-700 mb-2">Business Name</Text>
             <TextInput
               className={`rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base ${
-                permitType === 'Business Clearance' 
+                isBarangayClearance 
                   ? (businessData.length > 0 ? 'bg-gray-100 text-gray-600' : 'bg-white text-gray-900')
                   : 'bg-gray-100 text-gray-600'
               }`}
               placeholder={
-                permitType === 'Business Clearance' 
+                isBarangayClearance 
                   ? (businessData.length > 0 ? "Business name from records" : "Enter business name")
                   : (isLoadingBusiness ? "Loading business details..." : "No business found")
               }
@@ -463,12 +469,12 @@ const CertPermit: React.FC = () => {
             <Text className="text-sm font-medium text-gray-700 mb-2">Business Address</Text>
             <TextInput
               className={`rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base ${
-                permitType === 'Business Clearance' 
+                isBarangayClearance 
                   ? (businessData.length > 0 ? 'bg-gray-100 text-gray-600' : 'bg-white text-gray-900')
                   : 'bg-gray-100 text-gray-600'
               }`}
               placeholder={
-                permitType === 'Business Clearance' 
+                isBarangayClearance 
                   ? (businessData.length > 0 ? "Business address from records" : "Enter business address")
                   : (isLoadingBusiness ? "Loading business details..." : "No business found")
               }
@@ -480,33 +486,37 @@ const CertPermit: React.FC = () => {
               autoCorrect={false}
             />
 
-            {/* Annual Gross Sales */}
-            <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales</Text>
-            {businessData.length === 0 ? (
-              // Dropdown for residents without business
-              <SelectLayout
-                options={grossSalesOptions}
-                selectedValue={selectedGrossSalesRange}
-                onSelect={(option) => setSelectedGrossSalesRange(option.value)}
-                placeholder={isLoadingGrossSales ? "Loading..." : "Select gross sales range"}
-                disabled={isLoadingGrossSales}
-                className="mb-3"
-              />
-            ) : (
-              // Read-only for residents with business
-              <TextInput
-                className="rounded-lg bg-gray-100 px-3 py-3 mb-3 border border-gray-200 text-base text-gray-600"
-                placeholder={isLoadingBusiness ? "Loading business details..." : "No business found"}
-                placeholderTextColor="#888"
-                value={grossSales ? `₱${parseFloat(grossSales).toLocaleString()}` : ""}
-                editable={false}
-              />
+            {/* Annual Gross Sales - Only show for barangay clearance */}
+            {isBarangayClearance && (
+              <>
+                <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales</Text>
+                {businessData.length === 0 ? (
+                  // Dropdown for residents without business
+                  <SelectLayout
+                    options={grossSalesOptions}
+                    selectedValue={selectedGrossSalesRange}
+                    onSelect={(option) => setSelectedGrossSalesRange(option.value)}
+                    placeholder={isLoadingGrossSales ? "Loading..." : "Select gross sales range"}
+                    disabled={isLoadingGrossSales}
+                    className="mb-3"
+                  />
+                ) : (
+                  // Read-only for residents with business
+                  <TextInput
+                    className="rounded-lg bg-gray-100 px-3 py-3 mb-3 border border-gray-200 text-base text-gray-600"
+                    placeholder={isLoadingBusiness ? "Loading business details..." : "No business found"}
+                    placeholderTextColor="#888"
+                    value={grossSales ? `₱${parseFloat(grossSales).toLocaleString()}` : ""}
+                    editable={false}
+                  />
+                )}
+              </>
             )}
 
             {/* Claim Date removed */}
 
-            {/* Image Upload Section - Show for non-Business Clearance OR Business Clearance for new businesses */}
-            {(permitType !== 'Business Clearance' || (permitType === 'Business Clearance' && businessData.length === 0)) && (
+            {/* Image Upload Section - Only show for barangay clearance */}
+            {isBarangayClearance && (
               <View className="mb-4">
                 <Text className="text-sm font-medium text-gray-700 mb-3">Required Documents</Text>
                 
@@ -574,7 +584,7 @@ const CertPermit: React.FC = () => {
                       <Ionicons name="document-outline" size={32} color="#888" />
                       <Text className="text-gray-600 text-sm mt-2">Upload Assessment</Text>
                       <Text className="text-gray-400 text-xs mt-1">
-                        {permitType === 'Business Clearance' && businessData.length === 0 
+                        {isBarangayClearance && businessData.length === 0 
                           ? 'Required for new businesses' 
                           : 'Required for all businesses'
                         }
@@ -590,8 +600,8 @@ const CertPermit: React.FC = () => {
               <Text className="text-green-800 text-sm font-medium mb-1">Amount to be Paid:</Text>
               <Text className="text-green-700 text-lg font-bold">
                 {(() => {
-                  if (permitType === 'Business Clearance') {
-                    // For Business Clearance, use ags_rate (Annual Gross Sales rate)
+                  if (isBarangayClearance) {
+                    // For Barangay Clearance, use ags_rate (Annual Gross Sales rate)
                     if (businessData.length === 0) {
                       // For residents without business, use rate from selected gross sales range
                       const selectedGrossSales = annualGrossSales.find(sales => 
@@ -607,7 +617,7 @@ const CertPermit: React.FC = () => {
                       return matchingGrossSales ? `₱${matchingGrossSales.ags_rate.toLocaleString()}` : '₱0';
                     }
                   } else {
-                    // For other permit types, use rate from purpose and rates
+                    // For permit types, use rate from purpose and rates
                     const selectedPurpose = purposeAndRates.find(p => p.pr_purpose === permitType);
                     return selectedPurpose ? `₱${selectedPurpose.pr_rate.toLocaleString()}` : '₱0';
                   }
@@ -628,7 +638,7 @@ const CertPermit: React.FC = () => {
             )}
 
             {/* Submit Button */}
-            {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || permitType === 'Business Clearance') ? (
+            {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || isBarangayClearance) ? (
               <TouchableOpacity
                 className={`rounded-xl py-4 items-center mt-2 mb-8 ${
                   (addBusinessPermit.status === 'pending' || isUploadingFiles) 

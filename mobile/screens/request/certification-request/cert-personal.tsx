@@ -161,7 +161,7 @@ const CertForm: React.FC = () => {
       headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 px-5">
+      <View className="flex-1 p-6">
         {/* Loading Overlay */}
         {addPersonalCert.status === 'pending' && (
           <View className="absolute inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">

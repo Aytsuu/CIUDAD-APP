@@ -3,12 +3,11 @@ import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getAnnualDevPlanYears } from './restful-api/annualDevPlanGetAPI';
+import PageLayout from '@/screens/_PageLayout';
 
 interface FolderItem {
   id: string;
   name: string;
-  isCreate?: boolean;
-  secondaryText?: string;
 }
 
 const AnnualDevPlanMain = () => {
@@ -27,43 +26,38 @@ const AnnualDevPlanMain = () => {
         name: `Year ${year}`,
       }));
       
-      // Add create folder option
-      yearFolders.push({ id: 'create', name: 'Create New Plan', isCreate: true });
-      
       setFolders(yearFolders);
     } catch (error) {
       console.error('Error fetching years:', error);
       Alert.alert('Error', 'Failed to load annual development plans');
-      // Set default create folder if fetch fails
-      setFolders([{ id: 'create', name: 'Create New Plan', isCreate: true }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFolderPress = (folder: FolderItem) => {
-    if (folder.isCreate) {
-      console.log('Create new plan');
-      router.push('/(gad)/annual-dev-plan/create-plan');
-    } else {
-      console.log(`Opening year: ${folder.name}`);
-      // Navigate to view plan for the selected year
-      router.push({
-        pathname: '/(gad)/annual-dev-plan/view-plan',
-        params: { year: folder.id }
-      });
-    }
+    console.log(`Opening year: ${folder.name}`);
+    // Navigate to view plan for the selected year
+    router.push({
+      pathname: '/(gad)/annual-dev-plan/view-plan',
+      params: { year: folder.id }
+    });
   };
 
   return (
-    <ScrollView className="flex-1 bg-blue-50">
-      <View className="p-4">
-        <View className="pt-12 pb-4">
-          <Text className="text-3xl font-bold mb-10 text-gray-800 text-center">
-            Annual Development Plan
-          </Text>
-        </View>
-        
+    <PageLayout
+      leftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Ionicons name="chevron-back" size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-[13px]">Annual Development Plan</Text>}
+      rightAction={<View className="w-10 h-10" />}
+    >
+      <View className="flex-1 p-6">
         <View className="flex-row flex-wrap justify-between">
           {isLoading ? (
             <View className="w-full items-center py-8">
@@ -83,21 +77,7 @@ const AnnualDevPlanMain = () => {
                   <View className="w-16 h-12 bg-yellow-400 rounded-t-lg relative">
                     {/* Folder tab */}
                     <View className="absolute -top-1 left-2 w-8 h-3 bg-yellow-400 rounded-t-lg" />
-                    
-                    {/* Plus icon for create folder */}
-                    {folder.isCreate && (
-                      <View className="absolute inset-0 justify-center items-center">
-                        <Ionicons name="add" size={24} color="white" />
-                      </View>
-                    )}
                   </View>
-                  
-                  {/* Secondary text (faint) for first folder */}
-                  {folder.secondaryText && (
-                    <Text className="text-xs text-gray-400 mb-1 opacity-60">
-                      {folder.secondaryText}
-                    </Text>
-                  )}
                 </View>
                 
                 {/* Folder name */}
@@ -110,7 +90,7 @@ const AnnualDevPlanMain = () => {
           )}
         </View>
       </View>
-    </ScrollView>
+    </PageLayout>
   );
 };
 
