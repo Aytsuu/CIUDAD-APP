@@ -12,6 +12,7 @@ import {
   Search,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { SearchInput } from "@/components/ui/search-input";
 import { SelectLayout } from '@/components/ui/select-layout';
 import { useInvoiceQuery, type Receipt } from './queries/receipt-getQueries';
 import PageLayout from '@/screens/_PageLayout';
@@ -24,6 +25,7 @@ const ReceiptPage = () => {
   const router = useRouter();
   
   // State for search and filter
+  const [showSearch, setShowSearch] = React.useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilterId, setSelectedFilterId] = useState('all');
 
@@ -102,8 +104,8 @@ const ReceiptPage = () => {
     return (
       <View className="bg-white rounded-lg p-4 border border-gray-200 mb-3 shadow-sm">
         <View className="flex-row justify-between mb-2">
-          <Text className="text-gray-600">Serial No:</Text>
-          <Text className="font-medium">{item.inv_serial_num}</Text>
+          <Text className="text-gray-600 ">Serial No:</Text>
+          <Text className="font-medium bg-blue-500 px-2 py-0.5 rounded-md text-white">{item.inv_serial_num}</Text>
         </View>
         
         <View className="flex-row justify-between mb-2">
@@ -195,22 +197,29 @@ const ReceiptPage = () => {
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Receipts</Text>}
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
       wrapScroll={false}
     >
       <View className="flex-1 px-6">
-        {/* Search and Filter */}
+        {/* Search and Filter */}        
         <View className="flex-col gap-3 pb-8">
-          <View className="relative">
-            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-            <TextInput
-              placeholder="Search..."
-              className="pl-5 w-full h-12 bg-white text-base rounded-xl p-2 border border-gray-300"
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-            />
-          </View>
+          {showSearch && (
+            <View className="relative">
+              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
+              <TextInput
+                placeholder="Search..."
+                className="pl-5 w-full h-12 bg-gray-100 text-base rounded-xl p-2 border border-gray-300"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+              />
+            </View>            
+          )}
 
           <SelectLayout
             className="w-full bg-white"
