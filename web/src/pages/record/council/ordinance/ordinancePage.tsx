@@ -1,21 +1,19 @@
 
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Plus, Search, Eye, FileText, Brain } from 'lucide-react';
+import { Plus, Search, Eye, FileText } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from '@/components/ui/input';
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CardLayout from '@/components/ui/card/card-layout';
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { Ordinance, deleteOrdinance, OrdinanceFolder, groupOrdinancesIntoFolders, updateOrdinance } from './restful-api/OrdinanceGetAPI';
 import { useOrdinancesPaginated } from './queries/OrdinanceFetchQueries';
 import { useDebounce } from "@/hooks/use-debounce";
 import { useQueryClient } from "@tanstack/react-query";
-// import { useNavigate } from 'react-router-dom';
 import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
@@ -25,8 +23,6 @@ import { useForm } from "react-hook-form"
 import { ordinanceUploadFormSchema, amendOrdinanceUploadSchema, repealOrdinanceUploadSchema } from '@/form-schema/council/ordinanceUploadSchema';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useInsertOrdinanceUpload } from './queries/OrdinanceUploadInsertQueries.tsx';
-// import { OrdinanceAISummary } from './queries/OrdinanceAISummary.tsx';
-import { huggingFaceAIService, AIAnalysisResponse } from './services/AIService.ts';
 import { Badge } from '@/components/ui/badge';
 
 // Type for ordinances only
@@ -74,16 +70,10 @@ function OrdinancePage() {
                 filtered = ordinances.filter((item: Ordinance) => item.ord_category === filter);
             }
 
-            // Load existing AI analyses from localStorage
-            const ordinancesWithAnalyses = filtered.map((ordinance: Ordinance) => {
-                const existingAnalysis = loadAnalysisFromStorage(ordinance.ord_num);
-                return existingAnalysis ? { ...ordinance, aiAnalysisResult: existingAnalysis } : ordinance;
-            });
-
-            setOrdinanceItems(ordinancesWithAnalyses);
+            setOrdinanceItems(filtered);
             
             // Group ordinances into folders
-            const folders = groupOrdinancesIntoFolders(ordinancesWithAnalyses);
+            const folders = groupOrdinancesIntoFolders(filtered);
             setOrdinanceFolders(folders);
             
             setTotalPages(Math.ceil(folders.length / 10));
@@ -105,73 +95,15 @@ function OrdinancePage() {
     
     // New states for ordinance amendment functionality
     const [selectedExistingOrdinance, setSelectedExistingOrdinance] = useState<string>("new");
-    const [showUploadAIAnalysis, setShowUploadAIAnalysis] = useState(false);
-    const [uploadAIAnalysisResult, setUploadAIAnalysisResult] = useState<AIAnalysisResponse | null>(null);
-    
-    // State for individual ordinance AI analysis
-    const [individualAnalysisLoading, setIndividualAnalysisLoading] = useState<string | null>(null);
-    const [fileExtractionLoading, setFileExtractionLoading] = useState<string | null>(null);
     
     // State for ordinance creation loading
     const [isCreatingOrdinance, setIsCreatingOrdinance] = useState(false);
     
-    // State for folder amendment comparison loading
-    const [folderAmendmentLoading, setFolderAmendmentLoading] = useState<string | null>(null);
     
     // State for folder view popup
     const [selectedFolder, setSelectedFolder] = useState<OrdinanceFolder | null>(null);
     const [folderViewOpen, setFolderViewOpen] = useState(false);
-    const [aiAnalysisOpen, setAiAnalysisOpen] = useState(false);
-    const [selectedOrdinanceForAnalysis, setSelectedOrdinanceForAnalysis] = useState<OrdinanceItem | null>(null);
     
-    // Function to save AI analysis results to localStorage
-    const saveAnalysisToStorage = (ordinanceId: string, analysisResult: AIAnalysisResponse) => {
-        try {
-            const existingAnalyses = JSON.parse(localStorage.getItem('ordinanceAnalyses') || '{}');
-            existingAnalyses[ordinanceId] = {
-                ...analysisResult,
-                timestamp: Date.now()
-            };
-            localStorage.setItem('ordinanceAnalyses', JSON.stringify(existingAnalyses));
-        } catch (error) {
-            console.error('Error saving analysis to localStorage:', error);
-        }
-    };
-    
-    // Function to load AI analysis results from localStorage
-    const loadAnalysisFromStorage = (ordinanceId: string): AIAnalysisResponse | null => {
-        try {
-            const existingAnalyses = JSON.parse(localStorage.getItem('ordinanceAnalyses') || '{}');
-            const analysis = existingAnalyses[ordinanceId];
-            
-            // Check if analysis is less than 24 hours old (optional: you can adjust this)
-            if (analysis && analysis.timestamp) {
-                const hoursSinceAnalysis = (Date.now() - analysis.timestamp) / (1000 * 60 * 60);
-                if (hoursSinceAnalysis < 24) {
-                    return analysis;
-                } else {
-                    // Remove expired analysis
-                    delete existingAnalyses[ordinanceId];
-                    localStorage.setItem('ordinanceAnalyses', JSON.stringify(existingAnalyses));
-                }
-            }
-            return null;
-        } catch (error) {
-            console.error('Error loading analysis from localStorage:', error);
-            return null;
-        }
-    };
-    
-    // Summary popup state removed - summary now shown in AI analysis popup
-    
-    const aiService = useMemo(() => {
-        try {
-            return huggingFaceAIService;
-        } catch (error) {
-            console.error("Failed to initialize AI service:", error);
-            return null;
-        }
-    }, []);
     
     const {mutate: addOrdinance} = useInsertOrdinanceUpload(() => {
         console.log('Ordinance added successfully, refreshing data...');
@@ -297,31 +229,6 @@ function OrdinancePage() {
         setFolderViewOpen(true);
     };
 
-    // Function to handle AI analysis for ordinances (individual or amendment comparison)
-    const handleOpenAIAnalysis = async (ordinance: OrdinanceItem) => {
-        if (!aiService) {
-            showErrorToast("AI service is not available. Please try again later.");
-            return;
-        }
-
-        // Check if this is a base ordinance with amendments - if so, automatically do amendment comparison
-        const folder = ordinanceFolders.find(f => f.baseOrdinance.ord_num === ordinance.ord_num);
-        if (folder && folder.amendments.length > 0) {
-            // Automatically proceed with amendment comparison
-            await handleFolderAmendmentComparison(folder);
-            return;
-        }
-
-        // If no amendments, proceed with individual analysis
-        if (ordinance.aiAnalysisResult) {
-            // If analysis exists, open the popup to view it
-            setSelectedOrdinanceForAnalysis(ordinance);
-            setAiAnalysisOpen(true);
-        } else {
-            // If no analysis exists, run the analysis
-            await handleIndividualAIAnalysis(ordinance);
-        }
-    };
 
 
     const confirmDelete = async () => {
@@ -445,13 +352,6 @@ function OrdinancePage() {
         }
     }, [mediaFiles, form]);
 
-    // Watch for changes in ordinance details to update AI analysis content
-    useEffect(() => {
-        const subscription = form.watch(() => {
-            // Handle form field changes if needed
-        });
-        return () => subscription.unsubscribe();
-    }, [form]);
 
     const resetUploadForm = () => {
         form.reset({
@@ -467,163 +367,10 @@ function OrdinancePage() {
         setMediaFiles([]);
         setActiveVideoId("");
         setSelectedExistingOrdinance("new");
-        setUploadAIAnalysisResult(null);
     };
 
 
-    const handleIndividualAIAnalysis = async (item: OrdinanceItem) => {
-        if (!aiService) {
-            showErrorToast("AI service is not available. Please try again later.");
-            return;
-        }
 
-        setIndividualAnalysisLoading(item.ord_num);
-        setFileExtractionLoading(item.ord_num);
-        try {
-            // Use the new Hugging Face AI service with comparison support
-            const result = await aiService.analyzeOrdinanceWithComparison({
-                ordinance: item,
-                analysisType: "summary",
-                includeFileContent: true
-            });
-            
-            // Convert to the expected format
-            const analysisResult = {
-                summary: result.summary,
-                keyPoints: result.keyPoints,
-                analysisType: "summary",
-                timestamp: new Date().toISOString(),
-                riskLevel: "low" as const,
-                complianceStatus: "compliant" as const,
-                confidence: 0.8,
-                analysisTimestamp: new Date().toISOString(),
-                recommendations: []
-            };
-            
-            // Save the analysis result to localStorage
-            saveAnalysisToStorage(item.ord_num, analysisResult);
-            
-            // Update the ordinance item with AI analysis result
-            setOrdinanceItems(prev => prev.map(ord => 
-                ord.ord_num === item.ord_num 
-                    ? { ...ord, aiAnalysisResult: analysisResult }
-                    : ord
-            ));
-            
-            // Also update the folder structure
-            setOrdinanceFolders(prev => prev.map(folder => {
-                if (folder.baseOrdinance.ord_num === item.ord_num) {
-                    return {
-                        ...folder,
-                        baseOrdinance: { ...folder.baseOrdinance, aiAnalysisResult: analysisResult }
-                    };
-                }
-                const updatedAmendments = folder.amendments.map(amendment =>
-                    amendment.ord_num === item.ord_num
-                        ? { ...amendment, aiAnalysisResult: analysisResult }
-                        : amendment
-                );
-                if (updatedAmendments.some(amendment => amendment.ord_num === item.ord_num)) {
-                    return { ...folder, amendments: updatedAmendments };
-                }
-                return folder;
-            }));
-            
-            showSuccessToast("Document analysis completed successfully!");
-            
-            // Open the AI analysis popup to show the results
-            // Use the updated item with the new analysis result
-            const updatedItem = { ...item, aiAnalysisResult: analysisResult };
-            setSelectedOrdinanceForAnalysis(updatedItem);
-            setAiAnalysisOpen(true);
-        } catch (error) {
-            console.error("Error analyzing ordinance:", error);
-            showErrorToast("Failed to analyze ordinance. Please try again.");
-        } finally {
-            setIndividualAnalysisLoading(null);
-            setFileExtractionLoading(null);
-        }
-    };
-
-    // Function to handle AI analysis for amendments within folders
-
-    // New function to analyze and compare all amendments within a folder
-    const handleFolderAmendmentComparison = async (folder: OrdinanceFolder) => {
-        if (!aiService) {
-            showErrorToast("AI service is not available. Please try again later.");
-            return;
-        }
-        if (folder.amendments.length === 0) {
-            showErrorToast("No amendments found to compare.");
-            return;
-        }
-        
-        // Check if comparison already exists and user wants to view it
-        if (folder.amendmentComparisonResult) {
-            // Show the existing comparison result in the AI analysis popup
-            setSelectedOrdinanceForAnalysis({
-                ...folder.baseOrdinance,
-                aiAnalysisResult: folder.amendmentComparisonResult
-            });
-            setAiAnalysisOpen(true);
-            return;
-        }
-        
-        setFolderAmendmentLoading(folder.id);
-        try {
-            // Create a comprehensive comparison of all ordinances
-            const allOrdinances = [folder.baseOrdinance, ...folder.amendments];
-            
-            // Use the new Hugging Face AI service to compare multiple ordinances
-            const comparisonResult = await aiService.compareMultipleOrdinances(allOrdinances);
-            
-            // Create a custom analysis result for the folder comparison
-            const folderComparisonResult = {
-                summary: `Amendment Comparison Analysis for ${folder.baseOrdinance.ord_title}\n\n${comparisonResult.analysis}`,
-                keyPoints: comparisonResult.similarities, // Similarities as key points
-                keyDifferences: comparisonResult.differences, // Differences as key differences
-                similarities: comparisonResult.similarities, // Keep similarities
-                differences: comparisonResult.differences, // Keep differences
-                analysisType: "amendment_comparison",
-                timestamp: new Date().toISOString(),
-                similarityScore: comparisonResult.similarityScore,
-                riskLevel: "low" as const,
-                complianceStatus: "compliant" as const,
-                confidence: 0.8,
-                analysisTimestamp: new Date().toISOString(),
-                recommendations: [],
-                metadata: {
-                    ordinanceCount: allOrdinances.length,
-                    categories: [...new Set(allOrdinances.map(ord => ord.ord_category))],
-                    yearRange: {
-                        min: Math.min(...allOrdinances.map(ord => ord.ord_year)),
-                        max: Math.max(...allOrdinances.map(ord => ord.ord_year))
-                    }
-                }
-            };
-            
-            // Store the comparison result in the folder
-            setOrdinanceFolders(prev => prev.map(f =>
-                f.id === folder.id 
-                    ? { ...f, amendmentComparisonResult: folderComparisonResult }
-                    : f
-            ));
-            
-            // Show the comparison result directly in the AI analysis popup
-            setSelectedOrdinanceForAnalysis({
-                ...folder.baseOrdinance,
-                aiAnalysisResult: folderComparisonResult
-            });
-            setAiAnalysisOpen(true);
-            
-            showSuccessToast("Amendment comparison analysis completed successfully!");
-        } catch (error) {
-            console.error("Error comparing amendments:", error);
-            showErrorToast("Failed to compare amendments. Please try again.");
-        } finally {
-            setFolderAmendmentLoading(null);
-        }
-    };
 
     // Removed unused color functions for risk and compliance badges
 
@@ -796,31 +543,6 @@ function OrdinancePage() {
 
                                         {/* Action Buttons */}
                                         <div className="flex items-center justify-end gap-2">
-                                            <TooltipLayout
-                                                trigger={
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            handleOpenAIAnalysis(folder.baseOrdinance);
-                                                        }}
-                                                        disabled={!aiService || individualAnalysisLoading === folder.baseOrdinance.ord_num || folderAmendmentLoading === folder.id}
-                                                        className="h-8 px-3 text-xs hover:bg-purple-50 hover:border-purple-300"
-                                                    >
-                                                        {(individualAnalysisLoading === folder.baseOrdinance.ord_num || folderAmendmentLoading === folder.id) ? (
-                                                            <Spinner size="sm" />
-                                                        ) : folder.baseOrdinance.aiAnalysisResult ? (
-                                                            <Eye className="h-4 w-4 mr-1" />
-                                                        ) : (
-                                                            <Brain className="h-4 w-4 mr-1" />
-                                                        )}
-                                                        {(individualAnalysisLoading === folder.baseOrdinance.ord_num || folderAmendmentLoading === folder.id) ? 
-                                                         (fileExtractionLoading === folder.baseOrdinance.ord_num ? 'Extracting...' : 'Analyzing...') : 
-                                                         folder.baseOrdinance.aiAnalysisResult ? 'View Analysis' : 'Analyze'}
-                                                    </Button>
-                                                }
-                                                content={folder.baseOrdinance.aiAnalysisResult ? 'View AI Analysis Results' : 'Run AI Analysis'}
-                                            />
 
                                             <TooltipLayout
                                                 trigger={
@@ -1142,54 +864,6 @@ function OrdinancePage() {
 
 
 
-            {/* Upload AI Analysis Results Dialog */}
-            <DialogLayout
-                isOpen={showUploadAIAnalysis}
-                onOpenChange={setShowUploadAIAnalysis}
-                className="max-w-4xl"
-                title="AI Ordinance Comparison Analysis"
-                description="Analysis of differences between existing and new ordinance"
-                mainContent={
-                    <div className="max-h-[80vh] overflow-y-auto p-4">
-                        {uploadAIAnalysisResult && (
-                            <div className="space-y-6">
-                                {/* Analysis Header - Removed risk and compliance badges */}
-
-                                {/* Summary */}
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">Executive Summary</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-line">
-                                            {uploadAIAnalysisResult.summary}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Key Differences */}
-                                {uploadAIAnalysisResult.keyDifferences && uploadAIAnalysisResult.keyDifferences.length > 0 && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="text-lg">Key Differences</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ul className="space-y-2">
-                                                {uploadAIAnalysisResult.keyDifferences?.map((difference: string, index: number) => (
-                                                    <li key={index} className="flex items-start gap-2">
-                                                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                                                        <span className="text-sm text-gray-700">{difference}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                }
-            />
 
             {/* Folder View Popup Dialog */}
             <DialogLayout
@@ -1213,20 +887,6 @@ function OrdinancePage() {
                                                                                     <div className="space-y-3">
                                                     {/* Base Ordinance Actions - Moved above title */}
                                                     <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleOpenAIAnalysis(selectedFolder.baseOrdinance)}
-                                                            disabled={!aiService || individualAnalysisLoading === selectedFolder.baseOrdinance.ord_num || folderAmendmentLoading === selectedFolder.id}
-                                                            className="text-xs px-3 py-1 h-7"
-                                                        >
-                                                            {(individualAnalysisLoading === selectedFolder.baseOrdinance.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
-                                                                <Spinner size="sm" />
-                                                            ) : (
-                                                                <Brain className="h-3 w-3 mr-1" />
-                                                            )}
-                                                            {(individualAnalysisLoading === selectedFolder.baseOrdinance.ord_num || folderAmendmentLoading === selectedFolder.id) ? 'Analyzing...' : 'Analyze'}
-                                                        </Button>
                                                         
                                                         <Button
                                                             variant="outline"
@@ -1269,47 +929,6 @@ function OrdinancePage() {
                                                     <h3 className="text-lg font-semibold text-gray-800">Amendments ({amendmentItems.length})</h3>
                                                 </div>
 
-                                        {/* Amendment Comparison Results */}
-                                        {selectedFolder.amendmentComparisonResult && (
-                                            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200 p-4 mb-4">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <Brain className="h-4 w-4 text-green-600" />
-                                                    <h4 className="text-sm font-semibold text-green-800">Amendment Comparison Analysis</h4>
-                                                </div>
-                                                
-                                                <div className="space-y-3">
-                                                    {/* Summary */}
-                                                    <div className="bg-white rounded p-3 border border-green-100">
-                                                        <div className="text-xs font-medium text-green-700 mb-1">Summary</div>
-                                                        <div className="text-sm text-gray-700 whitespace-pre-line">
-                                                            {selectedFolder.amendmentComparisonResult.summary}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Key Differences */}
-                                                    {selectedFolder.amendmentComparisonResult.keyDifferences && selectedFolder.amendmentComparisonResult.keyDifferences.length > 0 && (
-                                                        <div className="bg-white rounded p-3 border border-green-100">
-                                                            <div className="text-xs font-medium text-green-700 mb-2">Key Differences Between Amendments</div>
-                                                            <ul className="space-y-1">
-                                                                {selectedFolder.amendmentComparisonResult.keyDifferences.map((difference: string, index: number) => (
-                                                                    <li key={index} className="flex items-start gap-2">
-                                                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                                                        <span className="text-xs text-gray-700">{difference}</span>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Metadata */}
-                                                    <div className="flex items-center gap-4 text-xs text-gray-600">
-                                                        <span>Total Ordinances: {selectedFolder.amendmentComparisonResult.metadata?.ordinanceCount || 0}</span>
-                                                        <span>Years: {selectedFolder.amendmentComparisonResult.metadata?.yearRange?.min || 0} - {selectedFolder.amendmentComparisonResult.metadata?.yearRange?.max || 0}</span>
-                                                        
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {amendmentItems.map((amendment, index) => (
                                             <div key={amendment.ord_num} className="bg-white rounded-lg border border-gray-200 p-4">
@@ -1322,20 +941,6 @@ function OrdinancePage() {
                                                 <div className="space-y-3">
                                                                                                         {/* Amendment Actions - Moved above title */}
                                                     <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleOpenAIAnalysis(amendment)}
-                                                            disabled={!aiService || individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === selectedFolder.id}
-                                                            className="text-xs px-3 py-1 h-7"
-                                                        >
-                                                            {(individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
-                                                                <Spinner size="sm" />
-                                                            ) : (
-                                                                <Brain className="h-3 w-3 mr-1" />
-                                                            )}
-                                                            {(individualAnalysisLoading === amendment.ord_num || folderAmendmentLoading === selectedFolder.id) ? 'Analyzing...' : 'Analyze'}
-                                                        </Button>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
@@ -1382,20 +987,6 @@ function OrdinancePage() {
 
                                                         <div className="space-y-3">
                                                             <div className="flex items-center gap-2">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handleOpenAIAnalysis(repeal)}
-                                                                    disabled={!aiService || individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id}
-                                                                    className="text-xs px-3 py-1 h-7"
-                                                                >
-                                                                    {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id) ? (
-                                                                        <Spinner size="sm" />
-                                                                    ) : (
-                                                                        <Brain className="h-3 w-3 mr-1" />
-                                                                    )}
-                                                                    {(individualAnalysisLoading === repeal.ord_num || folderAmendmentLoading === selectedFolder.id) ? 'Analyzing...' : 'Analyze'}
-                                                                </Button>
 
                                                                 <Button
                                                                     variant="outline"
@@ -1434,133 +1025,7 @@ function OrdinancePage() {
 
 
 
-            {/* AI Analysis Popup Dialog */}
-            <DialogLayout
-                isOpen={aiAnalysisOpen}
-                onOpenChange={setAiAnalysisOpen}
-                className="max-w-4xl"
-                title={`AI Analysis: ${selectedOrdinanceForAnalysis?.ord_title}`}
-                description={`Analyzing ordinance ${selectedOrdinanceForAnalysis?.ord_num}`}
-                mainContent={
-                    <div className="max-h-[80vh] overflow-y-auto p-4">
-                        {selectedOrdinanceForAnalysis && (
-                            <div className="space-y-4">
-                                {/* Ordinance Info */}
-                                <div className="bg-gray-50 p-3 rounded">
-                                    <div className="text-sm font-medium">{selectedOrdinanceForAnalysis.ord_title}</div>
-                                    <div className="text-xs text-gray-600">ORD: {selectedOrdinanceForAnalysis.ord_num} • {selectedOrdinanceForAnalysis.ord_date_created}</div>
-                                </div>
 
-                                {/* AI Analysis Results */}
-                                {selectedOrdinanceForAnalysis.aiAnalysisResult ? (
-                                    <div className="space-y-4">
-
-                                        
-                                        {/* Amendment Comparison Results - Enhanced Display */}
-                                        {selectedOrdinanceForAnalysis.aiAnalysisResult.metadata?.ordinanceCount && selectedOrdinanceForAnalysis.aiAnalysisResult.metadata.ordinanceCount > 1 ? (
-                                            <div className="space-y-4">
-                                                {/* Header for Amendment Comparison */}
-                                                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200 p-4">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <Brain className="h-5 w-5 text-green-600" />
-                                                        <h3 className="text-lg font-semibold text-green-800">Amendment Comparison Analysis</h3>
-                                                    </div>
-                                                    <div className="text-sm text-green-700">
-                                                        Comparing {selectedOrdinanceForAnalysis.aiAnalysisResult.metadata.ordinanceCount} ordinances
-                                                        {selectedOrdinanceForAnalysis.aiAnalysisResult.metadata.yearRange && (
-                                                            <span> • Years: {selectedOrdinanceForAnalysis.aiAnalysisResult.metadata.yearRange.min} - {selectedOrdinanceForAnalysis.aiAnalysisResult.metadata.yearRange.max}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* File Content Analysis Status */}
-                                                <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <h4 className="text-md font-semibold text-blue-800">File Content Analysis</h4>
-                                                    </div>
-                                                    <div className="text-sm text-blue-700">
-                                                        <div className="font-medium mb-1">Comprehensive Document Analysis Completed</div>
-                                                        <div>All ordinance documents have been analyzed and compared for detailed amendment tracking. The AI has examined the actual content of each ordinance to identify specific changes, additions, and deletions.</div>
-                                                    </div>
-                                                </div>
-
-
-
-                                                {/* Executive Summary - Enhanced */}
-                                                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <h4 className="text-lg font-semibold text-gray-800">Executive Summary</h4>
-                                                    </div>
-                                                    <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-4 whitespace-pre-line leading-relaxed">
-                                                        {selectedOrdinanceForAnalysis.aiAnalysisResult.summary}
-                                                    </div>
-                                                </div>
-
-
-                                                {/* Key Differences */}
-                                                {selectedOrdinanceForAnalysis.aiAnalysisResult.keyDifferences && selectedOrdinanceForAnalysis.aiAnalysisResult.keyDifferences.length > 0 && (
-                                                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                                        <div className="flex items-center gap-2 mb-3">
-                                                            <h4 className="text-lg font-semibold text-gray-800">Key Differences Between Amendments</h4>
-                                                        </div>
-                                                        <ul className="space-y-3">
-                                                            {selectedOrdinanceForAnalysis.aiAnalysisResult.keyDifferences.map((difference: string, index: number) => (
-                                                                <li key={index} className="flex items-start gap-3">
-                                                                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                                                                    <span className="text-sm text-gray-700 leading-relaxed">{difference}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-
-                                        
-
-
-                                            </div>
-                                        ) : (
-                                            /* Regular Individual Analysis Display */
-                                            <div className="space-y-4">
-                                                {/* File Content Analysis Status for Individual Ordinance */}
-                                                {selectedOrdinanceForAnalysis.file?.file_url && (
-                                                    <div className="bg-green-50 rounded-lg border border-green-200 p-4">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <h4 className="text-md font-semibold text-green-800">File Content Analysis</h4>
-                                                        </div>
-                                                        <div className="text-sm text-green-700">
-                                                            <div className="font-medium mb-1">Document Content Analyzed</div>
-                                                            <div>The ordinance document has been analyzed using both metadata and extracted file content for comprehensive understanding.</div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Individual Analysis Summary */}
-                                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <h4 className="text-lg font-semibold text-blue-900">AI Analysis Summary</h4>
-                                                    </div>
-                                                    <div className="text-blue-800 leading-relaxed whitespace-pre-line">
-                                                        {selectedOrdinanceForAnalysis.aiAnalysisResult.summary}
-                                                    </div>
-                                                </div>
-
-
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8">
-                                        <div className="text-gray-500 mb-2">No AI analysis available yet</div>
-                                        <div className="text-xs text-gray-400">Click the Analyze button on the ordinance card to run AI analysis</div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                }
-            />
-
-            {/* Summary popup removed - summary now shown in AI analysis popup */}
         </div>
     );
 }

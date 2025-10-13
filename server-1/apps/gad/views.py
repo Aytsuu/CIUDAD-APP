@@ -701,6 +701,7 @@ class ProjectProposalForProposal(generics.ListAPIView):
 # ===========================================================================================================
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GADDevelopmentPlanSerializer
     pagination_class = StandardResultsPagination
 
@@ -795,6 +796,7 @@ class GADDevelopmentPlanYears(APIView):
         return Response(sorted(years, reverse=True))
 
 class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     queryset = DevelopmentPlan.objects.all()
     serializer_class = GADDevelopmentPlanSerializer
     lookup_field = 'dev_id'

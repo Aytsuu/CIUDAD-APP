@@ -239,7 +239,7 @@ class ServiceChargePaymentRequest(models.Model):
 
 class SummonCase(models.Model):
     sc_id = models.BigAutoField(primary_key=True)
-    sc_code = models.CharField(max_length=200)
+    sc_code = models.CharField(max_length=200, unique=True)
     sc_mediation_status = models.CharField(max_length=500)
     sc_conciliation_status = models.CharField(max_length=500, null=True, blank=True)
     sc_date_marked = models.DateTimeField(null=True, blank=True)
@@ -248,6 +248,7 @@ class SummonCase(models.Model):
 
     class Meta:
         db_table = 'summon_case'
+        managed = False
 
 
 class HearingSchedule(models.Model):

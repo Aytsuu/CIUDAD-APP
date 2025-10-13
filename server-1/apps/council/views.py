@@ -780,6 +780,7 @@ class MOMSuppDocView(generics.ListCreateAPIView):
 # ================================== ORDINANCE VIEWS (from secretary) =================================
 
 class OrdinanceListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
 
@@ -849,6 +850,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
@@ -921,6 +923,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().destroy(request, *args, **kwargs)
 
 class OrdinanceArchiveView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
@@ -964,6 +967,7 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
 
 # Ordinance File Views
 class OrdinanceFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = OrdinanceFile.objects.all()
     serializer_class = OrdinanceFileSerializer
 
