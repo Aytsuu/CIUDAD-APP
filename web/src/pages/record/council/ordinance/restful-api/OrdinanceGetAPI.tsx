@@ -1,6 +1,5 @@
 import { api } from "@/api/api";
 import { AxiosError } from "axios";
-import type { AIAnalysisResponse } from "../services/AIService";
 
 export interface Ordinance {
     ord_num: string;
@@ -14,19 +13,19 @@ export interface Ordinance {
     file?: any;
     staff?: any;
     staff_id?: string;
-    ord_parent?: string; // ord_num of the parent ordinance (if this is an amendment)
+    ord_parent?: string;
     ord_is_ammend?: boolean;
     ord_ammend_ver?: number;
-    aiAnalysisResult?: AIAnalysisResponse;
+   
 }
 
-// New interface for grouped ordinances (folders)
+
 export interface OrdinanceFolder {
     id: string; // Unique identifier for the folder
     baseOrdinance: Ordinance; // The original ordinance
     amendments: Ordinance[]; // All amendments to this ordinance
     totalOrdinances: number; // Total count of ordinances in this folder
-    amendmentComparisonResult?: AIAnalysisResponse; // AI analysis result for comparing all amendments
+   
 }
 
 export interface SupplementaryDoc {
