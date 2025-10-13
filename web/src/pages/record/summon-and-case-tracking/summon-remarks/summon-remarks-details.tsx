@@ -274,7 +274,7 @@ export default function SummonRemarksDetails() {
               mainContent={
                 <div className="flex flex-col h-full overflow-y-hidden">
                   <div className="overflow-y-auto flex-1 pr-2 max-h-[calc(90vh-100px)]">
-                    <ComplaintRecordForSummon comp_id={comp_id || ""} isPending={false} />
+                    <ComplaintRecordForSummon comp_id={comp_id || ""}/>
                   </div>
                 </div>
               }
