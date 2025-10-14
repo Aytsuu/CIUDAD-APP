@@ -72,7 +72,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61] font-sans">
+          <Text className="text-gray-900 text-[13px]">
             Disbursement Voucher
           </Text>
         }
@@ -243,7 +243,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
             {title}
           </Text>
         </View>
-        <Text className="text-lg font-semibold text-gray-900 font-sans">
+        <Text className="text-[13px] font-semibold text-gray-900 font-sans">
           {value}
         </Text>
       </CardContent>
@@ -254,7 +254,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
       <View className="px-6 py-4 space-y-4">
         <View className="mb-4">
-          <Text className="text-xl font-semibold text-gray-900 font-sans mb-1">
+          <Text className="text-lg font-bold text-gray-900 font-sans mb-1">
             Disbursement Overview
           </Text>
           <Text className="text-sm text-gray-600 font-sans">
@@ -276,11 +276,11 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
                   <CreditCard size={20} color="#7C3AED" />
                 </View>
-                <Text className="text-sm font-medium text-gray-600 font-sans">
+                <Text className="text-sm text-gray-600 font-sans">
                   TIN
                 </Text>
               </View>
-              <Text className="text-lg font-semibold text-gray-900 font-sans">
+              <Text className="text-[13px] font-semibold text-gray-900 font-sans">
                 {disbursement.dis_tin}
               </Text>
             </CardContent>
@@ -293,17 +293,17 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
                 <Calendar size={20} color="#059669" />
               </View>
-              <Text className="text-sm font-medium text-gray-600 font-sans">
+              <Text className="text-sm text-gray-600 font-sans">
                 Date Information
               </Text>
             </View>
 
             <View className="space-y-3">
               <View className="flex-row justify-between items-center">
-                <Text className="text-sm font-medium text-gray-600 font-sans">
+                <Text className="text-sm text-gray-600 font-sans">
                   DV Date:
                 </Text>
-                <Text className="text-sm text-gray-900 font-medium font-sans">
+                <Text className="text-sm text-gray-900 font-sans">
                   {disbursement?.dis_date
                     ? new Date(disbursement.dis_date).toLocaleDateString(
                         "en-US",
@@ -413,7 +413,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 <Receipt size={20} color="#ea580c" />
               </View>
               <View className="flex-1">
-                <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+                <Text className="text-sm font-semibold text-[#1a2332] font-sans">
                   Particulars
                 </Text>
                 <Text className="text-xs text-gray-500 mt-1 font-sans">
@@ -470,7 +470,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                         </View>
                         <View className="min-w-[120px] items-end">
                           <Text
-                            className="text-base font-semibold text-[#2a3a61] font-sans"
+                            className="text-[13px] font-semibold text-[#2a3a61] font-sans"
                             numberOfLines={1}
                           >
                             {formatCurrency(taxRate > 0 ? netAmount : amount)}
@@ -493,7 +493,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                   <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
                     <Building size={20} color="#4f46e5" />
                   </View>
-                  <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+                  <Text className="text-[13px] font-semibold text-[#1a2332] font-sans">
                     Signatories
                   </Text>
                 </View>
@@ -506,13 +506,13 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                         key={index}
                         className="bg-gray-50 rounded-lg p-4 border border-gray-200"
                       >
-                        <Text className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-2 font-sans">
+                        <Text className="text-[13px] text-indigo-600 uppercase tracking-wide mb-2">
                           {getSignatoryLabel(sig.type)}
                         </Text>
-                        <Text className="text-base font-semibold text-gray-800 mb-1 font-sans">
+                        <Text className="text-[13px] font-semibold text-gray-800 mb-1">
                           {sig.name}
                         </Text>
-                        <Text className="text-sm text-gray-600 font-sans">
+                        <Text className="text-gray-600 text-xs">
                           {sig.position}
                         </Text>
                       </View>
@@ -541,7 +541,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               disabled={disbursement?.dis_is_archive}
             >
               <Text
-                className={`font-medium font-sans text-center ${
+                className={`font-bold text-[13px] text-center ${
                   disbursement?.dis_is_archive ? "text-gray-500" : "text-white"
                 }`}
               >
@@ -553,7 +553,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
         {disbursement?.dis_is_archive && (
           <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-            <Text className="text-yellow-800 text-sm text-center font-sans">
+            <Text className="text-yellow-800 text-sm text-center text-[13px]">
               This disbursement is archived. Document modifications are
               disabled.
             </Text>
@@ -578,8 +578,8 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <Text
                 className={`font-sans ${
                   supportDocsViewMode === "active"
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-500"
+                    ? "text-primaryBlue text-[13px]"
+                    : "text-gray-500 text-[13px]"
                 }`}
               >
                 Active
@@ -596,8 +596,8 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <Text
                 className={`font-sans ${
                   supportDocsViewMode === "archived"
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-500"
+                    ? "text-primaryBlue text-[13px]"
+                    : "text-gray-500 text-[13px]"
                 }`}
               >
                 Archived
@@ -612,7 +612,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         : archivedSupportDocs
       ).length === 0 && !isLoadingSupportDocs ? (
         <View className="flex-1 justify-center items-center py-12">
-          <Text className="text-gray-500 text-center font-sans">
+          <Text className="text-gray-500 text-center text-[13px]">
             No {supportDocsViewMode === "active" ? "active" : "archived"}{" "}
             supporting documents found.
           </Text>
@@ -745,7 +745,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61] font-sans">
+          <Text className="text-gray-900 text-[13px]">
             Disbursement Voucher
           </Text>
         }
@@ -770,7 +770,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61] font-sans">
+          <Text className="text-gray-900 text-[13px]">
             DV #{disbursement?.dis_num}
           </Text>
         }
@@ -796,7 +796,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 >
                   <Text
                     className={`font-sans ${
-                      activeTab === "details" ? "font-medium" : "text-gray-500"
+                      activeTab === "details" ? "text-[13px]" : "text-gray-500 text-[13px]"
                     }`}
                   >
                     Voucher Details
@@ -806,15 +806,15 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                   value="documents"
                   className={`flex-1 mx-1 ${
                     activeTab === "documents"
-                      ? "border-b-2 border-primaryBlue"
+                      ? "border-b-2 border-primaryBlue text-[13px]"
                       : ""
                   }`}
                 >
                   <Text
                     className={`font-sans ${
                       activeTab === "documents"
-                        ? "font-medium"
-                        : "text-gray-500"
+                        ? "text-[13px]"
+                        : "text-gray-500 text-[13px]"
                     }`}
                   >
                     Documents
@@ -843,7 +843,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <TouchableOpacity onPress={() => setShowUploadModal(false)}>
                 <Text className="text-blue-500 font-sans">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold font-sans">
+              <Text className="text-lg font-semibold font-sans text-[13px]">
                 Add Supporting Documents
               </Text>
               <TouchableOpacity

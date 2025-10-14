@@ -208,7 +208,7 @@ const DonationTracker = () => {
       }
       wrapScroll={false}
     >
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-white">
         {/* Search Bar */}
         {showSearch && (
           <SearchInput 
@@ -248,7 +248,7 @@ const DonationTracker = () => {
             onPress={handleAddDonation} 
             className="bg-primaryBlue rounded-xl"
           >
-            <Text className="text-white text-[17px]">Add Donation</Text>
+            <Text className="text-white text-[13px] font-bold">Add Donation</Text>
           </Button>
 
           {/* Content Area */}

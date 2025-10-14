@@ -236,7 +236,7 @@ const AttendanceRecord = () => {
       }
       wrapScroll={false}
     >
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-white">
         {/* Search Bar */}
         {showSearch && (
           <SearchInput 

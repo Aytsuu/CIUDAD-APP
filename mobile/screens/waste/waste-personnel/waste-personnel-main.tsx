@@ -413,7 +413,7 @@ return (
               onPress={handleAddTruck} 
               className="bg-primaryBlue rounded-xl"
             >
-              <Text className="text-white text-[17px]">Add Truck</Text>
+              <Text className="text-white text-[13px] font-bold">Add Truck Record</Text>
             </Button>
           )}
         </View>

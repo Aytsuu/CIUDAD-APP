@@ -429,7 +429,7 @@ function GADViewEditEntryForm() {
                   <TextInput
                     value={field.value}
                     onChangeText={field.onChange}
-                    className={`border rounded p-3 text-[12px] font-PoppinsRegular text-gray-400 ${
+                    className={`border rounded-lg p-3 text-[12px] font-PoppinsRegular text-gray-400 ${
                       fieldState.error ? "border-red-500" : "border-gray-300"
                     }`}
                     editable={false}
