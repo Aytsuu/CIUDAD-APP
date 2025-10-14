@@ -120,12 +120,12 @@ export default function PageLayout({
   const handleContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
     // Get the available height (screen height minus header and footer)
     let availableHeight = screenHeight
-    if (showHeader) {
-      availableHeight -= responsiveHeaderHeight + 50 // Add some buffer for status bar
-    }
-    if (shouldShowFooter) {
-      availableHeight -= responsiveFooterHeight
-    }
+    // if (showHeader) {
+    //   availableHeight -= responsiveHeaderHeight + 50 // Add some buffer for status bar
+    // }
+    // if (shouldShowFooter) {
+    //   availableHeight -= responsiveFooterHeight
+    // }
 
     const scrollable = contentHeight > availableHeight
     setIsScrollable(scrollable)
@@ -136,7 +136,7 @@ export default function PageLayout({
   const handleScrollIndicatorPress = useCallback(() => {
     if (scrollViewRef.current) {
       // Scroll down by approximately one screen height
-      const scrollAmount = screenHeight * 0.7 // 70% of screen height
+      const scrollAmount = screenHeight
       const newScrollY = scrollY + scrollAmount
 
       scrollViewRef.current.scrollTo({
@@ -271,7 +271,7 @@ export default function PageLayout({
         )}
 
         {/* Floating Scroll Indicator */}
-        {wrapScroll && showScrollIndicator && showScrollArrow && (
+        {wrapScroll && showScrollIndicator && showScrollArrow && isScrollable && (
           <View style={getScrollIndicatorPositionStyles()}>
             <TouchableOpacity
               onPress={handleScrollIndicatorPress}

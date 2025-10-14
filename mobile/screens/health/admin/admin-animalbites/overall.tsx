@@ -8,6 +8,8 @@ import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Overallrecordcard } from "../components/overall-cards"
+import { PaginationControls } from "../components/pagination-layout"
+import { TabBar, TabType } from "../components/tab-bar"
 
 type PatientSummary = {
   id: string
@@ -25,141 +27,44 @@ type PatientSummary = {
   recordCount: number
 }
 
-type TabType = "all" | "resident" | "transient"
-
-// Components
-const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-  const getTypeConfig = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'resident':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        };
-      case 'transient':
-        return {
-          color: 'text-amber-700',
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-        };
-      default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        };
-    }
-  };
-
-  const typeConfig = getTypeConfig(type);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </Text>
-    </View>
-  );
-};
-
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
-
-
 export default function AnimalBiteOverallScreen() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [hasMoreData, setHasMoreData] = useState<boolean>(true);
+  const pageSize = 10;
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const { 
-    data: patientSummary, 
-    isLoading, 
-    isError, 
-    error, 
-    refetch, 
-    isFetching,
+  const {
+    data: patientSummary,
+    isLoading,
+    isError,
+    error,
+    refetch,
   } = useAnimalBitePatientSummary({
     search: debouncedSearchQuery,
     filter: activeTab === 'all' ? undefined : activeTab,
     page: currentPage,
-    limit: 20, // Set your desired page size
-    ordering: '-date', // Optional: sort by most recent
+    limit: pageSize,
+    ordering: '-date',
   })
 
-  // Extract patients from the response
   const patients: PatientSummary[] = useMemo(() => {
-    if (!patientSummary?.results) return []
-    return patientSummary.results
+    return patientSummary?.results || []
   }, [patientSummary])
 
-  // Reset pagination when search or filter changes
+  const totalCount = patientSummary?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Reset to page 1 when search or filter changes
   React.useEffect(() => {
     setCurrentPage(1);
-    setHasMoreData(true);
   }, [debouncedSearchQuery, activeTab]);
 
-  // Update hasMoreData based on API response
-  React.useEffect(() => {
-    if (patientSummary) {
-      setHasMoreData(!!patientSummary.next);
-    }
-  }, [patientSummary]);
-
-  // Transform patients to Overallrecordcard format
   const transformedRecords = useMemo(() => {
     return patients.map(transformToOverallRecord);
   }, [patients]);
-
-  // Extract counts from the response - now using backend counts
-  const counts = useMemo(() => {
-    // Use backend-provided count if available, otherwise fallback
-    const totalCount = patientSummary?.count || 0;
-    
-    // For resident/transient counts, we'll use the current page data
-    // If your backend provides these counts separately, use them instead
-    const residents = patients.filter((p) => p.patientType.toLowerCase() === "resident").length
-    const transients = patients.filter((p) => p.patientType.toLowerCase() === "transient").length
-    
-    return {
-      all: totalCount,
-      resident: residents,
-      transient: transients,
-    }
-  }, [patientSummary, patients])
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -179,24 +84,23 @@ export default function AnimalBiteOverallScreen() {
     setSearchQuery(text);
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    if (!isFetching && hasMoreData && patientSummary?.next) {
-      setCurrentPage(prev => prev + 1);
+  const handlePageChange = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
-  }, [isFetching, hasMoreData, patientSummary]);
+  }, [totalPages]);
 
-  const handleRecordPress = (record: any) => { 
-    try { 
-      router.push({ 
-        pathname: "/admin/animalbites/individual", 
-        params: { patientId: record.pat_id }, 
-      }); 
-    } catch (error) { 
-      console.log("Navigation error:", error); 
-    } 
+  const handleRecordPress = (record: any) => {
+    try {
+      router.push({
+        pathname: "/admin/animalbites/individual",
+        params: { patientId: record.pat_id },
+      });
+    } catch (error) {
+      console.log("Navigation error:", error);
+    }
   };
 
-  // Loading state for initial load
   if (isLoading && currentPage === 1) {
     return <LoadingState />;
   }
@@ -248,11 +152,11 @@ export default function AnimalBiteOverallScreen() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search by name, ID, or location..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={handleSearchChange}
@@ -261,74 +165,71 @@ export default function AnimalBiteOverallScreen() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} counts={counts} />
-
-        {/* Records List */}
-        {transformedRecords.length === 0 && !isFetching ? (
-          <View className="flex-1 justify-center items-center px-6">
-            <FileText size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
-            <Text className="text-gray-600 text-center mt-2">
-              {searchQuery || activeTab !== 'all' 
-                ? `No records match your current filters.` 
-                : `There are no animal bite records available yet.`
-              }
+        <TabBar activeTab={activeTab} setActiveTab={handleTabChange}/>
+        <View className="px-4 flex-row items-center justify-between mt-4">
+          <View className="flex-row items-center">
+            <Text className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
             </Text>
           </View>
-        ) : (
+          <View className="flex-row items-center">
+            <Text className="text-sm font-medium text-gray-800">
+              Page {currentPage} of {totalPages}
+            </Text>
+          </View>
+        </View>
+
+        {/* Records List */}
+        <View className="flex-1">
           <FlatList
             data={transformedRecords}
-            keyExtractor={(item) => `ab-${item.pat_id}-${Math.random()}`} // Add randomness for pagination
+            keyExtractor={(item) => `ab-${item.pat_id}-${currentPage}`}
             refreshControl={
-              <RefreshControl 
-                refreshing={refreshing} 
-                onRefresh={onRefresh} 
-                colors={['#3B82F6']} 
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#3B82F6']}
               />
             }
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={10}
-            maxToRenderPerBatch={10}
-            windowSize={21}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
+            contentContainerStyle={{
+              padding: 16,
+              flexGrow: 1,
+              paddingBottom: transformedRecords.length > 0 ? 80 : 0 // Add space for pagination
+            }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-20">
+                <FileText size={48} color="#D1D5DB" />
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
+                  {searchQuery || activeTab !== 'all' ? 'No records found' : 'No records available'}
+                </Text>
+                <Text className="text-gray-500 text-center">
+                  {searchQuery
+                    ? `No records match "${searchQuery}"`
+                    : `No animal bite records found`}
+                </Text>
+              </View>
+            )}
             renderItem={({ item }) => (
               <Overallrecordcard
                 record={item}
                 onPress={() => handleRecordPress(item)}
               />
             )}
-            ListFooterComponent={
-              isFetching && currentPage > 1 ? (
-                <View className="py-4 items-center">
-                  <Text className="text-gray-500">Loading more records...</Text>
-                </View>
-              ) : hasMoreData ? (
-                <View className="py-4 items-center">
-                  <Text className="text-gray-500">Pull to load more</Text>
-                </View>
-              ) : transformedRecords.length > 0 ? (
-                <View className="py-4 items-center">
-                  <Text className="text-gray-500"></Text>
-                </View>
-              ) : null
-            }
-            ListEmptyComponent={
-              isFetching ? (
-                <View className="flex-1 justify-center items-center py-20">
-                  <Text className="text-gray-500">Loading records...</Text>
-                </View>
-              ) : null
-            }
           />
-        )}
+
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </View>
       </View>
     </PageLayout>
   );
 }
 
-// Keep your existing transformToOverallRecord function
+// Transform function
 const transformToOverallRecord = (patient: PatientSummary) => {
   return {
     pat_id: patient.id,

@@ -771,8 +771,7 @@ def get_complete_fp_record(request, fprecord_id):
         complete_data["occupation"] = fp_record.occupation or "N/A"  # Set once
         complete_data["avg_monthly_income"] =  fp_record.avg_monthly_income or ""  # Original ID
         complete_data["avg_monthly_income_display"] = map_income_display(fp_record.avg_monthly_income) or ""  # Display value
-        
-        print("Initial occupation set:", complete_data["occupation"])  # Debug
+        # complete_data["numOfLivingChildren"] = complete_data.num_of_children or 0
         complete_data["contact"] = ""
         complete_data["religion"] = ""
         

@@ -61,12 +61,12 @@ export const useAnimalBitePatientSummary = (params?: {
   page?: number;
   limit?: number;
   ordering?: string;
+  count?: number;
 }) => {
   return useQuery({
     queryKey: ["animalbite-patient-summary", params],
     queryFn: () => getAnimalBitePatientSummary(params),
     staleTime: 1000 * 60 * 5,
-    keepPreviousData: true, // This helps with smooth pagination
   });
 };
 // Hook for individual patient's bite history

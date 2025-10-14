@@ -368,7 +368,7 @@ export const FamilyPlanningView = () => {
                 <Label className=" text-xs">NO. OF LIVING CHILDREN:</Label>
                 <InputLine
                   className="h-4 mt-1"
-                  value={recordData.obstetricalHistory?.numOfLivingChildren || recordData?.numOfLivingChildren}
+                  value={recordData.obstetricalHistory?.numOfLivingChildren || recordData?.num_of_children}
                 />
               </div>
               <div>

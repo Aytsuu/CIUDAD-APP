@@ -77,13 +77,13 @@ const ImageCarousel = ({
         )}
 
         {/* Image counter */}
-        <View className="absolute top-2 left-2 bg-white/80 px-2 py-1 rounded-full">
-          {images.length > 1 && (
+        {images.length > 1 && (
+          <View className="absolute top-2 left-2 bg-white/80 px-2 py-1 rounded-full">
             <Text className="text-xs">
               {currentIndex + 1}/{images.length}
             </Text>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Navigation arrows */}
         {images.length > 1 && (

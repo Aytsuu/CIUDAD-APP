@@ -9,6 +9,7 @@ import PageLayout from "@/screens/_PageLayout"
 import { usePatients } from "./queries/fetch"
 import { router } from "expo-router"
 import { useDebounce } from "@/hooks/use-debounce"
+import { TabType, TabBar } from "../components/tab-bar"
 
 interface PatientRecord {
   pat_id: string
@@ -34,7 +35,7 @@ interface PatientRecord {
   medical_condition?: string
 }
 
-type TabType = "all" | "resident" | "transient"
+// type TabType = "all" | "resident" | "transient"
 
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   const getTypeConfig = (type: string) => {
@@ -68,38 +69,37 @@ const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   )
 }
 
-const TabBar: React.FC<{
-  activeTab: TabType
-  setActiveTab: (tab: TabType) => void
-  counts: { all: number; resident: number; transient: number }
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab("all")}
-      className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>
-        All ({counts.all})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab("resident")}
-      className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>
-        Residents ({counts.resident})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab("transient")}
-      className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>
-        Transients ({counts.transient})
-      </Text>
-    </TouchableOpacity>
-  </View>
-)
+// const TabBar: React.FC<{
+//   activeTab: TabType
+//   setActiveTab: (tab: TabType) => void
+// }> = ({ activeTab, setActiveTab}) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity
+//       onPress={() => setActiveTab("all")}
+//       className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>
+//         All
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab("resident")}
+//       className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>
+//         Residents 
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab("transient")}
+//       className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>
+//         Transients  
+//       </Text>
+//     </TouchableOpacity>
+//   </View>
+// )
 
 const PatientRecordCard: React.FC<{
   record: PatientRecord
@@ -279,7 +279,7 @@ export default function PatientsRecord() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
@@ -292,8 +292,8 @@ export default function PatientsRecord() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
-
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      
         {/* Page Info */}
         <View className="px-4 flex-row items-center justify-between mt-4">
           <View className="flex-row items-center">

@@ -194,6 +194,11 @@ const { data: latestRecord, isLoading: isFetchingLatestRecord } = useQuery<FormD
   //   queryFn: () => getFPCompleteRecord(Number(prefillFromFpRecord)),
   //   enabled: currentMode === "followup" && !!prefillFromFpRecord,
   // })
+  console.log("=== LATEST RECORD DEBUG ===");
+console.log("latestRecord:", latestRecord);
+console.log("num_of_children from backend:", latestRecord?.num_of_children);
+console.log("numOfLivingChildren from backend:", latestRecord?.numOfLivingChildren);
+console.log("obstetricalHistory:", latestRecord?.obstetricalHistory);
 
   // Effect to update internalPatientId when fetchedRecord changes (for view/edit modes)
   useEffect(() => {
@@ -258,9 +263,9 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         gender: passedGender || latestRecord.gender || "Unknown",
         address: latestRecord.address,
         spouse: latestRecord.spouse,
-        numOfLivingChildren: latestRecord.numOfLivingChildren,
         plan_more_children: latestRecord.plan_more_children,
         avg_monthly_income: latestRecord.avg_monthly_income,
+        numOfLivingChildren: latestRecord.num_of_children || latestRecord.numOfLivingChildren || 0,
         // Reset method-related fields for new method selection
         typeOfClient: "currentuser",
         subTypeOfClient: "changingmethod",
@@ -297,6 +302,7 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         reason: latestRecord.reason,
         otherReasonForFP: latestRecord.otherReasonForFP || "", // Preserve existing value
         previousMethod: prevEffectiveMethod || "",
+        numOfLivingChildren: latestRecord.num_of_children || latestRecord.numOfLivingChildren || 0,
       };
 
       setFormData(prefillData)
@@ -346,7 +352,7 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
       methodCurrentlyUsed: latestRecord.methodCurrentlyUsed,
       bloodPressure: latestRecord.bloodPressure,
       pulseRate: latestRecord.pulseRate,
-      numOfLivingChildren: latestRecord.obstetricalHistory.numOfLivingChildren,
+      numOfLivingChildren: latestRecord.num_of_children || latestRecord.obstetricalHistory?.numOfLivingChildren || latestRecord.numOfLivingChildren || 0,
       skinExamination: latestRecord.fp_physical_exam?.skin_exam ?? "normal",
       conjunctivaExamination: latestRecord.fp_physical_exam?.conjunctiva_exam ?? "normal",
       neckExamination: latestRecord.fp_physical_exam?.neck_exam ?? "normal",

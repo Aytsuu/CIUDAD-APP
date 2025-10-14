@@ -11,8 +11,9 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { PaginationControls } from "../components/pagination-layout";
+import { TabBar, TabType } from "../components/tab-bar";
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
 // Components
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
@@ -49,38 +50,37 @@ const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   );
 };
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
+// const TabBar: React.FC<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+// }> = ({ activeTab, setActiveTab }) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('all')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         All 
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('resident')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Residents
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('transient')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Transients 
+//       </Text>
+//     </TouchableOpacity>
+//   </View>
+// );
 
 const FirstAidRecordCard: React.FC<{
   record: FirstAidRecord;
@@ -112,7 +112,7 @@ const FirstAidRecordCard: React.FC<{
                 <User color="white" size={20} />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
+                <Text className="font-semibold text-md text-gray-900">
                   {record.patient_details.personal_info.per_lname}, {record.patient_details.personal_info.per_fname} {record.patient_details.personal_info.per_mname}
                 </Text>
                 <Text className="text-gray-500 text-sm">ID: {record.pat_id}</Text>
@@ -269,11 +269,11 @@ export default function AllFirstAidRecords() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search records..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -282,7 +282,7 @@ export default function AllFirstAidRecords() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Results Info */}
         <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">

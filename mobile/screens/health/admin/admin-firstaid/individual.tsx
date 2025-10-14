@@ -248,15 +248,13 @@ export default function IndivFirstAidRecords() {
           <PatientInfoCard patientData={patientData} />
         </View>
 
-        {/* <StatsCard count={firstAidCount} /> */}
-
         {/* Search Bar */}
         <View className="mx-4 mb-4">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-white rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-white rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search records..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}

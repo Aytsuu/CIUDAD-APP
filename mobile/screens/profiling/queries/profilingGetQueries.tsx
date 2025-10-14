@@ -38,6 +38,8 @@ export const useResidentsTable = (page: number, pageSize: number, searchQuery: s
       }
     },
     staleTime: 5000,
+    placeholderData: (previous) => previous,
+    retry: false,
   })
 }
 
@@ -101,6 +103,8 @@ export const useFamiliesTable = (page: number, pageSize: number, searchQuery: st
       }
     },
     staleTime: 5000,
+    placeholderData: (previous) => previous,
+    retry: false
   });
 }
 
@@ -164,6 +168,8 @@ export const useHouseholdTable = (page: number, pageSize: number, searchQuery: s
       }
     },
     staleTime: 5000,
+    placeholderData: (previous) => previous,
+    retry: false
   })
 }
 

@@ -4,13 +4,13 @@ import { View, Text, ScrollView, Image, TouchableOpacity, Dimensions } from "rea
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, router } from "expo-router";
 import { getFPCompleteRecord } from "./GetRequest";
-import { User,Calendar,MapPin,Heart,Activity,Stethoscope,FileText,GraduationCap,CreditCard,Baby,TrendingUp,Scale,Ruler,Droplets,UserCheck,Clock,AlertCircle,} from "lucide-react-native";
+import { User,Calendar,MapPin,Heart,Activity,Stethoscope,FileText,GraduationCap,CreditCard,Baby,TrendingUp,Scale,Ruler,Droplets,UserCheck,Clock,AlertCircle, ChevronLeft,} from "lucide-react-native";
 import { FPRecordData } from "./FPRecordData";
 import { LoadingState } from "@/components/ui/loading-state";
+import PageLayout from "@/screens/_PageLayout";
 
 export default function FpRecordViewPage1() {
   const { fprecordId } = useLocalSearchParams();
-  const windowWidth = Dimensions.get("window").width;
 
   const { data: recordData, isLoading, isError, error } = useQuery<FPRecordData | null>({
     queryKey: ["fpCompleteRecordView", fprecordId],
@@ -164,6 +164,7 @@ export default function FpRecordViewPage1() {
                 <Text className="text-sm font-medium text-gray-900">{recordData.typeOfClient ?? "N/A"}</Text>
               </View>
             </View>
+            
             <View className="flex-row items-start space-x-3 mb-4">
               <View className="w-5 h-5 mt-1">
                 <Heart size={18} color="#6B7280" />
@@ -193,6 +194,16 @@ export default function FpRecordViewPage1() {
                 </Text>
               </View>
             </View>
+             <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Living Children</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.num_of_children ?? "0"}</Text>
+              </View>
+            </View>
+            
             <View className="border-t border-gray-100 pt-4 mt-2">
               <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-sm text-gray-500">Plans to have more children:</Text>
@@ -868,21 +879,26 @@ export default function FpRecordViewPage1() {
   };
 
   return (
+     <PageLayout
+          leftAction={
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <ChevronLeft size={24} color="#374151" />
+            </TouchableOpacity>
+          }
+          headerTitle={<Text className="text-gray-900 text-lg font-semibold">Family Planning Records</Text>}
+          rightAction={<View className="w-10 h-10" />}
+        >
     <View className="flex-1 bg-gray-50">
-      {/* Header Section */}
-      <View className="bg-blue-600 px-6 pt-16 pb-8">
-        <View className="items-center">
-          <Heart size={32} color="white" />
-          <Text className="text-2xl font-bold text-white mt-2">Family Planning Record</Text>
-          <Text className="text-blue-100 mt-1">Complete Medical Profile</Text>
-        </View>
-      </View>
+    
 
       {/* Horizontal Scrollable Tab Bar */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="bg-white border-b mt-2 border-gray-200"
+        className="bg-white border-b  border-gray-200"
         contentContainerStyle={{ paddingHorizontal: 16 }}
         style={{ maxHeight: 40 }} // Add this to limit height
       >
@@ -910,5 +926,6 @@ export default function FpRecordViewPage1() {
         {renderTabContent()}
       </ScrollView>
     </View>
+    </PageLayout>
   );
 }
