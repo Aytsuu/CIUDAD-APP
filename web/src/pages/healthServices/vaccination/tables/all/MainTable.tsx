@@ -27,7 +27,7 @@ export default function VaccinationManagement() {
       case "vaccinated":
         return "Vaccination Records";
       case "unvaccinated":
-        return "Unvaccinated Residents";
+        return "Resident Vaccination Tracking";
       default:
         return "Vaccination Records";
     }
@@ -38,7 +38,7 @@ export default function VaccinationManagement() {
       case "vaccinated":
         return "Manage and view patients vaccination information";
       case "unvaccinated":
-        return "List of residents who have not received any vaccines";
+        return "List of residents who are unvaccinated,partially vaccinated and fully vaccinated";
       default:
         return "Manage and view patients vaccination information";
     }

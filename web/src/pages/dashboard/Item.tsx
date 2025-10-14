@@ -9,11 +9,10 @@ import { MedicineDistributionSidebar } from "@/components/analytics/health/medic
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
-import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
-
+import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
   profilingCards: ReturnType<typeof useProfilingSectionCards>,
@@ -134,10 +133,7 @@ export const getItemsConfig = (
             title: "Medical History",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
-          {
-            title: "Vaccination",
-            element: <VaccineDistributionChart initialMonth={currentMonth} />,
-          },
+         
         {
           title: "Maternal",
           element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
@@ -156,8 +152,14 @@ export const getItemsConfig = (
             title: "Most used FirstAid",
             element: <FirstAidDistributionSidebar />,
           },
+          {
+            title:"Administered Vaccination",
+            element:<VaccinationDistributionSidebar />
+          }
         ],
+        
       },
+
     ];
     
   } else return []
