@@ -15,17 +15,21 @@ export const useConfirmAllPendingItems = () => {
       staff_id?: string;
       pat_id: string;
     }) => confirmAllPendingItems(payload),
-    onSuccess: (data, variables) => {
+    onSuccess: (variables) => {
       // Invalidate and refetch related queries
-      queryClient.invalidateQueries({ queryKey: ["pendingItemsMedRequest", variables.medreq_id] });
-      queryClient.invalidateQueries({ queryKey: ["medicineRequestItems"] });
       queryClient.invalidateQueries({ queryKey: ["medicinesWithStock"] });
       queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedrequestitems"] });
+      queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords", variables.pat_id] });
+      queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
+
+
       
       // Show success message with allocation details
-      showSuccessToast(
-        `Medicine request confirmed successfully! ${data.allocations_created} allocations created.`
-      );
+      showSuccessToast("Confirmed Successfully"      );
       
       navigate(-1); // Navigate back to the previous page
     },

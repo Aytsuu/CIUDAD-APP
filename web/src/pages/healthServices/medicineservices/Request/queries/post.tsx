@@ -54,6 +54,7 @@ export const useCreateMedicineAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ["medicineRecords"] });
       queryClient.invalidateQueries({ queryKey: ["processingmedrequest"] });
       queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords", data.pat_id] });
 
 
       console.log("Allocation successful:", data);

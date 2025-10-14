@@ -42,7 +42,7 @@ urlpatterns=[
         
         # Kurt urls and views
         path('indiv-medicine-record/<str:pat_id>/', IndividualMedicineRecordView.as_view(), name='inv-medrecord'),
-        path("user-pending-items/", UserAllMedicineRequestItemsView.as_view(), name="user-pending-medicine-items"),
+        path("user-     -items/", UserAllMedicineRequestItemsView.as_view(), name="user-pending-medicine-items"),
         path("user-all-items/", UserAllMedicineRequestItemsView.as_view(), name="user-all-medicine-items"),
         path('submit-request/', SubmitMedicineRequestView.as_view(), name='submit-medicine-request'),
         path('cancel-medicine-request-item/<int:medreqitem_id>/', MedicineRequestItemCancel.as_view(), name="cancel-medicine-request-item"),

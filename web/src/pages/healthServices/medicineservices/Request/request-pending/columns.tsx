@@ -154,23 +154,32 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       const [isActionModalOpen, setIsActionModalOpen] = useState(false);
       const [isReferOpen, setIsReferOpen] = useState(false);
       const status = row.original.status;
+      const files = row.original.medicine_files || [];
+      const med_type = row.original.med_type || "Prescription";
+      
+      // Check if this item has documents and is prescription type
+      const hasDocuments = med_type === "Prescription" && files.length > 0;
 
       return (
         <div className="flex justify-center gap-2">
           {status === "pending" ? (
             <>
-              {/* Refer Button */}
+              {/* Refer Button - Always show */}
               <Button size="sm" variant="outline" onClick={() => setIsReferOpen(true)}>
                 Refer Request
               </Button>
 
-              {/* ActionModal Button */}
-              <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
-                Reject Document
-              </Button>
+              {/* Reject Document Button - Only show if there are documents */}
+              {hasDocuments && (
+                <Button size="sm" variant="destructive" className="text-xs" onClick={() => setIsActionModalOpen(true)}>
+                  Reject Document
+                </Button>
+              )}
 
-              {/* ActionModal Modal */}
-              <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
+              {/* ActionModal Modal - Only render if there are documents */}
+              {hasDocuments && (
+                <ActionModal isOpen={isActionModalOpen} onClose={() => setIsActionModalOpen(false)} data={row.original} mode="reject" />
+              )}
 
               <ActionModal isOpen={isReferOpen} onClose={() => setIsReferOpen(false)} data={row.original} mode="refer" />
             </>

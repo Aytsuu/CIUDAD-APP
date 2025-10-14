@@ -474,9 +474,26 @@ class MedicineRequestPendingItemsTableView(APIView):
                     allocation_data = {
                         'alloc_id': allocation.alloc_id,
                         'minv_id': allocation.minv.minv_id,
+                        'inv_id': allocation.minv.inv_id.inv_id if allocation.minv.inv_id else None,
                         'minv_name': allocation.minv.med_id.med_name if allocation.minv.med_id else "Unknown",
                         'allocated_qty': allocation.allocated_qty,
                         'created_at': allocation.created_at,
+                        'minv_details': {
+                            'minv_dsg': allocation.minv.minv_dsg,
+                            'minv_dsg_unit': allocation.minv.minv_dsg_unit,
+                            'minv_form': allocation.minv.minv_form,
+                            'minv_qty': allocation.minv.minv_qty,
+                            'minv_qty_unit': allocation.minv.minv_qty_unit,
+                            'minv_pcs': allocation.minv.minv_pcs,
+                            'minv_qty_avail': allocation.minv.minv_qty_avail,
+                            'wasted': allocation.minv.wasted,
+                            'temporary_deduction': allocation.minv.temporary_deduction,
+                        },
+                        'inv_details': {
+                            'expiry_date': allocation.minv.inv_id.expiry_date if allocation.minv.inv_id else None,
+                            'inv_type': allocation.minv.inv_id.inv_type if allocation.minv.inv_id else None,
+                            'is_archived': allocation.minv.inv_id.is_Archived if allocation.minv.inv_id else None,
+                        }
                     }
                     allocations.append(allocation_data)
                     total_allocated_qty += allocation.allocated_qty
