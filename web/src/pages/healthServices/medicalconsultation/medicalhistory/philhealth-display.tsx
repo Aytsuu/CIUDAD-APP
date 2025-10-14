@@ -154,16 +154,16 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
               </td>
             </tr>
             <tr>
-            <td className="w-1/3 border-b border-black pb-1 px-2 align-top">
+            <td className="w-1/4 border-b border-black pb-1 px-2 align-top">
             <Label className="font-bold text-md">Sitio/Street</Label>: <span>{toTitleCase(patientData.address.add_sitio || "N/A")}</span>
               </td>
-              <td className="w-1/3 border-l  border-b border-black pb-1 px-2 align-top">
+              <td className="w-1/4 border-l  border-b border-black pb-1 px-2 align-top">
               <Label className="font-bold text-md">Barangay</Label>: <span>{toTitleCase(patientData.address.add_barangay || "N/A")}</span>
               </td>
-              <td className="w-1/3 border-l border-b border-black pb-1 px-2 align-top">
+              <td className="w-1/4 border-l border-b border-black pb-1 px-2 align-top">
               <Label className="font-bold text-md">City/Municipality</Label>: <span>{toTitleCase(patientData.address.add_city || "N/A")}</span>
               </td>
-              <td className="w-1/2 border-l  border-b border-black pb-1 px-2 align-top">
+              <td className="w-1/4 border-l  border-b border-black pb-1 px-2 align-top">
               <Label className="font-bold text-md">Province</Label>:  <span>{toTitleCase(patientData.address.add_province || "Cebu")}</span>
               </td>
             </tr>

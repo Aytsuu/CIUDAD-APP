@@ -118,7 +118,7 @@ export const nonPhilHealthSchema = z.object({
   height: heightSchema,
   weight: weightSchema,
   vital_temp: temperatureSchema,
-  medrec_chief_complaint: z.string().min(1, "Chief complaint is required"),
+    medrec_chief_complaint: z.string().min(1, "Chief complaint is required"),
   obs_id: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
   selectedDoctorStaffId: z.preprocess((val) => (val !== undefined ? String(val) : undefined), z.string().optional().default("")),
   is_phrecord: z.boolean().optional().default(false),
@@ -150,6 +150,7 @@ export const nonPhilHealthSchema = z.object({
   alcohol_bottles_per_day: z.string().optional().default(""),
   famselectedIllnesses: z.array(z.number()).optional(),
   myselectedIllnesses: z.array(z.number()).optional(),
+  app_id: z.string().optional().default(""),
 
  
  

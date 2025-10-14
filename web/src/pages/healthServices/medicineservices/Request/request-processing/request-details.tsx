@@ -32,7 +32,8 @@ export default function MedicineRequestDetail() {
   const request = location.state?.params?.request as any;
   console.log("mrfreq", request);
   console.log("personal info", patientData);
-  // const status = request.mode;
+  
+  const isAppMode = request?.mode === 'app'; // Check if mode is app
 
   const [searchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -104,7 +105,12 @@ export default function MedicineRequestDetail() {
       total_available_stock: medicine.total_available_stock,
       med_id: medicine.med_id,
       reason: item.reason || "No reason provided",
-      medreq_id: item.medreq_id
+      medreq_id: item.medreq_id,
+      // Include allocation data if available
+      allocations: item.allocations || [],
+      total_allocated_qty: item.total_allocated_qty || 0,
+      remaining_qty: item.remaining_qty || item.medreqitem_qty,
+      is_fully_allocated: item.is_fully_allocated || false
     }))
   );
 
@@ -142,8 +148,10 @@ export default function MedicineRequestDetail() {
     }
   };
 
-
+  // Only create medicine mapping if NOT in app mode
   const createMedicineMapping = () => {
+    if (isAppMode) return []; // Return empty array for app mode
+    
     if (!medicineStocksOptions || !medicineData?.length) {
       return [];
     }
@@ -255,11 +263,12 @@ export default function MedicineRequestDetail() {
     return mappedMedicines;
   };
 
-
   const enhancedMedicineStocks = createMedicineMapping();
 
-  // Improved auto-selection logic
+  // Improved auto-selection logic - only for non-app mode
   useEffect(() => {
+    if (isAppMode) return; // Skip auto-selection for app mode
+    
     console.log("=== Auto-selection useEffect triggered ===");
     
     // Check if we have all required data
@@ -380,7 +389,7 @@ export default function MedicineRequestDetail() {
         selectedMedicinesLength: selectedMedicines.length
       });
     }
-  }, [medicineData, medicineStocksOptions, isLoading, isMedicinesLoading]); // Removed enhancedMedicineStocks from dependencies
+  }, [medicineData, medicineStocksOptions, isLoading, isMedicinesLoading, isAppMode]); // Added isAppMode dependency
 
   // Helper function to find medicine data by the unique ID
   const getMedicineDataByUniqueId = (uniqueId: string) => {
@@ -502,7 +511,12 @@ export default function MedicineRequestDetail() {
               <CardTitle>
                 Medicine Requests <span className="bg-red-500 text-white rounded-full text-sm px-2"> {totalCount}</span>
               </CardTitle>
-              <CardDescription>Review confirmed medicine request items before confirmation</CardDescription>
+              <CardDescription>
+                {isAppMode 
+                  ? "Review medicine requests and their allocations" 
+                  : "Review confirmed medicine request items before confirmation"
+                }
+              </CardDescription>
             </div>
             <div className="flex items-center gap-3">
               <Link
@@ -596,194 +610,70 @@ export default function MedicineRequestDetail() {
           </CardContent>
         </Card>
 
-        {/* Debug Component - Only in Development
-        {process.env.NODE_ENV === 'development' && (
-          <Card className="mt-4 border-yellow-200 bg-yellow-50">
+        {/* Medicine Display - Only show if NOT in app mode */}
+        {!isAppMode && (
+          <Card className="mt-4">
             <CardContent>
-              <h4 className="font-semibold mb-2 text-yellow-800">🐛 Auto-Selection Debug Info</h4>
-              
-              <div className="space-y-4 text-sm">
-                <div>
-                  <h5 className="font-semibold text-gray-700">Data Loading Status:</h5>
-                  <ul className="list-disc list-inside text-gray-600">
-                    <li>Medicine Data Loading: <span className={isLoading ? "text-red-600" : "text-green-600"}>{isLoading ? "Yes" : "No"}</span></li>
-                    <li>Medicine Stocks Loading: <span className={isMedicinesLoading ? "text-red-600" : "text-green-600"}>{isMedicinesLoading ? "Yes" : "No"}</span></li>
-                    <li>Medicine Data Length: <span className="text-blue-600">{medicineData.length}</span></li>
-                    <li>Stock Options Available: <span className="text-blue-600">{medicineStocksOptions?.medicines?.length || 0}</span></li>
-                    <li>Enhanced Stocks Length: <span className="text-blue-600">{enhancedMedicineStocks.length}</span></li>
-                    <li>Currently Selected: <span className="text-purple-600">{selectedMedicines.length}</span></li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Medicine Data Structure:</h5>
-                  {medicineData.map((med: any, index: number) => (
-                    <div key={index} className="ml-4 mb-3 p-2 bg-white rounded border">
-                      <div><strong>Medicine:</strong> {med.med_name} (ID: {med.med_id})</div>
-                      <div><strong>Confirmed Items:</strong></div>
-                      {med.request_items?.filter((item: any) => item.status === "confirmed").map((item: any, itemIndex: number) => (
-                        <div key={itemIndex} className="ml-4 p-1 bg-gray-100 rounded text-xs">
-                          <div>Item ID: {item.medreqitem_id}</div>
-                          <div>Quantity: {item.medreqitem_qty}</div>
-                          <div>Status: {item.status}</div>
-                          <div>Reason: {item.reason}</div>
-                          <div className="text-red-600">
-                            <strong>Inventory:</strong> {JSON.stringify(item.inventory, null, 2)}
-                          </div>
-                          <div className="text-purple-600">
-                            <strong>Has MinvId:</strong> {item.inventory?.minv_id ? `Yes (${item.inventory.minv_id})` : "No"}
-                          </div>
-                          <div className="text-blue-600">
-                            <strong>Will Show in Selection:</strong> {item.inventory?.minv_id ? "Yes" : "No"}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Items WITHOUT MinvId (Will be skipped):</h5>
-                  {medicineData.map((med: any, index: number) => {
-                    const itemsWithoutMinvId = med.request_items?.filter((item: any) => 
-                      item.status === "confirmed" && !item.inventory?.minv_id
-                    ) || [];
-                    
-                    if (itemsWithoutMinvId.length === 0) return null;
-                    
-                    return (
-                      <div key={index} className="ml-4 mb-3 p-2 bg-red-50 rounded border border-red-200">
-                        <div><strong>Medicine:</strong> {med.med_name} (ID: {med.med_id})</div>
-                        <div><strong>Items without MinvId:</strong></div>
-                        {itemsWithoutMinvId.map((item: any, itemIndex: number) => (
-                          <div key={itemIndex} className="ml-4 p-1 bg-red-100 rounded text-xs">
-                            <div>Item ID: {item.medreqitem_id}</div>
-                            <div>Quantity: {item.medreqitem_qty}</div>
-                            <div className="text-red-600">⚠️ No minv_id - Will be excluded from selection</div>
-                          </div>
-                        ))}
+              <div className="">
+                <h3 className="text-lg font-semibold mb-4 mt-3">Select Medicines to Process</h3>
+                {/* Show loading state */}
+                {isMedicinesLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600">Loading medicine inventory...</span>
+                  </div>
+                ) : enhancedMedicineStocks.length === 0 ? (
+                  <div className="flex items-center justify-center py-12 text-gray-500">
+                    <AlertCircle className="h-8 w-8 mr-2" />
+                    <div className="text-center">
+                      <div>No medicines available for processing</div>
+                      <div className="text-sm mt-1">
+                        This could be because:
+                        <ul className="list-disc list-inside mt-2 text-xs">
+                          <li>No confirmed medicine requests have specific inventory assignments (minv_id)</li>
+                          <li>The assigned inventory stocks are not found in current stock</li>
+                          <li>Data is still loading</li>
+                        </ul>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-700">Available Stock Options (First 3):</h5>
-                  {medicineStocksOptions?.medicines?.slice(0, 3).map((stock: any, index: number) => (
-                    <div key={index} className="ml-4 mb-2 p-2 bg-white rounded border text-xs">
-                      <div>Stock ID: {stock.id}</div>
-                      <div>Inv ID: {stock.inv_id}</div>
-                      <div>Med ID: {stock.med_id}</div>
-                      <div>Medicine: {stock.med_name}</div>
-                      <div>Available: {stock.avail}</div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <MedicineDisplay
+                      medicines={enhancedMedicineStocks}
+                      initialSelectedMedicines={selectedMedicines}
+                      onSelectedMedicinesChange={handleSelectedMedicinesChange}
+                      itemsPerPage={10}
+                      currentPage={medicineDisplayPage}
+                      onPageChange={setMedicineDisplayPage}
+                      autoFillReasons={true}
+                      isLoading={isMedicinesLoading}
+                    />
 
-                <div>
-                  <h5 className="font-semibold text-gray-700">Enhanced Medicine Stocks (First 3):</h5>
-                  {enhancedMedicineStocks.slice(0, 3).map((enhanced: any, index: number) => (
-                    <div key={index} className="ml-4 mb-2 p-2 bg-white rounded border text-xs">
-                      <div>Unique ID: {enhanced.id}</div>
-                      <div>Original Stock ID: {enhanced.original_stock_id}</div>
-                      <div>Med ID: {enhanced.med_id}</div>
-                      <div>Medicine: {enhanced.med_name}</div>
-                      <div>Request Item ID: {enhanced.medreqitem_id}</div>
-                      <div>Has MinvId: {enhanced.has_minv_id ? "Yes" : "No"}</div>
-                      <div>MinvId: {enhanced.minv_id}</div>
+                    <div className="mt-6">
+                      <SignatureField ref={signatureRef} title="Signature" onSignatureChange={handleSignatureChange} required={true} />
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
-        )} */}
-
-        {/* Medicine Display */}
-        <Card className="mt-4">
-          <CardContent>
-            <div className="">
-              <h3 className="text-lg font-semibold mb-4 mt-3">Select Medicines to Process</h3>
-              {/* Show loading state */}
-              {isMedicinesLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600">Loading medicine inventory...</span>
-                </div>
-              ) : enhancedMedicineStocks.length === 0 ? (
-                <div className="flex items-center justify-center py-12 text-gray-500">
-                  <AlertCircle className="h-8 w-8 mr-2" />
-                  <div className="text-center">
-                    <div>No medicines available for processing</div>
-                    <div className="text-sm mt-1">
-                      This could be because:
-                      <ul className="list-disc list-inside mt-2 text-xs">
-                        <li>No confirmed medicine requests have specific inventory assignments (minv_id)</li>
-                        <li>The assigned inventory stocks are not found in current stock</li>
-                        <li>Data is still loading</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <MedicineDisplay
-                    medicines={enhancedMedicineStocks}
-                    initialSelectedMedicines={selectedMedicines}
-                    onSelectedMedicinesChange={handleSelectedMedicinesChange}
-                    itemsPerPage={10}
-                    currentPage={medicineDisplayPage}
-                    onPageChange={setMedicineDisplayPage}
-                    autoFillReasons={true}
-                    isLoading={isMedicinesLoading}
-                  />
-
-                  <div className="mt-6">
-                    <SignatureField ref={signatureRef} title="Signature" onSignatureChange={handleSignatureChange} required={true} />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Debug info for selected medicines
-            {selectedMedicines.length > 0 && (
-              <div className="mt-4 p-4 bg-gray-100 rounded">
-                <h4 className="font-semibold mb-2">Selected Medicines Debug Info:</h4>
-                <div className="text-sm">
-                  {selectedMedicines.map((med, index) => (
-                    <div key={index} className="mb-2 p-2 bg-white rounded">
-                      <div>
-                        Medicine: <span className="font-semibold text-blue-600">{med.med_name || "Unknown"}</span>
-                      </div>
-                      <div>
-                        MinvId: <span className="text-gray-600">{med.minv_id}</span>
-                      </div>
-                      <div>
-                        Original Stock ID: <span className="text-purple-600">{med.original_stock_id}</span>
-                      </div>
-                      <div>
-                        Qty: <span className="text-green-600">{med.medrec_qty}</span>
-                      </div>
-                      <div>
-                        Reason: <span className="text-orange-600">{med.reason}</span>
-                      </div>
-                      <div>
-                        MedReqItem ID: <span className={med.medreqitem_id ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>{med.medreqitem_id || "N/A"}</span>
-                      </div>
-                      <div>
-                        Auto-selected: <span className="text-blue-600">{med.inventory?.minv_id ? "Yes (by minv_id)" : "No"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )} */}
-          </CardContent>
-        </Card>
+        )}
 
         {/* Action Button */}
         <div className="flex justify-end mt-4">
-          <Button onClick={processMedicineAllocation} disabled={confirmedItemsCount === 0 || selectedMedicines.length === 0 || isPending || isRegistering || !signature} size="lg" className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400">
+          <Button 
+            onClick={processMedicineAllocation} 
+            disabled={
+              confirmedItemsCount === 0 || 
+              (!isAppMode && selectedMedicines.length === 0) || 
+              isPending || 
+              isRegistering || 
+              !signature
+            } 
+            size="lg" 
+            className="min-w-[200px] bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
+          >
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -792,7 +682,7 @@ export default function MedicineRequestDetail() {
             ) : (
               <>
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Submit ({selectedMedicines.length})   
+                {isAppMode ? "Complete Request" : `Submit (${selectedMedicines.length})`}
               </>
             )}
           </Button>

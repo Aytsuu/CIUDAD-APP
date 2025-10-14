@@ -23,7 +23,7 @@ import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries
 import ViewButton from "@/components/ui/view-button";
 import { useDebounce } from "@/hooks/use-debounce";
 
-// main component
+// main component           
 export default function ScheduleRecords() {
   type ScheduleRecord = {
     id: number;

@@ -28,7 +28,7 @@ urlpatterns=[
         path('create-medicine/request/', CreateMedicineRequestView.as_view(), name='medicine-request-create'), 
         
         # UPDATE OR DELETE
-        path('update-pending-medreq/<str:medreq_id>/',UpdateConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
+        path('update-pending-medreq/',UpdateConfirmAllPendingItemsView.as_view(), name='update-all medicine-request-pending'),
         path('update-medreq-item/<int:medreqitem_id>/',UpdateMedicinerequestItemView.as_view(),name='update-medicine-request-items'),
         path('update-medicine-request/<str:medreq_id>/', UpdateMedicineRequestView.as_view(), name='medicine_request_detail'),
 

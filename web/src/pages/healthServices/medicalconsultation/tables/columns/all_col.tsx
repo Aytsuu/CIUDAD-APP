@@ -116,7 +116,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
         return (
           <ViewButton
             onClick={() => {
-              navigate("/services/medical-consultation/records", {
+              navigate("/services/medical-consultation/records/individual-records", {
                 state: {
                   params: {
                     patientData

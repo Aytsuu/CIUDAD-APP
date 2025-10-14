@@ -9,6 +9,27 @@ from apps.healthProfiling.models import *
 from apps.maternal.models import *
 from django.db import models
 
+
+class MedConsultAppointment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    chief_complaint = models.CharField(max_length=255)
+    scheduled_date = models.DateField()
+    meridiem = models.CharField(max_length=2, choices=[('AM', 'AM'), ('PM', 'PM')])
+    status = models.CharField(max_length=50, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    archive_reason = models.TextField(null=True, blank=True)
+    
+    # CHANGED: Use CharField to match the VARCHAR type in database
+    rp = models.ForeignKey(
+        'healthProfiling.ResidentProfile',
+        on_delete=models.CASCADE,
+        db_column='rp_id',
+        to_field='rp_id'  # Specify which field to use as the foreign key
+    )
+    
+    class Meta:
+        db_table = "medconsult_appointment"
 class PhilHealthLaboratory(models.Model):
     lab_id = models.BigAutoField(primary_key=True)
     
@@ -107,6 +128,7 @@ class MedicalConsultation_Record(models.Model):
    
     # PhilHealth flag only
     is_phrecord = models.BooleanField(default=False)
+    app_id =models.ForeignKey(MedConsultAppointment, on_delete=models.SET_NULL, null=True, blank=True, db_column='app_id')
 
 
     class Meta:
@@ -145,23 +167,3 @@ class DateSlots(models.Model):
     def pm_available_slots(self):
         return max(0, self.pm_max_slots - self.pm_current_bookings)
 
-class MedConsultAppointment(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    chief_complaint = models.CharField(max_length=255)
-    scheduled_date = models.DateField()
-    meridiem = models.CharField(max_length=2, choices=[('AM', 'AM'), ('PM', 'PM')])
-    status = models.CharField(max_length=50, default="pending")
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    archive_reason = models.TextField(null=True, blank=True)
-    
-    # CHANGED: Use CharField to match the VARCHAR type in database
-    rp = models.ForeignKey(
-        'healthProfiling.ResidentProfile',
-        on_delete=models.CASCADE,
-        db_column='rp_id',
-        to_field='rp_id'  # Specify which field to use as the foreign key
-    )
-    
-    class Meta:
-        db_table = "medconsult_appointment"
