@@ -58,6 +58,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: Bu
       queryClient.invalidateQueries({
         queryKey: ['gad-budget-files', data.gbud_num],
       });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
 
       showSuccessToast('Budget entry created successfully');
       navigate(`/gad/gad-budget-tracker-table/${year}/`);

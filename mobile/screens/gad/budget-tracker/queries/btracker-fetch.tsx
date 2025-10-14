@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
     fetchGADBudgets,
-    fetchGADBudgetEntry,
+    fetchGADBudgetEntry,getBudgetAggregates,
     fetchGADBudgetFile, fetchBudgetLog,
     fetchGADBudgetFiles, fetchProjectProposalsAvailability
 } from "../request/btracker-get";
@@ -94,5 +94,20 @@ export const useGADBudgetLogs = (
     queryFn: () => fetchBudgetLog(year, page, pageSize, searchQuery),
     enabled: !!year,
     staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useGetBudgetAggregates = (year: string, options = {}) => {
+  return useQuery<{
+    total_budget: number;
+    total_expenses: number;
+    pending_expenses: number; // Add this
+    remaining_balance: number;
+  }, Error>({
+    queryKey: ["budgetAggregates", year],
+    queryFn: () => getBudgetAggregates(year),
+    enabled: !!year,
+    staleTime: 1000 * 60 * 5,
+    ...options,
   });
 };

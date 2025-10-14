@@ -68,3 +68,8 @@ export const fetchBudgetLog = async (
   const response = await api.get(`/gad/budget-logs/${year}/`, { params });
   return response.data;
 };
+
+export const getBudgetAggregates = async (year: string) => {
+  const response = await api.get(`/gad/gad-budget-aggregates/${year}/`);
+  return response.data;
+};

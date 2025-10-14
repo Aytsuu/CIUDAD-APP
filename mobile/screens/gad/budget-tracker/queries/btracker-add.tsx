@@ -74,6 +74,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],
       });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
       
       toast.success('Budget entry created successfully');
     },

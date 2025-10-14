@@ -14,6 +14,9 @@ from apps.act_log.utils import ActivityLogMixin
 from apps.pagination import StandardResultsPagination
 from django.db.models import Q
 from utils.supabase_client import remove_from_storage
+from django.db.models import Sum, DecimalField
+from django.db.models.functions import Coalesce
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -697,6 +700,103 @@ class ProjectProposalForProposal(generics.ListAPIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+class GADBudgetAggregatesView(APIView):
+    """Returns budget totals for a given year (excluding archived entries)"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request, year):
+        try:
+            # Get the yearly budget from GAD_Budget_Year
+            yearly_budget = GAD_Budget_Year.objects.filter(
+                gbudy_year=year,
+                gbudy_is_archive=False
+            ).first()
+            
+            if not yearly_budget:
+                return Response({
+                    'total_budget': 0,
+                    'total_expenses': 0,
+                    'pending_expenses': 0,
+                    'remaining_balance': 0,
+                })
+            
+            # Get active entries for calculating pending expenses
+            entries_queryset = GAD_Budget_Tracker.objects.filter(
+                gbudy__gbudy_year=year,
+                gbud_is_archive=False
+            )
+            
+            # Calculate pending expenses (entries with 0 actual expense)
+            pending_expenses_queryset = entries_queryset.filter(gbud_actual_expense=0)
+            pending_aggregates = pending_expenses_queryset.aggregate(
+                pending_expenses=Coalesce(Sum('gbud_proposed_budget'), 0, output_field=DecimalField())
+            )
+            
+            total_budget = Decimal(str(yearly_budget.gbudy_budget))
+            total_expenses = Decimal(str(yearly_budget.gbudy_expenses))
+            pending_expenses = Decimal(str(pending_aggregates['pending_expenses']))
+            remaining = total_budget - total_expenses
+            
+            return Response({
+                'total_budget': float(total_budget),
+                'total_expenses': float(total_expenses),
+                'pending_expenses': float(pending_expenses),
+                'remaining_balance': float(remaining),
+            })
+        except Exception as e:
+            logger.error(f"Error calculating budget aggregates: {str(e)}")
+            return Response({
+                'total_budget': 0,
+                'total_expenses': 0,
+                'pending_expenses': 0,
+                'remaining_balance': 0,
+            })
+
+class ProjectProposalGrandTotalView(APIView):
+    """Returns grand total for all non-archived project proposals"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        try:
+            queryset = ProjectProposal.objects.filter(
+                gpr_is_archive=False
+            ).select_related('dev')
+            
+            total = Decimal('0')
+            
+            for proposal in queryset:
+                if proposal.dev and proposal.dev.dev_gad_items:
+                    for item in proposal.dev.dev_gad_items:
+                        if not isinstance(item, dict):
+                            continue
+                        
+                        # Get amount
+                        amount = item.get('amount') or item.get('price') or 0
+                        try:
+                            amount = Decimal(str(amount))
+                        except:
+                            amount = Decimal('0')
+                        
+                        # Get pax and parse if string
+                        pax = item.get('pax', 1)
+                        if isinstance(pax, str):
+                            # Extract first number from string like "10 pax"
+                            match = re.search(r'(\d+)', pax)
+                            pax = int(match.group(1)) if match else 1
+                        else:
+                            pax = int(pax) if pax else 1
+                        
+                        total += amount * pax
+            
+            return Response({
+                'grand_total': float(total)
+            })
+        except Exception as e:
+            logger.error(f"Error calculating grand total: {str(e)}")
+            return Response({
+                'grand_total': 0
+            })
 
 # ===========================================================================================================
 
