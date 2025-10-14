@@ -570,6 +570,7 @@ interface Template {
   temp_filename: string;
   temp_applicantName?: string;
   temp_summon?: boolean;
+  temp_file_action?: boolean;
   temp_w_sign_right: boolean;
   temp_w_sign_left: boolean;
   temp_w_sign_applicant: boolean;
@@ -581,9 +582,11 @@ interface Template {
 interface TemplatePreviewProps {
   templates: Template[]; // Changed from individual props to array of templates
   signatory?: string | null;
+  pangkatSecretary?: string | null; 
+  pangkatChairman?: string | null;
 }
 
-function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
+function TemplatePreview({ templates, signatory, pangkatSecretary, pangkatChairman }: TemplatePreviewProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [_barangayLogoData, setBarangayLogoData] = useState<string | null>(null);
@@ -648,7 +651,7 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
     if (imagesLoaded) {
       generateMultiPagePDF();
     }
-  }, [imagesLoaded, templates, signatory]);
+  }, [imagesLoaded, templates, signatory, pangkatSecretary, pangkatChairman]);
 
   const generateHeader = (doc: jsPDF, template: Template, yPos: number, pageWidth: number, marginValue: number) => {
     const logoWidth = 90;
@@ -823,6 +826,55 @@ function TemplatePreview({ templates, signatory }: TemplatePreviewProps) {
     const textBelowSealOffset = 20;
 
     let currentY = footerY;
+
+ if (template.temp_file_action) {
+      // Right side - Pangkat Secretary
+      const rightX = pageWidth - marginValue - 200;
+      
+      doc.setFont("times", "bold");
+      doc.setFontSize(10);
+      const secretaryName = pangkatSecretary;
+      const secretaryWidth = doc.getTextWidth(String(secretaryName));
+      
+      // Add underline for secretary name
+      doc.text(String(secretaryName), rightX, currentY);
+      doc.setLineWidth(0.5);
+      doc.line(rightX, currentY + 2, rightX + secretaryWidth, currentY + 2);
+      
+      currentY += 15;
+      
+      doc.setFont("times", "normal");
+      doc.setFontSize(11);
+      doc.text("Pangkat Secretary", rightX + 30, currentY);
+      
+      // Reset currentY for left side
+      currentY = footerY;
+      
+      // Left side - Attested
+      doc.setFont("times", "normal");
+      doc.setFontSize(10);
+      doc.text("Attested:", signatureX, currentY);
+      
+      currentY += 40; // Space for signature
+      
+      doc.setFont("times", "bold");
+      doc.setFontSize(10);
+      const chairmanName = pangkatChairman;
+      const chairmanWidth = doc.getTextWidth(String(chairmanName));
+      
+      // Add underline for chairman name
+      doc.text(String(chairmanName), signatureX, currentY);
+      doc.setLineWidth(0.5);
+      doc.line(signatureX, currentY + 2, signatureX + chairmanWidth, currentY + 2);
+      
+      currentY += 15;
+      
+      doc.setFont("times", "normal");
+      doc.setFontSize(11);
+      doc.text("Pangkat Chairman", signatureX + 25, currentY);
+      
+      return; // Exit early, don't process other footer types
+    }    
 
     if (template.temp_summon) {
       const captainX = pageWidth - marginValue - 170;

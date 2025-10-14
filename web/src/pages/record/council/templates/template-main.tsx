@@ -1125,6 +1125,8 @@ interface RequestProps {
   isNonResident?: boolean;
   businessName?: string;
   Signatory?: string | null;
+  pangkatSecretary?: string | null;
+  pangkatChairman?: string | null;
   Custodies?: string[];
   showAddDetails?: boolean; // ako gi add kay makita ang add details nga button sa cert
 }
@@ -1146,13 +1148,14 @@ type Template = {
   temp_w_sign_right: boolean;
   temp_w_sign_left: boolean;
   temp_w_sign_applicant: boolean;
+  temp_file_action?: boolean;
   temp_w_seal: boolean;
   temp_body: string;
   temp_id?: string; 
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, Custodies, specificPurpose, showAddDetails = true} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, Custodies, specificPurpose, showAddDetails = true} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([]);
 
@@ -1804,11 +1807,11 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\t\t\t\tBarangay Case No.[ Case No. ]\n" +
       "[ Name of Complainant ]\n" +
       "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
-      "Complainant/s\n\n" +
+      "COMPLAINANT/S\n\n" +
       "      - AGAINTS -\n\n" +
       "[ Name of Respondent ]\n" +
       "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
-      "Respondent/s\n",
+      "RESPONDENT/S\n",
       temp_title: "CERTIFICATION TO FILE ACTION",
       temp_barangayLogo: barangayLogo,
       temp_cityLogo: cityLogo,
@@ -1817,7 +1820,8 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_paperSize: "letter",
       temp_margin: "narrow",
       temp_filename: "File Action",
-      temp_summon: true,
+      temp_file_action: true,
+      temp_summon: false,
       temp_w_sign_right: false,
       temp_w_sign_left: false,
       temp_w_sign_applicant: false,
@@ -2304,6 +2308,8 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
               <TemplatePreview
                 templates={previewTemplates} // Pass the entire array
                 signatory={Signatory?.toUpperCase()}
+                pangkatSecretary={pangkatSecretary?.toUpperCase()}         
+                pangkatChairman={pangkatChairman?.toUpperCase()}         
               />
             </div>
           }
