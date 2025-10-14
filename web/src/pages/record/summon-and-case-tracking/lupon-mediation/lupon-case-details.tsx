@@ -9,7 +9,6 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { ChevronLeft, Check, CircleAlert, AlertTriangle  } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import SummonPreview from "../council-mediation/summon-preview"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useGetTemplateRecord } from "../../council/templates/queries/template-FetchQueries"
 import { formatTime } from "@/helpers/timeFormatter"
@@ -27,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { InfoIcon } from "lucide-react"
 import SummonRemarksView from "../summon-remarks-view"
 import { useEscalateCase } from "../queries/summonUpdateQueries"
+import LuponPreview from "./conciliation-preview"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -120,7 +120,7 @@ export default function LuponCaseDetails() {
     const status_type = "Lupon"
     resolve({status_type, sc_id})
   }
-  
+
   const handleEscalate = () => {
     if (caseDetails?.comp_id) {
       escalate({sc_id, comp_id});
@@ -300,13 +300,11 @@ export default function LuponCaseDetails() {
                       </div>
                     }
                     title="Schedule Details"
-                    description={`Details for ${schedule.hs_level} on ${new Date(
-                      schedule.summon_date.sd_date
-                    ).toLocaleDateString()}`}
+                    description={`Details for ${schedule.hs_level} on ${formatDate(schedule.summon_date.sd_date, "long")}`}
                     className="w-[90vw] h-[90vh] max-w-[1800px] max-h-[1200px]"
                     mainContent={
                       <div className="w-full h-full">
-                        <SummonPreview
+                        <LuponPreview
                           sr_code={sc_code || ""}
                           barangayLogo={barangayLogo}
                           cityLogo={cityLogo}
