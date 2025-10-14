@@ -116,7 +116,11 @@ export default function LuponCaseDetails() {
   // Determine if Escalate button should be shown - only in 3rd Conciliation Proceedings
   const shouldShowEscalateButton = isThirdMediation && !isCaseClosed
 
-  const handleResolve = () => resolve(sc_id)
+  const handleResolve = () => {
+    const status_type = "Lupon"
+    resolve({status_type, sc_id})
+  }
+  
   const handleEscalate = () => {
     if (caseDetails?.comp_id) {
       escalate({sc_id, comp_id});

@@ -110,7 +110,11 @@ export default function SummonDetails() {
   // Determine if Resolve button should be shown
   const shouldShowResolveButton = !isCaseClosed
 
-  const handleResolve = () => resolve(sc_id)
+  const handleResolve = () => {
+    const status_type = "Council"
+    resolve({status_type, sc_id})
+  }
+  
   const handleForward = () => forward(sc_id)
 
   // Function to handle minutes view click

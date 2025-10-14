@@ -7,7 +7,7 @@ export const useResolveCase = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
 
      return useMutation({
-        mutationFn: (sc_id: string) => resolveCase(sc_id),
+        mutationFn: (data: { status_type: string; sc_id: string}) => resolveCase(data.status_type, data.sc_id),
         onMutate: () =>{
             toast.loading("Marking case...", { id: "resolveCase" });
         },

@@ -1,12 +1,23 @@
 import { api } from "@/api/api";
 
-export const resolveCase = async (sc_id: string) => {
+export const resolveCase = async (status_type: string, sc_id: string) => {
     try{
-        const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
-            sc_mediation_status: "Resolved",
-            sc_date_marked: new Date().toISOString(),
-        })
-        return res.data
+
+        if(status_type == "Council"){
+            const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                sc_mediation_status: "Resolved",
+                sc_date_marked: new Date().toISOString(),
+            })
+
+            return res.data
+        } else {
+            const res = await api.put(`clerk/update-summon-case/${sc_id}/`, {
+                sc_conciliation_status: "Resolved",
+                sc_date_marked: new Date().toISOString(),
+            })
+            return res.data
+        }
+        
     }catch(err){
         console.error(err)
     }
