@@ -4,16 +4,14 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
-  ActivityIndicator,
   Dimensions,
   RefreshControl,
 } from "react-native";
 import { format, parseISO, isSameMonth, isSameDay, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from "date-fns";
-import { Plus, ChevronLeft, ChevronRight, Calendar } from "lucide-react-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import PageLayout from "@/screens/_PageLayout";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingState } from "@/components/ui/loading-state";
 import { getAnnualDevPlansByYear } from "../annual-dev-plan/restful-api/annualDevPlanGetAPI";
 
@@ -40,7 +38,6 @@ const GADActivityCalendar = () => {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [eventViewMode, setEventViewMode] = useState<"active" | "archive">("active");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [allEvents, setAllEvents] = useState<GADEvent[]>([]);
@@ -100,15 +97,8 @@ const GADActivityCalendar = () => {
     setRefreshing(false);
   };
 
-  // Filter events by archive status (for now, all events are active)
-  const filteredEvents = useMemo(() => {
-    return allEvents.filter(event => {
-      if (eventViewMode === "archive") {
-        return false; // No archived events for now
-      }
-      return true; // All events are active
-    });
-  }, [allEvents, eventViewMode]);
+  // All events are active (no filtering needed)
+  const filteredEvents = allEvents;
 
   // Get events for the selected date
   const getEventsForDate = (date: Date) => {

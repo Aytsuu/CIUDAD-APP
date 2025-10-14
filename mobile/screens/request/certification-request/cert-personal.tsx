@@ -68,7 +68,6 @@ const CertForm: React.FC = () => {
   }, [hasVoterId]);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   
@@ -113,7 +112,6 @@ const CertForm: React.FC = () => {
     
     
     const isEligibleForFreeCert = user?.personal?.voter_id !== null && user?.personal?.voter_id !== undefined;
-    const reqAmount = isEligibleForFreeCert ? 0 : (selectedPurpose?.pr_rate || 0);
     
     addPersonalCert.mutate({
       cert_type: "personal",

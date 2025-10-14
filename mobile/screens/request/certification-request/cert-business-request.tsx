@@ -21,7 +21,6 @@ const CertPermit: React.FC = () => {
   const [grossSales, setGrossSales] = useState("");
   const [selectedGrossSalesRange, setSelectedGrossSalesRange] = useState("");
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Image upload states
