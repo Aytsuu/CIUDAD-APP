@@ -175,7 +175,7 @@ function ResolutionCreate({ onSuccess }: ResolutionCreateFormProps) {
 
     return (
         <_ScreenLayout
-            headerBetweenAction={<Text className="text-[13px]">Add New Resolution</Text>}
+            headerBetweenAction={<Text className="text-[13px]">Add Resolution</Text>}
             headerAlign="left"
             showBackButton={true}
             showExitButton={false}

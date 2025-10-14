@@ -524,6 +524,9 @@ import { useDeleteResolution } from './queries/resolution-delete-queries';
 import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queries';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
+
 
 function ResolutionPage() {
   const router = useRouter();
@@ -650,9 +653,19 @@ function ResolutionPage() {
     });    
   }
 
+
   const handleRefresh = () => {
     refetch();
   };
+
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
+
 
   const renderItem = ({ item }: { item: any }) => (
     <Pressable onPress={() => handleEdit(item)} className="mb-4">
@@ -775,7 +788,7 @@ function ResolutionPage() {
         </TouchableOpacity>
       }
       headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61]">Resolution Record</Text>
+          <Text className="text-gray-900 text-[13px]">Resolution Record</Text>
       }
       rightAction={
         <View className="w-10 h-10 rounded-full items-center justify-center"></View>
@@ -851,14 +864,7 @@ function ResolutionPage() {
 
           <TabsContent value="active">
             {isLoading || isArchivePending || isDeletePending ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating resolution records..." : 
-                  isDeletePending ? "Deleting resolution record..." : 
-                  "Loading resolutions..."}
-                </Text>
-              </View>
+              renderLoadingState()          
             ) : (
               <FlatList
                 data={filteredData}
@@ -877,14 +883,7 @@ function ResolutionPage() {
 
           <TabsContent value="archive">
             {isLoading || isArchivePending || isDeletePending ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating resolution records..." : 
-                  isDeletePending ? "Deleting resolution record..." : 
-                  "Loading resolutions..."}
-                </Text>
-              </View>
+              renderLoadingState()          
             ) : (
               <FlatList
                 data={filteredData}
