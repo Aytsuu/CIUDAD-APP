@@ -586,7 +586,7 @@ interface TemplatePreviewProps {
   pangkatChairman?: string | null;
 }
 
-function TemplatePreview({ templates, signatory, pangkatSecretary, pangkatChairman }: TemplatePreviewProps) {
+function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MAE GANSON", pangkatChairman = "FLORANTE T. NAVARRO III" }: TemplatePreviewProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [_barangayLogoData, setBarangayLogoData] = useState<string | null>(null);
@@ -712,9 +712,23 @@ function TemplatePreview({ templates, signatory, pangkatSecretary, pangkatChairm
       { text: "Republic of the Philippines", bold: true, size: 12 },
       { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
       { text: "____________________________________", bold: true, size: 14 },
-      { text: "Office of the Barangay Captain", bold: false, size: 13 },
+      { 
+        text: template.temp_file_action 
+          ? "Office of the Lupong Tagapamayapa" 
+          : "Office of the Barangay Captain", 
+        bold: false, 
+        size: 13 
+      },
       { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-      { text: `${template.temp_email} | ${template.temp_telNum}`, bold: false, size: 11 }
+      { text: `${template.temp_email} | ${template.temp_telNum}`, bold: false, size: 11 },
+      { text: "", bold: false, size: 11 },
+      { 
+        text: template.temp_file_action 
+          ? "OFFICE OF THE LUPONG TAGAPAMAYAPA" 
+          : "", 
+        bold: true, 
+        size: 13 
+      },
     ];
 
     const centerX = pageWidth / 2;
@@ -827,16 +841,16 @@ function TemplatePreview({ templates, signatory, pangkatSecretary, pangkatChairm
 
     let currentY = footerY;
 
- if (template.temp_file_action) {
-      // Right side - Pangkat Secretary
-      const rightX = pageWidth - marginValue - 200;
+    if (template.temp_file_action) {
+      // Right side - Pangkat Secretary - PROPERLY ALIGNED TO RIGHT
+      const rightX = pageWidth - marginValue - 170;
       
       doc.setFont("times", "bold");
       doc.setFontSize(10);
       const secretaryName = pangkatSecretary;
       const secretaryWidth = doc.getTextWidth(String(secretaryName));
       
-      // Add underline for secretary name
+      // Add underline for secretary name - RIGHT ALIGNED
       doc.text(String(secretaryName), rightX, currentY);
       doc.setLineWidth(0.5);
       doc.line(rightX, currentY + 2, rightX + secretaryWidth, currentY + 2);
@@ -845,15 +859,20 @@ function TemplatePreview({ templates, signatory, pangkatSecretary, pangkatChairm
       
       doc.setFont("times", "normal");
       doc.setFontSize(11);
-      doc.text("Pangkat Secretary", rightX + 30, currentY);
+      // Right align the title too
+      const secretaryTitle = "Pangkat Secretary";
+      const titleWidth = doc.getTextWidth(secretaryTitle);
+      doc.text(secretaryTitle, rightX + (secretaryWidth - titleWidth) / 2, currentY); // Center the title under the name
       
-      // Reset currentY for left side
+      // Reset currentY for left side (Attested section)
       currentY = footerY;
+
+      currentY += 40;
       
       // Left side - Attested
       doc.setFont("times", "normal");
       doc.setFontSize(10);
-      doc.text("Attested:", signatureX, currentY);
+      doc.text("ATTESTED:", signatureX, currentY);
       
       currentY += 40; // Space for signature
       
@@ -873,8 +892,7 @@ function TemplatePreview({ templates, signatory, pangkatSecretary, pangkatChairm
       doc.setFontSize(11);
       doc.text("Pangkat Chairman", signatureX + 25, currentY);
       
-      return; // Exit early, don't process other footer types
-    }    
+    }
 
     if (template.temp_summon) {
       const captainX = pageWidth - marginValue - 170;
