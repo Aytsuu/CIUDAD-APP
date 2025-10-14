@@ -12,7 +12,6 @@ import {
   Dimensions,
 } from "react-native";
 import {
-  Plus,
   Archive,
   ArchiveRestore,
   Trash,
@@ -29,19 +28,17 @@ import { SelectLayout } from "@/components/ui/select-layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { useGADBudgets } from "./queries/btracker-fetch";
+import { useGADBudgets, useGetBudgetAggregates } from "./queries/btracker-fetch";
 import {
   useArchiveGADBudget,
   useRestoreGADBudget,
   usePermanentDeleteGADBudget,
 } from "./queries/btracker-del";
-import { useGetGADYearBudgets } from "./queries/btracker-yearqueries";
 import PageLayout from "@/screens/_PageLayout";
 import {
   GADBudgetEntryUI,
   DropdownOption,
   GADBudgetFile,
-  BudgetYear
 } from "./gad-btracker-types";
 import { useDebounce } from "@/hooks/use-debounce";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -60,6 +57,7 @@ const BudgetTrackerRecords = () => {
   const [searchInputVal, setSearchInputVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("All");
+  const { data: aggregates, isLoading: aggregatesLoading } = useGetBudgetAggregates(year || "");
   const [refreshing, setRefreshing] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   
@@ -76,8 +74,6 @@ const BudgetTrackerRecords = () => {
     selectedMonth,
     activeTab === "archive"
   );
-
-  const { data: yearBudgets} = useGetGADYearBudgets();
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: deleteEntry } = usePermanentDeleteGADBudget();
@@ -92,14 +88,7 @@ const BudgetTrackerRecords = () => {
     setRefreshing(false);
   };
 
-  // Extract entries from data structure like web
   const entries = entriesData?.results || [];
-
-  const currentYearBudget = yearBudgets?.results?.find(
-    (budget: BudgetYear) => budget.gbudy_year === year
-  )?.gbudy_budget;
-
-  // Remove frontend filtering - let backend handle it
   const filteredData = entries;
 
   const handleArchive = (gbud_num: number) => {
@@ -218,59 +207,6 @@ const BudgetTrackerRecords = () => {
     if (value === "active" || value === "archive") {
       setActiveTab(value);
     }
-  };
-
-  const getLatestRemainingBalance = (): number => {
-    // If no entries, return the initial budget
-    if (!entries || entries.length === 0) {
-      return currentYearBudget ? Number(currentYearBudget) : 0;
-    }
-
-    // Filter active (unarchived) entries
-    const activeEntries = entries.filter((entry) => !entry.gbud_is_archive);
-
-    // If no active entries, return initial budget
-    if (activeEntries.length === 0) {
-      return currentYearBudget ? Number(currentYearBudget) : 0;
-    }
-
-    // Calculate balance from scratch using only gbud_actual_expense
-    let balance = currentYearBudget ? Number(currentYearBudget) : 0;
-
-    activeEntries.forEach((entry) => {
-      if (entry.gbud_actual_expense !== null) {
-        const amount = Number(entry.gbud_actual_expense) || 0;
-        balance -= amount;
-      }
-    });
-
-    return balance;
-  };
-
-  const calculateTotalProposedWithoutActual = () => {
-    if (!entries || entries.length === 0) return 0;
-
-    return entries.reduce((total, entry) => {
-      if (entry.gbud_is_archive) return total;
-      const toNum = (val: any) => {
-        if (val === undefined || val === null) return undefined;
-        const num = +val; // Convert to number
-        return isNaN(num) ? undefined : num;
-      };
-
-      const actual = toNum(entry.gbud_actual_expense);
-      const proposed = toNum(entry.gbud_proposed_budget);
-      const shouldInclude =
-        (actual === undefined || actual === null || actual === 0) &&
-        proposed !== undefined &&
-        proposed !== null &&
-        proposed !== 0;
-
-      if (shouldInclude) {
-        return total + proposed;
-      }
-      return total;
-    }, 0);
   };
 
   const renderItem = ({ item }: { item: GADBudgetEntryUI }) => (
@@ -397,27 +333,28 @@ const BudgetTrackerRecords = () => {
             <Text className="text-gray-600">Budget:</Text>
             <Text className="text-blue-500 font-bold ml-2">
               ₱
-              {Number(currentYearBudget).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              {aggregatesLoading ? "..." : Number(aggregates?.total_budget || 0).toFixed(2)}
             </Text>
           </View>
           <View className="flex-row items-center mt-1">
             <Text className="text-gray-600">Remaining Balance:</Text>
             <Text className="text-green-600 font-bold ml-2">
               ₱
-              {getLatestRemainingBalance().toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              {aggregatesLoading ? "..." : Number(aggregates?.remaining_balance || 0).toFixed(2)}
+            </Text>
+          </View>
+          <View className="flex-row items-center mt-1">
+            <Text className="text-gray-600">Total Expenses:</Text>
+            <Text className="text-amber-600 font-bold ml-2">
+              ₱
+              {aggregatesLoading ? "..." : Number(aggregates?.total_expenses || 0).toFixed(2)}
             </Text>
           </View>
           <View className="flex-row items-center mt-1">
             <Text className="text-gray-600">Pending Expenses:</Text>
             <Text className="text-red-600 font-bold ml-2">
               ₱
-              {calculateTotalProposedWithoutActual().toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              {aggregatesLoading ? "..." : Number(aggregates?.pending_expenses || 0).toFixed(2)}
             </Text>
           </View>
         </View>

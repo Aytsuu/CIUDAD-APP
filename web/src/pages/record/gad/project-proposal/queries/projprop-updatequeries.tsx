@@ -9,6 +9,7 @@ const queryClient = useQueryClient();
     mutationFn: putProjectProposal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
       showSuccessToast("Project proposal updated successfully");
     },
     onError: (_error: any) => {

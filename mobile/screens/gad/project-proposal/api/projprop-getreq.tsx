@@ -152,3 +152,8 @@ const transformProposalWithData = (proposal: any, suppDocs: any[]) => {
   
   return transformed;
 };
+
+export const getProjectProposalGrandTotal = async () => {
+  const response = await api.get(`/gad/project-proposals-grand-total/`);
+  return response.data;
+};
