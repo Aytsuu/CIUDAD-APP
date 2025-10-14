@@ -152,3 +152,33 @@ export const getChildData = async (id: any): Promise<any> => {
 		throw error;
 	}
 }
+
+
+export const getAllAppointments = async (filters: AppointmentFilters = {}) => {
+  try {
+    const params = new URLSearchParams();
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.page_size) params.append('page_size', filters.page_size.toString());
+    if (filters.search) params.append('search', filters.search);
+    if (filters.tab && filters.tab !== 'all') {
+      params.append('status', filters.tab);  // Uses 'tab' as 'status'
+    }
+    if (filters.time_frame) params.append('time_frame', filters.time_frame);
+    if (filters.sort_by) params.append('sort_by', filters.sort_by);
+    if (filters.sort_order) params.append('sort_order', filters.sort_order);
+
+    const queryString = params.toString();
+    const url = queryString 
+      ? `/patientrecords/all-appointments/?${queryString}`
+      : "/patientrecords/all-appointments/";
+
+    console.log('Fetching all appointments URL:', url);
+    
+    const res = await api2.get(url);
+     console.log('API Response:', res.data); 
+    return res.data || {count: 0, next: null, previous: null, results: []};
+  } catch (error) {
+    console.error("Error fetching all appointments:", error);
+    return {count: 0, next: null, previous: null, results: []};
+  }
+};

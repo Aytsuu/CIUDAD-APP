@@ -12,6 +12,7 @@ import { useVaccinationRecords } from "./queries/fetch";
 import { Overallrecordcard } from "../components/overall-cards";
 import { PaginationControls } from "../components/pagination-layout";
 import { useDebounce } from "@/hooks/use-debounce";
+import { TabType, TabBar } from "../components/tab-bar";
 
 interface VaccinationRecord {
   pat_id: string;
@@ -62,25 +63,25 @@ interface ApiResponse {
   };
 }
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients</Text>
-    </TouchableOpacity>
-  </View>
-);
+// const TabBar: React.FC<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+//   counts: { all: number; resident: number; transient: number };
+// }> = ({ activeTab, setActiveTab, counts }) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients</Text>
+//     </TouchableOpacity>
+//   </View>
+// );
 
 export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -256,7 +257,7 @@ const debouncedSearchQuery = useDebounce(searchQuery, 500);
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         <View className="px-4 flex-row items-center justify-between mt-4">
           <View className="flex-row items-center">

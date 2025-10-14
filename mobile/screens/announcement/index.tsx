@@ -95,14 +95,14 @@ export default () => {
 
   const handleScroll = () => {
     setIsScrolling(true);
-    if(scrollTimeout.current){
+    if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
 
     scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false)
-    }, 150)
-  }
+      setIsScrolling(false);
+    }, 150);
+  };
 
   const handleSearch = React.useCallback(() => {
     setIsRefreshing(true);
@@ -137,7 +137,7 @@ export default () => {
     if (isScrolling) {
       setIsLoadMore(true);
     }
-    if (hasNext && isScrolling && !isFetching && !isRefreshing && !isLoading) {
+    if (hasNext && isScrolling) {
       setPageSize((prev) => prev + 5);
     }
   };
@@ -148,12 +148,117 @@ export default () => {
   };
 
   const handleFormatDate = (posted: string) => {
-    const timeAgo = formatTimeAgo(posted)
-    const raw = timeAgo?.split(" ")[0]
-    const isPastWeek = parseInt(raw) > 7 && raw.split("")[raw.length - 1] == "d"
+    const timeAgo = formatTimeAgo(posted);
+    const raw = timeAgo?.split(" ")[0];
+    const isPastWeek =
+      parseInt(raw) > 7 && raw.split("")[raw.length - 1] == "d";
 
-    return isPastWeek ? formatDate(posted, "short") : timeAgo
-  }
+    return isPastWeek ? formatDate(posted, "short") : timeAgo;
+  };
+
+  const ItemCard = React.memo(({ item }: { item: Record<string, any> }) => (
+    <View className="">
+      {/* Header */}
+      <View className="flex-row items-start justify-between mb-2">
+        <View className="flex-1 mr-2">
+          <Text
+            className="text-base font-semibold text-gray-900 truncate"
+            numberOfLines={2}
+          >
+            {item.ann_title}
+          </Text>
+          <Text className="text-xs text-gray-500 mt-0.5 truncate font-medium">
+            {item.staff.id == user?.staff?.staff_id
+              ? "POSTED BY YOU"
+              : `${capitalize(item.staff.name)} - ${capitalize(
+                  item.staff.position
+                )}`}
+          </Text>
+        </View>
+        <View>
+          {item.staff.id == user?.staff?.staff_id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Ellipsis size={20} className="text-gray-700" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(announcement)/announcementcreate",
+                      params: {
+                        data: JSON.stringify(item),
+                      },
+                    })
+                  }
+                >
+                  <Text className="text-sm text-gray-700">Edit</Text>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Text className="text-sm text-gray-700">Delete</Text>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </View>
+      </View>
+
+      {/* Description with gradient fade */}
+      <View className="relative mb-2">
+        {viewMoreList.includes(item.ann_id) ? (
+          <View>
+            <Text className="text-sm text-gray-700 leading-5">
+              {item.ann_details}
+            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                setViewMoreList(
+                  viewMoreList.filter((view) => view !== item.ann_id)
+                )
+              }
+              className="mt-1"
+            >
+              <Text className="text-sm font-semibold text-primaryBlue">
+                View less
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text className="text-sm text-gray-700 leading-5">
+            {truncateText(item.ann_details)}
+            {item.ann_details.length > 150 && (
+              <Text
+                onPress={() =>
+                  setViewMoreList((prev) => [...prev, item.ann_id])
+                }
+                className="text-sm font-semibold text-primaryBlue"
+              >
+                {" "}
+                View more
+              </Text>
+            )}
+          </Text>
+        )}
+      </View>
+      {item.files?.length > 0 && <ImageCarousel images={item.files} />}
+
+      {/* Footer Info */}
+      <View className="flex-row items-center justify-between border-b border-gray-100 pb-5">
+        <View></View>
+        <Text className="text-xs text-gray-500">
+          {handleFormatDate(
+            item.ann_start_at ? item.ann_start_at : item.ann_created_at
+          )}
+        </Text>
+      </View>
+    </View>
+  ));
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Record<string, any> }) => <ItemCard item={item} />,
+    []
+  );
 
   if (isLoading && isInitialRender) {
     return <LoadingState />;
@@ -302,7 +407,7 @@ export default () => {
             )}
           </View>
           {!isRefreshing && (
-            <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${totalCount} announcements ${
+            <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${data.length} of ${totalCount} announcements ${
               myAnnouncement ? "you created" : ""
             }`}</Text>
           )}
@@ -317,125 +422,31 @@ export default () => {
             overScrollMode="never"
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.3}
-            maxToRenderPerBatch={5}
-            initialNumToRender={5}
-            windowSize={5}
+            maxToRenderPerBatch={10}
+            initialNumToRender={10}
+            windowSize={21}
             data={data}
             onScroll={handleScroll}
-            renderItem={({ item }) => (
-              <View className="">
-                {/* Header */}
-                <View className="flex-row items-start justify-between mb-2">
-                  <View className="flex-1 mr-2">
-                    <Text
-                      className="text-base font-semibold text-gray-900 truncate"
-                      numberOfLines={2}
-                    >
-                      {item.ann_title}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-0.5 truncate font-medium">
-                      {item.staff.id == user?.staff?.staff_id
-                        ? "POSTED BY YOU"
-                        : `${capitalize(item.staff.name)} - ${capitalize(
-                            item.staff.position
-                          )}`}
-                    </Text>
-                  </View>
-                  <View>
-                    {item.staff.id == user?.staff?.staff_id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Ellipsis size={20} className="text-gray-700" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onPress={() => router.push({
-                            pathname: "/(announcement)/announcementcreate",
-                            params: {
-                              data: JSON.stringify(item)
-                            }
-                          })}>
-                            <Text className="text-sm text-gray-700">Edit</Text>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Text className="text-sm text-gray-700">
-                              Delete
-                            </Text>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </View>
-                </View>
-
-                {/* Description with gradient fade */}
-                <View className="relative mb-2">
-                  {viewMoreList.includes(item.ann_id) ? (
-                    <View>
-                      <Text className="text-sm text-gray-700 leading-5">
-                        {item.ann_details}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() =>
-                          setViewMoreList(
-                            viewMoreList.filter((view) => view !== item.ann_id)
-                          )
-                        }
-                        className="mt-1"
-                      >
-                        <Text className="text-sm font-semibold text-primaryBlue">
-                          View less
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <Text className="text-sm text-gray-700 leading-5">
-                      {truncateText(item.ann_details)}
-                      {item.ann_details.length > 150 && (
-                        <Text
-                          onPress={() =>
-                            setViewMoreList((prev) => [...prev, item.ann_id])
-                          }
-                          className="text-sm font-semibold text-primaryBlue"
-                        >
-                          {" "}
-                          View more
-                        </Text>
-                      )}
-                    </Text>
-                  )}
-                </View>
-                {item.files?.length > 0 && (
-                  <ImageCarousel 
-                    images={item.files}
-                  />
-                )}
-
-                {/* Footer Info */}
-                <View className="flex-row items-center justify-between border-b border-gray-100 pb-5">
-                  <View></View>
-                  <Text className="text-xs text-gray-500">
-                    {handleFormatDate(item.ann_start_at ? item.ann_start_at : item.ann_created_at)}
-                  </Text>
-                </View>
-              </View>
-            )}
+            renderItem={renderItem}
             keyExtractor={(item) => item.ann_id}
+            removeClippedSubviews
             ListFooterComponent={() =>
-              isFetching && pageSize > INITIAL_PAGE_SIZE ? (
+              isFetching ? (
                 <View className="py-4 items-center">
                   <ActivityIndicator size="small" color="#3B82F6" />
                   <Text className="text-xs text-gray-500 mt-2">
                     Loading more...
                   </Text>
                 </View>
-              ) : !hasNext && data.length > 0 && pageSize >= data.length ? (
-                <View className="py-4 items-center">
-                  <Text className="text-xs text-gray-400">
-                    No more announcements
-                  </Text>
-                </View>
-              ) : null
+              ) : (
+                !hasNext && data.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more announcements
+                    </Text>
+                  </View>
+                )
+              )
             }
             refreshControl={
               <RefreshControl
@@ -453,7 +464,7 @@ export default () => {
               <View className="items-center justify-center py-12">
                 <FileText size={48} className="text-gray-300 mb-3" />
                 <Text className="text-gray-500 text-sm">
-                  No announcements yet
+                  No announcements found
                 </Text>
               </View>
             }

@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { getResident, getPatients, getPatientDetails, AppointmentFilters, getAllFollowUpVisits, getAllTransientAddresses, checkPatientExistsGet, getChildData, getAppointmentsByResidentId } from "./get";
+import { getResident, getPatients, getPatientDetails, AppointmentFilters, getAllFollowUpVisits, getAllTransientAddresses, checkPatientExistsGet, getChildData, getAppointmentsByResidentId, getAllAppointments } from "./get";
 import { api2 } from "@/api/api";
 
 export const useChildData = (id: any,) => {
@@ -148,3 +148,14 @@ export const useCheckPatientExists = (rp_id: string) => {
 		staleTime: 300000, // 5 minutes
 	})
 }
+
+export const useAllAppointments = (filters: AppointmentFilters, options = {}) => {
+  return useQuery({
+    queryKey: ['allAppointments', filters],
+    queryFn: () => getAllAppointments(filters),
+    staleTime: 60 * 1000, // 1 minute
+    retry: 3,
+    placeholderData: keepPreviousData,
+    ...options,
+  });
+};

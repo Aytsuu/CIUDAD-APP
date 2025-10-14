@@ -5,12 +5,12 @@ import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { router } from "expo-router";
-import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFPPatientsCounts, getFPRecordsList } from "./GetRequest";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { debounce } from "lodash";
+import { TabBar, TabType } from "../components/tab-bar";
 
 interface FPRecord {
   fprecord_id: number;
@@ -32,7 +32,7 @@ interface FPPatientsCount {
   transient_fp_patients: number;
 }
 
-type TabType = "all" | "Resident" | "Transient";
+// type TabType = "all" | "Resident" | "Transient";
 
 // Components
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
@@ -69,38 +69,37 @@ const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
   );
 };
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('Resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'Resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'Resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('Transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'Transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'Transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
+// const TabBar: React.FC<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+// }> = ({ activeTab, setActiveTab }) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('all')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         All
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('Resident')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'Resident' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'Resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Residents
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('Transient')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'Transient' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'Transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Transients
+//       </Text>
+//     </TouchableOpacity>
+//   </View>
+// );
 
 const FPRecordCard: React.FC<{
   record: FPRecord;
@@ -122,7 +121,7 @@ const FPRecordCard: React.FC<{
                 <User color="white" size={20} />
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
+                <Text className="font-semibold text-md text-gray-900">
                   {record.patient_name}
                 </Text>
                 <Text className="text-gray-500 text-sm">ID: {record.patient_id}</Text>
@@ -135,7 +134,7 @@ const FPRecordCard: React.FC<{
 
       {/* Details */}
       <View className="p-4">
-        <View className="flex-row items-center mb-3">
+        <View className="flex-row items-center">
           <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Client Type: <Text className="font-medium text-gray-900">{record.client_type}</Text>
@@ -152,7 +151,8 @@ export default function OverallFpRecordsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(10);
 
   const queryClient = useQueryClient();
 
@@ -285,7 +285,7 @@ export default function OverallFpRecordsScreen() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
@@ -298,7 +298,20 @@ export default function OverallFpRecordsScreen() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        <View className="px-4 flex-row items-center justify-between mt-4">
+                  <View className="flex-row items-center">
+                    <Text className="text-sm text-gray-600">
+                      Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <Text className="text-sm font-medium text-gray-800">
+                      Page {currentPage} of {totalPages}
+                    </Text>
+                  </View>
+                </View>
 
         {/* Records List */}
         {fpRecords.length === 0 ? (
@@ -339,50 +352,43 @@ export default function OverallFpRecordsScreen() {
               </View>
             )}
             ListFooterComponent={() => (
-              totalPages > 1 ? (
-                <View className="px-4 mb-4">
-                  <Card className="bg-white border-slate-200">
-                    <CardContent className="p-4">
-                      <View className="flex-row items-center justify-between">
-                        <Button
-                          onPress={() => handlePageChange(page - 1)}
-                          disabled={page === 1 || !fpData?.previous}
-                          variant={page === 1 ? "secondary" : "default"}
-                          className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
-                        >
-                          <Text
-                            className={`font-medium ${
-                              page === 1 ? "text-slate-400" : "text-white"
-                            }`}
-                          >
-                            Previous
-                          </Text>
-                        </Button>
+  <View className="px-4 mb-4">
+ 
+    {totalPages > 1 && (
+      <Card className="bg-white border-slate-200">
+        <CardContent className="p-4">
+          <View className="flex-row items-center justify-between">
+            <Button
+              onPress={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              variant={page === 1 ? "secondary" : "default"}
+              className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
+            >
+              <Text className={page === 1 ? "text-slate-400" : "text-white"}>
+                Previous
+              </Text>
+            </Button>
 
-                        <Text className="text-slate-600 font-medium">
-                          Page {page} of {totalPages}
-                        </Text>
+            <Text className="text-slate-600 font-medium">
+              Page {page} of {totalPages}
+            </Text>
 
-                        <Button
-                          onPress={() => handlePageChange(page + 1)}
-                          disabled={page === totalPages || !fpData?.next}
-                          variant={page === totalPages ? "secondary" : "default"}
-                          className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
-                        >
-                          <Text
-                            className={`font-medium ${
-                              page === totalPages ? "text-slate-400" : "text-white"
-                            }`}
-                          >
-                            Next
-                          </Text>
-                        </Button>
-                      </View>
-                    </CardContent>
-                  </Card>
-                </View>
-              ) : null
-            )}
+            <Button
+              onPress={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              variant={page === totalPages ? "secondary" : "default"}
+              className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
+            >
+              <Text className={page === totalPages ? "text-slate-400" : "text-white"}>
+                Next
+              </Text>
+            </Button>
+          </View>
+        </CardContent>
+      </Card>
+    )}
+  </View>
+)}
           />
         )}
       </View>

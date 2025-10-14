@@ -11,6 +11,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { useMedicalRecord } from "./queries/fetch";
 import { Overallrecordcard } from "../components/overall-cards";
 import { PaginationControls } from "../components/pagination-layout";
+import { TabBar, TabType } from "../components/tab-bar";
 
 // Types
 interface MedicalRecord {
@@ -53,25 +54,24 @@ interface MedicalRecord {
 }
 
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All ({counts.all})</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents ({counts.resident})</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients ({counts.transient})</Text>
-    </TouchableOpacity>
-  </View>
-);
+// const TabBar: React.FC<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+// }> = ({ activeTab, setActiveTab}) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients</Text>
+//     </TouchableOpacity>
+//   </View>
+// );
 
 export default function AllMedicalRecord() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -138,22 +138,22 @@ export default function AllMedicalRecord() {
   const formattedData = formatMedicalData();
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
-  const hasNext = !!apiResponse?.next;
-  const hasPrevious = !!apiResponse?.previous;
+  // const hasNext = !!apiResponse?.next;
+  // const hasPrevious = !!apiResponse?.previous;
 
   // Calculate counts for summary cards and tabs
-  const counts = useMemo(() => {
-    if (!formattedData) return { all: 0, resident: 0, transient: 0 };
+  // const counts = useMemo(() => {
+  //   if (!formattedData) return { all: 0, resident: 0, transient: 0 };
 
-    const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
-    const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
+  //   const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
+  //   const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
 
-    return {
-      all: totalCount,
-      resident: residentCount,
-      transient: transientCount
-    };
-  }, [formattedData, totalCount]);
+  //   return {
+  //     all: totalCount,
+  //     resident: residentCount,
+  //     transient: transientCount
+  //   };
+  // }, [formattedData, totalCount]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -195,7 +195,7 @@ export default function AllMedicalRecord() {
             <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medical Records</Text>}
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medical Consultation Records</Text>}
         rightAction={<View className="w-10 h-10" />}
       >
         <View className="flex-1 justify-center items-center bg-gray-50 px-6">
@@ -218,20 +218,20 @@ export default function AllMedicalRecord() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medical Records</Text>}
+      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Medical Consultation Records</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 ">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3  border-b border-gray-200">
-          <View className="flex-row p-2 items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Results Info */}
         <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
