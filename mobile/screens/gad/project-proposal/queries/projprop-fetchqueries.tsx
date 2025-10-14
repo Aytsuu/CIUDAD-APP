@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs, getProjectProposalYears} from "../api/projprop-getreq"
+import { getProjectProposals, getProjectProposal, getStaffList, getSupportDocs, getProjectProposalYears, getProjectProposalGrandTotal} from "../api/projprop-getreq"
 import { Staff, ProjectProposal, SupportDoc } from "../projprop-types"
 
 export const useGetProjectProposalYears = (options = {}) => {
@@ -51,5 +51,14 @@ export const useGetSupportDocs = (proposalId: number, options = {}) => {
     queryFn: () => getSupportDocs(proposalId),
     enabled: !!proposalId,
     ...options
+  });
+};
+
+export const useGetProjectProposalGrandTotal = (options = {}) => {
+  return useQuery<{ grand_total: number }, Error>({
+    queryKey: ["projectProposalGrandTotal"],
+    queryFn: getProjectProposalGrandTotal,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    ...options,
   });
 };

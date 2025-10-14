@@ -41,6 +41,7 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.budgetData.gbud_num] });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
       toast.success('Budget entry updated successfully');
     },
     onError: (error: any) => {

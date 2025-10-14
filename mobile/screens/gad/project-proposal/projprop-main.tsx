@@ -16,6 +16,7 @@ import {
 import {
   useGetProjectProposals,
   useGetProjectProposalYears,
+  useGetProjectProposalGrandTotal
 } from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
@@ -49,7 +50,8 @@ const ProjectProposalList: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
-  
+  const { data: grandTotalData } = useGetProjectProposalGrandTotal();
+  const grandTotal = grandTotalData?.grand_total || 0;
   const pageSize = 10;
   const { data: availableYears = [] } = useGetProjectProposalYears();
   const {
@@ -88,25 +90,6 @@ const ProjectProposalList: React.FC = () => {
     setSearchQuery(searchInputVal);
     setCurrentPage(1);
   };
-
-  // Calculate total budget of all displayed projects
-  const totalBudget = projects.reduce((sum, project) => {
-    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
-
-    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount =
-        typeof item.amount === "string"
-          ? parseFloat(item.amount) || 0
-          : item.amount || 0;
-      const paxCount =
-        typeof item.pax === "string"
-          ? parseInt(item.pax.replace(/\D/g, "")) || 1
-          : 1;
-      return projectSum + paxCount * amount;
-    }, 0);
-
-    return sum + projectTotal;
-  }, 0);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -371,7 +354,7 @@ const ProjectProposalList: React.FC = () => {
                     {new Intl.NumberFormat("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    }).format(totalBudget)}
+                    }).format(grandTotal)}
                   </Text>
                 </Text>
               </View>

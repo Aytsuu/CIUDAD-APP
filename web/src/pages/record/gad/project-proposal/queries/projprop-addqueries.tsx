@@ -13,6 +13,7 @@ export const useAddProjectProposal = (isUpdate: boolean = false) => {
       postProjectProposal(proposalData),
     onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
       showSuccessToast(
         `Project proposal ${isUpdate ? "updated" : "added"} successfully`
       );
@@ -36,6 +37,7 @@ export const useAddSupportDocument = () => {
       queryClient.invalidateQueries({
         queryKey: ["supportDocs", variables.gpr_id],
       });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
     },
     onError: (_error: any) => {
       showErrorToast("Failed to add support document");

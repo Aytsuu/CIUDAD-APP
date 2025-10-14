@@ -32,6 +32,7 @@ export const useArchiveProjectProposal = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
       showSuccessToast("Project proposal archived successfully");
     }
   });
@@ -64,6 +65,7 @@ export const useRestoreProjectProposal = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projectProposals"] });
+      queryClient.invalidateQueries({ queryKey: ["projectProposalGrandTotal"] });
       showSuccessToast("Project proposal restored successfully");
     }
   });

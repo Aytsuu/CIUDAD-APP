@@ -175,3 +175,8 @@ export const getAvailableDevPlanProjects = async (year?: string) => {
     return [];
   }
 };
+
+export const getProjectProposalGrandTotal = async () => {
+  const response = await api.get(`/gad/project-proposals-grand-total/`);
+  return response.data;
+};

@@ -9,6 +9,7 @@ export const useArchiveGADBudget = () => {
         mutationFn: archiveBudgetEntry,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["gad-budgets"] });
+            queryClient.invalidateQueries({ queryKey: ["budgetAggregates"] });
             showSuccessToast("Entry archived successfully");
         },
         onError: (_error: Error) => {
@@ -24,6 +25,7 @@ export const useRestoreGADBudget = () => {
         mutationFn: restoreBudgetEntry,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["gad-budgets"] });
+            queryClient.invalidateQueries({ queryKey: ["budgetAggregates"] });
             showSuccessToast("Entry restored successfully");
         },
         onError: (_error: Error) => {
