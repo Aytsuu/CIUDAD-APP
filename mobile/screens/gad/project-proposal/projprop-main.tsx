@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   RefreshControl,
-  TextInput,
   FlatList,
 } from "react-native";
 import {
@@ -32,8 +31,10 @@ import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { LoadingModal } from "@/components/ui/loading-modal";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
 
 const ProjectProposalList: React.FC = () => {
   const router = useRouter();
@@ -42,10 +43,13 @@ const ProjectProposalList: React.FC = () => {
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchTerm = useDebounce(searchQuery, 500);
   const [selectedYear, setSelectedYear] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSearch, setShowSearch] = useState(false);
+  
   const pageSize = 10;
   const { data: availableYears = [] } = useGetProjectProposalYears();
   const {
@@ -79,6 +83,11 @@ const ProjectProposalList: React.FC = () => {
       value: year.toString(),
     })),
   ];
+
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  };
 
   // Calculate total budget of all displayed projects
   const totalBudget = projects.reduce((sum, project) => {
@@ -140,11 +149,6 @@ const ProjectProposalList: React.FC = () => {
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (text: string) => {
-    setSearchTerm(text);
     setCurrentPage(1);
   };
 
@@ -257,7 +261,7 @@ const ProjectProposalList: React.FC = () => {
 
   // Empty state component
   const renderEmptyState = () => {
-    const emptyMessage = searchTerm || selectedYear !== "All"
+    const emptyMessage = searchQuery || selectedYear !== "All"
       ? "No project proposals found"
       : `No ${viewMode === "active" ? "active" : "archived"} project proposals found.`;
     
@@ -287,8 +291,15 @@ const ProjectProposalList: React.FC = () => {
             <ChevronLeft size={24} className="text-gray-700" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="font-semibold text-lg text-black">Project Proposal</Text>}
-        rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+        headerTitle={<Text className="text-gray-900 text-[13px]">Project Proposal</Text>}
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        }
         wrapScroll={false}
       >
         <View className="flex-1 justify-center items-center p-4">
@@ -317,26 +328,30 @@ const ProjectProposalList: React.FC = () => {
             <ChevronLeft size={24} className="text-gray-700" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="font-semibold text-lg text-black">Project Proposal</Text>}
-        rightAction={<View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>}
+        headerTitle={<Text className="text-gray-900 text-[13px]">Project Proposal</Text>}
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        }
         wrapScroll={false}
       >
-        <View className="flex-1 px-6">
-          {/* Search and Filter Section - Styled like Resolution */}
-          <View className="mb-4">
-            <View className="flex-row items-center gap-2 pb-3">
-              <View className="relative flex-1">
-                <TextInput
-                  placeholder="Search project proposals..."
-                  className="pl-2 w-full h-[45px] bg-white text-[13px] rounded-xl p-2 border border-gray-300"
-                  value={searchTerm}
-                  onChangeText={handleSearchChange}
-                />
-              </View>
-            </View>
+        <View className="flex-1 bg-white">
+          {/* Search Bar */}
+          {showSearch && (
+            <SearchInput 
+              value={searchInputVal}
+              onChange={setSearchInputVal}
+              onSubmit={handleSearch} 
+            />
+          )}
 
+          <View className="flex-1 px-6">
             {/* Year Filter */}
-            <View className="pb-3">
+            <View className="py-3">
               <SelectLayout
                 options={yearFilterOptions}
                 selectedValue={selectedYear}
@@ -363,7 +378,7 @@ const ProjectProposalList: React.FC = () => {
             </View>
 
             {/* Tabs - Styled like Budget Plan */}
-            <Tabs value={viewMode} onValueChange={val => handleViewModeChange(val as "active" | "archived")}>
+            <Tabs value={viewMode} onValueChange={val => handleViewModeChange(val as "active" | "archived")} className="flex-1">
               <TabsList className="bg-blue-50 flex-row justify-between">
                 <TabsTrigger 
                   value="active" 
@@ -382,69 +397,131 @@ const ProjectProposalList: React.FC = () => {
                   </Text>
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-          </View>
 
-          {/* Content Area */}
-          <View className="flex-1">
-            {isLoading ? (
-              <View className="flex-1 justify-center items-center">
-                <LoadingState/>
-              </View>
-            ) : (
-              <View className="flex-1">
-                {projects.length === 0 ? (
-                  renderEmptyState()
+              {/* Active Tab Content */}
+              <TabsContent value="active" className="flex-1 mt-4">
+                {isLoading ? (
+                  <View className="flex-1 justify-center items-center">
+                    <LoadingState/>
+                  </View>
                 ) : (
-                  <FlatList
-                    data={projects}
-                    renderItem={({ item }) => <RenderProjectCard project={item} />}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={['#00a8f0']}
+                  <View className="flex-1">
+                    {projects.length === 0 ? (
+                      renderEmptyState()
+                    ) : (
+                      <FlatList
+                        data={projects}
+                        renderItem={({ item }) => <RenderProjectCard project={item} />}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                          <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#00a8f0']}
+                          />
+                        }
+                        contentContainerStyle={{ 
+                          paddingBottom: 16,
+                          paddingTop: 16
+                        }}
+                        ListFooterComponent={
+                          totalPages > 1 ? (
+                            <View className="flex-row justify-between items-center mt-4 px-4">
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">← Previous</Text>
+                              </TouchableOpacity>
+
+                              <View className="flex-row items-center">
+                                {isFetching && (
+                                  <LoadingState />
+                                )}
+                                <Text className="text-gray-500">
+                                  Page {currentPage} of {totalPages}
+                                </Text>
+                              </View>
+
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">Next →</Text>
+                              </TouchableOpacity>
+                            </View>
+                          ) : null
+                        }
                       />
-                    }
-                    contentContainerStyle={{ 
-                      paddingBottom: 16,
-                      paddingTop: 16
-                    }}
-                    ListFooterComponent={
-                      totalPages > 1 ? (
-                        <View className="flex-row justify-between items-center mt-4 px-4">
-                          <TouchableOpacity
-                            onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-                          >
-                            <Text className="text-primaryBlue font-bold">← Previous</Text>
-                          </TouchableOpacity>
-
-                          <View className="flex-row items-center">
-                            {isFetching && (
-                              <LoadingState />
-                            )}
-                            <Text className="text-gray-500">
-                              Page {currentPage} of {totalPages}
-                            </Text>
-                          </View>
-
-                          <TouchableOpacity
-                            onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
-                          >
-                            <Text className="text-primaryBlue font-bold">Next →</Text>
-                          </TouchableOpacity>
-                        </View>
-                      ) : null
-                    }
-                  />
+                    )}
+                  </View>
                 )}
-              </View>
-            )}
+              </TabsContent>
+
+              {/* Archived Tab Content */}
+              <TabsContent value="archived" className="flex-1 mt-4">
+                {isLoading ? (
+                  <View className="flex-1 justify-center items-center">
+                    <LoadingState/>
+                  </View>
+                ) : (
+                  <View className="flex-1">
+                    {projects.length === 0 ? (
+                      renderEmptyState()
+                    ) : (
+                      <FlatList
+                        data={projects}
+                        renderItem={({ item }) => <RenderProjectCard project={item} />}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                          <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#00a8f0']}
+                          />
+                        }
+                        contentContainerStyle={{ 
+                          paddingBottom: 16,
+                          paddingTop: 16
+                        }}
+                        ListFooterComponent={
+                          totalPages > 1 ? (
+                            <View className="flex-row justify-between items-center mt-4 px-4">
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">← Previous</Text>
+                              </TouchableOpacity>
+
+                              <View className="flex-row items-center">
+                                {isFetching && (
+                                  <LoadingState />
+                                )}
+                                <Text className="text-gray-500">
+                                  Page {currentPage} of {totalPages}
+                                </Text>
+                              </View>
+
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">Next →</Text>
+                              </TouchableOpacity>
+                            </View>
+                          ) : null
+                        }
+                      />
+                    )}
+                  </View>
+                )}
+              </TabsContent>
+            </Tabs>
           </View>
         </View>
       </PageLayout>

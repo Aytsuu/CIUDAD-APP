@@ -327,7 +327,7 @@ const DisbursementVoucherList: React.FC = () => {
         }
         wrapScroll={false}
       >
-        <View className="flex-1 bg-gray-50">
+        <View className="flex-1 bg-white">
           {/* Search Bar */}
           {showSearch && (
             <SearchInput 
@@ -356,7 +356,7 @@ const DisbursementVoucherList: React.FC = () => {
                   value="active" 
                   className={`flex-1 mx-1 ${viewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
                 >
-                  <Text className={`font-sans ${viewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                  <Text className={`font-sans text-[13px] ${viewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
                     Active
                   </Text>
                 </TabsTrigger>
@@ -364,7 +364,7 @@ const DisbursementVoucherList: React.FC = () => {
                   value="archived" 
                   className={`flex-1 mx-1 ${viewMode === 'archived' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
                 >
-                  <Text className={`font-sans ${viewMode === 'archived' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                  <Text className={`font-sans text-[13px] ${viewMode === 'archived' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
                     Archived
                   </Text>
                 </TabsTrigger>

@@ -217,7 +217,7 @@ const AttendanceSheets = () => {
             className="bg-primaryBlue rounded-xl"
             onPress={() => setUploadModalVisible(true)}
           >
-            <Text className="text-white text-[15px]">Upload Sheets</Text>
+            <Text className="text-white text-[13px] font-bold">Upload Sheets</Text>
           </Button>
         </View>
 
