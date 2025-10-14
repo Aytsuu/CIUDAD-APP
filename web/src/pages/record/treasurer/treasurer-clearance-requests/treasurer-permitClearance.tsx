@@ -94,11 +94,21 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
         cell: ({ row }) => {
             const agsId = row.original.ags_id;
             const grossSalesData = row.original.grossSalesData;
+            const businessGrossSales = row.original.businessGrossSales;
             
+            // Priority 1: Show annual gross sales range (for barangay clearance)
             if (grossSalesData && agsId) {
                 return (
                     <div className="text-center">
                         ₱{parseFloat(grossSalesData.ags_minimum).toLocaleString()} - ₱{parseFloat(grossSalesData.ags_maximum).toLocaleString()}
+                    </div>
+                );
+            }
+            // Priority 2: Show business gross sales if available (for existing businesses)
+            else if (businessGrossSales) {
+                return (
+                    <div className="text-center">
+                        ₱{parseFloat(businessGrossSales.toString()).toLocaleString()}
                     </div>
                 );
             }
@@ -134,9 +144,24 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
             </div>
         ),
         cell: ({ row }) => {
-            // Use the ags_rate from grossSalesData
             const grossSalesData = row.original.grossSalesData;
-            const amount = grossSalesData ? parseFloat(grossSalesData.ags_rate) : 0;
+            const purposeData = row.original.purposeData;
+            const agsId = row.original.ags_id;
+            
+            let amount = 0;
+            
+            // If ags_id exists, it's a barangay clearance - use ags_rate
+            if (agsId && grossSalesData) {
+                amount = parseFloat(grossSalesData.ags_rate);
+            } 
+            // If no ags_id but has purposeData, it's a permit - use pr_rate
+            else if (purposeData && !agsId) {
+                amount = parseFloat(purposeData.pr_rate);
+            }
+            // Fallback to req_amount from backend
+            else {
+                amount = row.original.req_amount || 0;
+            }
             
             return (
                 <div className="text-center font-medium text-green-700">
@@ -256,7 +281,24 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                     req_payment_status: row.original.req_payment_status || "Pending",
                                     pr_id: row.original.pr_id,
                                     business_name: row.original.businessName && row.original.businessName !== "No Business Linked" ? row.original.businessName : row.original.requestor || "Unknown Business",
-                                    req_amount: row.original.grossSalesData ? parseFloat(row.original.grossSalesData.ags_rate) : 0, // Pass the ags_rate
+                                    req_amount: (() => {
+                                        const grossSalesData = row.original.grossSalesData;
+                                        const purposeData = row.original.purposeData;
+                                        const agsId = row.original.ags_id;
+                                        
+                                        // If ags_id exists, it's a barangay clearance - use ags_rate
+                                        if (agsId && grossSalesData) {
+                                            return parseFloat(grossSalesData.ags_rate);
+                                        } 
+                                        // If no ags_id but has purposeData, it's a permit - use pr_rate
+                                        else if (purposeData && !agsId) {
+                                            return parseFloat(purposeData.pr_rate);
+                                        }
+                                        // Fallback to req_amount from backend
+                                        else {
+                                            return row.original.req_amount || 0;
+                                        }
+                                    })(),
                                     // req_sales_proof field removed
                                 }}
                                 onSuccess={() => {}}
@@ -317,7 +359,8 @@ type PermitClearance = {
     amount_to_pay?: number, // Add amount_to_pay field from backend
     req_amount?: number, // Add req_amount field from backend
     grossSalesData?: any, // Add gross sales data
-    purposeData?: any // Add purpose data
+    purposeData?: any, // Add purpose data
+    businessGrossSales?: number // Add business gross sales for existing businesses
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -437,6 +480,7 @@ function PermitClearance(){
             pr_id: item.pr_id, // Include pr_id
             grossSalesData: grossSalesData, // Include gross sales data
             purposeData: purposeData, // Include purpose data
+            businessGrossSales: item.business_gross_sales, // Include business gross sales for existing businesses
             ...item
         };
     });

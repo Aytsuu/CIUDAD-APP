@@ -411,7 +411,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                                      label=""
                                                      placeholder="Select purpose..."
                                                      emptyText="No purposes found"
-                                                     onSelect={(value: string, selectedOption: any) => {
+                                                     onSelect={(_value: string, selectedOption: any) => {
                                                          const purposeId = selectedOption?.id || selectedOption?.pr_id || '';
                                                          field.onChange(purposeId.toString());
                                                      }}

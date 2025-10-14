@@ -10,6 +10,7 @@ import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type 
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleBusinessPermitFiles, prepareBusinessPermitFileForUpload, type BusinessPermitFileData } from "@/helpers/businessPermitUpload";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const CertPermit: React.FC = () => {
   const router = useRouter();
@@ -21,7 +22,6 @@ const CertPermit: React.FC = () => {
   const [grossSales, setGrossSales] = useState("");
   const [selectedGrossSalesRange, setSelectedGrossSalesRange] = useState("");
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Image upload states
@@ -347,10 +347,7 @@ const CertPermit: React.FC = () => {
         headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
         rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#00AFFF" />
-          <Text className="text-gray-600 text-base mt-4">Loading...</Text>
-        </View>
+        <LoadingState />
       </PageLayout>
     );
   }

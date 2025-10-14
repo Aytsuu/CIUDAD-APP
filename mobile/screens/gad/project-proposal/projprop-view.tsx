@@ -61,7 +61,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61]">
+          <Text className="text-gray-900 text-[13px]">
             Project Proposal
           </Text>
         }
@@ -207,7 +207,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             {title}
           </Text>
         </View>
-        <Text className="text-lg font-semibold text-gray-900 font-sans">
+        <Text className="text-[13px] font-semibold text-gray-900 font-sans">
           {value}
         </Text>
       </CardContent>
@@ -222,7 +222,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             <DollarSign size={20} color="#15803D" />
           </View>
           <View className="flex-1">
-            <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+            <Text className="text-sm font-semibold text-[#1a2332] font-sans">
               Budget Allocation
             </Text>
             <Text className="text-xs text-gray-500 mt-1 font-sans">
@@ -315,7 +315,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
       <View className="px-6 py-4 space-y-4">
         {/* Header */}
         <View className="mb-4">
-          <Text className="text-xl font-semibold text-gray-900 font-sans mb-1">
+          <Text className="text-lg font-bold text-gray-900 font-sans mb-1">
             Project Overview
           </Text>
           <Text className="text-sm text-gray-600 font-sans">
@@ -420,7 +420,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 <View className="w-10 h-10 bg-gray-100 rounded-md items-center justify-center">
                   <User size={20} color="#1D4ED8" />
                 </View>
-                <Text className="text-lg font-semibold text-[#1a2332] font-sans">
+                <Text className="text-sm font-semibold text-[#1a2332] font-sans">
                   Signatories
                 </Text>
               </View>
@@ -482,7 +482,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               disabled={project.gprIsArchive}
             >
               <Text
-                className={`font-medium font-sans text-center ${
+                className={`text-[13px] font-bold text-center ${
                   project.gprIsArchive ? "text-gray-500" : "text-white"
                 }`}
               >
@@ -494,7 +494,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
 
         {project.gprIsArchive && (
           <View className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-            <Text className="text-yellow-800 text-sm text-center font-sans">
+            <Text className="text-yellow-800 text-sm text-center font-sans text-[13px]">
               This project is archived. Document modifications are disabled.
             </Text>
           </View>
@@ -519,8 +519,8 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <Text
                 className={`${
                   supportDocsViewMode === "active"
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-500"
+                    ? "text-primaryBlue text-[13px]"
+                    : "text-gray-500 text-[13px]"
                 }`}
               >
                 Active
@@ -528,7 +528,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             </TabsTrigger>
             <TabsTrigger
               value="archived"
-              className={`flex-1 mx-1 ${
+              className={`flex-1 mx-1  ${
                 supportDocsViewMode === "archived"
                   ? "bg-white border-b-2 border-primaryBlue"
                   : ""
@@ -537,8 +537,8 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
               <Text
                 className={`${
                   supportDocsViewMode === "archived"
-                    ? "text-primaryBlue font-medium"
-                    : "text-gray-500"
+                    ? "text-primaryBlue text-[13px]"
+                    : "text-gray-500 text-[13px]"
                 }`}
               >
                 Archived
@@ -682,7 +682,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61]">
+          <Text className="text-gray-900 text-[13px]">
             Project Proposal
           </Text>
         }
@@ -707,7 +707,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61]">
+          <Text className="text-gray-900 text-[13px]">
             {project.projectTitle}
           </Text>
         }
@@ -733,7 +733,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                 >
                   <Text
                     className={`${
-                      activeTab === "details" ? " font-medium" : "text-gray-500"
+                      activeTab === "details" ? "text-[13px]" : "text-gray-500 text-[13px]"
                     }`}
                   >
                     Project Details
@@ -750,8 +750,8 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
                   <Text
                     className={`${
                       activeTab === "documents"
-                        ? "font-medium"
-                        : "text-gray-500"
+                        ? "text-[13px]"
+                        : "text-gray-500 text-[13px]"
                     }`}
                   >
                     Documents

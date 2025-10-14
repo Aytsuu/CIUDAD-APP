@@ -6,7 +6,7 @@ import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
 import { formatDateForSummon, formatTimestampToDate } from "@/helpers/summonTimestampFormatter";
 import { formatSummonDateTime } from "@/helpers/summonDateTimeFormatter";
 
-interface SummonPreviewProps {
+interface LuponPreview {
   sr_code: string;
   incident_type?: string;
   complainant: string[];
@@ -24,9 +24,8 @@ interface SummonPreviewProps {
   withSeal?: boolean;
 }
 
-function SummonPreview({
+function LuponPreview({
   sr_code,
-  // incident_type,
   complainant,
   complainant_address,
   accused,
@@ -40,7 +39,7 @@ function SummonPreview({
   email,
   telnum,
   withSeal = false,
-}: SummonPreviewProps) {
+}: LuponPreview) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [barangayLogoData, setBarangayLogoData] = useState<string | null>(null);
@@ -186,7 +185,7 @@ function SummonPreview({
       { text: "Republic of the Philippines", bold: true, size: 12 },
       { text: "City of Cebu | San Roque Ciudad", bold: false, size: 11 },
       { text: "____________________________________", bold: true, size: 14 },
-      { text: "Office of the Barangay Captain", bold: false, size: 13 },
+      { text: "Office of the Lupong Tagapamayapa", bold: false, size: 13 },
       { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
       { text: `${email} | ${telnum}`, bold: false, size: 11 }
     ];
@@ -261,7 +260,7 @@ function SummonPreview({
     // Title
     doc.setFont("times", "bold");
     doc.setFontSize(16);
-    const title = "S U M M O N";
+    const title = "NOTICE OF HEARING";
     doc.text(title, pageWidth / 2, yPos, { align: "center" });
     yPos += lineHeight;
 
@@ -275,14 +274,14 @@ function SummonPreview({
     setFont("normal");
     doc.setFontSize(10);
     const formattedDateTime = formatSummonDateTime(hearingDate, hearingTime);
-    const body1 = `You are hereby informed to appear before me in person, together with your witnesses, on the ${formattedDateTime} at the Barangay Hall of San Roque (CIUDAD). Then and there to answer the complaint made before me, for mediation of your dispute with complainant.`;
+    const body1 = `         You are hereby informed to appear before me in person, on the ${formattedDateTime} then and there to answer the complaint made before me, before conciliation your dispute with complaint.`;
     doc.splitTextToSize(body1, pageWidth - marginValue * 2).forEach((line: string) => {
       doc.text(line, marginValue, yPos);
       yPos += lineHeight;
     });
     yPos += sectionGap;
 
-    const body2 = "You are hereby warned that if you refuse or willfully fail to appear in obedience to this Summon, you may be barred from filing any counter claim arising from said complaint. Fail not or else face punishment for contempt of court.";
+    const body2 = "         You are hereby warned that if you refuse or willfully fail to appear in obedience to this Summon. You may be barred from filing any counter claim arising from said complaint. Fail not or else face punishment for contempt of court.";
     doc.splitTextToSize(body2, pageWidth - marginValue * 2).forEach((line: string) => {
       doc.text(line, marginValue, yPos);
       yPos += lineHeight;
@@ -290,16 +289,16 @@ function SummonPreview({
     yPos += sectionGap;
 
     // Issuance date
-    doc.text(`Issued this ${newIssuanceDate}, in the City of Cebu, Philippines.`, marginValue, yPos);
+    doc.text(`               Issued this ${newIssuanceDate}, in the City of Cebu, Philippines.`, marginValue, yPos);
     yPos += lineHeight * 3;
 
     // Signature section
     setFont("bold");
-    doc.text("HON. VIRGINIA N. ABENOJA", pageWidth - marginValue, yPos, {
+    doc.text("FLORANTE T. NAVARRO III/ ANGELITA C. SIPE", pageWidth - marginValue, yPos, {
       align: "right",
     });
     setFont("normal");
-    doc.text("Punong Barangay", pageWidth - marginValue, yPos + lineHeight, {
+    doc.text("Pangkat Chairman/ Lupon Secretary", pageWidth - marginValue, yPos + lineHeight, {
       align: "right",
     });
     yPos += lineHeight * 4;
@@ -347,4 +346,4 @@ function SummonPreview({
   );
 }
 
-export default SummonPreview;
+export default LuponPreview;

@@ -9,6 +9,7 @@ import { usePurposeAndRates, type PurposeAndRate } from "./queries/certification
 import { SelectLayout, type DropdownOption } from "@/components/ui/select-layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/api/api";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const CertForm: React.FC = () => {
   const router = useRouter();
@@ -68,7 +69,6 @@ const CertForm: React.FC = () => {
   }, [hasVoterId]);
   const [personalType, setPersonalType] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   
@@ -113,7 +113,6 @@ const CertForm: React.FC = () => {
     
     
     const isEligibleForFreeCert = user?.personal?.voter_id !== null && user?.personal?.voter_id !== undefined;
-    const reqAmount = isEligibleForFreeCert ? 0 : (selectedPurpose?.pr_rate || 0);
     
     addPersonalCert.mutate({
       cert_type: "personal",
@@ -138,12 +137,7 @@ const CertForm: React.FC = () => {
         headerTitle={<Text className="text-[13px]">Submit a Request</Text>}
         rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#00AFFF" />
-          <Text className="text-gray-600 text-base mt-4">
-            {isLoading ? 'Loading user data...' : 'Loading purposes...'}
-          </Text>
-        </View>
+        <LoadingState />
       </PageLayout>
     );
   }

@@ -3,9 +3,10 @@ import { useRouter } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { NoAccessScreen } from "@/components/ui/feedback-screen";
+// import { NoAccessScreen } from "@/components/ui/feedback-screen";
 import PageLayout from "../_PageLayout";
 import { LinearGradient } from 'expo-linear-gradient';
+import { Clipboard, Calendar, DollarSign, FileText } from 'lucide-react-native';
 
 export default () => {
   // ============== STATE INITIALIZATION ==============
@@ -17,25 +18,25 @@ export default () => {
     {
       title: "Budget Tracker",
       route: "/(gad)/budget-tracker/budget-tracker-main",
-      icon: "",
+      icon: DollarSign,
       gradient: ['#60a5fa', '#3b82f6'],
     },
     {
       title: "Project Proposal",
       route: "/(gad)/project-proposal/projprop-main",
-      icon: "",
+      icon: FileText,
       gradient: ['#3b82f6', '#2563eb'],
     },
     {
       title: "Annual Development Plan",
       route: "/(gad)/annual-dev-plan/main-plan",
-      icon: "",
+      icon: Clipboard,
       gradient: ['#2563eb', '#1e40af'],
     },
     {
       title: "Activity Calendar",
       route: "/(gad)/activity/gad-activity",
-      icon: "",
+      icon: Calendar,
       gradient: ['#8b5cf6', '#7c3aed'],
     },
   ];
@@ -99,7 +100,11 @@ export default () => {
                 <View className="flex-1 justify-between">
                   <View className="items-start">
                     <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center">
-                      <Text className="text-3xl">{item.icon}</Text>
+                      {typeof item.icon === 'string' ? (
+                        <Text className="text-3xl">{item.icon}</Text>
+                      ) : (
+                        <item.icon size={24} color="white" />
+                      )}
                     </View>
                   </View>
                   
