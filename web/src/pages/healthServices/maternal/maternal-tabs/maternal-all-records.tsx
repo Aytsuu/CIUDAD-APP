@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, RefreshCw, FileInput, Loader2 } from "lucide-react";
+import { ArrowUpDown, Search, RefreshCw, FileInput } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
 import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
 
@@ -20,7 +20,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-
+import TableLoading from "../../table-loading";
 
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
@@ -435,9 +435,7 @@ export default function MaternalAllRecords() {
           </div>
           <div className="bg-white w-full min-h-20 overflow-x-auto">
             {isLoading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="animate-spin" /> Loading...
-              </div>
+              < TableLoading />
             ) : (
               <DataTable columns={columns} data={transformData} />
             )}

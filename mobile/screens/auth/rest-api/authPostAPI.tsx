@@ -57,18 +57,28 @@ export const addRequest = async (data: Record<string, any>) => {
   }
 };
 
-export const postFaceData = async (data: Record<string, any>) => {
+export const postFaceData = async (data: FormData) => {
   try {
-    const res = await api.post("profiling/kyc/match-face/", data);
+    const res = await api.post("profiling/kyc/match-face/", data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 30000
+    });
     return res.data;
   } catch (err) {
     throw err;
   }
 }
 
-export const postDocumentData = async (data: Record<string, any>) => {
+export const postDocumentData = async (data: FormData) => {
   try {
-    const res = await api.post("profiling/kyc/match-document/", data);
+    const res = await api.post("profiling/kyc/match-document/", data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 30000
+    });
     return res.data;
   } catch (err) {
     throw err;

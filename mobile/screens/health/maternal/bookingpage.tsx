@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar, Modal, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, UserPlus, X, AlertCircle } from 'lucide-react-native';
 import { format } from 'date-fns'; // Import format from date-fns
 import { calculateAge } from '@/helpers/ageCalculator';
 
-import { useAddPrenatalAppointment } from './queries/add';
+import { useAddPrenatalAppointment, useCheckOrCreatePatient } from './queries/add';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGetScheduler } from '../admin/admin-scheduler/queries/schedulerFetchQueries';
 
@@ -19,34 +19,25 @@ interface User {
 
 interface PrenatalAppointmentData {
   requested_at: string;
+  approved_at: string | null;
+  cancelled_at: string | null;
+  completed_at: string | null;
+  rejected_at: string | null;
+  reason: string | null;
   status: string;
   rp_id: string;
   pat_id: string;
-  approved_at?: string | null;
-  cancelled_at?: string | null;
-  completed_at?: string | null;
-  rejected_at?: string | null;
-  reason?: string | null;
 }
-
-// Helper function to calculate age from DOB
-const calculateAge = (dob: string): number => {
-  const birthDate = new Date(dob);
-  const today = new Date('2025-09-28'); // Current date
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
 
 const PrenatalBookingPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [showRegistrationDialog, setShowRegistrationDialog] = useState<boolean>(false);
+  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
 
   const addPrenatalAppointmentMutation = useAddPrenatalAppointment();
+  const checkOrCreatePatientMutation = useCheckOrCreatePatient();
 
   const { user } = useAuth();
   const { pat_id } = useAuth();
@@ -67,6 +58,7 @@ const PrenatalBookingPage: React.FC = () => {
   );
 
   
+
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
@@ -81,7 +73,7 @@ const PrenatalBookingPage: React.FC = () => {
     } else {
       // Fallback to Thursdays if no services are defined
       const dayOfWeek = date.getDay();
-      return dayOfWeek !== 4;
+      return dayOfWeek !== 4
     }
   };
 
@@ -89,13 +81,8 @@ const PrenatalBookingPage: React.FC = () => {
     setShowDatePicker(false);
     if (selected) {
       if (isDateDisabled(selected)) {
-        Alert.alert(
-          'Unavailable Date',
-          availableDays.size > 0
-            ? 'Prenatal appointments are only available on scheduled days.'
-            : 'Prenatal appointments are only available on Thursdays.'
-        );
-        return;
+        Alert.alert('Unavailable Date', 'Prenatal appointments are only available on Thursdays. Please select another date.');
+        return; 
       }
       setSelectedDate(selected);
     }
@@ -139,12 +126,52 @@ const PrenatalBookingPage: React.FC = () => {
       return;
     }
 
+    // Check if patient exists or needs to be created
+    if (!pat_id && rp_id) {
+      // No patient ID, show registration dialog
+      setShowRegistrationDialog(true);
+    } else {
+      // Has patient ID, proceed with appointment
+      proceedWithAppointment(pat_id || '');
+    }
+  };
+
+  const handleCreatePatient = async (): Promise<void> => {
+    if (!rp_id) {
+      Alert.alert('Error', 'Resident ID not found');
+      return;
+    }
+
+    try {
+      const result = await checkOrCreatePatientMutation.mutateAsync(rp_id);
+      
+      if (result.patient && result.patient.pat_id) {
+        setCurrentPatientId(result.patient.pat_id);
+        setShowRegistrationDialog(false);
+        
+        // Proceed with appointment using the new or existing patient ID
+        proceedWithAppointment(result.patient.pat_id);
+      }
+    } catch (error: any) {
+      console.error('Error creating patient:', error);
+      Alert.alert(
+        'Error',
+        error?.response?.data?.error || 'Failed to create patient record. Please try again.',
+      );
+    }
+  };
+
+  const proceedWithAppointment = (patientId: string): void => {
     const payload = {
-      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`,
-      // confirmed_at: null,
+      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`, 
+      approved_at: null,
+      cancelled_at: null,
+      completed_at: null,
+      rejected_at: null,
+      reason: null,
       status: 'pending',
       rp_id: rp_id || '',
-      pat_id: pat_id || '',
+      pat_id: patientId,
     };
 
     addPrenatalAppointmentMutation.mutateAsync(payload)
@@ -257,6 +284,83 @@ const PrenatalBookingPage: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Patient Registration Dialog */}
+      <Modal
+        visible={showRegistrationDialog}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowRegistrationDialog(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-4">
+          <View className="bg-white rounded-2xl w-full max-w-md shadow-xl">
+            {/* Header */}
+            <View className="flex-row items-center justify-between p-5 border-b border-gray-200">
+              <View className="flex-row items-center">
+                <UserPlus size={24} color="#2563eb" />
+                <Text className="text-xl font-semibold text-gray-900 ml-2">Patient Registration</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowRegistrationDialog(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+              >
+                <X size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View className="p-5">
+              <View className="flex-row items-start bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <AlertCircle size={20} color="#2563eb" className="mt-0.5" />
+                <View className="flex-1 ml-3">
+                  <Text className="text-blue-900 font-medium mb-1">
+                    Not Yet Registered as Patient
+                  </Text>
+                  <Text className="text-blue-800 text-sm">
+                    You need to be registered as a patient before scheduling a prenatal appointment. 
+                    Would you like to create your patient record now?
+                  </Text>
+                </View>
+              </View>
+
+              <View className="bg-gray-50 rounded-lg p-3 mb-4">
+                <Text className="text-gray-700 text-sm">
+                  <Text className="font-semibold">Note:</Text> Creating a patient record is quick and uses your existing resident information. 
+                  This is required for all health services.
+                </Text>
+              </View>
+            </View>
+
+            {/* Actions */}
+            <View className="flex-row p-5 border-t border-gray-200 space-x-3 gap-3">
+              <TouchableOpacity
+                className="flex-1 py-3 px-4 rounded-lg bg-gray-100 border border-gray-300"
+                onPress={() => setShowRegistrationDialog(false)}
+                disabled={checkOrCreatePatientMutation.isPending}
+              >
+                <Text className="text-gray-700 text-center font-medium">Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                className={`flex-1 py-3 px-4 rounded-lg ${
+                  checkOrCreatePatientMutation.isPending ? 'bg-blue-400' : 'bg-blue-600'
+                }`}
+                onPress={handleCreatePatient}
+                disabled={checkOrCreatePatientMutation.isPending}
+              >
+                {checkOrCreatePatientMutation.isPending ? (
+                  <View className="flex-row items-center justify-center">
+                    <ActivityIndicator size="small" color="white" />
+                    <Text className="text-white text-center font-medium ml-2">Creating...</Text>
+                  </View>
+                ) : (
+                  <Text className="text-white text-center font-medium">Create & Continue</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </PageLayout>
   );
 };

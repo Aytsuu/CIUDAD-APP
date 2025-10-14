@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
-import { fetchHouseholds, fetchHouseholdData, fetchResidentPersonalInfo } from '@/api/health-family-profiling-api';
+import { useGetHouseholds, useGetHouseholdData, useGetResidentPersonalInfo } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData } from '@/form-schema/health-family-profiling-schema';
 
 interface DemographicStepProps {
@@ -27,17 +26,10 @@ export const DemographicStep: React.FC<DemographicStepProps> = ({ form }) => {
   const selectedHouseholdId = form.watch('demographicInfo.householdNo');
 
   // Fetch all households
-  const { data: households = [], isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ['households'],
-    queryFn: fetchHouseholds,
-  });
+  const { data: households = [], isLoading: isLoadingHouseholds } = useGetHouseholds();
 
   // Fetch selected household data
-  const { data: householdData, isLoading: isLoadingHousehold } = useQuery({
-    queryKey: ['household', selectedHouseholdId],
-    queryFn: () => fetchHouseholdData(selectedHouseholdId),
-    enabled: !!selectedHouseholdId,
-  });
+  const { data: householdData, isLoading: isLoadingHousehold } = useGetHouseholdData(selectedHouseholdId);
 
   // Extract household head ID
   const householdHeadId = React.useMemo(() => {
@@ -46,11 +38,7 @@ export const DemographicStep: React.FC<DemographicStepProps> = ({ form }) => {
   }, [householdData]);
 
   // Fetch personal info of household head
-  const { data: personalInfo } = useQuery({
-    queryKey: ['resident-personal', householdHeadId],
-    queryFn: () => fetchResidentPersonalInfo(householdHeadId!),
-    enabled: !!householdHeadId,
-  });
+  const { data: personalInfo } = useGetResidentPersonalInfo(householdHeadId || '');
 
   // Populate household head fields when data is available
   useEffect(() => {

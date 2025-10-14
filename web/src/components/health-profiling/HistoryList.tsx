@@ -18,7 +18,7 @@ interface HistoryListProps {
   isLoading?: boolean;
 }
 
-export const HistoryList = ({ history, entityType, entityTitle, isLoading }: HistoryListProps) => {
+export const HistoryList = ({ history, isLoading }: HistoryListProps) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) {

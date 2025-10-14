@@ -1,26 +1,29 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useCallback } from "react"
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native"
-import { Search, ChevronLeft, AlertCircle,User, Calendar, FileText, Users,MapPin, RefreshCw } from "lucide-react-native"
+import { Search, ChevronLeft, AlertCircle, FileText, RefreshCw } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { router } from "expo-router"
-import { format } from "date-fns"
 import { useAnimalBitePatientSummary } from "./db-request/get-query"
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
+import { useDebounce } from "@/hooks/use-debounce"
+import { Overallrecordcard } from "../components/overall-cards"
 
-// type PatientSummary = {
-//   patient_id: string
-//   patient_fname: string
-//   patient_lname: string
-//   patient_mname?: string
-//   patient_sex: string
-//   patient_age: number
-//   patient_type: string
-//   patient_address: string
-//   record_count: number
-//   record_created_at: string
-//   first_record_date: string
-// }
+type PatientSummary = {
+  id: string
+  fname: string
+  lname: string
+  gender: string
+  age: string
+  date: string
+  patientType: string
+  exposure: string
+  siteOfExposure: string
+  bitingAnimal: string
+  actions_taken: string
+  referredby: string
+  recordCount: number
+}
 
 type TabType = "all" | "resident" | "transient"
 
@@ -92,114 +95,71 @@ const TabBar: React.FC<{
   </View>
 );
 
-const AnimalBiteCard: React.FC<{
-  patient: PatientSummary;
-  onPress: () => void;
-}> = ({ patient, onPress }) => {
-  const formatDateSafely = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "MMM dd, yyyy");
-    } catch (e) {
-      return "Invalid Date";
-    }
-  };
-
-  return (
-    <TouchableOpacity
-      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
-      activeOpacity={0.8}
-      onPress={onPress}
-    >
-      {/* Header */}
-      <View className="p-4 border-b border-gray-100">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-                <User color="white" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
-                  {patient.patient_fname} {patient.patient_lname}
-                </Text>
-                <Text className="text-gray-500 text-sm">ID: {patient.patient_id}</Text>
-              </View>
-            </View>
-          </View>
-          <StatusBadge type={patient.patient_type} />
-        </View>
-      </View>
-
-      {/* Details */}
-      <View className="p-4">
-        <View className="flex-row items-center mb-3">
-          <Calendar size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            First Record: <Text className="font-medium text-gray-900">{formatDateSafely(patient.first_record_date)}</Text>
-          </Text>
-        </View>
-        <View className="flex-row items-center mb-3">
-          <Users size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Age: <Text className="font-medium text-gray-900">{patient.patient_age}</Text> • {patient.patient_sex}
-          </Text>
-        </View>
-        <View className="flex-row items-center mb-3">
-          <MapPin size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Address: <Text className="font-medium text-gray-900">{patient.patient_address}</Text>
-          </Text>
-        </View>
-        <View className="flex-row items-center">
-          <FileText size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-600 text-sm">
-            Records: <Text className="font-medium text-gray-900">{patient.record_count}</Text>
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 export default function AnimalBiteOverallScreen() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [hasMoreData, setHasMoreData] = useState<boolean>(true);
 
-//   const { data: patientSummary, isLoading, isError, error, refetch, isFetching } = useAnimalBitePatientSummary()
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-//   const patients: PatientSummary[] = useMemo(() => {
-//     if (!patientSummary) return []
-//     return patientSummary
-//   }, [patientSummary])
+  const { 
+    data: patientSummary, 
+    isLoading, 
+    isError, 
+    error, 
+    refetch, 
+    isFetching,
+  } = useAnimalBitePatientSummary({
+    search: debouncedSearchQuery,
+    filter: activeTab === 'all' ? undefined : activeTab,
+    page: currentPage,
+    limit: 20, // Set your desired page size
+    ordering: '-date', // Optional: sort by most recent
+  })
 
-  const filteredData = useMemo(() => {
-    let result = patients
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase()
-      result = result.filter(
-        (patient) =>
-          patient.patient_fname.toLowerCase().includes(lowerCaseQuery) ||
-          patient.patient_lname.toLowerCase().includes(lowerCaseQuery) ||
-          patient.patient_id.toLowerCase().includes(lowerCaseQuery)
-      )
+  // Extract patients from the response
+  const patients: PatientSummary[] = useMemo(() => {
+    if (!patientSummary?.results) return []
+    return patientSummary.results
+  }, [patientSummary])
+
+  // Reset pagination when search or filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+    setHasMoreData(true);
+  }, [debouncedSearchQuery, activeTab]);
+
+  // Update hasMoreData based on API response
+  React.useEffect(() => {
+    if (patientSummary) {
+      setHasMoreData(!!patientSummary.next);
     }
-    if (activeTab !== 'all') {
-      result = result.filter((patient) =>
-        patient.patient_type.toLowerCase() === activeTab
-      )
-    }
-    return result
-  }, [patients, searchQuery, activeTab])
+  }, [patientSummary]);
 
-  const counts = useMemo(() => {
-    return {
-      all: patients.length,
-      resident: patients.filter((p) => p.patient_type.toLowerCase() === "resident").length,
-      transient: patients.filter((p) => p.patient_type.toLowerCase() === "transient").length,
-    };
+  // Transform patients to Overallrecordcard format
+  const transformedRecords = useMemo(() => {
+    return patients.map(transformToOverallRecord);
   }, [patients]);
+
+  // Extract counts from the response - now using backend counts
+  const counts = useMemo(() => {
+    // Use backend-provided count if available, otherwise fallback
+    const totalCount = patientSummary?.count || 0;
+    
+    // For resident/transient counts, we'll use the current page data
+    // If your backend provides these counts separately, use them instead
+    const residents = patients.filter((p) => p.patientType.toLowerCase() === "resident").length
+    const transients = patients.filter((p) => p.patientType.toLowerCase() === "transient").length
+    
+    return {
+      all: totalCount,
+      resident: residents,
+      transient: transients,
+    }
+  }, [patientSummary, patients])
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -211,9 +171,33 @@ export default function AnimalBiteOverallScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  const handleRecordPress = (patientId: string) => { try { router.push({ pathname: "/admin/animalbites/individual", params: { patientId }, }); } catch (error) { console.log("Navigation error:", error); } };
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+  }, []);
 
-  if (isLoading) {
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    if (!isFetching && hasMoreData && patientSummary?.next) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [isFetching, hasMoreData, patientSummary]);
+
+  const handleRecordPress = (record: any) => { 
+    try { 
+      router.push({ 
+        pathname: "/admin/animalbites/individual", 
+        params: { patientId: record.pat_id }, 
+      }); 
+    } catch (error) { 
+      console.log("Navigation error:", error); 
+    } 
+  };
+
+  // Loading state for initial load
+  if (isLoading && currentPage === 1) {
     return <LoadingState />;
   }
 
@@ -234,7 +218,7 @@ export default function AnimalBiteOverallScreen() {
           <AlertCircle size={64} color="#EF4444" />
           <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading records</Text>
           <Text className="text-gray-600 text-center mt-2 mb-6">
-            Failed to load data. Please check your connection and try again.
+            {error?.message || 'Failed to load data. Please check your connection and try again.'}
           </Text>
           <TouchableOpacity
             onPress={onRefresh}
@@ -268,58 +252,98 @@ export default function AnimalBiteOverallScreen() {
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search records..."
+              placeholder="Search by name, ID, or location..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={handleSearchChange}
             />
           </View>
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} counts={counts} />
 
         {/* Records List */}
-        {patients.length === 0 ? (
+        {transformedRecords.length === 0 && !isFetching ? (
           <View className="flex-1 justify-center items-center px-6">
             <FileText size={64} color="#9CA3AF" />
             <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No records found</Text>
             <Text className="text-gray-600 text-center mt-2">
-              There are no animal bite records available yet.
+              {searchQuery || activeTab !== 'all' 
+                ? `No records match your current filters.` 
+                : `There are no animal bite records available yet.`
+              }
             </Text>
           </View>
         ) : (
           <FlatList
-            data={filteredData}
-            keyExtractor={(item) => `ab-${item.patient_id}`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            data={transformedRecords}
+            keyExtractor={(item) => `ab-${item.pat_id}-${Math.random()}`} // Add randomness for pagination
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                colors={['#3B82F6']} 
+              />
+            }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
             windowSize={21}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
             renderItem={({ item }) => (
-              <AnimalBiteCard
-                patient={item}
-                onPress={() => handleRecordPress(item.patient_id)}
+              <Overallrecordcard
+                record={item}
+                onPress={() => handleRecordPress(item)}
               />
             )}
-            ListEmptyComponent={() => (
-              <View className="flex-1 justify-center items-center py-20">
-                <FileText size={48} color="#D1D5DB" />
-                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
-                  No records in this category
-                </Text>
-                <Text className="text-gray-500 text-center">
-                  {searchQuery
-                    ? `No ${activeTab} records match your search.`
-                    : `No ${activeTab} records found.`}
-                </Text>
-              </View>
-            )}
+            ListFooterComponent={
+              isFetching && currentPage > 1 ? (
+                <View className="py-4 items-center">
+                  <Text className="text-gray-500">Loading more records...</Text>
+                </View>
+              ) : hasMoreData ? (
+                <View className="py-4 items-center">
+                  <Text className="text-gray-500">Pull to load more</Text>
+                </View>
+              ) : transformedRecords.length > 0 ? (
+                <View className="py-4 items-center">
+                  <Text className="text-gray-500"></Text>
+                </View>
+              ) : null
+            }
+            ListEmptyComponent={
+              isFetching ? (
+                <View className="flex-1 justify-center items-center py-20">
+                  <Text className="text-gray-500">Loading records...</Text>
+                </View>
+              ) : null
+            }
           />
         )}
       </View>
     </PageLayout>
   );
 }
+
+// Keep your existing transformToOverallRecord function
+const transformToOverallRecord = (patient: PatientSummary) => {
+  return {
+    pat_id: patient.id,
+    fname: patient.fname,
+    lname: patient.lname,
+    mname: "", // Animal bite data doesn't have middle name
+    age: patient.age,
+    sex: patient.gender,
+    pat_type: patient.patientType,
+    count: patient.recordCount,
+    street: "",
+    barangay: "",
+    city: "",
+    province: "",
+    sitio: "",
+    address: "",
+  };
+};

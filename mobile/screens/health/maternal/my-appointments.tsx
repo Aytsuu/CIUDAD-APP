@@ -1,10 +1,10 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, TextInput } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react-native";
+import { ChevronLeft, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Trash2, X } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePrenatalAppointmentRequests } from "./queries/fetch";
-import { useUpdatePrenatalAppointment } from "./queries/update";
+import { useCancelPrenatalAppointment } from "./queries/update";
 import PageLayout from "@/screens/_PageLayout";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
@@ -14,11 +14,17 @@ export default function MyPrenatalAppointments() {
   const { user, isLoading: authLoading } = useAuth();
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'completed' | 'cancelled' | 'rejected'>('all');
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Cancel dialog state
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const rp_id = user?.rp || "";
+  const { pat_id } = useAuth();
   
   const { data: appointmentData, isLoading, isError, refetch } = usePrenatalAppointmentRequests(rp_id);
-  const { mutate: updateAppointment, isPending: isUpdating } = useUpdatePrenatalAppointment();
+  const { mutate: cancelAppointment, isPending: isCancelling } = useCancelPrenatalAppointment();
 
   const appointments = appointmentData?.requests || [];
   const statusCounts = appointmentData?.status_counts || {
@@ -112,20 +118,43 @@ export default function MyPrenatalAppointments() {
     }
   };
 
-  // Cancel appointment function
-  const handleCancelAppointment = (appointment: any) => {
+  // Open cancel dialog
+  const openCancelDialog = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setCancelReason("");
+    setShowCancelDialog(true);
+  };
+
+  // Close cancel dialog
+  const closeCancelDialog = () => {
+    setShowCancelDialog(false);
+    setSelectedAppointment(null);
+    setCancelReason("");
+  };
+
+  // Confirm cancellation
+  const confirmCancelAppointment = () => {
+    if (!cancelReason.trim()) {
+      Alert.alert("Required", "Please provide a reason for cancellation.");
+      return;
+    }
+
+    if (!selectedAppointment) return;
+
     const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    
-    updateAppointment(
+
+    cancelAppointment(
       {
-        par_id: appointment.par_id.toString(),
+        par_id: selectedAppointment.par_id.toString(),
         updateData: {
           cancelled_at: currentDate,
-          status: 'cancelled'
+          status: 'cancelled',
+          reason: cancelReason.trim()
         }
       },
       {
         onSuccess: () => {
+          closeCancelDialog();
           Alert.alert(
             "Success", 
             "Your appointment has been cancelled successfully.",
@@ -348,28 +377,15 @@ export default function MyPrenatalAppointments() {
                 {appointment.status.toLowerCase() === 'pending' && (
                   <View className="flex-row space-x-2 mt-3">
                     <TouchableOpacity
-                      className={`flex-1 py-2 px-4 rounded-lg ${
-                        isUpdating 
-                          ? 'bg-gray-100 border border-gray-300' 
-                          : 'bg-red-100 border border-red-300'
+                      className={`flex-1 py-3 px-4 rounded-lg ${
+                        isCancelling
+                          ? 'bg-gray-100 border border-gray-300'
+                          : 'bg-red-500 border border-red-300'
                       }`}
-                      disabled={isUpdating}
-                      onPress={() => {
-                        Alert.alert(
-                          "Cancel Appointment",
-                          "Are you sure you want to cancel this appointment request?",
-                          [
-                            { text: "No", style: "cancel" },
-                            { 
-                              text: "Yes", 
-                              style: "destructive",
-                              onPress: () => handleCancelAppointment(appointment)
-                            }
-                          ]
-                        );
-                      }}
+                      disabled={isCancelling}
+                      onPress={() => openCancelDialog(appointment)}
                     >
-                      {isUpdating ? (
+                      {isCancelling ? (
                         <View className="flex-row items-center justify-center">
                           <ActivityIndicator size="small" color="#6B7280" />
                           <Text className="text-gray-600 text-center font-medium ml-2">Cancelling...</Text>
@@ -396,6 +412,85 @@ export default function MyPrenatalAppointments() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Cancel Appointment Dialog */}
+      <Modal
+        visible={showCancelDialog}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeCancelDialog}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-4">
+          <View className="bg-white rounded-2xl w-full max-w-md shadow-xl">
+            {/* Header */}
+            <View className="flex-row items-center justify-between p-5 border-b border-gray-200">
+              <Text className="text-xl font-semibold text-gray-900">Cancel Appointment</Text>
+              <TouchableOpacity
+                onPress={closeCancelDialog}
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+              >
+                <X size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View className="p-5">
+              <View className="flex-row items-center bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <AlertCircle size={20} color="#D97706" />
+                <Text className="text-yellow-800 text-sm ml-2 flex-1">
+                  Are you sure you want to cancel this appointment?
+                </Text>
+              </View>
+
+              <Text className="text-gray-700 font-medium mb-2">
+                Reason for Cancellation <Text className="text-red-500">*</Text>
+              </Text>
+              <TextInput
+                className="border border-gray-300 rounded-lg p-3 text-gray-900 min-h-[100px] text-base"
+                placeholder="Please provide a reason for cancelling this appointment..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                value={cancelReason}
+                onChangeText={setCancelReason}
+                maxLength={500}
+              />
+              <Text className="text-gray-500 text-xs mt-1 text-right">
+                {cancelReason.length}/500 characters
+              </Text>
+            </View>
+
+            {/* Actions */}
+            <View className="flex-row p-5 border-t border-gray-200 space-x-3 gap-3">
+              <TouchableOpacity
+                className="flex-1 py-3 px-4 rounded-lg bg-gray-100 border border-gray-300"
+                onPress={closeCancelDialog}
+                disabled={isCancelling}
+              >
+                <Text className="text-gray-700 text-center font-medium">No, Keep It</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                className={`flex-1 py-3 px-4 rounded-lg ${
+                  isCancelling ? 'bg-red-400' : 'bg-red-500'
+                }`}
+                onPress={confirmCancelAppointment}
+                disabled={isCancelling || !cancelReason.trim()}
+              >
+                {isCancelling ? (
+                  <View className="flex-row items-center justify-center">
+                    <ActivityIndicator size="small" color="white" />
+                    <Text className="text-white text-center font-medium ml-2">Cancelling...</Text>
+                  </View>
+                ) : (
+                  <Text className="text-white text-center font-medium">Yes, Cancel</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </PageLayout>
   );
 }

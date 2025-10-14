@@ -81,7 +81,7 @@ export default () => {
   return (
     <PageLayout 
       headerTitle={<Text className="text-gray-900 text-[13px]">Account</Text>}
-      rightAction={<View className="w-10 h-10">
+      rightAction={<View className="w-10 h-10 flex-row items-center">
         {user?.staff && (
           <TouchableOpacity
             onPress={() => setShowStaffCard(true)}

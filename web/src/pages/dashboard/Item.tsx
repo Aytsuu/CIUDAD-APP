@@ -12,6 +12,7 @@ import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illnes
 import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-chart";
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -123,19 +124,10 @@ export const getItemsConfig = (
           familyPlanning,
           maternal,
         ],
-        sidebar: [
-          {
-            title: "Most Requested Medicine",
-            element: <MedicineDistributionSidebar />,
-          },
-          {
-            title: "Most used FirstAid",
-            element: <FirstAidDistributionSidebar />,
-          },
-        ],
+
         chart: [
           {
-            title: "Growth",
+            title: "OPT",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
@@ -146,6 +138,10 @@ export const getItemsConfig = (
             title: "Vaccination",
             element: <VaccineDistributionChart initialMonth={currentMonth} />,
           },
+        {
+          title: "Maternal",
+          element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
+        },
         ],
       },
 

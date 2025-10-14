@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.db.models import OuterRef, Exists, Prefetch, Q, Count
 from rest_framework.response import Response
@@ -18,7 +19,66 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# medical history GET
+# for charts 
+class MaternalPatientsListView(APIView):
+    def get(self, request, month):
+        try:
+            # Validate month format (YYYY-MM)
+            try:
+                year, month_num = map(int, month.split('-'))
+                if month_num < 1 or month_num > 12:
+                    raise ValueError
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid month format. Use YYYY-MM.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get maternal patients with records created in the specified month
+            queryset = Patient.objects.filter(
+                Exists(PatientRecord.objects.filter(
+                    pat_id=OuterRef('pat_id'),
+                    patrec_type__in=['Prenatal', 'Postpartum Care'],
+                    created_at__year=year,
+                    created_at__month=month_num
+                ))
+            ).annotate(
+                completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
+            ).distinct()
+
+            # Serialize the data
+            serializer = PatientSerializer(queryset, many=True)
+            
+            # Count prenatal and postpartum records for the month
+            prenatal_count = PatientRecord.objects.filter(
+                patrec_type='Prenatal',
+                created_at__year=year,
+                created_at__month=month_num
+            ).count()
+            
+            postpartum_count = PatientRecord.objects.filter(
+                patrec_type='Postpartum Care',
+                created_at__year=year,
+                created_at__month=month_num
+            ).count()
+
+            return Response({
+                'success': True,
+                'month': month,
+                'patients': serializer.data,
+                'total_patients': queryset.count(),
+                'prenatal_records': prenatal_count,
+                'postpartum_records': postpartum_count,
+                'total_records': prenatal_count + postpartum_count
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error fetching maternal patients for month {month}: {e}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # medical history GET
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
@@ -276,8 +336,7 @@ class MaternalPatientListView(generics.ListAPIView):
         return queryset
 
 
-# Fix: Use APIView and return Response in get method
-
+# Counts
 class MaternalCountView(generics.ListAPIView):
     def get(self, request):
         try:

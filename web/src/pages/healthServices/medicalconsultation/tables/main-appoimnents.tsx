@@ -50,13 +50,13 @@ export default function MainAppointments() {
                 <TabsTrigger value="appointment" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <ClipboardList className="h-4 w-4" />
                   <span>Confirmed Appointments</span>
-                  {!isLoading && data?.data?.medrequest_count > 0 && <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center min-w-[20px]">{data.data.medrequest_count}</span>}
+                  {!isLoading && data?.data?.confirmed_appointments_count > 0 && <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center min-w-[20px]">{data.data.confirmed_appointments_count}</span>}
                 </TabsTrigger>
 
                 <TabsTrigger value="pending" className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                   <Clock className="h-4 w-4" />
                   <span>Pending Confirmation</span>
-                  {!isLoading && data?.data?.apprequest_count > 0 && <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center min-w-[20px]">{data.data.apprequest_count}</span>}
+                  {!isLoading && data?.data?.pending_appointments_count > 0 && <span className="ml-2 text-xs font-semibold text-white bg-red-500 rounded-full px-2 h-5 w-5 flex items-center justify-center min-w-[20px]">{data.data.pending_appointments_count}</span>}
                 </TabsTrigger>
               </TabsList>
             </div>

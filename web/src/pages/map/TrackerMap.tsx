@@ -12,11 +12,6 @@ interface TrackingDevice {
   status: 'online' | 'offline' | 'idle';
 }
 
-interface TrackingHistory {
-  position: [number, number];
-  timestamp: Date;
-}
-
 export default function TrackerMap(): JSX.Element {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -36,7 +31,7 @@ export default function TrackerMap(): JSX.Element {
   ]);
   
   const [selectedDevice, setSelectedDevice] = useState<string | null>('device-1');
-  const [isTracking, setIsTracking] = useState<boolean>(true);
+  const [isTracking, _setIsTracking] = useState<boolean>(true);
 
   // Initialize map
   useEffect(() => {
@@ -97,57 +92,57 @@ export default function TrackerMap(): JSX.Element {
   }, []);
 
   // Create custom marker element
-  const createMarkerElement = (device: TrackingDevice): HTMLDivElement => {
-    const el = document.createElement('div');
-    el.style.width = '40px';
-    el.style.height = '40px';
-    el.style.cursor = 'pointer';
+  // const createMarkerElement = (device: TrackingDevice): HTMLDivElement => {
+  //   const el = document.createElement('div');
+  //   el.style.width = '40px';
+  //   el.style.height = '40px';
+  //   el.style.cursor = 'pointer';
     
-    const color = device.status === 'online' ? '#22c55e' : 
-                  device.status === 'offline' ? '#ef4444' : '#f59e0b';
+  //   const color = device.status === 'online' ? '#22c55e' : 
+  //                 device.status === 'offline' ? '#ef4444' : '#f59e0b';
     
-    el.innerHTML = `
-      <div style="
-        position: relative;
-        width: 100%;
-        height: 100%;
-      ">
-        <div style="
-          background-color: ${color};
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: absolute;
-          top: 0;
-          left: 4px;
-        ">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
-            <path d="M8 0l-2 6h-6l5 4-2 6 5-4 5 4-2-6 5-4h-6z"/>
-          </svg>
-        </div>
-        <div style="
-          position: absolute;
-          top: 36px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(0,0,0,0.8);
-          color: white;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 10px;
-          white-space: nowrap;
-          font-weight: bold;
-        ">${device.name}</div>
-      </div>
-    `;
+  //   el.innerHTML = `
+  //     <div style="
+  //       position: relative;
+  //       width: 100%;
+  //       height: 100%;
+  //     ">
+  //       <div style="
+  //         background-color: ${color};
+  //         width: 32px;
+  //         height: 32px;
+  //         border-radius: 50%;
+  //         border: 3px solid white;
+  //         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  //         display: flex;
+  //         align-items: center;
+  //         justify-content: center;
+  //         position: absolute;
+  //         top: 0;
+  //         left: 4px;
+  //       ">
+  //         <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
+  //           <path d="M8 0l-2 6h-6l5 4-2 6 5-4 5 4-2-6 5-4h-6z"/>
+  //         </svg>
+  //       </div>
+  //       <div style="
+  //         position: absolute;
+  //         top: 36px;
+  //         left: 50%;
+  //         transform: translateX(-50%);
+  //         background: rgba(0,0,0,0.8);
+  //         color: white;
+  //         padding: 2px 6px;
+  //         border-radius: 4px;
+  //         font-size: 10px;
+  //         white-space: nowrap;
+  //         font-weight: bold;
+  //       ">${device.name}</div>
+  //     </div>
+  //   `;
     
-    return el;
-  };
+  //   return el;
+  // };
 
   // Update markers on map
   useEffect(() => {

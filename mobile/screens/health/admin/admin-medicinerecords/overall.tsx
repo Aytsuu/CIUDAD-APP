@@ -87,7 +87,6 @@ export default function AllMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  const queryClient = useQueryClient();
   const debouncedSearchQuery = useDebounce(searchQuery, 1500);
 
   // Build query parameters

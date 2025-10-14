@@ -11,7 +11,7 @@ import { BadgeCheck } from "lucide-react";
 
 const NavItemList = [
   { path: "/home", title: "Home" },
-  { path: "/about", title: "About" },
+  { path: "/about", title: "Our Barangay" },
   { path: "/announcements", title: "Announcement" },
   { path: "/health", title: "Health" },
   { path: "/mobile-app", title: "Mobile App" },
