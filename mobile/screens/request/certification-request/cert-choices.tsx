@@ -2,8 +2,8 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ChevronRight } from "@/lib/icons/ChevronRight";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import { ChevronRight } from "lucide-react-native";
+import PageLayout from '@/screens/_PageLayout';
 
 const CertChoices = () => {
   const router = useRouter();
@@ -24,8 +24,8 @@ const CertChoices = () => {
   ];
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity 
           onPress={() => router.back()} 
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
@@ -33,8 +33,8 @@ const CertChoices = () => {
           <Ionicons name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Certification Requests</Text>}
-      customRightAction={<View className="w-10 h-10" />}
+      headerTitle={<Text className="text-[13px]">Certification Requests</Text>}
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 p-6">
         {menuItem.map((item: any, index: number) => (
@@ -62,13 +62,13 @@ const CertChoices = () => {
               </View>
 
               <View className="ml-2">
-                <ChevronRight className="text-gray-400" size={20} />
+                <ChevronRight color="#9ca3af" size={20} />
               </View>
             </View>
           </TouchableOpacity>
         ))}
       </View>
-    </_ScreenLayout>
+    </PageLayout>
   );
 };
 

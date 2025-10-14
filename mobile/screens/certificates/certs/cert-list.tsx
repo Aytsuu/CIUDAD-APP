@@ -4,12 +4,19 @@ import { router } from 'expo-router'
 import { getCertificates, Certificate } from '../queries/certificateQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
+import { LoadingState } from '@/components/ui/loading-state'
+import { Search } from '@/lib/icons/Search'
+import { SearchInput } from '@/components/ui/search-input'
 
 const CertList = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected' | 'completed'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'completed' | 'rejected'>('all')
+  const [searchInputVal, setSearchInputVal] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [showSearch, setShowSearch] = useState<boolean>(false)
 
   // Fetch certificates from API
   useEffect(() => {
@@ -71,13 +78,33 @@ const CertList = () => {
     return text.slice(0, idx) + "\n" + text.slice(idx).trimStart();
   }
 
-  // Filter certificates based on status
+  // Search function
+  const handleSearch = React.useCallback(() => {
+    setSearchQuery(searchInputVal);
+  }, [searchInputVal]);
+
+  // Filter certificates based on status and search
   const filteredCertificates = useMemo(() => {
-    return certificates.filter(cert => {
-      if (statusFilter === 'all') return true;
-      return getNormalizedStatus(cert.req_status) === statusFilter;
-    })
-  }, [certificates, statusFilter])
+    let filtered = certificates.filter(cert => {
+      if (activeTab === 'all') return true;
+      return getNormalizedStatus(cert.req_status) === activeTab;
+    });
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(cert => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+          cert.cr_id?.toLowerCase().includes(searchLower) ||
+          cert.resident_details?.per_fname?.toLowerCase().includes(searchLower) ||
+          cert.resident_details?.per_lname?.toLowerCase().includes(searchLower) ||
+          cert.req_type?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    return filtered;
+  }, [certificates, activeTab, searchQuery])
 
   return (
     <PageLayout
@@ -86,70 +113,100 @@ const CertList = () => {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
-          <ChevronLeft size={24} className="text-gray-700" />
+          <ChevronLeft size={20} color="#374151" />
         </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Personal Clearance Request</Text>}
-      rightAction={<View className="w-10 h-10" />}
+      rightAction={
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
+      }
       wrapScroll={false}
     >
-      <View className="flex-1 p-6">
-        {loading && (
-          <View className="items-center justify-center py-10">
-            <ActivityIndicator />
-            <Text className="text-gray-500 mt-2">Loading certificates…</Text>
-          </View>
+      <View className="flex-1 bg-gray-50">
+        {/* Search Bar */}
+        {showSearch && (
+          <SearchInput 
+            value={searchInputVal}
+            onChange={setSearchInputVal}
+            onSubmit={handleSearch} 
+          />
         )}
 
-        {error && (
-          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-            <Text className="text-red-800 text-sm">Failed to load certificates.</Text>
+        {/* Fixed Tab Headers */}
+        <View className="bg-white border-b border-gray-200">
+          <View className="flex-row">
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeTab === 'all' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveTab('all')}
+            >
+              <Text className={`font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-500'}`}>
+                All
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeTab === 'pending' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveTab('pending')}
+            >
+              <Text className={`font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Pending
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeTab === 'approved' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveTab('approved')}
+            >
+              <Text className={`font-medium ${activeTab === 'approved' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Approved
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeTab === 'completed' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveTab('completed')}
+            >
+              <Text className={`font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Completed
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-4 items-center border-b-2 ${
+                activeTab === 'rejected' ? 'border-blue-500' : 'border-transparent'
+              }`}
+              onPress={() => setActiveTab('rejected')}
+            >
+              <Text className={`font-medium ${activeTab === 'rejected' ? 'text-blue-600' : 'text-gray-500'}`}>
+                Rejected
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
+        </View>
 
-        {!loading && !error && (
-          <>
-            {/* Status Filters */}
-            <View className="flex-row bg-gray-100 rounded-xl p-1 mb-3">
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'all' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('all')}
-              >
-                <Text className={`text-sm ${statusFilter === 'all' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'pending' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('pending')}
-              >
-                <Text className={`text-sm ${statusFilter === 'pending' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Pending</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'approved' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('approved')}
-              >
-                <Text className={`text-sm ${statusFilter === 'approved' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Approved</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'completed' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('completed')}
-              >
-                <Text className={`text-sm ${statusFilter === 'completed' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Completed</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-lg items-center ${statusFilter === 'rejected' ? 'bg-white' : ''}`}
-                activeOpacity={0.8}
-                onPress={() => setStatusFilter('rejected')}
-              >
-                <Text className={`text-sm ${statusFilter === 'rejected' ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>Rejected</Text>
-              </TouchableOpacity>
+        {/* Scrollable Content Area */}
+        <View className="flex-1">
+          {loading ? (
+            <View className="flex-1 justify-center items-center">
+              <LoadingState />
             </View>
-
-            {/* Certificate Cards */}
-            <ScrollView showsVerticalScrollIndicator={false}>
+          ) : error ? (
+            <View className="flex-1 justify-center items-center p-6">
+              <View className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <Text className="text-red-800 text-sm text-center">Failed to load certificates.</Text>
+              </View>
+            </View>
+          ) : (
+            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
               {filteredCertificates.length ? (
                 filteredCertificates.map((certificate, idx) => (
                   <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
@@ -166,11 +223,23 @@ const CertList = () => {
                   </View>
                 ))
               ) : (
-                <Text className="text-gray-500 text-sm mb-4">No personal certificates found.</Text>
+                <View className="flex-1 items-center justify-center py-12">
+                  <View className="items-center">
+                    <View className="bg-gray-100 rounded-full p-4 mb-4">
+                      <Text className="text-gray-500 text-2xl">📋</Text>
+                    </View>
+                    <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                      {searchQuery ? 'No certificates found matching your search' : `No ${activeTab} certificates yet`}
+                    </Text>
+                    <Text className="text-gray-500 text-sm text-center">
+                      {searchQuery ? 'Try adjusting your search terms' : `Your ${activeTab} certificates will appear here`}
+                    </Text>
+                  </View>
+                </View>
               )}
             </ScrollView>
-          </>
-        )}
+          )}
+        </View>
       </View>
     </PageLayout>
   )

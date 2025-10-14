@@ -26,21 +26,21 @@ const CertificatesMain = () => {
     {
       id: 'personal',
       title: 'Personal & Others',
-      description: 'Manage personal information and other requests',
+      description: 'View personal requests',
       icon: FileText,
       gradient: ['#3b82f6', '#1e40af'],
     },
     {
       id: 'permit',
       title: 'Permit',
-      description: 'Apply for and manage permits',
+      description: 'View business permits',
       icon: Building2,
       gradient: ['#059669', '#047857'],
     },
     {
       id: 'certificates',
       title: 'Issued Certificates',
-      description: 'View and download issued certificates',
+      description: 'View issued certificates',
       icon: Award,
       gradient: ['#7c3aed', '#5b21b6'],
     }
@@ -53,7 +53,7 @@ const CertificatesMain = () => {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
         >
-          <ChevronLeft size={24} className="text-gray-700" />
+          <ChevronLeft size={20} color="#374151" />
         </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Certification</Text>}

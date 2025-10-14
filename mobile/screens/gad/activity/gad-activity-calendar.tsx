@@ -222,9 +222,7 @@ const GADActivityCalendar = () => {
         headerTitle={<Text className="text-[13px]">GAD Activity Calendar</Text>}
         rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 p-6 justify-center items-center">
-          <LoadingState />
-        </View>
+        <LoadingState />
       </PageLayout>
     );
   }

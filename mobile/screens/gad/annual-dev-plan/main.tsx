@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getAnnualDevPlanYears } from './restful-api/annualDevPlanGetAPI';
 import PageLayout from '@/screens/_PageLayout';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface FolderItem {
   id: string;
@@ -58,13 +59,11 @@ const AnnualDevPlanMain = () => {
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 p-6">
-        <View className="flex-row flex-wrap justify-between">
-          {isLoading ? (
-            <View className="w-full items-center py-8">
-              <Text className="text-gray-600">Loading...</Text>
-            </View>
-          ) : (
-            folders.map((folder, index) => (
+        {isLoading ? (
+          <LoadingState />
+        ) : (
+          <View className="flex-row flex-wrap justify-between">
+            {folders.map((folder, index) => (
             <TouchableOpacity
               key={folder.id}
               className="w-[48%] mb-6 items-center"
@@ -86,9 +85,9 @@ const AnnualDevPlanMain = () => {
                 </Text>
               </View>
             </TouchableOpacity>
-          ))
-          )}
-        </View>
+          ))}
+          </View>
+        )}
       </View>
     </PageLayout>
   );
