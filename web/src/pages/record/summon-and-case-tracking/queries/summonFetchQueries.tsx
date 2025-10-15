@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSummonCaseList, getSummonScheduleList, getSummonSuppDoc, getSummonCaseDetail, getSummonTemplate, getSuppDoc, getSummonDates, 
     getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail} from "../requestAPI/summonGetAPI";
-import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList } from "../summon-types";
+import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList } from "../summon-types";
 
 
 export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
@@ -108,20 +108,9 @@ export const useGetSummonSuppDoc = (ss_id: string) => {
     })
 }
 
-export type ScheduleList = {
-    ss_id: string;
-    ss_mediation_level: string;
-    ss_is_rescheduled: boolean;
-    ss_reason: string;
-    hearing_date: string;
-    hearing_time: string;
-    supporting_docs: SupportingDoc[];
-}
-
 export type ResidentProfileBase = {
   [key: string]: any;
 };
-
 
 export type Complaint = {
   comp_incident_type: string;

@@ -15,6 +15,7 @@ import MinutesOfMeetingMain from "@/screens/council/minutesOfmeeting/minutes-of-
 import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main";
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 import HomeScreen from "@/screens/home";
+import SummonRemarksMain from "@/screens/summon/summon-remarks/summon-remarks-main";
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
 
@@ -23,6 +24,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <App/>
+    return <SummonRemarksMain/>
 }
  
