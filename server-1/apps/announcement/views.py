@@ -42,7 +42,6 @@ class AnnouncementListView(generics.ListAPIView):
             queryset = Announcement.objects.filter(staff=Staff.objects.filter(staff_id=staff).first())
         
         if filter:
-            print(f"Handling {filter} filter...")
             if filter == 'event':
                 queryset = queryset.filter(ann_type__icontains='event')
             elif filter == 'general':

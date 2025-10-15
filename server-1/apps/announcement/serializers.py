@@ -187,7 +187,7 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
                         'staff_id': getattr(announcement.staff, 'id', 'N/A'),
                         'current_date': now(),
                         'files': list(
-                            announcement.announcementfile_set.values(
+                            announcement.announcement_file.all().values(
                                 'af_name', 'af_type', 'af_url'
                             )
                         ),

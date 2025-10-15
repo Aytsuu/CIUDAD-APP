@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { Link, Outlet } from "react-router";
+import { Link } from "react-router";
 import { FaFacebook, FaPhoneAlt } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button/button";
@@ -8,19 +8,43 @@ import SignIn from "@/pages/landing/signin/signin";
 import CebuCitySeal from "@/assets/images/cebucity_seal.svg";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { BadgeCheck } from "lucide-react";
-
-const NavItemList = [
-  { path: "/home", title: "Home" },
-  { path: "/about", title: "Our Barangay" },
-  { path: "/announcements", title: "Announcement" },
-  { path: "/health", title: "Health" },
-  { path: "/mobile-app", title: "Mobile App" },
-];
+import Home from "@/pages/landing/Home";
+import About from "@/pages/landing/About";
+import Announcements from "@/pages/landing/Announcements";
+import MobileApp from "@/pages/landing/MobileApp";
+import React from "react";
+import { Footer } from "@/pages/landing/Footer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function LandingLayout() {
   const { user } = useAuth();
+  const homeRef = React.useRef<HTMLDivElement>(null);
+  const aboutRef = React.useRef<HTMLDivElement>(null);
+  const announcementRef = React.useRef<HTMLDivElement>(null);
+  const healthRef = React.useRef<HTMLDivElement>(null);
+  const mobileAppRef = React.useRef<HTMLDivElement>(null);
+
+  const NavItemList = [
+    { path: homeRef, title: "Home" },
+    { path: aboutRef, title: "Our Barangay" },
+    { path: announcementRef, title: "Announcement" },
+    { path: mobileAppRef, title: "Mobile App" },
+  ];
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      homeRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [])
+
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="w-screen h-screen bg-snow overflow-hidden flex flex-col">
+    <div className="w-full min-h-screen bg-snow">
       {/* Fixed Headers Container */}
       <div className="fixed top-0 left-0 right-0 z-50">
         {/* Top Header */}
@@ -31,8 +55,19 @@ export default function LandingLayout() {
               Website of Barangay San Roque (Ciudad)
             </Label>
             <div className="flex gap-3">
-              <FaFacebook className="hover:text-white cursor-pointer" />
-              <FaPhoneAlt className="hover:text-white cursor-pointer" />
+              <FaFacebook className="hover:text-white cursor-pointer" 
+                onClick={() => {
+                  window.open('https://www.facebook.com/brgysanroqueciudad', '_black')
+                }}
+              />
+              <Popover>
+                <PopoverTrigger>
+                  <FaPhoneAlt className="hover:text-white cursor-pointer" />
+                </PopoverTrigger>
+                <PopoverContent>
+                  
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <img
@@ -62,11 +97,11 @@ export default function LandingLayout() {
             {/* Navigation */}
             <nav className="w-1/2 flex items-center gap-3">
               {NavItemList.map(({ path, title }) => (
-                <Link key={path} to={path}>
+                <div key={title} onClick={() => scrollTo(path)}>
                   <Label className="p-[10px] rounded-lg hover:bg-lightBlue cursor-pointer">
                     {title}
                   </Label>
-                </Link>
+                </div>
               ))}
               {user?.staff?.staff_id ? (
                 <Link to={"/dashboard"}>
@@ -82,16 +117,39 @@ export default function LandingLayout() {
             </nav>
           </div>
         </header>
-        <header></header>
       </div>
 
       {/* Spacer to push content below fixed headers */}
       <div className="h-[120px]"></div>
 
       {/* Scrollable Page Content */}
-      <section className="flex-1 overflow-y-auto w-full flex justify-center bg-[#17294A]">
-        <Outlet />
-      </section>
+      <main className="w-full">
+        <section 
+          ref={homeRef}
+          className="w-full h-screen flex justify-center items-center"
+        >
+          <Home/>
+        </section>
+        <section 
+          ref={aboutRef}
+          className="w-full h-[150vh] flex justify-center items-center"
+        >
+          <About/>
+        </section>
+        <section 
+          ref={announcementRef}
+          className="w-full min-h-screen flex justify-center items-center"
+        >
+          <Announcements/>
+        </section>
+        <section 
+          ref={mobileAppRef}
+          className="w-full min-h-screen flex justify-center items-center"
+        >
+          <MobileApp/>
+        </section>
+        <Footer/>
+      </main>
     </div>
   );
 }

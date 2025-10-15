@@ -15,8 +15,8 @@ export const Footer = () => {
         <div className="w-1/3 space-y-4">
           <h3 className="text-xl font-bold">Barangay San Roque (Ciudad)</h3>
           <p className="text-gray-300">
-            Committed to serving our community with integrity, transparency, and
-            compassion.
+            Connecting communities through digital innovation and transparent
+            governance
           </p>
           <div className="flex space-x-4">
             <a href="#" className="text-gray-300 hover:text-white">
@@ -42,38 +42,21 @@ export const Footer = () => {
             </li>
             <li>
               <a href="#" className="text-gray-300 hover:text-white transition">
-                About Us
+                Our Barangay
               </a>
             </li>
             <li>
               <a href="#" className="text-gray-300 hover:text-white transition">
-                Services
+                Announcement
               </a>
             </li>
             <li>
               <a href="#" className="text-gray-300 hover:text-white transition">
-                News & Events
-              </a>
-            </li>
-            <li>
-              <a href="#" className="text-gray-300 hover:text-white transition">
-                Contact
+                Mobile App
               </a>
             </li>
           </ul>
         </div>
-
-        {/* Services */}
-        {/* <div>
-            <h3 className="text-lg font-semibold mb-4">Our Services</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Barangay Clearance</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Business Permit</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Health Services</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Community Programs</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Document Requests</a></li>
-            </ul>
-          </div> */}
 
         {/* Contact Info */}
         <div>
