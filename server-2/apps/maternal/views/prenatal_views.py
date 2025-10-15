@@ -565,13 +565,6 @@ class PrenatalAppointmentRequestMissedView(generics.UpdateAPIView):
 class PrenatalRecordsListView(generics.ListAPIView):
     """
     Optimized list view for prenatal records comparison table.
-    Uses PrenatalFormCompleteViewSerializer with extensive query optimization.
-    
-    Query Parameters:
-        - pat_id: Filter by patient ID
-        - pregnancy_id: Filter by pregnancy ID
-        - page: Page number for pagination
-        - page_size: Number of records per page (max 100)
     """
     serializer_class = PrenatalFormCompleteViewSerializer
     pagination_class = StandardResultsPagination
@@ -579,13 +572,11 @@ class PrenatalRecordsListView(generics.ListAPIView):
     def get_queryset(self):
         """
         Optimized queryset with select_related and prefetch_related to minimize queries.
-        Reduces N+1 query problem from 1000+ queries to ~20-30 queries for large datasets.
         """
         # Get query parameters
         pat_id = self.request.query_params.get('pat_id', None)
         pregnancy_id = self.request.query_params.get('pregnancy_id', None)
         
-        # Base queryset with comprehensive query optimization
         queryset = Prenatal_Form.objects.select_related(
             # Patient record chain
             'patrec_id',

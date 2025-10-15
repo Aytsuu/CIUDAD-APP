@@ -1,15 +1,14 @@
 "use client";
 
-import { Link } from "react-router";
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { ArrowUpDown, Search, AlertCircle, Loader2, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DataTable } from "@/components/ui/table/data-table"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
-import { SelectLayout } from "@/components/ui/select/select-layout"
+// import { SelectLayout } from "@/components/ui/select/select-layout"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { useLoading } from "@/context/LoadingContext"
 import { ExportButton } from "@/components/ui/export";
@@ -17,14 +16,12 @@ import { ExportButton } from "@/components/ui/export";
 import { getAgeInUnit } from "@/helpers/ageCalculator"
 
 import ScheduleTab from "./appointments-tab";
-
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
 import { useDebounce } from "@/hooks/use-debounce";
-import { capitalize } from "@/helpers/capitalize";
 
 
 // main component
-export default function ScheduleRecords() {
+export default function DefaultersTracking() {
   type ScheduleRecord = {
     id: number;
     patient: {
@@ -47,7 +44,7 @@ export default function ScheduleRecords() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedFilter] = useState("All");
   const [timeFrame, setTimeFrame] = useState("all");
   const [isTimeFrameLoading, setIsTimeFrameLoading] = useState(false);
 
@@ -68,8 +65,6 @@ export default function ScheduleRecords() {
     timeFrame
   )
 
-  
-
   // age unit handler
   function getBestAgeUnit(dob: string): { value: number; unit: string } {
     const years = getAgeInUnit(dob, "years");
@@ -84,6 +79,19 @@ export default function ScheduleRecords() {
     const days = getAgeInUnit(dob, "days");
     return { value: days, unit: days === 1 ? "day" : "days" };
   }
+
+  // determine if missed
+  const getAppointmentStatus = useCallback((scheduledDate: string, currentStatus: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const appointmentDate = new Date(scheduledDate);
+    appointmentDate.setHours(0, 0, 0, 0);
+
+    if (appointmentDate < today && currentStatus === "Pending") {
+      return "Missed";
+    }
+    return currentStatus;
+  }, []);
 
   // Transform the Django API data to match our ScheduleRecord type
   const transformedData = useMemo((): ScheduleRecord[] => {
@@ -136,8 +144,15 @@ export default function ScheduleRecords() {
         console.error("Error transforming visit data:", error, visit)
         return null
       }
-    }).filter(Boolean) // Remove null values
-  }, [paginatedData])
+    })
+    .filter(Boolean) // Remove null values
+    .filter((record: ScheduleRecord | null) => {
+      // Only show missed appointments
+      if (!record) return false;
+      const actualStatus = getAppointmentStatus(record.scheduledDate, record.status);
+      return actualStatus === "Missed";
+    })
+  }, [paginatedData, getAppointmentStatus])
 
   const totalPages = Math.ceil((paginatedData?.count || 0) / pageSize)
 
@@ -150,11 +165,6 @@ export default function ScheduleRecords() {
     setPage(1)
   }
 
-  const handleFilterChange = (filter: string) => {
-    setSelectedFilter(filter)
-    setPage(1) 
-  }
-
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
     setPage(1) 
@@ -165,19 +175,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
     setTimeFrame(timeFrame)
     setPage(1)
   }
-
-  // determine if missed (stable via useCallback)
-  const getAppointmentStatus = useCallback((scheduledDate: string, currentStatus: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const appointmentDate = new Date(scheduledDate);
-    appointmentDate.setHours(0, 0, 0, 0);
-
-    if (appointmentDate < today && currentStatus === "Pending") {
-      return "Missed";
-    }
-    return currentStatus;
-  }, []);
 
   const columns: ColumnDef<ScheduleRecord>[] = useMemo(() => [
     {
@@ -237,13 +234,12 @@ const handleTimeFrameChange = (timeFrame: string) => {
       header: "Purpose",
       cell: ({ row }) => (
         <div className="flex justify-center px-2">
-          <div className="w-full break-words">{capitalize(row.original.purpose)}</div>
+          <div className="w-full break-words">{row.original.purpose}</div>
         </div>
       )
     },
     {
       accessorKey: "status",
-      // size: 80,
       header: "Status",
       cell: ({ row }) => {
         const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status);
@@ -263,7 +259,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "sitio",
-      // size: 80,
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px]">
@@ -273,47 +268,14 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "type",
-      // size: 80,
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center">
           <div className="w-full">{row.original.type}</div>
         </div>
       )
-    }, 
-    // {
-    //   accessorKey: "action",
-    //   size: 100,
-    //   header: "Action",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center">
-    //       <TooltipProvider> 
-    //         <TooltipLayout
-    //           trigger={
-    //             <div
-    //               className="bg-white hover:bg-gray-50 text-black px-4 py- rounded cursor-pointer"
-    //               onClick={() => {
-    //                 console.log("View patient:", row.original.patient.patientId)
-    //               }}
-    //             >
-    //               <ViewButton onClick={() => {}} />
-    //             </div>
-    //           }
-    //           content="View Schedule Details"
-    //         />
-    //       </TooltipProvider>
-    //     </div>
-    //   )
-    // }
+    }
   ], [getAppointmentStatus]);
-
-  const filter = [
-    { id: "All", name: "All" },
-    { id: "pending", name: "Pending" },
-    { id: "completed", name: "Completed" },
-    { id: "missed", name: "Missed" },
-    { id: "cancelled", name: "Cancelled" },
-  ]
 
   // export columns
   const exportColumns = [
@@ -364,7 +326,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
   // Error state
   if (error) {
     return (
-      <MainLayoutComponent title="Scheduled Appointments" description="View patient appointment schedules">
+      <LayoutWithBack title="Defaulters Tracking" description="View patient with missed follow-up visits">
         <div className="flex flex-col items-center justify-center h-64">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-red-600 mb-2 text-lg font-semibold">Error loading data</p>
@@ -373,26 +335,18 @@ const handleTimeFrameChange = (timeFrame: string) => {
             Try Again
           </Button>
         </div>
-      </MainLayoutComponent>
+      </LayoutWithBack>
     );
   }
 
   const showLoadingState = isLoading || isTimeFrameLoading;
 
   return (
-    <MainLayoutComponent title="Follow-up Visits" description="View patient appointment schedules">
+    <LayoutWithBack title="Defaulters Tracking" description="View patient with missed follow-up visits">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
         <div className="flex justify-between mb-4 w-full">
           <div>
             <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
-          </div>
-
-          {/* defaulters tracking */}
-          <div className="flex justify-center items-center">
-            <Link to="/health-appointments/defaulters-tracking">
-              <Button variant="link">Defaulters Tracking</Button>
-            </Link>
-            
           </div>
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
@@ -402,13 +356,13 @@ const handleTimeFrameChange = (timeFrame: string) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
                 <Input placeholder="Search schedules..." className="pl-10 w-full bg-white" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
               </div>
-              <SelectLayout 
-                placeholder="Select status" 
-                className="w-full md:w-[200px] bg-white text-black" 
-                options={filter} 
-                value={selectedFilter} 
-                onChange={handleFilterChange} 
-              />
+              {/* <SelectLayout 
+                  placeholder="Select status" 
+                  className="w-full md:w-[200px] bg-white text-black" 
+                  options={filter} 
+                  value={selectedFilter} 
+                  onChange={handleFilterChange} 
+               /> */}
             </div>
           </div>
         </div>
@@ -440,7 +394,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
               <div className="flex justify-center h-48">
                 <p className="flex text-gray-500 items-center"> 
                   <FileText size={28}/> 
-                  No follow-up visits found for {timeFrame === "today" ? "today" : timeFrame === "thisWeek" ? "this week" : "this month"}
+                  No missed follow-up visits found {timeFrame === "all" ? "" : timeFrame === "today" ? "today" : timeFrame === "thisWeek" ? "this week" : "this month"}
                 </p>
               </div>
             )}
@@ -457,6 +411,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
+    </LayoutWithBack>
   );
 }

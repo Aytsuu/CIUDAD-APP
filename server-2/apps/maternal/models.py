@@ -146,6 +146,7 @@ class Prenatal_Form(models.Model):
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
     vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vacrec_id', null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='assigned_prenatal_forms', db_column='assigned_to', null=True)
 
     def save(self, *args, **kwargs):
         if not self.pf_id:
@@ -205,6 +206,8 @@ class TT_Status(models.Model):
     tts_date_given = models.DateField(null=True, blank=True)
     tts_tdap = models.BooleanField(null=True, blank=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='tt_status', db_column='pat_id', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
     class Meta:
         db_table = 'tt_status'
 

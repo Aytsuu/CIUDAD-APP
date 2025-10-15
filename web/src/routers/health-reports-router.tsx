@@ -1,5 +1,6 @@
-// import BHWReportsMainTable from "@/pages/healthServices/reports/bhw-report/bhw-main-table";
-// import BHWReportsForm from "@/pages/healthServices/reports/bhw-report/bhw-m-accmplshmnt-form";
+// BHW
+import BHWReportsMonthlyRecords from "@/pages/healthServices/reports/bhw-report/monthly";
+import BHWReportDetails from "@/pages/healthServices/reports/bhw-report/records";
 
 import HealthcareReports from "@/pages/healthServices/reports/MainReports";
 import MonthlyMedicineRecords from "@/pages/healthServices/reports/medicine-report/monthly";
@@ -18,6 +19,7 @@ import MonthlyInventoryFirstAidRecords from "@/pages/healthServices/reports/inve
 import MonthlyInventoryFirstAidDetails from "@/pages/healthServices/reports/inventory/firstaid/records";
 import MonthlyInventoryAntigenRecords from "@/pages/healthServices/reports/inventory/antigen/monthly";
 import MonthlyInventoryAntigenDetails from "@/pages/healthServices/reports/inventory/antigen/records";
+
 // OPT
 import MonthlyOPTRecords from "@/pages/healthServices/reports/opt-tracking/monthly";
 import MonthlyOPTDetails from "@/pages/healthServices/reports/opt-tracking/records";
@@ -47,14 +49,14 @@ import MultiStepFormFHIS from "@/pages/healthServices/reports/fhisreport/pages/m
 import FHSISMonthlyRecords from "@/pages/healthServices/reports/fhisreport/monthly";
 
 export const healthreports_router = [
-  // {
-  //   path: "/bhw-monthly-reports",
-  //   element: <BHWReportsMainTable />,
-  // },
-  // {
-  //   path:"/bhw-accomplishment-reports",
-  //   element: <BHWReportsForm />,
-  // },
+  {
+    path: "/reports/bhw-accomplishment-reports/monthly",
+    element: <BHWReportsMonthlyRecords />,
+  },
+  {
+    path:"/reports/bhw-accomplishment-reports/records",
+    element: <BHWReportDetails />,
+  },
   {
     path: "/reports",
     element: <HealthcareReports />

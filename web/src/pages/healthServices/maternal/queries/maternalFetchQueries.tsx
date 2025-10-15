@@ -23,6 +23,7 @@ import { getPatients,
 			getPrenatalAppointmentRequests,
 			getPrenatalRecordComparison,
 			getMaternalCharts,
+			getMaternalStaff
 } from "../restful-api/maternalGetAPI";
 
 import { api2 } from "@/api/api";
@@ -326,5 +327,15 @@ export const useMaternalCharts = (month: string) => {
 	return useQuery({
 		queryKey: ['maternalCharts', month],
 		queryFn: () => getMaternalCharts(month),
+	})
+}
+
+// for getMaternalStaff
+export const useMaternalStaff = () => {
+	return useQuery({
+		queryKey: ['maternalStaff'],
+		queryFn: getMaternalStaff,
+		staleTime: 30 * 1000,
+		retry: 2,
 	})
 }

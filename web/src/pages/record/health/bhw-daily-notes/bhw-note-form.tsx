@@ -7,7 +7,7 @@ import { FormTextArea } from "@/components/ui/form/form-text-area"
 
 import { BHWFormSchema } from "./bhw-form"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { Form } from "@/components/ui/form/form"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -15,15 +15,43 @@ import z from "zod"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button/button"
 import { Separator } from "@/components/ui/separator"
+import { useAuth } from "@/context/AuthContext"
+import { Plus, Trash2 } from "lucide-react"
+
+import { NutritionalStatusCalculator } from "@/components/ui/nutritional-status-calculator"
 
 
 export default function BHWNoteForm() {
    const defaultValues = generateDefaultValues(BHWFormSchema)
+   const { user } = useAuth()
+   const staffId = user?.staff?.staff_id || ""
+   const today = new Date().toISOString().split("T")[0]
 
    const form = useForm<z.infer<typeof BHWFormSchema>>({
       resolver: zodResolver(BHWFormSchema),
       defaultValues,
    })
+
+   form.setValue("staffId", staffId)
+   form.setValue("dateToday", today)
+
+   // Field array for dynamic "others" diseases
+   const { fields, append, remove } = useFieldArray({
+      control: form.control,
+      name: "surveillanceCasesCount.others"
+   })
+
+   const handleNutritionalStatusChange = (status: any) => {
+      // Save the nutritional status to your form
+      form.setValue("nutritionalStatus", status)
+      console.log("Nutritional Status:", status)
+   }
+
+   const weight = form.watch("weight")
+   const height = form.watch("height")
+   const age = form.watch("age") // You need to add this field
+   const gender = form.watch("gender") // You need to add this field
+   const muac = form.watch("muac")
 
    // const handleSubmit = async () => {
    //    let isValid = false
@@ -67,11 +95,31 @@ export default function BHWNoteForm() {
                            </div>
                         </div>
                      </div>
+
+                     <div className="mb-5">
+                        <FormTextArea
+                           control={form.control}
+                           label="Description"
+                           name="description"
+                        />
+                     </div>
                      
                      <div className="mb-5">
                         <Label className=" text-md font-semibold">Child Anthropometric Measurement</Label>
                         <Separator className="mt-2 mb-4"/>
-                        <div className="grid grid-cols-2 gap-2 mb-5">
+                        <div className="grid grid-cols-4 gap-2 mb-5">
+                           <FormInput
+                              control={form.control}
+                              label="Age"
+                              placeholder="e.g., 2 years 3 months"
+                              name="age"
+                           />
+                           <FormInput
+                              control={form.control}
+                              label="Gender"
+                              placeholder="Male or Female"
+                              name="gender"
+                           />
                            <FormInput
                               control={form.control}
                               label="Weight"
@@ -85,13 +133,21 @@ export default function BHWNoteForm() {
                               name="height"
                            />
                         </div>
+                        <NutritionalStatusCalculator
+                           weight={weight ? Number(weight) : undefined}
+                           height={height ? Number(height) : undefined}
+                           muac={muac}
+                           age={age}
+                           gender={gender as "Male" | "Female"}
+                           onStatusChange={handleNutritionalStatusChange}
+                        />
 
-                        <div className="flex flex-col border p-5 rounded-lg">
+                        {/* <div className="flex flex-col border p-5 rounded-lg">
                               <Label>Measurement Completion List</Label>
                            <div className="flex h-[200px] border p-5 mt-3 rounded-md overflow-y-auto">
 
                            </div>
-                        </div>
+                        </div> */}
                      </div>
 
                      <div className="mb-5">
@@ -177,35 +233,75 @@ export default function BHWNoteForm() {
                               name="surveillanceCasesCount.tuberculosisCount"
                               type="number"
                            />
-                           <FormInput
+                            <FormInput
                               control={form.control}
                               label="Leprosy"
                               placeholder="Enter count"
                               name="surveillanceCasesCount.leprosyCount"
                               type="number"
                            />
-                           <FormInput
-                              control={form.control}
-                              label="Others"
-                              placeholder="Enter count"
-                              name="surveillanceCasesCount.othersCount"
-                              type="number"
-                           />
+                        </div>
+
+                        {/* Others - Dynamic Fields */}
+                        <div className="mt-4">
+                           <div className="flex items-center justify-between mb-3">
+                              <Label className="text-sm font-semibold">Other Diseases</Label>
+                              <Button
+                                 type="button"
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => append({ diseaseName: "", count: 0 })}
+                              >
+                                 <Plus className="w-4 h-4 mr-1" />
+                                 Add Disease
+                              </Button>
+                           </div>
+
+                           {fields.length > 0 && (
+                              <div className="space-y-2 border rounded-md p-3 bg-gray-50">
+                                 {fields.map((field, index) => (
+                                    <div key={field.id} className="flex gap-2 items-end">
+                                       <div className="flex-1">
+                                          <FormInput
+                                             control={form.control}
+                                             label={index === 0 ? "Disease Name" : ""}
+                                             placeholder="Enter disease name"
+                                             name={`surveillanceCasesCount.others.${index}.diseaseName`}
+                                          />
+                                       </div>
+                                       <div className="w-32">
+                                          <FormInput
+                                             control={form.control}
+                                             label={index === 0 ? "Count" : ""}
+                                             placeholder="Count"
+                                             name={`surveillanceCasesCount.others.${index}.count`}
+                                             type="number"
+                                          />
+                                       </div>
+                                       <Button
+                                          type="button"
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={() => remove(index)}
+                                          className="mb-0.5"
+                                       >
+                                          <Trash2 className="w-4 h-4" />
+                                       </Button>
+                                    </div>
+                                 ))}
+                              </div>
+                           )}
+
+                           {fields.length === 0 && (
+                              <div className="text-center py-4 text-sm text-gray-500 border rounded-md bg-gray-50">
+                                 No other diseases added. Click "Add Disease" to add custom diseases.
+                              </div>
+                           )}
                         </div>
                      </div>
-
-                     <div className="mb-5">
-                        <FormTextArea
-                           control={form.control}
-                           label="Description"
-                           name="description"
-                        />
-                     </div>
-
                      <div className="flex justify-end">
-                        <Button type="submit">Save Notes</Button>
+                        <Button type="submit">Save Note</Button>
                      </div>
-                     
                   </div>
                </div>
             </div>

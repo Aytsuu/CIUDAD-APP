@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-// import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Form } from "@/components/ui/form/form";
@@ -103,10 +102,6 @@ export default function PrenatalFormFirstPg({
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("");
   const [selectedIllnessId, setSelectedIllnessId] = useState<string>("");
 
-  // for vaccine useState
-  // const [, setNextVisitDate] = useState<string | null>(null);
-  // const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
-
   // patient data fetching
   const { data: illnessesData, refetch: illnessesRefetch } = useIllnessList(); // illness list
   const { data: medHistoryData, isLoading, error } = usePrenatalPatientMedHistory(selectedPatientId); //medical history
@@ -115,10 +110,34 @@ export default function PrenatalFormFirstPg({
   const { data: bodyMeasurementData, isLoading: bmLoading } = usePrenatalPatientBodyMeasurement(selectedPatientId); //body measurement
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId); //tt status
   const { data: latestPrenatalData, isLoading: latestPrenatalLoading } = useLatestPatientPrenatalRecord(isFromIndividualRecord ? selectedPatientId : "" ); //latest prenatal record
-  // const { data: vaccinesData, isLoading: isVacstckLoading } = fetchVaccinesWithStock(isFromIndividualRecord ? selectedPatientId : "");
 
   // add mutation hook
   const addIllnessMutation = useAddIllnessData();
+
+  const hasLgBabies = watch("obstetricHistory.historyOfLBabiesStr");
+  const lgBabiesCount = watch("obstetricHistory.historyOfLBabies");
+
+  // Validate large babies count when hasLgBabies is true
+  // useEffect(() => {
+  //   if (hasLgBabies === true) {
+  //     // Check if count is provided and greater than 0
+  //     if (!lgBabiesCount || lgBabiesCount <= 0) {
+  //       form.setError("obstetricHistory.historyOfLBabies", {
+  //         type: "manual",
+  //         message: "Count of Large Babies is required",
+  //       });
+  //     } else {
+  //       // Clear the error if count is valid
+  //       form.clearErrors("obstetricHistory.historyOfLBabies");
+  //     }
+  //   } else if (hasLgBabies === false) {
+  //     // Clear error and reset count when 'No' is selected
+  //     form.clearErrors("obstetricHistory.historyOfLBabies");
+  //     if (lgBabiesCount && lgBabiesCount > 0) {
+  //       setValue("obstetricHistory.historyOfLBabies", 0);
+  //     }
+  //   }
+  // }, [hasLgBabies, lgBabiesCount, form, setValue]);
 
   // This function will only be called by form.handleSubmit if validation passes
   const handleNext = async () => {
@@ -163,6 +182,10 @@ export default function PrenatalFormFirstPg({
     }
   };
 
+  useEffect(() => {
+
+  }, [])
+
   // populate with the preselected patient if available
   useEffect(() => {
     if (isFromIndividualRecord && preselectedPatient) {
@@ -192,184 +215,65 @@ export default function PrenatalFormFirstPg({
 
       if (latestPF?.spouse_details?.spouse_info) {
         const residentSpouse = latestPF?.spouse_details?.spouse_info;
-        form.setValue(
-          "motherPersonalInfo.husbandLName",
-          residentSpouse?.per_lname || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.husbandFName",
-          residentSpouse?.per_fname || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.husbandMName",
-          residentSpouse?.per_mname || ""
-        );  
-        form.setValue(
-          "motherPersonalInfo.husbandDob",
-          residentSpouse?.per_dob || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.occupation",
-          residentSpouse?.spouse_occupation?.toUpperCase() || latestPF?.pf_occupation?.toUpperCase() || ""
-        );
+        form.setValue("motherPersonalInfo.husbandLName", residentSpouse?.per_lname || "");
+        form.setValue("motherPersonalInfo.husbandFName", residentSpouse?.per_fname || "");
+        form.setValue("motherPersonalInfo.husbandMName", residentSpouse?.per_mname || "");
+        form.setValue("motherPersonalInfo.husbandDob", residentSpouse?.per_dob || "");
+        form.setValue("motherPersonalInfo.occupation", residentSpouse?.spouse_occupation?.toUpperCase() || latestPF?.pf_occupation?.toUpperCase() || "");
       } else {
-        form.setValue(
-          "motherPersonalInfo.husbandLName",
-          latestPF.spouse_details.spouse_lname || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.husbandFName",
-          latestPF.spouse_details.spouse_fname || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.husbandMName",
-          latestPF.spouse_details.spouse_mname || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.husbandDob",
-          latestPF.spouse_details.spouse_dob || ""
-        );
-        form.setValue(
-          "motherPersonalInfo.occupation",
-          latestPF.spouse_details.spouse_occupation ||
-            latestPF.pf_occupation ||
-            ""
-        );
+        form.setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "");
+        form.setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "");
+        form.setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "");
+        form.setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "");
+        form.setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || latestPF.pf_occupation || "");
       }
 
       if (latestPF && activePregnancyId) {
-        form.setValue(
-          "medicalHistory.previousComplications",
-          latestPF.previous_complications || ""
-        );
+        form.setValue("medicalHistory.previousComplications", latestPF.previous_complications || "");
         form.setValue("presentPregnancy.pf_edc", latestPF.pf_edc || "");
-        form.setValue(
-          "followUpSchedule.aogWeeks",
-          latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || ""
-        );
-        form.setValue(
-          "followUpSchedule.aogDays",
-          latestPF.prenatal_care_entries[0]?.pfpc_aog_days || ""
-        );
+        form.setValue("followUpSchedule.aogWeeks", latestPF.prenatal_care_entries[0]?.pfpc_aog_wks || "");
+        form.setValue("followUpSchedule.aogDays", latestPF.prenatal_care_entries[0]?.pfpc_aog_days || "");
 
         if (latestPF.body_measurement_details) {
           const bodyMeasurement = latestPF.body_measurement_details;
-          form.setValue(
-            "motherPersonalInfo.motherWt",
-            bodyMeasurement.weight || ""
-          );
-          form.setValue(
-            "motherPersonalInfo.motherHt",
-            bodyMeasurement.height || ""
-          );
+          form.setValue("motherPersonalInfo.motherWt", bodyMeasurement.weight || "");
+          form.setValue("motherPersonalInfo.motherHt", bodyMeasurement.height || "");
         }
 
         if (latestPF.previous_pregnancy) {
           const prevPregnancy = latestPF.previous_pregnancy;
-          form.setValue(
-            "previousPregnancy.dateOfDelivery",
-            prevPregnancy.date_of_delivery || ""
-          );
-          form.setValue(
-            "previousPregnancy.outcome",
-            prevPregnancy.outcome || ""
-          );
-          form.setValue(
-            "previousPregnancy.typeOfDelivery",
-            prevPregnancy.type_of_delivery || ""
-          );
-          form.setValue(
-            "previousPregnancy.babysWt",
-            prevPregnancy.babys_wt || ""
-          );
+          form.setValue("previousPregnancy.dateOfDelivery", prevPregnancy.date_of_delivery || "");
+          form.setValue("previousPregnancy.outcome", prevPregnancy.outcome || "");
+          form.setValue("previousPregnancy.typeOfDelivery", prevPregnancy.type_of_delivery || "");
+          form.setValue("previousPregnancy.babysWt", prevPregnancy.babys_wt || "");
           form.setValue("previousPregnancy.gender", prevPregnancy.gender || "");
-          form.setValue(
-            "previousPregnancy.ballardScore",
-            prevPregnancy.ballard_score || ""
-          );
-          form.setValue(
-            "previousPregnancy.apgarScore",
-            prevPregnancy.apgar_score || ""
-          );
-        }
-
-        // guide for 4anc visits
-        if (latestPF.anc_visit_guide) {
-          const ancVisits = latestPF.anc_visit_guide;
-          form.setValue("ancVisits.firstTri", ancVisits.pfav_1st_tri || "");
-          form.setValue("ancVisits.secondTri", ancVisits.pfav_2nd_tri || "");
-          form.setValue(
-            "ancVisits.thirdTriOne",
-            ancVisits.pfav_3rd_tri_one || ""
-          );
-          form.setValue(
-            "ancVisits.thirdTriTwo",
-            ancVisits.pfav_3rd_tri_two || ""
-          );
+          form.setValue("previousPregnancy.ballardScore", prevPregnancy.ballard_score || "");
+          form.setValue("previousPregnancy.apgarScore", prevPregnancy.apgar_score || "");
         }
 
         // checklist
         if (latestPF.checklist_data) {
           const checklist = latestPF.checklist_data;
-          form.setValue(
-            "assessmentChecklist.increasedBP",
-            checklist.increased_bp
-          );
-          form.setValue(
-            "assessmentChecklist.epigastricPain",
-            checklist.epigastric_pain
-          );
+          form.setValue("assessmentChecklist.increasedBP", checklist.increased_bp);
+          form.setValue("assessmentChecklist.epigastricPain", checklist.epigastric_pain);
           form.setValue("assessmentChecklist.nausea", checklist.nausea);
-          form.setValue(
-            "assessmentChecklist.blurringOfVision",
-            checklist.blurring_of_vision
-          );
+          form.setValue("assessmentChecklist.blurringOfVision", checklist.blurring_of_vision);
           form.setValue("assessmentChecklist.edema", checklist.edema);
-          form.setValue(
-            "assessmentChecklist.severeHeadache",
-            checklist.severe_headache
-          );
-          form.setValue(
-            "assessmentChecklist.abnormalVaginalDischarges",
-            checklist.abnormal_vaginal_discharges
-          );
-          form.setValue(
-            "assessmentChecklist.vaginalBleeding",
-            checklist.vaginal_bleeding
-          );
-          form.setValue(
-            "assessmentChecklist.chillsFever",
-            checklist.chills_fever
-          );
-          form.setValue(
-            "assessmentChecklist.diffInBreathing",
-            checklist.diff_in_breathing
-          );
-          form.setValue(
-            "assessmentChecklist.varicosities",
-            checklist.varicosities
-          );
-          form.setValue(
-            "assessmentChecklist.abdominalPain",
-            checklist.abdominal_pain
-          );
+          form.setValue("assessmentChecklist.severeHeadache", checklist.severe_headache);
+          form.setValue("assessmentChecklist.abnormalVaginalDischarges", checklist.abnormal_vaginal_discharges);
+          form.setValue("assessmentChecklist.vaginalBleeding", checklist.vaginal_bleeding);
+          form.setValue("assessmentChecklist.chillsFever", checklist.chills_fever);
+          form.setValue("assessmentChecklist.diffInBreathing", checklist.diff_in_breathing);
+          form.setValue("assessmentChecklist.varicosities", checklist.varicosities);
+          form.setValue("assessmentChecklist.abdominalPain", checklist.abdominal_pain);
         }
 
         // risk codes
         if (latestPF.obstetric_risk_codes) {
           const riskCodes = latestPF.obstetric_risk_codes;
-          form.setValue(
-            "riskCodes.hasOneOrMoreOfTheFF.prevCaesarian",
-            riskCodes.pforc_prev_c_section
-          );
-          form.setValue(
-            "riskCodes.hasOneOrMoreOfTheFF.miscarriages",
-            riskCodes.pforc_3_consecutive_miscarriages
-          );
-          form.setValue(
-            "riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage",
-            riskCodes.pforc_postpartum_hemorrhage
-          );
+          form.setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", riskCodes.pforc_prev_c_section);
+          form.setValue("riskCodes.hasOneOrMoreOfTheFF.miscarriages", riskCodes.pforc_3_consecutive_miscarriages);
+          form.setValue("riskCodes.hasOneOrMoreOfTheFF.postpartumHemorrhage", riskCodes.pforc_postpartum_hemorrhage);
         }
 
         // birth plan
@@ -1130,83 +1034,6 @@ export default function PrenatalFormFirstPg({
     },
   ];
 
-  // const handleVaccineChange = (value: string) => {
-  //   form.setValue("prenatalVaccineInfo.vaccineType", value);
-  //   setNextVisitDate(null);
-  //   setNextVisitDescription(null);
-  //   form.setValue("prenatalVaccineInfo.followv_date", "");
-  //   form.setValue("prenatalVaccineInfo.vacrec_totaldose", "");
-  //   setIsVaccineCompleted(false);
-
-  //   if (value) {
-  //     const [vacStck_id, vac_id, vac_name] = value.split(",");
-  //     const selectedVaccine = vaccinesData?.default?.find((v: any) => v.vacStck_id === parseInt(vacStck_id, 10));
-
-  //     if (selectedVaccine) {
-  //       const { vaccinelist } = selectedVaccine;
-  //       setSelectedVaccineType(vaccinelist.vac_type_choices);
-
-  //       const currentVaccineHistory = patientVaccinationRecords?.filter((record) => record.vaccine_stock?.vaccinelist?.vac_id === Number(vac_id)) || [];
-  //       setVaccineHistory(currentVaccineHistory);
-
-  //       let doseNumber = 1;
-
-  //       // Always get the latest dose and increment by 1 for non-routine vaccines
-  //       if (vaccinelist.vac_type_choices !== "routine") {
-  //         const latestDose = currentVaccineHistory.length > 0 ? Math.max(...currentVaccineHistory.map((r) => Number(r.vachist_doseNo) || 0)) : 0;
-  //         doseNumber = latestDose + 1;
-  //       }
-
-  //       form.setValue("vachist_doseNo", doseNumber);
-
-  //       // Only set total dose for non-conditional vaccines
-  //       if (vaccinelist.vac_type_choices !== "conditional" && vaccinelist.no_of_doses) {
-  //         form.setValue("vacrec_totaldose", vaccinelist.no_of_doses.toString());
-  //       }
-
-  //       // Check if vaccine is already completed (only for non-conditional vaccines)
-  //       const isCompleted =
-  //         vaccinelist.vac_type_choices !== "conditional" &&
-  //         currentVaccineHistory.some((record:any) => {
-  //           const recordTotalDose = record.vacrec_details?.vacrec_totaldose ? Number(record.vacrec_details.vacrec_totaldose) : 0;
-  //           const currentDose = Number(doseNumber);
-  //           return currentDose > recordTotalDose && recordTotalDose > 0;
-  //         });
-
-  //       setIsVaccineCompleted(isCompleted);
-
-  //       if (isCompleted) {
-  //         showErrorToast(`${vac_name} vaccine is already completed (Dose ${doseNumber} of ${vaccinelist.no_of_doses})`);
-  //         return;
-  //       }
-
-  //       // FIXED LOGIC: Handle routine vaccines separately from other vaccine types
-  //       if (vaccinelist.vac_type_choices === "routine") {
-  //         // For routine vaccines, always calculate next visit if routine_frequency exists
-  //         if (vaccinelist.routine_frequency) {
-  //           const { interval, time_unit } = vaccinelist.routine_frequency;
-  //           const nextDate = calculateNextVisitDate(interval, time_unit, new Date().toISOString());
-  //           setNextVisitDate(nextDate.toISOString().split("T")[0]);
-  //           setNextVisitDescription(`Routine vaccination for ${vaccinelist.vac_name}`);
-  //           form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
-  //         }
-  //       } else if (vaccinelist.vac_type_choices === "primary" && doseNumber < vaccinelist.no_of_doses) {
-  //         // For primary vaccines, only set next visit if there are more doses needed
-  //         if (vaccinelist.no_of_doses >= 2) {
-  //           const nextDoseInterval = vaccinelist.intervals.find((interval: any) => interval.dose_number === doseNumber + 1);
-  //           if (nextDoseInterval) {
-  //             const nextDate = calculateNextVisitDate(nextDoseInterval.interval, nextDoseInterval.time_unit, new Date().toISOString());
-  //             setNextVisitDate(nextDate.toISOString().split("T")[0]);
-  //             setNextVisitDescription(`Vaccination for ${vaccinelist.vac_name}`);
-  //             form.setValue("followv_date", nextDate.toISOString().split("T")[0]);
-  //           }
-  //         }
-  //       }
-  //       // For conditional vaccines or when all doses are complete, no follow-up date is set
-  //     }
-  //   }
-  // };
-
   // functionality to handle adding of previous illness
   const addPrevIllness = () => {
     const illness = getValues("medicalHistory.prevIllness");
@@ -1258,11 +1085,15 @@ export default function PrenatalFormFirstPg({
   // functionality to handle adding of previous hopsitalization to table
   const addPrevHospitalization = () => {
     const hospitalization = getValues("medicalHistory.prevHospitalization");
-    const hospitalizationYr = getValues("medicalHistory.prevHospitalizationYr");
+    let hospitalizationYr = getValues("medicalHistory.prevHospitalizationYr");
 
     if (!hospitalization?.trim()) {
       showErrorToast("Please enter a hospitalization record.");
       return;
+    }
+
+    if (!hospitalizationYr) {
+      hospitalizationYr = new Date().getFullYear();
     }
 
     // Check for duplicates
@@ -1323,6 +1154,8 @@ export default function PrenatalFormFirstPg({
 
     setValue("motherPersonalInfo.motherBMICategory", bmiCategory);
   }, [bmi, setValue]);
+
+  
 
   return (
     <>
@@ -1424,6 +1257,7 @@ export default function PrenatalFormFirstPg({
                   name="motherPersonalInfo.occupation"
                   label="Occupation"
                   placeholder="Enter Occupation"
+                  upper={true}
                 />
               </div>
 
@@ -1587,8 +1421,17 @@ export default function PrenatalFormFirstPg({
                           control={control}
                           name="obstetricHistory.historyOfLBabies"
                           label=""
-                          placeholder="Enter count of large babies"
+                          placeholder={
+                            hasLgBabies === true && (!lgBabiesCount || lgBabiesCount <= 0)
+                              ? "Enter count of Large Babies is required"
+                              : "Enter count of large babies"
+                          }
                           type="number"
+                          className={
+                            hasLgBabies === true && (!lgBabiesCount || lgBabiesCount <= 0)
+                              ? "border-red-500 placeholder:text-red-500"
+                              : ""
+                          }
                         />
                       </div>
                     </div>
@@ -1684,12 +1527,11 @@ export default function PrenatalFormFirstPg({
                           />
                         </div>
                         <div className="flex-1">
-                          <FormInput
+                          <FormDateTimeInput
                             control={control}
                             name="medicalHistory.prevIllnessYr"
                             label=""
-                            placeholder="Enter year"
-                            type="number"
+                            type="month"
                           />
                         </div>
                         <Button

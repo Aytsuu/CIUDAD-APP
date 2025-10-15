@@ -48,7 +48,7 @@ const formatDate = (dateString: string | null): string => {
 
 export default function PrenatalFormTableHistory() {
   const location = useLocation()
-  const { pregnancyId } = location.state?.params || {}
+  const { pregnancyId, visitNumber } = location.state?.params || {}
 
   const { data: prenatalData, isLoading, error } = usePrenatalRecordComparison(pregnancyId || "")
 
@@ -69,7 +69,11 @@ export default function PrenatalFormTableHistory() {
     return <div className="text-center text-gray-500 p-4">No prenatal records found for this pregnancy.</div>
   }
 
-  const records = prenatalData.results
+  // Filter records to only show up to the selected visit number
+  const allRecords = prenatalData.results
+  const records = visitNumber 
+    ? allRecords.slice(allRecords.length - visitNumber, allRecords.length)
+    : allRecords
 
   return (
     <div className="p-4 text-xs">
@@ -84,7 +88,8 @@ export default function PrenatalFormTableHistory() {
                 <TableHead className="w-[200px]">Field</TableHead>
                 {records.map((record: any, index: number) => (
                   <TableHead key={index} className="text-center">
-                    Visit {index + 1}
+                    Visit {records.length - index}
+                    {index === 0 && <span className="text-blue-500 ml-1">[current]</span>}
                     <br />
                     <span className="text-xs text-gray-500">{formatDate(record.created_at)}</span>
                   </TableHead>
@@ -93,13 +98,13 @@ export default function PrenatalFormTableHistory() {
             </TableHeader>
             <TableBody>
               {/* Personal Information Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Personal Information
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Family No.</TableCell>
+                <TableCell>Family No.</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.patient_details?.family?.fam_id || "N/A"}
@@ -107,7 +112,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Name</TableCell>
+                <TableCell>Name</TableCell>
                 {records.map((record: any, index: number) => {
                   const info = record.patient_details?.personal_info
                   const fullName = `${info?.per_fname || ""} ${info?.per_mname || ""} ${info?.per_lname || ""}`.trim()
@@ -119,7 +124,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Age</TableCell>
+                <TableCell>Age</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.patient_details?.personal_info?.per_dob
@@ -129,7 +134,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Date of Birth</TableCell>
+                <TableCell>Date of Birth</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {formatDate(record.patient_details?.personal_info?.per_dob)}
@@ -137,7 +142,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Husband's Name</TableCell>
+                <TableCell>Husband's Name</TableCell>
                 {records.map((record: any, index: number) => {
                   const father = record.patient_details?.family?.family_heads?.father
                   const husbandName = father
@@ -153,7 +158,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Occupation</TableCell>
+                <TableCell>Occupation</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.pf_occupation || "N/A"}
@@ -161,7 +166,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Address</TableCell>
+                <TableCell>Address</TableCell>
                 {records.map((record: any, index: number) => {
                   const addr = record.patient_details?.address
                   const fullAddress = addr
@@ -175,7 +180,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Weight (kg)</TableCell>
+                <TableCell>Weight (kg)</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.body_measurement_details?.weight || "N/A"}
@@ -183,7 +188,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Height (cm)</TableCell>
+                <TableCell>Height (cm)</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.body_measurement_details?.height || "N/A"}
@@ -191,7 +196,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">BMI</TableCell>
+                <TableCell>BMI</TableCell>
                 {records.map((record: any, index: number) => {
                   const weight = record.body_measurement_details?.weight
                   const height = record.body_measurement_details?.height
@@ -215,13 +220,13 @@ export default function PrenatalFormTableHistory() {
               </TableRow>
 
               {/* Obstetrical History Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Obstetrical History
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Children Born Alive</TableCell>
+                <TableCell>Children Born Alive</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_ch_born_alive ?? "N/A"}
@@ -229,7 +234,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Living Children</TableCell>
+                <TableCell>Living Children</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_living_ch ?? "N/A"}
@@ -237,7 +242,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Abortions</TableCell>
+                <TableCell>Abortions</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_abortion ?? "N/A"}
@@ -245,7 +250,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Still Births</TableCell>
+                <TableCell>Still Births</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_still_birth ?? "N/A"}
@@ -253,7 +258,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Large Babies (8LBS+)</TableCell>
+                <TableCell>Large Babies (8LBS+)</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_lg_babies ?? "N/A"}
@@ -261,7 +266,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Diabetes History</TableCell>
+                <TableCell>Diabetes History</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_lg_babies_str ? "Yes" : "No"}
@@ -270,13 +275,13 @@ export default function PrenatalFormTableHistory() {
               </TableRow>
 
               {/* Medical History Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Medical History
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Previous Illnesses</TableCell>
+                <TableCell>Previous Illnesses</TableCell>
                 {records.map((record: any, index: number) => {
                   const illnesses = record.medical_history || []
                   const uniqueIllnesses = Array.from(
@@ -303,7 +308,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Previous Hospitalizations</TableCell>
+                <TableCell>Previous Hospitalizations</TableCell>
                 {records.map((record: any, index: number) => {
                   const hospitalizations = record.previous_hospitalizations || []
                   return (
@@ -324,7 +329,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Previous Complications</TableCell>
+                <TableCell>Previous Complications</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_complications || "None"}
@@ -333,13 +338,13 @@ export default function PrenatalFormTableHistory() {
               </TableRow>
 
               {/* Previous Pregnancy Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Previous Pregnancy
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Date of Delivery</TableCell>
+                <TableCell>Date of Delivery</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {formatDate(record.previous_pregnancy?.date_of_delivery)}
@@ -347,7 +352,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Outcome</TableCell>
+                <TableCell>Outcome</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_pregnancy?.outcome || "N/A"}
@@ -355,7 +360,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Type of Delivery</TableCell>
+                <TableCell>Type of Delivery</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_pregnancy?.type_of_delivery || "N/A"}
@@ -363,7 +368,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Baby's Weight (lbs)</TableCell>
+                <TableCell>Baby's Weight (lbs)</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_pregnancy?.babys_wt || "N/A"}
@@ -371,7 +376,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Gender</TableCell>
+                <TableCell>Gender</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_pregnancy?.gender || "N/A"}
@@ -379,7 +384,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Ballard Score</TableCell>
+                <TableCell>Ballard Score</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_pregnancy?.ballard_score ?? "N/A"}
@@ -387,7 +392,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">APGAR Score</TableCell>
+                <TableCell>APGAR Score</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.previous_pregnancy?.apgar_score ?? "N/A"}
@@ -396,13 +401,13 @@ export default function PrenatalFormTableHistory() {
               </TableRow>
 
               {/* Tetanus Toxoid Status Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Tetanus Toxoid Status
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">TT Status</TableCell>
+                <TableCell>TT Status</TableCell>
                 {records.map((record: any, index: number) => {
                   const ttStatuses = record.tt_statuses || []
                   return (
@@ -423,14 +428,46 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
 
+              {/* Vaccination Records Section */}
+              {records.some((r: any) => r.vaccination_records?.length > 0) && (
+                <>
+                  <TableRow className="bg-blue-100">
+                    <TableCell colSpan={records.length + 1} className="font-semibold">
+                      Vaccination Records
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Vaccines Administered</TableCell>
+                    {records.map((record: any, index: number) => {
+                      const vaccines = record.vaccination_records || []
+                      return (
+                        <TableCell key={index} className="text-center text-xs">
+                          {vaccines.length > 0 ? (
+                            <div className="space-y-1">
+                              {vaccines.map((vac: any, idx: number) => (
+                                <div key={idx}>
+                                  {vac.vaccine_name} (Dose {vac.dose_number}) - {formatDate(vac.date_administered)}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            "None"
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                </>
+              )}
+
               {/* Present Pregnancy Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Present Pregnancy
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Gravida</TableCell>
+                <TableCell>Gravida</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_gravida ?? "N/A"}
@@ -438,7 +475,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Para</TableCell>
+                <TableCell>Para</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_para ?? "N/A"}
@@ -446,7 +483,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Fullterm</TableCell>
+                <TableCell>Fullterm</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_fullterm ?? "N/A"}
@@ -454,7 +491,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Preterm</TableCell>
+                <TableCell>Preterm</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.obstetric_history?.obs_preterm ?? "N/A"}
@@ -462,7 +499,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Last Menstrual Period</TableCell>
+                <TableCell>Last Menstrual Period</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {formatDate(record.obstetric_history?.obs_lmp)}
@@ -470,7 +507,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Expected Date of Confinement</TableCell>
+                <TableCell>Expected Date of Confinement (EDC)</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {formatDate(record.pf_edc)}
@@ -479,13 +516,13 @@ export default function PrenatalFormTableHistory() {
               </TableRow>
 
               {/* Assessment & Planning Section */}
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-blue-100">
                 <TableCell colSpan={records.length + 1} className="font-semibold">
                   Assessment & Planning
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Laboratory Results</TableCell>
+                <TableCell>Laboratory Results</TableCell>
                 {records.map((record: any, index: number) => {
                   const labs = record.laboratory_results || []
                   return (
@@ -506,7 +543,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Pre-eclampsia Signs</TableCell>
+                <TableCell>Pre-eclampsia Signs</TableCell>
                 {records.map((record: any, index: number) => {
                   const checklist = record.checklist_data
                   const trueItems = checklist
@@ -522,7 +559,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Place of Delivery Plan</TableCell>
+                <TableCell>Place of Delivery Plan</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.birth_plan_details?.place_of_delivery_plan || "N/A"}
@@ -530,7 +567,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Newborn Screening Plan</TableCell>
+                <TableCell>Newborn Screening Plan</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
                     {record.birth_plan_details?.newborn_screening_plan ? "Yes" : "No"}
@@ -538,7 +575,7 @@ export default function PrenatalFormTableHistory() {
                 ))}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Micronutrient Supplementation</TableCell>
+                <TableCell>Micronutrient Supplementation</TableCell>
                 {records.map((record: any, index: number) => {
                   const medicines = record.medicine_records || []
                   return (
@@ -559,7 +596,7 @@ export default function PrenatalFormTableHistory() {
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Risk Codes</TableCell>
+                <TableCell>Risk Codes</TableCell>
                 {records.map((record: any, index: number) => {
                   const risks = record.obstetric_risk_codes
                   const trueRisks = risks
@@ -569,16 +606,16 @@ export default function PrenatalFormTableHistory() {
                     : []
                   return (
                     <TableCell key={index} className="text-center text-xs">
-                      {trueRisks.length > 0 ? trueRisks.join(", ") : "None"}
+                      {trueRisks.length > 0 ? capitalize(trueRisks.join(", ")) : "None"}
                     </TableCell>
                   )
                 })}
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Assessed By</TableCell>
+                <TableCell>Assessed By</TableCell>
                 {records.map((record: any, index: number) => (
                   <TableCell key={index} className="text-center">
-                    {record.staff_details?.staff_name || "N/A"}
+                    {capitalize(record.staff_details?.staff_name) || "N/A"}
                   </TableCell>
                 ))}
               </TableRow>
@@ -586,13 +623,13 @@ export default function PrenatalFormTableHistory() {
               {/* Prenatal Care Visit Details Section */}
               {records.some((r: any) => r.prenatal_care_entries?.length > 0) && (
                 <>
-                  <TableRow className="bg-muted/50">
+                  <TableRow className="bg-blue-100">
                     <TableCell colSpan={records.length + 1} className="font-semibold">
                       Prenatal Care Visit Details
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Age of Gestation</TableCell>
+                    <TableCell>Age of Gestation (AOG)</TableCell>
                     {records.map((record: any, index: number) => {
                       const entries = record.prenatal_care_entries || []
                       return (
@@ -613,7 +650,7 @@ export default function PrenatalFormTableHistory() {
                     })}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Weight (kg)</TableCell>
+                    <TableCell>Weight (kg)</TableCell>
                     {records.map((record: any, index: number) => {
                       const entries = record.prenatal_care_entries || []
                       return (
@@ -626,7 +663,7 @@ export default function PrenatalFormTableHistory() {
                     })}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Blood Pressure</TableCell>
+                    <TableCell>Blood Pressure</TableCell>
                     {records.map((record: any, index: number) => (
                       <TableCell key={index} className="text-center">
                         {record.vital_signs_details?.vital_bp_systolic}/{record.vital_signs_details?.vital_bp_diastolic}
@@ -634,7 +671,7 @@ export default function PrenatalFormTableHistory() {
                     ))}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Leopold's Findings</TableCell>
+                    <TableCell>Leopold's Findings</TableCell>
                     {records.map((record: any, index: number) => {
                       const entries = record.prenatal_care_entries || []
                       return (
@@ -656,7 +693,7 @@ export default function PrenatalFormTableHistory() {
                     })}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Complaints</TableCell>
+                    <TableCell>Complaints</TableCell>
                     {records.map((record: any, index: number) => {
                       const entries = record.prenatal_care_entries || []
                       return (
@@ -675,7 +712,7 @@ export default function PrenatalFormTableHistory() {
                     })}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Advises</TableCell>
+                    <TableCell>Advises</TableCell>
                     {records.map((record: any, index: number) => {
                       const entries = record.prenatal_care_entries || []
                       return (
@@ -684,38 +721,6 @@ export default function PrenatalFormTableHistory() {
                             <div className="space-y-1">
                               {entries.map((entry: any, idx: number) => (
                                 <div key={idx}>{entry.pfpc_advises || "None"}</div>
-                              ))}
-                            </div>
-                          ) : (
-                            "None"
-                          )}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                </>
-              )}
-
-              {/* Vaccination Records Section */}
-              {records.some((r: any) => r.vaccination_records?.length > 0) && (
-                <>
-                  <TableRow className="bg-muted/50">
-                    <TableCell colSpan={records.length + 1} className="font-semibold">
-                      Vaccination Records
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Vaccines Administered</TableCell>
-                    {records.map((record: any, index: number) => {
-                      const vaccines = record.vaccination_records || []
-                      return (
-                        <TableCell key={index} className="text-center text-xs">
-                          {vaccines.length > 0 ? (
-                            <div className="space-y-1">
-                              {vaccines.map((vac: any, idx: number) => (
-                                <div key={idx}>
-                                  {vac.vaccine_name} (Dose {vac.dose_number}) - {formatDate(vac.date_administered)}
-                                </div>
                               ))}
                             </div>
                           ) : (

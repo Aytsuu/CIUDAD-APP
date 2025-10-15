@@ -292,14 +292,20 @@ class MaternalPatientListView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        # queryset = Patient.objects.filter(
+        #     Exists(PatientRecord.objects.filter(
+        #         pat_id=OuterRef('pat_id'),
+        #         patrec_type__in=['Prenatal', 'Postpartum Care']
+        #     ))
+        # ).annotate(
+        #     completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
+        # ).distinct()
+
         queryset = Patient.objects.filter(
-            Exists(PatientRecord.objects.filter(
-                pat_id=OuterRef('pat_id'),
-                patrec_type__in=['Prenatal', 'Postpartum Care']
+            Exists(Pregnancy.objects.filter(
+                pat_id=OuterRef('pat_id')
             ))
-        ).annotate(
-            completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
-        ).distinct()
+        )
 
 
         params = self.request.query_params
@@ -923,3 +929,30 @@ def get_illness_list(request):
         return Response({
             'error': f'Failed to fetch illness list: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_maternal_staff(request):
+    """
+    Get all staff members with roles: BARANGAY HEALTH WORKERS, ADMIN, and DOCTOR
+    """
+    try:
+        staff_members = Staff.objects.filter(
+            pos__pos_title__in=['BARANGAY HEALTH WORKERS', 'ADMIN', 'DOCTOR']
+        ).select_related('rp__per', 'pos').order_by('rp__per__per_lname', 'rp__per__per_fname')
+        
+        serializer = StaffSerializer(staff_members, many=True)
+        
+        return Response({
+            'success': True,
+            'staff': serializer.data,
+            'count': staff_members.count()
+        }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f'Error fetching maternal staff: {str(e)}')
+        return Response({
+            'success': False,
+            'error': f'Failed to fetch staff list: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

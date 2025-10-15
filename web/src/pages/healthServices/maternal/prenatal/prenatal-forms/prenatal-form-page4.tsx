@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import { Form } from "@/components/ui/form/form"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Loader2, SquarePen, Trash } from "lucide-react"
+import { Loader2, SquarePen } from "lucide-react"
 
 import type { z } from "zod"
 
@@ -18,11 +18,13 @@ import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
 import { ProtectedComponentButton } from "@/ProtectedComponentButton"
+import { Combobox } from "@/components/ui/combobox"
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries"
+import { useMaternalStaff } from "../../queries/maternalFetchQueries"
 
 
 export default function PrenatalFormFourthPq({
@@ -47,6 +49,16 @@ export default function PrenatalFormFourthPq({
   const aogDays = form.watch("followUpSchedule.aogDays")
 
   const { data: prenatalCareHistory, isLoading: isLoadingPrenatalCare } = usePrenatalPatientPrenatalCare(patId, pregnancyId)
+  const { data: staffsData } = useMaternalStaff()
+
+  // Map staff data to Combobox options format
+  const staffOptions =
+    Array.isArray(staffsData)
+      ? staffsData.map((staff: any) => ({
+          id: staff.id || staff.staff_id || staff._id || staff.name,
+          name: staff.name || staff.fullName || staff.staff_name || "Unknown Staff",
+        }))
+      : []
 
   type prenatalCareTypes = {
     date: string
@@ -286,14 +298,11 @@ export default function PrenatalFormFourthPq({
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <ProtectedComponentButton exclude={['BARANGAY HEALTH WORKER']}>
+          <ProtectedComponentButton exclude={['BARANGAY HEALTH WORKERS']}>
             <Button variant="outline" onClick={() => removePrenatalCareEntry(row.index)}>
               <SquarePen className="h-4 w-4" />
             </Button>
           </ProtectedComponentButton>
-          <Button variant="destructive" onClick={() => removePrenatalCareEntry(row.index)}>
-            <Trash className="h-4 w-4" />
-          </Button>
         </div>
         
       ),
@@ -305,17 +314,8 @@ export default function PrenatalFormFourthPq({
    const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsConfirmOpen(false)
-    setIsSubmitting(true)
     
     try {
-      // Check if there's any prenatal care data to submit
-      // if (prenatalCareData.length === 0) {
-      //   console.warn("No prenatal care data to submit")
-      //   alert("Please add at least one prenatal care entry before submitting.")
-      //   setIsSubmitting(false)
-      //   return
-      // }
-
       const transformedPrenatalCare = prenatalCareData.map(entry => ({
         ...entry,
         date: entry.date,
@@ -344,14 +344,17 @@ export default function PrenatalFormFourthPq({
       setValue("prenatalCare", transformedPrenatalCare)
       console.log("Prenatal care data set in form as array")
 
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Set submitting state and allow component to re-render
+      setIsSubmitting(true)
+      
+      // Use setTimeout to ensure state update triggers re-render before calling onSubmit
+      await new Promise(resolve => setTimeout(resolve, 50))
 
       onSubmit()
       
     } catch (error) {
       console.error("Error in handleFormSubmit:", error)
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
       setIsSubmitting(false)
     }
   }
@@ -367,7 +370,7 @@ export default function PrenatalFormFourthPq({
             <h3 className="text-md font-semibold mt-2 mb-4">PRENATAL CARE</h3>
             <Card className="border rounded-md border-gray p-5">
               <CardContent>
-                <div className="flex mb-7">
+                <div className="flex flex-1 gap-4 mb-7">
                   <FormDateTimeInput
                     control={control}
                     name="prenatalCare.date"
@@ -476,12 +479,27 @@ export default function PrenatalFormFourthPq({
             <div className="mt-10 border h-[40rem] overflow-auto">
               <DataTable columns={prenatalCareColumn} data={getAllPrenatalCareData()} />
             </div>
+            <div>
+              <div className="flex flex-col gap-2 mt-4">
+                <Label className="text-sm font-medium">Forward record to</Label>
+                <Combobox
+                  options={staffOptions}
+                  value=""
+                  placeholder="Select staff"
+                  emptyMessage="No staff found"
+                  onChange={(value:any) => {
+                    console.log("Selected staff:", value)
+                    // You can store this in state if needed
+                  }}
+                />
+              </div>
+            </div>
             <div className="mt-8 sm:mt-10 flex justify-end">
               <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
                 Prev
               </Button>
               <Button type="submit" className="mt-4 mr-4 w-[120px]" disabled={isSubmitting || addPrenatalRecordMutation.isPending}>
-                {addPrenatalRecordMutation.isPending && isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {(addPrenatalRecordMutation.isPending || isSubmitting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit
               </Button>
             </div>

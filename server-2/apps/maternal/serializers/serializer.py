@@ -13,6 +13,27 @@ from apps.administration.models import Staff
 from utils.supabase_client import upload_to_storage
 
 
+# Staff Serializer
+class StaffSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    first_name = serializers.CharField(source='rp.per.per_fname', read_only=True)
+    last_name = serializers.CharField(source='rp.per.per_lname', read_only=True)
+    middle_name = serializers.CharField(source='rp.per.per_mname', read_only=True)
+    position = serializers.CharField(source='pos.pos_title', read_only=True)
+    
+    class Meta:
+        model = Staff
+        fields = ['staff_id', 'first_name', 'last_name', 'middle_name', 'position', 'full_name', 'staff_type']
+    
+    def get_full_name(self, obj):
+        try:
+            per = obj.rp.per
+            middle_initial = f"{per.per_mname[0]}." if per.per_mname else ""
+            return f"{per.per_fname} {middle_initial} {per.per_lname}".strip()
+        except:
+            return "Unknown"
+
+
 # serializer for models not in maternal
 class MedicalHistorySerializer(serializers.ModelSerializer):
     illness_name = serializers.CharField(source='ill.illname', read_only=True)
@@ -275,3 +296,4 @@ class PrenatalCareSerializer(serializers.ModelSerializer):
             'pfpc_id', 'pf_id', 'pfpc_date', 'pfpc_aog_wks', 'pfpc_aog_days', 'pfpc_fundal_ht',
             'pfpc_fetal_hr', 'pfpc_fetal_pos', 'pfpc_complaints', 'pfpc_advises'
         ]
+

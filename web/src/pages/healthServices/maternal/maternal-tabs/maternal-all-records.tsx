@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, RefreshCw, FileInput, Loader2 } from "lucide-react";
+import { ArrowUpDown, Search, RefreshCw, Loader2 } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
 import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
 
@@ -20,7 +20,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-
+import { ExportButton } from "@/components/ui/export";
 
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
@@ -298,6 +298,45 @@ export default function MaternalAllRecords() {
       ),
     },
   ];
+
+  // export columns
+  const exportColumns = [
+    { key: "pat_id", header: "Patient ID" },
+    { 
+      key: "patient", 
+      header: "Patient Name",
+      format: (row: maternalRecords) => 
+        `${row.personal_info.per_lname}, ${row.personal_info.per_fname} ${row.personal_info.per_mname}`.trim()
+    },
+    { 
+      key: "age", 
+      header: "Age",
+      format: (row: maternalRecords) => `${row.age} ${row.personal_info.ageTime}`
+    },
+    { 
+      key: "sex", 
+      header: "Sex",
+      format: (row: maternalRecords) => row.personal_info.per_sex
+    },
+    { 
+      key: "address", 
+      header: "Address",
+      format: (row: maternalRecords) => {
+        const addressObj = row.address;
+        return addressObj
+          ? [addressObj.add_street, addressObj.add_barangay, addressObj.add_city, addressObj.add_province]
+              .filter(Boolean)
+              .join(", ") || "Unknown"
+          : "Unknown";
+      }
+    },
+    { 
+      key: "sitio", 
+      header: "Sitio",
+      format: (row: maternalRecords) => row.address?.add_sitio || "Not Provided"
+    },
+    { key: "pat_type", header: "Type" }
+  ];
   
   // refetch handler
   const handleRefetching = async () => {
@@ -418,19 +457,11 @@ export default function MaternalAllRecords() {
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportButton
+                data={transformData}
+                filename={`maternal-records-${new Date().toISOString().split("T")[0]}`}
+                columns={exportColumns}
+              />
             </div>
           </div>
           <div className="bg-white w-full min-h-20 overflow-x-auto">

@@ -13,6 +13,7 @@ import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
+import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -148,6 +149,10 @@ export const getItemsConfig = (
       {
         dashboard: "INVENTORY",
         sidebar: [
+          {
+            title: "Weekly Schedule",
+            element: <SchedulerSidebar />,
+          },
           {
             title: "Most Requested Medicine",
             element: <MedicineDistributionSidebar />,

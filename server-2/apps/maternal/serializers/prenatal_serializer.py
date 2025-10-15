@@ -705,7 +705,6 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
         patient = obj.patrec_id.pat_id
         
         # Use __date lookup to compare date parts only
-        # prenatal_date = obj.created_at if isinstance(obj.created_at, date) else obj.created_at.date()
         cutoff_time = obj.created_at + timedelta(seconds=5)
         
         lab_results = LaboratoryResult.objects.filter(
@@ -718,6 +717,7 @@ class PrenatalFormCompleteViewSerializer(serializers.ModelSerializer):
             'result_date': lab.result_date,
             'to_be_followed': lab.to_be_followed,
             'is_completed': lab.is_completed,
+            'remarks': lab.remarks,
         } for lab in lab_results]
 
 
@@ -1091,10 +1091,7 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
     # creation of vaccination record logic for TT vaccines
     def create_vaccination_records_for_tt(self, prenatal_form, tt_statuses_data, patient_record, staff_instance, vital_signs, user_provided_total_dose=None):
         """
-        Create VaccinationRecord and VaccinationHistory for TT/TD/TDAP vaccines.
-        This processes vaccine stock information from tt_statuses_data.
-        
-        Args:
+       Args:
             user_provided_total_dose: Total dose count manually entered by user (for conditional vaccines)
                                      If provided, placeholder VaccinationHistory records will be created
         """
@@ -1142,10 +1139,55 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             
             # CASE 1: Conditional vaccine - Create placeholder VaccinationHistory records
             if is_conditional_vaccine:
-                print(f"🔄 Processing CONDITIONAL vaccine: Creating {user_provided_total_dose} placeholder history records")
+                print(f"🔄 Processing CONDITIONAL vaccine: Target total dose = {user_provided_total_dose}")
                 
-                # Create multiple VaccinationHistory records based on total dose count
-                for dose_number in range(1, user_provided_total_dose + 1):
+                # For conditional vaccines, we need to check existing history for the SAME vaccine type
+                # IMPORTANT: Check across ALL VaccinationRecords for this PATIENT (across all services)
+                
+                # Get the patient ID to query across ALL their records (prenatal, child health, etc.)
+                patient = patient_record.pat_id
+                
+                # Step 1: Get ALL existing vaccination history records with vaccine stock for THIS PATIENT (across all services)
+                all_existing_history = VaccinationHistory.objects.filter(
+                    vacrec__patrec_id__pat_id=patient,  # All vaccination records for this patient (across all services)
+                    vacStck_id__vac_id__isnull=False  # Only consider records with actual vaccine stock
+                ).select_related('vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id').order_by('-vachist_doseNo')
+                
+                # Step 2: Get the vac_id from the first (most recent) existing record
+                # This identifies WHICH vaccine type we're tracking doses for
+                specific_vac_id = None
+                if all_existing_history.exists():
+                    specific_vac_id = all_existing_history.first().vacStck_id.vac_id.vac_id
+                    print(f"   🔍 Detected existing vaccine type: vac_id={specific_vac_id} (patient: pat_id={patient.pat_id}, across all services)")
+                
+                # Step 3: Filter records by that specific vac_id to get accurate dose count FOR THIS PATIENT (across all services)
+                highest_dose = 0
+                if specific_vac_id:
+                    # Get all history records for THIS specific vaccine (by vac_id through vacStck_id) for THIS PATIENT (across all services)
+                    vaccine_specific_history = VaccinationHistory.objects.filter(
+                        vacrec__patrec_id__pat_id=patient,  # All vaccination records for this patient (across all services)
+                        vacStck_id__vac_id=specific_vac_id  # Filter by the specific vaccine ID
+                    ).select_related('vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id').order_by('-vachist_doseNo')
+                    
+                    if vaccine_specific_history.exists():
+                        highest_dose = vaccine_specific_history.first().vachist_doseNo
+                        vaccine_name = vaccine_specific_history.first().vacStck_id.vac_id.vac_name
+                        print(f"   📊 Found {vaccine_specific_history.count()} existing record(s) for vaccine '{vaccine_name}' (vac_id: {specific_vac_id}), highest dose: {highest_dose} (across all services)")
+                else:
+                    print(f"   📊 No existing vaccination history records found with vaccine stock for patient (across all services)")
+                
+                # If highest_dose = 1 and user_provided_total_dose = 3, create doses 2 and 3
+                doses_to_create = []
+                if user_provided_total_dose > highest_dose:
+                    doses_to_create = range(highest_dose + 1, user_provided_total_dose + 1)
+                    print(f"   🔢 Will create doses: {list(doses_to_create)}")
+                else:
+                    print(f"   ⚠️ User-provided total dose ({user_provided_total_dose}) is not greater than highest existing dose ({highest_dose})")
+                    print(f"   ℹ️ No new vaccination history records will be created")
+                
+                # Create the new VaccinationHistory records
+                created_count = 0
+                for dose_number in doses_to_create:
                     vaccination_history = VaccinationHistory.objects.create(
                         vachist_doseNo=dose_number,
                         vachist_status='pending',  # Status is pending for conditional vaccines
@@ -1160,13 +1202,18 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                         signature=None,  # No signature
                         assigned_to=None  # No assigned staff
                     )
+                    created_count += 1
                     print(f"   ✅ Created VaccinationHistory #{dose_number}: ID={vaccination_history.vachist_id} (conditional/placeholder)")
                 
-                # Set the user-provided total dose
+                # Update the total dose count
                 vaccination_record.vacrec_totaldose = user_provided_total_dose
                 vaccination_record.save()
                 print(f"✅ Set vacrec_totaldose to: {user_provided_total_dose}")
-                print(f"✅ Conditional vaccine processing complete: {user_provided_total_dose} placeholder records created")
+                
+                if created_count > 0:
+                    print(f"✅ Conditional vaccine processing complete: {created_count} new placeholder record(s) created (total doses now: {user_provided_total_dose})")
+                else:
+                    print(f"✅ Conditional vaccine processing complete: No new records created (already at or above target dose)")
                 
                 return vaccination_record
             
@@ -1195,8 +1242,50 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                         print(f"No stock available for {vac_name}")
                         continue
                     
-                    # Extract dose number from TT status (TT1, TT2, etc.)
-                    dose_no = int(tts_status.replace('TT', '')) if 'TT' in tts_status else 1
+                    # Calculate the correct dose number based on existing history for THIS specific vaccine
+                    current_vac_id = vaccine_stock.vac_id.vac_id
+                    current_vac_name = vaccine_stock.vac_id.vac_name
+                    
+                    # Get the patient ID to query across ALL their records (prenatal, child health, etc.)
+                    patient = patient_record.pat_id
+                    
+                    print(f"Current vaccine: vacStck_id={vacStck_id}, vac_id={current_vac_id}, name='{current_vac_name}'")
+                    print(f"Patient: pat_id={patient.pat_id}, patrec_id={patient_record.patrec_id}")
+                    
+                    # DEBUG: Check ALL VaccinationHistory for this patient across ALL services
+                    all_patient_history = VaccinationHistory.objects.filter(
+                        vacrec__patrec_id__pat_id=patient  # Traverse: VaccinationHistory -> VaccinationRecord -> PatientRecord -> Patient
+                    ).select_related('vacStck_id', 'vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id')
+                    
+                    print(f"DEBUG: Total vaccination history records for patient {patient.pat_id} (all services): {all_patient_history.count()}")
+                    if all_patient_history.exists():
+                        print(f"DEBUG: All history records for this patient:")
+                        for hist in all_patient_history[:10]:
+                            vac_info = f"vac_id={hist.vacStck_id.vac_id.vac_id}" if hist.vacStck_id and hist.vacStck_id.vac_id else "NO STOCK/VAC"
+                            print(f"      - vachist_id={hist.vachist_id}, dose={hist.vachist_doseNo}, patrec_type={hist.vacrec.patrec_id.patrec_type}, vacrec={hist.vacrec.vacrec_id}, vacStck={hist.vacStck_id.vacStck_id if hist.vacStck_id else 'NULL'}, {vac_info}")
+                    
+                    # Find ALL existing doses for this specific vaccine type for THIS PATIENT (across all services)
+                    existing_doses = VaccinationHistory.objects.filter(
+                        vacrec__patrec_id__pat_id=patient, 
+                        vacStck_id__vac_id=current_vac_id
+                    ).select_related('vacStck_id', 'vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id').order_by('-vachist_doseNo')
+                    
+                    # Debug: Show what we found
+                    print(f"Found {existing_doses.count()} existing dose(s) for vac_id={current_vac_id} (across all patient services)")
+                    
+                    if existing_doses.exists():
+                        # Show all existing doses
+                        for idx, dose_record in enumerate(existing_doses[:5]):  # Show first 5
+                            print(f"      - Dose #{dose_record.vachist_doseNo}: patrec_type={dose_record.vacrec.patrec_id.patrec_type}, vacrec={dose_record.vacrec.vacrec_id}, vacStck_id={dose_record.vacStck_id.vacStck_id}, vac_id={dose_record.vacStck_id.vac_id.vac_id}, status={dose_record.vachist_status}")
+                    
+                    # Calculate next dose number
+                    if existing_doses.exists():
+                        highest_existing_dose = existing_doses.first().vachist_doseNo
+                        dose_no = highest_existing_dose + 1
+                        print(f"   ✅ Next dose will be: {dose_no} (highest existing: {highest_existing_dose})")
+                    else:
+                        dose_no = 1
+                        print(f"   ✅ Starting at dose: {dose_no} (no existing history)")
                     
                     # Deduct stock
                     vaccine_stock.vacStck_qty_avail -= 1
@@ -1212,10 +1301,10 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                         vital=vital_signs,
                         vacrec=vaccination_record,
                         vacStck_id=vaccine_stock,
-                        vac=vaccine_stock.vac_id if vaccine_stock.vac_id else None
+                        vac=None  # Set to NULL - vaccine is referenced through vacStck_id.vac_id relationship
                     )
                     
-                    print(f"   ✅ Created VaccinationHistory: {vaccination_history.vachist_id} for {vac_name} (Dose {dose_no})")
+                    print(f"   ✅ Created VaccinationHistory: {vaccination_history.vachist_id} for {vac_name} (vac_id: {current_vac_id}, Dose {dose_no}) with vac=NULL")
                     
                 except VaccineStock.DoesNotExist:
                     print(f"   ❌ Vaccine stock not found for ID: {vacStck_id}")
@@ -1432,12 +1521,32 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     )
                     print(f'Created new Pregnancy: {pregnancy.pregnancy_id}')
 
-                # create PatientRecord
-                patient_record = PatientRecord.objects.create(
-                    patrec_type=patrec_type, # Use the patrec_type from validated_data (defaults to "Prenatal")
-                    pat_id=patient
+                # Get or create PatientRecord for this pregnancy
+                # Same pregnancy should reuse the same PatientRecord
+                patient_record, pr_created = PatientRecord.objects.get_or_create(
+                    pat_id=patient,
+                    patrec_type=patrec_type,
+                    # Find existing PatientRecord for this pregnancy by checking prenatal forms
+                    defaults={}
                 )
-                print(f"Created patient record: {patient_record.patrec_id}")
+                
+                # Check if there's already a PatientRecord for this pregnancy
+                existing_prenatal = Prenatal_Form.objects.filter(
+                    pregnancy_id=pregnancy,
+                    patrec_id__isnull=False
+                ).select_related('patrec_id').first()
+                
+                if existing_prenatal:
+                    # Reuse the PatientRecord from the existing prenatal form for this pregnancy
+                    patient_record = existing_prenatal.patrec_id
+                    print(f"Reusing existing PatientRecord: {patient_record.patrec_id} for pregnancy {pregnancy.pregnancy_id}")
+                else:
+                    # Create new PatientRecord for this pregnancy
+                    patient_record = PatientRecord.objects.create(
+                        patrec_type=patrec_type,
+                        pat_id=patient
+                    )
+                    print(f"Created new PatientRecord: {patient_record.patrec_id} for pregnancy {pregnancy.pregnancy_id}")
 
                 # create ObstetricalHistory
                 obstetrical_history = Obstetrical_History.objects.create(
@@ -1501,15 +1610,15 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 if assessed_by:
                     try:
                         staff_instance = Staff.objects.get(staff_id=assessed_by)
-                        print(f"✅ Found staff: {staff_instance.staff_id}")
+                        print(f"Found staff: {staff_instance.staff_id}")
                     except Staff.DoesNotExist:
-                        print(f"❌ Staff with ID {assessed_by} not found")
+                        print(f"Staff with ID {assessed_by} not found")
                         # Validation should have caught this, but just in case
                         staff_instance = None
                 validated_data['staff'] = staff_instance
 
                 # create Prenatal_Form
-                print(f"🔍 Creating prenatal form with staff: {staff_instance}")
+                print(f"Creating prenatal form with staff: {staff_instance}")
                 prenatal_form = Prenatal_Form.objects.create(
                     patrec_id=patient_record,
                     pregnancy_id=pregnancy,
@@ -1519,8 +1628,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     followv_id=follow_up_visit,
                     **validated_data 
                 )
-                print(f"✅ Created prenatal form: {prenatal_form.pf_id}")
-                print(f"🔍 Prenatal form staff field after creation: {prenatal_form.staff}")
 
                 # create Previous_Hospitalization records
                 if previous_hospitalizations_data:
@@ -1529,12 +1636,10 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 
                 # create TT_Status records
                 if tt_statuses_data:
-                    print(f"🔄 Starting TT status creation for {len(tt_statuses_data)} records")
                     self.create_tt_status_logic(prenatal_form, tt_statuses_data, patient)
-                    print(f"✅ Created {len(tt_statuses_data)} TT status records.")
+                    print(f"Created {len(tt_statuses_data)} TT status records.")
                     
                     # Create vaccination records for TT vaccines with stock information
-                    print(f"🔄 Calling create_vaccination_records_for_tt...")
                     vaccination_record = self.create_vaccination_records_for_tt(
                         prenatal_form, 
                         tt_statuses_data, 
@@ -1545,20 +1650,64 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     )
                     
                     # Link vaccination record to prenatal form if created
-                    print(f"🔍 Vaccination record returned: {vaccination_record}")
                     if vaccination_record:
                         prenatal_form.vacrec_id = vaccination_record
                         prenatal_form.save()
-                        print(f"✅ Linked VaccinationRecord {vaccination_record.vacrec_id} to prenatal form")
+                        print(f"Linked VaccinationRecord {vaccination_record.vacrec_id} to prenatal form")
                     else:
-                        print(f"⚠️ No vaccination record returned - nothing to link")
+                        print(f"No vaccination record returned - nothing to link")
 
                 # create LaboratoryResult and LaboratoryResultImg records
                 for lab_data in lab_results_data:
                     images_data = lab_data.pop('images', [])
                     lab_result = LaboratoryResult.objects.create(pf_id=prenatal_form, **lab_data)
+                    
+                    # Upload images to Supabase and save the URL
                     for img_data in images_data:
-                        LaboratoryResultImg.objects.create(lab_id=lab_result, **img_data)
+                        try:
+                            # Generate unique filename with timestamp to avoid duplicates
+                            import time
+                            original_name = img_data['image_name']
+                            name_parts = original_name.rsplit('.', 1)
+                            if len(name_parts) == 2:
+                                unique_name = f"{name_parts[0]}_{int(time.time() * 1000)}.{name_parts[1]}"
+                            else:
+                                unique_name = f"{original_name}_{int(time.time() * 1000)}"
+                            
+                            # Prepare file data for upload
+                            file_data = {
+                                'file': img_data['image_url'],  # base64 string from frontend
+                                'name': unique_name,
+                                'type': img_data['image_type'],
+                                'size': img_data['image_size'],
+                            }
+                            
+                            print(f"   📤 Uploading lab image: {original_name} → {unique_name}")
+                            
+                            # Upload to Supabase bucket and get the public URL
+                            uploaded_url = upload_to_storage(file_data, bucket='lab-result-documents', folder='lab-images')
+                            
+                            if not uploaded_url:
+                                print(f"Failed to upload {original_name} to Supabase")
+                                raise Exception(f"Failed to upload image {original_name}")
+                            
+                            # Save with the short Supabase URL instead of base64
+                            LaboratoryResultImg.objects.create(
+                                lab_id=lab_result,
+                                image_url=uploaded_url,  # Short URL from Supabase
+                                image_name=original_name,  # Original name for display
+                                image_type=img_data['image_type'],
+                                image_size=img_data['image_size'],
+                            )
+                            print(f"Uploaded: {original_name}")
+                            print(f"URL: {uploaded_url}")
+                            
+                        except Exception as e:
+                            print(f"Error uploading {img_data.get('image_name', 'unknown')}: {str(e)}")
+                            # Clean up the lab_result if image upload fails
+                            lab_result.delete()
+                            raise Exception(f"Failed to upload lab images: {str(e)}")
+                
                 if lab_results_data:
                     print(f"Created {len(lab_results_data)} laboratory result records.")
 

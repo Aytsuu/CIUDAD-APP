@@ -279,3 +279,15 @@ export const getMaternalCharts = async (month: string) => {
     throw error;
   }
 }
+
+
+{/* *********** staffs *********** */}
+export const getMaternalStaff = async () => {
+  try {
+    const res = await api2.get("maternal/staff/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching maternal staff: ", error);
+    throw error;
+  }
+}

@@ -147,8 +147,6 @@ export const IllnessCombobox = React.memo(
                 key={option.id}
                 value={option.id}
                 onSelect={(currentValue) => {
-                  console.log("[v0] Combobox onSelect - currentValue:", currentValue, "current value:", value)
-
                   if (allowDeselect && currentValue === value) {
                     onChange && onChange("")
                   } else {

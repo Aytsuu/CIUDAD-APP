@@ -48,6 +48,9 @@ urlpatterns=[
     path('prenatal/missed-visits/<str:pregnancy_id>/', views.calculate_missed_visits_by_pregnancy, name='calculated-missed-visits'),
     path('prenatal/illnesses/', get_illness_list, name='illness-list'),
     path('prenatal/illness/create/', IllnessCreateView.as_view(), name='illness-create'),
+    
+    # Staff URLs
+    path('staff/', get_maternal_staff, name='maternal-staff-list'),
 
     # Postpartum URLs
     path('postpartum_record/', PostpartumRecordCreateView.as_view(), name='postpartum-record-create'),

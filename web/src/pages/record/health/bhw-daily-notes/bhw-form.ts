@@ -1,26 +1,39 @@
 import z from "zod"
-import { positiveNumberSchema } from "@/form-schema/maternal/prenatal-schema"
 
 
 export const BHWFormSchema = z.object({
    staffId: z.string(),
    dateToday: z.string(),
-   weight: z.string().optional(),
-   height: z.string().optional(),
-
+   description: z.string().optional(),
+   age: z.string(), // Add this
+   gender: z.enum(["Male", "Female"]), // Add this
+   weight: z.number().optional(),
+   height: z.number().optional(),
+   muac: z.number().optional(), // Optional
+   nutritionalStatus: z.object({ // Add this to store the calculated status
+      wfa: z.string(),
+      lhfa: z.string(),
+      wfh: z.string(),
+      muac: z.number().optional(),
+      muac_status: z.string(),
+   }).optional(),
    surveillanceCasesCount: z.object({
-      feverCount: positiveNumberSchema.optional(),
-      dengueCount: positiveNumberSchema.optional(),
-      diarrheaCount: positiveNumberSchema.optional(),
-      pneumoniaCount: positiveNumberSchema.optional(),
-      measlesCount: positiveNumberSchema.optional(),
-      typhoidFeverCount: positiveNumberSchema.optional(),
-      hepatitisCount: positiveNumberSchema.optional(),
-      influenzaCount: positiveNumberSchema.optional(),
-      hypertensiveCount: positiveNumberSchema.optional(),
-      diabetesMellitusCount: positiveNumberSchema.optional(),
-      tuberculosisCount: positiveNumberSchema.optional(),
-      leprosyCount: positiveNumberSchema.optional(),
-      othersCount: positiveNumberSchema.optional(),
-   })
+      feverCount: z.number().optional(),
+      dengueCount: z.number().optional(),
+      diarrheaCount: z.number().optional(),
+      pneumoniaCount: z.number().optional(),
+      measlesCount: z.number().optional(),
+      typhoidFeverCount: z.number().optional(),
+      hepatitisCount: z.number().optional(),
+      influenzaCount: z.number().optional(),
+      hypertensiveCount: z.number().optional(),
+      diabetesMellitusCount: z.number().optional(),
+      tuberculosisCount: z.number().optional(),
+      leprosyCount: z.number().optional(),
+      // Remove othersCount, replace with array
+      others: z.array(z.object({
+         diseaseName: z.string().min(1, "Disease name is required"),
+         count: z.number().min(0, "Count must be 0 or greater")
+      })).optional()
+   }),
 })
