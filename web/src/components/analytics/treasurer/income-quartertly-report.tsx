@@ -235,7 +235,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
 import { useIncomeData } from "@/pages/record/treasurer/treasurer-income-expense-tracker/queries/treasurerIncomeExpenseFetchQueries";
 import { getQuarterlyIncomeByItem } from "@/pages/record/treasurer/treasurer-income-expense-tracker/queries/treasurerQuarterlyIncExp";
 import { cn } from "@/lib/utils";
