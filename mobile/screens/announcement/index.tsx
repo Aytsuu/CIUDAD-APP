@@ -392,15 +392,20 @@ export default () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onPress={() => handleRecipient("Staff Only")}
+                    onPress={() => handleRecipient("Staff")}
                   >
                     <Text className="text-xs">Staff Only</Text>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onPress={() => handleRecipient("Resident Only")}
+                    onPress={() => handleRecipient("Resident")}
                   >
                     <Text className="text-xs">Resident Only</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onPress={() => handleRecipient("Public")}
+                  >
+                    <Text className="text-xs">Public</Text>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

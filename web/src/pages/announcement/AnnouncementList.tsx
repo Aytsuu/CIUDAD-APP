@@ -171,8 +171,9 @@ function AnnouncementTracker() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="staff only">Staff Only</SelectItem>
-                  <SelectItem value="resident only">Resident Only</SelectItem>
+                  <SelectItem value="staff">Staff Only</SelectItem>
+                  <SelectItem value="resident">Resident Only</SelectItem>
+                  <SelectItem value="public">Public</SelectItem>
                 </SelectContent>
               </Select>
 

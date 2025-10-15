@@ -21,7 +21,6 @@ export default function LandingLayout() {
   const homeRef = React.useRef<HTMLDivElement>(null);
   const aboutRef = React.useRef<HTMLDivElement>(null);
   const announcementRef = React.useRef<HTMLDivElement>(null);
-  const healthRef = React.useRef<HTMLDivElement>(null);
   const mobileAppRef = React.useRef<HTMLDivElement>(null);
 
   const NavItemList = [
@@ -132,13 +131,13 @@ export default function LandingLayout() {
         </section>
         <section 
           ref={aboutRef}
-          className="w-full h-[150vh] flex justify-center items-center"
+          className="w-full h-[140vh] flex justify-center items-center"
         >
           <About/>
         </section>
         <section 
           ref={announcementRef}
-          className="w-full min-h-screen flex justify-center items-center"
+          className="w-full flex justify-center items-center"
         >
           <Announcements/>
         </section>
