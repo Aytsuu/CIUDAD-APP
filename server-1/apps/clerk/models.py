@@ -102,8 +102,8 @@ class BusinessPermitRequest(models.Model):
     rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
+    bus_clearance_gross_sales = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Add inputted gross sales field
 
-    
     class Meta:
         db_table = 'business_permit_request'
         managed = False
