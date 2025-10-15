@@ -18,6 +18,9 @@ import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-qua
 import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar"; 
 import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
 import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
+import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
+import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
+
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -108,6 +111,16 @@ export const getItemsConfig = (
       },
       {
         dashboard: "FINANCE",
+        chart: [
+          {
+            title: "Finance Expense Overview",
+            element: <IncomeExpenseQuarterlyChart/>,
+          },
+          {
+            title: "Finance Income Overview",
+            element: <IncomeQuarterlyChart/>,
+          },
+        ],
         sidebar: [
           {
             title: "Recent Disbursement Voucher",
