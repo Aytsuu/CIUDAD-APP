@@ -20,7 +20,7 @@ const CertPermit: React.FC = () => {
   const [businessName, setBusinessName] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [grossSales, setGrossSales] = useState("");
-  const [selectedGrossSalesRange, setSelectedGrossSalesRange] = useState("");
+  const [inputtedGrossSales, setInputtedGrossSales] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   
@@ -125,20 +125,44 @@ const CertPermit: React.FC = () => {
     }
   }, [isLoadingBusiness, businessData.length, permitPurposes, barangayClearancePurposes]);
 
-  // Memoize gross sales options to prevent re-renders
-  const grossSalesOptions: DropdownOption[] = useMemo(() => {
-    return annualGrossSales
-      .filter(sales => sales.ags_is_archive === false)
-      .filter((sales, index, self) => 
-        index === self.findIndex(s => 
-          s.ags_minimum === sales.ags_minimum && s.ags_maximum === sales.ags_maximum
-        )
-      )
-      .map(sales => ({
-        label: `₱${sales.ags_minimum} - ₱${sales.ags_maximum}`,
-        value: `${sales.ags_minimum} - ${sales.ags_maximum}`
-      }));
-  }, [annualGrossSales]);
+  // Helper function to find the closest gross sales range and rate
+  const findMatchingGrossSalesRate = (inputValue: string) => {
+    const numericValue = parseFloat(inputValue);
+    if (isNaN(numericValue)) return null;
+    
+    // Filter out archived ranges
+    const activeRanges = annualGrossSales.filter(sales => sales.ags_is_archive === false);
+    
+    if (activeRanges.length === 0) return null;
+    
+    // First, try to find exact match within a range
+    const exactMatch = activeRanges.find(sales => 
+      numericValue >= sales.ags_minimum && 
+      numericValue <= sales.ags_maximum
+    );
+    
+    if (exactMatch) return exactMatch;
+    
+    // If no exact match, find the closest range
+    let closestRange = null;
+    let minDistance = Infinity;
+    
+    activeRanges.forEach(sales => {
+      const rangeMin = parseFloat(sales.ags_minimum);
+      const rangeMax = parseFloat(sales.ags_maximum);
+      const rangeMid = (rangeMin + rangeMax) / 2;
+      
+      // Calculate distance from input value to range midpoint
+      const distance = Math.abs(numericValue - rangeMid);
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestRange = sales;
+      }
+    });
+    
+    return closestRange;
+  };
 
   // Check if selected type is barangay clearance
   const isBarangayClearance = useMemo(() => {
@@ -186,13 +210,22 @@ const CertPermit: React.FC = () => {
       setError("Business address is required");
       return;
     }
-    if (isBarangayClearance && businessData.length === 0 && !selectedGrossSalesRange) {
-      setError("Please select a gross sales range");
+    if (isBarangayClearance && businessData.length === 0 && !inputtedGrossSales.trim()) {
+      setError("Please enter your annual gross sales amount");
       return;
     }
     if (isBarangayClearance && businessData.length > 0 && !grossSales) {
       setError("Gross sales information is missing");
       return;
+    }
+    
+    // Validate that inputted gross sales can find a closest range
+    if (isBarangayClearance && businessData.length === 0 && inputtedGrossSales.trim()) {
+      const matchingRate = findMatchingGrossSalesRate(inputtedGrossSales);
+      if (!matchingRate) {
+        setError("No valid gross sales range found for the entered amount");
+        return;
+      }
     }
 
     // Validate required images - only for barangay clearance
@@ -211,7 +244,7 @@ const CertPermit: React.FC = () => {
       cert_type: "permit",
       business_name: businessName || "",
       business_address: businessAddress || "",
-      gross_sales: isBarangayClearance ? (businessData.length === 0 ? (selectedGrossSalesRange || "") : (grossSales || "")) : "N/A",
+      gross_sales: isBarangayClearance ? (businessData.length === 0 ? (inputtedGrossSales || "") : (grossSales || "")) : "N/A",
       rp_id: user?.rp || "",
       permit_image: isBarangayClearance ? (previousPermitImage || undefined) : undefined,
       assessment_image: isBarangayClearance ? (assessmentImage || undefined) : undefined,
@@ -236,12 +269,10 @@ const CertPermit: React.FC = () => {
     if (isBarangayClearance) {
       // For Barangay Clearance, use ags_rate (Annual Gross Sales rate)
       if (businessData.length === 0) {
-        // For residents without business, use rate from selected gross sales range
-        const selectedGrossSales = annualGrossSales.find(sales => 
-          `${sales.ags_minimum} - ${sales.ags_maximum}` === selectedGrossSalesRange
-        );
-        reqAmount = selectedGrossSales?.ags_rate || 0;
-        agsId = selectedGrossSales?.ags_id || null;
+        // For residents without business, use rate from inputted gross sales
+        const matchingGrossSales = findMatchingGrossSalesRate(inputtedGrossSales);
+        reqAmount = matchingGrossSales?.ags_rate || 0;
+        agsId = matchingGrossSales?.ags_id || null;
       } else {
         // For residents with business, find rate based on gross sales amount
         const grossSalesAmount = parseFloat(grossSales);
@@ -261,12 +292,13 @@ const CertPermit: React.FC = () => {
       cert_type: "permit",
       business_name: businessName,
       business_address: businessAddress,
-      gross_sales: isBarangayClearance ? (businessData.length === 0 ? selectedGrossSalesRange : grossSales) : "N/A",
+      gross_sales: isBarangayClearance ? (businessData.length === 0 ? inputtedGrossSales : grossSales) : "N/A",
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : undefined, 
       pr_id: prId,
       rp_id: user?.rp || "",
       req_amount: reqAmount,
       ags_id: agsId || undefined,
+      bus_clearance_gross_sales: isBarangayClearance && businessData.length === 0 ? parseFloat(inputtedGrossSales) : undefined,
     };
 
     // Handle file uploads if images are provided - only for barangay clearance
@@ -488,14 +520,16 @@ const CertPermit: React.FC = () => {
               <>
                 <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales</Text>
                 {businessData.length === 0 ? (
-                  // Dropdown for residents without business
-                  <SelectLayout
-                    options={grossSalesOptions}
-                    selectedValue={selectedGrossSalesRange}
-                    onSelect={(option) => setSelectedGrossSalesRange(option.value)}
-                    placeholder={isLoadingGrossSales ? "Loading..." : "Select gross sales range"}
-                    disabled={isLoadingGrossSales}
-                    className="mb-3"
+                  // Text input for residents without business
+                  <TextInput
+                    className="rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base bg-white text-gray-900"
+                    placeholder="Enter your annual gross sales amount (e.g., 50000)"
+                    placeholderTextColor="#888"
+                    value={inputtedGrossSales}
+                    onChangeText={setInputtedGrossSales}
+                    keyboardType="numeric"
+                    autoCapitalize="none"
+                    autoCorrect={false}
                   />
                 ) : (
                   // Read-only for residents with business
@@ -600,11 +634,9 @@ const CertPermit: React.FC = () => {
                   if (isBarangayClearance) {
                     // For Barangay Clearance, use ags_rate (Annual Gross Sales rate)
                     if (businessData.length === 0) {
-                      // For residents without business, use rate from selected gross sales range
-                      const selectedGrossSales = annualGrossSales.find(sales => 
-                        `${sales.ags_minimum} - ${sales.ags_maximum}` === selectedGrossSalesRange
-                      );
-                      return selectedGrossSales ? `₱${selectedGrossSales.ags_rate.toLocaleString()}` : '₱0';
+                      // For residents without business, use rate from inputted gross sales
+                      const matchingGrossSales = findMatchingGrossSalesRate(inputtedGrossSales);
+                      return matchingGrossSales ? `₱${matchingGrossSales.ags_rate.toLocaleString()}` : '₱0';
                     } else {
                       // For residents with business, find rate based on gross sales amount
                       const grossSalesAmount = parseFloat(grossSales);

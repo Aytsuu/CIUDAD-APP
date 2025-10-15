@@ -95,12 +95,13 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
             const agsId = row.original.ags_id;
             const grossSalesData = row.original.grossSalesData;
             const businessGrossSales = row.original.businessGrossSales;
+            const inputtedGrossSales = row.original.bus_clearance_gross_sales;
             
-            // Priority 1: Show annual gross sales range (for barangay clearance)
-            if (grossSalesData && agsId) {
+            // Priority 1: Show inputted gross sales (for new businesses with barangay clearance)
+            if (inputtedGrossSales && agsId) {
                 return (
                     <div className="text-center">
-                        ₱{parseFloat(grossSalesData.ags_minimum).toLocaleString()} - ₱{parseFloat(grossSalesData.ags_maximum).toLocaleString()}
+                        ₱{parseFloat(inputtedGrossSales.toString()).toLocaleString()}
                     </div>
                 );
             }
@@ -109,6 +110,14 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                 return (
                     <div className="text-center">
                         ₱{parseFloat(businessGrossSales.toString()).toLocaleString()}
+                    </div>
+                );
+            }
+            // Priority 3: Show annual gross sales range as fallback (for barangay clearance without inputted value)
+            else if (grossSalesData && agsId) {
+                return (
+                    <div className="text-center">
+                        ₱{parseFloat(grossSalesData.ags_minimum).toLocaleString()} - ₱{parseFloat(grossSalesData.ags_maximum).toLocaleString()}
                     </div>
                 );
             }
@@ -360,7 +369,8 @@ type PermitClearance = {
     req_amount?: number, // Add req_amount field from backend
     grossSalesData?: any, // Add gross sales data
     purposeData?: any, // Add purpose data
-    businessGrossSales?: number // Add business gross sales for existing businesses
+    businessGrossSales?: number, // Add business gross sales for existing businesses
+    bus_clearance_gross_sales?: number // Add inputted gross sales for new businesses
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -480,7 +490,8 @@ function PermitClearance(){
             pr_id: item.pr_id, // Include pr_id
             grossSalesData: grossSalesData, // Include gross sales data
             purposeData: purposeData, // Include purpose data
-            businessGrossSales: item.business_gross_sales, // Include business gross sales for existing businesses
+            businessGrossSales: item.business_gross_sales || item.gross_sales, // Include business gross sales for existing businesses
+            bus_clearance_gross_sales: item.bus_clearance_gross_sales, // Include inputted gross sales for new businesses
             ...item
         };
     });
