@@ -66,29 +66,29 @@ const SummonCaseCard = React.memo(({ item }: { item: SummonCaseList }) => {
     };
 
     const handleViewDetails = () => {
-        // router.push({
-        //     pathname: "/view-remarks-details",
-        //     params: {
-        //         sc_id: item.sc_id,
-        //         incident_type: item.incident_type,
-        //         hasResident: hasResidentComplainant(item) ? "true" : "false",
-        //         comp_names: Array.isArray(item.complainant_names) 
-        //             ? item.complainant_names.join(",") 
-        //             : item.complainant_names || "N/A",
-        //         acc_names: Array.isArray(item.accused_names) 
-        //             ? item.accused_names.join(",") 
-        //             : item.accused_names || "N/A",
-        //         complainant_addresses: Array.isArray(item.complainant_addresses) 
-        //             ? item.complainant_addresses.join(",") 
-        //             : item.complainant_addresses || "N/A",
-        //         accused_addresses: Array.isArray(item.accused_addresses) 
-        //             ? item.accused_addresses.join(",") 
-        //             : item.accused_addresses || "N/A",
-        //         complainant_rp_ids: item.complainant_rp_ids ? JSON.stringify(item.complainant_rp_ids) : "",
-        //         sc_code: item.sc_code,
-        //         sc_mediation_status: item.sc_mediation_status || ""
-        //     }
-        // });
+        router.push({
+            pathname: "/(summon)/view-remarks-details",
+            params: {
+                sc_id: item.sc_id,
+                incident_type: item.incident_type,
+                hasResident: hasResidentComplainant(item) ? "true" : "false",
+                comp_names: Array.isArray(item.complainant_names) 
+                    ? item.complainant_names.join(",") 
+                    : item.complainant_names || "N/A",
+                acc_names: Array.isArray(item.accused_names) 
+                    ? item.accused_names.join(",") 
+                    : item.accused_names || "N/A",
+                complainant_addresses: Array.isArray(item.complainant_addresses) 
+                    ? item.complainant_addresses.join(",") 
+                    : item.complainant_addresses || "N/A",
+                accused_addresses: Array.isArray(item.accused_addresses) 
+                    ? item.accused_addresses.join(",") 
+                    : item.accused_addresses || "N/A",
+                complainant_rp_ids: item.complainant_rp_ids ? JSON.stringify(item.complainant_rp_ids) : "",
+                sc_code: item.sc_code,
+                sc_mediation_status: item.sc_mediation_status || ""
+            }
+        });
     };
 
     const status = item.sc_conciliation_status || item.sc_mediation_status;

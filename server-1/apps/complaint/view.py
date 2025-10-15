@@ -17,6 +17,8 @@ import uuid
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from datetime import date
+from rest_framework.permissions import AllowAny
+
 
 logger = logging.getLogger(__name__)
             
@@ -54,6 +56,7 @@ class ComplaintListView(generics.ListAPIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ComplaintSerializer
     lookup_field = 'comp_id'
 
