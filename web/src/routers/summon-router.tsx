@@ -3,8 +3,8 @@ import SummonCases from "@/pages/record/summon-and-case-tracking/council-mediati
 import SummonDetails from "@/pages/record/summon-and-case-tracking/council-mediation/summon-details";
 import SummonRemarksDetails from "@/pages/record/summon-and-case-tracking/summon-remarks/summon-remarks-details";
 import SummonRemarksMain from "@/pages/record/summon-and-case-tracking/summon-remarks/summon-remarks-main";
-import LuponCases from "@/pages/record/summon-and-case-tracking/lupon-mediation/lupon-cases";
-import LuponCaseDetails from "@/pages/record/summon-and-case-tracking/lupon-mediation/lupon-case-details";
+import LuponCases from "@/pages/record/summon-and-case-tracking/lupon-conciliation/lupon-cases";
+import LuponCaseDetails from "@/pages/record/summon-and-case-tracking/lupon-conciliation/lupon-case-details";
 
 export const summon_router = [
     {
