@@ -197,9 +197,6 @@ export default function LandingLayout() {
         </header>
       </div>
 
-      {/* Spacer to push content below fixed headers */}
-      <div className="h-[120px]"></div>
-
       {/* Floating Edit Button */}
       {user?.staff?.pos?.toLowerCase() == "admin" &&
         user?.staff?.staff_type?.toLowerCase() == "barangay staff" && (
@@ -255,8 +252,8 @@ export default function LandingLayout() {
           />
         )}
 
-      {/* Scrollable Page Content */}
-      <main className="w-full">
+      {/* Scrollable Page Content - Added pt-[120px] to account for fixed headers */}
+      <main className="w-full pt-[120px]">
         <section
           ref={homeRef}
           className="w-full h-screen flex justify-center items-center"

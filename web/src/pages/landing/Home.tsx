@@ -43,7 +43,7 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
 
       {/* Content */}
       <div className="absolute inset-0 flex items-center justify-center px-8">
-        <div className="w-full max-w-7xl flex justify-between items-center gap-12">
+        <div className="w-full max-w-[90rem] flex justify-between items-center gap-12">
           {/* Text Content */}
           <div className="flex-1 flex flex-col">
             <div className="flex items-center gap-4">
@@ -58,14 +58,14 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
             </div>
 
             <div
-              className="w-24 h-1 rounded-full mt-6 mb-14"
+              className="w-24 h-2 rounded-full mt-6 mb-14"
               style={{
                 background:
                   "linear-gradient(to right, #3b82f6, #ef4444, #eab308)",
               }}
             />
 
-            <h1 className="text-7xl font-poppins font-bold text-white mb-8 leading-tight">
+            <h1 className="text-7xl font-poppins font-bold text-white mb-6 leading-tight">
               Welcome to Our Barangay
             </h1>
             <p className="text-lg text-white/90 leading-relaxed max-w-2xl">

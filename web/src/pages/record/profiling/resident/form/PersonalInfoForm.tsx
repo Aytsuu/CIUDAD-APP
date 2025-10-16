@@ -157,10 +157,10 @@ const PersonalInfoForm = ({
       )}
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true}/>
-        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} upper={true}/>
-        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} upper={true}/>
-        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} upper={true}/>
+        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} upper={true} noSpecialChars/>
       </div>
 
       {/* Sex, Status, DOB, Address */}

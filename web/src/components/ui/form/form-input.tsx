@@ -22,6 +22,7 @@ interface FormInputProps {
   step?: number;
   maxLength?: number;
   upper?: boolean;
+  noSpecialChars?: boolean;
 }
 
 export const FormInput = React.memo(({ 
@@ -36,7 +37,8 @@ export const FormInput = React.memo(({
   max,
   step,
   maxLength,
-  upper = false
+  upper = false,
+  noSpecialChars = false
 }: FormInputProps) => (
   <FormField
     control={control}
@@ -72,6 +74,17 @@ export const FormInput = React.memo(({
                   ['a', 'c', 'v', 'x', 'z'].includes(e.key);
                 
                 if (!(isDecimal || isMinus || isControlKey || isCtrlCombination)) {
+                  e.preventDefault();
+                }
+              } else {
+                if (!noSpecialChars) return;
+                
+                const allowedKeys = 'qwertyuiopasdfghjklzxcvbnm'.split('')
+                allowedKeys.push('Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                  'Home', 'End')
+
+                if (!allowedKeys.includes(e.key)) {
                   e.preventDefault();
                 }
               }
