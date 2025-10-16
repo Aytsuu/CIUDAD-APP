@@ -1119,6 +1119,12 @@ interface RequestProps {
   liveInYears?: number;
   dateOfConflagration?: string;
   dateDemolished?: string;
+  fileActComplainant?: string;
+  fileActComplainantAddress?: string;
+  fileActRespondent?: string;
+  fileActRespondentAddress?: string;
+  fileActBarangayCase?: string;
+  fileActComplainDate?: string;
   purpose?: string;
   specificPurpose?: string;
   issuedDate?: string;
@@ -1155,7 +1161,7 @@ type Template = {
 }
 
 
-function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, Custodies, specificPurpose, showAddDetails = true} : RequestProps ) {
+function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, liveInYears, childName, childAge, childBirtdate, deceasedName, deceasedAge, deceasedBirthdate, deceasedAddress, dateOfConflagration, dateDemolished, purpose, issuedDate, businessName, Signatory, pangkatSecretary, pangkatChairman, fileActComplainant, fileActComplainantAddress, fileActRespondent, fileActRespondentAddress, fileActBarangayCase, fileActComplainDate, Custodies, specificPurpose, showAddDetails = true} : RequestProps ) {
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([]);
 
@@ -1181,6 +1187,9 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
 
   //Demolished Date Format
   const FormattedDemolishedDate =  dateDemolished ? formatTimestampToDate(dateDemolished) : "";  
+
+  //File Action Complain date Format
+  const FormattedComplainDate = fileActComplainDate ? formatTimestampToDate(fileActComplainDate) : "";
   
   //birthdate format
   const FormattedBirthdate = birthdate ? new Date(birthdate).toLocaleDateString("en-US", {
@@ -1804,14 +1813,13 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
     // },
     {
       temp_id: "File Action",
-      temp_belowHeaderContent: "\t\t\t\t\t\t\t\t\t\t\tBARANGAY CASE NO.[ Case No. ]\n" +
-      "\t\t\t\t\t\t\t\t\t\t\tCASE NAME: [NAME]\n\n" +
-      "[ Name of Complainant ]\n" +
-      "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
+      temp_belowHeaderContent: `\t\t\t\t\t\t\t\t\t\t\tBARANGAY CASE NO. ${fileActBarangayCase}\n\n` +
+      `${fileActComplainant}\n` +
+      `${fileActComplainantAddress}\n` +
       "COMPLAINANT/S\n\n" +
       "      - AGAINTS -\n\n" +
-      "[ Name of Respondent ]\n" +
-      "[ Address ], Brgy. San Roque Ciudad Cebu City\n" +
+      `${fileActRespondent}\n` +
+      `${fileActRespondentAddress}\n` +
       "RESPONDENT/S\n\n",
       temp_title: "CERTIFICATION TO FILE ACTION",
       temp_barangayLogo: barangayLogo,
@@ -1828,7 +1836,7 @@ function TemplateMainPage({fname, lname, age, birthdate, address, partnerName, l
       temp_w_sign_applicant: false,
       temp_w_seal: false,
       temp_body: "This is to certify that:\n\n" +
-      "1. There was a complaint filled in this Office on [SEPTEMBER] [10], [2025];\n\n" +
+      `1. There was a complaint filled in this Office on ${FormattedComplainDate};\n\n` +
       "2. There has been a personal confrontation between the parties before the Punong Barangay but mediation failed;\n\n" +
       "3. The Pangkat ng Tagapangkasundo was constituted but the personal confrontation before the Pangkat likewise did not result into settlement;\n\n" +
       "4. Therefore, the corresponding complaint for the dispute may now be filed in the court/government office.\n\n" +
