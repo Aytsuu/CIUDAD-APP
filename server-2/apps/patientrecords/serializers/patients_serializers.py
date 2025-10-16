@@ -600,8 +600,16 @@ class PatientSerializer(serializers.ModelSerializer):
                         if mother_comp:
                             # get TT_Status for mother (resident rp)
                             try:
-                                tt_status = self.get_mother_tt_status(mother_comp.rp.rp_id)
-                                additional_info['mother_tt_status'] = tt_status
+                                tt_status = TT_Status.objects.filter(
+                                    pat_id__rp_id=mother_comp.rp.rp_id
+                                ).order_by('-tts_date_given', '-tts_id').first()
+                                if tt_status:
+                                    additional_info['mother_tt_status'] = {
+                                        'status': tt_status.tts_status,
+                                        'date_given': tt_status.tts_date_given
+                                    }
+                                else:
+                                    additional_info['mother_tt_status'] = None
                             except Exception as e:
                                 additional_info['mother_tt_status'] = None
 
@@ -646,7 +654,11 @@ class PatientSerializer(serializers.ModelSerializer):
                         pat_id=obj
                     ).select_related('pat_id').order_by('-tts_date_given', '-tts_id')
                     if tt_qs.exists():
-                        additional_info['mother_tt_status'] = tt_qs.first().tts_status
+                        latest_tt_status = tt_qs.first()
+                        additional_info['mother_tt_status'] = {
+                            'status': latest_tt_status.tts_status,
+                            'date_given': latest_tt_status.tts_date_given
+                        }
                     else:
                         additional_info['mother_tt_status'] = None
                 except Exception:

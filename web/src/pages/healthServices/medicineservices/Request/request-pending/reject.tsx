@@ -55,10 +55,10 @@ export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) =
       title: "Refer Request",
       icon: Forward,
       iconColor: "text-blue-600",
-      buttonText: "Refer Document",
+      buttonText: "Submit",
       buttonColor: "bg-blue-600 hover:bg-blue-700",
       status: "referred",
-      archive_reason: `We regret to inform you that your request has been referred due to the medicine specifically "${data.med_name}" being out of stock. You may submit another request when the medicine becomes available. Please note that availability will be prioritized based on the order of requests. There is also a possibility that your request may be referred again depending on stock availability.`
+      archive_reason: ``
     }
   };
 
@@ -132,7 +132,6 @@ export const ActionModal = ({ isOpen, onClose, data, mode }: ActionModalProps) =
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Send className="h-4 w-4" />
                       {config.buttonText}
                     </div>
                   )}

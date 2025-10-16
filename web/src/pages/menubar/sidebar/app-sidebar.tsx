@@ -361,7 +361,7 @@ export function AppSidebar() {
         { title: "Maternal", url: "/services/maternal" },
         {
           title: "Medical Consultation ",
-          url: "/services/medical-consultation",
+          url: "/services/medical-consultation/records",
         },
         { title: "Medicine", url: "/services/medicine/records" },
         { title: "Vaccination", url: "/services/vaccination" },

@@ -86,6 +86,7 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
             'staff',
             'assigned_to',
             'is_phrecord',
+            'app_id',
             
             # Nested fields
             'vital_signs',
