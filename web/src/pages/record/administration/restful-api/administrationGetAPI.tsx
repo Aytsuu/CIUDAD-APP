@@ -28,7 +28,7 @@ export const getStaffs = async (
 };
 
 // Fetch positions with optional filtering for staff type
-export const getPositions = async (staff_type: string) => {
+export const getPositions = async (staff_type?: string) => {
   try {
     const res = await api.get("administration/position/", {
       params: {
