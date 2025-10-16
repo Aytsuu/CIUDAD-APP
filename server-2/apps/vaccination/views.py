@@ -193,7 +193,6 @@ class GetAllResidentsNotVaccinated(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class UnvaccinatedVaccinesDetailsView(APIView):
     """
     Second endpoint: Get paginated list of ALL residents for a specific vaccine and age group

@@ -81,6 +81,7 @@ export const VaccineStocksSchema = z.object({
   solvent: z.string().min(1, "required").default(""),
   batchNumber: z.string().min(1, "Batch number is required"),
   volume: positiveNumberSchema,
+  dose_ml: positiveNumberSchema,
   qty: positiveNumberSchema,
   inv_type:z.string().min(1, "Inventory type is required").default("Antigen"),
   staff: z.string().optional(),
