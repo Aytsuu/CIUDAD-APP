@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView, StatusBar, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, StatusBar, Modal, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
@@ -188,7 +188,7 @@ const PrenatalBookingPage: React.FC = () => {
         );
       })
       .catch((error) => {
-        let errorMsg = 'Failed to schedule appointment. Please try again.';
+        const errorMsg = 'Failed to schedule appointment. Please try again.';
         Alert.alert('Error', errorMsg);
         console.error('Backend error:', error);
       });

@@ -12,7 +12,7 @@ interface PersonalInfoCardProps {
   address?: any;
   currentPatId?: string | null;
   rp_id?: string;
-  medreq_id: string;
+  medreq_id?: string;
   onPatientRegistered: (patId: string) => void;
   // New props for patient existence check
   shouldShowRegisterButton?: boolean;

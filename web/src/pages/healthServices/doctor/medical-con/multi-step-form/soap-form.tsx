@@ -17,7 +17,6 @@ interface SoapFormProps {
 }
 
 export default function SoapForm({ patientData, MedicalConsultation, onBack, initialData, onFormDataUpdate }: SoapFormProps) {
-
   const [currentPage, setCurrentPage] = useState(1);
   const { mutate: submitSoapForm, isPending: isSubmitting } = useSubmitSoapForm();
 
@@ -110,9 +109,10 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       others: initialData?.others || "",
       is_phrecord: initialData?.is_phrecord || false,
       phil_id: initialData?.phil_id || MedicalConsultation?.philhealth_details?.phil_id || "",
-      staff_id: initialData?.staff_id ||  "",
+      staff_id: initialData?.staff_id || "",
       medrec_id: initialData?.medrec_id || MedicalConsultation?.medrec_id || "",
-      patrec_id: initialData?.patrec_id || MedicalConsultation?.patrec || ""
+      patrec_id: initialData?.patrec_id || MedicalConsultation?.patrec || "",
+      app_id: initialData?.app_id || ""
     }
   });
 
@@ -315,10 +315,7 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         obj_summary: data.obj_summary,
         assessment_summary: data.assessment_summary,
         plantreatment_summary: data.plantreatment_summary,
-        medicineRequest: {
-          pat_id: patientData?.pat_id || "",
-          medicines: selectedMedicines
-        },
+        medicineRequest: { pat_id: patientData?.pat_id || "", medicines: selectedMedicines },
         physicalExamResults: data.physicalExamResults,
         selectedIllnesses: data.selectedIllnesses,
         followv: data.followv,
@@ -340,7 +337,8 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
         phil_id: data.phil_id || MedicalConsultation?.philhealth_details?.phil_id || "",
         staff_id: data.staff_id || MedicalConsultation?.staff_id || "",
         medrec_id: data.medrec_id || MedicalConsultation?.medrec_id || "",
-        patrec_id: data.patrec_id || MedicalConsultation?.patrec || ""
+        patrec_id: data.patrec_id || MedicalConsultation?.patrec || "",
+        app_id: data.app_id || MedicalConsultation?.app_id || ""
       };
 
       console.log("Clean submission data:", submissionData);
@@ -348,12 +346,11 @@ export default function SoapForm({ patientData, MedicalConsultation, onBack, ini
       submitSoapForm({
         formData: submissionData,
         patientData,
-        MedicalConsultation,
+        MedicalConsultation
       });
     },
     [selectedMedicines, patientData, MedicalConsultation, submitSoapForm]
   );
-
 
   return (
     <div>

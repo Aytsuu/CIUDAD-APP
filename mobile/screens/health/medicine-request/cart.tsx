@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
-import { ArrowLeft, Trash2, ShoppingBag, Pill, X, CheckCircle, AlertTriangle } from "lucide-react-native";
+import { ArrowLeft, Trash2, ShoppingBag, Pill, AlertTriangle } from "lucide-react-native";
 import { useGlobalCartState, removeFromCart, clearCart, addUploadedFile, removeUploadedFile, UploadedFile } from "./cart-state";
 import { submitMedicineRequest } from "./queries/queries";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";

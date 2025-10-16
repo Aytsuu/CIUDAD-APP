@@ -1,6 +1,6 @@
 import { ChevronDown } from "@/lib/icons/ChevronDown"
 import React, { useState, useRef, useCallback } from "react"
-import { View, Text, TouchableOpacity, Dimensions, StatusBar, ScrollView } from "react-native"
+import { View, TouchableOpacity, Dimensions, ScrollView } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
@@ -119,7 +119,7 @@ export default function PageLayout({
   // Handle content size change to determine if content is scrollable
   const handleContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
     // Get the available height (screen height minus header and footer)
-    let availableHeight = screenHeight
+    const availableHeight = screenHeight
     // if (showHeader) {
     //   availableHeight -= responsiveHeaderHeight + 50 // Add some buffer for status bar
     // }

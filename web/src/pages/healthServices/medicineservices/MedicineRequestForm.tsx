@@ -39,7 +39,7 @@ export default function MedicineRequestForm() {
     page: 1,
     pageSize: 10,
     search: "",
-    is_temp: false // Changed to false for medicine request form
+    is_temp: true // Changed to false for medicine request form
   });
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);

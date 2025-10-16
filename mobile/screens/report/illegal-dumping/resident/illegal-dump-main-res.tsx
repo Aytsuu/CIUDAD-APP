@@ -8,7 +8,7 @@ import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 
 export default function WasteIllegalDumpingResMain() {
-  let rp_ide = '00003250910';
+  const rp_ide = '00003250910';
   const {
     data: fetchedData = [],
     isLoading,

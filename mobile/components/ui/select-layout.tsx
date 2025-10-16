@@ -2,7 +2,6 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { View, Text, TouchableOpacity, Modal, FlatList, Dimensions, Animated } from "react-native"
 import { ChevronDown, Check } from "lucide-react-native"
-import { capitalize } from "@/helpers/capitalize"
 
 export interface DropdownOption {
   label: string
@@ -98,7 +97,7 @@ export const SelectLayout: React.FC<ModalSelectProps> = ({
     const dropdownHeight = Math.min(maxHeight, options.length * 50)
 
     // Use custom offset if provided, otherwise auto-detect context
-    let gapAdjustment = isInModal ? 5 : -30;
+    const gapAdjustment = isInModal ? 5 : -30;
     let top = dropdownLayout.y + dropdownLayout.height + gapAdjustment;
 
     // If not enough space below, show above

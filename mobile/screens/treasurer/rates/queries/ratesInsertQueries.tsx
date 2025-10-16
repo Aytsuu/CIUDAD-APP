@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleCheck } from "lucide-react-native";
 import {z} from "zod";
 import { addAnnualGrossSales, addPurposeAndRate } from "../restful-API/ratesPostAPI";
 import { AnnualGrossSalesSchema, PurposeAndRatesSchema } from "@/form-schema/rates-form-schema";

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
 import { useGetHouseholds, useGetHouseholdData, useGetResidentPersonalInfo } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';

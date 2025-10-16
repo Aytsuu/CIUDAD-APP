@@ -1,10 +1,10 @@
 import {api} from "@/api/api";
 
 
-export const useUpdateResolution = async (res_num: String, resolutionInfo: Record<string, any>) => {
+export const useUpdateResolution = async (res_num: string, resolutionInfo: Record<string, any>) => {
 
     try{
-        let staff = "00004250910";
+        const staff = "00004250910";
 
         console.log({
             res_title: resolutionInfo.res_title,

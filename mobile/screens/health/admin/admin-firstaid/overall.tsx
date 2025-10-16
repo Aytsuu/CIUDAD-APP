@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
-import { Search, ChevronLeft, AlertCircle, User, FileText, Users, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, User, FileText, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

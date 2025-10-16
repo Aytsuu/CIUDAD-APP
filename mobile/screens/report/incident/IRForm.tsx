@@ -1,6 +1,5 @@
 import React from "react"
-import _ScreenLayout from "@/screens/_ScreenLayout"
-import { Text, View, TouchableOpacity, ScrollView, Alert } from "react-native"
+import { Text, View, TouchableOpacity } from "react-native"
 import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"

@@ -2,7 +2,6 @@ import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { UseFormReturn } from "react-hook-form";
 import { Eye, EyeOff, Mail, Phone, Lock } from "lucide-react-native";
-import { Button } from "@/components/ui/button";
 
 interface AccountFormProps {
   form: UseFormReturn<any>;

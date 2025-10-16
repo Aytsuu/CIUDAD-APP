@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { DonorSelect } from "../personalizedCompo/search_input";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ChevronLeft } from "lucide-react-native";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";

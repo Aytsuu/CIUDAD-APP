@@ -4,6 +4,9 @@ import VaccinationView from "@/pages/healthServices/vaccination/viewhistory/View
 import VaccinationManagement from "@/pages/healthServices/vaccination/tables/all/MainTable";
 // import AgeGroup from "@/pages/healthServices/agegroup/AgeGroup";
 import ScheduledVaccine from "@/pages/healthServices/vaccination/viewhistory/ScheduledVaccine";
+import { ResidentListSection } from "@/pages/healthServices/vaccination/tables/all/ResidentListDialog";
+
+
 export const vaccination = [
   {
     path: "/services/vaccination/records",
@@ -28,5 +31,10 @@ export const vaccination = [
   {
     path: "scheduled-vaccine",
     element: <ScheduledVaccine />
+  },
+  {
+    path: "/services/vaccination/resident-list",
+    element: <ResidentListSection />
   }
+
 ];

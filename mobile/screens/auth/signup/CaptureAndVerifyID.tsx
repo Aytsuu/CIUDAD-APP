@@ -2,12 +2,10 @@ import React from "react";
 import { useCameraDevice, Camera } from "react-native-vision-camera";
 import { View, StyleSheet, Text } from "react-native";
 import { supabase } from "@/lib/supabase";
-import * as FileSystem from "expo-file-system";
 import { postDocumentData } from "../rest-api/authPostAPI";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import NetInfo from "@react-native-community/netinfo";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
-import * as ImageManipulator from "expo-image-manipulator";
 
 export type CAVIDCamHandle = {
   capturePhoto: () => Promise<boolean | undefined>;

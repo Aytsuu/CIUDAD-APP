@@ -1,6 +1,6 @@
 import PageLayout from "@/screens/_PageLayout";
 import PersonalInformation from "../PersonalInformation";
-import { ScrollView, TouchableOpacity, Text, View } from "react-native";
+import { ScrollView, TouchableOpacity, Text } from "react-native";
 import { router } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";

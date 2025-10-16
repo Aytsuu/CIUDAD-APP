@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react"
 import { View, TouchableOpacity, TextInput, ScrollView, RefreshControl } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, RefreshCw, ChevronLeft } from "lucide-react-native"
+import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, ChevronLeft } from "lucide-react-native"
 
 import { Text } from "@/components/ui/text"
 import { Card, CardContent } from "@/components/ui/card"

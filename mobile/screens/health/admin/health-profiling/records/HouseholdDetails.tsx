@@ -2,16 +2,13 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   Alert,
   FlatList,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Card } from "@/components/ui/card";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import PageLayout from "@/screens/_PageLayout";
 import { Home } from "@/lib/icons/Home";

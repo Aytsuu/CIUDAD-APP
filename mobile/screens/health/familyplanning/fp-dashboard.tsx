@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react"
 import { View, Text, TextInput, TouchableOpacity, FlatList, ScrollView } from "react-native"
 import { router } from "expo-router"
-import { Search, AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, Plus, Filter, ChevronLeft, Activity } from "lucide-react-native"
+import { Search, AlertCircle, ChevronRight, Heart, Calendar, Clock, TrendingUp, AlertTriangle, ChevronLeft, Activity } from "lucide-react-native"
 import { useLocalSearchParams } from "expo-router"; // NEW: Import this
 import PageLayout from "@/screens/_PageLayout"
 import { useAuth } from "@/contexts/AuthContext"

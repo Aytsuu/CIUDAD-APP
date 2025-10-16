@@ -4,10 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import * as ImagePicker from 'expo-image-picker';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
-import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
+import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId } from "./queries/certificationReqFetchQueries";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import _ScreenLayout from '@/screens/_ScreenLayout';
 
@@ -524,7 +523,7 @@ const CertPermit: React.FC = () => {
             </View>
 
             {/* Submit Button */}
-            {!isLoadingBusiness && !Boolean(isLoading) && (businessData.length > 0 || permitType === 'Business Clearance') ? (
+            {!isLoadingBusiness && !isLoading && (businessData.length > 0 || permitType === 'Business Clearance') ? (
               <TouchableOpacity
                 className={`bg-[#00AFFF] rounded-xl py-4 items-center mt-2 mb-8 ${addBusinessPermit.status === 'pending' ? 'opacity-50' : ''}`}
                 activeOpacity={0.85}
@@ -538,7 +537,7 @@ const CertPermit: React.FC = () => {
             ) : (
               <View className="bg-gray-100 rounded-xl py-4 items-center mt-2 mb-8">
                 <Text className="text-gray-500 font-semibold text-base">
-                  {Boolean(isLoading) ? 'Loading user data...' : 'Cannot Request Business Permit'}
+                  {isLoading ? 'Loading user data...' : 'Cannot Request Business Permit'}
                 </Text>
               </View>
             )}

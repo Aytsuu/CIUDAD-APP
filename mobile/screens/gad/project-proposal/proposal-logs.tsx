@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
-import { Search, ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select-layout";

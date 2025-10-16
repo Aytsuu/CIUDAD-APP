@@ -12,15 +12,12 @@ import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
 import Logout from '@/assets/icons/essentials/logout.svg'
 import Settings from '@/assets/icons/essentials/settings.svg'
 import UserLock from '@/assets/icons/essentials/user-lock.svg'
-import Star from '@/assets/icons/essentials/star.svg'
-import Service from '@/assets/icons/essentials/service.svg'
 import House from '@/assets/icons/essentials/house.svg'
 import UserGorup from '@/assets/icons/essentials/user-group.svg'
 import InformationCircle from '@/assets/icons/essentials/information-circle.svg'
 import StaffCard from '@/assets/icons/essentials/staff-card.svg'
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Drawer } from "@/components/ui/drawer";
 import React from "react";
 

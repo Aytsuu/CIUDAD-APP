@@ -5,7 +5,6 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList, ScrollView
 import { Search, ChevronLeft, AlertCircle, Pill, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";

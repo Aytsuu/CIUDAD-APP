@@ -3,19 +3,11 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
-  FlatList,
   ActivityIndicator,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
-import { Calendar } from "@/lib/icons/Calendar";
-import { MapPin } from "@/lib/icons/MapPin";
-import { UserRound } from "@/lib/icons/UserRound";
-import { Home } from "@/lib/icons/Home";
 import PageLayout from "@/screens/_PageLayout";
 import { formatDate } from "@/helpers/dateHelpers";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";

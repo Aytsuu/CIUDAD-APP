@@ -4,7 +4,6 @@ import {
   Camera,
 } from "react-native-vision-camera";
 import { View, StyleSheet } from "react-native";
-import * as FileSystem from 'expo-file-system';
 import { postFaceData } from "../rest-api/authPostAPI";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";

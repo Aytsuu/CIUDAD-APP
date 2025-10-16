@@ -13,7 +13,6 @@ import { Search } from "@/lib/icons/Search";
 import { useHouseholdTable } from "../../../../profiling/queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
 import { UsersRound } from "@/lib/icons/UsersRound";
-import { MapPin } from "@/lib/icons/MapPin";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";

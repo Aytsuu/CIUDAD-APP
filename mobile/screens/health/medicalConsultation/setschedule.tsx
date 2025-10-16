@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, SafeAreaView, StatusBar, Platform, ActivityIndicator, FlatList, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, SafeAreaView, StatusBar, Platform, ActivityIndicator, RefreshControl } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Calendar, Clock, AlertCircle, User, ChevronDown, ChevronLeft } from 'lucide-react-native';
+import { Calendar, Clock, AlertCircle, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { api2 } from '@/api/api';
 import { format, isWeekend } from 'date-fns';

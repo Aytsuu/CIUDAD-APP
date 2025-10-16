@@ -5,7 +5,7 @@ import {api} from "@/api/api";
 
 export const resolution_create = async (resolutionInfo: Record<string, any>) => {
     try{
-        let staff = "00004250910";
+        const staff = "00004250910";
 
 
         console.log("\nRESOLUTION CREATED MOBILE: ",{

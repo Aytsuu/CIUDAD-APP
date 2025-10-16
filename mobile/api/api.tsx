@@ -1,6 +1,5 @@
 import axios from "axios";
 import { setupApiInterceptor } from "./apiInterceptor";
-import Constants from 'expo-constants'
 
 //brgy-api
 export const api = axios.create({

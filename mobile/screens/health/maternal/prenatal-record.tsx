@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { View, ScrollView, TouchableOpacity } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { FileText, ChevronLeft } from "lucide-react-native"
