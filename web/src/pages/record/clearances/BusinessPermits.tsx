@@ -168,8 +168,42 @@ function BusinessDocumentPage() {
       accessorKey: "purpose",
       header: "Purpose",
       cell: ({ row }) => {
-        const value = (row.original as any)?.purpose;
-        return <div className="text-center">{value && String(value).trim() !== "" ? value : "Not Set"}</div>;
+        const raw = (row.original as any)?.purpose as string | undefined;
+        const value = raw ? raw.toString() : "";
+        const capitalizedValue = value
+          ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+          : "";
+
+        let bg = "bg-[#eaf4ff]";
+        let text = "text-[#2563eb]";
+        let border = "border border-[#b6d6f7]";
+
+        if (capitalizedValue === "Business clearance") {
+          // blue (default)
+        } else if (capitalizedValue === "Barangay sinulog permit") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        } else if (capitalizedValue === "Barangay Fiesta Permit") {
+          bg = "bg-[#fffaf0]";
+          text = "text-[#b45309]";
+          border = "border border-[#fcd34d]";
+        } else if (capitalizedValue) {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
+        }
+
+        const label = capitalizedValue || "Not Set";
+
+        return (
+          <span
+            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+          >
+            {label}
+          </span>
+        );
       },
     },
     {

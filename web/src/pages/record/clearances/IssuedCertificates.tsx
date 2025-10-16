@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ import { Combobox } from "@/components/ui/combobox";
 import TemplateMainPage from "../council/templates/template-main";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import { calculateAge } from "@/helpers/ageCalculator";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useLoading } from "@/context/LoadingContext";
 
 interface ExtendedIssuedCertificate extends IssuedCertificate {
   AsignatoryStaff?: string;
@@ -41,6 +43,8 @@ function IssuedCertificates() {
   const [businessFilterValue, setBusinessFilterValue] = useState("All");
   
   const [serviceChargeSearchQuery, setServiceChargeSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
@@ -60,6 +64,8 @@ function IssuedCertificates() {
   React.useEffect(() => {
     console.log("IssuedCertificates: resolved staffId from useAuth:", staffId);
   }, [staffId]);
+
+  const { showLoading, hideLoading } = useLoading();
 
   const handleViewFile = (certificate: IssuedCertificate) => {
     setSelectedCertificate(null);
@@ -333,14 +339,14 @@ function IssuedCertificates() {
     },
   ];
 
-  const { data: certificates, isLoading, error } = useQuery<IssuedCertificate[]>({
-    queryKey: ["issuedCertificates"],
-    queryFn: getIssuedCertificates,
+  const { data: certificatesPage, isLoading, error } = useQuery({
+    queryKey: ["issuedCertificates", searchQuery, currentPage, pageSize, filterValue],
+    queryFn: () => getIssuedCertificates(searchQuery, currentPage, pageSize, filterValue),
   });
 
-  const { data: businessPermits, isLoading: businessPermitsLoading, error: businessPermitsError } = useQuery<IssuedBusinessPermit[]>({
-    queryKey: ["issuedBusinessPermits"],
-    queryFn: getIssuedBusinessPermits,
+  const { data: businessPermitsPage, isLoading: businessPermitsLoading, error: businessPermitsError } = useQuery({
+    queryKey: ["issuedBusinessPermits", businessSearchQuery, currentPage, pageSize, businessFilterValue],
+    queryFn: () => getIssuedBusinessPermits(businessSearchQuery, currentPage, pageSize, businessFilterValue),
   });
 
   const { data: serviceCharges, isLoading: serviceChargesLoading, error: serviceChargesError } = useQuery<ServiceCharge[]>({
@@ -363,6 +369,10 @@ function IssuedCertificates() {
     purpose.pr_category === "Permit Clearance" && !purpose.pr_is_archive
   ) || [];
 
+  const certificates = certificatesPage?.results || [];
+  const certCount = certificatesPage?.count || 0;
+  const totalPagesCert = Math.ceil(certCount / pageSize) || 1;
+
   const filteredCertificates = certificates?.filter((cert: IssuedCertificate) => {
     const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -370,7 +380,22 @@ function IssuedCertificates() {
     return matchesSearch && matchesFilter;
   });
 
+  const businessPermits = businessPermitsPage?.results || [];
+  const bpCount = businessPermitsPage?.count || 0;
+  const totalPagesBP = Math.ceil(bpCount / pageSize) || 1;
+
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
+  useEffect(() => {
+    if (isLoading || businessPermitsLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, businessPermitsLoading, showLoading, hideLoading]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
     const matchesSearch = permit.business_name.toLowerCase().includes(businessSearchQuery.toLowerCase()) ||
                          (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
     const matchesFilter = businessFilterValue === "All" || permit.purpose === businessFilterValue;
@@ -415,8 +440,8 @@ function IssuedCertificates() {
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
-          </div>
         </div>
+      </div>
       )}
 
       {activeTab === "businessPermits" && (
@@ -467,7 +492,7 @@ function IssuedCertificates() {
           <div className="flex gap-x-4 items-center">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <Input type="number" className="w-14 h-8" value={pageSize} onChange={(e) => setPageSize(parseInt(e.target.value) || 10)} />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             
@@ -562,13 +587,25 @@ function IssuedCertificates() {
         )}
       </div>
 
+      <div className="w-full sm:w-auto flex justify-center">
+        <PaginationLayout 
+          totalPages={activeTab === 'certificates' ? totalPagesCert : activeTab === 'businessPermits' ? totalPagesBP : 1}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
+      </div>
+
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {
-            activeTab === "certificates" ? (filteredCertificates?.length || 0) : 
-            activeTab === "businessPermits" ? (filteredBusinessPermits?.length || 0) :
-            (filteredServiceCharges?.length || 0)
-          } rows
+          {activeTab === "certificates" && (
+            <>Showing {(certCount === 0 ? 0 : (currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, certCount)} of {certCount} rows</>
+          )}
+          {activeTab === "businessPermits" && (
+            <>Showing {(bpCount === 0 ? 0 : (currentPage - 1) * pageSize + 1)}-{Math.min(currentPage * pageSize, bpCount)} of {bpCount} rows</>
+          )}
+          {activeTab === "serviceCharges" && (
+            <>Showing 1-{filteredServiceCharges?.length || 0} of {filteredServiceCharges?.length || 0} rows</>
+          )}
         </p>
       </div>
 
