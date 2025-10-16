@@ -669,7 +669,7 @@ function ResolutionPage() {
 
   const renderItem = ({ item }: { item: any }) => (
     <Pressable onPress={() => handleEdit(item)} className="mb-4">
-      <Card className="border border-gray-200">
+      <Card className="border border-gray-200 bg-white">
         <CardHeader className="flex-row justify-between items-center">
           <CardTitle className="text-lg text-[#2a3a61]">Resolution No. {item.res_num}</CardTitle>
           {activeTab === 'active' ? (

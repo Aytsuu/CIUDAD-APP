@@ -261,7 +261,7 @@ const ExpenseTracking = () => {
   );
 
   const renderItem = ({ item }: { item: any }) => (
-    <Card className="mb-4 border border-gray-200">
+    <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader className="flex-row justify-between items-center">
         <CardTitle className="text-lg text-[#2a3a61]">
           {new Date(item.iet_datetime).toLocaleString("en-US", {
@@ -390,7 +390,7 @@ const ExpenseTracking = () => {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="font-semibold text-lg text-[#2a3a61]">
+        <Text className="text-gray-900 text-[13px]">
           {year} Expense Tracking
         </Text>
       }
