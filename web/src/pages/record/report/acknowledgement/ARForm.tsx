@@ -10,6 +10,7 @@ import React from "react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { Check } from "lucide-react";
+import { formatDate } from "@/helpers/dateHelper";
 
 export default function ARForm({
   form, 
@@ -35,9 +36,9 @@ export default function ARForm({
       <div className="grid grid-cols-6 gap-4">
         <FormInput control={form.control} name="ar_title" label="Name of Incident/Activity" placeholder="Enter incident/activity name" className="col-span-2"/>
         <FormInput control={form.control} name="ar_area" label="Area" placeholder="Enter the exact location" className="col-span-2"/>
-        <FormDateTimeInput control={form.control} name="ar_date_started" label="Date Started" type="date"/>
+        <FormDateTimeInput control={form.control} name="ar_date_started" label="Date Started" type="date" max={formatDate(new Date()) as string}/>
         <FormDateTimeInput control={form.control} name="ar_time_started" label="Time Started" type="time" />
-        <FormDateTimeInput control={form.control} name="ar_date_completed" label="Date Completed" type="date"/>
+        <FormDateTimeInput control={form.control} name="ar_date_completed" label="Date Completed" type="date" max={formatDate(new Date()) as string}/>
         <FormDateTimeInput control={form.control} name="ar_time_completed" label="Time Completed" type="time" />
       </div>
       <div className="grid grid-cols-2 gap-4">
