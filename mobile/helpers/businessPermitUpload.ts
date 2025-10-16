@@ -62,11 +62,11 @@ export const uploadMultipleBusinessPermitFiles = async (
         const results: BusinessPermitUploadResult[] = [];
         for (const file of files) {
             try {
-                // Upload sequentially to avoid server overload or race conditions
+
                 const result = await uploadBusinessPermitFile(file);
                 results.push(result);
             } catch (err) {
-                // Retry once per file
+
                 console.warn(`⚠️ Retry uploading file: ${file.name}`);
                 const retryResult = await uploadBusinessPermitFile(file);
                 results.push(retryResult);
