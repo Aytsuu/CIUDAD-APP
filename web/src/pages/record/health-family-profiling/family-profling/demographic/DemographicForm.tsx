@@ -27,7 +27,7 @@ export default function DemographicForm({
   const selectedHouseholdId = form.watch("demographicInfo.householdNo");
 
   // Fetch household data when household is selected
-  const { data: householdData, isLoading: isLoadingHousehold } = useHouseholdData(selectedHouseholdId);
+  const { isLoading: isLoadingHousehold } = useHouseholdData(selectedHouseholdId);
 
   const submit = async () => {
     const formIsValid = await form.trigger("demographicInfo");

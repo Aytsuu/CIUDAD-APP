@@ -1137,36 +1137,32 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
             else:
                 print(f"♻️  Using existing VaccinationRecord: {vaccination_record.vacrec_id}")
             
-            # CASE 1: Conditional vaccine - Create placeholder VaccinationHistory records
+            # CASE 1: Conditional vaccine
             if is_conditional_vaccine:
                 print(f"🔄 Processing CONDITIONAL vaccine: Target total dose = {user_provided_total_dose}")
                 
                 # For conditional vaccines, we need to check existing history for the SAME vaccine type
-                # IMPORTANT: Check across ALL VaccinationRecords for this PATIENT (across all services)
                 
-                # Get the patient ID to query across ALL their records (prenatal, child health, etc.)
                 patient = patient_record.pat_id
                 
-                # Step 1: Get ALL existing vaccination history records with vaccine stock for THIS PATIENT (across all services)
+                # Get ALL existing vaccination history records with vaccine stock for THIS PATIENT (across all services)
                 all_existing_history = VaccinationHistory.objects.filter(
-                    vacrec__patrec_id__pat_id=patient,  # All vaccination records for this patient (across all services)
-                    vacStck_id__vac_id__isnull=False  # Only consider records with actual vaccine stock
+                    vacrec__patrec_id__pat_id=patient,
+                    vacStck_id__vac_id__isnull=False
                 ).select_related('vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id').order_by('-vachist_doseNo')
                 
-                # Step 2: Get the vac_id from the first (most recent) existing record
-                # This identifies WHICH vaccine type we're tracking doses for
+                # Get the vac_id from the first (most recent) existing record
                 specific_vac_id = None
                 if all_existing_history.exists():
                     specific_vac_id = all_existing_history.first().vacStck_id.vac_id.vac_id
                     print(f"   🔍 Detected existing vaccine type: vac_id={specific_vac_id} (patient: pat_id={patient.pat_id}, across all services)")
                 
-                # Step 3: Filter records by that specific vac_id to get accurate dose count FOR THIS PATIENT (across all services)
+                # Filter records by that specific vac_id to get accurate dose count FOR THIS PATIENT (across all services)
                 highest_dose = 0
                 if specific_vac_id:
-                    # Get all history records for THIS specific vaccine (by vac_id through vacStck_id) for THIS PATIENT (across all services)
                     vaccine_specific_history = VaccinationHistory.objects.filter(
-                        vacrec__patrec_id__pat_id=patient,  # All vaccination records for this patient (across all services)
-                        vacStck_id__vac_id=specific_vac_id  # Filter by the specific vaccine ID
+                        vacrec__patrec_id__pat_id=patient,  
+                        vacStck_id__vac_id=specific_vac_id  
                     ).select_related('vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id').order_by('-vachist_doseNo')
                     
                     if vaccine_specific_history.exists():
@@ -1249,10 +1245,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                     # Get the patient ID to query across ALL their records (prenatal, child health, etc.)
                     patient = patient_record.pat_id
                     
-                    print(f"Current vaccine: vacStck_id={vacStck_id}, vac_id={current_vac_id}, name='{current_vac_name}'")
-                    print(f"Patient: pat_id={patient.pat_id}, patrec_id={patient_record.patrec_id}")
-                    
-                    # DEBUG: Check ALL VaccinationHistory for this patient across ALL services
                     all_patient_history = VaccinationHistory.objects.filter(
                         vacrec__patrec_id__pat_id=patient  # Traverse: VaccinationHistory -> VaccinationRecord -> PatientRecord -> Patient
                     ).select_related('vacStck_id', 'vacStck_id__vac_id', 'vacrec', 'vacrec__patrec_id')
@@ -1482,7 +1474,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
                 # handle Pregnancy (create new or link to existing active)
                 pregnancy = None
                 current_datetime = timezone.now()
-                # current_date = current_datetime.date()
                 
                 # Check for an active pregnancy for this patient
                 active_pregnancy = Pregnancy.objects.filter(pat_id=patient, status='active').first()
@@ -1523,13 +1514,6 @@ class PrenatalCompleteSerializer(serializers.ModelSerializer):
 
                 # Get or create PatientRecord for this pregnancy
                 # Same pregnancy should reuse the same PatientRecord
-                patient_record, pr_created = PatientRecord.objects.get_or_create(
-                    pat_id=patient,
-                    patrec_type=patrec_type,
-                    # Find existing PatientRecord for this pregnancy by checking prenatal forms
-                    defaults={}
-                )
-                
                 # Check if there's already a PatientRecord for this pregnancy
                 existing_prenatal = Prenatal_Form.objects.filter(
                     pregnancy_id=pregnancy,

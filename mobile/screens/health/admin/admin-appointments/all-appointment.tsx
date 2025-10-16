@@ -1,370 +1,302 @@
-import React, { useState, useMemo } from "react"
-import { View,TouchableOpacity,TextInput,RefreshControl,FlatList} from "react-native"
-import { Search,AlertCircle,Calendar,User,FileText,ChevronLeft,MapPin,RefreshCw} from "lucide-react-native"
-import { Text } from "@/components/ui/text"
-import { router } from "expo-router"
-import { format } from "date-fns"
-import { useAllFollowUpVisits } from "../../my-schedules/fetch"
-import PageLayout from "@/screens/_PageLayout"
-import { LoadingState } from "@/components/ui/loading-state"
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
+import { Search, AlertCircle, Calendar, ChevronLeft, RefreshCw, ChevronRight, ChevronLeft as ChevronLeftIcon } from "lucide-react-native";
+import { Text } from "@/components/ui/text";
+import { router } from "expo-router";
+import { format } from "date-fns";
+import { useAllAppointments } from "../../my-schedules/fetch";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 
 type ScheduleRecord = {
-  id: number
+  id: number;
   patient: {
-    firstName: string
-    lastName: string
-    middleName: string
-    gender: string
-    age: number
-    ageTime: string
-    patientId: string
-  }
-  scheduledDate: string
-  purpose: string
-  status: "Pending" | "Completed" | "Missed" | "Cancelled"
-  sitio: string
-  type: "Transient" | "Resident"
-  patrecType: string
+    firstName: string;
+    lastName: string;
+    middleName: string;
+    gender: string;
+    age: number;
+    ageTime: string;
+    patientId: string;
+  };
+  scheduledDate: string;
+  purpose: string;
+  status: "Pending" | "Completed" | "Missed" | "Cancelled";
+  sitio: string;
+  type: "Transient" | "Resident";
+  patrecType: string;
+};
+
+type TabType = "pending" | "completed" | "missed" | "cancelled";
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
 }
 
-type FilterType = "All" | "Pending" | "Completed" | "Missed" | "Cancelled"
-type TabType = "pending" | "completed" | "missed" | "cancelled"
-
-// Components
+// StatusBadge Component
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const getStatusConfig = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return {
-          color: 'text-yellow-700',
-          bgColor: 'bg-yellow-100',
-          borderColor: 'border-yellow-200',
-        }
+        return { color: 'text-yellow-700', bgColor: 'bg-yellow-100', borderColor: 'border-yellow-200' };
       case 'completed':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        }
-      case 'missed':
-        return {
-          color: 'text-red-700',
-          bgColor: 'bg-red-100',
-          borderColor: 'border-red-200',
-        }
-      case 'cancelled':
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        }
+        return { color: 'text-green-700', bgColor: 'bg-green-100', borderColor: 'border-green-200' };
+      case 'missed' :  case 'cancelled':
+        return { color: 'text-red-700', bgColor: 'bg-red-100', borderColor: 'border-red-200' };
       default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        }
+        return { color: 'text-gray-700', bgColor: 'bg-gray-100', borderColor: 'border-gray-200' };
     }
-  }
+  };
 
-  const statusConfig = getStatusConfig(status)
+  const statusConfig = getStatusConfig(status);
   return (
     <View className={`px-3 py-1 rounded-full border ${statusConfig.bgColor} ${statusConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${statusConfig.color}`}>
-        {status}
-      </Text>
+      <Text className={`text-xs font-semibold ${statusConfig.color}`}>{status}</Text>
     </View>
-  )
-}
+  );
+};
 
+// TabBar Component
 const TabBar: React.FC<{
-  activeTab: TabType
-  setActiveTab: (tab: TabType) => void
-  counts: { pending: number; completed: number; missed: number; cancelled: number }
-}> = ({ activeTab, setActiveTab, counts }) => (
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+}> = ({ activeTab, setActiveTab }) => (
   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('pending')}
-      className={`flex-1 items-center py-3 ${activeTab === 'pending' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'pending' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Pending ({counts.pending})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('completed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'completed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'completed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Completed ({counts.completed})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('missed')}
-      className={`flex-1 items-center py-3 ${activeTab === 'missed' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'missed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Missed ({counts.missed})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('cancelled')}
-      className={`flex-1 items-center py-3 ${activeTab === 'cancelled' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Cancelled ({counts.cancelled})
-      </Text>
-    </TouchableOpacity>
+    {(['pending', 'completed', 'missed', 'cancelled'] as TabType[]).map((tab) => (
+      <TouchableOpacity
+        key={tab}
+        onPress={() => setActiveTab(tab)}
+        className={`flex-1 items-center py-3 ${activeTab === tab ? 'border-b-2 border-blue-600' : ''}`}
+      >
+        <Text className={`text-sm font-medium ${activeTab === tab ? 'text-blue-600' : 'text-gray-600'}`}>
+          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+        </Text>
+      </TouchableOpacity>
+    ))}
   </View>
-)
+);
 
-const AppointmentCard: React.FC<{
-  appointment: ScheduleRecord
-  actualStatus: string
-  onPress: () => void
-}> = ({ appointment, actualStatus, onPress }) => {
-  const formatDateSafely = (dateString: string) => {
-    if (!dateString) return "N/A"
-    try {
-      return format(new Date(dateString), "MMM dd, yyyy")
-    } catch (e) {
-      return "Invalid Date"
-    }
-  }
+// AppointmentCard Component
+const AppointmentCard: React.FC<{ appointment: ScheduleRecord; onPress: () => void }> = ({ appointment, onPress }) => {
+  const formattedDate = appointment.scheduledDate
+    ? format(new Date(appointment.scheduledDate), 'MMM dd, yyyy')
+    : 'N/A';
 
   return (
     <TouchableOpacity
-      className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
-      activeOpacity={0.8}
       onPress={onPress}
+      className="bg-white rounded-xl p-4 mb-3 border border-gray-200"
     >
-      {/* Header */}
-      <View className="p-4 border-b border-gray-100">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <View className="flex-row items-center mb-1">
-              <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center mr-3">
-                <User color="white" size={20} />
-              </View>
-              <View className="flex-1">
-                <Text className="font-semibold text-lg text-gray-900">
-                  {appointment.patient.firstName} {appointment.patient.lastName}
-                </Text>
-                <Text className="text-gray-500 text-sm">ID: {appointment.patient.patientId}</Text>
-              </View>
-            </View>
-          </View>
-          <View className="items-end">
-            <StatusBadge status={actualStatus} />
-            <View className="bg-blue-100 px-2 py-1 rounded-lg mt-2">
-              <Text className="text-blue-700 font-bold text-xs">#{appointment.id}</Text>
-            </View>
-          </View>
-        </View>
+      <View className="flex-row justify-between items-center">
+        <Text className="text-base font-semibold text-gray-900">
+          {appointment.patient.firstName} {appointment.patient.lastName}
+        </Text>
+        <StatusBadge status={appointment.status} />
       </View>
-
-      {/* Details */}
-      <View className="p-4 space-y-3">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center flex-1">
-            <Calendar size={16} color="#6B7280" />
-            <Text className="ml-2 text-sm text-gray-700">
-              {formatDateSafely(appointment.scheduledDate)}
-            </Text>
-          </View>
-          <Text className="text-sm text-gray-600">
-            {appointment.patient.age} {appointment.patient.ageTime}
-          </Text>
+      <View className="mt-2">
+        <View className="flex-row items-center">
+          <Calendar size={16} color="#6B7280" />
+          <Text className="ml-2 text-sm text-gray-600">{formattedDate}</Text>
         </View>
-
-        <View className="flex-row items-start">
-          <FileText size={16} color="#6B7280" className="mt-0.5" />
-          <Text className="ml-2 text-sm text-gray-700 flex-1">
-            {appointment.purpose}
-          </Text>
+        <View className="flex-row items-center mt-1">
+          <Text className="text-sm font-medium text-gray-800">Purpose: </Text>
+          <Text className="text-sm text-gray-600">{appointment.purpose}</Text>
         </View>
-
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <MapPin size={16} color="#6B7280" />
-            <Text className="ml-2 text-sm text-gray-700">
-              {appointment.sitio}
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            <Text className="text-sm text-gray-600">
-              {appointment.type}
-            </Text>
-          </View>
+        <View className="flex-row items-center mt-1">
+          <Text className="text-sm font-medium text-gray-800">Type: </Text>
+          <Text className="text-sm text-gray-600">{appointment.patrecType}</Text>
         </View>
+        {appointment.sitio && (
+          <View className="flex-row items-center mt-1">
+            <Text className="text-sm font-medium text-gray-800">Sitio: </Text>
+            <Text className="text-sm text-gray-600">{appointment.sitio}</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
-  )
-}
+  );
+};
 
-export default function AdminAppointmentsScreen() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [refreshing, setRefreshing] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabType>("pending")
+// ResultsInfo Component
+const ResultsInfo: React.FC<{
+  currentPage: number;
+  pageSize: number;
+  totalCount: number;
+  isLoading: boolean;
+}> = ({ currentPage, pageSize, totalCount, isLoading }) => {
+  if (isLoading || totalCount === 0) return null;
 
-  // Large page size to fetch all data
-  const appointmentsPerPage = 1000
+  const start = (currentPage - 1) * pageSize + 1;
+  const end = Math.min(currentPage * pageSize, totalCount);
 
-  // Fetch data using the API hook
-  const { data: paginatedData, isLoading, error, refetch } = useAllFollowUpVisits({
-    page: 1,
-    page_size: appointmentsPerPage,
-  })
+  return (
+    <View className="px-4 py-2 bg-white border-b border-gray-200">
+      <Text className="text-sm text-gray-600">
+        Showing {start} to {end} of {totalCount} appointments
+      </Text>
+    </View>
+  );
+};
 
-  // Utility functions
-  const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const appointmentDate = new Date(scheduledDate)
-    appointmentDate.setHours(0, 0, 0, 0)
+// Pagination Component
+const Pagination: React.FC<{
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  isLoading: boolean;
+}> = ({ currentPage, totalPages, onPageChange, isLoading }) => {
+  if (totalPages <= 1) return null;
 
-    if (appointmentDate < today && currentStatus === "Pending") {
-      return "Missed"
-    }
-    return currentStatus
-  }
+  const getVisiblePages = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
 
-  // Transform API data to match ScheduleRecord type
-  const appointments = useMemo(() => {
-    if (!paginatedData?.results) {
-      return []
-    }
-
-    const transformed = paginatedData.results
-      .map((visit: any) => {
-        try {
-          const patientDetails = visit.patient_details
-          if (!patientDetails) {
-            return null
-          }
-
-          const patientInfo = patientDetails.personal_info || {}
-          const address = patientDetails.address || {}
-
-          const calculateAge = (dob: string) => {
-            if (!dob) {
-              return { age: 0, ageTime: "yrs" }
-            }
-            try {
-              const birthDate = new Date(dob)
-              const today = new Date()
-              let age = today.getFullYear() - birthDate.getFullYear()
-              const monthDiff = today.getMonth() - birthDate.getMonth()
-
-              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--
-              }
-              return { age: Math.max(0, age), ageTime: "yrs" }
-            } catch (e) {
-              return { age: 0, ageTime: "yrs" }
-            }
-          }
-
-          const ageInfo = calculateAge(patientInfo.per_dob)
-
-          const formatDate = (dateStr: string) => {
-            if (!dateStr) {
-              return new Date().toISOString().split("T")[0]
-            }
-            try {
-              return new Date(dateStr).toISOString().split("T")[0]
-            } catch (e) {
-              return dateStr
-            }
-          }
-
-          const record: ScheduleRecord = {
-            id: visit.followv_id || visit.id || 0,
-            patient: {
-              firstName: patientInfo.per_fname || "Unknown",
-              lastName: patientInfo.per_lname || "Unknown",
-              middleName: patientInfo.per_mname || "",
-              gender: patientInfo.per_sex || "Unknown",
-              age: ageInfo.age,
-              ageTime: ageInfo.ageTime,
-              patientId: patientDetails.pat_id || patientInfo.pat_id || "",
-            },
-            scheduledDate: formatDate(visit.followv_date || visit.date),
-            purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-            status: (visit.followv_status || visit.status || "Pending").charAt(0).toUpperCase() +
-              (visit.followv_status || visit.status || "Pending").slice(1) as "Pending" | "Completed" | "Missed" | "Cancelled",
-            sitio: address.add_sitio || address.location || "Unknown",
-            type: patientDetails.pat_type === "Transient" ? "Transient" : "Resident",
-            patrecType: patientDetails.patrec_type || "Unknown",
-          }
-
-          return record
-        } catch (error) {
-          return null
-        }
-      })
-      .filter(Boolean)
-
-    return transformed
-  }, [paginatedData])
-
-  // Filter appointments based on active tab and search query
-  const filteredAppointments = useMemo(() => {
-    let result = appointments
-
-    // Filter by search query first
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase()
-      result = result.filter(
-        (appointment: any) =>
-          appointment.patient.firstName.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.patient.lastName.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.patient.patientId.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.purpose.toLowerCase().includes(lowerCaseQuery) ||
-          appointment.sitio.toLowerCase().includes(lowerCaseQuery)
-      )
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
     }
 
-    // Filter by active tab
-    result = result.filter((appointment: any) => {
-      const actualStatus = getAppointmentStatus(appointment.scheduledDate, appointment.status)
-      return actualStatus.toLowerCase() === activeTab
-    })
-
-    // Sort by date (most recent first)
-    result.sort((a: any, b: any) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
-
-    return result
-  }, [appointments, searchQuery, activeTab])
-
-  // Calculate stats for tabs
-  const counts = useMemo(() => {
-    return {
-      pending: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Pending").length,
-      completed: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Completed").length,
-      missed: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Missed").length,
-      cancelled: appointments.filter((a: any) => getAppointmentStatus(a.scheduledDate, a.status) === "Cancelled").length,
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
     }
-  }, [appointments])
 
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    try {
-      await refetch()
-    } catch (e) {
-      console.error("Refetch error:", e)
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else {
+      rangeWithDots.push(totalPages);
     }
-    setRefreshing(false)
-  }, [refetch])
 
-  const handleAppointmentPress = (appointment: ScheduleRecord) => {
-    console.log("View appointment:", { id: appointment.id, patient: appointment.patient.patientId })
-    // Navigate to appointment details or perform action
-  }
+    return rangeWithDots;
+  };
 
-  if (isLoading) { return <LoadingState/>}
+  const visiblePages = getVisiblePages();
 
-  if (error) {
+  return (
+    <View className="flex-row items-center justify-center py-4 px-2 bg-white border-t border-gray-200">
+      <TouchableOpacity
+        onPress={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1 || isLoading}
+        className={`flex-row items-center px-3 py-2 rounded-lg mr-2 ${currentPage === 1 || isLoading ? 'opacity-50' : 'bg-gray-100'
+          }`}
+      >
+        <ChevronLeftIcon size={16} color="#374151" />
+        <Text className="ml-1 text-sm font-medium text-gray-700">Prev</Text>
+      </TouchableOpacity>
+
+      <View className="flex-row items-center mx-2">
+        {visiblePages.map((page, index) => (
+          <React.Fragment key={index}>
+            {page === '...' ? (
+              <Text className="px-3 py-2 text-gray-500">...</Text>
+            ) : (
+              <TouchableOpacity
+                onPress={() => onPageChange(page as number)}
+                disabled={isLoading}
+                className={`px-3 py-2 rounded-lg mx-1 min-w-10 items-center ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+                  }`}
+              >
+                <Text className={`text-sm font-medium ${currentPage === page ? 'text-white' : 'text-gray-700'}`}>
+                  {page}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </React.Fragment>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        onPress={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages || isLoading}
+        className={`flex-row items-center px-3 py-2 rounded-lg ml-2 ${currentPage === totalPages || isLoading ? 'opacity-50' : 'bg-gray-100'
+          }`}
+      >
+        <Text className="mr-1 text-sm font-medium text-gray-700">Next</Text>
+        <ChevronRight size={16} color="#374151" />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default function AllAppointments() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>('pending');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  const debouncedSearch = useDebounce(searchQuery, 500);
+
+  const filters = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: debouncedSearch,
+      tab: activeTab,
+      time_frame: 'all', // Adjust as needed
+      sort_by: 'scheduledDate',
+      sort_order: 'desc' as 'desc' | 'asc',
+    }),
+    [currentPage, debouncedSearch, activeTab]
+  );
+
+  const {
+    data: paginatedData,
+    isLoading,
+    isError,
+    refetch
+  } = useAllAppointments(filters);
+
+  const appointments = useMemo(() => paginatedData?.results || [], [paginatedData]);
+  const totalCount = paginatedData?.total_records || paginatedData?.count || paginatedData?.totalCount || 0;
+
+  console.log('Paginated Data:', paginatedData);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  console.log('Pagination Debug:', {
+    totalCount,
+    pageSize,
+    totalPages,
+    currentPage,
+    appointmentsLength: appointments.length
+  });
+
+
+  const counts = useMemo(() => paginatedData?.counts || { pending: 0, completed: 0, missed: 0, cancelled: 0 }, [paginatedData]);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
+
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  }, [totalPages]);
+
+
+  if (isLoading && !refreshing) {
     return (
       <PageLayout
         leftAction={
@@ -376,23 +308,45 @@ export default function AdminAppointmentsScreen() {
           </TouchableOpacity>
         }
         headerTitle={<Text className="text-gray-900 text-lg font-semibold">All Appointments</Text>}
+        rightAction={<View className="w-10 h-10" />}
       >
-        <View className="flex-1 justify-center items-center bg-gray-50 px-6">
+        <LoadingState />
+      </PageLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-lg font-semibold">All Appointments</Text>}
+        rightAction={<View className="w-10 h-10" />}
+      >
+        <View className="flex-1 justify-center items-center px-6">
           <AlertCircle size={64} color="#EF4444" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Error loading appointments</Text>
-          <Text className="text-gray-600 text-center mt-2 mb-6">
-            Failed to load appointment data. Please check your connection and try again.
+          <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">
+            Error loading appointments
+          </Text>
+          <Text className="text-gray-600 text-center mt-2">
+            Please check your connection and try again.
           </Text>
           <TouchableOpacity
             onPress={onRefresh}
-            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg"
+            className="flex-row items-center bg-blue-600 px-6 py-3 rounded-lg mt-4"
           >
             <RefreshCw size={18} color="white" />
             <Text className="ml-2 text-white font-medium">Try Again</Text>
           </TouchableOpacity>
         </View>
       </PageLayout>
-    )
+    );
   }
 
   return (
@@ -406,70 +360,68 @@ export default function AdminAppointmentsScreen() {
         </TouchableOpacity>
       }
       headerTitle={<Text className="text-gray-900 text-lg font-semibold">All Appointments</Text>}
-      rightAction={<View className="w-10 h-10" />
-      }
+      rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 bg-gray-50">
-        {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
-              className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search appointments..."
+              className="flex-1 ml-2 text-gray-800 text-base"
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              returnKeyType="search"
             />
           </View>
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} />
+
+        {/* Results Info */}
+        <ResultsInfo currentPage={currentPage} pageSize={pageSize} totalCount={totalCount} isLoading={isLoading} />
 
         {/* Appointments List */}
-        {appointments.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-6">
-            <Calendar size={64} color="#9CA3AF" />
-            <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">No appointments found</Text>
-            <Text className="text-gray-600 text-center mt-2">
-              There are no appointments scheduled yet.
-            </Text>
-          </View>
-        ) : (
+        <View className="flex-1">
           <FlatList
-            data={filteredAppointments}
-            keyExtractor={(item) => `appointment-${item.id}`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} />}
+            data={appointments}
+            keyExtractor={(item) => `appointment-${item.id}-${currentPage}`}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#3B82F6']}
+              />
+            }
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 16 }}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
-            windowSize={21}
-            renderItem={({ item }) => {
-              const actualStatus = getAppointmentStatus(item.scheduledDate, item.status)
-              return (
-                <AppointmentCard
-                  appointment={item}
-                  actualStatus={actualStatus}
-                  onPress={() => handleAppointmentPress(item)}
-                />
-              )
-            }}
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
             ListEmptyComponent={() => (
               <View className="flex-1 justify-center items-center py-20">
                 <Calendar size={48} color="#D1D5DB" />
-                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">No appointments in this category</Text>
-                <Text className="text-gray-500 text-center">
-                  {searchQuery
-                    ? `No ${activeTab} appointments match your search.`
-                    : `No ${activeTab} appointments found.`}
+                <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
+                  {searchQuery || activeTab !== 'pending' ? 'No appointments found' : 'No appointments scheduled'}
                 </Text>
+                <Text className="text-gray-500 text-center">
+                  {searchQuery ? `No ${activeTab} appointments match "${searchQuery}"` : `No ${activeTab} appointments found`}</Text>
               </View>
             )}
+            renderItem={({ item }) => (
+              <AppointmentCard
+                appointment={item}
+                onPress={() => console.log("")}
+              />
+            )}
           />
-        )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            isLoading={isLoading}
+          />
+        </View>
       </View>
     </PageLayout>
-  )
+  );
 }

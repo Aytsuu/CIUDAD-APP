@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, TextInput } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
-import { fetchWaterSupplyOptions } from '@/api/health-family-profiling-api';
+import { useGetWaterSupplyOptions } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData } from '@/form-schema/health-family-profiling-schema';
 
 interface EnvironmentalStepProps {
@@ -47,10 +46,7 @@ export const EnvironmentalStep: React.FC<EnvironmentalStepProps> = ({ form }) =>
   const wasteManagement = form.watch('environmentalForm.wasteManagement');
 
   // Fetch water supply options
-  const { data: waterSupplyOptions = [] } = useQuery({
-    queryKey: ['water-supply-options'],
-    queryFn: fetchWaterSupplyOptions,
-  });
+  const { data: waterSupplyOptions = [] } = useGetWaterSupplyOptions();
 
   const waterOptions = waterSupplyOptions.map((option: any) => ({
     label: option.name || option,

@@ -44,9 +44,9 @@ export default function HomeScreen() {
   const {user, isLoading} = useAuth();
   const [showMoreFeatures, setShowMoreFeatures] = React.useState<boolean>(false);
 
-  if (isLoading) {
-    return <LoadingModal visible={true} />;
-  }
+  // if (isLoading) {
+  //   return <LoadingModal visible={true} />;
+  // }
 
   // Optimized feature rendering logic
   const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (

@@ -46,11 +46,25 @@ class BusinessHistoryBaseSerializer(serializers.ModelSerializer):
       return None
 
 class BusinessTableSerializer(serializers.ModelSerializer):
+  registered_by = serializers.SerializerMethodField()
+
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_location', 'bus_status',
               'bus_date_of_registration', 'bus_date_verified', 
-              'rp', 'br']
+              'rp', 'br', 'registered_by']
+    
+    def get_registered_by(self, obj):
+      staff = obj.staff
+      if staff:
+          staff_type = staff.staff_type
+          staff_id = staff.staff_id
+          fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+          fam_id = fam.fam.fam_id if fam else ""
+          personal = staff.rp.per
+          staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+
+      return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
 class BusinessRespondentTableSerializer(serializers.ModelSerializer):
   businesses = serializers.SerializerMethodField()

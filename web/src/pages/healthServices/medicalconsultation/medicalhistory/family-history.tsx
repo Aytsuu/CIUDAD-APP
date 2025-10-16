@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2, Check } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 const FamhistTable = ({ famhistData, isLoading, isError }: any) => {
   if (isLoading) {

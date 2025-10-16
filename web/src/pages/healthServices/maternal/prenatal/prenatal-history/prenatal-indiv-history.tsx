@@ -3,10 +3,9 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 
-import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
 import PrenatalFormTableHistory from "./prenatal-form-history";
 import PFHistoryTab from "./form-history/form-history-tab";
-
+import PrenatalViewingOne from "./form-history/prenatal-viewing-one";
 import PrenatalViewingTwo from "./form-history/prenatal-viewing-two";
 
 // main component
@@ -40,19 +39,7 @@ export default function PrenatalIndivHistory() {
         </div>
        
         <div className="bg-white/70 pt-5 px-2 py-2">
-          {/* <div className="flex-1 px-1 py-1 m-5 border rounded-md bg-blue-50">
-            <PrenatalIndivHistoryTab onTabChange={(tab) => setActiveTab(tab)} />
-          </div> */}
-
-          {/* {hasData && activeTab === "prenatalcare" && (
-            <div className="px-5">
-              <PrenatalCareHistoryTable data={processedPrenatalData} />
-            </div>
-          )} */}
-
-          {/* {activeTab === "prenatalform" && ( */}
-            <PrenatalFormTableHistory/>
-          {/* )} */}
+          <PrenatalFormTableHistory/>
         </div>
       </div>
         

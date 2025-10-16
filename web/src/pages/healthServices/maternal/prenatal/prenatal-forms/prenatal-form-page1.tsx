@@ -182,10 +182,6 @@ export default function PrenatalFormFirstPg({
     }
   };
 
-  useEffect(() => {
-
-  }, [])
-
   // populate with the preselected patient if available
   useEffect(() => {
     if (isFromIndividualRecord && preselectedPatient) {

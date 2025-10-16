@@ -352,7 +352,7 @@ class PatientSerializer(serializers.ModelSerializer):
                         'add_sitio': sitio,
                         'full_address': full_address
                     }
-                    print("✅ PersonalAddress used →", result)
+                    # print("✅ PersonalAddress used →", result)
                     return result
 
                 # Fallback: Try to fetch from Household

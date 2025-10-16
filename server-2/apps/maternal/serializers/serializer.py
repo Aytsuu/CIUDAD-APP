@@ -44,7 +44,7 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
-    year = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    year = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
     
     class Meta:
         model = MedicalHistory
@@ -53,9 +53,10 @@ class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # If 'year' is provided, use it for 'ill_date'
         year = attrs.pop('year', None)
-        if year is not None:
-            attrs['ill_date'] = str(year)
-        elif 'ill_date' not in attrs or attrs.get('ill_date') is None:
+        if year is not None and year != '':
+            # Keep the full date string (YYYY-MM-DD, YYYY-MM, or YYYY)
+            attrs['ill_date'] = str(year).strip()
+        elif 'ill_date' not in attrs or attrs.get('ill_date') is None or attrs.get('ill_date') == '':
             # If no year or ill_date provided, default to current year
             from datetime import datetime
             attrs['ill_date'] = str(datetime.now().year)

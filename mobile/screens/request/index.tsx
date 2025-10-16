@@ -1,5 +1,5 @@
 import { InteractionManager, Text, TouchableOpacity, View } from "react-native";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,11 +9,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default () => {
   // ============== STATE INITIALIZATION ==============
-  const router = useRouter();
   const { user } = useAuth();
   const [isReady, setIsReady] = React.useState<boolean>(false);
 
-  const menuItem = [
+  const menuItems = [
     {
       title: "Garbage Pickup",
       route: "/(request)/garbage-pickup/form",
@@ -81,7 +80,7 @@ export default () => {
     >
       <View className="flex-1 px-6 py-4">
         <View className="flex-row flex-wrap gap-3">
-          {menuItem.map((item: any, index: number) => (
+          {menuItems.map((item: any, index: number) => (
             <TouchableOpacity
               key={index}
               className="rounded-2xl overflow-hidden"

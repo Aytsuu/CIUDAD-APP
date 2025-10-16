@@ -1,4 +1,3 @@
-"use client";
 
 import type React from "react";
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -6,16 +5,15 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "rea
 import { Search, ChevronLeft, AlertCircle, Syringe, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useVaccinationRecords } from "./queries/fetch";
 import { Overallrecordcard } from "../components/overall-cards";
 import { PaginationControls } from "../components/pagination-layout";
+import { useDebounce } from "@/hooks/use-debounce";
+import { TabType, TabBar } from "../components/tab-bar";
 
-// Types
 interface VaccinationRecord {
   pat_id: string;
   fname: string;
@@ -58,27 +56,32 @@ interface ApiResponse {
   count?: number;
   next?: string;
   previous?: string;
+  counts_by_type?: {
+    all: number;
+    resident: number;
+    transient: number;
+  };
 }
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All ({counts.all})</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents ({counts.resident})</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients ({counts.transient})</Text>
-    </TouchableOpacity>
-  </View>
-);
+// const TabBar: React.FC<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+//   counts: { all: number; resident: number; transient: number };
+// }> = ({ activeTab, setActiveTab, counts }) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients</Text>
+//     </TouchableOpacity>
+//   </View>
+// );
 
 export default function AllVaccinationRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,28 +89,26 @@ export default function AllVaccinationRecords() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-
-  const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Build query parameters
   const queryParams = useMemo(
-    () => ({
-      page: currentPage,
-      page_size: pageSize,
-      search: debouncedSearchQuery || undefined,
-      patient_type: activeTab !== "all" ? activeTab : undefined
-    }),
-    [currentPage, pageSize, debouncedSearchQuery, activeTab]
-  );
+  () => ({
+    page: currentPage,
+    page_size: pageSize,
+    search: debouncedSearchQuery || undefined, // Use debounced value
+    patient_type: activeTab !== "all" ? activeTab : undefined
+  }),
+  [currentPage, pageSize, debouncedSearchQuery, activeTab] // Add debouncedSearchQuery
+);
 
   // Use the useVaccinationRecords hook
-  const { data: apiResponse, isLoading, isError, error, refetch, isFetching } = useVaccinationRecords(queryParams);
+  const { data: apiResponse, isLoading, isError, refetch, isFetching } = useVaccinationRecords(queryParams);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchQuery, activeTab]);
+  }, [searchQuery, activeTab]);
 
   // Format vaccination data
   const formatVaccinationData = useCallback((): VaccinationRecord[] => {
@@ -149,19 +150,18 @@ export default function AllVaccinationRecords() {
   const hasNext = !!apiResponse?.next;
   const hasPrevious = !!apiResponse?.previous;
 
-  // Calculate counts for summary cards and tabs
+  // Use counts from API response - this is the key fix
   const counts = useMemo(() => {
-    if (!formattedData) return { all: 0, resident: 0, transient: 0 };
-
-    const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
-    const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
-
+    if (!apiResponse?.counts_by_type) {
+      return { all: 0, resident: 0, transient: 0 };
+    }
+    
     return {
-      all: totalCount,
-      resident: residentCount,
-      transient: transientCount
+      all: apiResponse.counts_by_type.all,
+      resident: apiResponse.counts_by_type.resident,
+      transient: apiResponse.counts_by_type.transient
     };
-  }, [formattedData, totalCount]);
+  }, [apiResponse?.counts_by_type]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -210,7 +210,7 @@ export default function AllVaccinationRecords() {
     setCurrentPage(page);
   }, []);
 
-  if (isLoading && !formattedData.length) {
+  if (isLoading) {
     return <LoadingState />;
   }
 
@@ -250,16 +250,16 @@ export default function AllVaccinationRecords() {
     >
       <View className="flex-1">
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center px-2 p-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
-            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search by name, vaccine, or address..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
+            <TextInput className="flex-1 ml-3 text-gray-800 text-base" placeholder="Search..." placeholderTextColor="#9CA3AF" value={searchQuery} onChangeText={setSearchQuery} />
           </View>
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        <View className="px-4 flex-row items-center justify-between  mt-4">
+        <View className="px-4 flex-row items-center justify-between mt-4">
           <View className="flex-row items-center">
             <Text className="text-sm text-gray-600">
               Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
@@ -272,6 +272,7 @@ export default function AllVaccinationRecords() {
             </Text>
           </View>
         </View>
+
         {/* Records List */}
         {!formattedData || formattedData.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
@@ -300,7 +301,7 @@ export default function AllVaccinationRecords() {
               }
             />
             {/* Pagination Controls */}
-            <PaginationControls currentPage={currentPage} totalPages={totalPages}  onPageChange={handlePageChange} />
+            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
           </>
         )}
       </View>

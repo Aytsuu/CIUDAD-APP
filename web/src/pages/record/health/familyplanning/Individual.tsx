@@ -273,7 +273,8 @@ const IndividualFamPlanningTable: React.FC = () => {
       patientId: patientId,
       isNewMethod: true, // NEW: Flag this as a new method
       prefill: true,
-      gender: patientInfoForCard?.personal_info.per_sex || "Unknown" 
+      gender: patientInfoForCard?.personal_info.per_sex || "Unknown" ,
+      patrecId: groupedRecords.length > 0 ? groupedRecords[0][1][0]?.patrec_id : undefined
     },
   });
 };

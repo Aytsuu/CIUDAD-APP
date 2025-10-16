@@ -123,7 +123,7 @@ const UpcomingFollowUps = ({ records }: { records: FPRecord[] }) => {
 
   return (
     <View className="px-4 mb-6">
-      <View className="flex-row items-center justify-between mb-3">
+      <View className="flex-row items-center justify-between mb-3 mt-2">
         <Text className="text-lg font-semibold text-gray-900">Upcoming Follow-ups</Text>
         <View className="flex-row items-center">
           {missedFollowUps > 0 && (
@@ -240,14 +240,6 @@ const ActiveMethods = ({ records }: { records: FPRecord[] }) => {
   );
 };
 
-const clientTypeOptions = [
-  { id: "all", name: "All Types" },
-  { id: "currentuser", name: "Current User" },
-  { id: "changingmethod", name: "Changing Method" },
-  { id: "changingclinic", name: "Changing Clinic" },
-  { id: "restart", name: "Restart" },
-  { id: "newacceptor", name: "New Acceptor" },
-];
 
 export default function MyFPDashboardScreen() {
   const params = useLocalSearchParams<{ pat_id?: string }>(); // NEW: Get pat_id from params
@@ -260,7 +252,7 @@ export default function MyFPDashboardScreen() {
   console.log("[DEBUG] rp_id from auth:", rp_id);
 
   // NEW: Conditional patient query (only if no pat_id provided)
-  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = usePatientByResidentId(rp_id, {
+  const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = usePatientByResidentId(rp_id || "", {
     enabled: !patIdFromParams && !!rp_id, // Skip if pat_id provided (admin)
   });
 
@@ -303,7 +295,7 @@ export default function MyFPDashboardScreen() {
   }, [records, searchQuery, selectedFilter]);
 
   const activeMethods = useMemo(() => {
-    return filteredRecords.filter(record => record.followv_status?.toLowerCase() !== "completed");
+    return filteredRecords.filter((record: FPRecord) => record.followv_status?.toLowerCase() !== "completed");
   }, [filteredRecords]);
 
   if (isLoadingPatient || isLoadingRecords) {
@@ -347,7 +339,7 @@ export default function MyFPDashboardScreen() {
       headerTitle={<Text className="text-slate-900 text-[13px]">{patIdFromParams ? 'Family Planning Dashboard' : 'My Family Planning Dashboard'}</Text>} // NEW: Dynamic title
       rightAction={<View className="w-10 h-10" />}
     >
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-gray-50">
         <ScrollView showsVerticalScrollIndicator={false}>
           <UpcomingFollowUps records={filteredRecords} />
           <ActiveMethods records={activeMethods} />
@@ -372,30 +364,7 @@ export default function MyFPDashboardScreen() {
               )}
             </View>
 
-            {/* Enhanced Filter */}
-            <View className="bg-white rounded-2xl p-2 shadow-sm">
-              <View className="flex-row items-center justify-between">
-                {clientTypeOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.id}
-                    onPress={() => handleFilterChange(option.id)}
-                    className={`flex-1 items-center py-3 mx-1 rounded-xl transition-colors duration-200 ${
-                      selectedFilter === option.id 
-                        ? "bg-blue-500 shadow-lg" 
-                        : "bg-gray-50"
-                    }`}
-                  >
-                    <Text
-                      className={`text-xs font-semibold ${
-                        selectedFilter === option.id ? "text-white" : "text-gray-700"
-                      }`}
-                    >
-                      {option.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+
           </View>
 
           {/* Records List */}

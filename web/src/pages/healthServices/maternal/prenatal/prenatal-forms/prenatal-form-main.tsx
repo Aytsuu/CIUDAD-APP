@@ -183,16 +183,16 @@ export default function PrenatalForm() {
 
       // obstetrical history section
       obstetrical_history: {
-        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || null,
-        obs_living_ch: data.obstetricHistory?.noOfLivingCh || null,
-        obs_abortion: data.obstetricHistory?.noOfAbortion  || null,
-        obs_still_birth: data.obstetricHistory?.noOfStillBirths || null,
-        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || null,
+        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || 0,
+        obs_living_ch: data.obstetricHistory?.noOfLivingCh || 0,
+        obs_abortion: data.obstetricHistory?.noOfAbortion  || 0,
+        obs_still_birth: data.obstetricHistory?.noOfStillBirths || 0,
+        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || 0,
         obs_lg_babies_str: data.obstetricHistory?.historyOfLBabiesStr ?? false,
-        obs_gravida: data.presentPregnancy.gravida || null,
-        obs_para: data.presentPregnancy.para || null,
-        obs_fullterm: data.presentPregnancy.fullterm || null,
-        obs_preterm: data.presentPregnancy.preterm || null,
+        obs_gravida: data.presentPregnancy.gravida || 0,
+        obs_para: data.presentPregnancy.para || 0,
+        obs_fullterm: data.presentPregnancy.fullterm || 0,
+        obs_preterm: data.presentPregnancy.preterm || 0,
         obs_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       },
       

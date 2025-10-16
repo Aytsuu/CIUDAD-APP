@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState, useCallback } from "react" 
+import { useState, useCallback, useEffect } from "react" 
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
@@ -215,16 +215,13 @@ export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedi
     }
   }
 
+  useEffect(() => {
+    const isCesarean = form.getValues("previousPregnancy.typeOfDelivery") === "Cesarean Section";
 
-  // Set initial values for micronutrientSupp from form if they exist
-  // useEffect(() => {
-  //   const ironFolicStarted = form.getValues("micronutrientSupp.ironFolicStarted")
-  //   const ironFolicCompleted = form.getValues("micronutrientSupp.ironFolicCompleted")
-  //   const deworming = form.getValues("micronutrientSupp.deworming")
-
-  //   // You might need to map these to your `selectedMedicines` structure
-  //   // For now, I'll just ensure the form fields are correctly watched/set
-  // }, [form])
+    if (isCesarean) {
+      form.setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", true);
+    }
+  }, [form]);
 
   return (
     <>

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 
 import { usePrenatalRecordComplete } from "../../../queries/maternalFetchQueries"
+import { capitalize } from "@/helpers/capitalize"
 
 
 interface PrenatalViewingOneProps {
@@ -73,7 +74,7 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
   const family = prenatalForm.patient_details?.family;
   const bodyMeasurement = prenatalForm.body_measurement_details;
   const obstetricHistory = prenatalForm.obstetric_history;
-  const medicalHistory = prenatalForm.medical_histories || [];
+  const medicalHistory = prenatalForm.medical_history || [];
   const previousHospitalizations = prenatalForm.previous_hospitalizations || [];
   const previousPregnancies = prenatalForm.previous_pregnancy;
   const labResults = prenatalForm.laboratory_results || [];
@@ -188,12 +189,12 @@ export default function PrenatalViewingOne({ pfId }: PrenatalViewingOneProps) {
     const remarks = labResults
       .filter((lab: any) => lab.to_be_followed || lab.result_date)
       .map((lab: any) => {
-        const labName = lab.lab_type.toUpperCase().replace(/_/g, ' ');
+        const labName = capitalize(lab.lab_type.replace(/_/g, ' '));
         if (lab.to_be_followed) return `${labName}: to be followed`;
         if (lab.result_date) {
           const dateFormatted = new Date(lab.result_date).toLocaleDateString('en-US', {
             year: 'numeric',
-            month: 'short',
+            month: 'numeric',
             day: 'numeric'
           });
           return `${labName} (${dateFormatted}): ${lab.remarks || ""}   `;

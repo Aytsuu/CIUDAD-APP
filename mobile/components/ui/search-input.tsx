@@ -36,10 +36,10 @@ export const SearchInput = React.memo(({
         transform: [{ translateY: slideAnim }],
         opacity: fadeAnim,
       }}
-      className="px-5 pt-2 pb-3 bg-white"
+      className="px-6 pt-2 pb-3 bg-white"
     >
-      <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2">
-        <Search size={18} className="text-gray-400 mr-2" />
+      <View className="native:h-[45px] flex-row items-center bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+        <Search size={18} className="text-gray-500 mr-2" />
         <TextInput
           value={value}
           autoFocus={true}
@@ -47,7 +47,7 @@ export const SearchInput = React.memo(({
           onSubmitEditing={onSubmit}
           placeholder="Search..."
           returnKeyType="search"
-          className="flex-1 text-gray-900 mr-2"
+          className="flex-1 text-gray-900 mr-2 native:h-[45px]"
         />
       </View>
     </Animated.View>

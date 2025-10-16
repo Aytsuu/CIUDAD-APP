@@ -15,7 +15,6 @@ import { Combobox } from "@/components/ui/combobox"
 import { api2 } from "@/api/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createPage1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
-import { useObstetricalHistoryData } from "./queries/fpFetchQuery"
 
 type Page1Props = {
   onNext2: () => void
@@ -61,21 +60,21 @@ export default function FamilyPlanningForm({
   const typeOfClient = form.watch("typeOfClient")
   const shouldShowSubtypeAndReason = mode !== "view" && mode !== "followup" && typeOfClient === "currentuser";
   const patientId = formData?.pat_id
-  const { data: obstetricalData } = useObstetricalHistoryData(patientId)
+  // const { data: obstetricalData } = useObstetricalHistoryData(patientId)
 
-  useEffect(() => {
-    if (obstetricalData?.livingChildren !== undefined) {
-      form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
-      updateFormData({
-        ...form.getValues(),
-        numOfLivingChildren: obstetricalData.livingChildren,
-        obstetricalHistory: {
-          ...form.getValues().obstetricalHistory,
-          numOfLivingChildren: obstetricalData.livingChildren,
-        },
-      })
-    }
-  }, [obstetricalData, updateFormData])
+  // useEffect(() => {
+  //   if (obstetricalData?.livingChildren !== undefined) {
+  //     form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
+  //     updateFormData({
+  //       ...form.getValues(),
+  //       numOfLivingChildren: obstetricalData.livingChildren,
+  //       obstetricalHistory: {
+  //         ...form.getValues().obstetricalHistory,
+  //         numOfLivingChildren: obstetricalData.livingChildren,
+  //       },
+  //     })
+  //   }
+  // }, [obstetricalData, updateFormData])
 
 
   useEffect(() => {

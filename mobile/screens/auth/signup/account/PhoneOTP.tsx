@@ -67,6 +67,7 @@ export default function PhoneOTP({ params }: { params: Record<string, any> }) {
     try {
       setIsSubmitting(true);
       const phone = getValues("accountFormSchema.phone");
+      
       const verification = await sendOTP({
         pv_phone_num: phone,
         pv_type: params?.signin ? "login" : "signup"

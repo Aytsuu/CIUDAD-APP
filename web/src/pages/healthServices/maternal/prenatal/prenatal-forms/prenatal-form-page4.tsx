@@ -25,6 +25,7 @@ import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries"
 import { useMaternalStaff } from "../../queries/maternalFetchQueries"
+import { useAuth } from "@/context/AuthContext"
 
 
 export default function PrenatalFormFourthPq({
@@ -49,16 +50,37 @@ export default function PrenatalFormFourthPq({
   const aogDays = form.watch("followUpSchedule.aogDays")
 
   const { data: prenatalCareHistory, isLoading: isLoadingPrenatalCare } = usePrenatalPatientPrenatalCare(patId, pregnancyId)
-  const { data: staffsData } = useMaternalStaff()
+  const { data: staffsData, isLoading: isLoadingStaff } = useMaternalStaff()
+  const { user } = useAuth()
+  
+  // Get logged-in user's staff ID
+  const currentUserStaffId = user?.staff?.staff_id || ""
 
-  // Map staff data to Combobox options format
-  const staffOptions =
-    Array.isArray(staffsData)
-      ? staffsData.map((staff: any) => ({
-          id: staff.id || staff.staff_id || staff._id || staff.name,
-          name: staff.name || staff.fullName || staff.staff_name || "Unknown Staff",
-        }))
+  // Debug: Log the staff data
+  useEffect(() => {
+    console.log("🔍 Staff data received:", staffsData)
+    console.log("🔍 Is loading staff:", isLoadingStaff)
+    console.log("🔍 Current user staff ID:", currentUserStaffId)
+  }, [staffsData, isLoadingStaff, currentUserStaffId])
+
+  // Map staff data to Combobox options format (excluding logged-in user)
+  const staffOptions = 
+    staffsData && Array.isArray(staffsData.staff)
+      ? staffsData.staff
+          .filter((staff: any) => String(staff.staff_id || "") !== String(currentUserStaffId)) // Exclude logged-in user
+          .map((staff: any) => {
+            const fullName = staff.full_name || `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "Unknown Staff"
+            const position = staff.position || staff.pos || ""
+            const displayName = position ? `${fullName} (${position})` : fullName
+            
+            return {
+              id: String(staff.staff_id || ""),
+              name: displayName,
+            }
+          })
       : []
+
+  console.log("🔍 Staff options (excluding current user):", staffOptions)
 
   type prenatalCareTypes = {
     date: string
@@ -84,6 +106,7 @@ export default function PrenatalFormFourthPq({
 
   const [prenatalCareData, setPrenatalCareData] = useState<prenatalCareTypes[]>([])
   const [prenatalCareHistoryTableData, setPrenatalCareHistoryTableData] = useState<any[]>([])
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("")
 
   const today = new Date().toLocaleDateString("en-CA")
 
@@ -484,12 +507,12 @@ export default function PrenatalFormFourthPq({
                 <Label className="text-sm font-medium">Forward record to</Label>
                 <Combobox
                   options={staffOptions}
-                  value=""
-                  placeholder="Select staff"
+                  value={selectedStaffId}
+                  placeholder={isLoadingStaff ? "Loading staff..." : "Select staff"}
                   emptyMessage="No staff found"
                   onChange={(value:any) => {
                     console.log("Selected staff:", value)
-                    // You can store this in state if needed
+                    setSelectedStaffId(value)
                   }}
                 />
               </div>

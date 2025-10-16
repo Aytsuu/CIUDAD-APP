@@ -169,6 +169,7 @@ abdomenExamination: z.string().optional(),
 //     is_current: boolean;
 //   }>,
 
+  num_of_children: z.number().min(0).optional(),
   obstetricalHistory: z.object({
     g_pregnancies: z.coerce.number().min(0).default(0),
     p_pregnancies: z.coerce.number().min(0).default(0),

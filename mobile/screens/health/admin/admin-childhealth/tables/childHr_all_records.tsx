@@ -2,14 +2,13 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, TextInput, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search, MapPin, Calendar, Baby, Heart, ChevronLeft, Users, AlertCircle, RefreshCw } from 'lucide-react-native';
-import { Text as UIText } from '@/components/ui/text';
+import { Text as UIText,Text } from '@/components/ui/text';
 import { useChildHealthRecords } from '../queries/fetchQueries';
 import { ChildHealthRecord } from '../../admin-patientsrecord/types';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { calculateAge } from '@/helpers/ageCalculator';
-
-type TabType = "all" | "resident" | "transient";
+import { TabBar, TabType } from '../../components/tab-bar';
 
 // Components (keep your existing StatusBadge, TabBar, ChildHealthCard components the same)
 const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
@@ -45,39 +44,6 @@ const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
     </View>
   );
 };
-
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <UIText className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </UIText>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <UIText className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </UIText>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <UIText className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </UIText>
-    </TouchableOpacity>
-  </View>
-);
 
 const ChildHealthCard: React.FC<{
   child: ChildHealthRecord;
@@ -174,10 +140,13 @@ const ChildHealthCard: React.FC<{
 export default function AllChildHealthRecords() {
   const router = useRouter();
   const { data: childHealthRecords, isLoading, refetch, error } = useChildHealthRecords();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("all");
+const [currentPage, setCurrentPage] = useState<number>(1);
+const [searchQuery, setSearchQuery] = useState('');
+const [refreshing, setRefreshing] = useState(false);
+const [activeTab, setActiveTab] = useState<TabType>("all");
+const pageSize = 20;
+ const totalCount = childHealthRecords?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   // FIXED: Proper error handling for childHealthRecords
   const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
@@ -301,12 +270,7 @@ export default function AllChildHealthRecords() {
     return filtered;
   }, [formattedData, searchQuery, activeTab]);
 
-  // Calculate stats for tabs
-  const counts = useMemo(() => ({
-    all: formattedData.length,
-    resident: formattedData.filter((p) => p.pat_type.toLowerCase() === "resident").length,
-    transient: formattedData.filter((p) => p.pat_type.toLowerCase() === "transient").length,
-  }), [formattedData]);
+
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -383,7 +347,7 @@ export default function AllChildHealthRecords() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center p-1 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
@@ -396,8 +360,22 @@ export default function AllChildHealthRecords() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab}/>
 
+        <View className="px-4 flex-row items-center justify-between mt-4">
+                  <View className="flex-row items-center">
+                    <Text className="text-sm text-gray-600">
+                      Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <Text className="text-sm font-medium text-gray-800">
+                      Page {currentPage} of {totalPages}
+                    </Text>
+                  </View>
+                </View>
+
+                
         {/* Records List */}
         {formattedData.length === 0 ? (
           <View className="flex-1 justify-center items-center px-6">
