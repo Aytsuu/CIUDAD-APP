@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { IncomeImage, DisbursementImage } from "./inc-disc-types";
 
 export const archiveIncomeImage = async (infi_num: number) => {
   const res = await api.patch(`treasurer/income-tab/images/${infi_num}/`, { infi_is_archive: true });

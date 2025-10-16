@@ -6,7 +6,6 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "rea
 import { Search, ChevronLeft, AlertCircle, Pill, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";

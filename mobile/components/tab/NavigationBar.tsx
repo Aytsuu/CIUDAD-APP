@@ -1,7 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
-import { AntDesign, Feather } from '@expo/vector-icons';
-import { Home, Logs, Mail, CircleUserRound } from 'lucide-react-native';
 import HomeUnfocused from '@/assets/icons/tabs/home(unfocused).svg'
 import HomeFocused from '@/assets/icons/tabs/home(focused).svg'
 import MyRequestUnfocused from '@/assets/icons/tabs/myrequest(unfocused).svg'

@@ -75,20 +75,25 @@ export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
 }));
 
-// Vaccine schema remains unchanged as it doesn't use pieces validation
+
+
 export const VaccineStocksSchema = z.object({
-  vac_id: z.string().min(1, "Vaccine name is required"),
-  solvent: z.string().min(1, "required").default(""),
-  batchNumber: z.string().min(1, "Batch number is required"),
-  volume: positiveNumberSchema,
-  dose_ml: positiveNumberSchema,
-  qty: positiveNumberSchema,
-  inv_type:z.string().min(1, "Inventory type is required").default("Antigen"),
-  staff: z.string().optional(),
-  expiry_date: z.string().min(1, "Expiry date is required")
-    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
-});
- 
+  vac_id: z.string().nonempty("Vaccine is required"),
+  batchNumber: z.string().nonempty("Batch number is required"),
+  volume: z.preprocess((a) => Number(a), z.number({ invalid_type_error: "Volume must be a number" })),
+  qty: z.preprocess((a) => Number(a), z.number({ invalid_type_error: "Quantity must be a number" })).optional(),
+  dose_ml: z.preprocess((a) => Number(a), z.number({ invalid_type_error: "Dose must be a number" })).optional(),
+  expiry_date: z.string().nonempty("Expiry date is required"),
+  solvent: z.enum(["diluent", "doses"]),
+  inv_type: z.string(),
+  staff: z.string()
+}).refine(
+  (data) => data.solvent === "diluent" || (data.solvent === "doses" && data.dose_ml !== undefined),
+  {
+    message: "Dose (ml) is required when solvent is doses",
+    path: ["dose_ml"]
+  }
+); 
 
 export const usedFaSchema = z.object({
   usedItem: positiveNumberSchema,

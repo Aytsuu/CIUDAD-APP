@@ -7,11 +7,10 @@ import _ScreenLayout from '@/screens/_ScreenLayout'
 import { PurposeAndRatesEditSchema } from '@/form-schema/rates-form-schema'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronLeft, X } from 'lucide-react-native'
+import { ChevronLeft } from 'lucide-react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import z from "zod";
 import { useEditPurposeAndRate } from './queries/ratesUpdateQueries'
-import { Alert } from 'react-native'
 
 export default function PurposeAndRateEditForm() {
     const router = useRouter();

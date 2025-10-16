@@ -6,7 +6,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { Search, Calendar, X, ChevronLeft } from 'lucide-react-native';
+import { Search, Calendar, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import PageLayout from '@/screens/_PageLayout';

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { Input } from "@/components/ui/input"
-import { Package, ChevronLeft, ChevronRight, Search, Loader2, Info, Eye, Lock } from "lucide-react"
+import { Package, ChevronLeft, ChevronRight, Search, Loader2, Info, Eye } from "lucide-react"
 import { StockBadge } from "@/components/ui/stock-badge"
 import { Button } from "@/components/ui/button/button"
 import { isNearExpiry, isLowStock } from "@/helpers/StocksAlert"

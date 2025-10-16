@@ -1,6 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity } from "react-native";
-import { Syringe, Calendar, FileText, CheckCircle, Clock, XCircle } from "lucide-react-native";
+import { Syringe, Calendar, CheckCircle, Clock, XCircle } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { format, parseISO, isValid } from "date-fns";
 

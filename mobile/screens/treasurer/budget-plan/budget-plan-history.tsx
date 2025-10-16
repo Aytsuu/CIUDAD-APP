@@ -1,4 +1,4 @@
-import { SafeAreaView, Text, ScrollView, View, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { SafeAreaView, Text, ScrollView, View, TextInput, ActivityIndicator } from "react-native";
 import { Search } from 'lucide-react-native';
 import { useGetBudgetPlanHistory, type BudgetPlanHistory } from "./queries/budgetPlanFetchQueries";
 import { formatTimestamp } from "@/helpers/timestampformatter";

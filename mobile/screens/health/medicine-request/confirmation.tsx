@@ -1,6 +1,6 @@
 // confirmation.tsx
 import { View, ScrollView, TouchableWithoutFeedback, Animated } from "react-native"
-import { Check, ArrowLeft, Clock, Package } from "lucide-react-native"
+import { Check, ArrowLeft, Package } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { Button } from "@/components/ui/button"
 import { router, useLocalSearchParams } from "expo-router"

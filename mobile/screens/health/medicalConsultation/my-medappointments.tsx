@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, RefreshControl, Alert, Modal, TextInput, FlatList } from 'react-native';
 import { router } from 'expo-router';
-import { ChevronLeft, XCircle, RefreshCw, Trash2, Search, Calendar, AlertCircle, Plus } from 'lucide-react-native';
+import { ChevronLeft, XCircle, RefreshCw, Trash2, Search, Calendar, AlertCircle } from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api2 } from '@/api/api';
 import PageLayout from '@/screens/_PageLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
-import { addDays, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 
 // Types
 interface AppointmentItem {

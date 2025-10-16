@@ -3,7 +3,6 @@ import React from 'react';
 import {
   Modal,
   View,
-  ActivityIndicator,
 } from 'react-native';
 
 export const LoadingModal = ({ 

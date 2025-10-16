@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { UseFormReturn, Controller } from 'react-hook-form';
 import { CustomDropdown } from '@/components/ui/custom-dropdown';
 import { useGetResidents } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';

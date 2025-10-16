@@ -1,12 +1,10 @@
 import PageLayout from "@/screens/_PageLayout";
 import PersonalInformation from "../PersonalInformation";
-import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { router } from "expo-router";
-import { ChevronLeft, X } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import { TouchableOpacity, Text, ScrollView, View } from "react-native";
 import { useProgressContext } from "@/contexts/ProgressContext";
 import React from "react";
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
 export default function RespondentInformation() {
   const { completeStep } = useProgressContext();

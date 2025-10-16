@@ -1,4 +1,4 @@
-import { View,ScrollView,TouchableOpacity,TextInput,RefreshControl,ActivityIndicator,FlatList,Alert} from "react-native";
+import { View,ScrollView,TouchableOpacity,TextInput,RefreshControl,FlatList} from "react-native";
 import { Search, Package, ChevronLeft, AlertTriangle, Filter } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import * as React from "react";

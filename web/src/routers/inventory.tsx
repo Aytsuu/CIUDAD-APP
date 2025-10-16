@@ -19,7 +19,7 @@ import MedicineStocks from "@/pages/healthInventory/inventoryStocks/tables/Medic
 import CommodityStocks from "@/pages/healthInventory/inventoryStocks/tables/CommodityStocks";
 import VaccineStocks from "@/pages/healthInventory/inventoryStocks/tables/VaccineStocks";
 import MedicineArchiveTable from "@/pages/healthServices/archive/Inventory/tables/MedicineStocks";
-import CombinedStockTable from "@/pages/healthServices/archive/Inventory/tables/VaccineStocks";
+import CombinedStockTableArchive from "@/pages/healthServices/archive/Inventory/tables/VaccineStocks";
 import CommodityArchiveTable from "@/pages/healthServices/archive/Inventory/tables/CommodityStocks";
 import MedicineTransactionTable from "@/pages/healthInventory/transaction/tables/TransactionMedicineList";
 import AntigenTransactionTable from "@/pages/healthInventory/transaction/tables/TransactionAntigen";
@@ -83,7 +83,7 @@ export const healthinventory = [
             element: <ArchiveMainInventoryStocks />,
             children: [
               { path: "medicine", element: <MedicineArchiveTable /> },
-              { path: "antigen", element: <CombinedStockTable /> },
+              { path: "antigen", element: <CombinedStockTableArchive /> },
               { path: "commodity", element: <CommodityArchiveTable /> },
               { path: "firstaid", element: <MedicineArchiveTable /> }
             ]

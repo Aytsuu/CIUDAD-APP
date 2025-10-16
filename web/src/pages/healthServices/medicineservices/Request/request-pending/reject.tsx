@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { X, Send, AlertCircle, Forward } from "lucide-react";
+import { X, AlertCircle, Forward } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { useUpdateMedicineRequestItem } from "../queries/post";

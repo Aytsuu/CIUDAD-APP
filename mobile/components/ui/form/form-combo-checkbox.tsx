@@ -1,19 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   FlatList,
   TextInput,
-  Dimensions,
 } from "react-native";
 import { Controller } from "react-hook-form";
 import { MaterialIcons } from "@expo/vector-icons";
 import { cn } from "@/lib/utils";
 import { Drawer } from "../drawer";
-import { all } from "axios";
-import isEqual from "lodash.isequal";
 
 type Option = { label: string; value: string };
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -14,11 +14,10 @@ import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input'
 // import { FormTimeInput } from '@/components/ui/form/form-time-input';
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
-import MultiImageUploader, { MediaFileType } from '@/components/ui/multi-media-upload';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useBudgetItems } from './queries/income-expense-FetchQueries';
 import { useCreateIncomeExpense } from './queries/income-expense-AddQueries';
-import { ChevronLeft, X } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 
 
 function ExpenseCreateForm() {

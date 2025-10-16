@@ -7,7 +7,6 @@ import AppointmentForm from "@/pages/healthServices/medicalconsultation/Forms/Ap
 import MedconRecordsLayout from "@/pages/healthServices/medicalconsultation/tables/main-medconlayout";
 import AppointmentsLayout from "@/pages/healthServices/medicalconsultation/tables/main-layout/main-appointmentlayout";
 import MainAppointments from "@/pages/healthServices/medicalconsultation/tables/main-appoimnents";
-import path from "path";
 
 export const medicalConsultation = [
   {

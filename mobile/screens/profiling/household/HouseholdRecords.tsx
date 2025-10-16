@@ -4,7 +4,6 @@ import {
   View,
   Text,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { useRouter } from "expo-router";
@@ -12,12 +11,9 @@ import React from "react";
 import { Search } from "@/lib/icons/Search";
 import { useHouseholdTable } from "../queries/profilingGetQueries";
 import { Card } from "@/components/ui/card";
-import { UsersRound } from "@/lib/icons/UsersRound";
-import { MapPin } from "@/lib/icons/MapPin";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
 import { SearchInput } from "@/components/ui/search-input";
 import PageLayout from "@/screens/_PageLayout";
-import { Home } from "@/lib/icons/Home";
 import { LoadingState } from "@/components/ui/loading-state";
 
 export default function HouseholdRecords() {

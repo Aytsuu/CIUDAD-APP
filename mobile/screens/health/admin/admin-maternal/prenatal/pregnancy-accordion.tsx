@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { View, TouchableOpacity } from "react-native"
-import { Calendar, CheckCircle2, Eye, HeartHandshake } from "lucide-react-native"
+import { Calendar, Eye } from "lucide-react-native"
 import { router } from "expo-router"
 
 import { Text } from "@/components/ui/text"

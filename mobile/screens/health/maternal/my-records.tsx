@@ -15,7 +15,6 @@ import { PregnancyAccordion } from "../admin/admin-maternal/prenatal/pregnancy-a
 
 import { usePregnancyDetails } from "../admin/admin-maternal/queries/maternalFETCH"
 import { useAuth } from "@/contexts/AuthContext"
-import { useQuery } from "@tanstack/react-query"
 import { usePatientByResidentId } from "../patientchecker/queries"
 
 interface Patient {

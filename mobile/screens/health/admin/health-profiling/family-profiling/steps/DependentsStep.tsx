@@ -13,8 +13,7 @@ import {
   useCreateDependentUnderFive 
 } from '@/screens/health/admin/health-profiling/queries/healthProfilingQueries';
 import { HealthFamilyProfilingFormData, DependentData } from '@/form-schema/health-family-profiling-schema';
-import { Plus, Trash2, UserPlus, Calendar } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Plus, Trash2, UserPlus } from 'lucide-react-native';
 
 interface DependentsStepProps {
   form: UseFormReturn<HealthFamilyProfilingFormData>;
