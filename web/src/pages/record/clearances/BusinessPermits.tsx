@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 // import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -15,7 +15,6 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAuth } from "@/context/AuthContext";
 import { useLoading } from "@/context/LoadingContext";
 import { formatDate } from "@/helpers/dateHelper";
@@ -33,6 +32,13 @@ function BusinessDocumentPage() {
     queryKey: ["businessPermits"],
     queryFn: getBusinessPermit,
   });
+
+  // Show only paid permits
+  const paidPermits = useMemo(() => {
+    return (businessPermits || []).filter((p) =>
+      String(p.req_payment_status || "").toLowerCase() === "paid"
+    );
+  }, [businessPermits]);
 
   // Handle loading state
   useEffect(() => {
@@ -125,30 +131,45 @@ function BusinessDocumentPage() {
       header: "Business Name",
       cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
     },
+    // {
+    //   accessorKey: "business_gross_sales",
+    //   header: "Gross Sales",
+    //   cell: ({ row }) => {
+    //     const original = row.original as any;
+    //     const agsId = original?.ags_id;
+    //     const inputtedGrossSales = original?.bus_clearance_gross_sales;
+    //     const businessGrossSales = original?.business_gross_sales;
+
+    //     let displayAmount: number | null = null;
+
+    //     // Priority 1: Show inputted gross sales (for new businesses with barangay clearance)
+    //     if (inputtedGrossSales && agsId) {
+    //       const parsed = parseFloat(inputtedGrossSales.toString());
+    //       displayAmount = isNaN(parsed) ? null : parsed;
+    //     }
+    //     // Priority 2: Show business gross sales if available (for existing businesses)
+    //     else if (businessGrossSales !== undefined && businessGrossSales !== null && businessGrossSales !== "") {
+    //       const parsed = typeof businessGrossSales === 'string' ? parseFloat(businessGrossSales) : businessGrossSales;
+    //       displayAmount = isNaN(parsed as number) ? null : (parsed as number);
+    //     }
+
+    //     if (displayAmount === null) {
+    //       return <div className="text-center text-gray-500">Not Set</div>;
+    //     }
+
+    //     return (
+    //       <div className="text-center">
+    //         ₱{displayAmount.toLocaleString()}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
-      accessorKey: "business_gross_sales",
-      header: "Gross Sales",
+      accessorKey: "purpose",
+      header: "Purpose",
       cell: ({ row }) => {
-        const grossSales = row.getValue("business_gross_sales") as string | number;
-        
-        // If grossSales is empty, null, or undefined, show "Not Set"
-        if (!grossSales || grossSales === "" || grossSales === "0") {
-          return <div className="text-center text-gray-500">Not Set</div>;
-        }
-        
-        // Format the gross sales amount
-        const amount = typeof grossSales === 'string' ? parseFloat(grossSales) : grossSales;
-        
-        // Check if it's a valid number
-        if (isNaN(amount)) {
-          return <div className="text-center text-gray-500">{grossSales}</div>;
-        }
-        
-        return (
-          <div className="text-center">
-            ₱{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-        );
+        const value = (row.original as any)?.purpose;
+        return <div className="text-center">{value && String(value).trim() !== "" ? value : "Not Set"}</div>;
       },
     },
     {
@@ -260,7 +281,7 @@ function BusinessDocumentPage() {
           ) : (
             <DataTable 
             columns={columns} 
-            data={businessPermits || []}
+            data={paidPermits}
             header={true} />
           )}
         </div>
@@ -270,37 +291,27 @@ function BusinessDocumentPage() {
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         {/* Showing Rows Info */}
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {businessPermits ? businessPermits.length : 0} rows
+          Showing 1-10 of {paidPermits.length} rows
         </p>
 
         {/* Pagination */}
         <div className="w-full sm:w-auto flex justify-center">
           <PaginationLayout
-            totalPages={Math.ceil((businessPermits?.length || 1) / 10)}
+            totalPages={Math.ceil((paidPermits.length || 1) / 10)}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />
         </div>
       </div>
 
-      {/* Render Business Permit Template when a permit is selected */}
+      {/* Render Business Permit Template like Certification: component manages its own dialog */}
       {selectedPermit && (
-        <DialogLayout
-          isOpen={!!selectedPermit}
-          onOpenChange={(open) => !open && setSelectedPermit(null)}
-          className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
-          title=""
-          description=""
-          mainContent={
-            <div className="w-full h-full">
-              <TemplateMainPage
-                businessName={selectedPermit.business_name || "N/A"}
-                address={selectedPermit.business_address || "N/A"}
-                purpose="bussClear"
-                issuedDate={new Date().toISOString()}
-              />
-            </div>
-          }
+        <TemplateMainPage
+          businessName={selectedPermit.business_name}
+          address={selectedPermit.business_address}
+          purpose={selectedPermit.purpose}
+          issuedDate={new Date().toISOString()}
+          showAddDetails={false}
         />
       )}
     </div>
