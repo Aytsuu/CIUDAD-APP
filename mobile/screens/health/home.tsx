@@ -56,12 +56,13 @@ const Homepage = () => {
   // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
 
   const modules: Module[] = [
+  { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus }, 
   { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
   // { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
   { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
   { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
   { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
-  { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus },
+  
   { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
   { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
   { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },

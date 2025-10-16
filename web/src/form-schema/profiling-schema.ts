@@ -69,7 +69,11 @@ export const personalInfoSchema = z.object({
 
 export const perAddDetails = z.object({
   bloodType: z.string().optional(),
-  philHealthId: z.string().optional(),
+  philHealthId: z.string()
+    .refine((val) => !val || val.length === 0 || val.length === 12, {
+      message: "PhilHealth ID must be exactly 12 digits",
+    })
+    .optional(),
   covidVaxStatus: z.string().optional(),
 });
 
