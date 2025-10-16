@@ -93,7 +93,6 @@ export default function LandingLayout() {
 
   const update = async () => {
     if (!(await form.trigger())) {
-      console.log(form.getValues());
       return;
     }
 
