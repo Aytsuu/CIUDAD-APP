@@ -119,11 +119,12 @@ class BusinessPermitFile(models.Model):
 class IssuedBusinessPermit(models.Model):
     ibp_id = models.CharField(max_length=10, primary_key=True)
     ibp_date_of_issuance = models.DateField()
-    permit_request = models.ForeignKey(BusinessPermitRequest, on_delete=models.CASCADE, db_column='bpr_id')
+    bpr_id = models.ForeignKey(BusinessPermitRequest, on_delete=models.CASCADE, db_column='bpr_id')
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'issued_business_permit'
+        managed = False
 
 class ClerkBusinessPermit(models.Model):
     busi_req_no = models.CharField(max_length=10, primary_key=True)
