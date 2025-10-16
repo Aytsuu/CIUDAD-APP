@@ -367,6 +367,7 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             'business_name',
             'business_address',
             'business_gross_sales',
+            'bus_clearance_gross_sales',
             'requestor',
             'purpose',
             'amount_to_pay',
@@ -449,6 +450,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'req_amount',  
             'bus_permit_name',  
             'bus_permit_address',  
+            'bus_clearance_gross_sales',
         ]
         extra_kwargs = {
             'bpr_id': {'required': False, 'read_only': True},
@@ -460,6 +462,7 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
             'bus_id': {'required': False, 'allow_null': True},
             'rp_id': {'required': False, 'allow_null': True},
             'req_amount': {'required': False},  # Make req_amount optional
+            'bus_clearance_gross_sales': {'required': False, 'allow_null': True},
         }
 
     def create(self, validated_data):

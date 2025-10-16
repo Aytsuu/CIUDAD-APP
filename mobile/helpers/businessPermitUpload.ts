@@ -59,8 +59,19 @@ export const uploadMultipleBusinessPermitFiles = async (
     try {
         console.log(`🚀 Uploading ${files.length} business permit files...`);
 
-        const uploadPromises = files.map(file => uploadBusinessPermitFile(file));
-        const results = await Promise.all(uploadPromises);
+        const results: BusinessPermitUploadResult[] = [];
+        for (const file of files) {
+            try {
+
+                const result = await uploadBusinessPermitFile(file);
+                results.push(result);
+            } catch (err) {
+
+                console.warn(`⚠️ Retry uploading file: ${file.name}`);
+                const retryResult = await uploadBusinessPermitFile(file);
+                results.push(retryResult);
+            }
+        }
 
         console.log("✅ All business permit files uploaded");
         return results;

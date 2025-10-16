@@ -96,12 +96,13 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 pr_id: requestInfo.pr_id || null, // Purpose and rate ID (optional)
                 bus_permit_name: requestInfo.business_name || '', // Business name field
                 bus_permit_address: requestInfo.business_address || '', // Business address field
+                // Inputted gross sales for non-existing businesses
+                bus_clearance_gross_sales: requestInfo.bus_clearance_gross_sales ?? null,
                 // Image fields for business_permit_file table (handled by backend)
                 permit_image: requestInfo.permit_image || null,
                 assessment_image: requestInfo.assessment_image || null
             };
 
-            // Always include bus_id - use null if no business exists
             payload.bus_id = requestInfo.business_id || null;
 
             console.log("Business Permit Request Payload:", payload);
