@@ -279,13 +279,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
           url = upload_to_storage(file_data, 'business-bucket', folder)
           business_file.bf_url=url
           business_files.append(business_file)
-          continue
 
         files_to_keep.append(file_data['name'])
       
       # Consider removed files, should be removed in the db
       for file in current_files:
         if file.bf_name not in files_to_keep:
+          remove_from_storage('business-bucket', file.bf_path)
           file.delete()
 
       # Bulk create newly added files

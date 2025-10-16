@@ -7,16 +7,18 @@ import {
   Mail,
 } from "lucide-react";
 
-export const Footer = () => {
+export const Footer = ({data} : {
+  data: Record<string, any>
+}) => {
   return (
     <footer className="bg-[#0F1F3A] text-white py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto flex justify-between gap-16">
+      <div className="w-3/4 mx-auto flex justify-between gap-28">
         {/* About Section */}
-        <div className="w-1/3 space-y-4">
+        <div className="w-full space-y-4">
           <h3 className="text-xl font-bold">Barangay San Roque (Ciudad)</h3>
           <p className="text-gray-300">
-            Committed to serving our community with integrity, transparency, and
-            compassion.
+            Connecting communities through digital innovation and transparent
+            governance
           </p>
           <div className="flex space-x-4">
             <a href="#" className="text-gray-300 hover:text-white">
@@ -32,7 +34,7 @@ export const Footer = () => {
         </div>
 
         {/* Quick Links */}
-        <div>
+        <div className="w-full">
           <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
           <ul className="space-y-2">
             <li>
@@ -42,56 +44,39 @@ export const Footer = () => {
             </li>
             <li>
               <a href="#" className="text-gray-300 hover:text-white transition">
-                About Us
+                Our Barangay
               </a>
             </li>
             <li>
               <a href="#" className="text-gray-300 hover:text-white transition">
-                Services
+                Announcement
               </a>
             </li>
             <li>
               <a href="#" className="text-gray-300 hover:text-white transition">
-                News & Events
-              </a>
-            </li>
-            <li>
-              <a href="#" className="text-gray-300 hover:text-white transition">
-                Contact
+                Mobile App
               </a>
             </li>
           </ul>
         </div>
 
-        {/* Services */}
-        {/* <div>
-            <h3 className="text-lg font-semibold mb-4">Our Services</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Barangay Clearance</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Business Permit</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Health Services</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Community Programs</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition">Document Requests</a></li>
-            </ul>
-          </div> */}
-
         {/* Contact Info */}
-        <div>
+        <div className="w-full">
           <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
           <ul className="space-y-3">
             <li className="flex items-start space-x-2">
               <MapPin className="h-5 w-5 mt-0.5 text-gray-300" />
               <span className="text-gray-300">
-                123 Barangay Street, City, Province
+                {data?.address}
               </span>
             </li>
             <li className="flex items-center space-x-2">
               <Phone className="h-5 w-5 text-gray-300" />
-              <span className="text-gray-300">(123) 456-7890</span>
+              <span className="text-gray-300">{data?.contact}</span>
             </li>
             <li className="flex items-center space-x-2">
               <Mail className="h-5 w-5 text-gray-300" />
-              <span className="text-gray-300">info@barangayname.gov</span>
+              <span className="text-gray-300">{data?.email}</span>
             </li>
           </ul>
         </div>

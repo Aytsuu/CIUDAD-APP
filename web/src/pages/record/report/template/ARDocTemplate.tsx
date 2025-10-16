@@ -13,7 +13,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { useGetStaffByTitle } from "../../administration/queries/administrationFetchQueries";
 import { formatStaffs } from "../../administration/AdministrationFormats";
 import { toast } from "sonner";
-import { fileToBase64 } from "@/helpers/fileHelpers";
+import { handleImageUpload } from "@/helpers/fileHelpers";
 
 export const ARDocTemplate = ({
   incident,
@@ -183,17 +183,6 @@ export const ARDocTemplate = ({
       })
     }
   }
-
-  const handleImageUpload = React.useCallback(async (files: any[]) => {
-    if (files.length === 0) return;
-    const base64 = await fileToBase64(files[0]);
-    const file = {
-      name: `media_${files[0].name}_${Date.now()}.${files[0].type.split('/')[1]}${Math.random().toString(36).substring(2, 8)}`,
-      type: files[0].type, 
-      file: base64,
-    }
-    return file;
-  }, []);
 
   // Logo component
   const LogoUpload = ({ 

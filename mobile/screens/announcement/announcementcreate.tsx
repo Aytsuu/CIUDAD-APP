@@ -479,7 +479,7 @@ export default function AnnouncementCreate() {
                 buttonLabel={
                   data ? "Update Announcement" : "Create Announcement"
                 }
-                submittingLabel={data ? "Saving..." : "Submitting..."}
+                submittingLabel={data ? "Saving..." : "Creating..."}
                 isSubmitting={isSubmitting}
                 handleSubmit={data ? update : create}
               />
