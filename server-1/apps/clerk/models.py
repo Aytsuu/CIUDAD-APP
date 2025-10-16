@@ -6,7 +6,6 @@ def default_due_date():
     return timezone.now().date() + timezone.timedelta(days=7)
 spay_due_date = models.DateField(default=default_due_date)
 
-
 class ClerkCertificate(models.Model):
     cr_id = models.CharField(primary_key=True)
     cr_req_request_date = models.DateTimeField(default = datetime.now)
@@ -38,7 +37,6 @@ class ClerkCertificate(models.Model):
     class Meta:
         db_table = 'certification_request'
         managed = False
-
 
 class NonResidentCertificateRequest(models.Model):
     nrc_id = models.BigAutoField(primary_key=True)  
@@ -103,6 +101,7 @@ class BusinessPermitRequest(models.Model):
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
     bus_clearance_gross_sales = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Add inputted gross sales field
+
 
     class Meta:
         db_table = 'business_permit_request'

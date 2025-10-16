@@ -148,8 +148,8 @@ const CertPermit: React.FC = () => {
     let minDistance = Infinity;
     
     activeRanges.forEach(sales => {
-      const rangeMin = parseFloat(sales.ags_minimum);
-      const rangeMax = parseFloat(sales.ags_maximum);
+      const rangeMin = sales.ags_minimum;
+      const rangeMax = sales.ags_maximum;
       const rangeMid = (rangeMin + rangeMax) / 2;
       
       // Calculate distance from input value to range midpoint
@@ -523,7 +523,7 @@ const CertPermit: React.FC = () => {
                   // Text input for residents without business
                   <TextInput
                     className="rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base bg-white text-gray-900"
-                    placeholder="Enter your annual gross sales amount (e.g., 50000)"
+                    placeholder="Enter your annual gross sales amount"
                     placeholderTextColor="#888"
                     value={inputtedGrossSales}
                     onChangeText={setInputtedGrossSales}
