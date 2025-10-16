@@ -7,6 +7,8 @@ from apps.pagination import StandardResultsPagination
 from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 from rest_framework.permissions import AllowAny
+from ..double_queries import PostQueries
+import copy
 
 class RequestTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -58,9 +60,10 @@ class RequestCreateView(APIView):
           'per': self.create_personal_info(data['per']),
           'req': request
         } 
-                
+        
         if 'acc' in data:  
           acc = data['acc']  
+          print(acc)
           account = Account.objects.create_user(
               email=acc.get('email', None),
               phone=acc.get('phone', None),
@@ -79,12 +82,14 @@ class RequestCreateView(APIView):
       )
     
     if len(new_comp) > 0:
-      RequestRegistrationComposition.objects.bulk_create(new_comp)
-      return Response(data=RequestBaseSerializer(request).data, status=status.HTTP_200_OK)
+      for comp in new_comp:
+        comp.save()
+      return Response(status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
   def create_personal_info(self, personal, staff=None):
-    addresses = personal.pop("per_addresses", None)
+    personal_copy = copy.deepcopy(personal)
+    addresses = personal_copy.pop("per_addresses", None)
     add_instances = [
       Address.objects.get_or_create(
         add_province=add["add_province"],
@@ -98,7 +103,7 @@ class RequestCreateView(APIView):
     ]
 
     # Create Personal record
-    per_instance = Personal(**personal)
+    per_instance = Personal(**personal_copy)
     per_instance._history_user = staff
     per_instance.save()
 
@@ -113,6 +118,14 @@ class RequestCreateView(APIView):
       history = PersonalAddressHistory(add=add, per=per_instance)
       history.history_id=history_id
       history.save()
+
+    response = PostQueries().personal(personal)
+    if not response.ok:
+      try:
+        error_details = response.json()
+      except ValueError:
+        error_details = response.text
+      raise serializers.ValidationError({'error': error_details})
     
     return per_instance
 

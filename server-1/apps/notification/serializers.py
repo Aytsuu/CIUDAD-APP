@@ -3,7 +3,7 @@ from .models import Notification, FCMToken, Recipient
 
 class NotificationSerializer(serializers.ModelSerializer):
     sender_name = serializers.CharField(source='sender.username', read_only=True)
-    sender_avatar = serializers.SerializerMethodField()
+    sender_profile = serializers.CharField(source='notif.sender.profile_image', read_only=True)
     recipients = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     redirect_url = serializers.SerializerMethodField()
     class Meta:
@@ -12,20 +12,14 @@ class NotificationSerializer(serializers.ModelSerializer):
             'notif_id', 
             'notif_title', 
             'notif_message', 
+            'notif_type',
             'sender', 
             'sender_name', 
-            'sender_avatar', 
+            'sender_profile', 
             'notif_created_at',
-            'recipients'
+            'recipients',
         ]
         read_only_fields = ['notif_id', 'notif_created_at', 'sender']
-    
-    def get_sender_avatar(self, obj):
-        # Adjust this based on your Account model's avatar field
-        if hasattr(obj.sender, 'avatar') and obj.sender.avatar:
-            return obj.sender.avatar.url if hasattr(obj.sender.avatar, 'url') else str(obj.sender.avatar)
-        return None
-    
     def get_redirect_url(self, obj):
         if obj.content_object and hasattr(obj.content_object, "get_absolute_url"):
             return obj.content_object.get_absolute_url()
@@ -36,11 +30,13 @@ class RecipientSerializer(serializers.ModelSerializer):
     notif_id = serializers.IntegerField(source='notif.notif_id', read_only=True)
     notif_title = serializers.CharField(source='notif.notif_title', read_only=True)
     notif_message = serializers.CharField(source='notif.notif_message', read_only=True)
+    notif_type = serializers.CharField(source='notif.notif_type', read_only=True)
     notif_created_at = serializers.DateTimeField(source='notif.notif_created_at', read_only=True)
     resident = serializers.SerializerMethodField()
     redirect_url = serializers.SerializerMethodField()
+    mobile_route = serializers.SerializerMethodField()
     sender_name = serializers.CharField(source='notif.sender.username', read_only=True)
-    sender_avatar = serializers.SerializerMethodField()
+    sender_profile = serializers.CharField(source='notif.sender.profile_image', read_only=True)
     
     class Meta:
         model = Recipient
@@ -48,28 +44,21 @@ class RecipientSerializer(serializers.ModelSerializer):
             'notif_id', 
             'notif_title', 
             'notif_message', 
+            'notif_type',
             'is_read', 
             'notif_created_at', 
             'resident',
             'redirect_url',
             'sender_name',
-            'sender_avatar'
+            'sender_profile',
+            'mobile_route',
         ]
         read_only_fields = fields
-    
-    def get_sender_avatar(self, obj):
-        if obj.notif.sender and hasattr(obj.notif.sender, 'avatar') and obj.notif.sender.avatar:
-            return obj.notif.sender.avatar.url if hasattr(obj.notif.sender.avatar, 'url') else str(obj.notif.sender.avatar)
-        return None
 
     def get_resident(self, obj):
-        """Return resident profile information"""
         if obj.rp:
-            # Get name from Personal model if available
             name = None
             if hasattr(obj.rp, 'per') and obj.rp.per:
-                # Adjust based on your Personal model's name fields
-                # Common patterns: full_name, first_name + last_name, etc.
                 name = (
                     getattr(obj.rp.per, 'per_fullname', None) or
                     getattr(obj.rp.per, 'full_name', None) or
@@ -88,6 +77,10 @@ class RecipientSerializer(serializers.ModelSerializer):
             return obj.notif.content_object.get_absolute_url()
         return None
 
+    def get_mobile_route(self, obj):
+        if obj.notif.content_object and hasattr(obj.notif.content_object, "get_mobile_route"):
+            return obj.notif.content_object.get_mobile_route()
+        return None
 
 class FCMTokenSerializer(serializers.ModelSerializer):
     class Meta:

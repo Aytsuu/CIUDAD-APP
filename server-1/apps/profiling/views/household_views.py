@@ -8,15 +8,19 @@ class HouseholdListView(generics.ListAPIView):
   serializer_class = HouseholdListSerialzer
   
   def get_queryset(self):
-    queryset = None
-    search = self.request.query_params.get('search', '').strip()
-    if search:
-       queryset = Household.objects.filter(
-          Q(hh_id__icontains=search) |
-          Q(rp__per__per_lname__icontains=search) |
-          Q(rp__per__per_fname__icontains=search) |
-          Q(rp__per__per_mname__icontains=search)
-       )
+    is_search = self.request.query_params.get('is_search', 'false') == 'true'
+    if is_search:
+      queryset = None
+      search = self.request.query_params.get('search', '').strip()
+      if search:
+        queryset = Household.objects.filter(
+            Q(hh_id__icontains=search) |
+            Q(rp__per__per_lname__icontains=search) |
+            Q(rp__per__per_fname__icontains=search) |
+            Q(rp__per__per_mname__icontains=search)
+        )
+    else:
+       return Household.objects.all()
     return queryset
 
 class HouseholdDataView(generics.RetrieveAPIView):

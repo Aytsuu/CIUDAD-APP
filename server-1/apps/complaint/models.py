@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.db.models import Max
+import json
 
 class Complainant(models.Model):
     cpnt_id = models.BigAutoField(primary_key=True)
@@ -88,7 +89,16 @@ class Complaint(models.Model):
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):
-        return f"/complaint/{self.comp_id}/"
+        if self.comp_id:
+            return f"/complaint/view?id={self.comp_id}"
+        return f"/complaint/view"
+    
+    def get_mobile_route(self):
+        return {
+            'screen' : '/(my-request)/complaint-tracking/compMainView',
+            'params' : {'comp_id': str(self.comp_id)}
+        }
+        
         
 class ComplaintComplainant(models.Model):
     cc_id = models.BigAutoField(primary_key=True)

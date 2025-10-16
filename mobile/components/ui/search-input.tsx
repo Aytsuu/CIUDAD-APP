@@ -42,7 +42,7 @@ export const SearchInput = React.memo(({
         <Search size={18} className="text-gray-400 mr-2" />
         <TextInput
           value={value}
-          autoFocus={true}
+          autoFocus={false}
           onChangeText={onChange}
           onSubmitEditing={onSubmit}
           placeholder="Search..."

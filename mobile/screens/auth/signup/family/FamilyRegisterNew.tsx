@@ -10,8 +10,7 @@ import React from 'react';
 import { useProgressContext } from "@/contexts/ProgressContext";
 import { Button } from "@/components/ui/button";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import { useAddPersonal, useAddRequest, useAddAddress, useAddPerAddress } from "../../queries/authPostQueries";
-import { capitalizeAllFields } from "@/helpers/capitalize";
+import { useAddRequest } from "../../queries/authPostQueries";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useToastContext } from "@/components/ui/toast";
@@ -218,37 +217,41 @@ export default function FamilyRegisterNew() {
       } = getValues();
 
       const {confirmPassword, ...account } = accountFormSchema
+      const {email, ...acc} = account
       const dependents = dependentInfoSchema.list
-
+      console.log(acc)
       const data = [
         fatherInfoSchema,
         motherInfoSchema,
         guardianInfoSchema,
         ...dependents
       ].map((info: any) => {
-        const {role, ...per} = info;
-        return JSON.stringify(per) === JSON.stringify(personalInfoSchema) ? 
+        const {role, per_id, ...per} = info;
+        const {per_id: id, ...respondent} = personalInfoSchema;
+        return JSON.stringify(per) === JSON.stringify(respondent) ? 
           {
              per: {
               ...per,
               per_addresses: per.per_addresses.list,
-              per_id: +per.per_id
             }, 
           
             role: role, 
-            acc: account 
+            acc: {
+              ...acc,
+              ...(email !== "" && {email: email})
+            }
           } : { 
             per: {
               ...per,
               per_addresses: per.per_addresses.list,
-              per_id: +per.per_id
             }, 
             role: role 
           }
 
       }).filter((info) => info.per.per_contact !== "")
+      console.log(data)
 
-      addRequest({
+      await addRequest({
         comp: data
       }, {
         onSuccess: () => {
@@ -321,8 +324,9 @@ export default function FamilyRegisterNew() {
         </Text>
         <Button className={`bg-primaryBlue rounded-xl native:h-[45px]`}
           onPress={() => {
-            reset()
             router.replace('/(auth)/loginscreen')
+            resetProgress()
+            reset()
           }}
         >
           <Text className="text-white text-base font-semibold">

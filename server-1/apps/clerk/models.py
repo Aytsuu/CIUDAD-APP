@@ -291,11 +291,13 @@ class SummonTimeAvailability(models.Model):
         managed = False
 
 class ServiceChargePaymentRequest(models.Model):
-    spay_id = models.BigAutoField(primary_key=True)
-    spay_status = models.CharField(max_length=200)
-    spay_due_date = models.DateField(default = default_due_date())
-    spay_date_paid = models.DateTimeField(null = True, blank = True)
-    sr_id = models.OneToOneField('ServiceChargeRequest', on_delete=models.CASCADE, db_column='sr_id')
+    pay_id = models.BigAutoField(primary_key=True)
+    pay_sr_type = models.CharField(max_length=200)
+    pay_status = models.CharField(max_length=200)
+    pay_date_req = models.DateTimeField(default = datetime.now)
+    pay_due_date = models.DateField(default = default_due_date())
+    pay_date_paid = models.DateTimeField(null = True, blank = True)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True)
 
     class Meta:

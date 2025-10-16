@@ -174,7 +174,6 @@ class ComplaintCreateView(APIView):
                     ]
                     ComplaintAccused.objects.bulk_create(complaint_accused)
                 
-                # Handle file uploads using the same pattern as medicine
                 files = request.data.get("files", [])
                 uploaded_files = []
                 
@@ -203,32 +202,37 @@ class ComplaintCreateView(APIView):
 
                 # Create notification
                 try:
+                    # Get all staff with ADMIN position
+                    staff = Staff.objects.filter(pos__pos_title="ADMIN").select_related("rp")
+                    
                     recipients = []
                     
-                    for complainant in complainant_instances:
-                        if not complainant.rp_id:
-                            continue
-                        recipients.append(complainant.rp_id)
-                            
+                    for staff in staff:
+                        if staff.rp:
+                            print(f"Staff RP ID: {staff.rp.rp_id}")
+                            recipients.append(staff.rp)
+                    
+                    print(f"Complaint Data: {complaint}")
+
                     if recipients:
                         create_notification(
-                            title="Complaint Filed Successfully",
-                            message=f"Your complaint regarding {complaint.comp_incident_type} has been successfully filed and is now under review. Complaint ID: {complaint.comp_id}",
+                            title="New Complaint Filed",
+                            message=(
+                                f"A {complaint.comp_incident_type} complaint is awaiting your review. "
+                            ),
                             sender=request.user,
-                            recipients=recipients, 
-                            notif_type="Info",
+                            recipients=recipients,
+                            notif_type="REQUEST",
                             target_obj=complaint,
                         )
-                        logger.info(f"Notifications sent to {len(recipients)} complainants with sender {request.user.acc_id}")
+                        logger.info(
+                            f"Notifications sent to {len(recipients)} ADMIN staff members."
+                        )
                     else:
-                        if not sender_id:
-                            logger.warning("No complainant account found to use as sender")
-                        if not complainant_account_ids:
-                            logger.info("No complainant accounts found for notification")
-                        
+                        logger.warning("No ADMIN staff found to notify.")
+
                 except Exception as notif_error:
                     logger.error(f"Failed to create/send notifications: {notif_error}")
-                    # Don't fail the entire request if notification fails
                 
                 logger.info(f"Complaint created with ID: {complaint.comp_id}")
                 return Response(

@@ -153,16 +153,16 @@ class VerifyWebAccRegistration(APIView):
 #             logger.warning("No refresh token found in response data")   
 #         return res
     
-# class CookieTokenRefreshView(TokenRefreshView):
-#     serializer_class = TokenRefreshSerializer
+class CookieTokenRefreshView(TokenRefreshView):
+    serializer_class = TokenRefreshSerializer
     
-#     def post(self, request, *args, **kwargs):
-#         refresh = request.COOKIES.get('refresh_token')
-#         print("Refresh Token: ", refresh)
+    def post(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get('refresh_token')
+        print("Refresh Token: ", refresh)
         
-#         if not refresh:
-#             return Response({'error': 'Refresh token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
-#         serializer = self.get_serializer(data={'refresh': refresh})
-#         serializer.is_valid(raise_exception=True)
-#         return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        if not refresh:
+            return Response({'error': 'Refresh token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = self.get_serializer(data={'refresh': refresh})
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
 

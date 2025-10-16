@@ -1,31 +1,32 @@
 import { useMutation } from "@tanstack/react-query";
-import { addAccount, addAddress, addPersonal, addPersonalAddress, addRequest } from "../rest-api/authPostAPI";
+import { addAccount, addRequest } from "../rest-api/authPostAPI";
 import { api } from "@/api/api";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
-export const useAddAddress = () => {
-  return useMutation({
-    mutationFn: (data: Record<string, any>[]) => addAddress(data)
-  })
-}
+// export const useAddAddress = () => {
+//   return useMutation({
+//     mutationFn: (data: Record<string, any>[]) => addAddress(data)
+//   })
+// }
 
-export const useAddPerAddress = () => {
-  return useMutation({
-    mutationFn: ({data, staff_id, history_id} : {
-      data: Record<string, any>[], 
-      staff_id?: string,
-      history_id?: string
-    }) => addPersonalAddress(data, staff_id, history_id)
-  })
-}
+// export const useAddPerAddress = () => {
+//   return useMutation({
+//     mutationFn: ({data, staff_id, history_id} : {
+//       data: Record<string, any>[], 
+//       staff_id?: string,
+//       history_id?: string
+//     }) => addPersonalAddress(data, staff_id, history_id)
+//   })
+// }
 
-export const useAddPersonal = () => {
-  return useMutation({
-    mutationFn: (data: Record<string, any>) => addPersonal(data),
-    onSuccess: () => {}
-  })
-}
+// export const useAddPersonal = () => {
+//   return useMutation({
+//     mutationFn: (data: Record<string, any>) => addPersonal(data),
+//     onSuccess: () => {}
+//   })
+// }
 
 export const useAddRequest = () => {
   return useMutation({

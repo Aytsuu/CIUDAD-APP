@@ -5,9 +5,6 @@ import { Search } from "@/lib/icons/Search"
 import { useRouter } from "expo-router"
 import { useState } from "react"
 import ComplaintPending from "./tabs/complaintPending"
-import ComplaintCancelled from "./tabs/complaintCancelled"
-import ComplaintAccepted from "./tabs/complaintAccepted"
-import ComplaintRejected from "./tabs/complaintRejected"
 
 type TabType = "pending" | "accepted" | "rejected" | "cancelled"
 
@@ -26,12 +23,6 @@ export default function ComplaintMainRequest() {
     switch (activeTab) {
       case "pending":
         return <ComplaintPending />
-      case "accepted":
-        return <ComplaintAccepted/>
-      case "rejected":
-        return <ComplaintRejected/>
-      case "cancelled":
-        return <ComplaintCancelled/>
       default:
         return null
     }   

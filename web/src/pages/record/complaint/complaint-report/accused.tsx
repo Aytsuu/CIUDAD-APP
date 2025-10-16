@@ -17,11 +17,11 @@ import { FormInput } from "@/components/ui/form/form-input";
 
 type Resident = {
   rp_id: string;
-  cpnt_name: string;
-  cpnt_gender?: string;
-  cpnt_age?: string;
-  cpnt_number?: string;
-  cpnt_address?: string;
+  name: string;
+  gender?: string;
+  age?: string;
+  number?: string;
+  address?: string;
   [key: string]: any;
 };
 
@@ -74,11 +74,11 @@ export const AccusedInfo = () => {
     setSelectedResident(resident);
     setSelectedResidentValue(residentId);
     setValue(`accused.${activeTab}.rp_id`, resident.rp_id);
-    setValue(`accused.${activeTab}.acsd_name`, resident.cpnt_name);
-    setValue(`accused.${activeTab}.acsd_age`, resident.cpnt_age);
+    setValue(`accused.${activeTab}.acsd_name`, resident.name);
+    setValue(`accused.${activeTab}.acsd_age`, resident.age);
     
     // Format gender to match options
-    const residentGender = resident.cpnt_gender;
+    const residentGender = resident.gender;
     let formattedGender = "";
     if (residentGender) {
       formattedGender = residentGender.charAt(0).toUpperCase() + residentGender.slice(1).toLowerCase();
@@ -86,7 +86,7 @@ export const AccusedInfo = () => {
     setValue(`accused.${activeTab}.acsd_gender`, formattedGender);
     
     setValue(`accused.${activeTab}.acsd_description`, "");
-    setValue(`accused.${activeTab}.acsd_address`, resident.cpnt_address || "");
+    setValue(`accused.${activeTab}.acsd_address`, resident.address || "");
   };
 
   const clearSelection = () => {

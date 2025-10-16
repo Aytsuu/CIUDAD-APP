@@ -29,22 +29,29 @@ export default function IndividualScan() {
     per: Record<string, any>,
     account: Record<string, any>
   ) => {
+    const {email, ...acc} = account;
+    const {per_id, ...new_per} = per;
     try {
       await addRequest(
-        {
-          comp: [
-            {
-              per: {
-                ...capitalizeAllFields(per),
-                per_id: +per.per_id
-              },
-              acc: account,
-              role: "Independent",
+        { comp: [{
+            per: {
+              ...new_per,
             },
-          ],
+            acc: {
+              ...acc,
+              ...(email !== "" && {email: email})
+            },
+            role: "Independent",
+          }],
         },
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            console.log(data)
+            dispatch(setAuthData({ 
+              accessToken: data.access_token, 
+              user: data.user,
+              refreshToken: data.refresh_token 
+            }));
             setShowFeedback(false);
             setTimeout(() => {
               setStatus("success");

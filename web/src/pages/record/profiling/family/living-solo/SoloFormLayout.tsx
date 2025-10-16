@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button/button"
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function SoloFormLayout({ tab_params }: { tab_params?: Record<string, any> }) {
   // ================= STATE INITIALIZATION ==================
@@ -46,17 +47,19 @@ export default function SoloFormLayout({ tab_params }: { tab_params?: Record<str
   const [selectOwnedHouses, setSelectOwnedHouses] = React.useState<boolean>(false);
   const [residentSearch, setResidentSearch] = React.useState<string>("");
   const [houseSearch, setHouseSearch] = React.useState<string>("");
+  const debouncedResidentSearch = useDebounce(residentSearch, 50)
+  const debouncedHouseSearch = useDebounce(houseSearch, 50)
 
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(
     false, // is_staff
     true, // exclude_independent
     true, // is search only
-    residentSearch, //search
+    debouncedResidentSearch, //search
     false // disable query
   )
 
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList(
-    houseSearch
+    debouncedHouseSearch
   )
   const formattedResidents = formatResidents(residentsList)
   const formattedHouseholds = formatHouseholds(householdsList)

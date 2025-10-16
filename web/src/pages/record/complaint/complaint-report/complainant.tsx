@@ -17,12 +17,12 @@ import { Combobox } from "@/components/ui/combobox";
 
 type Resident = {
   rp_id: string;
-  cpnt_name: string;
-  cpnt_gender?: string;
-  cpnt_age?: string;
-  cpnt_number?: string;
+  name: string;
+  gender?: string;
+  age?: string;
+  number?: string;
   cpnt_relation_to_respondent?: string;
-  cpnt_address?: string;
+  address?: string;
   [key: string]: any;
 };
 
@@ -77,7 +77,7 @@ export const ComplainantInfo = () => {
     setSelectedResident(resident);
     setSelectedResidentValue(residentId);
     setValue(`complainant.${activeTab}.rp_id`, resident.rp_id);
-    setValue(`complainant.${activeTab}.cpnt_name`, resident.cpnt_name);
+    setValue(`complainant.${activeTab}.cpnt_name`, resident.name);
     
     // Fix gender mapping - ensure it matches the option values
     const residentGender = resident.cpnt_gender;
@@ -87,10 +87,10 @@ export const ComplainantInfo = () => {
     }
     setValue(`complainant.${activeTab}.cpnt_gender`, formattedGender);
     
-    setValue(`complainant.${activeTab}.cpnt_age`, resident.cpnt_age);
+    setValue(`complainant.${activeTab}.cpnt_age`, resident.age);
     setValue(
       `complainant.${activeTab}.cpnt_number`,
-      resident.cpnt_number || ""
+      resident.number || ""
     );
     setValue(
       `complainant.${activeTab}.cpnt_relation_to_respondent`,
@@ -98,7 +98,7 @@ export const ComplainantInfo = () => {
     );
     setValue(
       `complainant.${activeTab}.cpnt_address`,
-      resident.cpnt_address || ""
+      resident.address || ""
     );
   };
 

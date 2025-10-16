@@ -1,8 +1,9 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   TouchableOpacity, 
   View, 
-  Text, 
+  Text,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -13,6 +14,7 @@ import PageLayout from "@/screens/_PageLayout";
 import ComplaintDetails from "./complaintDetails";
 import { ComplaintData } from "./types";
 import CaseTracking from "./caseTracking";
+import { useGetComplaintById } from "../../api-operations/queries/ComplaintGetQueries";
 
 interface TabButtonProps {
   title: string;
@@ -22,23 +24,60 @@ interface TabButtonProps {
 
 type TabType = 'details' | 'tracking';
 
+interface ComplaintParams {
+  complaint?: string;
+  comp_id?: string;
+}
+
 export default function ComplaintMainView(): JSX.Element {
   const router = useRouter();
-  const { complaint } = useLocalSearchParams<{ complaint: string }>();
+  const params = useLocalSearchParams() as ComplaintParams;
   
   // State
   const [activeTab, setActiveTab] = useState<TabType>('details');
+  const [complaintData, setComplaintData] = useState<ComplaintData | null>(null);
 
-  // Parse complaint data
-  const data: ComplaintData | null = complaint ? JSON.parse(complaint) : null;
+  // Load complaint from params (if passed directly)
+  useEffect(() => {
+    if (params.complaint) {
+      try {
+        const parsed: ComplaintData = JSON.parse(params.complaint);
+        setComplaintData(parsed);
+        console.log('✅ Complaint data loaded from params');
+      } catch (error) {
+        console.error('❌ Error parsing complaint data:', error);
+      }
+    }
+  }, [params.complaint]);
 
-  // Tab Button Component - Updated to match DriverTasksMain style
+  // Determine if we need to fetch
+  const shouldFetch = !complaintData && !!params.comp_id;
+
+  // Fetch complaint by ID if needed
+  const { 
+    data: fetchedComplaint, 
+    isLoading, 
+    isError,
+    error 
+  } = useGetComplaintById(params.comp_id || '', { 
+    enabled: shouldFetch 
+  });
+
+  // Update state when fetched
+  useEffect(() => {
+    if (fetchedComplaint) {
+      setComplaintData(fetchedComplaint as ComplaintData);
+    }
+  }, [fetchedComplaint]);
+
+  // Loading state
+  const isDataLoading = isLoading || (!complaintData && shouldFetch);
+
+  // Tab Button Component
   const TabButton: React.FC<TabButtonProps> = ({ title, isActive, onPress }) => (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-1 py-4 items-center border-b-2 ${
-        isActive ? "border-blue-500" : "border-transparent"
-      }`}
+      className={`flex-1 py-4 items-center border-b-2 ${isActive ? "border-blue-500" : "border-transparent"}`}
     >
       <Text className={`font-medium ${isActive ? "text-blue-600" : "text-gray-500"}`}>
         {title}
@@ -46,24 +85,65 @@ export default function ComplaintMainView(): JSX.Element {
     </TouchableOpacity>
   );
 
-  // Render Error State
-  if (!data) {
+  // Shared Header Actions
+  const LeftHeader = (
+    <TouchableOpacity
+      onPress={() => router.back()}
+      className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+    >
+      <ChevronLeft size={20} color="#374151" />
+    </TouchableOpacity>
+  );
+
+  const RightHeader = <View className="w-10 h-10" />;
+
+  // Render Loading State
+  if (isDataLoading) {
     return (
       <PageLayout
-        leftAction={
+        leftAction={LeftHeader}
+        headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
+        rightAction={RightHeader}
+      >
+        <View className="flex-1 justify-center items-center bg-gray-50">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="text-gray-500 text-center mt-4 font-PoppinsRegular">
+            Loading complaint details...
+          </Text>
+        </View>
+      </PageLayout>
+    );
+  }
+
+  // Render Error / No Data State
+  if (!complaintData) {
+    const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+    
+    return (
+      <PageLayout
+        leftAction={LeftHeader}
+        headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
+        rightAction={RightHeader}
+      >
+        <View className="flex-1 justify-center items-center px-4 bg-gray-50">
+          <View className="w-16 h-16 bg-red-50 rounded-full items-center justify-center mb-4">
+            <AlertCircle size={32} color="#EF4444" />
+          </View>
+          <Text className="text-gray-900 font-PoppinsSemiBold text-lg">
+            {isError ? "Failed to load complaint" : "No complaint data available"}
+          </Text>
+          <Text className="text-gray-500 text-center mt-2 font-PoppinsRegular px-8">
+            {isError 
+              ? errorMessage 
+              : "The complaint you're looking for doesn't exist or couldn't be loaded."}
+          </Text>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+            className="mt-6 bg-blue-500 px-8 py-3 rounded-xl shadow-sm"
+            activeOpacity={0.8}
           >
-            <ChevronLeft size={20} className="text-gray-600" />
+            <Text className="text-white font-PoppinsSemiBold">Go Back</Text>
           </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
-        rightAction={<View className="w-10 h-10" />}
-      >
-        <View className="flex-1 justify-center items-center">
-          <AlertCircle size={48} className="text-gray-400 mb-4" />
-          <Text className="text-gray-500 text-center">No complaint data available</Text>
         </View>
       </PageLayout>
     );
@@ -72,19 +152,12 @@ export default function ComplaintMainView(): JSX.Element {
   // Main Render
   return (
     <PageLayout
-      leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
-        >
-          <ChevronLeft size={20} className="text-gray-600" />
-        </TouchableOpacity>
-      }
+      leftAction={LeftHeader}
       headerTitle={<Text className="text-gray-900 font-medium">Complaint View</Text>}
-      rightAction={<View className="w-10 h-10" />}
+      rightAction={RightHeader}
     >
       <View className="flex-1 bg-gray-50">
-        {/* Tab Navigation - Updated to match DriverTasksMain style */}
+        {/* Tab Navigation */}
         <View className="bg-white border-b border-gray-200">
           <View className="flex-row">
             <TabButton
@@ -103,9 +176,12 @@ export default function ComplaintMainView(): JSX.Element {
         {/* Tab Content */}
         <View className="flex-1">
           {activeTab === 'details' ? (
-            <ComplaintDetails data={data} />
+            <ComplaintDetails data={complaintData} />
           ) : (
-            <CaseTracking comp_id = {String(data.comp_id)} isRaised={data.comp_status}/>
+            <CaseTracking 
+              comp_id={String(complaintData.comp_id)} 
+              isRaised={complaintData.comp_status}
+            />
           )}
         </View>
       </View>

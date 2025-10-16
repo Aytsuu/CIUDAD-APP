@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-// import { useNotifications } from "@/context/NotificationContext";
 import { usePostComplaint } from "../api-operations/queries/complaintPostQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -32,8 +31,6 @@ export const ComplaintForm = () => {
   const postComplaint = usePostComplaint();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
-  // const { send } = useNotifications();
   const navigate = useNavigate();
 
   const methods = useForm<ComplaintFormData>({
@@ -106,30 +103,11 @@ export const ComplaintForm = () => {
         comp_datetime: data.incident.comp_datetime,
         files: data.files || [],
       };
-
       console.log("Payload to submit:", payload);
-
-      // If you need to log files specifically
-      if (payload.files.length > 0) {
-        console.log("Files to upload:", payload.files);
-        payload.files.forEach((fileItem: any, index: number) => {
-          if (fileItem && fileItem.file) {
-            console.log(
-              `File ${index}:`,
-              fileItem.file.name,
-              fileItem.file.type,
-              fileItem.file.size
-            );
-          } else {
-            console.warn(`File ${index} is not a File object:`, fileItem);
-          }
-        });
-      }
 
       const response = await postComplaint.mutateAsync(payload);
 
       if (response) {
-        // await handleSendAlert();
         const successMessage = response.comp_id
           ? `Complaint #${response.comp_id} submitted successfully`
           : "Complaint submitted successfully";
@@ -150,23 +128,6 @@ export const ComplaintForm = () => {
       setIsSubmitting(false);
     }
   };
-
-  // const handleSendAlert = async () => {
-  //   try {
-  //     await send({
-  //       title: "Complaint Report Filed",
-  //       message: "Your complaint has been submitted and is now being processed",
-  //       recipient_ids: [user?.acc_id || ""],
-  //       metadata: {
-  //         action_url: `complaint/${user?.acc_id}/`,
-  //         sender_name: "Barangay System",
-  //         sender_avatar: `${user?.profile_image}` || "",
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Error sending notification:", error);
-  //   }
-  // };
 
   const confirmSubmit = () => {
     const formData = methods.getValues();

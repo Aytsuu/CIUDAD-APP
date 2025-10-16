@@ -149,7 +149,6 @@ const staffMembers = [
 ]
 
 export default function Health() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [appointmentForm, setAppointmentForm] = useState({
     name: "",
     phone: "",

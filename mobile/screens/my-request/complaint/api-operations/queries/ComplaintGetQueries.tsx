@@ -16,14 +16,30 @@ export const getComplaintLists = () => {
   });
 };
 
-export const useGetComplaintById = (id: string) => {
+export const useGetComplaintById = (complaintId: string, options?: { enabled?: boolean }) => {
   return useQuery({
-    queryKey: ["complaint", id],
+    queryKey: ["complaint", complaintId],
     queryFn: async () => {
       try {
-        const res = await api.get(`complaint/${id}`, {
-          params: {id},
+        const res = await api.get(`complaint/view/`, {
+          params: { comp_id: complaintId }  
         });
+        return res.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    staleTime: 5000,
+    enabled: options?.enabled !== false && !!complaintId, 
+  });
+};
+
+export const useGetComplaintView = () => {
+  return useQuery({
+    queryKey: ["complaint"],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`complaint/view/`);
         return res.data;
       } catch (error) {
         throw error;

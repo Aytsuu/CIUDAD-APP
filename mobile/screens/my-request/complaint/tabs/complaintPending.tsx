@@ -9,7 +9,7 @@ import { getComplaintLists } from "../api-operations/queries/ComplaintGetQueries
 import { useRouter } from "expo-router";
 
 export default function ComplaintPending() {
-  const { data, isLoading, error } = getComplaintLists();
+  const { data: complaint, isLoading, error } = getComplaintLists();
   const router = useRouter();
 
   if (isLoading)
@@ -32,7 +32,7 @@ export default function ComplaintPending() {
       </View>
     );
 
-  const complaints = data || [];
+  const complaints = complaint || [];
 
   const handleCancelRequests = (id: number) => {};
 
@@ -73,15 +73,6 @@ export default function ComplaintPending() {
 
                 {/* Details Section */}
                 <View className="space-y-3">
-                  <View>
-                    {/* <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                      Accused Person
-                    </Text>
-                    <Text className="text-base text-gray-900">
-                      {item.acsd_name || "Not specified"}
-                    </Text> */}
-                  </View>
-
                   <View>
                     <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                       Location

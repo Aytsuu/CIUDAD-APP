@@ -1,14 +1,17 @@
 import { api } from "@/api/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ComplaintPayload} from "@/form-schema/complaint-schema";
 
 export const usePostComplaint = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const res = await api.post("complaint/create/", formData);
+    mutationFn: async (payload: ComplaintPayload) => {
+      const res = await api.post("complaint/create/", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return res.data;
     },
     onSuccess: () => {

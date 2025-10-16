@@ -28,12 +28,11 @@ import { getDateTimeFormat } from "@/helpers/dateHelpers";
 import { useAuth } from "@/contexts/AuthContext";
 
 
-export default function AnnouncementListPage() {
+export default () => {
   const router = useRouter();
   const { user } = useAuth();
 
   const staff_id = user?.staff?.staff_id
-
 
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [search, setSearch] = React.useState("");

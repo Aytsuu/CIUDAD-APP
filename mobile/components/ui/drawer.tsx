@@ -1,6 +1,7 @@
-import React from "react"
-import { Animated, Dimensions, Modal, ScrollView, TouchableOpacity, View, Text } from "react-native"
-import { Ionicons } from '@expo/vector-icons'; 
+// components/ui/drawer.tsx
+import React from "react";
+import { Animated, Dimensions, Modal, TouchableOpacity, View, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export const Drawer = ({
   children,
@@ -8,15 +9,19 @@ export const Drawer = ({
   description,
   visible,
   onClose,
+  showCloseButton = true,
+  showHeaderSpacing = true,
 }: {
   header?: React.ReactNode;
   description?: React.ReactNode;
   children: React.ReactNode;
   visible: boolean;
   onClose: () => void;
+  showCloseButton?: boolean;
+  showHeaderSpacing?: boolean;
 }) => {
-  const { height: screenHeight } = Dimensions.get("window")
-  const slideAnim = React.useRef(new Animated.Value(screenHeight)).current
+  const { height: screenHeight } = Dimensions.get("window");
+  const slideAnim = React.useRef(new Animated.Value(screenHeight)).current;
 
   React.useEffect(() => {
     if (visible) {
@@ -25,32 +30,30 @@ export const Drawer = ({
         useNativeDriver: true,
         tension: 5,
         friction: 20,
-      }).start()
+      }).start();
     } else {
       Animated.timing(slideAnim, {
         toValue: screenHeight,
         duration: 250,
         useNativeDriver: true,
-      }).start()
+      }).start();
     }
-  }, [visible])
+  }, [visible]);
 
-  const handleClose = () => {
-    onClose();
-  }
+  const handleClose = () => onClose();
 
   return (
-    <Modal 
-      visible={visible} 
-      transparent 
-      animationType="none" 
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
       onRequestClose={handleClose}
       statusBarTranslucent
     >
       {/* Backdrop */}
-      <TouchableOpacity 
-        className="flex-1 bg-black/50" 
-        activeOpacity={1} 
+      <TouchableOpacity
+        className="flex-1 bg-black/50"
+        activeOpacity={1}
         onPress={handleClose}
       >
         {/* Drawer Container */}
@@ -69,22 +72,32 @@ export const Drawer = ({
             </View>
 
             {/* Drawer Header */}
-            <View className="px-6 mb-4">
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-lg font-PoppinsSemiBold text-gray-900">
-                  {header}
-                </Text>
-                <TouchableOpacity 
-                  onPress={handleClose}
-                  className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+            {(header || description) && (
+              <View className="px-6 mb-4">
+                <View
+                  className={showHeaderSpacing ? "flex-row justify-between items-center mb-2" : "mb-2"}
                 >
-                  <Ionicons name="close" size={20} color="#6B7280" />
-                </TouchableOpacity>
+                  <Text className="text-lg font-PoppinsSemiBold text-gray-900">
+                    {header}
+                  </Text>
+
+                  {showCloseButton && (
+                    <TouchableOpacity
+                      onPress={handleClose}
+                      className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                    >
+                      <Ionicons name="close" size={20} color="#6B7280" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {description && (
+                  <Text className="text-sm font-PoppinsRegular text-gray-600">
+                    {description}
+                  </Text>
+                )}
               </View>
-              <Text className="text-sm font-PoppinsRegular text-gray-600">
-                {description}
-              </Text>
-            </View>
+            )}
 
             {/* Drawer Content */}
             {children}
@@ -92,5 +105,5 @@ export const Drawer = ({
         </Animated.View>
       </TouchableOpacity>
     </Modal>
-  )
-}
+  );
+};

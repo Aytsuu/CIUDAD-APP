@@ -21,7 +21,8 @@ export default () => ({
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
-      package: "com.aytsuu.mobile"
+      package: "com.aytsuu.mobile",
+      "googleServicesFile": "./google-services.json",
     },
     web: {
       bundler: "metro",
@@ -61,7 +62,9 @@ export default () => ({
           savePhotosPermission: "Allow $(PRODUCT_NAME) to save photos.",
           isAccessMediaLocationEnabled: true
         }
-      ]
+      ],
+      "./expo-notifee-plugin.js",
+      "@react-native-firebase/app",
     ],
     experiments: {
       typedRoutes: true
