@@ -8,6 +8,7 @@ import { useReportSectionCards } from "@/components/analytics/report/report-sect
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
@@ -21,10 +22,11 @@ export default function Dashboard() {
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
   const wasteCards = useWastePersonnelSectionCards();
+  const garbCards = useGarbagePickupSectionCards();
   const donationCards = useDonationSectionCards();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards]
   );
 
   const validateFeature = (feature: string) => {

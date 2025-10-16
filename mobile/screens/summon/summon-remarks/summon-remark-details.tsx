@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Users, User, FileText, Calendar } from "lucide-react-native"
 import { useGetSummonCaseDetails } from "../queries/summonFetchQueries"
 import { formatTimestamp } from "@/helpers/timestampformatter"
+import { formatDate } from "@/helpers/dateHelpers"
+import { formatTime } from "@/helpers/timeFormatter"
 
 export default function SummonRemarkDetails(){
     const router = useRouter()
@@ -173,18 +175,126 @@ export default function SummonRemarkDetails(){
     )
 
     // Hearing Schedule Tab Content
-    const HearingScheduleTab = () => (
-        <View className="flex-1 justify-center items-center p-6">
-            <Calendar size={48} className="text-gray-300 mb-4" />
-            <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                Hearing Schedule
-            </Text>
-            <Text className="text-gray-400 text-center text-sm">
-                Hearing schedule information will be displayed here
-            </Text>
-            {/* You can replace this with your actual hearing schedule component */}
-        </View>
-    )
+    const HearingScheduleTab = () => {
+            const hearingSchedules = details?.hearing_schedules || [];
+
+            if (hearingSchedules.length === 0) {
+                return (
+                    <View className="flex-1 justify-center items-center p-6">
+                        <Calendar size={48} className="text-gray-300 mb-4" />
+                        <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                            No Hearing Schedules
+                        </Text>
+                        <Text className="text-gray-400 text-center text-sm">
+                            No hearing schedules have been created for this case yet.
+                        </Text>
+                    </View>
+                );
+            }
+
+            return (
+                <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                    <View className="p-6">
+                        {hearingSchedules.map((schedule: any, index: number) => (
+                            <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-3">
+                                <CardContent className="p-4">
+                                    {/* Header with Hearing Level and Status */}
+                                    <View className="flex-row justify-between items-start mb-3">
+                                        <View className="flex flex-row items-center gap-3">
+                                            <Text className="text-md font-bold text-gray-900">
+                                                {schedule.hs_level}
+                                            </Text>
+                                            <View className="flex-row items-center space-x-2">
+                                                <View className={`px-2 py-1 rounded-full ${
+                                                    schedule.hs_is_closed
+                                                        ? "bg-orange-100 border border-orange-200"
+                                                        : "bg-green-100 border border-green-200"
+                                                }`}> 
+                                                    <Text className={`text-xs font-medium ${
+                                                        schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
+                                                    }`}>
+                                                        {schedule.hs_is_closed ? "Closed" : "Open"}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    {/* Hearing Date and Time */}
+                                    <View className="space-y-2 mb-3">
+                                        <View className="flex-row justify-between items-center">
+                                            <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
+                                            <Text className="text-sm font-semibold text-gray-900">
+                                                {formatDate(schedule.summon_date?.sd_date, "long")},  {formatTime(schedule.summon_time?.st_start_time)}
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Remarks Section */}
+                                    <View className="border-t border-gray-100 pt-3">
+                                        {schedule.remark && schedule.remark.rem_id ? (
+                                            <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                                <View className="flex-row justify-between items-start mb-2">
+                                                    <Text className="text-sm font-semibold text-blue-800">
+                                                        Remarks Added
+                                                    </Text>
+                                                    <Text className="text-xs text-blue-600">
+                                                        {formatTimestamp(schedule.remark.rem_date)}
+                                                    </Text>
+                                                </View>
+                                                <Text className="text-sm text-gray-700 mb-2">
+                                                    {schedule.remark.rem_remarks}
+                                                </Text>
+                                                {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
+                                                    <View className="mt-2">
+                                                        <Text className="text-xs font-medium text-gray-600 mb-1">
+                                                            Attached Files ({schedule.remark.supp_docs.length})
+                                                        </Text>
+                                                        <View className="space-y-1">
+                                                            {schedule.remark.supp_docs.map((doc: any, docIndex: number) => (
+                                                                <Text key={docIndex} className="text-xs text-gray-500">
+                                                                    • {doc.name || "Unnamed file"}
+                                                                </Text>
+                                                            ))}
+                                                        </View>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        ) : (
+                                            <View className="bg-red-50 rounded-lg p-3 border border-red-200">
+                                                <View className="flex-row items-center space-x-2">
+                                                    <Text className="text-sm font-semibold text-red-800">
+                                                        No Remarks Available
+                                                    </Text>
+                                                </View>
+                                                <Text className="text-xs text-red-600 mt-1">
+                                                    Add remarks to close this hearing schedule
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
+
+                                    {/* Action Button */}
+                                    {!schedule.remark && (
+                                        <TouchableOpacity 
+                                            className="mt-3 bg-blue-600 py-2 px-4 rounded-lg"
+                                            onPress={() => {
+                                                // You can add navigation to add remarks form here
+                                                console.log('Add remarks for schedule:', schedule.hs_id);
+                                            }}
+                                        >
+                                            <Text className="text-white text-sm font-semibold text-center">
+                                                Add Remarks
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </View>
+                </ScrollView>
+            );
+        };
 
     // Complaint Record Tab Content
     const ComplaintRecordTab = () => (
@@ -217,7 +327,7 @@ export default function SummonRemarkDetails(){
                     </TouchableOpacity>
                 }
                 wrapScroll={false}
-                headerTitle={<Text className="text-gray-900 text-[13px]">Case {sc_code}</Text>}
+                headerTitle={<Text className="text-gray-900 text-[13px]">Case No. {sc_code}</Text>}
             >
                 <View className="flex-1 bg-gray-50">
                     {/* Tabs */}

@@ -13,6 +13,7 @@ import { VaccineDistributionChart } from "@/components/analytics/health/vaccine-
 import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report"; 
 import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar"; 
@@ -30,6 +31,7 @@ export const getItemsConfig = (
   healthCards: ReturnType<typeof useHealthServicesSectionCards>,
   wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
   donationCards: ReturnType<typeof useDonationSectionCards>,
+  garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -47,6 +49,7 @@ export const getItemsConfig = (
     maternal,
   } = healthCards;
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
+  const {accepted, rejected, completed, pending} = garbCards;
   const { cashDonations } = donationCards;
 
   if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
@@ -137,7 +140,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles], 
+        card: [driverLoaders, wasteLoaders, collectionVehicles, accepted, rejected, completed, pending], 
       },
     ];
   }

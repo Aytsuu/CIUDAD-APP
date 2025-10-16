@@ -96,7 +96,6 @@ const SummonCaseCard = React.memo(({ item }: { item: SummonCaseList }) => {
     return (
         <TouchableOpacity  onPress={() => handleViewDetails()}
             activeOpacity={0.8}
-            className="mb-3"
         >
             <Card className="border-2 border-gray-200 shadow-sm bg-white mb-3">
                 <CardHeader className="pb-3">
