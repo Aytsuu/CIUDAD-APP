@@ -126,7 +126,7 @@ export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_ty
 }
 
 
-export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, status_type: string, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addRemarks = async (hs_id: string, st_id: string | number, sc_id: string, remarks: string, close: boolean, status_type: string, files: { name: string | undefined; type: string | undefined; file: string | undefined }[]) => {
     try{
 
         // insert the remark

@@ -48,6 +48,18 @@ export default function SummonRemarkDetails(){
         }
     };
 
+    const handleAddRemarks = (hs_id: string, st_id: string, sc_id: string, schedCount: number) => {
+        router.push ({
+            pathname: "/(summon)/add-remarks", 
+            params: {
+                sc_id,
+                hs_id,
+                st_id,
+                schedCount
+            }
+        })
+    }
+
    
     if(isLoading){
         return (
@@ -278,10 +290,7 @@ export default function SummonRemarkDetails(){
                                     {!schedule.remark && (
                                         <TouchableOpacity 
                                             className="mt-3 bg-blue-600 py-2 px-4 rounded-lg"
-                                            onPress={() => {
-                                                // You can add navigation to add remarks form here
-                                                console.log('Add remarks for schedule:', schedule.hs_id);
-                                            }}
+                                            onPress={() => handleAddRemarks(schedule.hs_id, schedule.st_id, schedule.sc_id, hearingSchedules.length)}
                                         >
                                             <Text className="text-white text-sm font-semibold text-center">
                                                 Add Remarks

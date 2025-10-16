@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleCheck } from "lucide-react";
 import { addHearingMinutes, addSummonDate, addSummonTimeSlots, addSchedule, addRemarks } from "../requestAPI/summonPostAPI";
 import z from "zod"
 import SummonSchema from "@/form-schema/summon-schema";
 import { useToastContext } from "@/components/ui/toast";
+import { useRouter } from "expo-router";
 
 
 export const useAddSummonSchedule = (onSuccess?: () => void) => {
@@ -103,6 +103,7 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
 export const useAddRemarks = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     const {toast} = useToastContext()
+    const router = useRouter()
 
     return useMutation({
         mutationFn: async (data: {
@@ -112,7 +113,7 @@ export const useAddRemarks = (onSuccess?: () => void) => {
             remarks: string;
             close: boolean
             status_type: string;
-            files: { name: string; type: string; file: string | undefined}[];
+            files: { name: string | undefined; type: string | undefined; file: string | undefined}[];
         }) => {
             return addRemarks(data.hs_id, data.st_id, data.sc_id, data.remarks, data.close, data.status_type, data.files);
         },
@@ -123,6 +124,7 @@ export const useAddRemarks = (onSuccess?: () => void) => {
 
             toast.success('Remarks added successfully!')
             onSuccess?.();
+            router.back()
         },
         onError: (err: Error) => {
             console.error("Upload error:", err);

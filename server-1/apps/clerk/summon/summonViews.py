@@ -8,6 +8,7 @@ from apps.pagination import StandardResultsPagination
 from apps.treasurer.serializers import Purpose_And_RatesSerializers
 from apps.treasurer.models import Purpose_And_Rates
 
+
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
 class LuponCasesView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -199,6 +200,7 @@ class UpdateSummonCaseView(generics.UpdateAPIView):
     
 
 class HearingScheduleView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = HearingScheduleSerializer
     queryset = HearingSchedule.objects.all()
 
@@ -208,6 +210,7 @@ class HearingMinutesCreateView(generics.ListCreateAPIView):
     queryset = HearingMinutes.objects.all()
 
 class UpdateHearingScheduleView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = HearingScheduleSerializer
     queryset = HearingSchedule.objects.all()
     lookup_field = 'hs_id'
@@ -236,25 +239,30 @@ class HearingScheduleListView(generics.ListAPIView):
         ).order_by('sd_id__sd_date', 'st_id__st_start_time')
     
 class RemarkView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = RemarkSerializer
     queryset = Remark.objects.all()
 
 class RemarkSuppDocCreateView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = RemarkSuppDocCreateSerializer
     queryset = RemarkSuppDocs.objects.all()
 
 # ======================== SUMMON DATE AND TIME ========================
 class SummonDateAvailabilityView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = SummonDateAvailabilitySerializer
     queryset = SummonDateAvailability.objects.all()
 
 
 class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = SummonDateAvailability.objects.all()
     serializer_class = SummonDateAvailabilitySerializer
     lookup_field = 'sd_id'
 
 class SummonTimeAvailabilityView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = SummonTimeAvailabilitySerializer
     queryset = SummonTimeAvailability.objects.all()
 
@@ -269,6 +277,7 @@ class SummonTimeAvailabilityView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
 class SummonTimeAvailabilityByDateView(generics.ListAPIView):
+    permission_classes = [AllowAny]
     serializer_class = SummonTimeAvailabilitySerializer
 
     def get_queryset(self):
@@ -279,12 +288,14 @@ class SummonTimeAvailabilityByDateView(generics.ListAPIView):
         return queryset
 
 class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = SummonTimeAvailability.objects.all()
     serializer_class = SummonTimeAvailabilitySerializer
     lookup_field = 'st_id'
 
 
 class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = SummonTimeAvailabilitySerializer
     queryset = SummonTimeAvailability.objects.all()
     lookup_field = 'st_id'
@@ -300,6 +311,7 @@ class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
 # =================== PAYMENT REQ =========================
 
 class ServiceChargePaymentReqView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ServiceChargePaymentReqSerializer
     queryset = ServiceChargePaymentRequest.objects.all()
 
