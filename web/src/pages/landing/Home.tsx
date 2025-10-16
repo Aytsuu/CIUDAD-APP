@@ -1,4 +1,3 @@
-import Demo1 from "@/assets/demo/demo-1.webp";
 import SanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { Label } from "@/components/ui/label";
 import Autoplay from "embla-carousel-autoplay";
@@ -8,10 +7,11 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { MediaUploadType } from "@/components/ui/media-upload";
 
-export default function Home() {
+export default function Home({ carousel }: { carousel: MediaUploadType }) {
   const plugin = React.useRef(
-    Autoplay({ delay: 10000, stopOnInteraction: true })
+    Autoplay({ delay: 5000, stopOnInteraction: true })
   );
 
   return (
@@ -25,20 +25,15 @@ export default function Home() {
           className="w-full h-full"
         >
           <CarouselContent>
-            <CarouselItem key={1} className="basis-full p-0">
-              <img
-                src={Demo1}
-                className="w-full h-full object-cover"
-                alt="Barangay landscape"
-              />
-            </CarouselItem>
-            <CarouselItem key={2} className="basis-full p-0">
-              <img
-                src={Demo1}
-                className="w-full h-full object-cover"
-                alt="Barangay landscape"
-              />
-            </CarouselItem>
+            {carousel.map((file: any) => (
+              <CarouselItem key={file.name} className="basis-full p-0">
+                <img
+                  src={file.url}
+                  className="w-full h-full object-cover"
+                  alt="Barangay landscape"
+                />
+              </CarouselItem>
+            ))}
           </CarouselContent>
         </Carousel>
       </div>
@@ -51,7 +46,7 @@ export default function Home() {
         <div className="w-full max-w-7xl flex justify-between items-center gap-12">
           {/* Text Content */}
           <div className="flex-1 flex flex-col">
-            <div className="flex items-center gap-4 border-b border-white/30 pb-6 mb-10">
+            <div className="flex items-center gap-4">
               <div className="flex flex-col text-white">
                 <Label className="text-2xl font-poppins font-medium">
                   BARANGAY SAN ROQUE (CIUDAD)
@@ -61,6 +56,14 @@ export default function Home() {
                 </Label>
               </div>
             </div>
+
+            <div
+              className="w-24 h-1 rounded-full mt-6 mb-14"
+              style={{
+                background:
+                  "linear-gradient(to right, #3b82f6, #ef4444, #eab308)",
+              }}
+            />
 
             <h1 className="text-7xl font-poppins font-bold text-white mb-8 leading-tight">
               Welcome to Our Barangay

@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import React from "react";
 import BackgroundPHMap from "@/assets/background/background-ph-map.svg";
 import SanRoqueMap from "./SanRoqueMap";
 
-export default function About() {
-  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
-  const [isQuoteVisible, setIsQuoteVisible] = useState(false);
-  const [isMapVisible, setIsMapVisible] = useState(false);
-  const [isCardsVisible, setIsCardsVisible] = useState(false);
+export default function About({data} : {
+  data: Record<string, any>
+}) {
+  const [isHeaderVisible, setIsHeaderVisible] = React.useState<boolean>(false);
+  const [isQuoteVisible, setIsQuoteVisible] = React.useState<boolean>(false);
+  const [isMapVisible, setIsMapVisible] = React.useState<boolean>(false);
+  const [isCardsVisible, setIsCardsVisible] = React.useState<boolean>(false);
 
-  const headerRef = useRef<HTMLDivElement>(null);
-  const quoteRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
+  const headerRef = React.useRef<HTMLDivElement | null>(null);
+  const quoteRef = React.useRef<HTMLDivElement | null>(null);
+  const mapRef = React.useRef<HTMLDivElement | null>(null);
+  const cardsRef = React.useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const observerOptions = {
       threshold: 0.1,
       rootMargin: "0px 0px -50px 0px",
@@ -79,7 +81,7 @@ export default function About() {
         <div className="text-center flex flex-col items-center mb-16">
           <div
             ref={headerRef}
-            className={`transition-all duration-700 ${
+            className={`transition-all duration-500 ${
               isHeaderVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
@@ -93,32 +95,31 @@ export default function About() {
 
           <div
             ref={quoteRef}
-            className={`flex gap-16 transition-all duration-700 delay-200 ${
+            className={`flex gap-16 transition-all duration-500 delay-200 ${
               isQuoteVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
             }`}
           >
             <p className="text-xl md:text-2xl max-w-2xl mx-auto leading-relaxed text-gray-700 mt-16">
-              "We take pride in our dedication to serve every resident through
-              accessible programs, responsive public services, and active
-              community engagement."
+              {data?.quote}
             </p>
             <div className="mb-4">
               <img
-                src=""
+                src={data?.cpt_photo}
                 alt="Barangay Captain"
                 className="w-[250px] h-[250px] bg-gray-200 rounded-lg"
               />
-              <p className="text-lg font-medium mt-4">Barangay Captain</p>
+              <p className="text-lg font-medium mt-4 underline">{data?.cpt_name || "SCHNEIDER MALAKIHIN"}</p>
+              <p className="text-lg text-gray-700">Barangay Captain</p>
             </div>
           </div>
         </div>
 
-        <div className="w-full flex flex-col items-center mt-8 gap-6">
+        <div className="w-full flex flex-col items-center mt-8 gap-16">
           <div
             ref={mapRef}
-            className={`w-4/5 transition-all duration-700 delay-300 ${
+            className={`w-4/5 transition-all duration-500 delay-300 ${
               isMapVisible
                 ? "opacity-100 scale-100"
                 : "opacity-0 scale-95"
@@ -129,7 +130,7 @@ export default function About() {
 
           <div
             ref={cardsRef}
-            className={`w-4/5 grid md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-700 delay-500 ${
+            className={`w-4/5 grid md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500 delay-500 ${
               isCardsVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
@@ -142,8 +143,7 @@ export default function About() {
             >
               <h3 className="text-xl font-semibold mb-3">Our Mission</h3>
               <p className="text-gray-600">
-                Building a stronger, more connected community through innovative
-                digital solutions and responsive governance.
+                {data?.mission}
               </p>
             </div>
 
@@ -154,8 +154,7 @@ export default function About() {
             >
               <h3 className="text-xl font-semibold mb-3">Our Vision</h3>
               <p className="text-gray-600">
-                A progressive barangay where technology empowers citizens and
-                transparency builds trust.
+                {data?.vision}
               </p>
             </div>
 
@@ -166,8 +165,7 @@ export default function About() {
             >
               <h3 className="text-xl font-semibold mb-3">Our Values</h3>
               <p className="text-gray-600">
-                Integrity, service, innovation, and community-centered
-                governance in everything we do.
+                {data?.values}
               </p>
             </div>
           </div>

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Plus, Search, FileText, Pen, Trash, Megaphone } from "lucide-react";
+import { Search, Megaphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -30,6 +29,12 @@ function AnnouncementTracker() {
   const [selected, setSelected] = React.useState<Record<string, any> | null>(
     null
   );
+
+  const [isHeaderVisible, setIsHeaderVisible] = React.useState<boolean>(false);
+  const [isMainContentVisibile, setIsMainContentVisible] =
+    React.useState<boolean>(false);
+  const headerRef = React.useRef<HTMLDivElement | null>(null);
+  const mainContentRef = React.useRef<HTMLDivElement | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
@@ -64,10 +69,43 @@ function AnnouncementTracker() {
     return isPastWeek ? formatDate(posted, "short") : timeAgo;
   };
 
+  React.useEffect(() => {
+    const headerObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setIsHeaderVisible(true);
+        }
+      });
+    });
+
+    const mainContentObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setIsMainContentVisible(true);
+        }
+      });
+    });
+
+    if (headerRef.current) headerObserver.observe(headerRef.current);
+    if (mainContentRef.current)
+      mainContentObserver.observe(mainContentRef.current);
+
+    return () => {
+      headerObserver.disconnect(), mainContentObserver.disconnect();
+    };
+  }, []);
+
   return (
     <section className="relative w-full h-full bg-white py-16 overflow-hidden">
       <div className="container mx-auto px-8">
-        <div className="w-4/5 mx-auto text-darkBlue1 mb-8 gap-3">
+        <div
+          ref={headerRef}
+          className={`w-4/5 mx-auto text-darkBlue1 mb-8 gap-3 transition-all duration-700 ${
+            isHeaderVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+        >
           <p className="text-3xl font-bold">Public Announcements</p>
           <p className="text-base text-darkBlue2">
             Stay informed with the latest updates, activities, and public
@@ -75,7 +113,16 @@ function AnnouncementTracker() {
           </p>
         </div>
 
-        <div className={`w-4/5 mx-auto rounded-lg border ${totalPages > 0 ? "h-[750px]" : "h-[300px]"} border-gray-200 shadow-md mb-6 overflow-hidden`}>
+        <div
+          ref={mainContentRef}
+          className={`w-4/5 mx-auto rounded-lg border ${
+            totalPages > 0 ? "h-[750px]" : "h-[300px]"
+          } border-gray-200 shadow-md mb-6 overflow-hidden transition-all duration-700 ${
+            isMainContentVisibile
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+        >
           {totalPages > 0 && (
             <>
               <div className="flex flex-col gap-4 items-center justify-between">
