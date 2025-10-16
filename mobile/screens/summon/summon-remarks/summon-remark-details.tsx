@@ -1,12 +1,14 @@
 import PageLayout from "@/screens/_PageLayout"
 import { LoadingState } from "@/components/ui/loading-state"
-import { TouchableOpacity, View, Text, ScrollView } from "react-native"
+import { TouchableOpacity, View, Text, ScrollView, Modal, Image, Pressable, Alert } from "react-native"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
+import { ChevronRight} from "@/lib/icons/ChevronRight" 
+import { X } from "@/lib/icons/X" 
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { ComplaintRecordForSummon } from "../complaint-record"
 import { useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Users, User, FileText, Calendar } from "lucide-react-native"
+import { Users, User, FileText, Calendar, Paperclip, Eye } from "lucide-react-native"
 import { useGetSummonCaseDetails } from "../queries/summonFetchQueries"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatDate } from "@/helpers/dateHelpers"
@@ -16,11 +18,13 @@ export default function SummonRemarkDetails(){
     const router = useRouter()
     const params = useLocalSearchParams()
     const [activeTab, setActiveTab] = useState<"details" | "schedule" | "complaint">("details")
+    const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
+    const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     const { sc_id, incident_type, hasResident, comp_names, acc_names, complainant_addresses, accused_addresses, complainant_rp_ids, sc_code, sc_mediation_status} = params
 
     const {data: details, isLoading} = useGetSummonCaseDetails(String(sc_id))
-
 
     // Parse array data from comma-separated strings
     const complainantNames = comp_names ? (comp_names as string).split(',') : []
@@ -59,6 +63,16 @@ export default function SummonRemarkDetails(){
             }
         })
     }
+
+    const handleViewImages = (files: any[], index = 0) => {
+        const images = files.map(file => ({
+            url: file.url || file.momsp_url || file.sd_url, // Adjust based on your actual file structure
+            name: file.name || file.momsp_name || file.sd_name || 'Document'
+        }));
+        setSelectedImages(images);
+        setCurrentIndex(index);
+        setViewImagesModalVisible(true);
+    };
 
    
     if(isLoading){
@@ -259,16 +273,18 @@ export default function SummonRemarkDetails(){
                                                 </Text>
                                                 {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
                                                     <View className="mt-2">
-                                                        <Text className="text-xs font-medium text-gray-600 mb-1">
-                                                            Attached Files ({schedule.remark.supp_docs.length})
-                                                        </Text>
-                                                        <View className="space-y-1">
-                                                            {schedule.remark.supp_docs.map((doc: any, docIndex: number) => (
-                                                                <Text key={docIndex} className="text-xs text-gray-500">
-                                                                    • {doc.name || "Unnamed file"}
+                                                        <TouchableOpacity 
+                                                            onPress={() => handleViewImages(schedule.remark.supp_docs)}
+                                                            className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
+                                                        >
+                                                            <View className="flex-row items-center">
+                                                                <Paperclip size={16} color="#3b82f6" />
+                                                                <Text className="text-blue-700 font-medium ml-2">
+                                                                    View Attached Files ({schedule.remark.supp_docs.length})
                                                                 </Text>
-                                                            ))}
-                                                        </View>
+                                                            </View>
+                                                            <Eye size={16} color="#3b82f6" />
+                                                        </TouchableOpacity>
                                                     </View>
                                                 )}
                                             </View>
@@ -384,6 +400,76 @@ export default function SummonRemarkDetails(){
                         {activeTab === "complaint" && <ComplaintRecordTab />}
                     </View>
                 </View>
+
+                {/* Image Viewer Modal */}
+                <Modal
+                    visible={viewImagesModalVisible}
+                    transparent={true}
+                    onRequestClose={() => setViewImagesModalVisible(false)}
+                >
+                    <View className="flex-1 bg-black/90">
+                        {/* Header with close button and file name */}
+                        <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
+                            <Text className="text-white text-lg font-medium w-[90%]">
+                                {selectedImages[currentIndex]?.name || 'Document'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setViewImagesModalVisible(false)}>
+                                <X size={24} color="white" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Main Image */}
+                        <Pressable 
+                            className="flex-1 justify-center items-center"
+                            onPress={() => setViewImagesModalVisible(false)}
+                        >
+                            <Image
+                                source={{ uri: selectedImages[currentIndex]?.url }}
+                                className="w-full h-full"
+                                resizeMode="contain"
+                            />
+                        </Pressable>
+
+                        {/* Pagination indicators */}
+                        {selectedImages.length > 1 && (
+                            <View className="absolute bottom-4 left-0 right-0 items-center">
+                                <View className="flex-row bg-black/50 rounded-full px-3 py-1">
+                                    {selectedImages.map((_, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            onPress={() => setCurrentIndex(index)}
+                                            className="p-1"
+                                        >
+                                            <View className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-500'}`} />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Navigation arrows */}
+                        {selectedImages.length > 1 && (
+                            <>
+                                {currentIndex > 0 && (
+                                    <TouchableOpacity
+                                        className="absolute left-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
+                                        onPress={() => setCurrentIndex(prev => prev - 1)}
+                                    >
+                                        <ChevronLeft size={24} color="white" />
+                                    </TouchableOpacity>
+                                )}
+                                {currentIndex < selectedImages.length - 1 && (
+                                    <TouchableOpacity
+                                        className="absolute right-4 top-1/2 -mt-6 bg-black/50 rounded-full p-3"
+                                        onPress={() => setCurrentIndex(prev => prev + 1)}
+                                    >
+                                        <ChevronRight size={24} color="white" />
+                                    </TouchableOpacity>
+                                )}
+                            </>
+                        )}
+                    </View>
+                </Modal>
             </PageLayout>
         </>
     )

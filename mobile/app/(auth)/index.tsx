@@ -16,6 +16,8 @@ import PurposeAndRatesMain from "@/screens/treasurer/rates/purpose-and-rate-main
 import GarbagePickupMain from "@/screens/waste/waste-garbage-pickup-request/staff/garbage-pickup-request-main";
 import HomeScreen from "@/screens/home";
 import SummonRemarksMain from "@/screens/summon/summon-remarks/summon-remarks-main";
+import CouncilMediationMain from "@/screens/summon/council-mediation/council-mediation-main";
+import LuponConciliationMain from "@/screens/summon/lupon-conciliation/lupon-conciliation-main";
 // Makes the Error Overlay dissapear
 import { LogBox } from 'react-native';
 
@@ -24,6 +26,6 @@ if (__DEV__) {
 }
 
 export default () => {
-    return <SummonRemarksMain/>
+    return <LuponConciliationMain/>
 }
  
