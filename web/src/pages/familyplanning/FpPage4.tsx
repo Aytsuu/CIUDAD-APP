@@ -6,12 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
 import { page4Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-
-// Utility function to format dates
-const formatDate = (dateString: string): string => {
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString(undefined, options);
-};
+import { formatDate } from "@/helpers/dateHelper"
 
 // Add props type to the component
 type Page4Props = {
@@ -165,9 +160,9 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
             </div>
             <span className="text-xs italic mt-5 m">
               {(formData.weight > 0 || formData.height > 0) && (
-                `Weight & height last recorded (y/m/d): ${formData.bodyMeasurementRecordedAt
+                `Weight & height last recorded: ${formData.bodyMeasurementRecordedAt
                   ? formatDate(formData.bodyMeasurementRecordedAt)
-                  : formatDate(new Date().toISOString().split('T')[0])
+                  : 'Date not available'
                 }`
               )}
             </span>

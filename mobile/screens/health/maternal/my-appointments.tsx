@@ -327,6 +327,14 @@ export default function MyPrenatalAppointments() {
                     </Text>
                   </View>
 
+                   <View className="flex-row items-center">
+                    <Calendar size={16} color="#6B7280" />
+                    <Text className="text-gray-600 text-sm ml-2">
+                      Date of appointment: {formatDate(appointment.requested_date)}
+                    </Text>
+                  </View>
+
+
                   {appointment.approved_at && (
                     <View className="flex-row items-center">
                       <CheckCircle size={16} color="#059669" />
@@ -373,7 +381,6 @@ export default function MyPrenatalAppointments() {
                   )}
                 </View>
 
-                {/* Action buttons for pending appointments */}
                 {appointment.status.toLowerCase() === 'pending' && (
                   <View className="flex-row space-x-2 mt-3">
                     <TouchableOpacity
@@ -391,7 +398,7 @@ export default function MyPrenatalAppointments() {
                           <Text className="text-gray-600 text-center font-medium ml-2">Cancelling...</Text>
                         </View>
                       ) : (
-                        <Text className="text-red-700 text-center font-medium">Cancel</Text>
+                        <Text className="text-white text-center font-medium">Cancel</Text>
                       )}
                     </TouchableOpacity>
                   </View>

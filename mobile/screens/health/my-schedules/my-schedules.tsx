@@ -17,6 +17,7 @@ type ScheduleRecord = {
   sitio: string
   type: "Transient" | "Resident"
   patrecType: string
+  createdAt?: string
 }
 
 type FilterType = "All" | "Pending" | "Completed" | "Missed"
@@ -228,9 +229,11 @@ export default function MyAppointmentsScreen() {
             scheduledDate: visit.followv_date || "",
             purpose: visit.followv_description || "Follow-up Visit",
             status: (visit.followv_status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
-            sitio: "", // Default; response lacks address
+            sitio: "",
             type: "Resident",
             patrecType: "Follow-up",
+            // Add created/requested date for sorting
+            createdAt: visit.created_at || visit.followv_date || "", // Use created_at if available
           }
           console.log("Transformed follow-up record:", record)
           transformed.push(record)
@@ -249,9 +252,10 @@ export default function MyAppointmentsScreen() {
             scheduledDate: consult.scheduled_date || "",
             purpose: consult.chief_complaint || "Medical Consultation",
             status: (consult.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
-            sitio: "", // Default; response lacks address
+            sitio: "",
             type: "Resident",
             patrecType: "Consultation",
+            createdAt: consult.created_at || consult.scheduled_date || "",
           }
           console.log("Transformed consultation record:", record)
           transformed.push(record)
@@ -267,12 +271,13 @@ export default function MyAppointmentsScreen() {
         try {
           const record: ScheduleRecord = {
             id: prenatal.par_id || 0,
-            scheduledDate: prenatal.requested_at || "", // Using requested_at as scheduled date
+            scheduledDate: prenatal.requested_date || "",
             purpose: prenatal.reason || "Prenatal Check-up",
             status: (prenatal.status || "Pending").toLowerCase() as "Pending" | "Completed" | "Missed",
-            sitio: "", 
+            sitio: "",
             type: "Resident",
             patrecType: "Prenatal",
+            createdAt: prenatal.requested_at || prenatal.created_at || "", // Use requested_at for prenatal
           }
           console.log("Transformed prenatal record:", record)
           transformed.push(record)
@@ -306,8 +311,13 @@ export default function MyAppointmentsScreen() {
         return true
       })
 
-    // Sort by date descending
-    result.sort((a: any, b: any) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
+    // Sort by created/requested date (latest first)
+    result.sort((a: any, b: any) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      
+      return dateB - dateA // Latest first
+    })
 
     return result
   }, [userAppointments, searchQuery, activeTab])

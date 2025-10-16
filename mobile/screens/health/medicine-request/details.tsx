@@ -143,7 +143,7 @@ export default function MedicineDetailsScreen() {
 
             {/* Add to Cart Button */}
             <TouchableOpacity
-              className={`py-4 rounded-xl items-center ${medicine.availableStock > 0 ? "bg-indigo-600" : "bg-gray-400"}`}
+              className={`py-4 rounded-xl items-center ${medicine.availableStock > 0 ? "bg-[#2563EB]" : "bg-gray-400"}`}
               onPress={handleAddToCart}
               disabled={medicine.availableStock === 0}
             >

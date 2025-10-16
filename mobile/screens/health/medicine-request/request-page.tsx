@@ -249,11 +249,11 @@ const categories = useMemo(() => {
                           </View>
 
                           <View className="mt-2 gap-1">
-                            <Text className={`text-sm ${
+                            {/* <Text className={`text-sm ${
                               isDisabled ? "text-gray-400" : "text-gray-600"
                             }`}>
                               {medicine.med_type || "Unknown Type"}
-                            </Text>
+                            </Text> */}
 
                             {medicine.inventory_items[0]?.dosage && (
                               <Text className={`text-xs ${

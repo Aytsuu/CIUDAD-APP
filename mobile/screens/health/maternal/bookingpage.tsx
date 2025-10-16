@@ -81,7 +81,7 @@ const PrenatalBookingPage: React.FC = () => {
     setShowDatePicker(false);
     if (selected) {
       if (isDateDisabled(selected)) {
-        Alert.alert('Unavailable Date', 'Prenatal appointments are only available on Thursdays. Please select another date.');
+        Alert.alert('Unavailable Date', 'Prenatal appointments are only available based on the scheduler. Please select another date.');
         return; 
       }
       setSelectedDate(selected);
@@ -163,7 +163,8 @@ const PrenatalBookingPage: React.FC = () => {
 
   const proceedWithAppointment = (patientId: string): void => {
     const payload = {
-      requested_at: `${formatDate(selectedDate)}T${selectedTime}:00`, 
+      requested_at: new Date().toISOString(), 
+      requested_date: formatDate(selectedDate), 
       approved_at: null,
       cancelled_at: null,
       completed_at: null,
@@ -238,7 +239,7 @@ const PrenatalBookingPage: React.FC = () => {
             <Text className='text-xs text-gray-500 mt-1'>
               {availableDays.size > 0
                 ? 'Prenatal appointments available only on scheduled days'
-                : 'Prenatal appointments available only every Thursday'}
+                : 'Prenatal appointments are only available based on the scheduler'}
             </Text>
           </View>
 
@@ -280,7 +281,7 @@ const PrenatalBookingPage: React.FC = () => {
         {/* Contact Info */}
         <View className='items-center mb-5'>
           <Text className='text-sm text-gray-500 text-center'>
-            Barangay health center hours {"\n"}: Monday - Saturday, 8:00 AM - 4:30 PM
+            Barangay health center hours {"\n"}Monday - Saturday, 8:00 AM - 4:30 PM
           </Text>
         </View>
       </ScrollView>

@@ -185,7 +185,7 @@ export default function AnimalBiteIndividualScreen() {
                   <User size={18} color="#6B7280" />
                   <Text className="text-gray-600 text-sm ml-2 font-medium">Age & Gender</Text>
                 </View>
-                <Text className="text-gray-800 font-bold text-lg">
+                <Text className="text-gray-800 font-bold text-md">
                   {patientInfo.patient_age} years old, {patientInfo.patient_sex}
                 </Text>
               </View>

@@ -186,6 +186,8 @@ export default function FamilyPlanningForm({
       const response = await api2.get(`patientrecords/patient/${realPatId}/`);
       const patientData = response.data;
 
+
+      
       // Initialize default spouse info
       let spouseInfo = {
         s_lastName: "",
@@ -247,6 +249,11 @@ export default function FamilyPlanningForm({
         };
       }
 
+       const bodyMeasurementDate = bodyMeasurementsResponse.data?.body_measurement?.created_at || 
+                               personalResponse.data?.bodyMeasurementRecordedAt || 
+                               "";
+
+
       // Build the form data with proper fallbacks
       const newFormData = {
         ...formData,
@@ -264,7 +271,7 @@ export default function FamilyPlanningForm({
         },
         height: bodyMeasurementsResponse.data?.height || 0,
         weight: bodyMeasurementsResponse.data?.weight || 0,
-        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.recorded_at || "",
+        bodyMeasurementRecordedAt: bodyMeasurementDate,
         philhealthNo: personalResponse.data?.philhealthNo || "",
         nhts_status: personalResponse.data?.nhts_status || false,
         fourps: personalResponse.data?.fourps || false,
@@ -282,6 +289,13 @@ export default function FamilyPlanningForm({
       };
       console.log("New form data:", newFormData); // Debug log
       console.log("Final form data address:", newFormData.address); // Debug log
+
+      console.log("Patient Details Response:", {
+    weight: newFormData.weight,
+    height: newFormData.height, 
+    bodyMeasurementRecordedAt: newFormData.bodyMeasurementRecordedAt,
+    fullResponse: newFormData
+});
 
       if (newFormData.methodCurrentlyUsed) {
         setOriginalMethod(newFormData.methodCurrentlyUsed);

@@ -299,29 +299,31 @@ const CancelModal: React.FC<{
           </Text>
           <TextInput
             className="border border-gray-300 rounded-lg p-3 mb-4 text-gray-800"
-            placeholder="Please provide a reason for cancellation..."
+            placeholder="Please provide a reason"
             placeholderTextColor="#9CA3AF"
             value={cancellationReason}
             onChangeText={setCancellationReason}
             multiline
             numberOfLines={3}
           />
-          <View className="flex-row justify-end space-x-3">
-            <TouchableOpacity 
-              onPress={onClose}
-              disabled={isPending}
-              className="px-4 py-2 rounded-lg bg-gray-100"
-            >
-              <Text className="text-gray-700 font-medium">Close</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
+          <View className="flex-row justify-end gap-2">
+             <TouchableOpacity 
               onPress={onConfirm}
               disabled={isPending}
               className="px-4 py-2 rounded-lg bg-red-600 flex-row items-center"
             >
               {isPending && <RefreshCw size={16} color="white" className="animate-spin mr-2" />}
-              <Text className="text-white font-medium">Confirm Cancel</Text>
+              <Text className="text-white font-medium">Cancel</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={onClose}
+              disabled={isPending}
+              className="px-4 py-2 rounded-lg bg-gray-400"
+            >
+              <Text className="text-white font-medium">Close</Text>
+            </TouchableOpacity>
+           
           </View>
         </View>
       </View>

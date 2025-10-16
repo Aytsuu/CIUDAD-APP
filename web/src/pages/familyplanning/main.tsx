@@ -263,6 +263,9 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         gender: passedGender || latestRecord.gender || "Unknown",
         address: latestRecord.address,
         spouse: latestRecord.spouse,
+        weight: latestRecord.weight,
+      height: latestRecord.height,
+      bodyMeasurementRecordedAt: latestRecord.bodyMeasurementRecordedAt,
         plan_more_children: latestRecord.plan_more_children,
         avg_monthly_income: latestRecord.avg_monthly_income,
         numOfLivingChildren: latestRecord.num_of_children || latestRecord.numOfLivingChildren || 0,
@@ -298,6 +301,9 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         patrec_id: "", // Ensure patrec_id is cleared for new record set (will be created by backend)
         typeOfClient: "currentuser",
         subTypeOfClient: "changingmethod", // Preserve existing value
+        weight: latestRecord.weight,
+      height: latestRecord.height,
+      bodyMeasurementRecordedAt: latestRecord.bodyMeasurementRecordedAt,
         reasonForFP: latestRecord.fp_type?.fpt_reason_fp || "medicalcondition",
         reason: latestRecord.reason,
         otherReasonForFP: latestRecord.otherReasonForFP || "", // Preserve existing value
@@ -349,6 +355,7 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
       reason: latestRecord.reason || "",
       weight: latestRecord.weight,
       height: latestRecord.height,
+      bodyMeasurementRecordedAt: latestRecord.bodyMeasurementRecordedAt,
       methodCurrentlyUsed: latestRecord.methodCurrentlyUsed,
       bloodPressure: latestRecord.bloodPressure,
       pulseRate: latestRecord.pulseRate,
@@ -395,6 +402,16 @@ console.log("Query enabled:", !!internalPatientId && (currentMode === "create" |
         : prev.acknowledgement,
     }))
   }, [])
+
+
+  useEffect(() => {
+  console.log("=== BODY MEASUREMENT DEBUG ===");
+  console.log("Latest Record bodyMeasurementRecordedAt:", latestRecord?.bodyMeasurementRecordedAt);
+  console.log("Current FormData bodyMeasurementRecordedAt:", formData.bodyMeasurementRecordedAt);
+  console.log("Current FormData weight:", formData.weight);
+  console.log("Current FormData height:", formData.height);
+}, [latestRecord, formData.bodyMeasurementRecordedAt, formData.weight, formData.height]);
+
 
   const reviewFormData = () => {
     console.log("=== CURRENT FORM DATA REVIEW ===")
