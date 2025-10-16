@@ -35,9 +35,9 @@ function BusinessDocumentPage() {
 
   // Show only paid permits
   const paidPermits = useMemo(() => {
-    return (businessPermits || []).filter((p) =>
-      String(p.req_payment_status || "").toLowerCase() === "paid"
-    );
+    return (businessPermits || [])
+      .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
+      .filter((p) => String(p.req_status || "").toLowerCase() !== "completed");
   }, [businessPermits]);
 
   // Handle loading state

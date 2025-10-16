@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -31,7 +30,6 @@ interface ExtendedIssuedCertificate extends IssuedCertificate {
 }
 
 function IssuedCertificates() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,6 +47,7 @@ function IssuedCertificates() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedIssuedCertificate | null>(null);
+  const [selectedBusinessPermit, setSelectedBusinessPermit] = useState<IssuedBusinessPermit | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [purposeInput, setPurposeInput] = useState("");
 
@@ -99,20 +98,7 @@ function IssuedCertificates() {
   };
 
   const handleViewBusinessFile = (permit: IssuedBusinessPermit) => {
-    // Navigate to ViewDocument with the business permit data
-    navigate(`/record/clearances/ViewDocument/${permit.ibp_id}`, {
-      state: {
-        name: permit.business_name,
-        purpose: permit.purpose,
-        date: permit.dateIssued,
-        requestId: permit.original_permit?.bpr_id || permit.ibp_id,
-        requestDate: permit.original_permit?.req_request_date || permit.dateIssued,
-        paymentMethod: permit.original_permit?.req_pay_method || "Walk-in",
-        isIssued: true, 
-        originalPermit: permit.original_permit,
-        isBusinessPermit: true, 
-      },
-    });
+    setSelectedBusinessPermit(permit);
   };
 
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
@@ -380,11 +366,16 @@ function IssuedCertificates() {
     return matchesSearch && matchesFilter;
   });
 
+  const sortedCertificates = (filteredCertificates || []).slice().sort((a, b) => {
+    const aT = a?.dateIssued ? Date.parse(a.dateIssued as any) : 0;
+    const bT = b?.dateIssued ? Date.parse(b.dateIssued as any) : 0;
+    return bT - aT;
+  });
+
   const businessPermits = businessPermitsPage?.results || [];
   const bpCount = businessPermitsPage?.count || 0;
   const totalPagesBP = Math.ceil(bpCount / pageSize) || 1;
 
-  const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
   useEffect(() => {
     if (isLoading || businessPermitsLoading) {
       showLoading();
@@ -396,10 +387,18 @@ function IssuedCertificates() {
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
+
+  const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
     const matchesSearch = permit.business_name.toLowerCase().includes(businessSearchQuery.toLowerCase()) ||
-                         (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
+      (permit.purpose && permit.purpose.toLowerCase().includes(businessSearchQuery.toLowerCase()));
     const matchesFilter = businessFilterValue === "All" || permit.purpose === businessFilterValue;
     return matchesSearch && matchesFilter;
+  });
+
+  const sortedBusinessPermits = (filteredBusinessPermits || []).slice().sort((a, b) => {
+    const aT = a?.dateIssued ? Date.parse(a.dateIssued as any) : 0;
+    const bT = b?.dateIssued ? Date.parse(b.dateIssued as any) : 0;
+    return bT - aT;
   });
 
   const filteredServiceCharges = serviceCharges?.filter((sc: ServiceCharge) => {
@@ -543,7 +542,7 @@ function IssuedCertificates() {
             ) : (
               <DataTable 
                 columns={certificateColumns} 
-                data={filteredCertificates || []} 
+                data={sortedCertificates} 
                 header={true} 
               />
             )}
@@ -561,7 +560,7 @@ function IssuedCertificates() {
             ) : (
               <DataTable 
                 columns={businessPermitColumns} 
-                data={filteredBusinessPermits || []} 
+                data={sortedBusinessPermits} 
                 header={true} 
               />
             )}
@@ -623,6 +622,17 @@ function IssuedCertificates() {
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={selectedCertificate.dateIssued || new Date().toISOString()}
           isNonResident={false}
+          showAddDetails={false}
+        />
+      )}
+
+      {selectedBusinessPermit && (
+        <TemplateMainPage
+          key={selectedBusinessPermit.ibp_id + Date.now()}
+          businessName={selectedBusinessPermit.business_name || ""}
+          address={(selectedBusinessPermit as any)?.original_permit?.business_address || ""}
+          purpose={selectedBusinessPermit.purpose as any}
+          issuedDate={selectedBusinessPermit.dateIssued || new Date().toISOString()}
           showAddDetails={false}
         />
       )}
