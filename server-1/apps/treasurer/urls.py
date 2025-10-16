@@ -5,6 +5,7 @@ from .views import *
 urlpatterns=[
 
     # Budget Plan and Budget Details URL
+    path('budget-plan-analytics/', BudgetPlanAnalyticsView.as_view(), name='budget-plan-analytics'),
     path('budget-plan-active/', BudgetPlanActiveView.as_view(), name = 'budget-plan-active'),
     path('budget-plan-inactive/', BudgetPlanInactiveView.as_view(), name = 'budget-plan-inactive'),
     path('budget-plan-detail/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),

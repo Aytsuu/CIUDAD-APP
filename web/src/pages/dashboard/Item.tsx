@@ -21,6 +21,7 @@ import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-side
 import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
+import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
 
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
@@ -129,6 +130,10 @@ export const getItemsConfig = (
             title: "Recent Disbursement Voucher",
             element: <DisbursementSidebar />,
           },
+          {
+            title: "Current Budget Plan",
+            element: <BudgetPlanSidebar />,
+          },
         ],
       },
       {
@@ -140,7 +145,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, accepted, rejected, completed, pending], 
+        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed], 
       },
     ];
   }

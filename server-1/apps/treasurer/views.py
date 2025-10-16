@@ -18,6 +18,34 @@ from django.db.models.functions import ExtractYear
 
 logger = logging.getLogger(__name__)
 
+class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BudgetPlanSerializer
+
+    def get_object(self):
+        current_year = str(timezone.now().year)
+        
+        budget_plan = Budget_Plan.objects.filter(
+            plan_year=current_year,
+            plan_is_archive=False
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        ).first()
+        
+        if not budget_plan:
+            raise Http404("No budget plan found for the current year")
+            
+        return budget_plan
+
 class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanSerializer
@@ -30,7 +58,7 @@ class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
             'plan_id',
             'plan_year',
             'plan_actual_income',
-            'plan_rpt_income',
+            'plan_rpt_income'
             'plan_balance',
             'plan_tax_share',
             'plan_tax_allotment',
