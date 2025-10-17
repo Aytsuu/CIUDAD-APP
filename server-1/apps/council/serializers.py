@@ -15,7 +15,7 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 class CouncilSchedulingSerializer(serializers.ModelSerializer):
-    staff_id = serializers.CharField(write_only=True, source='staff.staff_id')
+    staff_id = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
     class Meta:
         model = CouncilScheduling
         fields = '__all__'
@@ -44,7 +44,8 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        staff_id = self.initial_data.get('staff_id')
+        # Remove staff_id from validated_data if it exists
+        validated_data.pop('staff_id', None)
         
         # Fields that should trigger announcement creation
         announcement_trigger_fields = ['ce_title', 'ce_date', 'ce_time', 'ce_place', 'ce_description']
@@ -59,18 +60,20 @@ class CouncilSchedulingSerializer(serializers.ModelSerializer):
                     should_create_announcement = True
                     break
         
-        # Update the council event
+        # Update the council event fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         
-        # Only create announcement if relevant fields changed
+        # Create announcement if relevant fields changed
         if should_create_announcement:
             try:
-                self._create_staff_announcement(instance, staff_id, is_update=True)
+                # Use the existing staff from the instance
+                staff_id = instance.staff.staff_id if instance.staff else None
+                if staff_id:
+                    self._create_staff_announcement(instance, staff_id, is_update=True)
             except Exception as e:
                 logger.error(f"Failed to create update announcement: {str(e)}")
-                # Event is still updated successfully even if announcement fails
         
         return instance
     

@@ -148,8 +148,7 @@ function CalendarPage() {
               <EventCalendar
                 sources={calendarSources}
                 legendItems={[
-                  { label: "Waste Collection", color: "#10b981" },
-                  { label: "Council Events", color: "#191970" },
+                  // { label: "Council Events", color: "#191970" },
                 ]}
                 viewEditComponentSources={["Council Events"]}
               />

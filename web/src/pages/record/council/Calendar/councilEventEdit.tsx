@@ -18,10 +18,10 @@ import { formatDate } from "@/helpers/dateHelper";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteCouncilEvent } from "./queries/councilEventdelqueries";
 import { Archive } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+// import { useAuth } from "@/context/AuthContext";
 
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const isArchived = initialValues.ce_is_archive || false;
   const [isEditMode, setIsEditMode] = useState(false && !isArchived);
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string; present_or_absent?: string }[]>(initialValues.attendees || []);
@@ -61,7 +61,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       ce_description: values.eventDescription.trim(),
       ce_is_archive: false,
       ce_rows: numberOfRows,
-      staff_id: user?.staff?.staff_id,
+      staff_id: values.staff_id,
     };
 
     updateEvent(
