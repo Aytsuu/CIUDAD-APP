@@ -518,6 +518,7 @@ import { Archive, ArchiveRestore, Trash, CircleAlert, ChevronLeft, ChevronRight,
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useResolution } from './queries/resolution-fetch-queries';
 import { useDeleteResolution } from './queries/resolution-delete-queries';
@@ -531,6 +532,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 function ResolutionPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("active");
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
@@ -791,25 +793,40 @@ function ResolutionPage() {
           <Text className="text-gray-900 text-[13px]">Resolution Record</Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
       wrapScroll={false}
     >
+      {showSearch && (
+        <SearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={() => {}} 
+        />
+      )}      
+
       <View className="flex-1 px-6">
+
         {/* Search and Filters */}
         <View className="mb-4">
-          <View className="flex-row items-center gap-2 pb-3">
-            <View className="relative flex-1">
-              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
+          <View className="flex-row justify-between items-center gap-2 pb-5">
+            <View className="flex-1">
+              <SelectLayout
+                options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
+                className="h-8"
+                selectedValue={yearFilter}
+                onSelect={(option) => handleYearFilterChange(option.value)}
+                placeholder="Year Filter"
+                isInModal={false}
               />
             </View>
 
-            <View className="w-[120px] pb-5">
+            <View className="flex-1">
               <SelectLayout
                 options={filterOptions.map(f => ({ label: f.name, value: f.id }))}
                 className="h-8"
@@ -820,18 +837,6 @@ function ResolutionPage() {
               />
             </View>
           </View>
-
-          {/* Year Filter */}
-          <View className="pb-5">
-            <SelectLayout
-              options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
-              className="h-8"
-              selectedValue={yearFilter}
-              onSelect={(option) => handleYearFilterChange(option.value)}
-              placeholder="Year Filter"
-              isInModal={false}
-            />
-          </View>            
 
           <Button 
             onPress={() => router.push('/(council)/resolution/res-create')} 
