@@ -10,15 +10,34 @@ export const useMarkAsRead = () => {
       api.put("notification/bulk-update/", {
         notification_ids: [notificationId],
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    onMutate: async (notificationId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+
+      const previousNotifications = queryClient.getQueryData(["notifications"]);
+
+      queryClient.setQueryData(["notifications"], (old: any) => {
+        if (!old) return old;
+        return old.map((notif: any) =>
+          notif.notif_id === notificationId
+            ? { ...notif, is_read: true }
+            : notif
+        );
+      });
+
+      return { previousNotifications };
     },
-    onError: (error) => {
-      console.error("Failed to mark notification as read:", error);
+    onError: (error, notificationId, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["notifications"], context.previousNotifications);
+      }
       Alert.alert(
         "Error",
         "Failed to mark notification as read. Please try again."
       );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 };
@@ -31,8 +50,24 @@ export const useMarkAllAsRead = () => {
       api.put("notification/bulk-update/", {
         notification_ids: notificationIds,
       }),
+    onMutate: async (notificationIds) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+
+      const previousNotifications = queryClient.getQueryData(["notifications"]);
+
+      queryClient.setQueryData(["notifications"], (old: any) => {
+        if (!old) return old;
+        return old.map((notif: any) =>
+          notificationIds.includes(notif.notif_id)
+            ? { ...notif, is_read: true }
+            : notif
+        );
+      });
+
+      return { previousNotifications };
+    },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       Alert.alert(
         "Success",
         `Marked ${variables.length} notification${
@@ -40,12 +75,17 @@ export const useMarkAllAsRead = () => {
         } as read`
       );
     },
-    onError: (error) => {
-      console.error("Failed to mark all notifications as read:", error);
+    onError: (error, notificationIds, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["notifications"], context.previousNotifications);
+      }
       Alert.alert(
         "Error",
         "Failed to mark notifications as read. Please try again."
       );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 };

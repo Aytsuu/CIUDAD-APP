@@ -346,7 +346,7 @@ export const NotificationBell: React.FC = () => {
                             <span className="text-xs text-gray-400 w-full">
                               {formatTimeAgo(item.notif_created_at)}
                             </span>
-                           <div className="flex flex-col gap-2 mt-2">
+                           {/* <div className="flex flex-col gap-2 mt-2">
                               {item.notif_type === "REQUEST" && (
                               <div className="flex gap-2">
                                 <Button
@@ -363,7 +363,7 @@ export const NotificationBell: React.FC = () => {
                                 </Button>
                               </div>
                               )}
-                              </div>
+                            </div> */}
                           </div>
                           <div
                             className="flex items-start"

@@ -1,201 +1,243 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Alert, Platform } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
-import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
-import { useRouter } from 'expo-router';
-import api from '@/api/api';
+import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import api from '@/api/api';
 
-// IMPORTANT: Set up background handler OUTSIDE of any component/hook
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-  console.log('📩 Background message received:', remoteMessage);
-  
+// ✅ Modular Firebase imports
+import { getApp } from '@react-native-firebase/app';
+import {
+  getMessaging,
+  requestPermission,
+  getToken,
+  onMessage,
+  onTokenRefresh,
+  setBackgroundMessageHandler,
+  AuthorizationStatus,
+} from '@react-native-firebase/messaging';
+
+// ✅ Configure how notifications behave when app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+const app = getApp();
+const messaging = getMessaging(app);
+
+setBackgroundMessageHandler(messaging, async (remoteMessage) => {
+  console.log('📩 Background FCM message received:', remoteMessage);
   try {
-    await notifee.displayNotification({
-      title: remoteMessage.notification?.title || 'New Notification',
-      body: remoteMessage.notification?.body || '',
-      data: remoteMessage.data,
-      android: {
-        channelId: 'default',
-        smallIcon: 'ic_launcher',
-        importance: AndroidImportance.HIGH,
-        pressAction: {
-          id: 'default',
-        },
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: remoteMessage.notification?.title || 'New Notification',
+        body: remoteMessage.notification?.body || '',
+        data: remoteMessage.data || {},
+        sound: true,
       },
-      ios: {
-        sound: 'default',
-      },
+      trigger: null,
     });
   } catch (error) {
-    console.error('❌ Failed to display background notification:', error);
+    console.error('❌ Failed to show background notification:', error);
   }
 });
 
 export function useFCMToken() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
-    const setupNotifications = async () => {
+    const setup = async () => {
       try {
-        console.log('🚀 Starting notification setup...');
+        // 1️⃣ Request notification permission
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
 
-        // 1. Create notification channel FIRST (Android)
-        if (Platform.OS === 'android') {
-          await notifee.createChannel({
-            id: 'default',
-            name: 'Default Notifications',
-            importance: AndroidImportance.HIGH,
-            sound: 'default',
-            vibration: true,
-          });
-          console.log('✅ Notification channel created');
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
         }
 
-        // 2. Request permission
-        const authStatus = await messaging().requestPermission();
-        const enabled =
-          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-        if (!enabled) {
-          console.log('❌ Notification permission denied');
-          Alert.alert('Notification Permission', 'You disabled push notifications.');
+        if (finalStatus !== 'granted') {
+          Alert.alert('Permission Denied', 'Please enable push notifications.');
           return;
         }
 
-        console.log('✅ Notification permission granted');
-
-        // 3. Get FCM token
-        const token = await messaging().getToken();
-        console.log('📲 FCM Token obtained:', token.substring(0, 30) + '...');
-
-        // 4. Get device ID (unique identifier)
-        const deviceId = Device.modelName || 'unknown-device';
-        console.log('📱 Device ID:', deviceId);
-
-        try {
-          console.log('📤 Registering token with backend...');
-          
-          const response = await api.post('notification/register-token/', { 
-            fcm_token: token,
-            fcm_device_id: deviceId  // ✅ NOW INCLUDED
+        // 2️⃣ Android notification channel
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('default', {
+            name: 'Default Notifications',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FF231F7C',
+            sound: 'default',
           });
-          
-          console.log('✅ FCM token registered successfully:', response.data);
+        }
+
+        // 3️⃣ Firebase FCM permission and token
+        const authStatus = await requestPermission(messaging);
+        const enabled =
+          authStatus === AuthorizationStatus.AUTHORIZED ||
+          authStatus === AuthorizationStatus.PROVISIONAL;
+
+        if (!enabled) {
+          console.warn('❌ FCM permission denied');
+          return;
+        }
+
+        const fcmToken = await getToken(messaging);
+        console.log('📲 Firebase FCM Token:', fcmToken);
+
+        const deviceId = Device.modelName || 'unknown-device';
+
+        // 4️⃣ Register FCM token with backend
+        try {
+          console.log('📤 Sending token to backend...');
+          const res = await api.post('notification/register-token/', {
+            fcm_token: fcmToken,
+            fcm_device_id: deviceId,
+          });
+          console.log('✅ FCM token registered:', res.data);
         } catch (err: any) {
-          console.error('❌ Failed to register FCM token:', err);
-          console.error('❌ Error response:', err.response?.data);
+          console.error('❌ Backend registration failed:', err.response?.data || err.message);
+        }
+
+        // 5️⃣ Foreground FCM messages
+        const unsubscribeMessage = onMessage(messaging, async (remoteMessage) => {
+          console.log('📩 Foreground FCM message received:', remoteMessage);
           
-          // Show error to user for debugging
-          if (__DEV__) {
-            Alert.alert(
-              'Token Registration Failed',
-              `Error: ${err.response?.data?.detail || err.message}`,
-              [{ text: 'OK' }]
-            );
+          try {
+            // Show notification
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: remoteMessage.notification?.title || 'New Notification',
+                body: remoteMessage.notification?.body || '',
+                data: remoteMessage.data || {},
+                sound: true,
+              },
+              trigger: null,
+            });
+
+            // ✨ Invalidate notifications query to refresh the list
+            console.log('🔄 Invalidating notifications query...');
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            
+          } catch (error) {
+            console.error('❌ Failed to display notification:', error);
+          }
+        });
+
+        // 6️⃣ Notification received (foreground)
+        notificationListener.current = Notifications.addNotificationReceivedListener((n) => {
+          console.log('📩 Notification received (foreground):', n);
+          
+          // ✨ Invalidate notifications query
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        });
+
+        // 7️⃣ Notification pressed
+        responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+          const data = response.notification.request.content.data;
+          console.log('👆 Notification pressed:', data);
+
+          // ✨ Invalidate notifications query
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+          if (data?.screen) {
+            try {
+              let parsedParams = {};
+              if (data.params) {
+                parsedParams = typeof data.params === 'string' ? JSON.parse(data.params) : data.params;
+              }
+              
+              const queryString = Object.entries(parsedParams)
+                .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+                .join('&');
+              
+              const href = queryString ? `${data.screen}?${queryString}` : data.screen;
+              
+              router.push(href as any);
+            } catch (error) {
+              console.error('❌ Navigation error:', error);
+              router.push('/(notification)');
+            }
+          } else if (data?.redirect_url) {
+            router.push(data.redirect_url as any);
+          } else {
+            router.push('/(notification)');
+          }
+        });
+
+        // 8️⃣ Handle notification when app opened from quit
+        const lastResponse = await Notifications.getLastNotificationResponseAsync();
+        if (lastResponse) {
+          const data = lastResponse.notification.request.content.data;
+          console.log('🚀 App opened via notification:', data);
+          
+          // ✨ Invalidate notifications query
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          
+          if (data?.screen) {
+            try {
+              let parsedParams = {};
+              if (data.params) {
+                parsedParams = typeof data.params === 'string' ? JSON.parse(data.params) : data.params;
+              }
+              
+              const queryString = Object.entries(parsedParams)
+                .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+                .join('&');
+              
+              const href = queryString ? `${data.screen}?${queryString}` : data.screen;
+              
+              router.push(href as any);
+            } catch (error) {
+              console.error('❌ Navigation error:', error);
+              router.push('/(notification)');
+            }
+          } else if (data?.redirect_url) {
+            router.push(data.redirect_url as any);
           }
         }
+
+        // 9️⃣ Token refresh
+        const unsubscribeTokenRefresh = onTokenRefresh(messaging, async (newToken) => {
+          console.log('🔄 FCM Token refreshed:', newToken);
+          const deviceId = Device.modelName || 'unknown-device';
+          try {
+            await api.post('notification/register-token/', {
+              fcm_token: newToken,
+              fcm_device_id: deviceId,
+            });
+            console.log('✅ Token refreshed successfully');
+          } catch (err) {
+            console.error('❌ Failed to register refreshed token:', err);
+          }
+        });
+
+        // 🧹 Cleanup
+        return () => {
+          unsubscribeMessage();
+          unsubscribeTokenRefresh();
+          if (notificationListener.current) notificationListener.current.remove();
+          if (responseListener.current) responseListener.current.remove();
+        };
       } catch (error) {
-        console.error('❌ Setup failed:', error);
+        console.error('❌ Notification setup failed:', error);
       }
     };
 
-    setupNotifications();
-
-    // Handle foreground messages
-    const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
-      console.log('📩 Foreground message received:', remoteMessage);
-      
-      try {
-        await notifee.displayNotification({
-          title: remoteMessage.notification?.title || 'New Notification',
-          body: remoteMessage.notification?.body || '',
-          data: remoteMessage.data,
-          android: {
-            channelId: 'default',
-            smallIcon: 'ic_launcher',
-            importance: AndroidImportance.HIGH,
-            pressAction: {
-              id: 'default',
-            },
-          },
-          ios: {
-            sound: 'default',
-          },
-        });
-      } catch (error) {
-        console.error('❌ Failed to display foreground notification:', error);
-      }
-    });
-
-    // Handle notification press events (when app is open)
-    const unsubscribeNotifee = notifee.onForegroundEvent(({ type, detail }) => {
-      console.log('👆 Notification event:', type);
-      
-      if (type === EventType.PRESS && detail.notification?.data) {
-        const data = detail.notification.data as any;
-        
-        if (data.redirect_url) {
-          console.log('🚀 Navigating to:', data.redirect_url);
-          router.push(data.redirect_url);
-        } else {
-          router.push('/(notification)');
-        }
-      }
-    });
-
-    // Handle notification press when app is in background/quit state
-    notifee.onBackgroundEvent(async ({ type, detail }) => {
-      console.log('👆 Background notification event:', type);
-      
-      if (type === EventType.PRESS && detail.notification?.data) {
-        const data = detail.notification.data as any;
-        
-        if (data.redirect_url) {
-          console.log('🚀 Background navigation to:', data.redirect_url);
-          // Navigation will happen when app opens
-        }
-      }
-    });
-
-    // Listen for initial notification (when app is opened from quit state)
-    notifee.getInitialNotification().then((notification) => {
-      if (notification?.notification?.data) {
-        const data = notification.notification.data as any;
-        
-        if (data.redirect_url) {
-          console.log('🚀 Initial navigation to:', data.redirect_url);
-          router.push(data.redirect_url);
-        }
-      }
-    });
-
-    // Listen for token refresh
-    const unsubscribeTokenRefresh = messaging().onTokenRefresh(async (newToken) => {
-      console.log('🔄 FCM Token refreshed:', newToken.substring(0, 30) + '...');
-      
-      try {
-        // const deviceId = Device.modelId || Device.osInternalBuildId || 'unknown-device';
-        
-        await api.post('notification/register-token/', { 
-          fcm_token: newToken,
-          // fcm_device_id: deviceId
-        });
-        
-        console.log('✅ New FCM token registered successfully');
-      } catch (err) {
-        console.error('❌ Failed to register refreshed FCM token:', err);
-      }
-    });
-
-    // Cleanup subscriptions
-    return () => {
-      unsubscribeForeground();
-      unsubscribeNotifee();
-      unsubscribeTokenRefresh();
-    };
-  }, [router]);
+    setup();
+  }, [router, queryClient]);
 }

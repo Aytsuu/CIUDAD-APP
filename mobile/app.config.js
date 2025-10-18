@@ -63,7 +63,7 @@ export default () => ({
           isAccessMediaLocationEnabled: true
         }
       ],
-      "./expo-notifee-plugin.js",
+      // "./expo-notifee-plugin.js",
       "@react-native-firebase/app",
     ],
     experiments: {

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class RegisterFCMTokenView(generics.CreateAPIView):
     serializer_class = FCMTokenSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

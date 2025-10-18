@@ -40,7 +40,6 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
             rp=rp
         )
     
-    # Get redirect URL for the notification
     redirect_url = None
     mobile_route = None
     if target_obj and hasattr(target_obj, 'get_absolute_url'):
@@ -55,29 +54,30 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
     print(f"Target obj type: {type(target_obj)}")
     print(f"Has mobile route: {hasattr(target_obj, 'get_mobile_route')}")
     
-    seen_tokens = set()
-    unique_tokens = []
+    # Group tokens by device_id across all accounts
+    device_tokens = {}  # {device_id: token_obj}
     
     for acc in recipient_accounts:
         tokens = FCMToken.objects.filter(acc=acc)
         
         for token_obj in tokens:
-            token = token_obj.fcm_token
+            device_id = token_obj.fcm_device_id if hasattr(token_obj, 'fcm_device_id') else None
             
-            # skip if token already seen
-            if token in seen_tokens:
+            if not device_id:
                 continue
             
-            seen_tokens.add(token)
-            unique_tokens.append({
-                'token': token,
-                'account': acc
-            })
-            
-    for token_data in unique_tokens:
+            # Only store the first token we encounter for each device_id
+            if device_id not in device_tokens:
+                device_tokens[device_id] = {
+                    'token': token_obj.fcm_token,
+                    'account': acc
+                }
+    
+    print(f"Unique devices to send: {len(device_tokens)}")
+    
+    for device_id, token_data in device_tokens.items():
         token = token_data['token']
         acc = token_data['account']
-        
         
         # Prepare FCM data payload
         fcm_data = {

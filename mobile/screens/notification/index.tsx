@@ -7,18 +7,21 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Alert,
 } from "react-native";
-import { ChevronLeft, Bell, MoreVertical, Check, BookCopy } from "lucide-react-native";
+import { ChevronLeft, Bell, MoreVertical, Check, BookCopy, CheckCheck } from "lucide-react-native";
 import GetNotification from "./queries/getNotification";
 import { Drawer } from "@/components/ui/drawer";
 import { useRouter } from "expo-router";
 import { useMarkAsRead, useMarkAllAsRead } from "./queries/updateNotification";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "@/components/ui/button";
+import { useFocusEffect } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface notificationIcon {
   notif_type: string;
 }
+
 const NotificationType: React.FC<notificationIcon> = ({notif_type}) => {
   switch(notif_type) {
     case "REQUEST":
@@ -34,14 +37,23 @@ const NotificationType: React.FC<notificationIcon> = ({notif_type}) => {
 
 export default function NotificationScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [notifDrawerVisible, setNotifDrawerVisible] = useState(false);
   const [headerDrawerVisible, setHeaderDrawerVisible] = useState(false);
 
   const {data: notifications, isLoading, isError, error, refetch, isFetching} = GetNotification();
   
-  const { mutate: markAsRead } = useMarkAsRead();
-  const { mutate: markAllAsRead } = useMarkAllAsRead();
+  const { mutate: markAsRead, isPending: isMarkingAsRead } = useMarkAsRead();
+  const { mutate: markAllAsRead, isPending: isMarkingAllAsRead } = useMarkAllAsRead();
+
+  // ✨ Refresh notifications when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('🔄 NotificationScreen focused, invalidating query...');
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }, [queryClient])
+  );
 
   const formatDate = (dateString: string) => {
     try {
@@ -145,13 +157,7 @@ export default function NotificationScreen() {
       console.log('⚠️ [NotificationScreen] No mobile route found for notification');
     }
   };
-  const handleAcceptRequest = (id: string) => {
 
-  }
-
-  const handleDeclineRequest = (id: string) => {
-
-  }
   const handleMorePress = (item: any) => {
     console.log('⚙️ [NotificationScreen] More options pressed for:', item.notif_id);
     setSelectedNotification(item);
@@ -166,32 +172,32 @@ export default function NotificationScreen() {
     switch (action) {
       case "mark_read":
         markAsRead(selectedNotification.notif_id);
+        setNotifDrawerVisible(false);
         break;
       case "view":
         handleNotificationPress(selectedNotification);
+        setNotifDrawerVisible(false);
         break;
     }
-    
-    setNotifDrawerVisible(false);
   };
 
   const handleHeaderAction = (action: string) => {
-    console.log('🎬 [NotificationScreen] Header action:', action);
-    
     if (action === "mark_all_read") {
       const unreadIds = notifications
         ?.filter((n: any) => !n.is_read)
         .map((n: any) => n.notif_id) || [];
       
-      console.log('📖 [NotificationScreen] Marking all as read. Count:', unreadIds.length);
-      
       if (unreadIds.length > 0) {
         markAllAsRead(unreadIds);
+      } else {
+        Alert.alert("Info", "All notifications are already marked as read.");
       }
     }
     
     setHeaderDrawerVisible(false);
   };
+
+  const unreadCount = notifications?.filter((n: any) => !n.is_read).length || 0;
 
   const ListHeaderComponent = () => (
     <View className="bg-white px-5 py-4 border-b border-gray-100">
@@ -204,14 +210,21 @@ export default function NotificationScreen() {
             <ChevronLeft size={24} color="#000" />
           </TouchableOpacity>
           
-          <Text className="text-xl font-PoppinsSemiBold text-gray-900">Notifications</Text>
+          <View className="flex-1">
+            <Text className="text-xl font-PoppinsSemiBold text-gray-900">Notifications</Text>
+          </View>
         </View>
         
         <TouchableOpacity
           onPress={() => setHeaderDrawerVisible(true)}
           className="p-1"
+          disabled={isMarkingAllAsRead}
         >
-          <MoreVertical size={20} color="#000" />
+          {isMarkingAllAsRead ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <MoreVertical size={20} color="#000" />
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -243,7 +256,6 @@ export default function NotificationScreen() {
           </Text>
           <TouchableOpacity
             onPress={() => {
-              console.log('🔄 [NotificationScreen] Retrying...');
               refetch();
             }}
             className="mt-6 bg-blue-500 px-8 py-3 rounded-xl shadow-sm"
@@ -286,6 +298,7 @@ export default function NotificationScreen() {
           <RefreshControl
             refreshing={isFetching && !isLoading}
             onRefresh={() => {
+              console.log('🔄 Manual refresh triggered');
               refetch();
             }}
             colors={['#007AFF']}
@@ -330,49 +343,35 @@ export default function NotificationScreen() {
                   </View>
                   
                   {/* Content */}
-                  <View className="flex-1 pr-8 relative">
+                  <View className="flex-1 pr-8">
                     <Text className="text-sm text-gray-900 font-PoppinsMedium leading-5 mb-1">
                       {item.notif_title}
                     </Text>
                     <Text
                       className="text-sm text-gray-700 font-PoppinsRegular leading-5 mb-1"
                       numberOfLines={2}
-                      >
+                    >
                       {item.notif_message || "No message"}
                     </Text>
 
                     <Text className="text-xs text-gray-500 font-PoppinsRegular">
                       {formatDate(item.notif_created_at)}
                     </Text>
-                    
-                    {item.notif_type === "REQUEST" && (
-                      <View className="flex-row gap-2 mt-2">
-                        <Button
-                          onPress={() => handleAcceptRequest(item.notif_id)}
-                          className="flex-1 py-1 px-2 bg-blue-500 "
-                        >
-                          <Text className="text-white text-sm font-PoppinsSemiBold">Accept</Text>
-                        </Button>
-                        <Button
-                          onPress={() => handleDeclineRequest(item.notif_id)}
-                          className="flex-1 py-1 px-2 bg-gray-500"
-                        >
-                          <Text className="text-white text-sm font-PoppinsSemiBold">Decline</Text>
-                        </Button>
-                      </View>
-                    )}
+                  </View>
 
-                    <TouchableOpacity
-                      onPress={() => setNotifDrawerVisible(true)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
-                      >
-                      <MoreVertical size={20} color="#000" />
-                    </TouchableOpacity>
-                    </View>
-                    {/* Unread Indicator */}
-                    {!item.is_read && (
-                    <View className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
-                    )}
+                  {/* More Options Button */}
+                  <TouchableOpacity
+                    onPress={() => handleMorePress(item)}
+                    className="p-2"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MoreVertical size={20} color="#6B7280" />
+                  </TouchableOpacity>
+
+                  {/* Unread Indicator */}
+                  {!item.is_read && (
+                    <View className="absolute left-0 top-1/2 w-2 h-2 bg-blue-500 rounded-full -translate-y-1" />
+                  )}
                 </View>
               </TouchableOpacity>
             ))}
@@ -392,14 +391,30 @@ export default function NotificationScreen() {
               onPress={() => handleNotifAction("mark_read")}
               className="flex-row items-center p-4 rounded-xl mb-3 bg-gray-50"
               activeOpacity={0.7}
+              disabled={isMarkingAsRead}
             >
-              <View className="w-10 h-8 rounded-full items-center justify-center mr-3">
-                <Check size={20} className="text-gray-500" />
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-3">
+                {isMarkingAsRead ? (
+                  <ActivityIndicator size="small" color="#6B7280" />
+                ) : (
+                  <Check size={20} color="#6B7280" />
+                )}
               </View>
               <Text className="text-base font-PoppinsRegular text-gray-900">
-                Mark as Read
+                {isMarkingAsRead ? "Marking..." : "Mark as Read"}
               </Text>
             </TouchableOpacity>
+          )}
+          
+          {selectedNotification?.is_read && (
+            <View className="p-4 bg-green-50 rounded-xl">
+              <View className="flex-row items-center">
+                <CheckCheck size={20} color="#10B981" />
+                <Text className="text-base font-PoppinsRegular text-green-700 ml-3">
+                  Already read
+                </Text>
+              </View>
+            </View>
           )}
         </View>
       </Drawer>
@@ -416,14 +431,24 @@ export default function NotificationScreen() {
             onPress={() => handleHeaderAction("mark_all_read")}
             className="flex-row items-center p-4 bg-gray-50 rounded-xl mb-3"
             activeOpacity={0.7}
+            disabled={isMarkingAllAsRead || unreadCount === 0}
           >
             <View className="w-10 h-10 rounded-full items-center justify-center mr-3">
-              <Check size={20} className="text-gray-500" />
+              {isMarkingAllAsRead ? (
+                <ActivityIndicator size="small" color="#6B7280" />
+              ) : (
+                <CheckCheck size={20} color={unreadCount === 0 ? "#D1D5DB" : "#6B7280"} />
+              )}
             </View>
             <View className="flex-1">
-              <Text className="text-base font-PoppinsRegular text-gray-900">
-                Mark All as Read
+              <Text className={`text-base font-PoppinsRegular ${unreadCount === 0 ? "text-gray-400" : "text-gray-900"}`}>
+                {isMarkingAllAsRead ? "Marking all..." : "Mark All as Read"}
               </Text>
+              {unreadCount > 0 && (
+                <Text className="text-xs font-PoppinsRegular text-gray-500 mt-1">
+                  {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
+                </Text>
+              )}
             </View>
           </TouchableOpacity>
         </View>
