@@ -258,8 +258,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                 } else {
                                                     computeAndSet((item as any)?.per_dob, (item as any)?.per_disability);
                                                 }
-                                                const hasDob = (((full as any)?.per_dob ?? (item as any)?.per_dob)) && String(((full as any)?.per_dob ?? (item as any)?.per_dob)).trim() !== '';
-                                                const hasDis = (((full as any)?.per_disability ?? (item as any)?.per_disability)) && String(((full as any)?.per_disability ?? (item as any)?.per_disability)).trim() !== '';
                                                 }}
                                                 onCustomInput={(value: string) => {
                                                     field.onChange(value);

@@ -96,7 +96,6 @@ export const insertOrdinanceUpload = async (ordinanceInfo: Record<string, any>, 
             // Check if file is ready for upload
             const mediaFile = mediaFiles[0];
             const hasFile = !!(mediaFile as any).file;
-            const isUploaded = (mediaFile as any).status === 'uploaded';
             
             if (hasFile) {
                 try {
