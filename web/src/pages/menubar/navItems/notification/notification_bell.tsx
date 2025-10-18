@@ -10,7 +10,6 @@ import { listenForMessages } from "@/firebase";
 import { toast } from "sonner";
 import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
 import { MdNotificationAdd } from "react-icons/md";
-import { Button } from "@/components/ui/button/button";
 
 interface Notification {
   notif_id: string;
@@ -19,7 +18,10 @@ interface Notification {
   notif_type: string;
   is_read: boolean;
   notif_created_at: string;
-  redirect_url?: string;
+  redirect_url?: {
+    path: string;
+    params: Record<string, any>;
+  };
   sender_name?: string;
   sender_profile?: string;
   resident?: {
@@ -45,7 +47,6 @@ const NotificationIconType: React.FC<NotificationTypeIconProps> = ({ notif_type 
   }
 };
 
-
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate(); 
   const {mutate: bulkMarkAsRead} = useUpdateBulkNotification();
@@ -55,6 +56,7 @@ export const NotificationBell: React.FC = () => {
   const [open, setOpen] = useState(false);
   const { data, isLoading, isError, refetch } = fetchNotification();
   console.log(JSON.stringify(notifications, null, 2));
+  
   useEffect(() => {
     if (data) {
       setNotifications(data);
@@ -62,9 +64,44 @@ export const NotificationBell: React.FC = () => {
     }
   }, [data]);
 
+  // Helper function to build URL from redirect_url object
+  const buildRedirectUrl = (redirectUrl?: { path: string; params: Record<string, any> }) => {
+    if (!redirectUrl || !redirectUrl.path) return null;
+    
+    const { path, params } = redirectUrl;
+    if (!params || Object.keys(params).length === 0) {
+      return path;
+    }
+    
+    const searchParams = new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        acc[key] = String(value);
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString();
+    
+    return `${path}?${searchParams}`;
+  };
+
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
     const unsubscribe = listenForMessages((payload) => {
+      // Parse redirect_path and redirect_params from FCM data
+      let redirectUrl = undefined;
+      if (payload.data?.redirect_path) {
+        try {
+          const params = payload.data.redirect_params 
+            ? JSON.parse(payload.data.redirect_params) 
+            : {};
+          redirectUrl = {
+            path: payload.data.redirect_path,
+            params: params
+          };
+        } catch (e) {
+          console.error("Failed to parse redirect params:", e);
+        }
+      }
+
       const newNotif: Notification = {
         notif_id: payload.data?.notification_id || Date.now().toString(),
         notif_title: payload.notification?.title || "No title",
@@ -72,7 +109,7 @@ export const NotificationBell: React.FC = () => {
         notif_type: payload.data?.notif_type || "",
         is_read: false,
         notif_created_at: new Date().toISOString(),
-        redirect_url: payload.data?.redirect_url,
+        redirect_url: redirectUrl,
         sender_name: payload.data?.sender_name,
         sender_profile: payload.data?.sender_profile,
       };
@@ -109,12 +146,12 @@ export const NotificationBell: React.FC = () => {
   }, [navigate]);
 
   const handleAcceptRequest = (id: string) => {
-
-  }
+    // Implementation here
+  };
 
   const handleDeclineRequest = (id: string) => {
-
-  }
+    // Implementation here
+  };
 
   const markAsRead = (notif_id: string) => {
     MarkAsRead(notif_id, {
@@ -137,7 +174,7 @@ export const NotificationBell: React.FC = () => {
         setNotifications((prev) => prev.map((n) => ({...n, is_read: true})));
         setUnreadCount(0);
       }
-    })
+    });
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -146,8 +183,12 @@ export const NotificationBell: React.FC = () => {
       markAsRead(notification.notif_id);
     }
     
+    // Navigate using the redirect_url
     if (notification.redirect_url) {
-      navigate(notification.redirect_url);
+      const url = buildRedirectUrl(notification.redirect_url);
+      if (url) {
+        navigate(url);
+      }
     }
     
     setOpen(false);
@@ -162,7 +203,10 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          navigate(notification.redirect_url);
+          const url = buildRedirectUrl(notification.redirect_url);
+          if (url) {
+            navigate(url);
+          }
         }
         setOpen(false);
         break;
@@ -236,7 +280,6 @@ export const NotificationBell: React.FC = () => {
            <Badge className="absolute -top-0.5 -right-1 h-5 w-5 rounded-full bg-red-500 hover:bg-red-400 text-white text-xs flex items-center justify-center">
             {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
-
           )}
         </div>
       </PopoverTrigger>
@@ -405,4 +448,4 @@ export const NotificationBell: React.FC = () => {
       </PopoverContent>
     </Popover>
   );
-}
+};

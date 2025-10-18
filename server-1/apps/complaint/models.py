@@ -89,9 +89,10 @@ class Complaint(models.Model):
         super().save(*args, **kwargs)
     
     def get_absolute_url(self):
-        if self.comp_id:
-            return f"/complaint/view?id={self.comp_id}"
-        return f"/complaint/view"
+        return {
+            'path': '/complaint/view',
+            'params': {'id': self.comp_id}
+        }
     
     def get_mobile_route(self):
         return {

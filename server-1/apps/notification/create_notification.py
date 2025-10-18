@@ -40,10 +40,10 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
             rp=rp
         )
     
-    redirect_url = None
+    redirect_data = None
     mobile_route = None
     if target_obj and hasattr(target_obj, 'get_absolute_url'):
-        redirect_url = target_obj.get_absolute_url()
+        redirect_data = target_obj.get_absolute_url()
 
     if target_obj and hasattr(target_obj, 'get_mobile_route'):
         mobile_route = target_obj.get_mobile_route()
@@ -88,8 +88,9 @@ def create_notification(title, message, sender, recipients, notif_type, target_o
             "object_id": str(target_obj.pk) if target_obj else "",
         }
             
-        if redirect_url:
-            fcm_data["redirect_url"] = redirect_url
+        if redirect_data:
+            fcm_data["redirect_path"] = redirect_data.get('path', '')
+            fcm_data["redirect_params"] = json.dumps(redirect_data.get('params', {}))
         
         if mobile_route:
             fcm_data["screen"] = mobile_route.get('screen', '')

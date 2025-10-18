@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   User,
   AlertCircle,
@@ -24,22 +24,18 @@ import { useGetComplaintById } from "./api-operations/queries/complaintGetQuerie
 type ActiveSection = "details" | "initiation" | "resolution";
 
 export function ComplaintViewRecord() {
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState<ActiveSection>("details");
 
-  // Via notification 
-  const complaintId = searchParams.get("id"); // gets the id from the url attached in the notification
-  const {data: fetchedComplaint, isLoading, isError,} = useGetComplaintById(complaintId ?? "");
-
-  // Get complaint data passed through navigation (if any)
-  const complaintFromState = location.state?.complaint || null;
-
+  // Get complaint ID from URL params
+  const complaintId = searchParams.get("id");
   
-  // ✅ Use either the navigation state data or fetched data
-  const complaintData = complaintFromState || fetchedComplaint;
+  // Fetch complaint data
+  const { data: complaintData, isLoading, isError } = useGetComplaintById(
+    complaintId ?? ""
+  );
 
-  // 🌀 Loading state
+  // Loading state
   if (isLoading) {
     return (
       <LayoutWithBack
@@ -53,7 +49,7 @@ export function ComplaintViewRecord() {
     );
   }
 
-  // ⚠️ Error or no data
+  // Error or no data
   if (!complaintData || isError) {
     return (
       <LayoutWithBack

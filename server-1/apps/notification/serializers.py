@@ -6,6 +6,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     sender_profile = serializers.CharField(source='notif.sender.profile_image', read_only=True)
     recipients = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     redirect_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = Notification
         fields = [
@@ -18,8 +19,10 @@ class NotificationSerializer(serializers.ModelSerializer):
             'sender_profile', 
             'notif_created_at',
             'recipients',
+            'redirect_url',
         ]
         read_only_fields = ['notif_id', 'notif_created_at', 'sender']
+    
     def get_redirect_url(self, obj):
         if obj.content_object and hasattr(obj.content_object, "get_absolute_url"):
             return obj.content_object.get_absolute_url()
