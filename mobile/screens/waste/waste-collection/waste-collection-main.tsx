@@ -401,6 +401,7 @@ import { Plus, Trash, Archive, ArchiveRestore, Edit3, Search, ChevronLeft } from
 import { useRouter } from 'expo-router';
 import { formatTime } from '@/helpers/timeFormatter';
 import { SelectLayout } from '@/components/ui/select-layout';
+import { SearchInput } from '@/components/ui/search-input';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import PageLayout from '@/screens/_PageLayout';
 import { useCreateCollectionReminders } from './queries/waste-col-add-queries';
@@ -424,6 +425,7 @@ const WasteCollectionMain = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>('active');
   const [selectedDay, setSelectedDay] = useState('0');
+  const [showSearch, setShowSearch] = useState<boolean>(false);  
   const [searchQuery, setSearchQuery] = useState('');
   
   // Add debouncing for search
@@ -624,33 +626,35 @@ const WasteCollectionMain = () => {
         </Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
       wrapScroll={false}      
     >
-      {/* Search and Filter */}
-      <View className="px-6 pb-4 pt-4">
-        <View className="flex-row items-center gap-2">
-          <View className="relative flex-1">
-            <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-            <TextInput
-              placeholder="Search..."
-              className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-            />
-          </View>
 
-          <View className="w-[120px] pb-5">
-            <SelectLayout
-              options={dayOptions}
-              className="h-8"
-              selectedValue={selectedDay}
-              onSelect={handleDayChange}
-              placeholder="Day"
-              isInModal={false}
-            />
-          </View>
+      {showSearch && (
+        <SearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={() => {}} 
+        />
+      )}   
+
+      {/*Filter */}
+      <View className="px-6 pb-8">
+        <View className="w-full">
+          <SelectLayout
+            options={dayOptions}
+            className="h-8 w-full"
+            selectedValue={selectedDay}
+            onSelect={handleDayChange}
+            placeholder="Day"
+            isInModal={false}
+          />
         </View>
       </View>
 
