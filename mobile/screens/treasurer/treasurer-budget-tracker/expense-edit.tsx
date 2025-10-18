@@ -506,17 +506,9 @@ function ExpenseEdit() {
             <MediaPicker
               selectedImages={selectedImages}
               setSelectedImages={setSelectedImages}
-              multiple={true}
-              maxImages={5}
+              limit={5}
+              editable={isEditing}
             />    
-            {!isEditing && (
-                <TouchableOpacity
-                className="absolute top-[20px] left-0 right-0 bottom-0"
-                activeOpacity={1}
-                onPress={() => {}}
-                style={{ backgroundColor: 'transparent', zIndex: 10 }}
-                />
-            )}
         </View>        
 
       </View>

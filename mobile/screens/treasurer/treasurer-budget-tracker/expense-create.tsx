@@ -334,8 +334,7 @@ function ExpenseCreateForm() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={5}
+                limit={5}
               />              
             </View>
           </View>
