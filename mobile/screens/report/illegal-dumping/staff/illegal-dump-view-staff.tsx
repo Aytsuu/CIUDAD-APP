@@ -284,8 +284,7 @@ export default function WasteIllegalDumpingDetails() {
                         <MediaPicker
                           selectedImages={selectedImages}
                           setSelectedImages={setSelectedImages}
-                          multiple={true}
-                          maxImages={5}
+                          limit={3}
                         />  
 
                         {/* Submit Button */}

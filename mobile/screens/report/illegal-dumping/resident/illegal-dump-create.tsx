@@ -164,8 +164,7 @@ export default function IllegalDumpCreateForm() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={3}
+                limit={3}
               /> 
             </View>
 
