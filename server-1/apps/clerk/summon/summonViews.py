@@ -187,6 +187,7 @@ class LuponCaseDetailView(generics.RetrieveAPIView):
 
 class UpdateSummonCaseView(generics.UpdateAPIView):
     serializer_class = SummonCaseSerializer
+    permission_classes = [AllowAny]
     queryset = SummonCase.objects.all()
     lookup_field = 'sc_id'
 

@@ -67,7 +67,7 @@ const SummonCaseCard = React.memo(({ item }: { item: SummonCaseList }) => {
 
     const handleViewDetails = () => {
         router.push({
-            pathname: "/(summon)/view-remarks-details",
+            pathname: "/(summon)/view-mediation-details",
             params: {
                 sc_id: item.sc_id,
                 incident_type: item.incident_type,
