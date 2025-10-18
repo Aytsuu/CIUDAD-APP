@@ -55,9 +55,16 @@ export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
   try {
     // Fetch directly from the Paid list endpoint (includes sr_code and names/addresses)
     const res = await api.get('/clerk/summon-case-list/');
-    const list = (res.data ?? []) as any[];
+    const payload = res.data as any;
+    const list = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.results)
+      ? payload.results
+      : Array.isArray(payload?.data)
+      ? payload.data
+      : [];
 
-    const merged: ServiceCharge[] = (list || [])
+    const merged: ServiceCharge[] = list
       .map((sr: any) => ({
         sr_id: String(sr.sr_id),
         sr_code: sr.sr_code ?? null,
@@ -77,6 +84,10 @@ export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
   } catch (err) {
     const error = err as AxiosError;
     console.error('Error fetching service charges:', error.response?.data || error.message);
+    // For 500s, return empty to avoid crashing React Query retry logic
+    if (error.response?.status === 500) {
+      return [];
+    }
     throw error;
   }
 };

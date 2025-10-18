@@ -946,7 +946,7 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
                     Q(permit_request__rp_id__per__per_fname__icontains=search) |
                     Q(permit_request__rp_id__per__per_lname__icontains=search) |
                     Q(permit_request__pr_id__pr_purpose__icontains=search) |
-                    Q(date_issued__icontains=search)
+                    Q(ibp_date_of_issuance__icontains=search)
                 )
 
             # Purpose filter - matching web version
@@ -958,12 +958,12 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
             date_from = self.request.query_params.get('date_from', None)
             date_to = self.request.query_params.get('date_to', None)
             if date_from:
-                queryset = queryset.filter(date_issued__gte=date_from)
+                queryset = queryset.filter(ibp_date_of_issuance__gte=date_from)
             if date_to:
-                queryset = queryset.filter(date_issued__lte=date_to)
+                queryset = queryset.filter(ibp_date_of_issuance__lte=date_to)
             
             logger.info(f"Found {queryset.count()} issued business permits")
-            return queryset.order_by('-date_issued')
+            return queryset.order_by('-ibp_date_of_issuance')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -1024,9 +1024,32 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
             from apps.administration.models import Staff
             staff, created = Staff.objects.get_or_create(staff_id=staff_id)
             
-            # Generate unique ibp_id
-            import uuid
-            ibp_id = f"IBP{uuid.uuid4().hex[:8].upper()}"
+            # Update the original business permit request to Completed (mirror certificate flow)
+            try:
+                if getattr(permit_request, 'req_status', None) != 'Completed':
+                    permit_request.req_status = 'Completed'
+                    # If completion date empty, set to today
+                    if not getattr(permit_request, 'req_date_completed', None):
+                        permit_request.req_date_completed = timezone.now().date()
+                    permit_request.save(update_fields=['req_status', 'req_date_completed'])
+            except Exception as update_err:
+                logger.error(f"Failed to update BusinessPermitRequest {bpr_id} to Completed: {str(update_err)}")
+
+            # Generate sequential IBP ID like CR000-25 → IBP000-25 (length 10)
+            from .models import IssuedBusinessPermit as _IssuedBusinessPermit
+            year_suffix = timezone.now().year % 100
+            try:
+                existing_count = _IssuedBusinessPermit.objects.filter(
+                    ibp_id__endswith=f"-{year_suffix:02d}"
+                ).count()
+            except Exception:
+                existing_count = _IssuedBusinessPermit.objects.count()
+            seq = existing_count + 1
+            ibp_id = f"IBP{seq:03d}-{year_suffix:02d}"
+            # Ensure uniqueness in rare race conditions
+            while _IssuedBusinessPermit.objects.filter(ibp_id=ibp_id).exists():
+                seq += 1
+                ibp_id = f"IBP{seq:03d}-{year_suffix:02d}"
             
             # Create issued business permit (no file field needed)
             issued_permit = IssuedBusinessPermit.objects.create(

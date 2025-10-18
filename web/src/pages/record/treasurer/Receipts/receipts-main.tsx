@@ -29,6 +29,8 @@ function ReceiptPage() {
     selectedFilterId
   );
 
+  console.log("RECEIPTT DATA", receiptData)
+
   // Extract data from paginated response
   const fetchedData = receiptData.results || [];
   const totalCount = receiptData.count || 0;
@@ -90,7 +92,7 @@ function ReceiptPage() {
       accessorKey: "inv_payor",
       header: "Payor",
     },    
- {
+    {
       accessorKey: "inv_nat_of_collection",
       header: "Nature of Collection",
       cell: ({ row }) => {
@@ -100,13 +102,13 @@ function ReceiptPage() {
         const getColorScheme = (nature: string) => {
           const normalized = nature?.toLowerCase() || '';
           
-          if (normalized.includes('business')) {
+          if (normalized.includes('employment')) {
             return 'bg-blue-100 text-blue-800 border-blue-200';
-          } else if (normalized.includes('19') || normalized.includes('clearance')) {
+          } else if (normalized.includes('file action')) {
             return 'bg-green-100 text-green-800 border-green-200';
           } else if (normalized.includes('20')) {
             return 'bg-purple-100 text-purple-800 border-purple-200';
-          } else if (normalized.includes('18') || normalized.includes('charge')) {
+          } else if (normalized.includes('18')) {
             return 'bg-orange-100 text-orange-800 border-orange-200';
           } else if (normalized.includes('permit')) {
             return 'bg-teal-100 text-teal-800 border-teal-200';

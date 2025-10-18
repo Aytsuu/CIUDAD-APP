@@ -1252,9 +1252,9 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
             'bpr_id__rp_id__per',
             'nrc_id',
             'cr_id__rp_id__per',
-            'spay_id__comp_id'
+            'pay_id__comp_id'
         ).prefetch_related(
-            'spay_id__comp_id__complainant'
+            'pay_id__comp_id__complainant'
         ).all()
         
         # Get filter parameters from request
@@ -1274,7 +1274,7 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
                 Q(cr_id__rp_id__per__per_fname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_mname__icontains=search_query) |
                 Q(nrc_id__nrc_requester__icontains=search_query) |
-                Q(spay_id__comp_id__complainant__cpnt_name__icontains=search_query)
+                Q(pay_id__comp_id__complainant__cpnt_name__icontains=search_query)
             ).distinct()
         
         # Apply nature of collection filter

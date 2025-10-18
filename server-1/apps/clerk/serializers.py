@@ -498,19 +498,51 @@ class BusinessPermitCreateSerializer(serializers.ModelSerializer):
 class IssuedBusinessPermitSerializer(serializers.ModelSerializer):
     business_name = serializers.SerializerMethodField()
     dateIssued = serializers.DateField(source='ibp_date_of_issuance', format="%Y-%m-%d")
+    purpose = serializers.SerializerMethodField()
+    original_permit = serializers.SerializerMethodField()
 
     def get_business_name(self, obj):
         try:
-            if obj.permit_request and obj.permit_request.business:
-                return obj.permit_request.business.bus_name
+            # Prefer explicit permit name if provided on the request (new businesses)
+            if obj.permit_request and getattr(obj.permit_request, 'bus_permit_name', None):
+                return obj.permit_request.bus_permit_name
+            # Fallback to linked Business record name (existing businesses)
+            if obj.permit_request and getattr(obj.permit_request, 'bus_id', None) and getattr(obj.permit_request.bus_id, 'bus_name', None):
+                return obj.permit_request.bus_id.bus_name
             return "Unknown"
         except Exception as e:
             logger.error(f"Error getting business name: {str(e)}")
             return "Unknown"
 
+    def get_purpose(self, obj):
+        try:
+            if obj.permit_request and getattr(obj.permit_request, 'pr_id', None):
+                return obj.permit_request.pr_id.pr_purpose
+            return None
+        except Exception as e:
+            logger.error(f"Error getting business permit purpose: {str(e)}")
+            return None
+
+    def get_original_permit(self, obj):
+        try:
+            pr = obj.permit_request
+            if not pr:
+                return None
+            return {
+                'bpr_id': getattr(pr, 'bpr_id', None),
+                'req_request_date': getattr(pr, 'req_request_date', None),
+                'req_pay_method': getattr(pr, 'req_pay_method', None),
+                'business_name': getattr(pr, 'bus_permit_name', None) or (getattr(getattr(pr, 'bus_id', None), 'bus_name', None)),
+                'business_address': getattr(pr, 'bus_permit_address', None) or (getattr(getattr(pr, 'bus_id', None), 'bus_location', None)),
+                'purpose': getattr(getattr(pr, 'pr_id', None), 'pr_purpose', None),
+            }
+        except Exception as e:
+            logger.error(f"Error building original_permit: {str(e)}")
+            return None
+
     class Meta:
         model = IssuedBusinessPermit
-        fields = ['ibp_id', 'dateIssued', 'business_name']
+        fields = ['ibp_id', 'dateIssued', 'business_name', 'purpose', 'original_permit']
 
 # ================== SERVICE CHARGE SERIALIZERS =========================
     

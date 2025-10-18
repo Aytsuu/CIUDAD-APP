@@ -432,12 +432,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
                  'inv_nat_of_collection', 'nrc_id', 'bpr_id', 'cr_id', 
-                  'spay_id','inv_payor', 'inv_change', 'inv_discount_reason']
+                  'pay_id','inv_payor', 'inv_change', 'inv_discount_reason']
         extra_kwargs = {
             'nrc_id': {'allow_null': True, 'required': False},
             'bpr_id': {'allow_null': True, 'required': False},
             'cr_id': {'allow_null': True, 'required': False},
-            'spay_id': {'allow_null': True, 'required': False},
+            'pay_id': {'allow_null': True, 'required': False},
         }
     
     def get_inv_payor(self, obj):
@@ -461,9 +461,9 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
 
         # If the invoice is linked to a complaint
-        if obj.spay_id is not None:
+        if obj.pay_id is not None:
             try:
-                complaint = obj.spay_id.sr_id.comp_id
+                complaint = obj.pay_id.sr_id.comp_id
                 complainants = complaint.complainant.all()
                 
                 if complainants.exists():
