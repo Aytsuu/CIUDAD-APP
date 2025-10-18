@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import *
 from .summon.summonViews import *
-from apps.complaint.view import ComplaintDetailView
+from apps.complaint.views.complaint_detail_view import *
 
 urlpatterns = [ 
     # Council Mediation

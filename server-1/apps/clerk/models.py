@@ -191,37 +191,6 @@ class ServiceChargeDecision(models.Model):
     class Meta:
         db_table = 'service_charge_decision'
 
-class SummonDateAvailability(models.Model):
-    sd_id = models.BigAutoField(primary_key=True)
-    sd_date = models.DateField(default=date.today)
-
-    class Meta:
-        db_table = 'summon_date_availability'
-        managed = False
-
-class SummonTimeAvailability(models.Model):
-    st_id = models.BigAutoField(primary_key=True)
-    st_start_time = models.TimeField()
-    st_is_booked = models.BooleanField(default=False)
-    sd_id = models.ForeignKey('SummonDateAvailability', on_delete=models.CASCADE, null=True, related_name='time_availability')
-
-    class Meta:
-        db_table = 'summon_time_availability'
-        managed = False
-
-class ServiceChargePaymentRequest(models.Model):
-    pay_id = models.BigAutoField(primary_key=True)
-    pay_sr_type = models.CharField(max_length=200)
-    pay_status = models.CharField(max_length=200)
-    pay_date_req = models.DateTimeField(default = datetime.now)
-    pay_due_date = models.DateField(default = default_due_date())
-    pay_date_paid = models.DateTimeField(null = True, blank = True)
-    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True)
-
-    class Meta:
-        db_table = 'service_charge_payment_request'
-
 
 class SummonSchedule(models.Model):
     ss_id = models.BigAutoField(primary_key=True)
