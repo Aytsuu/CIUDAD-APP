@@ -254,21 +254,18 @@ const ReceiptPage = () => {
       }
       wrapScroll={false}
     >
+
+      {showSearch && (
+        <SearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={() => {}} // Can leave empty since you're using debounce
+        />
+      )}
+
       <View className="flex-1 px-6">
         {/* Search and Filter */}        
-        <View className="flex-col gap-3 pb-8">
-          {showSearch && (
-            <View className="relative">
-              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-5 w-full h-12 bg-gray-100 text-base rounded-xl p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-              />
-            </View>            
-          )}
-
+        <View className="flex-col pb-8">
           <SelectLayout
             className="w-full bg-white"
             placeholder="Filter"

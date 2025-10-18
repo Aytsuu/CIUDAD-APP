@@ -26,6 +26,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
@@ -63,6 +64,7 @@ const ExpenseTracking = () => {
   const totInc = parseFloat(params.totalInc as string) || 0;
 
   const [activeTab, setActiveTab] = useState('active');
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
@@ -395,29 +397,42 @@ const ExpenseTracking = () => {
         </Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
       wrapScroll={false} 
     >
       <View className="flex-1">
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}} // Can leave empty since you're using debounce
+          />
+        )}
 
         {/* Search and Filters */}
         <View className="px-6 pb-4">
-          <View className="flex-row items-center gap-2 mb-2">
-            <View className="relative flex-1">
-              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
+          <View className="flex-row justify-between items-center gap-2 pb-6">
+            <View className="flex-1">
+              <SelectLayout
+                options={monthFilterOptions}
+                className="h-8 w-full"
+                selectedValue={selectedMonth}
+                onSelect={handleMonthChange}
+                placeholder="Select Month"
+                isInModal={false}
               />
             </View>
             
-            <View className="w-[120px] pb-5">
+            <View className="flex-1">
               <SelectLayout
                 options={trackingOptions}
-                className="h-8"
+                className="h-8 w-full"
                 selectedValue={selectedTab}
                 onSelect={handleTabSelect}
                 placeholder="Type"
@@ -426,25 +441,11 @@ const ExpenseTracking = () => {
             </View>
           </View>
 
-          {/* Month Filter */}
-          <View className="pb-6">
-            <SelectLayout
-              options={monthFilterOptions}
-              className="h-8"
-              selectedValue={selectedMonth}
-              onSelect={handleMonthChange}
-              placeholder="Select Month"
-              isInModal={false}
-            />
-          </View>
-          
           <Button
             onPress={handleCreate}
             className="bg-primaryBlue mt-2 rounded-xl"
           >
-            <Text className="text-white text-[17px]">
-              <Plus size={16} color="white" className="mr-2" /> Create
-            </Text>
+            <Text className="text-white text-[17px]">  Create </Text>
           </Button>
         </View>
 

@@ -66,7 +66,7 @@ const GADBudgetLogTable = () => {
   };
 
   const renderItem = ({ item }: { item: BudgetLogTable }) => (
-    <Card className="mb-4 border border-gray-200">
+    <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader>
         <CardTitle className="text-lg text-[#2a3a61]">
           {item.gbudl_created_at

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Image, Alert } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import * as ImagePicker from 'expo-image-picker';
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
 import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, type PurposeAndRate, type AnnualGrossSales, type Business } from "./queries/certificationReqFetchQueries";
@@ -11,6 +10,7 @@ import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
 import { uploadMultipleBusinessPermitFiles, prepareBusinessPermitFileForUpload, type BusinessPermitFileData } from "@/helpers/businessPermitUpload";
 import { LoadingState } from "@/components/ui/loading-state";
+import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 
 const CertPermit: React.FC = () => {
   const router = useRouter();
@@ -24,9 +24,9 @@ const CertPermit: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   
-  // Image upload states
-  const [previousPermitImage, setPreviousPermitImage] = useState<string | null>(null);
-  const [assessmentImage, setAssessmentImage] = useState<string | null>(null);
+  // Image upload states - using MediaPicker format
+  const [previousPermitImages, setPreviousPermitImages] = useState<MediaItem[]>([]);
+  const [assessmentImages, setAssessmentImages] = useState<MediaItem[]>([]);
   const [isBusinessOld, setIsBusinessOld] = useState(false);
   
   // File upload progress states
@@ -53,32 +53,13 @@ const CertPermit: React.FC = () => {
     }
   }, [businessData]);
 
-  const pickImage = async (type: 'permit' | 'assessment') => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false, 
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        if (type === 'permit') {
-          setPreviousPermitImage(result.assets[0].uri);
-        } else {
-          setAssessmentImage(result.assets[0].uri);
-        }
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick image');
-    }
+  // Helper functions to get image URIs from MediaPicker format
+  const getPreviousPermitImageUri = () => {
+    return previousPermitImages.length > 0 ? previousPermitImages[0].uri : null;
   };
 
-  const removeImage = (type: 'permit' | 'assessment') => {
-    if (type === 'permit') {
-      setPreviousPermitImage(null);
-    } else {
-      setAssessmentImage(null);
-    }
+  const getAssessmentImageUri = () => {
+    return assessmentImages.length > 0 ? assessmentImages[0].uri : null;
   };
 
    
@@ -230,11 +211,11 @@ const CertPermit: React.FC = () => {
 
     // Validate required images - only for barangay clearance
     if (isBarangayClearance) {
-      if (isBusinessOld && !previousPermitImage) {
+      if (isBusinessOld && previousPermitImages.length === 0) {
         setError("Previous permit image is required for existing businesses");
         return;
       }
-      if (!assessmentImage) {
+      if (assessmentImages.length === 0) {
         setError("Assessment image is required");
         return;
       }
@@ -246,8 +227,8 @@ const CertPermit: React.FC = () => {
       business_address: businessAddress || "",
       gross_sales: isBarangayClearance ? (businessData.length === 0 ? (inputtedGrossSales || "") : (grossSales || "")) : "N/A",
       rp_id: user?.rp || "",
-      permit_image: isBarangayClearance ? (previousPermitImage || undefined) : undefined,
-      assessment_image: isBarangayClearance ? (assessmentImage || undefined) : undefined,
+      permit_image: isBarangayClearance ? (getPreviousPermitImageUri() || undefined) : undefined,
+      assessment_image: isBarangayClearance ? (getAssessmentImageUri() || undefined) : undefined,
     });
     
     if (!result.success) {
@@ -302,7 +283,7 @@ const CertPermit: React.FC = () => {
     };
 
     // Handle file uploads if images are provided - only for barangay clearance
-    if ((previousPermitImage || assessmentImage) && isBarangayClearance) {
+    if ((previousPermitImages.length > 0 || assessmentImages.length > 0) && isBarangayClearance) {
       try {
         setIsUploadingFiles(true);
         setUploadProgress("Preparing business permit files for upload...");
@@ -310,13 +291,13 @@ const CertPermit: React.FC = () => {
         const filesToUpload: BusinessPermitFileData[] = [];
         
         // Add previous permit image if exists
-        if (previousPermitImage && isBusinessOld) {
-          filesToUpload.push(prepareBusinessPermitFileForUpload(previousPermitImage, 'permit', businessName));
+        if (previousPermitImages.length > 0 && isBusinessOld) {
+          filesToUpload.push(prepareBusinessPermitFileForUpload(previousPermitImages[0].uri, 'permit', businessName));
         }
         
         // Add assessment image if exists
-        if (assessmentImage) {
-          filesToUpload.push(prepareBusinessPermitFileForUpload(assessmentImage, 'assessment', businessName));
+        if (assessmentImages.length > 0) {
+          filesToUpload.push(prepareBusinessPermitFileForUpload(assessmentImages[0].uri, 'assessment', businessName));
         }
         
         if (filesToUpload.length > 0) {
@@ -567,27 +548,12 @@ const CertPermit: React.FC = () => {
                     <Text className="text-sm font-medium text-gray-700 mb-2">
                       Previous Permit <Text className="text-red-500">*</Text>
                     </Text>
-                    {previousPermitImage ? (
-                      <View className="relative">
-                        <Image source={{ uri: previousPermitImage }} className="w-full h-40 rounded-lg mb-2" resizeMode="cover" />
-                        <TouchableOpacity
-                          onPress={() => removeImage('permit')}
-                          className="absolute top-2 right-2 bg-red-500 rounded-full p-1"
-                        >
-                          <Ionicons name="close" size={16} color="white" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        onPress={() => pickImage('permit')}
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 items-center"
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="camera-outline" size={32} color="#888" />
-                        <Text className="text-gray-600 text-sm mt-2">Upload Previous Permit</Text>
-                        <Text className="text-gray-400 text-xs mt-1">Required for existing businesses</Text>
-                      </TouchableOpacity>
-                    )}
+                    <MediaPicker
+                      selectedImages={previousPermitImages}
+                      setSelectedImages={setPreviousPermitImages}
+                      limit={1}
+                      editable={true}
+                    />
                   </View>
                 )}
 
@@ -596,32 +562,12 @@ const CertPermit: React.FC = () => {
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Assessment Document <Text className="text-red-500">*</Text>
                   </Text>
-                  {assessmentImage ? (
-                    <View className="relative">
-                      <Image source={{ uri: assessmentImage }} className="w-full h-40 rounded-lg mb-2" resizeMode="cover" />
-                      <TouchableOpacity
-                        onPress={() => removeImage('assessment')}
-                        className="absolute top-2 right-2 bg-red-500 rounded-full p-1"
-                      >
-                        <Ionicons name="close" size={16} color="white" />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => pickImage('assessment')}
-                      className="border-2 border-dashed border-gray-300 rounded-lg p-6 items-center"
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="document-outline" size={32} color="#888" />
-                      <Text className="text-gray-600 text-sm mt-2">Upload Assessment</Text>
-                      <Text className="text-gray-400 text-xs mt-1">
-                        {isBarangayClearance && businessData.length === 0 
-                          ? 'Required for new businesses' 
-                          : 'Required for all businesses'
-                        }
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <MediaPicker
+                    selectedImages={assessmentImages}
+                    setSelectedImages={setAssessmentImages}
+                    limit={1}
+                    editable={true}
+                  />
                 </View>
               </View>
             )}

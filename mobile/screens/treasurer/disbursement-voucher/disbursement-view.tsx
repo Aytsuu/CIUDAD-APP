@@ -675,7 +675,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 )}
 
                 {!disableDocumentManagement && (
-                  <View className="flex-row justify-end space-x-2 mt-3">
+                  <View className="flex-row justify-end space-x-2 mt-3 gap-2">
                     {supportDocsViewMode === "active"
                       ? !disbursement?.dis_is_archive && (
                           <ConfirmationModal
@@ -777,8 +777,8 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         rightAction={<View />}
         wrapScroll={false}
       >
-        <View className="flex-1">
-          <View className="pt-4">
+        <View className="flex-1 bg-white">
+          <View className="pt-4 bg-white">
             <Tabs
               value={activeTab}
               onValueChange={(val) =>
@@ -788,7 +788,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <TabsList className="bg-white flex-row justify-between">
                 <TabsTrigger
                   value="details"
-                  className={`flex-1 mx-1 ${
+                  className={`flex-1 mx-1 bg-white ${
                     activeTab === "details"
                       ? "border-b-2 border-primaryBlue"
                       : ""
@@ -804,7 +804,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 </TabsTrigger>
                 <TabsTrigger
                   value="documents"
-                  className={`flex-1 mx-1 ${
+                  className={`flex-1 mx-1 bg-white ${
                     activeTab === "documents"
                       ? "border-b-2 border-primaryBlue text-[13px]"
                       : ""
@@ -843,9 +843,6 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <TouchableOpacity onPress={() => setShowUploadModal(false)}>
                 <Text className="text-blue-500 font-sans">Cancel</Text>
               </TouchableOpacity>
-              <Text className="text-lg font-semibold font-sans text-[13px]">
-                Add Supporting Documents
-              </Text>
               <TouchableOpacity
                 onPress={handleUploadFiles}
                 disabled={selectedImages.length === 0}

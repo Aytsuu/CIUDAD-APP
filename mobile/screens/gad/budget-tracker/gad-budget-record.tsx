@@ -211,7 +211,7 @@ const BudgetTrackerRecords = () => {
 
   const renderItem = ({ item }: { item: GADBudgetEntryUI }) => (
     <TouchableOpacity onPress={() => handleEdit(item)}>
-      <Card className="mb-4 border border-gray-200">
+      <Card className="mb-4 border border-gray-200 bg-white">
         <CardHeader className="flex-row justify-between items-center">
           <CardTitle className="text-lg text-[#2a3a61]">
             {item.gbud_datetime

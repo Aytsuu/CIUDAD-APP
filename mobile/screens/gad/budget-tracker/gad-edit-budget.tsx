@@ -120,7 +120,7 @@ function GADViewEditEntryForm() {
         gbud_actual_expense: budgetEntry.gbud_actual_expense
           ? Number(budgetEntry.gbud_actual_expense)
           : 0,
-        gbud_reference_num: budgetEntry.gbud_reference_num || "",
+        gbud_reference_num: budgetEntry.gbud_reference_num || null,
         gbud_remaining_bal: budgetEntry.gbud_remaining_bal
           ? Number(budgetEntry.gbud_remaining_bal)
           : 0,
