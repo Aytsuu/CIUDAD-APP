@@ -8,7 +8,8 @@ export default () => {
                 <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade' }}/>
                 <Stack.Screen name="view-remarks-details" options={{ headerShown: false, animation: 'fade' }} />
                 <Stack.Screen name="add-remarks" options={{ headerShown: false, animation: 'fade' }} />
-                
+                <Stack.Screen name="view-mediation-details" options={{ headerShown: false, animation: 'fade' }} />
+                <Stack.Screen name="add-hearing-minutes" options={{ headerShown: false, animation: 'fade' }} />
             </Stack>
         </ToastProvider>
     )

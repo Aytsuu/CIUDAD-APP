@@ -959,9 +959,7 @@ export default function LuponCaseDetails() {
               <CircleAlert className="h-4 w-4 text-yellow-600" />
               <AlertDescription className="text-yellow-800">
                 <strong>Action Required:</strong> 
-                {!allSchedulesHaveRemarks && !allSchedulesAreClosed && " All hearing schedules must have remarks and be closed before you can resolve or escalate this case."}
-                {!allSchedulesHaveRemarks && allSchedulesAreClosed && " All hearing schedules must have remarks before you can resolve or escalate this case."}
-                {allSchedulesHaveRemarks && !allSchedulesAreClosed && " All hearing schedules must be closed before you can resolve or escalate this case."}
+                {!allSchedulesHaveRemarks || !allSchedulesAreClosed && " All hearing schedules must have remarks and be closed before you can resolve or escalate this case."}
               </AlertDescription>
             </div>
           </Alert>
