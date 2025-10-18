@@ -22,8 +22,8 @@ import {
   Mail,
   Home,
 } from "lucide-react-native";
-import { PersonType, ComplaintFile, ComplaintData } from "./types";
-import { usePostRaiseIssue } from "../../api-operations/queries/ComplaintPostQueries";
+import {ComplaintData, PersonType, ComplaintFile} from "./types";
+import { usePostRaiseIssue } from "./queries/ComplaintPostQueries";
 
 interface ComplaintDetailsProps {
   data: ComplaintData;
@@ -114,7 +114,7 @@ const ComplaintDetails: React.FC<ComplaintDetailsProps> = ({ data }) => {
     }
   };
 
-  const getStatusIcon = (status?: string): JSX.Element => {
+  const getStatusIcon = (status?: string): React.JSX.Element => {
     if (!status) return <FileText size={16} className="text-gray-600" />;
     
     switch (status.toLowerCase() as ComplaintStatus) {

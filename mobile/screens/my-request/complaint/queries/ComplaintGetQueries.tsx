@@ -34,17 +34,3 @@ export const useGetComplaintById = (complaintId: string, options?: { enabled?: b
   });
 };
 
-export const useGetComplaintView = () => {
-  return useQuery({
-    queryKey: ["complaint"],
-    queryFn: async () => {
-      try {
-        const res = await api.get(`complaint/view/`);
-        return res.data;
-      } catch (error) {
-        throw error;
-      }
-    },
-    staleTime: 5000,
-  });
-};

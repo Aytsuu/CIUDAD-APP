@@ -20,7 +20,7 @@ export default () => {
   {
     title: "Blotter Request",
     description: "Monitor blotter request",
-    route: "/(my-request)/complaint-tracking/compMainReq"
+    route: "/(my-request)/complaint-tracking/compMain"
   },
   {
     title: "Medicine Request",

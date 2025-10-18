@@ -1,4 +1,4 @@
-import ComplaintMainView from "@/screens/my-request/complaint/tabs/complaintView/complaintMainView";
+import ComplaintMainView from "@/screens/my-request/complaint/ComplaintMainView";
 
 export default () => {
     return <ComplaintMainView/>

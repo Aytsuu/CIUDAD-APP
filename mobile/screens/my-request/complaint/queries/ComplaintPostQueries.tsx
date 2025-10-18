@@ -1,8 +1,8 @@
 import { api } from "@/api/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { raiseIssue } from "../restful-api/complaintApi";
+import { raiseIssue } from "./complaintApi";
 import { useToast } from "@/hooks/use-toast";
-import { addSchedule } from "../restful-api/complaintPostAPI";
+import { addSchedule } from "./complaintPostAPI";
 import { useToastContext } from "@/components/ui/toast";
 
 export const usePostComplaint = () => {

@@ -11,10 +11,9 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import PageLayout from "@/screens/_PageLayout";
-import ComplaintDetails from "./complaintDetails";
+import ComplaintDetails from "./ComplaintDetails";
 import { ComplaintData } from "./types";
-import CaseTracking from "./caseTracking";
-import { useGetComplaintById } from "../../api-operations/queries/ComplaintGetQueries";
+import { useGetComplaintById } from "./queries/ComplaintGetQueries";
 
 interface TabButtonProps {
   title: string;
@@ -29,7 +28,7 @@ interface ComplaintParams {
   comp_id?: string;
 }
 
-export default function ComplaintMainView(): JSX.Element {
+export default function ComplaintMainView(): React.JSX.Element {
   const router = useRouter();
   const params = useLocalSearchParams() as ComplaintParams;
   
@@ -175,13 +174,8 @@ export default function ComplaintMainView(): JSX.Element {
 
         {/* Tab Content */}
         <View className="flex-1">
-          {activeTab === 'details' ? (
+          {activeTab === 'details' && (
             <ComplaintDetails data={complaintData} />
-          ) : (
-            <CaseTracking 
-              comp_id={String(complaintData.comp_id)} 
-              isRaised={complaintData.comp_status}
-            />
           )}
         </View>
       </View>
