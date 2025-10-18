@@ -98,25 +98,73 @@ function ReceiptPage() {
       cell: ({ row }) => {
         const nature = row.getValue("inv_nat_of_collection") as string;
         
-        // Define color schemes for different nature types
+        // Define distinct color schemes for each nature type
         const getColorScheme = (nature: string) => {
-          const normalized = nature?.toLowerCase() || '';
+          const normalized = nature?.toLowerCase().trim() || '';
           
-          if (normalized.includes('employment')) {
-            return 'bg-blue-100 text-blue-800 border-blue-200';
-          } else if (normalized.includes('file action')) {
-            return 'bg-green-100 text-green-800 border-green-200';
-          } else if (normalized.includes('20')) {
-            return 'bg-purple-100 text-purple-800 border-purple-200';
-          } else if (normalized.includes('18')) {
-            return 'bg-orange-100 text-orange-800 border-orange-200';
-          } else if (normalized.includes('permit')) {
-            return 'bg-teal-100 text-teal-800 border-teal-200';
-          } else if (normalized.includes('barangay')) {
-            return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-          } else {
-            return 'bg-gray-100 text-gray-800 border-gray-200';
+          const colorMap: Record<string, string> = {
+            // Employment & Job Related - Blue variants
+            'first time jobseeker': 'bg-blue-100 text-blue-800 border-blue-300',
+            'employment': 'bg-sky-100 text-sky-800 border-sky-300',
+            'identification': 'bg-cyan-100 text-cyan-800 border-cyan-300',
+            
+            // Financial & Loans - Purple variants
+            'loan': 'bg-purple-100 text-purple-800 border-purple-300',
+            'sss': 'bg-violet-100 text-violet-800 border-violet-300',
+            'bir': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+            'bank requirement': 'bg-indigo-100 text-indigo-800 border-indigo-300',
+            
+            // Utilities & Services - Teal/Green variants
+            'electrical connection': 'bg-teal-100 text-teal-800 border-teal-300',
+            'mcwd requirements': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            
+            // Education & Training - Indigo variants
+            'scholarship': 'bg-indigo-100 text-indigo-800 border-indigo-300',
+            'tesda': 'bg-blue-100 text-blue-800 border-blue-300',
+            'board examination': 'bg-sky-100 text-sky-800 border-sky-300',
+            
+            // IDs & Certifications - Cyan variants
+            'postal id': 'bg-cyan-100 text-cyan-800 border-cyan-300',
+            'nbi': 'bg-sky-100 text-sky-800 border-sky-300',
+            'pwd identification': 'bg-teal-100 text-teal-800 border-teal-300',
+            'señior citizen identification': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            'police clearance': 'bg-blue-100 text-blue-800 border-blue-300',
+            
+            // Financial Assistance - Green variants
+            'pwd financial assistance': 'bg-green-100 text-green-800 border-green-300',
+            'señior citizen financial assistance': 'bg-lime-100 text-lime-800 border-lime-300',
+            'fire victim': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            
+            // Legal & Government - Orange/Amber variants
+            'bail bond': 'bg-orange-100 text-orange-800 border-orange-300',
+            'probation': 'bg-amber-100 text-amber-800 border-amber-300',
+            'file action': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+            'proof of custody': 'bg-amber-100 text-amber-800 border-amber-300',
+            'summon': 'bg-orange-200 text-orange-900 border-orange-400',
+            
+            // Permits & Clearances - Red variants
+            'building permit': 'bg-red-100 text-red-800 border-red-300',
+            'barangay clearance': 'bg-rose-100 text-rose-800 border-rose-300',
+            'business clearance': 'bg-pink-100 text-pink-800 border-pink-300',
+            'barangay sinulog permit': 'bg-red-100 text-red-800 border-red-300',
+            'barangay fiesta permit': 'bg-rose-100 text-rose-800 border-rose-300',
+            'dwup': 'bg-pink-100 text-pink-800 border-pink-300',
+            
+            // Personal & Miscellaneous - Pink/Rose variants
+            'cohabitation': 'bg-pink-100 text-pink-800 border-pink-300',
+            'marriage certification': 'bg-rose-100 text-rose-800 border-rose-300',
+            'good moral': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+            'indigency': 'bg-purple-100 text-purple-800 border-purple-300',
+            'indigency (for minors)': 'bg-violet-100 text-violet-800 border-violet-300',
+          };
+          
+          // Exact match first
+          if (colorMap[normalized]) {
+            return colorMap[normalized];
           }
+          
+          // Default for any unknown values
+          return 'bg-gray-100 text-gray-800 border-gray-300';
         };
         
         return (
