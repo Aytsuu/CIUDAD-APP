@@ -18,9 +18,7 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form/form.tsx";
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx';
 import { FormInput } from '@/components/ui/form/form-input';
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { ordinanceUploadFormSchema, amendOrdinanceUploadSchema, repealOrdinanceUploadSchema } from '@/form-schema/council/ordinanceUploadSchema';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useInsertOrdinanceUpload } from './queries/OrdinanceUploadInsertQueries.tsx';
 import { Badge } from '@/components/ui/badge';
@@ -132,19 +130,10 @@ function OrdinancePage() {
     const handleOrdinanceError = () => {
         setIsCreatingOrdinance(false);
     };
-    
-    // Get the appropriate schema based on creation mode
-    const getSchemaForCreationMode = () => {
-        if (creationMode === 'amend') {
-            return amendOrdinanceUploadSchema;
-        } else if (creationMode === 'repeal') {
-            return repealOrdinanceUploadSchema;
-        }
-        return ordinanceUploadFormSchema;
-    };
 
     const form = useForm<any>({
-        resolver: zodResolver(getSchemaForCreationMode()),
+        mode: "onSubmit",
+        reValidateMode: "onSubmit",
         defaultValues: {
             ordTitle: "",        
             ordDate: "",
@@ -265,23 +254,62 @@ function OrdinancePage() {
         console.log('Media Files:', mediaFiles);
         console.log('Selected existing ordinance:', selectedExistingOrdinance);
         console.log('Creation mode:', creationMode);
-        console.log('ordTag value:', values.ordTag);
+        
+        // Clear previous errors before validation
+        form.clearErrors();
+        
+        let hasErrors = false;
+        
+        // Manual validation with inline errors
+        // Always required fields
+        if (!values.ordTitle || values.ordTitle.trim() === '') {
+            form.setError('ordTitle', { type: 'manual', message: 'Ordinance title is required' });
+            hasErrors = true;
+        }
+        
+        if (!values.ordDate || values.ordDate.trim() === '') {
+            form.setError('ordDate', { type: 'manual', message: 'Date is required' });
+            hasErrors = true;
+        }
+        
+        if (!values.ordinanceFile || values.ordinanceFile.trim() === '' || values.ordinanceFile === 'no-image-url-fetched') {
+            form.setError('ordinanceFile', { type: 'manual', message: 'Please upload the ordinance document' });
+            hasErrors = true;
+        }
+        
+        // Mode-specific validation for ordTag
+        if (creationMode === 'amend' || creationMode === 'repeal') {
+            const selectedOrdinance = values.ordTag || selectedExistingOrdinance;
+            if (!selectedOrdinance || selectedOrdinance === 'new' || selectedOrdinance === '') {
+                const errorMessage = creationMode === 'amend' ? 'Please select an ordinance to amend' : 'Please select an ordinance to repeal';
+                form.setError('ordTag', { type: 'manual', message: errorMessage });
+                hasErrors = true;
+            }
+        }
+        
+        // Always validate ordDetails and ordAreaOfFocus for all modes
+        if (!values.ordDetails || values.ordDetails.trim() === '') {
+            form.setError('ordDetails', { type: 'manual', message: 'Ordinance details are required' });
+            hasErrors = true;
+        }
+        
+        if (!values.ordAreaOfFocus || values.ordAreaOfFocus.length === 0) {
+            form.setError('ordAreaOfFocus', { type: 'manual', message: 'At least one area of focus must be selected' });
+            hasErrors = true;
+        }
+        
+        // If there are validation errors, stop here
+        if (hasErrors) {
+            setIsCreatingOrdinance(false);
+            return;
+        }
         
         // Set loading state to true
         setIsCreatingOrdinance(true);
         
-        // Manual validation for ordTag based on creation mode
-        // Check both form value and state value for validation
+        // Check both form value and state value for selected ordinance
         const selectedOrdinance = values.ordTag || selectedExistingOrdinance;
         console.log('Selected ordinance for validation:', selectedOrdinance);
-        
-        if ((creationMode === 'amend' || creationMode === 'repeal') && (!selectedOrdinance || selectedOrdinance === 'new' || selectedOrdinance === '')) {
-            const errorMessage = creationMode === 'amend' ? 'Please select an ordinance to amend.' : 'Please select an ordinance to repeal.';
-            showErrorToast(errorMessage);
-            (form as any).setError('ordTag', { type: 'manual', message: errorMessage });
-            setIsCreatingOrdinance(false);
-            return;
-        }
         
         // Transform form data to API format
         const transformFormData = (formValues: any, category: string) => {
@@ -372,8 +400,7 @@ function OrdinancePage() {
             ordinanceFile: "",
             ordRepealed: false,
             ordTag: "",
-            ordDesc: "",
-            creationMode: "new"
+            ordDesc: ""
         });
         form.clearErrors();
         setMediaFiles([]);
@@ -460,8 +487,11 @@ function OrdinancePage() {
                     <Button 
                         className="w-full md:w-auto"
                         onClick={() => {
-                            setUploadDialogOpen(true);
                             resetUploadForm();
+                            form.clearErrors();
+                            setCreationMode('new');
+                            setSelectedExistingOrdinance('new');
+                            setUploadDialogOpen(true);
                         }}
                     >
                         <Plus />Upload Ordinance
@@ -682,10 +712,13 @@ function OrdinancePage() {
                                                 if ((mode === 'amend' || mode === 'repeal') && !canTargetExisting) {
                                                     return; // prevent switching when no eligible ordinances
                                                 }
+                                                // Clear all form errors completely
+                                                form.clearErrors();
                                                 setCreationMode(mode);
                                                 if (mode === 'new') {
                                                     setSelectedExistingOrdinance('new');
                                                     form.setValue('ordRepealed', false);
+                                                    form.setValue('ordTag', '');
                                                 } else if (mode === 'amend') {
                                                     form.setValue('ordRepealed', false);
                                                 } else if (mode === 'repeal') {
@@ -695,12 +728,14 @@ function OrdinancePage() {
                                             return (
                                                 <>
                                                     <Button
+                                                        type="button"
                                                         variant={creationMode === 'new' ? 'default' : 'outline'}
                                                         onClick={() => handleSetMode('new')}
                                                     >
                                                         New
                                                     </Button>
                                                     <Button
+                                                        type="button"
                                                         variant={creationMode === 'amend' ? 'default' : 'outline'}
                                                         disabled={!canTargetExisting}
                                                         onClick={() => handleSetMode('amend')}
@@ -709,6 +744,7 @@ function OrdinancePage() {
                                                         Amend
                                                     </Button>
                                                     <Button
+                                                        type="button"
                                                         variant={creationMode === 'repeal' ? 'default' : 'outline'}
                                                         disabled={!canTargetExisting}
                                                         onClick={() => handleSetMode('repeal')}
@@ -760,7 +796,7 @@ function OrdinancePage() {
                                 <FormInput
                                     control={form.control}
                                     name="ordTitle"
-                                    label="Ordinance Title"    
+                                    label="Ordinance Title"
                                 />
 
                                 {/* Date Field */}
@@ -768,25 +804,14 @@ function OrdinancePage() {
                                     control={form.control}
                                     name="ordDate"
                                     label="Date"
-                                    type="date"    
+                                    type="date"
                                 />
 
                                 {/* Details Field */}
-                                <FormField
+                                <FormTextArea
                                     control={form.control}
                                     name="ordDetails"
-                                    render={() => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <FormTextArea
-                                                    control={form.control}
-                                                    name="ordDetails"
-                                                    label="Ordinance Details"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                    label="Ordinance Details"
                                 />
 
                                 {/* Area of Focus Field */}
@@ -865,7 +890,7 @@ function OrdinancePage() {
                                                 <span className="ml-2">Creating...</span>
                                             </>
                                         ) : (
-                                            'Create'
+                                            'Upload'
                                         )}
                                     </Button>
                                 </div>
@@ -874,9 +899,6 @@ function OrdinancePage() {
                     </div>
                 }
             />
-
-
-
 
             {/* Folder View Popup Dialog */}
             <DialogLayout
