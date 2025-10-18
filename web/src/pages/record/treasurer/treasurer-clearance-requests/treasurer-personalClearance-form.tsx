@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { createPersonalClearance, createNonResidentPersonalClearance } from "@/pages/record/treasurer/treasurer-clearance-requests/restful-api/personalClearancePostApi";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComboboxInput } from "../../../../components/ui/form/form-combo-box-search"; 
 import { useGetResidents } from "@/pages/record/treasurer/treasurer-clearance-requests/queries/CertClearanceFetchQueries";
@@ -41,7 +41,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
             // If staff_id is less than 11 digits, pad with leading zeros
             if (staffId.length < 11) {
                 staffId = staffId.padStart(11, '0');
-                console.log(`Padded staff_id from ${staff.staff_id} to ${staffId}`);
             }
         }
         
@@ -50,73 +49,11 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
     
     const staffId = getStaffId();
     
-    // Debug: Log user and staff data
-    useEffect(() => {
-        console.log('User data:', user);
-        console.log('Staff data:', user?.staff);
-        console.log('Staff ID from user.staff.staff_id:', user?.staff?.staff_id);
-        console.log('Staff ID type:', typeof user?.staff?.staff_id);
-        console.log('Staff ID length:', user?.staff?.staff_id?.length);
-    }, [user]);
     const { data: residents = [], isLoading: residentLoading} = useGetResidents()
     
-    // Debug: Log residents data
-    useEffect(() => {
-        console.log('Residents data:', residents);
-        if (residents.length > 0) {
-            console.log('First resident:', residents[0]);
-            console.log('Available resident IDs:', residents.map(r => r.rp_id));
-            console.log('Resident data structure check:', {
-                hasRpId: residents[0].hasOwnProperty('rp_id'),
-                rpIdType: typeof residents[0].rp_id,
-                rpIdValue: residents[0].rp_id,
-                fullName: residents[0].full_name
-            });
-        }
-    }, [residents]);
     
-    // Debug: Log staff data
-    useEffect(() => {
-        console.log('User data:', user);
-        console.log('Staff data:', user?.staff);
-        console.log('Staff ID from user.staff.staff_id:', user?.staff?.staff_id);
-        console.log('Staff ID type:', typeof user?.staff?.staff_id);
-        console.log('Staff ID length:', user?.staff?.staff_id?.length);
-        console.log('Final staff ID being used:', staffId);
-        
-        // Test API call to get staff data
-        const testStaffAPI = async () => {
-            try {
-                const response = await fetch('/api/administration/staff/list/table/');
-                const data = await response.json();
-                console.log('Available staff data:', data);
-                if (data.results) {
-                    console.log('Available staff IDs:', data.results.map((s: any) => s.staff_id));
-                    
-                    // Check if current staff_id exists in the list
-                    if (staffId) {
-                        const staffExists = data.results.some((s: any) => s.staff_id === staffId);
-                        console.log(`Staff ID ${staffId} exists in available staff:`, staffExists);
-                        if (!staffExists) {
-                            console.error(`Staff ID ${staffId} not found in available staff list!`);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to fetch staff data:', error);
-            }
-        };
-        testStaffAPI();
-    }, [user, staffId]);
     const { data: purposes = [], isLoading: _purposesLoading} = useGetPurposeAndRate()
 
-    // Read selected flags so they're used (and log for debugging)
-    useEffect(() => {
-        console.log('[Treasurer Personal] Eligibility flags changed:', {
-            isSenior: selectedIsSenior,
-            hasDisability: selectedHasDisability,
-        });
-    }, [selectedIsSenior, selectedHasDisability]);
 
     const purposeOptions = purposes
     .filter(purposes => purposes.pr_is_archive === false)
@@ -179,9 +116,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 ...values   
             };
             
-            console.log('Form values:', values);
-            console.log('Payload being sent:', payload);
-            console.log('Staff ID:', staffId);
             
             await createPersonalClearance(payload, staffId);
             if (onSuccess) onSuccess();
@@ -226,7 +160,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                 birthdate: values.birthdate,
             };
             
-            console.log('Non-resident payload:', payload);
             await createNonResidentPersonalClearance(payload, staffId);
             showSuccessToast("Personal clearance created successfully!");
             
@@ -285,11 +218,8 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                 placeholder="Search resident by name"
                                                 emptyText="No residents found"
                                                 onSelect={async (value: string, item: any) => {
-                                                    console.log('Selected resident item:', item);
-                                                    
                                                     // Validate that we have a valid rp_id
                                                     if (!item?.rp_id) {
-                                                        console.error('No rp_id found in selected item:', item);
                                                         showErrorToast("Invalid resident selected. Please try again.");
                                                         return;
                                                     }
@@ -298,9 +228,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                     field.onChange(value);
                                                     // Set the actual rp_id for form submission
                                                     residentForm.setValue('rp_id', item.rp_id);
-                                                    
-                                                    console.log('Set rp_id to:', item.rp_id);
-                                                    console.log('Display value set to:', value);
                                                     
                                                 // helper to compute and set flags
                                                 const computeAndSet = (dobValue: any, disabilityValue: any) => {
@@ -322,7 +249,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                     const hasDisability = disabilityRaw !== null && disabilityRaw !== undefined && String(disabilityRaw).trim() !== '';
                                                     setSelectedIsSenior(isSenior);
                                                     setSelectedHasDisability(hasDisability);
-                                                    console.log('[Treasurer Personal] Selected resident flags:', { rp_id: item?.rp_id, isSenior, hasDisability, per_dob: dobStr, per_disability: disabilityRaw });
                                                 };
 
                                                 // Prefer full resident record from the existing residents list
@@ -331,11 +257,6 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                                     computeAndSet((full as any)?.per_dob, (full as any)?.per_disability);
                                                 } else {
                                                     computeAndSet((item as any)?.per_dob, (item as any)?.per_disability);
-                                                }
-                                                const hasDob = (((full as any)?.per_dob ?? (item as any)?.per_dob)) && String(((full as any)?.per_dob ?? (item as any)?.per_dob)).trim() !== '';
-                                                const hasDis = (((full as any)?.per_disability ?? (item as any)?.per_disability)) && String(((full as any)?.per_disability ?? (item as any)?.per_disability)).trim() !== '';
-                                                if (!hasDob || !hasDis) {
-                                                    console.warn('[Treasurer Personal] Missing per_dob/per_disability in residents data for rp_id:', item?.rp_id, 'Ensure useGetResidents() provides these fields.');
                                                 }
                                                 }}
                                                 onCustomInput={(value: string) => {

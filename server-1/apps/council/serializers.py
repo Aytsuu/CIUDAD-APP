@@ -562,10 +562,6 @@ class OrdinanceSerializer(serializers.ModelSerializer):
         """
         # Get staff_id from initial_data (raw request data)
         staff_id = self.initial_data.get('staff_id')
-        print(f"🔍 OrdinanceSerializer - staff_id from initial_data: {staff_id}")
-        print(f"🔍 OrdinanceSerializer - staff_id type: {type(staff_id)}")
-        print(f"🔍 OrdinanceSerializer - initial_data: {self.initial_data}")
-        print(f"🔍 OrdinanceSerializer - validated_data: {validated_data}")
         
         # Convert staff_id string to Staff object
         if staff_id:
@@ -573,22 +569,15 @@ class OrdinanceSerializer(serializers.ModelSerializer):
                 Staff = apps.get_model('administration', 'Staff')
                 # Convert to string if it's a number
                 staff_id_str = str(staff_id)
-                print(f"🔍 Looking for staff with ID: {staff_id_str}")
                 staff = Staff.objects.get(staff_id=staff_id_str)
                 validated_data['staff'] = staff
-                print(f"✅ Found staff {staff_id_str}, setting in validated_data")
             except Staff.DoesNotExist:
-                print(f"⚠️ Staff with ID {staff_id_str} not found")
                 logger.error(f"Staff with id {staff_id_str} does not exist")
             except Exception as e:
-                print(f"❌ Error getting staff {staff_id_str}: {e}")
                 logger.error(f"Error getting staff: {str(e)}")
-        else:
-            print("⚠️ No staff_id provided in request")
         
         # Create the ordinance
         ordinance = Ordinance.objects.create(**validated_data)
-        print(f"✅ Created ordinance {ordinance.ord_num} with staff: {ordinance.staff}")
         
         return ordinance
         

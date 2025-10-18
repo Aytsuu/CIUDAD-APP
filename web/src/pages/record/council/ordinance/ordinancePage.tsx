@@ -104,7 +104,6 @@ function OrdinancePage() {
     
     
     const {mutate: addOrdinance} = useInsertOrdinanceUpload(() => {
-        console.log('Ordinance added successfully, refreshing data...');
         setUploadDialogOpen(false);
         
         // Set loading state to false
@@ -171,15 +170,6 @@ function OrdinancePage() {
 
     // Removed useEffect - now using paginated query
 
-    // Debug: Log ordinance data to see file structure
-    useEffect(() => {
-        if (ordinanceItems.length > 0) {
-            console.log('Ordinance items:', ordinanceItems);
-            ordinanceItems.forEach(item => {
-                console.log(`File for ${item.ord_num}:`, item.file);
-            });
-        }
-    }, [ordinanceItems]);
 
     // Removed fetchAllItems - now using paginated query
 
@@ -250,10 +240,6 @@ function OrdinancePage() {
     // };
 
     const handleUploadSubmit = (values: any) => {
-        console.log("Form values:", values);
-        console.log('Media Files:', mediaFiles);
-        console.log('Selected existing ordinance:', selectedExistingOrdinance);
-        console.log('Creation mode:', creationMode);
         
         // Clear previous errors before validation
         form.clearErrors();
@@ -309,7 +295,6 @@ function OrdinancePage() {
         
         // Check both form value and state value for selected ordinance
         const selectedOrdinance = values.ordTag || selectedExistingOrdinance;
-        console.log('Selected ordinance for validation:', selectedOrdinance);
         
         // Transform form data to API format
         const transformFormData = (formValues: any, category: string) => {
@@ -355,8 +340,6 @@ function OrdinancePage() {
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
             };
-            console.log("Creating amendment with data:", amendmentData);
-            console.log("Sending to addOrdinance:", { values: amendmentData, mediaFiles });
             addOrdinance({ values: amendmentData, mediaFiles }, { onError: handleOrdinanceError });
         } else if (creationMode === 'repeal') {
             // Find the original ordinance to get its category
@@ -369,13 +352,10 @@ function OrdinancePage() {
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: false,
             };
-            console.log("Creating repeal with data:", repealData);
             addOrdinance({ values: repealData, mediaFiles }, { onError: handleOrdinanceError });
         } else {
-            console.log("Creating new standalone ordinance");
             const category = values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "";
             const newData = transformFormData(values, category);
-            console.log("Creating new ordinance with data:", newData);
             addOrdinance({ values: newData, mediaFiles }, { onError: handleOrdinanceError });
         }
     };

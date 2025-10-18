@@ -550,8 +550,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                             act_type="Receipt Created",
                             act_description=f"Receipt {invoice.inv_serial_num} created for business permit {business_permit.bpr_id}. Payment status updated to Paid.",
                             staff=staff,
-                            record_id=invoice.inv_serial_num,
-                            feat_name="Receipt Management"
+                            record_id=invoice.inv_serial_num
                         )
                 except Exception as e:
                     print(f"Failed to log activity: {e}")
@@ -645,8 +644,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                             act_type="Receipt Created",
                             act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.spay_id}. Payment status updated to Paid.",
                             staff=staff,
-                            record_id=invoice.inv_serial_num,
-                            feat_name="Receipt Management"
+                            record_id=invoice.inv_serial_num
                         )
                 except Exception as e:
                     print(f"Failed to log activity: {e}")

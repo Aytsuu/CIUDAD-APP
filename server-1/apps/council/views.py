@@ -793,10 +793,6 @@ class OrdinanceListView(generics.ListCreateAPIView):
         # Extract of_id from request data
         of_id = request.data.get('of_id')
         staff_id = request.data.get('staff_id')
-        print(f"🔍 Received of_id: {of_id}")
-        print(f"🔍 Received staff_id: {staff_id}")
-        print(f"🔍 staff_id type: {type(staff_id)}")
-        print(f"🔍 Full request data: {request.data}")
         
         # Remove of_id from data to avoid serializer issues
         ordinance_data = request.data.copy()
@@ -806,7 +802,6 @@ class OrdinanceListView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=ordinance_data)
         serializer.is_valid(raise_exception=True)
         ordinance = serializer.save()
-        print(f"Created ordinance: {ordinance.ord_num}")
         
         # Link file if provided
         if of_id:
@@ -814,12 +809,8 @@ class OrdinanceListView(generics.ListCreateAPIView):
                 file_obj = OrdinanceFile.objects.get(of_id=of_id)
                 ordinance.of_id = file_obj
                 ordinance.save()
-                print(f"Linked file {of_id} to ordinance {ordinance.ord_num}")
             except OrdinanceFile.DoesNotExist:
-                print(f"File with of_id {of_id} does not exist")
                 pass  # File doesn't exist, continue without linking
-        else:
-            print("No of_id provided, ordinance created without file")
         
         # Log the activity
         try:
@@ -836,8 +827,7 @@ class OrdinanceListView(generics.ListCreateAPIView):
                     act_type="Ordinance Created",
                     act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {ordinance.ord_category}",
                     staff=staff,
-                    record_id=ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance creation: {ordinance.ord_num}")
             else:
@@ -876,8 +866,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
                     act_type="Ordinance Updated",
                     act_description=f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated",
                     staff=staff,
-                    record_id=updated_ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=updated_ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance update: {updated_ordinance.ord_num}")
             else:
@@ -909,8 +898,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
                     act_type="Ordinance Deleted",
                     act_description=f"Ordinance {ordinance_num} '{ordinance_title}' deleted",
                     staff=staff,
-                    record_id=ordinance_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance_num
                 )
                 logger.info(f"Activity logged for ordinance deletion: {ordinance_num}")
             else:
@@ -948,8 +936,7 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
                     act_type="Ordinance Archived",
                     act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' archived",
                     staff=staff,
-                    record_id=ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance archiving: {ordinance.ord_num}")
             else:

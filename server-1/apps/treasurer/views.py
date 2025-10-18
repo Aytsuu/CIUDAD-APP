@@ -1449,8 +1449,7 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
                                     act_type="Auto-Invoice Created",
                                     act_description=f"Auto-generated invoice INV-{instance.cr_id} created for {instance.req_type} payment",
                                     staff=staff,
-                                    record_id=f"INV-{instance.cr_id}",
-                                    feat_name="Payment Processing"
+                                    record_id=f"INV-{instance.cr_id}"
                                 )
                                 logger.info(f"Activity logged for auto-invoice creation: INV-{instance.cr_id}")
                             else:

@@ -204,12 +204,20 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                     staff = Staff.objects.filter(staff_id=staff_id_str).first()
                     
                     if staff:
+                        # Get resident name
+                        resident_name = "Unknown"
+                        if certificate.rp_id and certificate.rp_id.per:
+                            per = certificate.rp_id.per
+                            resident_name = f"{per.per_fname} {per.per_lname}"
+                        
+                        # Get purpose
+                        purpose = certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'
+                        
                         create_activity_log(
                             act_type="Personal Clearance Request Created",
-                            act_description=f"Personal clearance request {certificate.cr_id} created for {certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'}",
+                            act_description=f"Personal clearance request {certificate.cr_id} created for {resident_name} ({purpose})",
                             staff=staff,
-                            record_id=certificate.cr_id,
-                            feat_name="Personal Clearance Management"
+                            record_id=certificate.cr_id
                         )
                         logger.info(f"Activity logged for certificate creation: {certificate.cr_id}")
                     else:
@@ -661,13 +669,21 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 from apps.act_log.utils import create_activity_log
                 
                 if staff:
+                    # Get resident name
+                    resident_name = "Unknown"
+                    if certificate.rp_id and certificate.rp_id.per:
+                        per = certificate.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'
+                    
                     # Create activity log
                     create_activity_log(
                         act_type="Certificate Issued",
-                        act_description=f"Certificate {cr_id} marked as issued/printed",
+                        act_description=f"Certificate {cr_id} issued to {resident_name} ({purpose})",
                         staff=staff,
-                        record_id=str(issued_certificate.ic_id),
-                        feat_name="Certificate Management"
+                        record_id=str(issued_certificate.ic_id)
                     )
                     logger.info(f"Activity logged for certificate issuance: {issued_certificate.ic_id}")
                 else:
@@ -881,13 +897,19 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
+                        # Get business name and owner
+                        business_info = permit_clearance.bus_permit_name or "Unknown Business"
+                        owner_name = "Unknown Owner"
+                        if permit_clearance.rp_id and permit_clearance.rp_id.per:
+                            per = permit_clearance.rp_id.per
+                            owner_name = f"{per.per_fname} {per.per_lname}"
+                        
                         # Create activity log
                         create_activity_log(
                             act_type="Business Permit Request Created",
-                            act_description=f"Business permit request {permit_clearance.bpr_id} created",
+                            act_description=f"Business permit request {permit_clearance.bpr_id} created for '{business_info}' (Owner: {owner_name})",
                             staff=staff,
-                            record_id=permit_clearance.bpr_id,
-                            feat_name="Business Permit Management"
+                            record_id=permit_clearance.bpr_id
                         )
                         logger.info(f"Activity logged for business permit creation: {permit_clearance.bpr_id}")
                     else:
@@ -1064,13 +1086,19 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 from apps.act_log.utils import create_activity_log
                 
                 if staff:
+                    # Get business name and owner
+                    business_info = issued_permit.permit_request.bus_permit_name or "Unknown Business"
+                    owner_name = "Unknown Owner"
+                    if issued_permit.permit_request.rp_id and issued_permit.permit_request.rp_id.per:
+                        per = issued_permit.permit_request.rp_id.per
+                        owner_name = f"{per.per_fname} {per.per_lname}"
+                    
                     # Create activity log
                     create_activity_log(
                         act_type="Business Permit Issued",
-                        act_description=f"Business permit {bpr_id} marked as issued/printed",
+                        act_description=f"Business permit {bpr_id} issued for '{business_info}' (Owner: {owner_name})",
                         staff=staff,
-                        record_id=issued_permit.ibp_id,
-                        feat_name="Business Permit Management"
+                        record_id=issued_permit.ibp_id
                     )
                     logger.info(f"Activity logged for business permit issuance: {issued_permit.ibp_id}")
                 else:
@@ -1243,13 +1271,19 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
+                        # Get business name and owner
+                        business_info = clearance_request.bus_permit_name or "Unknown Business"
+                        owner_name = "Unknown Owner"
+                        if clearance_request.rp_id and clearance_request.rp_id.per:
+                            per = clearance_request.rp_id.per
+                            owner_name = f"{per.per_fname} {per.per_lname}"
+                        
                         # Create activity log
                         create_activity_log(
                             act_type="Business Clearance Request Created",
-                            act_description=f"Business clearance request {clearance_request.bpr_id} created",
+                            act_description=f"Business clearance request {clearance_request.bpr_id} created for '{business_info}' (Owner: {owner_name})",
                             staff=staff,
-                            record_id=clearance_request.bpr_id,
-                            feat_name="Business Clearance Management"
+                            record_id=clearance_request.bpr_id
                         )
                         logger.info(f"Activity logged for business clearance creation: {clearance_request.bpr_id}")
                     else:
