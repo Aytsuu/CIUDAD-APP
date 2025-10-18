@@ -804,9 +804,7 @@ export const ProjectProposalView: React.FC<ProjectProposalViewProps> = ({
             <MediaPicker
               selectedImages={selectedImages}
               setSelectedImages={setSelectedImages}
-              maxImages={10}
-              multiple={true}
-              editable={true}
+              limit={10}
             />
           </View>
         </Modal>

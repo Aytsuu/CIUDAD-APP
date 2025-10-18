@@ -865,9 +865,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
             <MediaPicker
               selectedImages={selectedImages}
               setSelectedImages={setSelectedImages}
-              maxImages={10}
-              multiple={true}
-              editable={true}
+              limit={10}
             />
           </View>
         </Modal>

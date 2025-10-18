@@ -533,8 +533,7 @@ function GADViewEditEntryForm() {
                 <MediaPicker
                   selectedImages={mediaFiles}
                   setSelectedImages={setMediaFiles}
-                  multiple={true}
-                  maxImages={5}
+                  limit={5}
                   editable={isEditing}
                 />
               </View>

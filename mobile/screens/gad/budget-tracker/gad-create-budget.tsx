@@ -504,8 +504,7 @@ useEffect(() => {
                 <MediaPicker
                   selectedImages={mediaFiles}
                   setSelectedImages={setMediaFiles}
-                  multiple={true}
-                  maxImages={5}
+                  limit={5}
                 />
               </View>
         </View>
