@@ -10,11 +10,13 @@ import { Search, Calendar, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
 import PageLayout from '@/screens/_PageLayout';
+import { SearchInput } from '@/components/ui/search-input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
 
 const IncomeExpenseMain = () => {
   const router = useRouter();
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Add debouncing for search
@@ -92,27 +94,27 @@ const IncomeExpenseMain = () => {
       }
       headerTitle={<Text className="text-gray-900 text-[13px]">Income & Expense Tracking</Text>}
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
     >
+      {showSearch && (
+        <SearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={() => {}} // Can leave empty since you're using debounce
+        />
+      )}      
 
       <View className="flex-1 px-2">
-        {/* Search Bar */}
-        <View className="px-4 mb-8">
-          <View className="relative">
-            <Search className="absolute left-3 top-3.5 text-gray-500" size={17} />
-            <TextInput
-              placeholder="Search"
-              className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </View>
 
         {/* Optional: Show total count - placeholder for future pagination */}
         {fetchedData.length > 0 && (
-          <View className="px-4 mb-2">
+          <View className="px-4 mb-2 pt-2">
             <Text className="text-xs text-gray-500">
               Showing {fetchedData.length} of {responseData.count} records
             </Text>

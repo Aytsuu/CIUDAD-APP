@@ -812,7 +812,7 @@ function ResolutionPage() {
 
       <View className="flex-1 px-6">
 
-        {/* Search and Filters */}
+        {/*Filters */}
         <View className="mb-4">
           <View className="flex-row justify-between items-center gap-2 pb-5">
             <View className="flex-1">
