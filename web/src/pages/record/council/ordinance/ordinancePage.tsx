@@ -283,6 +283,21 @@ function OrdinancePage() {
             return;
         }
         
+        // Transform form data to API format
+        const transformFormData = (formValues: any, category: string) => {
+            return {
+                ordinanceTitle: formValues.ordTitle,
+                ordinanceDate: formValues.ordDate,
+                ordinanceDetails: formValues.ordDetails,
+                ordinanceCategory: category,
+                ord_repealed: formValues.ordRepealed,
+                ordTag: formValues.ordTag,
+                ordDesc: formValues.ordDesc,
+                ordAreaOfFocus: formValues.ordAreaOfFocus,
+                ordinanceFile: formValues.ordinanceFile
+            };
+        };
+
         // Based on creation mode
         if (creationMode === 'amend') {
             // If new ordinance marked repealed, block amendment creation
@@ -305,11 +320,9 @@ function OrdinancePage() {
                 ord.ord_num === selectedOrdinance
             ).length;
             
+            const category = parent?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "");
             const amendmentData = {
-                ...values,
-                ord_repealed: false,
-                // Use the same category as the original ordinance
-                ordinanceCategory: parent?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : ""),
+                ...transformFormData(values, category),
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: true,
                 ord_ammend_ver: existingAmendments + 1
@@ -320,11 +333,10 @@ function OrdinancePage() {
         } else if (creationMode === 'repeal') {
             // Find the original ordinance to get its category
             const originalOrdinance = ordinanceItems.find(o => o.ord_num === selectedOrdinance);
+            const category = originalOrdinance?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "");
             const repealData = {
-                ...values,
+                ...transformFormData(values, category),
                 ord_repealed: true,
-                // Use the same category as the original ordinance
-                ordinanceCategory: originalOrdinance?.ord_category || (values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : ""),
                 // Link to the ordinance being repealed (optional business rule)
                 ord_parent: selectedOrdinance,
                 ord_is_ammend: false,
@@ -333,11 +345,9 @@ function OrdinancePage() {
             addOrdinance({ values: repealData, mediaFiles }, { onError: handleOrdinanceError });
         } else {
             console.log("Creating new standalone ordinance");
-            const newData = { 
-                ...values, 
-                ord_repealed: false,
-                ordinanceCategory: values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : ""
-            } as any;
+            const category = values.ordAreaOfFocus && values.ordAreaOfFocus.length > 0 ? values.ordAreaOfFocus[0] : "";
+            const newData = transformFormData(values, category);
+            console.log("Creating new ordinance with data:", newData);
             addOrdinance({ values: newData, mediaFiles }, { onError: handleOrdinanceError });
         }
     };
@@ -362,11 +372,14 @@ function OrdinancePage() {
             ordinanceFile: "",
             ordRepealed: false,
             ordTag: "",
-            ordDesc: ""
+            ordDesc: "",
+            creationMode: "new"
         });
+        form.clearErrors();
         setMediaFiles([]);
         setActiveVideoId("");
         setSelectedExistingOrdinance("new");
+        setCreationMode('new');
     };
 
 
