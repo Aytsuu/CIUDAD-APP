@@ -269,17 +269,29 @@ function ResolutionPage() {
                                 mainContent={
                                     <div className="flex flex-col gap-4 p-5">
                                         {files.map((file) => (
-                                            <div key={file.rsd_id} className="border p-3 rounded-md">
+                                            // <div key={file.rsd_id} className="border p-3 rounded-md">
+                                            //     <a 
+                                            //         href={file.rsd_url}
+                                            //         target="_blank"
+                                            //         rel="noopener noreferrer"
+                                            //         className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                                            //     >
+                                            //         <FileInput size={16} />
+                                            //         Image {file.rsd_name}
+                                            //     </a>
+                                            // </div>
+                                            <div key={file.rsd_id} className="border p-2 rounded-md">
                                                 <a 
                                                     href={file.rsd_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                                                    className="text-primary hover:text-blue-800 flex items-center gap-2"
                                                 >
-                                                    <FileInput size={16} />
-                                                    Image {file.rsd_name}
+                                                    <span className="truncate max-w-[500px] block" title={file.rsd_name}>
+                                                        {file.rsd_name}
+                                                    </span>
                                                 </a>
-                                            </div>
+                                            </div>                                            
                                         ))}
                                     </div>
                                 }
