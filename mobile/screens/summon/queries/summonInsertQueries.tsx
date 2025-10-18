@@ -74,13 +74,14 @@ export const useAddSummonTimeSlots = (onSuccess?: () => void) => {
 export const useAddHearingMinutes = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     const {toast} = useToastContext()
+    const router = useRouter()
 
     return useMutation({
         mutationFn: async (data: {
             hs_id: string;
             sc_id: string;
             status_type: string;
-            file: { name: string; type: string; file: string | undefined}[];
+            file: { name: string | undefined; type: string | undefined; file: string | undefined}[];
         }) => {
             return addHearingMinutes(data.hs_id, data.sc_id, data.status_type, data.file);
         },
@@ -91,6 +92,7 @@ export const useAddHearingMinutes = (onSuccess?: () => void) => {
 
             toast.success('Hearing Minutes uploaded successfully!')
             onSuccess?.();
+            router.back();
         },
         onError: (err: Error) => {
             console.error("Upload error:", err);

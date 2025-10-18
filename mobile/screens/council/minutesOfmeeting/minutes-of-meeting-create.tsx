@@ -143,7 +143,6 @@ export default function MOMCreate(){
                                 <MediaPicker
                                     selectedImages={selectedImages}
                                     setSelectedImages={setSelectedImages}
-                                    multiple={true}
                                 />
                             </View>
                     </View>

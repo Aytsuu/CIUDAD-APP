@@ -117,19 +117,18 @@ export default function CouncilMediationDetails() {
     const handleMinutesClick = (hearingMinutes: any[], hs_id: string) => {
         // For mobile, navigate to hearing minutes form
         if (hearingMinutes.length === 0 || !hearingMinutes.some(minute => minute.hm_url)) {
-            // router.push({
-            //     pathname: "/(summon)/hearing-minutes-form",
-            //     params: {
-            //         hs_id,
-            //         sc_id: String(sc_id),
-            //         status_type: "Council"
-            //     }
-            // })
+            router.push({
+                pathname: "/(summon)/add-hearing-minutes",
+                params: {
+                    hs_id,
+                    sc_id: String(sc_id),
+                    status_type: "Council"
+                }
+            })
         } else {
             // Open URL in browser for mobile
             const firstMinute = hearingMinutes.find(minute => minute.hm_url)
             if (firstMinute?.hm_url) {
-                // You might want to use Linking.openURL here
                 Alert.alert("Open Minutes", "Would you like to view the minutes?", [
                     { text: "Cancel", style: "cancel" },
                     { text: "Open", onPress: () => {} } // Add Linking.openURL(firstMinute.hm_url)
@@ -166,7 +165,7 @@ export default function CouncilMediationDetails() {
     // Case Details Tab Content
     const CaseDetailsTab = () => (
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-            <View className="p-4">
+            <View className="p-6">
                 {/* Case Information */}
                 <Card className="border-2 border-gray-200 shadow-sm bg-white mb-4">
                     <CardHeader className="flex flex-row gap-3 items-center">
@@ -288,10 +287,10 @@ export default function CouncilMediationDetails() {
                         <CardHeader>
                             <Text className="text-md font-bold text-gray-900">Case Actions</Text>
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="space-y-3 flex flex-col gap-3">
                             {shouldShowResolveButton && (
                                 <Button
-                                    className={`w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-green-500'}`}
+                                    className={` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-green-500'}`}
                                     onPress={() => setConfirmationModal({ visible: true, type: "resolve" })}
                                     disabled={shouldDisableButtons}
                                 >
@@ -302,7 +301,7 @@ export default function CouncilMediationDetails() {
                             
                             {isThirdMediation && (
                                 <Button
-                                    className={`w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-red-500'}`}
+                                    className={ ` flex flex-row gap-2 w-full py-3 rounded-lg ${shouldDisableButtons ? 'bg-gray-400' : 'bg-red-500'}`}
                                     onPress={() => setConfirmationModal({ visible: true, type: "forward" })}
                                     disabled={shouldDisableButtons}
                                 >
@@ -312,13 +311,9 @@ export default function CouncilMediationDetails() {
                             )}
 
                             {(shouldDisableButtons && (shouldShowResolveButton || isThirdMediation)) && (
-                                <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
                                     <Text className="text-yellow-800 text-sm text-center">
-                                        {!allSchedulesHaveRemarks && !allSchedulesAreClosed 
-                                            ? "All hearing schedules must have remarks and be closed before taking action"
-                                            : !allSchedulesHaveRemarks 
-                                            ? "All hearing schedules must have remarks before taking action"
-                                            : "All hearing schedules must be closed before taking action"}
+                                        All hearing schedules must have remarks and be closed before taking action
                                     </Text>
                                 </View>
                             )}
@@ -328,17 +323,9 @@ export default function CouncilMediationDetails() {
 
                 {/* Notices */}
                 {case_status === "Forwarded to Lupon" && (
-                    <View className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+                    <View className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-3">
                         <Text className="text-amber-800 text-sm">
                             <Text className="font-bold">Case Forwarded:</Text> This case has completed the 3rd council mediation and has been forwarded to the Office of Lupon Tagapamayapa for further action.
-                        </Text>
-                    </View>
-                )}
-
-                {hasResidentBool && !isCaseClosed && (
-                    <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                        <Text className="text-blue-800 text-sm">
-                            <Text className="font-bold">Resident Case:</Text> As the complainant is a resident, they have the option to choose their preferred date and time for the hearing schedule.
                         </Text>
                     </View>
                 )}
@@ -352,6 +339,15 @@ export default function CouncilMediationDetails() {
 
         return (
             <View className="flex-1">
+                {/* Resident Case Notice */}
+                {hasResidentBool && !isCaseClosed && (
+                    <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mx-4 mt-4 mb-2">
+                        <Text className="text-blue-800 text-sm">
+                            <Text className="font-bold">Resident Case:</Text> As the complainant is a resident, they have the option to choose their preferred date and time for the hearing schedule.
+                        </Text>
+                    </View>
+                )}
+
                 {/* Create Schedule Button */}
                 {shouldShowCreateButton && (
                     <View className="p-4 border-b border-gray-200 bg-white">
@@ -377,7 +373,7 @@ export default function CouncilMediationDetails() {
                     </View>
                 ) : (
                     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-                        <View className="p-4">
+                        <View className="p-6">
                             {hearingSchedules.map((schedule: any, index: number) => (
                                 <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-4">
                                     <CardContent className="p-4">

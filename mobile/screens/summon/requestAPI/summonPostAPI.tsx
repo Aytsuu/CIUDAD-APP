@@ -87,7 +87,7 @@ export const addSchedule = async (schedule: Record<string, any>, status_type: st
 }
 
 
-export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_type: string, files: { name: string; type: string; file: string | undefined }[]) => {
+export const addHearingMinutes = async ( hs_id: string, sc_id: string, status_type: string, files: { name: string | undefined; type: string | undefined; file: string | undefined }[]) => {
     try{
         const data = {
             hs_id,
