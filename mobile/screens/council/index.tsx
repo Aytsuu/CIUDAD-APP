@@ -39,6 +39,12 @@ export default () => {
       gradient: ['#06b6d4', '#0891b2'],
     },
     {
+      title: "Ordinances",
+      route: "/(council)/ordinance/ordinance-main",
+      icon: "",
+      gradient: ['#8b5cf6', '#7c3aed'],
+    },
+    {
       title: "Minutes of Meeting",
       route: "/(council)/minutes-of-meeting/mom-main",
       icon: "",
