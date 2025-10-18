@@ -8,6 +8,7 @@ import { useReportSectionCards } from "@/components/analytics/report/report-sect
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
+import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { Label } from "@/components/ui/label";
 
@@ -24,12 +25,19 @@ export default function Dashboard() {
   const wasteCards = useWastePersonnelSectionCards();
   const garbCards = useGarbagePickupSectionCards();
   const donationCards = useDonationSectionCards();
+  const certificateCards = useCertificateSectionCards();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards]
   );
 
   const validateFeature = (feature: string) => {
+    // Always allow access to basic dashboard sections
+    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE"];
+    if (basicSections.includes(feature)) {
+      return true;
+    }
+    
     const hasAccess =
       user?.staff?.assignments?.includes(feature) ||
       user?.staff?.pos?.toLowerCase() == "admin";
@@ -49,12 +57,19 @@ export default function Dashboard() {
     const itemsWithCharts = instance.filter(
       (item) => item.chart && validateFeature(item.dashboard)
     );
-    return itemsWithCharts.flatMap((item) =>
+    const charts = itemsWithCharts.flatMap((item) =>
       item?.chart?.map((chartItem: any) => ({
         dashboard: item.dashboard,
         ...chartItem,
       }))
     );
+    
+    // Debug logging
+    console.log('Dashboard - instance:', instance);
+    console.log('Dashboard - chartsWithAccess:', charts);
+    console.log('Dashboard - itemsWithCharts:', itemsWithCharts);
+    
+    return charts;
   }, [instance, user]);
 
   const sidebarsWithAccess = React.useMemo(() => {

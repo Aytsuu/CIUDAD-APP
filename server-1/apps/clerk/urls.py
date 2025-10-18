@@ -69,4 +69,12 @@ urlpatterns = [
     
     # Business Permit Files
     path('business-permit-files/<str:bpr_id>/', BusinessPermitFilesView.as_view(), name='business-permit-files'),
+    
+    # Certificate Analytics
+    path('analytics/certificates/', CertificateAnalyticsView.as_view(), name='certificate-analytics'),
+    path('analytics/certificates/purpose-trending/', CertificatePurposeTrendingView.as_view(), name='certificate-purpose-trending'),
+    
+    # Business Permit Analytics
+    path('analytics/business-permits/', BusinessPermitAnalyticsView.as_view(), name='business-permit-analytics'),
+    path('analytics/business-permits/sidebar/', BusinessPermitSidebarView.as_view(), name='business-permit-sidebar'),
 ]

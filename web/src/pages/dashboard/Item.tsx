@@ -22,6 +22,10 @@ import { DisbursementSidebar } from "@/components/analytics/treasurer/disburseme
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
 import { IncomeQuarterlyChart } from "@/components/analytics/treasurer/income-quartertly-report";
 import { BudgetPlanSidebar } from "@/components/analytics/treasurer/budgetplan-sidebar";
+import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
+import { CertificatePurposeChart } from "@/components/analytics/certificate/certificate-purpose-chart";
+import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
+import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
@@ -33,6 +37,7 @@ export const getItemsConfig = (
   wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
   donationCards: ReturnType<typeof useDonationSectionCards>,
   garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
+  certificateCards: ReturnType<typeof useCertificateSectionCards>,
 ) => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
@@ -52,6 +57,23 @@ export const getItemsConfig = (
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
   const {accepted, rejected, completed, pending} = garbCards;
   const { cashDonations } = donationCards;
+  const { 
+    totalCertificates, 
+    totalIssued, 
+    totalPending, 
+    totalCompleted, 
+    totalRejected, 
+    completionRate, 
+    avgProcessingDays,
+    // Business Permit Cards
+    totalBusinessPermits,
+    totalIssuedPermits,
+    totalPendingPermits,
+    totalCompletedPermits,
+    totalRejectedPermits,
+    permitCompletionRate,
+    avgPermitProcessingDays
+  } = certificateCards;
 
   if (user?.staff?.staff_type.toLowerCase() == "barangay staff") {
     return [
@@ -138,6 +160,39 @@ export const getItemsConfig = (
       },
       {
         dashboard: "CERTIFICATE & CLEARANCES",
+        card: [
+          totalCertificates,
+          totalIssued,
+          totalPending,
+          totalCompleted,
+          totalRejected,
+          completionRate,
+          avgProcessingDays,
+          // Business Permit Cards
+          totalBusinessPermits,
+          totalIssuedPermits,
+          totalPendingPermits,
+          totalCompletedPermits,
+          totalRejectedPermits,
+          permitCompletionRate,
+          avgPermitProcessingDays,
+        ],
+        chart: [
+          {
+            title: "Certificate & Permit Overview",
+            element: <CertificatePurposeChart initialMonths={12} />,
+          },
+        ],
+        sidebar: [
+          {
+            title: "Recent Certificate Requests",
+            element: <CertificateSidebar />,
+          },
+          {
+            title: "Recent Business Permit Requests",
+            element: <BusinessSidebar />,
+          },
+        ],
       },
       {
         dashboard: "DONATION",

@@ -1638,3 +1638,438 @@ class UpdateServiceChargePaymentStatusView(APIView):
                 'error': str(e),
                 'detail': 'An error occurred while updating payment status'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ===========================Certificate Analytics Views=====================
+
+class CertificateAnalyticsView(APIView):
+    """
+    Analytics view for certificate data including purpose trending and statistics
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from datetime import date, timedelta
+            try:
+                from dateutil.relativedelta import relativedelta
+            except ImportError:
+                # Fallback if dateutil is not available
+                from datetime import timedelta
+                def relativedelta(**kwargs):
+                    months = kwargs.get('months', 0)
+                    return timedelta(days=months * 30)  # Approximate
+            
+            # Get date range parameters
+            months_back = int(request.query_params.get('months', 6))
+            end_date = date.today()
+            start_date = end_date - relativedelta(months=months_back)
+            
+            # Total certificates count
+            total_certificates = ClerkCertificate.objects.count()
+            total_issued = IssuedCertificate.objects.count()
+            total_pending = ClerkCertificate.objects.filter(cr_req_status='Pending').count()
+            total_completed = ClerkCertificate.objects.filter(cr_req_status='Completed').count()
+            total_rejected = ClerkCertificate.objects.filter(cr_req_status='Rejected').count()
+            
+            # Purpose trending data using Django ORM
+            purpose_trends = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                count=Count('cr_id')
+            ).order_by('-count')[:10]
+            
+            # Monthly certificate requests
+            monthly_requests = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date
+            ).extra(
+                select={'month': "DATE_TRUNC('month', cr_req_request_date)"}
+            ).values('month').annotate(
+                count=Count('cr_id')
+            ).order_by('month')
+            
+            # Payment status breakdown
+            payment_status_breakdown = ClerkCertificate.objects.values(
+                'cr_req_payment_status'
+            ).annotate(
+                count=Count('cr_id')
+            ).order_by('-count')
+            
+            # Recent certificate requests (last 7 days) using Django ORM
+            recent_requests = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=date.today() - timedelta(days=7)
+            ).select_related('pr_id', 'rp_id__per').values(
+                'cr_id',
+                'cr_req_request_date',
+                'cr_req_status',
+                'pr_id__pr_purpose',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname'
+            ).order_by('-cr_req_request_date')[:10]
+            
+            # Most requested purposes (all time) using Django ORM
+            top_purposes = ClerkCertificate.objects.filter(
+                pr_id__isnull=False
+            ).values(
+                'pr_id__pr_purpose',
+                'pr_id__pr_category'
+            ).annotate(
+                count=Count('cr_id')
+            ).order_by('-count')[:15]
+            
+            # Certificate completion rate
+            completion_rate = 0
+            if total_certificates > 0:
+                completion_rate = round((total_completed / total_certificates) * 100, 2)
+            
+            # Average processing time (in days)
+            completed_certificates = ClerkCertificate.objects.filter(
+                cr_req_status='Completed',
+                cr_date_completed__isnull=False
+            ).extra(
+                select={
+                    'processing_days': "EXTRACT(EPOCH FROM (cr_date_completed - cr_req_request_date)) / 86400"
+                }
+            ).values('processing_days')
+            
+            avg_processing_days = 0
+            if completed_certificates.exists():
+                total_days = sum(cert['processing_days'] for cert in completed_certificates if cert['processing_days'])
+                avg_processing_days = round(total_days / completed_certificates.count(), 1) if completed_certificates.count() > 0 else 0
+            
+            analytics_data = {
+                'overview': {
+                    'total_certificates': total_certificates,
+                    'total_issued': total_issued,
+                    'total_pending': total_pending,
+                    'total_completed': total_completed,
+                    'total_rejected': total_rejected,
+                    'completion_rate': completion_rate,
+                    'avg_processing_days': avg_processing_days
+                },
+                'purpose_trends': list(purpose_trends),
+                'monthly_requests': list(monthly_requests),
+                'payment_status_breakdown': list(payment_status_breakdown),
+                'recent_requests': list(recent_requests),
+                'top_purposes': list(top_purposes),
+                'date_range': {
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'months_back': months_back
+                }
+            }
+            
+            return Response(analytics_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in certificate analytics: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching certificate analytics',
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CertificatePurposeTrendingView(APIView):
+    """
+    Detailed trending analysis for certificate purposes
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from datetime import date, timedelta
+            try:
+                from dateutil.relativedelta import relativedelta
+            except ImportError:
+                # Fallback if dateutil is not available
+                from datetime import timedelta
+                def relativedelta(**kwargs):
+                    months = kwargs.get('months', 0)
+                    return timedelta(days=months * 30)  # Approximate
+            
+            # Get parameters
+            months_back = int(request.query_params.get('months', 12))
+            end_date = date.today()
+            start_date = end_date - relativedelta(months=months_back)
+            
+            # Purpose trending over time (monthly) using Django ORM
+            purpose_monthly_trends = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).extra(
+                select={'month': "DATE_TRUNC('month', cr_req_request_date)"}
+            ).values(
+                'month',
+                'pr_id__pr_purpose'
+            ).annotate(
+                count=Count('cr_id')
+            ).order_by('month', '-count')
+            
+            # Top 10 purposes with growth rate
+            current_period_start = end_date - relativedelta(months=3)
+            previous_period_start = current_period_start - relativedelta(months=3)
+            
+            # Current period data using Django ORM
+            current_period_data = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=current_period_start,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                current_count=Count('cr_id')
+            )
+            current_period = {item['pr_id__pr_purpose']: item['current_count'] for item in current_period_data}
+            
+            # Previous period data using Django ORM
+            previous_period_data = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=previous_period_start,
+                cr_req_request_date__date__lt=current_period_start,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                previous_count=Count('cr_id')
+            )
+            previous_period = {item['pr_id__pr_purpose']: item['previous_count'] for item in previous_period_data}
+            
+            # Calculate growth rates
+            growth_analysis = []
+            all_purposes = set(current_period.keys()) | set(previous_period.keys())
+            
+            for purpose in all_purposes:
+                current = current_period.get(purpose, 0)
+                previous = previous_period.get(purpose, 0)
+                growth_rate = 0
+                if previous > 0:
+                    growth_rate = round(((current - previous) / previous) * 100, 2)
+                elif current > 0:
+                    growth_rate = 100  # New purpose
+                
+                growth_analysis.append({
+                    'purpose': purpose,
+                    'current_count': current,
+                    'previous_count': previous,
+                    'growth_rate': growth_rate,
+                    'trend': 'increasing' if growth_rate > 10 else 'decreasing' if growth_rate < -10 else 'stable'
+                })
+            
+            # Sort by current count and take top 10
+            growth_analysis.sort(key=lambda x: x['current_count'], reverse=True)
+            top_growth_purposes = growth_analysis[:10]
+            
+            # Purpose category breakdown using Django ORM
+            category_breakdown = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_category').annotate(
+                count=Count('cr_id')
+            ).order_by('-count')
+            
+            trending_data = {
+                'purpose_monthly_trends': list(purpose_monthly_trends),
+                'top_growth_purposes': top_growth_purposes,
+                'category_breakdown': list(category_breakdown),
+                'date_range': {
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'months_back': months_back
+                }
+            }
+            
+            return Response(trending_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error in certificate purpose trending: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching purpose trending data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ===========================Business Permit Analytics Views=====================
+
+class BusinessPermitAnalyticsView(APIView):
+    """
+    Analytics view for business permit data including statistics and trends
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from datetime import date, timedelta
+            try:
+                from dateutil.relativedelta import relativedelta
+            except ImportError:
+                # Fallback if dateutil is not available
+                from datetime import timedelta
+                def relativedelta(**kwargs):
+                    months = kwargs.get('months', 0)
+                    return timedelta(days=months * 30)  # Approximate
+            
+            # Get date range parameters
+            months_back = int(request.query_params.get('months', 6))
+            end_date = date.today()
+            start_date = end_date - relativedelta(months=months_back)
+            
+            # Total business permits count
+            total_permits = BusinessPermitRequest.objects.count()
+            total_issued = IssuedBusinessPermit.objects.count()
+            total_pending = BusinessPermitRequest.objects.filter(req_status='Pending').count()
+            total_completed = BusinessPermitRequest.objects.filter(req_status='Completed').count()
+            total_rejected = BusinessPermitRequest.objects.filter(req_status='Rejected').count()
+            
+            # Purpose trending data using Django ORM
+            purpose_trends = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=start_date,
+                req_request_date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                count=Count('bpr_id')
+            ).order_by('-count')[:10]
+            
+            # Monthly business permit requests
+            monthly_requests = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=start_date,
+                req_request_date__lte=end_date
+            ).extra(
+                select={'month': "DATE_TRUNC('month', req_request_date)"}
+            ).values('month').annotate(
+                count=Count('bpr_id')
+            ).order_by('month')
+            
+            # Payment status breakdown
+            payment_status_breakdown = BusinessPermitRequest.objects.values(
+                'req_payment_status'
+            ).annotate(
+                count=Count('bpr_id')
+            ).order_by('-count')
+            
+            # Recent business permit requests (last 7 days) using Django ORM
+            recent_requests = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=date.today() - timedelta(days=7)
+            ).select_related('pr_id', 'rp_id__per').values(
+                'bpr_id',
+                'req_request_date',
+                'req_status',
+                'pr_id__pr_purpose',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname',
+                'bus_permit_name',
+                'bus_permit_address'
+            ).order_by('-req_request_date')[:10]
+            
+            # Most requested purposes (all time) using Django ORM
+            top_purposes = BusinessPermitRequest.objects.filter(
+                pr_id__isnull=False
+            ).values(
+                'pr_id__pr_purpose',
+                'pr_id__pr_category'
+            ).annotate(
+                count=Count('bpr_id')
+            ).order_by('-count')[:15]
+            
+            # Business permit completion rate
+            completion_rate = 0
+            if total_permits > 0:
+                completion_rate = round((total_completed / total_permits) * 100, 2)
+            
+            # Average processing time (in days) - using Python calculation instead of SQL
+            completed_permits = BusinessPermitRequest.objects.filter(
+                req_status='Completed',
+                req_date_completed__isnull=False
+            ).values('req_request_date', 'req_date_completed')
+            
+            avg_processing_days = 0
+            if completed_permits.exists():
+                total_days = 0
+                count = 0
+                for permit in completed_permits:
+                    if permit['req_request_date'] and permit['req_date_completed']:
+                        processing_days = (permit['req_date_completed'] - permit['req_request_date']).days
+                        if processing_days >= 0:  # Only count positive processing days
+                            total_days += processing_days
+                            count += 1
+                
+                if count > 0:
+                    avg_processing_days = round(total_days / count, 1)
+            
+            analytics_data = {
+                'overview': {
+                    'total_permits': total_permits,
+                    'total_issued': total_issued,
+                    'total_pending': total_pending,
+                    'total_completed': total_completed,
+                    'total_rejected': total_rejected,
+                    'completion_rate': completion_rate,
+                    'avg_processing_days': avg_processing_days
+                },
+                'purpose_trends': list(purpose_trends),
+                'monthly_requests': list(monthly_requests),
+                'payment_status_breakdown': list(payment_status_breakdown),
+                'recent_requests': list(recent_requests),
+                'top_purposes': list(top_purposes),
+                'date_range': {
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'months_back': months_back
+                }
+            }
+            
+            return Response(analytics_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in business permit analytics: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching business permit analytics',
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessPermitSidebarView(APIView):
+    """
+    Sidebar data for business permit analytics
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from datetime import date, timedelta
+            
+            # Recent business permit requests (last 7 days)
+            recent_requests = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=date.today() - timedelta(days=7)
+            ).select_related('pr_id', 'rp_id__per').values(
+                'bpr_id',
+                'req_request_date',
+                'req_status',
+                'req_payment_status',
+                'pr_id__pr_purpose',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname',
+                'bus_permit_name',
+                'bus_permit_address'
+            ).order_by('-req_request_date')[:10]
+            
+            sidebar_data = {
+                'recent_requests': list(recent_requests)
+            }
+            
+            return Response(sidebar_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error in business permit sidebar: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching business permit sidebar data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
