@@ -329,9 +329,7 @@ const AttendanceSheets = () => {
             <MediaPicker
               selectedImages={selectedImages}
               setSelectedImages={setSelectedImages}
-              multiple={true}
-              maxImages={10}
-              editable={true}
+              limit={10}
             />
 
             <View className="flex-row space-x-2 mt-4 gap-2">
