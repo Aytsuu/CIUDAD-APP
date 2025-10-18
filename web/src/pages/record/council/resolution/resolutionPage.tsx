@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import React from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, CircleAlert } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, CircleAlert } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -269,17 +269,6 @@ function ResolutionPage() {
                                 mainContent={
                                     <div className="flex flex-col gap-4 p-5">
                                         {files.map((file) => (
-                                            // <div key={file.rsd_id} className="border p-3 rounded-md">
-                                            //     <a 
-                                            //         href={file.rsd_url}
-                                            //         target="_blank"
-                                            //         rel="noopener noreferrer"
-                                            //         className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-                                            //     >
-                                            //         <FileInput size={16} />
-                                            //         Image {file.rsd_name}
-                                            //     </a>
-                                            // </div>
                                             <div key={file.rsd_id} className="border p-2 rounded-md">
                                                 <a 
                                                     href={file.rsd_url}
