@@ -1,49 +1,42 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useMemo } from "react";
-import {
-  Plus,
-  FileInput,
-  ArrowUpDown,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  Home,
-  UserCog,
-  ArrowUp,
-  ArrowDown,
-  // Loader2,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown/dropdown-menu";
-import { Link, Link as RouterLink } from "react-router";
+import { useState, useMemo } from "react";
+import { Plus, FileInput, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+import { Link } from "react-router";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+
+import { getAgeInUnit } from "@/helpers/ageCalculator";
+import { capitalize } from "@/helpers/capitalize";
 
 import { usePatients } from "./queries/fetch";
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { TableSkeleton } from "@/pages/healthServices/skeleton/table-skeleton";
 
 import PatientRecordCount from "./PatientRecordCounts";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+
 
 type Report = {
   id: string;
   sitio: string;
-  lastName: string;
-  firstName: string;
-  mi: string;
+  fullName?: {
+    lastName: string;
+    firstName: string;
+    mi: string;
+  }
+  age: {
+    ageNumber: number;
+    ageUnit: string;
+  };
   type: string;
   noOfRecords?: number; 
+  philhealthId?: string;
 };
 
 interface Patients {
@@ -54,356 +47,228 @@ interface Patients {
     per_fname: string;
     per_lname: string;
     per_mname: string;
+    per_dob: string;
+    philhealth_id?: string;
   };
 
   address: {
     add_sitio?: string;
   };
+
+  additional_info?: {
+    per_add_philhealth_id?: string
+  }
 }
+
+const getPatType = (type: string) => {
+  switch (type.toLowerCase()) {
+    case "resident":
+      return 'bg-blue-500 w-24 rounded-md font-semibold text-white'
+    case "transient":
+      return 'border border-black/40 w-24 rounded-md font-semibold text-black'
+    default:
+      return "bg-gray-500 text-white";
+  }
+};
 
 // Define the columns for the data table
 export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer "
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer " onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Patient No.
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
       <div className="flex w-full justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
+      </div>
     )
   },
   {
     accessorKey: "sitio",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Sitio
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("sitio")}
+        {capitalize(row.getValue("sitio"))}
       </div>
     ),
   },
   {
-    accessorKey: "lastName",
+    accessorKey: "fullName",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Last Name
         <ArrowUpDown size={14} />
       </div>
     ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("lastName")}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
+      return (
+        <div className="hidden lg:block max-w-xs truncate">
+          {fullNameObj ? `${capitalize(fullNameObj.lastName)}, ${capitalize(fullNameObj.firstName)} ${fullNameObj.mi ? fullNameObj.mi.charAt(0).toUpperCase() + "." : ""}` : "-"}
+        </div>
+      )
+    },
   },
   {
-    accessorKey: "firstName",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        First Name
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("firstName")}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "mi",
-    header: "Middle Name",
-    cell: ({ row }) => (
-      <div className="hidden xl:block">{row.getValue("mi")}</div>
-    ),
+    accessorKey: "age",
+    header: "Age",
+    cell: ({ row }) => {
+      const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
+      return <div className="hidden xl:block">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
+    }
   },
   {
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
-      <div className="hidden xl:block">{row.getValue("type")}</div>
-    ),
+      <div className="flex items-center justify-center">
+        <div className={getPatType(row.getValue("type"))}>{row.getValue("type")}</div>
+      </div>
+    )
   },
   {
     accessorKey: "noOfRecords",
     header: "No. of Records",
-    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />,
+    cell: ({ row }) => <PatientRecordCount patientId={row.getValue("id")} />
   },
   {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <RouterLink
-        to={`/view-patients-record/${row.getValue("id")}`}
-        state={{ patientId: row.getValue("id") }}
+      <Link
+        to="/patientrecords/view"
+        state={
+          { patientId: row.getValue("id"), 
+            patientData: {
+              id: row.original.id,
+              sitio: row.original.sitio,
+              fullName: row.original.fullName,
+              type: row.original.type,
+              noOfRecords: row.original.noOfRecords,
+              philhealthId: row.original.philhealthId 
+            }
+          }}
       >
         <Button variant="outline">View</Button>
-      </RouterLink>
+      </Link>
     ),
     enableSorting: false,
-    enableHiding: false,
-  },
+    enableHiding: false
+  }
 ];
 
-// Custom pagination component to replace PaginationLayout
-const CustomPagination = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) => {
-  // Calculate page numbers to display
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxPagesToShow = 5;
+function getBestAgeUnit(dob: string): { value: number; unit: string } {
+  const years = getAgeInUnit(dob, "years");
+  if (years > 0) return { value: years, unit: years === 1 ? "yr" : "yrs" };
 
-    if (totalPages <= maxPagesToShow) {
-      // Show all pages if total is less than max to show
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Always show first page
-      pages.push(1);
+  const months = getAgeInUnit(dob, "months");
+  if (months > 0) return { value: months, unit: months === 1 ? "mo" : "mos" };
 
-      // Calculate start and end of middle pages
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
+  const weeks = getAgeInUnit(dob, "weeks");
+  if (weeks > 0) return { value: weeks, unit: weeks === 1 ? "wk" : "wks" };
 
-      // Adjust if we're at the beginning
-      if (currentPage <= 3) {
-        end = Math.min(totalPages - 1, 4);
-      }
+  const days = getAgeInUnit(dob, "days");
+  return { value: days, unit: days === 1 ? "day" : "days" };
+}
 
-      // Adjust if we're at the end
-      if (currentPage >= totalPages - 2) {
-        start = Math.max(2, totalPages - 3);
-      }
+// main component
+export default function PatientsRecord() {
 
-      // Add ellipsis after first page if needed
-      if (start > 2) {
-        pages.push(-1); // -1 represents ellipsis
-      }
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
-      // Add middle pages
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
+  const { data: patientData, isLoading } = usePatients({
+    page,
+    page_size: pageSize,
+    status: selectedFilter !== " All" ? selectedFilter : undefined,
+    search: searchTerm || undefined
+  });
 
-      // Add ellipsis before last page if needed
-      if (end < totalPages - 1) {
-        pages.push(-2); // -2 represents ellipsis
-      }
+  const totalPages = Math.ceil((patientData?.count || 0) / pageSize);
 
-      // Always show last page
-      pages.push(totalPages);
-    }
+  // filter options
+  const filter = [
+    { id: "all", name: "All" },
+    { id: "resident", name: "Resident" },
+    { id: "transient", name: "Transient" }
+  ];
 
-    return pages;
+  // searching and pagination handlers
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
-  return (
-    <div className="flex items-center justify-center space-x-2">
-      {/* Previous button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="h-8 w-8 p-0"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        <span className="sr-only">Previous page</span>
-      </Button>
+  const handleSearch = (search: string) => {
+    setSearchTerm(search);
+    setPage(1);
+  };
 
-      {/* Page numbers */}
-      {getPageNumbers().map((page, index) => {
-        if (page < 0) {
-          // Render ellipsis
-          return (
-            <span key={`ellipsis-${index}`} className="px-2">
-              ...
-            </span>
-          );
-        }
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+    setPage(1);
+  };
 
-        return (
-          <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
-            size="sm"
-            onClick={() => onPageChange(page)}
-            className="h-8 w-8 p-0"
-          >
-            {page}
-          </Button>
-        );
-      })}
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1);
+  };
 
-      {/* Next button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="h-8 w-8 p-0"
-      >
-        <ChevronRight className="h-4 w-4" />
-        <span className="sr-only">Next page</span>
-      </Button>
-    </div>
-  );
-};
-
-const transformPatientsToReports = (patients: Patients[]): Report[] => {
-  return patients.map((patient) => ({
-    id: patient.pat_id.toString(),
-    sitio: patient.address?.add_sitio || "N/A",
-    lastName: patient.personal_info?.per_lname || "",
-    firstName: patient.personal_info?.per_fname || "",
-    mi: patient.personal_info?.per_mname || "N/A",
-    type: patient.pat_type || "Resident", // assuming pat_type maps to resident/transient
-  }));
-};
-
-export default function PatientsRecord() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<Report[]>([]);
-  const [currentData, setCurrentData] = useState<Report[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [filterBy, setFilterBy] = useState("");
-
-  const { data: patientData, isLoading } = usePatients();
-
-  // record counts
-  // const { data: medicineCountData } = useMedicineCount(patientId ?? "")
-  //   const medicineCount = medicineCountData?.medicinerecord_count
-  //   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "")
-  //   const vaccinationCount = vaccinationCountData?.vaccination_count
-  //   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "")
-  //   const firstAidCount = firstAidCountData?.firstaidrecord_count
-  //   const { data: childHealthCount } = useChildHealthRecordCount(patientId ?? "")
-  //   const childHealthCountData = childHealthCount?.childhealthrecord_count
-  //   const { data: medconCountData } = useMedConCount(patientId ?? "")
-  //   const medconCount = medconCountData?.medcon_count
-  //   const { data: postpartumCountData } = usePatientPostpartumCount(patientId ?? "")
-  //   const postpartumCount = postpartumCountData
-  //   const { data: prenatalCountData } = usePatientPrenatalCount(patientId ?? "")
-  //   const prenatalCount = prenatalCountData
-    
+  const transformPatientsToReports = (patients: Patients[]): Report[] => {
+    return patients.map((patient) => {
+      const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patient.personal_info?.per_dob || "");
+      // Prefer personal_info.philhealth_id, fallback to additional_info.per_add_philhealth_id
+      let philhealthId = "N/A";
+      if (patient.personal_info && patient.personal_info.philhealth_id) {
+        philhealthId = patient.personal_info.philhealth_id;
+      } else if (patient.additional_info && patient.additional_info.per_add_philhealth_id) {
+        philhealthId = patient.additional_info.per_add_philhealth_id;
+      }
+      return {
+        id: patient.pat_id.toString(),
+        sitio: patient.address?.add_sitio || "",
+        fullName: {
+          lastName: patient.personal_info?.per_lname || "",
+          firstName: patient.personal_info?.per_fname || "",
+          mi: patient.personal_info?.per_mname || "",
+        },
+        age: { ageNumber: ageInfo, ageUnit: ageUnit},
+        type: patient.pat_type || "Resident",
+        philhealthId: philhealthId,
+      };
+    });
+  };
 
   const transformedPatients = useMemo(() => {
-    if (!patientData) return [];
-    return transformPatientsToReports(patientData);
+    if (!patientData?.results) return [];
+    return transformPatientsToReports(patientData.results);
   }, [patientData]);
 
   const patientDataset = transformedPatients;
 
   const totalPatients = patientDataset.length;
-  const residents = patientDataset.filter((patient) =>
-    patient.type.includes("Resident")
-  ).length;
-  const transients = patientDataset.filter((patient) =>
-    patient.type.includes("Transient")
-  ).length;
-  const residentPercentage =
-    totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
-  const transientPercentage =
-    totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
-  // Filter data based on search query
-  useEffect(() => {
-    if (!patientDataset.length) {
-      setFilteredData([]);
-      setTotalPages(0);
-      return;
-    }
-
-    const filtered = patientDataset.filter((report) => {
-      const searchText =
-        `${report.id} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.type}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-
-    // Apply additional filters if needed
-    let filteredDataTemp = filtered;
-    if (filterBy === "resident") {
-      filteredDataTemp = filteredDataTemp.filter((report) =>
-        report.type.includes("Resident")
-      );
-    } else if (filterBy === "transient") {
-      filteredDataTemp = filteredDataTemp.filter((report) =>
-        report.type.includes("Transient")
-      );
-    }
-
-    setFilteredData(filteredDataTemp);
-    setTotalPages(Math.ceil(filteredDataTemp.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize, filterBy, patientDataset]);
-
-  // Update data based on page and page size
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number.parseInt(event.target.value);
-    if (!isNaN(value) && value > 0) {
-      setPageSize(value);
-    } else {
-      setPageSize(10); // Default to 10 if invalid input
-    }
-  };
-
-  // Handle page change from the pagination component
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const residents = patientDataset.filter((patient) => patient.type.includes("Resident")).length;
+  const transients = patientDataset.filter((patient) => patient.type.includes("Transient")).length;
+  const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
+  const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
   return (
     <LayoutWithBack
-      title="Patients Records"
+      title="Patient Records"
       description="Manage and view patients information"
     >
-      <div className="w-full">
+      <div className="w-full ">
         {/* Stats Cards with simplified design */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <CardLayout
@@ -413,9 +278,7 @@ export default function PatientsRecord() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold">{totalPatients}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Total records
-                  </span>
+                  <span className="text-xs text-muted-foreground">Total records</span>
                 </div>
                 <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
                   <Users className="h-5 w-5 text-muted-foreground" />
@@ -435,11 +298,7 @@ export default function PatientsRecord() {
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold">{residents}</span>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    {residentPercentage > transientPercentage ? (
-                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
-                    )}
+                    {residentPercentage > transientPercentage ? <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> : <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />}
                     <span>{residentPercentage}% of total</span>
                   </div>
                 </div>
@@ -461,11 +320,7 @@ export default function PatientsRecord() {
                 <div className="flex flex-col">
                   <span className="text-2xl font-bold">{transients}</span>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    {transientPercentage > residentPercentage ? (
-                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-                    ) : (
-                      <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
-                    )}
+                    {transientPercentage > residentPercentage ? <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> : <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />}
                     <span>{transientPercentage}% of total</span>
                   </div>
                 </div>
@@ -484,41 +339,26 @@ export default function PatientsRecord() {
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
           <div className="flex w-full gap-x-2">
             <div className="relative flex-1 bg-white">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={20}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
+              <Input placeholder="Search..." className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
             </div>
             <div className="w-48">
-              <SelectLayout
-                placeholder="Filter by"
-                label=""
-                className="bg-white"
-                options={[
-                  { id: "all", name: "All" },
-                  { id: "resident", name: "Resident" },
-                  { id: "transient", name: "Transient" },
-                ]}
-                value={filterBy}
-                onChange={setFilterBy}
-              />
+              <SelectLayout placeholder="Filter by" label="" className="bg-white" options={filter} value={selectedFilter} onChange={handleFilterChange} />
             </div>
           </div>
-          <div>
-            <div className="flex ml-2">
-              <Link to="/create-patients-record">
-                <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-                  <Plus size={15} /> Create
-                </Button>
-              </Link>
+            
+            <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div>
+              <div className="flex ml-2">
+                <Link to="/patientrecords/form">
+                  <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                    <Plus size={15} /> Create
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+            </ProtectedComponentButton>
+          
         </div>
 
         {/* Table Container */}
@@ -526,13 +366,7 @@ export default function PatientsRecord() {
           <div className="w-full bg-white flex flex-row justify-between p-3">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-14 h-6"
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                min="1"
-              />
+              <Input type="number" className="w-14 h-6" value={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
@@ -551,29 +385,29 @@ export default function PatientsRecord() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="bg-white w-full overflow-x-auto">
+          <div className="bg-white w-full min-h-20 overflow-x-auto">
             {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
+              <div className="flex items-center justify-center">
+                <Loader2 className="animate-spin" /> Loading...
+              </div>
             ) : (
-              <DataTable columns={columns} data={currentData} />
+              <DataTable columns={columns} data={transformedPatients} />
             )}
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows
             </p>
 
-            {/* Custom Pagination component instead of PaginationLayout */}
             <div className="w-full sm:w-auto flex justify-center">
-              <CustomPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
+              {totalPages > 0 && (
+                <PaginationLayout
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
             </div>
           </div>
         </div>

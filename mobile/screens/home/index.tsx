@@ -20,6 +20,7 @@ import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
 import Svg, { Path } from "react-native-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
+import { capitalize } from "@/helpers/capitalize";
 
 const styles = StyleSheet.create({
   container: {
@@ -98,14 +99,14 @@ export default function HomeScreen() {
       if(userStatus.some((stat: string) => feat.users.includes(stat))) return feat;
     })
 
-    if (features.length <= 6) {
+    if (myFeatures.length <= 6) {
       // Show all features, no Show More/Less button
-      return features.map((feature, index) => renderFeatureItem(feature, index));
+      return myFeatures.map((feature, index) => renderFeatureItem(feature, index));
     }
 
     if (!showMoreFeatures) {
       // Show first 5 features + Show More button
-      const visibleFeatures = features.slice(0, INITIAL_FEATURES_COUNT);
+      const visibleFeatures = myFeatures.slice(0, INITIAL_FEATURES_COUNT);
       const items = [
         ...visibleFeatures.map((feature, index) => renderFeatureItem(feature, index)),
         renderFeatureItem({}, INITIAL_FEATURES_COUNT, true) // Show More button
@@ -113,11 +114,11 @@ export default function HomeScreen() {
       return items;
     } else {
       // Show all features + Show Less button
-      const allFeatureItems = features.map((feature, index) => 
+      const allFeatureItems = myFeatures.map((feature, index) => 
         renderFeatureItem(feature, index)
       );
       // Add Show Less button
-      allFeatureItems.push(renderFeatureItem({}, features.length, true));
+      allFeatureItems.push(renderFeatureItem({}, myFeatures.length, true));
       return allFeatureItems;
     }
   };
@@ -163,7 +164,7 @@ export default function HomeScreen() {
           style={{ backgroundColor: '#f3f4f6' }}
         />
         <Text className="text-md text-gray-700 font- mb-2">
-          Hi, {user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname}! 👋
+          Hi, {capitalize(user?.rp || !(user?.rp && user?.br) ? user?.personal?.per_fname : user?.personal?.br_fname)}! 👋
         </Text>
       </View>
 
@@ -290,7 +291,10 @@ export default function HomeScreen() {
   ))  
 
   return (
-    <PageLayout showHeader={false}>
+    <PageLayout
+      showHeader={false}
+      wrapScroll={false}
+    >
       <FlatList 
         maxToRenderPerBatch={1}
         showsVerticalScrollIndicator={false}
@@ -310,56 +314,3 @@ export default function HomeScreen() {
     </PageLayout>
   );
 }
-
-// import React from "react";
-// import { ScrollView, View, Text } from "react-native";
-// import { useAuth } from "@/contexts/AuthContext";
-// import PageLayout from "../_PageLayout";
-// import { LoadingModal } from "@/components/ui/loading-modal";
-
-// export default function HomeScreen() {
-//   const { user, isLoading } = useAuth();
-
-//   if (isLoading) return <LoadingModal visible={true} />;
-
-//   // 🔹 Recursive renderer
-//   const RenderTree = ({ data, indent = 0 }) => {
-//     if (typeof data !== "object" || data === null) {
-//       return (
-//         <Text style={{ marginLeft: indent, color: "#111" }}>
-//           {String(data)}
-//         </Text>
-//       );
-//     }
-
-//     return (
-//       <View style={{ marginLeft: indent }}>
-//         {Object.entries(data).map(([key, value], index) => (
-//           <View key={index} style={{ marginBottom: 2 }}>
-//             <Text style={{ fontWeight: "600", color: "#333" }}>
-//               {key}:
-//             </Text>
-//             {typeof value === "object" ? (
-//               <RenderTree data={value} indent={indent + 12} />
-//             ) : (
-//               <Text style={{ marginLeft: indent + 12, color: "#555" }}>
-//                 {String(value)}
-//               </Text>
-//             )}
-//           </View>
-//         ))}
-//       </View>
-//     );
-//   };
-
-//   return (
-//     <PageLayout showHeader={false}>
-//       <ScrollView style={{ padding: 16 }}>
-//         <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 12 }}>
-//           User Data
-//         </Text>
-//         <RenderTree data={user} />
-//       </ScrollView>
-//     </PageLayout>
-//   );
-// }

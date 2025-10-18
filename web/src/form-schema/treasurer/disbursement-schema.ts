@@ -13,7 +13,7 @@ const AmountRequirement = z.union([
 export const DisbursementSchema = z.object({
   dis_payee: z.string().min(1, "Payee is required"),
   dis_tin: z.string().optional(),
-  dis_date: z.string().min(1, "Date is required"),
+  dis_date: z.string().optional(),
   dis_fund: AmountRequirement.optional(),
   dis_particulars: z.array(z.object({
     forPayment: z.string().min(1, "Description is required"), 
@@ -29,7 +29,7 @@ export const DisbursementSchema = z.object({
     accCode: z.string().optional(),
     debit: AmountRequirement,
     credit: AmountRequirement,
-  })).min(1, "At least one payment account is required"),
+  })).optional(),
   dis_signatories: z.array(z.object({
     name: z.string().min(1, "Name is required"),
     position: z.string().min(1, "Position is required"),

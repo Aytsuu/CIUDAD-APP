@@ -10,6 +10,9 @@ urlpatterns = [
     path('staff/', StaffCreateView.as_view()),
     path('staff/<str:staff_id>/update/', StaffUpdateView.as_view(), name="staff-update"),
     path('staff/<str:staff_id>/delete/', StaffDeleteView.as_view(), name="staff-delete"),
+    path('staff/health/list/', HealthStaffListView.as_view(), name='health-staff-list'),
+    path('staff/health/combobox/', HealthStaffComboboxView.as_view(), name='health-staff-combobox'),
+    path('staff/debug/types/', StaffTypeDebugView.as_view(), name='staff-type-debug'),
     path('position/', PositionView.as_view(), name="positions-list"),
     path('position/group/list/', PositionGroupsListView.as_view(), name="groups-list"),
     path('position/bulk/create/', PositionBulkCreateView.as_view(), name="position-bulk-create"),
@@ -25,5 +28,9 @@ urlpatterns = [
     path('assignment/create/', AssignmentCreateView.as_view(), name='assignment-create'),
     path('assignment/<int:pos>/', AssignmentFilteredView.as_view(), name='assigned-feature'),
     path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
+    
+    path('healthstaff/', HealthStaffListView.as_view(), name='administration-healthsatff-list'),
+    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),
+    
  
-]   
+]

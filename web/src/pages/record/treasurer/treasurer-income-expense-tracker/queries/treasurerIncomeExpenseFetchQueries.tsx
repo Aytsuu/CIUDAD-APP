@@ -31,10 +31,17 @@ export type IncomeExpense = {
 };
   
 
-export const useIncomeExpense = (year?: number) => {
-    return useQuery<IncomeExpense[]>({
-        queryKey: ["incomeExpense", year], // Year in queryKey for proper caching
-        queryFn: () => getIncomeExpense(year),
+export const useIncomeExpense = (
+    page: number = 1,
+    pageSize: number = 10,
+    year?: number,
+    searchQuery?: string,
+    selectedMonth?: string,
+    isArchive?: boolean 
+) => {
+    return useQuery<{ results: IncomeExpense[]; count: number }>({
+        queryKey: ["incomeExpense", page, pageSize, year, searchQuery, selectedMonth, isArchive],
+        queryFn: () => getIncomeExpense(page, pageSize, year, searchQuery, selectedMonth, isArchive),
         staleTime: 1000 * 60 * 30,
     });
 };
@@ -115,10 +122,17 @@ export type Income = {
 
 
 
-export const useIncomeData = (year?: number) => {
-    return useQuery<Income[]>({
-        queryKey: ["income", year],
-        queryFn: () => getIncomeData(year),
+export const useIncomeData = (
+    page: number = 1,
+    pageSize: number = 10,
+    year?: number, 
+    searchQuery?: string, 
+    selectedMonth?: string,
+    isArchive?: boolean
+) => {
+    return useQuery<{ results: Income[]; count: number }>({
+        queryKey: ["income", page, pageSize, year, searchQuery, selectedMonth, isArchive],
+        queryFn: () => getIncomeData(page, pageSize, year, searchQuery, selectedMonth, isArchive),
         staleTime: 1000 * 60 * 30,
     });
 };
@@ -136,11 +150,15 @@ export type IncomeExpenseCard = {
 };
 
 
-export const useIncomeExpenseMainCard = () => {
-    return useQuery<IncomeExpenseCard[]>({
-        queryKey: ["income_expense_card"],
-        queryFn: getIncomeExpenseMainCard,
-        staleTime: 1000 * 60 * 30, // 30 minutes stale time
+export const useIncomeExpenseMainCard = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string
+) => {
+    return useQuery<{ results: IncomeExpenseCard[]; count: number }>({
+        queryKey: ["income_expense_card", page, pageSize, searchQuery],
+        queryFn: () => getIncomeExpenseMainCard(page, pageSize, searchQuery),
+        staleTime: 1000 * 60 * 30,
     });
 };
 
@@ -160,10 +178,16 @@ export type ExpenseLog = {
 };
 
 
-export const useExpenseLog = (year?: number) => {
-    return useQuery<ExpenseLog[]>({
-        queryKey: ["expense_log", year],
-        queryFn: () => getExpenseLog(year),
-        staleTime: 1000 * 60 * 30, // 30 minutes stale time
+export const useExpenseLog = (
+    page: number = 1,
+    pageSize: number = 10,
+    year?: number, 
+    searchQuery?: string, 
+    selectedMonth?: string
+) => {
+    return useQuery<{ results: ExpenseLog[]; count: number }>({
+        queryKey: ["expense_log", page, pageSize, year, searchQuery, selectedMonth],
+        queryFn: () => getExpenseLog(page, pageSize, year, searchQuery, selectedMonth),
+        staleTime: 1000 * 60 * 30,
     });
 };

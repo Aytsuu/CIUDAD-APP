@@ -1,9 +1,29 @@
 import { api } from "@/api/api";
 
-// Fetch permit clearances
-export const getPermitClearances = async () => {
+// Fetch permit clearances with search and pagination
+export const getPermitClearances = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
     try {
-        const response = await api.get('/clerk/permit-clearances/');
+        const params = new URLSearchParams();
+        if (search) {
+            params.append('search', search);
+        }
+        if (page) {
+            params.append('page', page.toString());
+        }
+        if (pageSize) {
+            params.append('page_size', pageSize.toString());
+        }
+        if (status) {
+            params.append('status', status);
+        }
+        if (paymentStatus) {
+            params.append('payment_status', paymentStatus);
+        }
+        
+        const queryString = params.toString();
+        const url = `/clerk/permit-clearances/${queryString ? '?' + queryString : ''}`;
+        
+        const response = await api.get(url);
         return response.data;
     } catch (error: any) {
         console.error("Failed to fetch permit clearances:", error);
@@ -23,7 +43,7 @@ export const getResidents = async () => {
 
 export const getGrossSales = async () => {
   try {
-    const response = await api.get('treasurer/annual-gross-sales/');
+    const response = await api.get('treasurer/annual-gross-sales-active/');
     return response.data;
   } catch (error) {
     console.error("Failed to fetch gross sales:", error);
@@ -49,7 +69,7 @@ export const getBusinesses = async () => {
     console.log("Using business table address data dynamically");
     
     // Fetch business respondents and personal data
-    let requestorMapping: { [key: number]: any } = {};
+    const requestorMapping: { [key: number]: any } = {};
     
     try {
       // Fetch business respondents
@@ -131,5 +151,38 @@ export const getPermitPurposes = async () => {
   } catch (error) {
     console.error("Failed to search permit purposes:", error);
     throw new Error("Failed to search permit purposes");
+  }
+};
+
+// Fetch annual gross sales data (moved from component)
+export const getAnnualGrossSalesForPermit = async () => {
+  try {
+    const response = await api.get('treasurer/annual-gross-sales-active/');
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch annual gross sales:", error);
+    throw new Error("Failed to fetch annual gross sales");
+  }
+};
+
+// Fetch purposes and rates data (moved from component)
+export const getPurposesAndRates = async () => {
+  try {
+    const response = await api.get('treasurer/purpose-and-rate/');
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch purposes and rates:", error);
+    throw new Error("Failed to fetch purposes and rates");
+  }
+};
+
+// Fetch business permit files by bpr_id
+export const getBusinessPermitFiles = async (bprId: string) => {
+  try {
+    const response = await api.get(`/clerk/business-permit-files/${bprId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch business permit files:", error);
+    throw new Error("Failed to fetch business permit files");
   }
 };

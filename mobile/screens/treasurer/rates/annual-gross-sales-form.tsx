@@ -12,8 +12,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAddAnnualGrossSales } from './queries/ratesInsertQueries';
 import z from "zod";
 import { useToastContext } from '@/components/ui/toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AnnualGrossSalesCreate() {
+  const {user} = useAuth();
   const router = useRouter();
   const rawLastMaxRange = useLocalSearchParams().lastMaxRange;
   const lastMaxRange = Array.isArray(rawLastMaxRange) ? rawLastMaxRange[0] : rawLastMaxRange ?? '';
@@ -29,6 +31,7 @@ export default function AnnualGrossSalesCreate() {
       minRange: calculatedMinRange,
       maxRange: '',
       amount: '',
+      staff_id: user?.staff?.staff_id
     }
   });
 
@@ -55,9 +58,9 @@ export default function AnnualGrossSalesCreate() {
       loading={isPending}
       loadingMessage='Submitting Record...'
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="mb-8">
-          <View className="space-y-4 p-4">
+          <View className="space-y-4 p-6">
             <FormInput
               control={control}
               label="Minimum Annual Gross Sales"

@@ -42,48 +42,6 @@ class WasteCollectorSerializer(serializers.ModelSerializer):
         fields = '__all__' 
 
 
-# class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
-#     collectors_wstp_ids = serializers.SerializerMethodField()
-#     collectors_wasc_ids = serializers.SerializerMethodField()
-#     sitio_name = serializers.SerializerMethodField() 
-
-#     class Meta:
-#         model = WasteCollectionSched
-#         fields = [
-#             'wc_num',
-#             'wc_date',
-#             'wc_time',
-#             'wc_add_info',
-#             'wc_is_archive',
-#             'staff',
-#             'sitio',
-#             'sitio_name',
-#             'truck',
-#             'wstp',
-#             'collectors_wstp_ids',
-#             'collectors_wasc_ids'
-#         ]
-
-#     def get_collectors_wstp_ids(self, obj):
-#         collectors = WasteCollector.objects.filter(wc_num=obj)
-#         return [
-#             collector.wstp.wstp_id
-#             for collector in collectors
-#             if collector.wstp is not None
-#         ]
-
-#     def get_collectors_wasc_ids(self, obj):
-#         collectors = WasteCollector.objects.filter(wc_num=obj)
-#         return [
-#             collector.wasc_id
-#             for collector in collectors
-#         ]
-
-#     def get_sitio_name(self, obj):
-#         return obj.sitio.sitio_name if obj.sitio else None
-
-
-
 class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
     collectors_wstp_ids = serializers.SerializerMethodField()
     collectors_names = serializers.SerializerMethodField()
@@ -139,110 +97,8 @@ class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
             'wc_num': {'read_only': True}
         }
 
-# class WasteCollectionAssignmentSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = WasteCollectionAssignment
-#         fields = '__all__'
 
 
-class WasteCollectorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WasteCollector
-        fields = '__all__' 
-
-
-# class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
-#     collectors_wstp_ids = serializers.SerializerMethodField()
-#     collectors_wasc_ids = serializers.SerializerMethodField()
-#     sitio_name = serializers.SerializerMethodField() 
-
-#     class Meta:
-#         model = WasteCollectionSched
-#         fields = [
-#             'wc_num',
-#             'wc_date',
-#             'wc_time',
-#             'wc_add_info',
-#             'wc_is_archive',
-#             'staff',
-#             'sitio',
-#             'sitio_name',
-#             'truck',
-#             'wstp',
-#             'collectors_wstp_ids',
-#             'collectors_wasc_ids'
-#         ]
-
-#     def get_collectors_wstp_ids(self, obj):
-#         collectors = WasteCollector.objects.filter(wc_num=obj)
-#         return [
-#             collector.wstp.wstp_id
-#             for collector in collectors
-#             if collector.wstp is not None
-#         ]
-
-#     def get_collectors_wasc_ids(self, obj):
-#         collectors = WasteCollector.objects.filter(wc_num=obj)
-#         return [
-#             collector.wasc_id
-#             for collector in collectors
-#         ]
-
-#     def get_sitio_name(self, obj):
-#         return obj.sitio.sitio_name if obj.sitio else None
-
-
-
-class WasteCollectionSchedFullDataSerializer(serializers.ModelSerializer):
-    collectors_wstp_ids = serializers.SerializerMethodField()
-    collectors_names = serializers.SerializerMethodField()
-    driver_name = serializers.SerializerMethodField()
-    sitio_name = serializers.SerializerMethodField() 
-
-    class Meta:
-        model = WasteCollectionSched
-        fields = [
-            'wc_num',
-            'wc_day',
-            'wc_time',
-            'wc_add_info',
-            'wc_is_archive',
-            'staff',
-            'sitio',
-            'sitio_name',
-            'truck',
-            'wstp',
-            'collectors_wstp_ids',
-            'collectors_names',
-            'driver_name'
-        ]
-
-
-    def get_collectors_wstp_ids(self, obj):
-        collectors = WasteCollector.objects.filter(wc_num=obj)
-        return [
-            collector.wstp.wstp_id
-            for collector in collectors
-            if collector.wstp is not None
-        ]
-    
-
-    def get_collectors_names(self, obj):
-        collectors = WasteCollector.objects.filter(wc_num=obj)
-        names = [
-            collector.wstp.get_staff_name()
-            for collector in collectors
-            if collector.wstp is not None
-        ]
-        return ', '.join(names)
-    
-
-    def get_driver_name(self, obj):
-        return obj.wstp.get_staff_name() if obj.wstp else None
-    
-
-    def get_sitio_name(self, obj):
-        return obj.sitio.sitio_name if obj.sitio else None
     
 
 class WasteHotspotSerializer(serializers.ModelSerializer):
@@ -557,6 +413,8 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             'garb_created_at',
             'garb_requester',
             'garb_additional_notes',
+            'garb_pref_time',
+            'garb_pref_date',
             'truck_id',
             'driver_id',
             'collector_ids',
@@ -718,6 +576,9 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             'garb_waste_type',
             'dec_date',
             'garb_created_at',
+            'garb_additional_notes',
+            'garb_pref_time',
+            'garb_pref_date',
             'garb_requester',
             'confirmation_info',
             'assignment_info',
@@ -763,7 +624,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
                 'pick_time': assignment.pick_time.strftime('%H:%M') if assignment.pick_time else None,
                 'driver': assignment.wstp_id.get_staff_name() if assignment.wstp_id else None,
                 'truck': self._get_truck_info(assignment.truck_id) if assignment.truck_id else None,
-                'collectors': self._get_collector_names(assignment)
+                'collectors': self._get_collector_names(assignment),
             }
         except Pickup_Assignment.DoesNotExist:
             return None
@@ -771,9 +632,10 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             print(f"Error getting assignment info: {str(e)}")
             return None
 
+
     def _get_collector_names(self, assignment):
         try:
-            collectors = assignment.assignment_collector_set.all()  # ← use default reverse name
+            collectors = assignment.collectors.all()
             return [
                 collector.wstp_id.get_staff_name()
                 for collector in collectors
@@ -782,6 +644,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(f"Error getting collectors: {str(e)}")
             return []
+
 
 
     def _get_truck_info(self, truck):
@@ -823,8 +686,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
         except Pickup_Request_Decision.DoesNotExist:
             pass
         
-        return None_name
-        return None      
+        return None
 
 class ResidentAcceptedPickupRequestsSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()

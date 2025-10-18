@@ -66,6 +66,7 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         instances = []
+
         # Prepare model instances
         for item in serializer.validated_data:
             existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
@@ -73,12 +74,16 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
                 existing.delete()
             instances.append(FamilyComposition(**item))
 
-        created_instances = FamilyComposition.objects.bulk_create(instances)
+        created_instances = []
+        for instance in instances:
+            instance.save()
+            created_instances.append(instance)
 
         if len(created_instances) > 0:
+        
             response_serializer = FamilyCompositionExtendedSerializer(created_instances, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST) 
 
 class FamilyMemberDeleteView(generics.DestroyAPIView):
     permission_classes = [AllowAny]

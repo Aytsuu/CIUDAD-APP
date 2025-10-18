@@ -1,3 +1,4 @@
+
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Complaint } from "../complaint-type";
 import { Link } from "react-router";

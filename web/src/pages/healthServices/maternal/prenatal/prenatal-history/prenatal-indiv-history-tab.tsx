@@ -31,11 +31,11 @@ export default function PrenatalIndivHistoryTab({ onTabChange }: PrenatalHistory
 		// <div className="bg-white/70 p-2">
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 				<div className={getTabStyle("prenatalcare")} onClick={() => handleHistoryChange("prenatalcare")}>
-					<h2 className="font-semibold">Prenatal Care History</h2>
+					<h2 className="text-sm font-semibold text-gray-800">Prenatal Care History</h2>
 				</div>
 
 				<div className={getTabStyle("prenatalform")} onClick={() => handleHistoryChange("prenatalform")}>
-					<h2 className="font-semibold">Prenatal Form History</h2>
+					<h2 className="text-sm font-semibold text-gray-800">Prenatal Form History</h2>
 				</div>
 			</div>
 		// </div>

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
 from ..models import *
-from django.db.models import Count
 from ..double_queries import PostQueries
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
@@ -38,7 +37,8 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle_name = f' {personal.per_mname}' if personal.per_mname else ''
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{middle_name}'
 
     return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
@@ -57,7 +57,7 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
               'date_registered']
     
   def get_total_families(self, obj):
-    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
+    return Family.objects.filter(hh=obj).count()
   
   def get_head(self, obj):
     info = obj.rp.per
@@ -84,9 +84,8 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     household.save()
 
     # Perform double query
-    request = self.context.get("request")
     double_queries = PostQueries()
-    response = double_queries.household(request.data)
+    response = double_queries.household(validated_data)
     if not response.ok:
       try:
           error_detail = response.json()

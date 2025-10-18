@@ -58,19 +58,20 @@ export const Drawer = ({
       >
         {/* Drawer Container */}
         <Animated.View
-          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl"
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl flex-1"
           style={{
             transform: [{ translateY: slideAnim }],
             maxHeight: screenHeight * 0.85,
             elevation: 20,
           }}
         >
-          <TouchableOpacity activeOpacity={1}>
+          {/* Remove the TouchableOpacity wrapper that was blocking scroll events */}
+          <View className="flex-1">
             {/* Drawer Handle */}
             <View className="items-center py-4">
               <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
             </View>
-
+            
             {/* Drawer Header */}
             {(header || description) && (
               <View className="px-6 mb-4">

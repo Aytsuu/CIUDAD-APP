@@ -63,8 +63,16 @@ export default () => ({
           isAccessMediaLocationEnabled: true
         }
       ],
-      // "./expo-notifee-plugin.js",
       "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            edgeToEdgeEnabled: true,
+            suppressNativeLinking: ["react-native-worklets"],
+          }
+        }
+      ]
     ],
     experiments: {
       typedRoutes: true

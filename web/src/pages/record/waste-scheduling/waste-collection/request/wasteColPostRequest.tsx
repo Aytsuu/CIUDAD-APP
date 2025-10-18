@@ -68,6 +68,7 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
 
 export const addAssCollector = async (wc_num: number, wstp_id: string) => {
     try {
+
         const res = await api.post('waste/waste-ass-collectors/', {
             wc_num: wc_num,
             wstp: wstp_id
@@ -78,3 +79,19 @@ export const addAssCollector = async (wc_num: number, wstp_id: string) => {
         throw err;
     }
 }
+
+
+
+//WASTE COLLECTION ANNOUNCEMENT
+export const createCollectionReminders = async () => {
+  try {
+ 
+
+    console.log("NISUDDD AS ANNOUNCEMENT.....")
+    const res = await api.post('waste/create-collection-reminders/');
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};

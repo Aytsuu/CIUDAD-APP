@@ -11,7 +11,7 @@ import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -47,12 +47,12 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
 
     //Fetch mutation
     const { data: IncomeParticularItems = [] } = useIncomeParticular();
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
     //Post mutation
     const { mutate: createIncome, isPending } = useCreateIncome(onSuccess);
 
-    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totInc = matchedYearData?.ie_main_inc ?? 0;
 
     
@@ -64,8 +64,8 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
 
         console.log("YEAR NUMBERRRR: ", typeof inputYear)
 
-        let totIncome = Number(totInc);
-        let inc_amount = Number(values.inc_amount)
+        const totIncome = Number(totInc);
+        const inc_amount = Number(values.inc_amount)
 
         totalIncome = totIncome + inc_amount;
 

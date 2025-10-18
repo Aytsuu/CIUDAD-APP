@@ -1,6 +1,6 @@
 from django.utils import timezone
 from .models import ActivityLog
-from apps.administration.models import Feature, Staff
+from apps.administration.models import Staff
 import inspect
 import os
 from rest_framework.response import Response
@@ -9,11 +9,9 @@ def create_activity_log(
     act_type,
     act_description,
     staff,
-    feat_name=None,
     record_id=None,
     **kwargs
 ):
-
     frame = inspect.currentframe().f_back
     module_name = "unknown"
     
@@ -51,39 +49,36 @@ def create_activity_log(
         act_action = "complete"
     
 
+    # Feature creation removed - no longer posting to feature table
     feature = None
-    if feat_name:
-        feature, created = Feature.objects.get_or_create(
-            feat_name=feat_name,
-            defaults={
-                'feat_category': module_name.title(),
-                'feat_url': f'/{module_name}/'
-            }
-        )
-    else:
-      
-        feature, created = Feature.objects.get_or_create(
-            feat_name=f'{module_name.title()} Management',
-            defaults={
-                'feat_category': module_name.title(),
-                'feat_url': f'/{module_name}/'
-            }
-        )
     
- 
-    activity_log = ActivityLog.objects.create(
-        act_timestamp=timezone.now(),
-        act_type=act_type,
-        act_description=act_description,
-        act_module=module_name,
-        act_action=act_action,
-        act_record_id=record_id,
-        feat=feature,
-        staff=staff,
-        **kwargs
-    )
+    # Filter out any kwargs that aren't actual ActivityLog model fields
+    # Common extra params that views might pass: feat_name, etc.
+    allowed_fields = {
+        'act_timestamp', 'act_type', 'act_description', 
+        'act_module', 'act_action', 'act_record_id', 'staff'
+    }
     
-    return activity_log
+    # Remove any kwargs that aren't valid model fields
+    filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_fields}
+    
+    try:
+        activity_log = ActivityLog.objects.create(
+            act_timestamp=timezone.now(),
+            act_type=act_type,
+            act_description=act_description,
+            act_module=module_name,
+            act_action=act_action,
+            act_record_id=record_id,
+            staff=staff,
+            **filtered_kwargs
+        )
+        return activity_log
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create activity log: {str(e)}")
+        raise e
 
 def log_model_change(model_instance, action, staff, description=None, **kwargs):
    
@@ -117,10 +112,10 @@ class ActivityLogMixin:
         instance = serializer.save()
         try:
             staff = getattr(self.request.user, 'staff', None)
-            # Create
+            
             log_model_change(instance, 'create', staff)
         except Exception:
-            # Avoid breaking the main flow due to logging issues
+           
             pass
         return instance
 

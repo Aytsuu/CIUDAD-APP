@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from ..models import *
+from django.db import transaction
 from django.utils import timezone
 from datetime import datetime
+from ..double_queries import PostQueries
 
 class FamilyBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -57,7 +59,8 @@ class FamilyTableSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+        middle_name = f' {personal.per_mname}' if personal.per_mname else ''
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{middle_name}'
 
     return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
@@ -67,8 +70,9 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
     fields = '__all__'
     read_only_fields = ['fam_id', 'fam_date_registered']
 
+  @transaction.atomic
   def create(self, validated_data):
-    return Family.objects.create(
+    family = Family.objects.create(
       fam_id = self.generate_fam_no(validated_data['fam_building']),
       fam_indigenous = validated_data['fam_indigenous'],
       fam_building = validated_data['fam_building'],
@@ -76,6 +80,17 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
       hh = validated_data['hh'],
       staff = validated_data['staff']
     )
+
+    # Perform double query
+    double_queries = PostQueries()
+    response = double_queries.family(validated_data)
+    if not response.ok:
+      try:
+          error_detail = response.json()
+      except ValueError:
+          error_detail = response.text
+      raise serializers.ValidationError({"error": error_detail})
+    return family
   
   def generate_fam_no(self, building_type):
 

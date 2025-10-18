@@ -5,12 +5,21 @@ import { useRouter, useLocalSearchParams } from "expo-router"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { formatTime } from "@/helpers/timeFormatter"
 import { useGetCompletedDetailsResident } from "./queries/garbagePickupFetchQueries"
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default function ResidentCompletedDetails() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const garb_id = String(params.garb_id)
-  const { data: requestDetails, isPending } = useGetCompletedDetailsResident(garb_id)
+  const { data: requestDetails, isLoading } = useGetCompletedDetailsResident(garb_id)
+
+   if (isLoading) {
+      return (
+          <View className="flex-1 justify-center items-center">
+              <LoadingState/>
+          </View>
+      );
+  }
 
   return (
     <_ScreenLayout
@@ -22,10 +31,8 @@ export default function ResidentCompletedDetails() {
       headerBetweenAction={<Text className="text-[13px]">Request Details</Text>}
       showBackButton={false}
       showExitButton={false}
-      loading={isPending}
-      loadingMessage="Loading..."
     >
-      <ScrollView className="flex-1 p-4">
+      <ScrollView className="flex-1 p-6">
         {/* Request Info Card */}
         <View className="bg-white rounded-xl p-5 mb-4 border border-gray-100 shadow-sm">
           <View className="flex-row items-center mb-4 gap-2">

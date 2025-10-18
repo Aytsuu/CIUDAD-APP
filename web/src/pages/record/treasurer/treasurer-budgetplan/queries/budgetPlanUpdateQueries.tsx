@@ -12,7 +12,7 @@ export const useUpdateBudgetHeader = (onSuccess: () => void) => {
         mutationFn: (values: z.infer<typeof BudgetPlanStep1Schema>) => 
         updateBudgetHeader(values),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
     
             toast.success('Budget Header Updated!', {
@@ -41,7 +41,8 @@ export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
             toast.loading("Archiving budget plan ...", { id: "archivePlan" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] })
             toast.success('Budget Plan is archived successfully', {
                 id: "archivePlan",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -69,7 +70,9 @@ export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
             toast.loading("Restoring budget plan ...", { id: "restorePlan" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] })
+            queryClient.invalidateQueries({ queryKey: ['inactiveBudgetPlan'] });
+
             toast.success('Budget Plan is restored successfully', {
                 id: "restorePlan",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -106,7 +109,7 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
         }>
         }) => updateBudgetItem(updatedItemData, historyRecords),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
+            queryClient.invalidateQueries({ queryKey: ['activeBudgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetDetails'] });
             queryClient.invalidateQueries({ queryKey: ['budgetPlanHistory'] });
     

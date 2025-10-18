@@ -56,7 +56,8 @@ class PhoneVerification(models.Model):
     pv_phone_num = models.CharField(max_length=11)
     pv_otp = models.CharField(max_length=6, null=True)
     pv_sent = models.BooleanField(default=False)
-    pv_type = models.CharField(default=False, max_length=10)
+    pv_type=models.CharField(max_length=10,default=False) 
+
 
     class Meta:
         db_table = "phone_verification"

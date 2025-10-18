@@ -1,22 +1,25 @@
 from django.shortcuts import render
-from django.db.models import OuterRef, Exists
+from django.db.models import OuterRef, Exists, Q
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 from django.db.models import Count, Prefetch
 from django.http import Http404
 from apps.pagination import StandardResultsPagination
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
-from ..utils import *
-from ..models import FollowUpVisit
+from apps.patientrecords.utils import get_completed_followup_visits, get_pending_followup_visits
 
-from ..serializers.followvisits_serializers import FollowUpVisitSerializer, PatientSerializer, FollowUpVisitWithPatientSerializer
+from apps.patientrecords.models import FollowUpVisit
+
+from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer, PatientSerializer, FollowUpVisitWithPatientSerializer
+
       
       
       
@@ -35,39 +38,69 @@ class AllFollowUpVisitsView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        queryset = FollowUpVisit.objects.select_related('patrec').all()
+        queryset = FollowUpVisit.objects.select_related(
+            'patrec',
+            'patrec__pat_id',
+            'patrec__pat_id__rp_id',
+            'patrec__pat_id__rp_id__per',
+            'patrec__pat_id__trans_id'
+        ).all( )
 
         # filtering options 
-        status = self.request.query_params.get('status')
-        search = self.request.query_params.get('search')
-        time_frame = self.request.query_params.get('time_frame')
+        params = self.request.query_params
+        status = params.get('status')
+        search = params.get('search')
+        time_frame = params.get('time_frame')
 
-        if status and status != 'All':
-            queryset = queryset.filter(followv_status=status)
-        
+        filters = Q()
+
+        if status and status.lower() not in ['all', '']:
+            filters &= Q(followv_status__iexact=status)
+
         if search:
-            queryset = queryset.filter(
-                Q(patient__per_fname__icontains=search) |
-                Q(patient__per_lname__icontains=search) |
-                Q(followv_description__icontains=search)
-            )
+            search = search.strip()
+            if search:
+                search_filters = Q()
+
+                search_filters |= (
+                    Q(patrec__pat_id__rp_id__per__per_fname__icontains=search) |
+                    Q(patrec__pat_id__rp_id__per__per_lname__icontains=search) 
+                )
+
+                search_filters |= (
+                    Q(patrec__pat_id__trans_id__tran_fname__icontains=search) |
+                    Q(patrec__pat_id__trans_id__tran_lname__icontains=search) 
+                )
+
+                search_filters |= Q(followv_description__icontains=search)
+
+                filters &= search_filters
         
         if time_frame:
-            today = timezone.now()
+            today = timezone.now().date()
+            date_filters = None
 
             if time_frame == 'today':
-                queryset =queryset.filter(followv_date__date=today)
+                date_filters = Q(followv_date=today)
+                
             elif time_frame == 'thisWeek':
-                start_week = today -timedelta(days=today.weekday())
-                end_week = start_week + timedelta(days=6)
-                queryset =queryset.filter(followv_date__range=[start_week, end_week])
-            elif time_frame == 'thisMonth':
-                queryset = queryset.filter(
-                    followv_date__year=today.year,
-                    followv_date__month=today.month
+                date_filters = Q(
+                    followv_date__week=today.isocalendar()[1],
+                    followv_date__year=today.year
                 )
-        return queryset.order_by('-followv_date')
 
+            elif time_frame == 'thisMonth':
+                date_filters = Q(
+                    followv_date__month=today.month,
+                    followv_date__year=today.year
+                )
+            if date_filters:
+                filters &= date_filters
+
+        if filters:
+            queryset = queryset.filter(filters)
+
+        return queryset.order_by('followv_date')
 
 
 class DeleteUpdateFollowUpVisitView(generics.RetrieveUpdateDestroyAPIView):
@@ -96,7 +129,7 @@ class GetCompletedFollowUpVisits(APIView):
                 'status': visit.followv_status,
                 'patrec_id': visit.patrec_id,
                 'created_at': visit.created_at.isoformat() if visit.created_at else None,
-                'updated_at': visit.updated_at.isoformat() if visit.updated_at else None
+                'completed_at': visit.completed_at.isoformat() if visit.completed_at else None
             } for visit in visits]
             
             response_data = {
@@ -113,10 +146,10 @@ class GetCompletedFollowUpVisits(APIView):
 
 
 class GetPendingFollowUpVisits(APIView):
-    def get(self, request, patrec_id):
+    def get(self, request, pat_id):
         try:
             # Get completed visits using the utility function
-            visits = get_pending_followup_visits(patrec_id)
+            visits = get_pending_followup_visits(pat_id)
             
             # Serialize the data
             serialized_visits = [{

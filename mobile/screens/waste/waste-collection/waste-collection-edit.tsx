@@ -12,13 +12,15 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-or-time-input'
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
-import { useGetWasteTrucks } from './queries/waste-col-fetch-queries';
+import { useGetWasteTrucks, type Trucks } from './queries/waste-col-fetch-queries';
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useUpdateWasteSchedule } from './queries/waste-col-update-queries';
 import { useUpdateCollectors } from './queries/waste-col-update-queries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetWasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 
 const dayOptions = [
@@ -34,6 +36,7 @@ const dayOptions = [
 
 function WasteColEdit() {
   const router = useRouter();
+  const { user } = useAuth(); 
   const params = useLocalSearchParams();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -64,13 +67,18 @@ function WasteColEdit() {
   const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
   const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
   const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio(); 
-  const { data: wasteCollectionData = [], isLoading: isLoadingWasteData} = useGetWasteCollectionSchedFull();
+  const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
-  const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
+  const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
   // UPDATE QUERY MUTATIONS
   const { mutate: updateSchedule, isPending: isUpdating } = useUpdateWasteSchedule();
   const { mutate: updateCollectors, isPending: isUpdatingCollectors } = useUpdateCollectors();
+
+
+  // Extract the actual data array
+  const wasteSchedules = wasteCollectionData.results || [];      
+
 
   // Options
   const collectorOptions = collectors.map(collector => ({
@@ -83,9 +91,11 @@ function WasteColEdit() {
     value: driver.id  
   }));
 
-  const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-    label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
-    value: String(truck.truck_id)
+  const truckOptions = (trucks as Trucks[])
+      .filter(truck => truck.truck_status === "Operational")
+      .map(truck => ({
+          label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+          value: String(truck.truck_id)
   }));
 
   const sitioOptions = sitios.map(sitio => ({
@@ -116,18 +126,20 @@ function WasteColEdit() {
       //checks for sitio with the same day
       const selectedSitioName = sitioOptions.find(sitio => sitio.value === values.selectedSitios)?.label; 
       
-      const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+      const hasSameSitioSameDay = wasteSchedules.some(schedule => 
           schedule.wc_day === values.day &&
           schedule.sitio_name === selectedSitioName &&
-          schedule.wc_num !== Number(wc_num)          
-      );
+          schedule.wc_num !== Number(wc_num)   
+      );    
+
 
       //checks for overlapping day and time
-      const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+      const hasDuplicateSchedule = wasteSchedules.some(schedule => 
           schedule.wc_day === values.day && 
           schedule.wc_time === formattedTime &&
-          schedule.wc_num !== Number(wc_num) 
+          schedule.wc_num !== Number(wc_num)   
       );     
+
       
       //return if there is overlapping schedule
       if (hasDuplicateSchedule) {
@@ -169,6 +181,7 @@ function WasteColEdit() {
           wc_num: Number(wc_num),
           values: {
             ...values,
+            staff: user?.staff?.staff_id
           }
         }, {
           onSuccess: () => {
@@ -212,7 +225,7 @@ function WasteColEdit() {
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -256,7 +269,7 @@ function WasteColEdit() {
       }
       stickyFooter={true}
     >
-      <View className="w-full px-4">
+      <View className="w-full px-6">
         {/* Date Input */}
         <View className="relative">
           <FormSelect

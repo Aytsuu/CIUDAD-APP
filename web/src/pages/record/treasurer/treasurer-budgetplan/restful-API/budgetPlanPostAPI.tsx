@@ -20,7 +20,7 @@ export const budget_plan = async (budgetInfo: Record<string, any>) => {
             staff_id: budgetInfo.staff_id 
         });
 
-        const res = await api.post('treasurer/budget-plan/', {
+        const res = await api.post('treasurer/budget-plan-active/', {
             plan_year: new Date().getFullYear().toString(),
             plan_actual_income: parseFloatSafe(budgetInfo.plan_actual_income), 
             plan_rpt_income: parseFloatSafe(budgetInfo.plan_rpt_income), 

@@ -190,19 +190,34 @@ export function AppSidebar() {
       title: "Team",
       url: "/team",
     },
-    ...(featureValidator("summon & case tracker")
+    ...(featureValidator("council mediation")
       ? [
           {
-            title: "Summon & Case Tracker",
+            title: "Council Mediation",
             url: "/",
             items: [
-              { title: "Request List", url: "/request-list" },
               { title: "Summon Calendar", url: "/summon-calendar" },
               { title: "Cases", url: "/summon-cases" },
             ],
           },
         ]
       : []),
+    ...(featureValidator("summon remarks")
+      ? [
+          {
+            title: "Summon Remarks",
+            url: "/summon-remarks",
+          },
+        ]
+      : []),
+    ...(featureValidator("conciliation proceedings")
+    ? [
+        {
+          title: "Conciliation Proceedings",
+          url: "/conciliation-proceedings",
+        },
+      ]
+    : []),
     ...(featureValidator("gad")
       ? [
           {
@@ -248,8 +263,8 @@ export function AppSidebar() {
                 url: "/treasurer-income-expense-main",
               },
               {
-                title: "Income & Disbursement",
-                url: "/treasurer-income-and-disbursement",
+                title: "Disbursement Voucher",
+                url: "/treasurer-disbursement",
               },
               {
                 title: "Payment Request",

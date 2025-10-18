@@ -128,10 +128,8 @@ export const formatMnpDates = (dates: string[]) => {
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-  return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
+  return Math.ceil(dayOfMonth / 7);
 };
 
 // Get month in text based on a given date format (YYYY-MM-DD)
@@ -246,5 +244,21 @@ export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
   const weekEndDate = new Date(weekStartDate)
   weekEndDate.setDate(weekStartDate.getDate() + 6)
 
-  return weekEndDate > currentDate
+  return currentDate > weekEndDate
 }
+
+export const formatTableDate = (dateString: string | null | undefined): string => {
+  if (!dateString || dateString === "N/A") return "N/A";
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "Invalid Date";
+  }
+};
+

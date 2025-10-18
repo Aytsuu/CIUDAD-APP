@@ -2,9 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useAppDispatch } from "../redux";
 import { setLoading, setError, clearAuthState, clearError, setAuthData, setOtpSent } from "./authSlice";
 import { queryClient } from "@/lib/queryClient";
-import { api } from "@/api/api";
 import { LoginCredentials, SignupCredentials, TokenResponse, SignupResponse } from "./auth-types";
-
+import { api } from "@/api/api";
 
 export const useLoginMutation = () => {
   const dispatch = useAppDispatch();
@@ -62,13 +61,13 @@ export const useSendEmailOTPMutation = () => {
   
   return useMutation<{ message: string }, Error, Record<string, any>>({
     mutationFn: async (data) => {
-      try {
-        const response = await api.post('authentication/email/sendOtp/', data);
-        return response.data;
-      } catch (err) {
-        console.error(err)
-        throw err;
-      }
+      console.log(data)
+      const response = await api.post('authentication/email/sendOtp/', data);
+      return response.data;
+    },
+    onMutate: () => {
+      dispatch(setLoading(true));
+      dispatch(clearError());
     },
     // onMutate: () => {
     //   dispatch(setLoading(true));

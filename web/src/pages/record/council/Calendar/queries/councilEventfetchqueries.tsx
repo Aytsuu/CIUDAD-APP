@@ -1,14 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCouncilEvents, getAttendanceSheets } from "../api/councilEventgetreq";
+import { getCouncilEvents, getAttendanceSheets, getCouncilEventYears } from "../api/councilEventgetreq";
 import { CouncilEvent, AttendanceSheet } from "../councilEventTypes";
 
-export const useGetCouncilEvents = () => {
-  return useQuery<CouncilEvent[], Error>({
-    queryKey: ["councilEvents"],
-    queryFn: () => getCouncilEvents().catch((error) => {
+export const useGetCouncilEvents = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  year?: string,
+  isArchive?: boolean
+) => {
+  return useQuery<{ results: CouncilEvent[]; count: number }, Error>({
+    queryKey: ["councilEvents", page, pageSize, searchQuery, year, isArchive],
+    queryFn: () => getCouncilEvents(page, pageSize, searchQuery, year, isArchive).catch((error) => {
       throw error;
     }),
     staleTime: 1000 * 60 * 5, 
+  });
+};
+
+// Get available years
+export const useGetCouncilEventYears = () => {
+  return useQuery<number[], Error>({
+    queryKey: ["councilEventYears"],
+    queryFn: getCouncilEventYears,
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
   });
 };
 

@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View, ScrollView, Dimensions, Platform, Image} from "react-native"
+import { Text, TouchableOpacity, View, ScrollView, Dimensions, Platform, Image, InteractionManager} from "react-native"
 import { router, useRouter } from "expo-router"
 import React from "react"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
@@ -77,6 +77,13 @@ export default () => {
   })
 
   // ============== MAIN RENDER ==============
+  if(!user?.rp) {
+    return (isReady && <NoAccessScreen 
+        title="Resident Access Required"
+        description="The report feature is only available to registered residents."/>
+    )
+  }
+
   return (
     <PageLayout
       leftAction={

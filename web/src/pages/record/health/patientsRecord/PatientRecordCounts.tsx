@@ -72,7 +72,7 @@ export default function PatientRecordCount({ patientId }: PatientRecordCountProp
   ])
 
   if (totalRecords === null) {
-    return <div>Loading...</div> // Or a spinner
+    return <div className="flex justify-center items-center">...</div> // Or a spinner
   }
 
   return <div>{totalRecords}</div>

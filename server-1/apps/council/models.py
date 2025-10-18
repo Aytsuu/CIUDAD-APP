@@ -5,7 +5,6 @@ from django.utils import timezone
 from django.db.models import Max
 from datetime import date
 
-
 class CouncilScheduling(models.Model):
     ce_id = models.BigAutoField(primary_key=True)
     ce_title = models.CharField(max_length=100)
@@ -47,7 +46,12 @@ class CouncilScheduling(models.Model):
 
 class CouncilAttendance(models.Model):
     att_id = models.BigAutoField(primary_key=True)
-    ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+    ce = models.ForeignKey(
+        'CouncilScheduling', 
+        on_delete=models.CASCADE,
+        db_column='ce_id',
+        related_name='attendance_sheets'
+    )
     att_is_archive = models.BooleanField(default=False)
     att_file_name = models.CharField(max_length=255, null=True)
     att_file_path = models.CharField(max_length=512, null=True)
@@ -64,7 +68,6 @@ class CouncilAttendance(models.Model):
 
     class Meta:
         db_table = 'attendance_sheet'
-
 
 class Template(models.Model):
     temp_id = models.BigAutoField(primary_key=True)
@@ -330,28 +333,30 @@ class Ordinance(models.Model):
                 pass
 
     def save(self, *args, **kwargs):
-        # Run validations before saving
+        # Generate ord_num if not provided BEFORE validation
+        if not self.ord_num:  # If no ordinance number provided
+            from django.utils import timezone
+            
+            # Use the ordinance's year, or current year if not set
+            year = getattr(self, 'ord_year', timezone.now().year)
+            year_suffix = year % 100
+            
+            # Count existing ordinances for this year
+            try:
+                existing_count = Ordinance.objects.filter(ord_num__endswith=f"-{year_suffix:02d}").count()
+            except Exception:
+                existing_count = Ordinance.objects.count()
+            
+            # Generate next sequence number
+            seq = existing_count + 1
+            self.ord_num = f"ORD{seq:03d}-{year_suffix:02d}"
+        
+        # Run validations after generating ord_num
         try:
             self.full_clean()
         except Exception:
             # Re-raise to preserve default behavior upstream
             raise
-        if not self.ord_num:  # If no ordinance number provided
-            # Generate ordinance number: ORD-YYYY-XXXX
-            year = getattr(self, 'ord_year', 2024)
-            import random
-            import string
-            
-            # Generate a unique number
-            while True:
-                # Generate 4 random digits
-                random_digits = ''.join(random.choices(string.digits, k=4))
-                ord_num = f"ORD-{year}-{random_digits}"
-                
-                # Check if it's unique
-                if not Ordinance.objects.filter(ord_num=ord_num).exists():
-                    self.ord_num = ord_num
-                    break
         
         super().save(*args, **kwargs)
     

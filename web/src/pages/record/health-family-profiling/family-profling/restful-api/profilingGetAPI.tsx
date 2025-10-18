@@ -1,5 +1,15 @@
 import { api2 } from "@/api/api";
 
+// ==================== FETCH FAMILY HEALTH PROFILING ==================== (Status: New)
+export const getFamilyHealthProfilingData = async (famId: string) => {
+  try {
+    const res = await api2.get(`health-profiling/family-health-profiling/${famId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
 export const getPerAddressesList = async () => {
   try {

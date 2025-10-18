@@ -24,6 +24,7 @@ export const AddEventFormSchema = z.object({
   eventTime: z.string().min(1, "Event time is required"),
   eventDescription: z.string().min(1, "Event description is required"),
   numRows: DataRequirement.optional(),
+  staff_id: z.string().optional(),
 });
 
 export const UpdateEventFormSchema = z.object({
@@ -33,4 +34,5 @@ export const UpdateEventFormSchema = z.object({
   eventTime: z.string().optional(),
   eventDescription: z.string().optional(),
   numRows: DataRequirement.optional(),
+  staff_id: z.string().optional(),
 });

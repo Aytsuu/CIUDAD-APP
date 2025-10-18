@@ -36,19 +36,17 @@ export const EditProjectProposalForm: React.FC<
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const [selectedDevProject] = useState<any>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { data: budgetEntries = [], isLoading: isBudgetLoading } =
-    useGADBudgets(new Date().getFullYear().toString());
-  const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
+  const { data: budgetData, isLoading } =  useGADBudgets(currentYear);
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const currentYearBudget = yearBudgetsArray.find(
+    (budget: any) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
 
-  const latestExpenseWithBalance = budgetEntries
-    .filter(
-      (entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null
-    )
-    .sort(
+  const latestExpenseWithBalance = budgetData?.results
+    ?.filter((entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
+    ?.sort(
       (a, b) =>
         new Date(b.gbud_datetime).getTime() -
         new Date(a.gbud_datetime).getTime()
@@ -339,7 +337,6 @@ export const EditProjectProposalForm: React.FC<
         gpr_monitoring: data.monitoringEvaluation,
         gpr_signatories: data.signatories.filter((s) => s.name.trim() !== ""),
         gpr_header_img: headerImage,
-        // existingHeaderImageName: initialValues.headerImage,
         staffId: initialValues.staffId || null,
         gprIsArchive: initialValues.gprIsArchive || false,
         dev: data.selectedDevProject?.dev_id || initialValues.devId || 0,
@@ -573,7 +570,7 @@ export const EditProjectProposalForm: React.FC<
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Wallet className="h-4 w-4 text-blue-600" />
                   <span>Available Funds:</span>
-                  {isBudgetLoading ? (
+                  {isLoading ? (
                     <span className="text-gray-500">Loading...</span>
                   ) : availableBudget != null ? (
                     <span className="font-mono text-red-500">

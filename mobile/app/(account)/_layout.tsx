@@ -31,9 +31,11 @@ export default () => {
               <Stack.Screen name="personal/index" options={{ headerShown: false, animation: 'slide_from_right'}}/>
               <Stack.Screen name="personal/update" options={{ headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="personal/scan" options={{ headerShown: false, animation: 'fade'}}/>
-              <Stack.Screen name="about" options={{ headerShown: false}}/>
-              <Stack.Screen name="support" options={{ headerShown: false}}/>
-              <Stack.Screen name="app-rating" options={{ headerShown: false}}/>
+              <Stack.Screen name="family" options={{ headerShown: false, animation: 'fade'}}/>
+              <Stack.Screen name="house" options={{ headerShown: false, animation: 'fade'}}/>
+              <Stack.Screen name="about" options={{ headerShown: false, animation: 'fade'}}/>
+              <Stack.Screen name="support" options={{ headerShown: false, animation: 'fade'}}/>
+              <Stack.Screen name="app-rating" options={{ headerShown: false, animation: 'fade'}}/>
             </Stack>
           </RegistationFormProvider>
         </RegistrationTypeProvider>

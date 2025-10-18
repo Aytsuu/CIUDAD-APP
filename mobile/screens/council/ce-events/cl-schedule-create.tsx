@@ -38,7 +38,6 @@ const CLCreateEvent = () => {
   const addEventMutation = useAddCouncilEvent();
 
   const onSubmit = async (formData: any) => {
-    console.log('Button pressed')
     const isValid = await trigger();
     if (!isValid) {
       return;
@@ -55,7 +54,7 @@ const CLCreateEvent = () => {
         ce_description: formData.eventDescription.trim(),
         ce_is_archive: false,
         ce_rows: numRows,
-        staff: user?.staff?.staff_id || null,
+        staff_id: user?.staff?.staff_id || null,
       };
 
       const newEvent = await addEventMutation.mutateAsync(eventPayload);
@@ -74,7 +73,7 @@ const CLCreateEvent = () => {
           <ChevronLeft size={30} color="black" className="text-black" />
         </TouchableOpacity>
       }
-      headerTitle={<Text>Schedule Events</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px]">Schedule Events</Text>}
       rightAction={<View />}
       footer={
         <View>
@@ -90,7 +89,7 @@ const CLCreateEvent = () => {
         </View>
       }
     >
-      <View className="flex-1 p-4">
+      <View className="flex-1 p-4 px-6">
         <FormInput
           control={control}
           name="eventTitle"

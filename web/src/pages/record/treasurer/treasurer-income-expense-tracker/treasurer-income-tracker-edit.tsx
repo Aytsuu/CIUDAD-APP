@@ -10,7 +10,7 @@ import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useAddParticular } from "./request/particularsPostRequest";
 import { useDeleteParticular } from "./request/particularsDeleteRequest";
@@ -67,13 +67,13 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
 
     //Fetch mutation
     const { data: IncomeParticularItems = [] } = useIncomeParticular();
-    const {  data: fetchedData = [] } = useIncomeExpenseMainCard();  
+    const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
     //Put mutation
     const { mutate: updateIncome, isPending } = useUpdateIncome(inc_num, onSuccess);
 
 
-    const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+    const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
     const totInc = matchedYearData?.ie_main_inc ?? 0;
 
 
@@ -90,9 +90,9 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
         const inputYear = inputDate.getFullYear();
         let totalIncome = 0.0
 
-        let totIncome = Number(totInc);
-        let prev_amount = Number(inc_amount);
-        let current_amount = Number(values.inc_amount);
+        const totIncome = Number(totInc);
+        const prev_amount = Number(inc_amount);
+        const current_amount = Number(values.inc_amount);
 
         if (inputYear !== Number(year)) {
             form.setError('inc_datetime', {

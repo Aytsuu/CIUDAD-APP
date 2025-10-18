@@ -1,58 +1,121 @@
-import React, { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Search, FileInput } from "lucide-react";
-import { Link } from "react-router";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
+import { Search, FileInput, Loader2, Users, Home, UserCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
+import { useMedicineRecords } from "../queries/fetch";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { getMedicineRecords } from "../restful-api/getAPI";
-// import { useNavigate } from "react-router";
-import { TableSkeleton } from "../../skeleton/table-skeleton";
 import { MedicineRecord } from "../types";
+import { useDebounce } from "@/hooks/use-debounce";
+// import { useLoading } from "@/context/LoadingContext";
+import { medicineColumns } from "./columns/all-med-col";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { FilterSitio } from "../../reports/filter-sitio";
+import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
 export default function AllMedicineRecords() {
+  // const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
-  // const queryClient = useQueryClient();
-  // const navigate = useNavigate();
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
 
-  // Fetch medicine records from API
-  const { data: medicineRecords, isLoading } = useQuery<MedicineRecord[]>({
-    queryKey: ["medicineRecords"],
-    queryFn: getMedicineRecords,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  // Fetch sitio data
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
 
-  const formatMedicineData = React.useCallback((): MedicineRecord[] => {
-    if (!medicineRecords) return [];
+  // Debounce search query to avoid too many API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, patientTypeFilter, selectedSitios]);
+
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchQuery || "";
+
+    // If sitios are selected, add them to the search query with COMMA separation
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+
+    return query || undefined;
+  }, [debouncedSearchQuery, selectedSitios]);
+
+  // Build query parameters
+  const queryParams = useMemo(
+    () => ({
+      page: currentPage,
+      page_size: pageSize,
+      search: combinedSearchQuery,
+      patient_type: patientTypeFilter !== "all" ? patientTypeFilter : undefined
+    }),
+    [currentPage, pageSize, combinedSearchQuery, patientTypeFilter]
+  );
+
+  // Fetch data with parameters
+  const { data: apiResponse, isLoading, error } = useMedicineRecords(queryParams);
+
+  // useEffect(() => {
+  //   if (isLoading) {
+  //     showLoading();
+  //   } else {
+  //     hideLoading();
+  //   }
+  // }, [isLoading, showLoading, hideLoading]);
+
+  // Handle API response structure
+  const {
+    medicineRecords,
+    totalCount,
+    totalPages: apiTotalPages
+  } = useMemo(() => {
+    if (!apiResponse) {
+      return { medicineRecords: [], totalCount: 0, totalPages: 1 };
+    }
+
+    // Check if response is paginated
+    if (apiResponse.results) {
+      // Paginated response
+      return {
+        medicineRecords: apiResponse.results,
+        totalCount: apiResponse.count || 0,
+        totalPages: Math.ceil((apiResponse.count || 0) / pageSize)
+      };
+    } else if (Array.isArray(apiResponse)) {
+      // Direct array response (fallback)
+      return {
+        medicineRecords: apiResponse,
+        totalCount: apiResponse.length,
+        totalPages: Math.ceil(apiResponse.length / pageSize)
+      };
+    } else {
+      // Unknown structure
+      return { medicineRecords: [], totalCount: 0, totalPages: 1 };
+    }
+  }, [apiResponse, pageSize]);
+
+  const formatMedicineData = useCallback((): MedicineRecord[] => {
+    if (!medicineRecords || !Array.isArray(medicineRecords)) {
+      return [];
+    }
 
     return medicineRecords.map((record: any) => {
-      const info = record.patient_details.personal_info || {};
-      const address = record.patient_details.address || {};
+      const details = record.patient_details || {};
+      const info = details.personal_info || {};
+      const address = details.address || {};
 
-      // Construct address string - returns empty string if no address components
-      const addressString =
-        [
-          address.add_street,
-          address.add_barangay,
-          address.add_city,
-          address.add_province,
-        ]
-          .filter((part) => part && part.trim().length > 0) // Remove empty parts
-          .join(", ") || ""; // Join with commas or return empty string
+      const addressString = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter((part) => part && part.trim().length > 0).join(", ") || "";
 
       return {
         pat_id: record.pat_id,
@@ -62,284 +125,191 @@ export default function AllMedicineRecords() {
         sex: info.per_sex || "",
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob || "",
-        householdno: record.patient_details?.households?.[0]?.hh_id || "",
+        householdno: details.households?.[0]?.hh_id || "",
         street: address.add_street || "",
         sitio: address.add_sitio || "",
         barangay: address.add_barangay || "",
         city: address.add_city || "",
         province: address.add_province || "",
-        pat_type: record.patient_details.pat_type || "",
-        medicine_count: record.medicine_count || 0,
-        address: addressString, // Will be empty string if no address parts
+        pat_type: details.pat_type || "",
+        address: addressString,
+        medicine_count: record.medicine_count || 0
       };
     });
   }, [medicineRecords]);
 
-  // Filter data based on search query and patient type
-  const filteredData = React.useMemo(() => {
-    return formatMedicineData().filter((record) => {
-      const searchText = `${record.pat_id} 
-        ${record.lname} 
-        ${record.fname} 
-        ${record.sitio}`.toLowerCase();
+  const formattedData = formatMedicineData();
+  const totalPages = apiTotalPages || Math.ceil(totalCount / pageSize);
 
-      const typeMatches =
-        patientTypeFilter === "all" ||
-        (record.pat_type ?? "").toLowerCase() ===
-          patientTypeFilter.toLowerCase();
+  // Calculate resident and transient counts
+  const calculateCounts = useCallback(() => {
+    if (!medicineRecords) return { residents: 0, transients: 0 };
 
-      return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
+    let residents = 0;
+    let transients = 0;
+
+    medicineRecords.forEach((record: any) => {
+      const details = record.patient_details || {};
+      const patType = details.pat_type || "";
+
+      if (patType === "Resident") residents++;
+      if (patType === "Transient") transients++;
     });
-  }, [searchQuery, formatMedicineData, patientTypeFilter]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+    return { residents, transients };
+  }, [medicineRecords]);
 
-  const columns: ColumnDef<MedicineRecord>[] = [
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Patient <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const fullName =
-          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">
-            {row.original.address
-              ? row.original.address
-              : "No address provided"}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">
-            {row.original.sitio || "N/A"}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "medicine_count",
-      header: "No of Records",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">
-            {row.original.medicine_count}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-            <Link
-              to="/IndivMedicineRecord"
-              state={{
-                params: {
-                  patientData: {
-                    pat_id: row.original.pat_id,
-                    pat_type: row.original.pat_type,
-                    age: row.original.age,
-                    addressFull: row.original.address || "No address provided",
-                    address: {
-                      add_street: row.original.street,
-                      add_barangay: row.original.barangay,
-                      add_city: row.original.city,
-                      add_province: row.original.province,
-                      add_sitio: row.original.sitio,
-                    },
-                    households: [{ hh_id: row.original.householdno }],
-                    personal_info: {
-                      per_fname: row.original.fname,
-                      per_mname: row.original.mname,
-                      per_lname: row.original.lname,
-                      per_dob: row.original.dob,
-                      per_sex: row.original.sex,
-                    },
-                  },
-                },
-              }}
-            >
-              View
-            </Link>
-          </div>
-        </div>
-      ),
-    },
-  ];
+  const { residents, transients } = calculateCounts();
+
+  // Sitio filter handlers
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
+
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
 
   return (
-    <>
-      <div className="w-full h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-col items-center ">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Medicine Records
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
-            </p>
-          </div>
+    <div className="w-full h-full flex flex-col">
+      {/* Summary Cards - Updated with EnhancedCardLayout */}
+      <div className="w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <EnhancedCardLayout title="Total Records" description="All medicine records" value={totalCount} valueDescription="Total records" icon={<Users className="h-5 w-5 text-muted-foreground" />} cardClassName="border shadow-sm rounded-lg" headerClassName="pb-2" contentClassName="pt-0" />
+
+          <EnhancedCardLayout
+            title="Resident Patients"
+            description="Patients who are residents"
+            value={residents}
+            valueDescription="Total residents"
+            icon={<Home className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <EnhancedCardLayout
+            title="Transient Patients"
+            description="Patients who are transients"
+            value={transients}
+            valueDescription="Total transients"
+            icon={<UserCheck className="h-5 w-5 text-muted-foreground" />}
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
         </div>
-        <hr className="border-gray-300 mb-4" />
+      </div>
 
-        <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
-          <div className="w-full flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 bg-white w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <SelectLayout
-              placeholder="Filter records"
-              label=""
-              className="bg-white w-full sm:w-48"
-              options={[
-                { id: "all", name: "All Types" },
-                { id: "resident", name: "Resident" },
-                { id: "transient", name: "Transient" },
-              ]}
-              value={patientTypeFilter}
-              onChange={(value) => setPatientTypeFilter(value)}
-            />
+      {/* Filters Section */}
+      <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+        <div className="w-full flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search by name, medicine, address, or sitio..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
+          <SelectLayout
+            placeholder="Patient Type"
+            label=""
+            className="bg-white w-full sm:w-48"
+            options={[
+              { id: "all", name: "All Types" },
+              { id: "resident", name: "Resident" },
+              { id: "transient", name: "Transient" }
+            ]}
+            value={patientTypeFilter}
+            onChange={(value) => setPatientTypeFilter(value)}
+          />
+          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} manualSearchValue="" />
+        </div>
 
+        <ProtectedComponentButton exclude={["DOCTOR"]}>
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
               <Link
-                to="/medicine-request-form"
+                to="/services/medicine/form"
                 state={{
                   params: {
-                    mode: "fromallrecordtable",
-                  },
+                    mode: "fromallrecordtable"
+                  }
                 }}
               >
                 New Request
-              </Link>{" "}
+              </Link>
             </Button>
+          </div>
+        </ProtectedComponentButton>
+      </div>
+
+      {/* Selected Filters Chips */}
+      {selectedSitios.length > 0 && <SelectedFiltersChips items={selectedSitios} onRemove={(sitio: any) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />}
+
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input
+              type="number"
+              className="w-14 h-8"
+              value={pageSize}
+              onChange={(e) => {
+                const value = +e.target.value;
+                setPageSize(value >= 1 ? value : 1);
+                setCurrentPage(1);
+              }}
+              min="1"
+            />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+          <div className="flex justify-end sm:justify-start">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
+                  <FileInput size={16} />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex sm:flex-row justify-between sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-3 justify-start items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-[70px] h-8 flex items-center justify-center text-center"
-                value={pageSize}
-                onChange={(e) => {
-                  const value = +e.target.value;
-                  setPageSize(value >= 1 ? value : 1);
-                }}
-                min="1"
-              />
-              <p className="text-xs sm:text-sm">Entries</p>
+        <div className="bg-white w-full overflow-x-auto border">
+          {isLoading ? (
+            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading...</span>
             </div>
-            <div className="flex justify-end sm:justify-start">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    aria-label="Export data"
-                    className="flex items-center gap-2"
-                  >
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          ) : error ? (
+            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+              <span>Error loading data. Please try again.</span>
             </div>
-          </div>
+          ) : (
+            <DataTable columns={medicineColumns} data={formattedData} />
+          )}
+        </div>
 
-          <div className="bg-white w-full overflow-x-auto">
-            {isLoading ? (
-              <TableSkeleton columns={columns} rowCount={5} />
-            ) : (
-              <DataTable columns={columns} data={paginatedData} />
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 ">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
-            </p>
-
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing {formattedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
+          </p>
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -18,7 +18,7 @@ import { z } from 'zod';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 import { useGetWasteCollectors } from './queries/wasteColFetchQueries';
 import { useGetWasteDrivers } from './queries/wasteColFetchQueries';
-import { useGetWasteTrucks } from './queries/wasteColFetchQueries';
+import { useGetWasteTrucks, type Trucks  } from './queries/wasteColFetchQueries';
 import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useUpdateWasteSchedule } from './queries/wasteColUpdateQueries';
 import { useUpdateCollectors } from './queries/wasteColUpdateQueries';
@@ -71,10 +71,13 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
-    const { data: wasteCollectionData = [], isLoading: isLoadingWasteData } = useGetWasteCollectionSchedFull();
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
-    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
+    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];    
 
     //UPDATE QUERY MUTATIONS
     const { mutate: updateSchedule } = useUpdateWasteSchedule();
@@ -91,9 +94,11 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
         name: `${driver.firstname} ${driver.lastname}`  
     }));
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        id: String(truck.truck_id),
-        name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+    const truckOptions = (trucks as Trucks[])
+        .filter(truck => truck.truck_status === "Operational")
+        .map(truck => ({
+            id: String(truck.truck_id),
+            name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`
     }));
 
     const sitioOptions = sitios.map(sitio => ({
@@ -127,18 +132,19 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             //checks for sitio with the same day
             const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
             
-            const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+
+            const hasSameSitioSameDay = wasteSchedules.some(schedule => 
                 schedule.wc_day === values.day &&
                 schedule.sitio_name === selectedSitioName &&
-                schedule.wc_num !== Number(wc_num)          
-            );
+                schedule.wc_num !== Number(wc_num)   
+            );            
 
             //checks for overlapping day and time
-            const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+            const hasDuplicateSchedule = wasteSchedules.some(schedule => 
                 schedule.wc_day === values.day && 
                 schedule.wc_time === formattedTime &&
-                schedule.wc_num !== Number(wc_num) 
-            );     
+                schedule.wc_num !== Number(wc_num)   
+            );  
             
             //return if there is overlapping schedule
             if (hasDuplicateSchedule) {

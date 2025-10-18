@@ -1,34 +1,69 @@
 // src/hooks/useChildHealthRecord.ts
 import { useQuery } from "@tanstack/react-query";
-import { getChildHealthRecords,getNutrionalSummary } from "../restful-api/get";
-import { getChildHealthHistory } from "../restful-api/get";
+import {getLatestVitals, getNextufc, getChildHealthRecords, getNutrionalSummary, getNutritionalStatus, getChildHealthHistory ,getChildnotesfollowup} from "../restful-api/get";
 
-export function useChildHealthRecords() {
+
+export const useChildHealthRecords = (params?: { page?: number; page_size?: number; search?: string; patient_type?: string; status?: string }) => {
   return useQuery({
-    queryKey: ["childHealthRecords"],
-    queryFn: getChildHealthRecords,
-    staleTime: 1000 * 60 * 5, 
-  });
-}
-
-
-
-export function useNutritionalSummary(chrec_id: string) {
-  return useQuery({
-    queryKey: ["nutritionalSummary", chrec_id],
-    queryFn: () => getNutrionalSummary(chrec_id),
-    enabled: !!chrec_id,              
-    staleTime: 1000 * 60 * 5, 
-  });
-}
-
-
-export const useChildHealthHistory = (chrec: string | undefined) => {
-
-  return useQuery({
-    queryKey: ["childHealthHistory", chrec],
-    queryFn: () => getChildHealthHistory(chrec!),
-    enabled: !!chrec,
+    queryKey: ["ChildHealthRecords", params],
+    queryFn: () => getChildHealthRecords(params),
     staleTime: 1000 * 60 * 5,
+    retry: 3
   });
 };
+
+export function useNutritionalSummary(id: string) {
+  return useQuery({
+    queryKey: ["nutritionalSummary", id],
+    queryFn: () => getNutrionalSummary(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5
+  });
+}
+
+export const useChildHealthHistory = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ["childHealthHistory", id],
+    queryFn: () => getChildHealthHistory(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5
+  });
+};
+
+export const useNutriotionalStatus = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ["NutritionalStatus", id],
+    queryFn: () => getNutritionalStatus(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5
+  });
+};
+
+export const useNextufcno = () => {
+  return useQuery({
+    queryKey: ["nextufc"],
+    queryFn:getNextufc,
+    staleTime: 1000 * 60 * 5
+  });
+};
+
+
+export const useChildLatestVitals = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ["latestVitals", id],
+    queryFn: () => getLatestVitals(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5
+  });
+}
+
+
+export const useChildNotesFollowup = (id: string | undefined) => {  
+  return useQuery({
+    queryKey: ["childnotesfollowup", id],
+    queryFn: () => getChildnotesfollowup(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5
+  });
+}
+

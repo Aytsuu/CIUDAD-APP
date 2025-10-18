@@ -1,264 +1,352 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Plus, X, Calendar } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Plus, X, Calendar } from "lucide-react";
 
-import { Button } from "@/components/ui/button/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
-import type {
-  ServiceScheduleFormProps,
-  WeeklySchedule,
-  DailySchedule,
-  ServiceTimeSlots,
-} from "../scheduler/schedule-types"
+import type { ServiceScheduleFormProps, WeeklySchedule, DailySchedule, ServiceTimeSlots } from "../scheduler/schedule-types";
 
 import { useAddScheduler, useAddService, useAddDay } from "../scheduler/queries/schedulerAddQueries"
-import { useGetServices, useGetDays } from "./queries/schedulerFetchQueries"
-import { useDeleteService, useDeleteDay } from "./queries/schedulerDeleteQueries"
+import { useGetServices, useGetDays, useGetScheduler } from "./queries/schedulerFetchQueries"
+import { useDeleteService, useDeleteDay, useDeleteScheduler } from "./queries/schedulerDeleteQueries"
+import { useUpdateScheduler } from "./queries/schedulerUpdateQueries"
 
 
 // Define the ServiceScheduleForm component
-export default function ServiceScheduleForm({
-  initialSchedule,
-  weekDays,
-  services: initialServices,
-  onSave,
-  onAddService,
-}: ServiceScheduleFormProps & { onAddDay?: (newDay: Date) => void }) {
-
-  
+export default function ServiceScheduleForm({ initialSchedule, weekDays, services: initialServices, onSave, onAddService }: ServiceScheduleFormProps & { onAddDay?: (newDay: Date) => void }) {
   // fetch services and days
   const { data: servicesData } = useGetServices()
   const { data: daysData } = useGetDays()
+  const { data: schedulerData } = useGetScheduler()
 
-  const [currentWeeklySchedule, setCurrentWeeklySchedule] = useState<WeeklySchedule>(initialSchedule)
+  const [currentWeeklySchedule, setCurrentWeeklySchedule] = useState<WeeklySchedule>(initialSchedule);
   const [days, setDays] = useState<string[]>([]);
   const [services, setServices] = useState<string[]>(initialServices || [])
   const [newServiceName, setNewServiceName] = useState("")
   const [isAddingService, setIsAddingService] = useState(false)
   const [isAddingDay, setIsAddingDay] = useState(false)
+  const [schedulerIdMap, setSchedulerIdMap] = useState<{[key: string]: number}>({})
 
   // mutation hook
-  const addServiceMutation = useAddService()
-  const addDayMutation = useAddDay()
-  const addSchedulerMutation = useAddScheduler()
+  const addServiceMutation = useAddService();
+  const addDayMutation = useAddDay();
+  const addSchedulerMutation = useAddScheduler();
 
   const deleteServiceMutation = useDeleteService()
   const deleteDayMutation = useDeleteDay()
+  const deleteSchedulerMutation = useDeleteScheduler()
+
+  const updateSchedulerMutation = useUpdateScheduler()
 
   const sortDaysInWeekOrder = (dayNames: string[]): string[] => {
-    const weekDaysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    const weekDaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     return dayNames.sort((a, b) => {
-      const indexA = weekDaysOrder.indexOf(a)
-      const indexB = weekDaysOrder.indexOf(b)
+      const indexA = weekDaysOrder.indexOf(a);
+      const indexB = weekDaysOrder.indexOf(b);
 
-      if(indexA === -1 || indexB === -1) return a.localeCompare(b)
-      if(indexA === -1) return 1
-      if(indexB === -1) return -1
+      if (indexA === -1 || indexB === -1) return a.localeCompare(b);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
 
-      return indexA - indexB
-    })
-  }
+      return indexA - indexB;
+    });
+  };
 
   const getNextAvailableDay = (): string => {
-    const weekDaysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    const weekDaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-    for(const day of weekDaysOrder) {
-      if(!days.includes(day)) {
-        return day
+    for (const day of weekDaysOrder) {
+      if (!days.includes(day)) {
+        return day;
       }
     }
 
-    return `Day ${days.length + 1}` 
-  }
-  
+    return `Day ${days.length + 1}`;
+  };
+
   // update fetched services
   useEffect(() => {
     if (servicesData && servicesData.length > 0) {
-      const serviceNames = servicesData.map(service => service.service_name)
-      setServices(serviceNames)
+      const serviceNames = servicesData.map((service) => service.service_name);
+      setServices(serviceNames);
     }
-  }, [servicesData])
+  }, [servicesData]);
 
   // update fetched days
   useEffect(() => {
-    if(daysData && daysData.length > 0) {
-      const dayNames = daysData.map(day => day.day)
-      const sortedDays = sortDaysInWeekOrder(dayNames)
-      setDays(sortedDays)
+    if (daysData && daysData.length > 0) {
+      const dayNames = daysData.map((day) => day.day);
+      const sortedDays = sortDaysInWeekOrder(dayNames);
+      setDays(sortedDays);
     }
-  }, [daysData])
+  }, [daysData]);
 
   // update internal state if initialSchedule prop changes
   useEffect(() => {
-    setCurrentWeeklySchedule(initialSchedule)
-  }, [initialSchedule])
+    setCurrentWeeklySchedule(initialSchedule);
+  }, [initialSchedule]);
 
-  const handleServiceToggle = (
+  // update schedule state based on fetched scheduler data
+  useEffect(() => {
+    if (schedulerData && schedulerData.length > 0) {
+      const newSchedule: WeeklySchedule = {}
+      const idMap: {[key: string]: number} = {}
+      
+      schedulerData.forEach(entry => {
+        const { service_name, day, meridiem, ss_id } = entry
+        
+        if (!newSchedule[day]) {
+          newSchedule[day] = {}
+        }
+        
+        if (!newSchedule[day][service_name]) {
+          newSchedule[day][service_name] = { AM: false, PM: false }
+        }
+        
+        if (meridiem === 'AM') {
+          newSchedule[day][service_name].AM = true
+          idMap[`${day}-${service_name}-AM`] = ss_id
+        } else if (meridiem === 'PM') {
+          newSchedule[day][service_name].PM = true
+          idMap[`${day}-${service_name}-PM`] = ss_id
+        }
+      })
+      
+      setCurrentWeeklySchedule(newSchedule)
+      setSchedulerIdMap(idMap)
+    }
+  }, [schedulerData])
+
+  const handleServiceToggle = async (
     dayName: string,
     serviceName: string,
     timeSlot: keyof ServiceTimeSlots,
     checked: boolean,
   ) => {
     setCurrentWeeklySchedule((prevSchedule) => {
-      const prevDailySchedule: DailySchedule = prevSchedule[dayName] || {}
-      const prevServiceTimeSlots: ServiceTimeSlots = prevDailySchedule[serviceName] || { AM: false, PM: false }
-      
+      const prevDailySchedule: DailySchedule = prevSchedule[dayName] || {};
+      const prevServiceTimeSlots: ServiceTimeSlots = prevDailySchedule[serviceName] || { AM: false, PM: false };
+
       const updatedServiceTimeSlots: ServiceTimeSlots = {
         ...prevServiceTimeSlots,
-        [timeSlot]: checked,
-      }
-      
+        [timeSlot]: checked
+      };
+
       const updatedDailySchedule: DailySchedule = {
         ...prevDailySchedule,
-        [serviceName]: updatedServiceTimeSlots,
-      }
-      
+        [serviceName]: updatedServiceTimeSlots
+      };
+
       return {
         ...prevSchedule,
-        [dayName]: updatedDailySchedule,
-      }
-    })
-  }
+        [dayName]: updatedDailySchedule
+      };
+    });
+  };
 
   // add service
   const handleAddService = async () => {
     if (newServiceName.trim() && !services.includes(newServiceName.trim())) {
       try {
-        await addServiceMutation.mutateAsync({ service_name: newServiceName.trim() })
-        
-        setNewServiceName("")
-        setIsAddingService(false)
-        onAddService(newServiceName.trim())
+        await addServiceMutation.mutateAsync({ service_name: newServiceName.trim() });
 
+        setNewServiceName("");
+        setIsAddingService(false);
+        onAddService(newServiceName.trim());
       } catch (error) {
-        console.error("Error adding service: ", error)
+        console.error("Error adding service: ", error);
       }
     }
-  }
+  };
 
   // remove service
   const handleRemoveService = async (service: string) => {
     try {
-        const serviceObj = servicesData?.find(s => s.service_name === service)
-        if (!serviceObj) {
-          console.error("Service not found: ", service)
-          return
-        }
+      const serviceObj = servicesData?.find((s) => s.service_name === service);
+      if (!serviceObj) {
+        console.error("Service not found: ", service);
+        return;
+      }
 
-        await deleteServiceMutation.mutateAsync(serviceObj.service_id)
+      await deleteServiceMutation.mutateAsync(serviceObj.service_id);
 
-        setServices(prev => prev.filter(service => service !== service))
-        
-        // Remove from schedule state if it exists
-        setCurrentWeeklySchedule(prev => {
-          const updatedSchedule = { ...prev }
-          Object.keys(updatedSchedule).forEach(day => {
-            if (updatedSchedule[day][service]) {
-              delete updatedSchedule[day][serviceObj.service_id]
-            }
-          })
-          return updatedSchedule
-        })
-        
-        console.log(`Removed service: ${service}`)
+      setServices((prev) => prev.filter((service) => service !== service));
+
+      // Remove from schedule state if it exists
+      setCurrentWeeklySchedule((prev) => {
+        const updatedSchedule = { ...prev };
+        Object.keys(updatedSchedule).forEach((day) => {
+          if (updatedSchedule[day][service]) {
+            delete updatedSchedule[day][serviceObj.service_id];
+          }
+        });
+        return updatedSchedule;
+      });
+
+      console.log(`Removed service: ${service}`);
     } catch (error) {
-      console.error("Error removing service:", error)
+      console.error("Error removing service:", error);
     }
-  }
+  };
 
   // add day
   const handleAddDay = async () => {
     if (weekDays.length >= 7) {
-      return
+      return;
     }
 
-    const nextDay = getNextAvailableDay()
+    const nextDay = getNextAvailableDay();
 
     try {
-      await addDayMutation.mutateAsync({day: nextDay, day_description: `${nextDay} Schedule`})
+      await addDayMutation.mutateAsync({ day: nextDay, day_description: `${nextDay} Schedule` });
 
-      console.log("Successfully added day: ", nextDay)
+      console.log("Successfully added day: ", nextDay);
     } catch (error) {
-      console.error("Error adding day: ", error)
+      console.error("Error adding day: ", error);
     }
-  }
+  };
 
   // remove day
   const handleRemoveDay = async (day: string) => {
-  try {
-    const dayObj = daysData?.find(d => d.day === day)
+    try {
+      const dayObj = daysData?.find((d) => d.day === day);
 
-    if (!dayObj) {
-          console.error("Day not found: ", day)
-          return
-        }
-    
-      await deleteDayMutation.mutateAsync(dayObj.day_id)
-
-    setDays(prev => prev.filter(day => day !== day))
-    
-    setCurrentWeeklySchedule(prev => {
-      const updatedSchedule = { ...prev }
-      if (updatedSchedule[day]) {
-        delete updatedSchedule[day][dayObj.day_id]
+      if (!dayObj) {
+        console.error("Day not found: ", day);
+        return;
       }
-      return updatedSchedule
-    })
-    
-    console.log(`Removed day: ${day}`)
-  } catch (error) {
-    console.error("Error removing day:", error)
-  }
-}
+
+      await deleteDayMutation.mutateAsync(dayObj.day_id);
+
+      setDays((prev) => prev.filter((day) => day !== day));
+
+      setCurrentWeeklySchedule((prev) => {
+        const updatedSchedule = { ...prev };
+        if (updatedSchedule[day]) {
+          delete updatedSchedule[day][dayObj.day_id];
+        }
+        return updatedSchedule;
+      });
+
+      console.log(`Removed day: ${day}`);
+    } catch (error) {
+      console.error("Error removing day:", error);
+    }
+  };
 
   // updated handleSave to create individual scheduler entries using your API
   const handleSave = async () => {
     try {
       console.log("Saving weekly schedule: ", currentWeeklySchedule);
 
-      const schedulerEntries = [];
-      for (const dayName of days) {
-        const dailySchedule = currentWeeklySchedule[dayName] || {};
+    // Get current scheduler entries from UI state
+    const currentEntries = [];
+    for (const dayName of days) {
+      const dailySchedule = currentWeeklySchedule[dayName] || {};
 
-        for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
-          if(timeSlots.AM) {
-            schedulerEntries.push({
-              service_name: serviceName,
-              day: dayName,
-              meridiem: "AM" as const,
-            })
-          }
-          if(timeSlots.PM) {
-            schedulerEntries.push({
-              service_name: serviceName,
-              day: dayName,
-              meridiem: "PM" as const,
-            })
-          }
+      for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
+        if(timeSlots.AM) {
+          currentEntries.push({
+            service_name: serviceName,
+            day: dayName,
+            meridiem: "AM" as const,
+          })
+        }
+        if(timeSlots.PM) {
+          currentEntries.push({
+            service_name: serviceName,
+            day: dayName,
+            meridiem: "PM" as const,
+          })
         }
       }
-      console.log('Scheduler entries to create: ', schedulerEntries)
+    }
 
-      const createdEntries = []
-      for (const entry of schedulerEntries) {
-        const result = await addSchedulerMutation.mutateAsync(entry)
-        createdEntries.push(result)
+    // Get existing entries from schedulerIdMap
+    const existingEntries = Object.keys(schedulerIdMap).map(key => {
+      const [day, service_name, meridiem] = key.split('-')
+      return {
+        key,
+        ss_id: schedulerIdMap[key],
+        service_name,
+        day,
+        meridiem: meridiem as "AM" | "PM"
       }
-      console.log("Created scheduler entries: ", createdEntries);
+    })
 
-      onSave(currentWeeklySchedule)
+    const toCreate = []
+    const toUpdate = []
+    const toDelete = []
+
+    for (const currentEntry of currentEntries) {
+      const currentKey = `${currentEntry.day}-${currentEntry.service_name}-${currentEntry.meridiem}`
+      const existing = existingEntries.find(e => e.key === currentKey)
+      
+      if (!existing) {
+        toCreate.push(currentEntry)
+      }
+    }
+
+    for (const existingEntry of existingEntries) {
+      const stillExists = currentEntries.some(current => 
+        current.day === existingEntry.day && 
+        current.service_name === existingEntry.service_name && 
+        current.meridiem === existingEntry.meridiem
+      )
+      
+      if (!stillExists) {
+        const sameServiceDay = currentEntries.find(current => 
+          current.day === existingEntry.day && 
+          current.service_name === existingEntry.service_name &&
+          current.meridiem !== existingEntry.meridiem
+        )
+        
+        if (sameServiceDay) {
+          toUpdate.push({
+            ss_id: existingEntry.ss_id,
+            meridiem: sameServiceDay.meridiem
+          })
+        } else {
+          toDelete.push(existingEntry.ss_id)
+        }
+      }
+    }
+
+    console.log('Operations to perform:', { toCreate, toUpdate, toDelete })
+
+    const operations = []
+
+    // create new entries
+    for (const entry of toCreate) {
+      operations.push(addSchedulerMutation.mutateAsync(entry))
+    }
+
+    // update existing entries
+    for (const update of toUpdate) {
+      operations.push(updateSchedulerMutation.mutateAsync(update))
+    }
+
+    // delete removed entries
+    for (const deleteId of toDelete) {
+      operations.push(deleteSchedulerMutation.mutateAsync(deleteId))
+    }
+
+    // wait for all operations to complete
+    await Promise.all(operations)
+
+    console.log("All scheduler operations completed successfully")
+    onSave(currentWeeklySchedule)
     } catch (error){ 
       console.error("Error saving schedule: ", error)
     }
-  }
-
+  };
 
   return (
     <Card className="w-full max-w-6xl max-h-[80vh] overflow-y-auto">
@@ -277,13 +365,7 @@ export default function ServiceScheduleForm({
               </div>
               {isAddingService ? (
                 <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    placeholder="Enter service name"
-                    value={newServiceName}
-                    onChange={(e) => setNewServiceName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddService()}
-                    className="flex-1"
-                  />
+                  <Input placeholder="Enter service name" value={newServiceName} onChange={(e) => setNewServiceName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAddService()} className="flex-1" />
                   <Button size="sm" onClick={handleAddService} disabled={!newServiceName.trim() || addServiceMutation.isPending}>
                     {addServiceMutation.isPending ? "Adding..." : "Add"}
                   </Button>
@@ -291,20 +373,15 @@ export default function ServiceScheduleForm({
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      setIsAddingService(false)
-                      setNewServiceName("")
+                      setIsAddingService(false);
+                      setNewServiceName("");
                     }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddingService(true)}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={() => setIsAddingService(true)} className="flex items-center gap-2">
                   Add New Service
                 </Button>
               )}
@@ -317,16 +394,9 @@ export default function ServiceScheduleForm({
                     <p className="text-xs text-gray-500 font-medium">Active Services:</p>
                     <div className="flex flex-wrap gap-2">
                       {services.map((service) => (
-                        <div 
-                          key={service} 
-                          className="group flex items-center gap-2 border border-blue-200 rounded-lg px-3 py-1.5 bg-blue-50 hover:bg-blue-100 transition-all duration-200"
-                        >
+                        <div key={service} className="group flex items-center gap-2 border border-blue-200 rounded-lg px-3 py-1.5 bg-blue-50 hover:bg-blue-100 transition-all duration-200">
                           <span className="text-blue-800 text-sm font-medium">{service}</span>
-                          <button 
-                            onClick={() => handleRemoveService(service)}
-                            className="text-blue-400 hover:text-red-500 opacity-70 group-hover:opacity-100 transition-all duration-200"
-                            title={`Remove ${service}`}
-                          >
+                          <button onClick={() => handleRemoveService(service)} className="text-blue-400 hover:text-red-500 opacity-70 group-hover:opacity-100 transition-all duration-200" title={`Remove ${service}`}>
                             <X className="h-3 w-3" />
                           </button>
                         </div>
@@ -352,11 +422,7 @@ export default function ServiceScheduleForm({
               {isAddingDay ? (
                 <div className="flex items-center gap-2 flex-1">
                   <span className="text-sm text-gray-600 flex-1">
-                    <Input
-                      type="text"
-                      value={getNextAvailableDay()}
-                      className="bg-gray-100 text-gray-700 cursor-default"
-                    />
+                    <Input type="text" value={getNextAvailableDay()} className="bg-gray-100 text-gray-700 cursor-default" />
                   </span>
                   <Button size="sm" onClick={handleAddDay} disabled={days.length >= 7 || addDayMutation.isPending}>
                     {addDayMutation.isPending ? "Adding..." : "Add Day"}
@@ -366,13 +432,7 @@ export default function ServiceScheduleForm({
                   </Button>
                 </div>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddingDay(true)}
-                  disabled={weekDays.length >= 7}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={() => setIsAddingDay(true)} disabled={weekDays.length >= 7} className="flex items-center gap-2">
                   Add New Day
                   {weekDays.length >= 7 && " (Max 7)"}
                 </Button>
@@ -386,16 +446,9 @@ export default function ServiceScheduleForm({
                     <p className="text-xs text-gray-500 font-medium">Active Days:</p>
                     <div className="flex flex-wrap gap-2">
                       {days.map((day) => (
-                        <div 
-                          key={day} 
-                          className="group flex items-center gap-2 border border-green-200 rounded-lg px-3 py-1.5 bg-green-50 hover:bg-green-100 transition-all duration-200"
-                        >
+                        <div key={day} className="group flex items-center gap-2 border border-green-200 rounded-lg px-3 py-1.5 bg-green-50 hover:bg-green-100 transition-all duration-200">
                           <span className="text-green-800 text-sm font-medium">{day}</span>
-                          <button 
-                            onClick={() => handleRemoveDay(day)}
-                            className="text-green-400 hover:text-red-500 opacity-70 group-hover:opacity-100 transition-all duration-200"
-                            title={`Remove ${day}`}
-                          >
+                          <button onClick={() => handleRemoveDay(day)} className="text-green-400 hover:text-red-500 opacity-70 group-hover:opacity-100 transition-all duration-200" title={`Remove ${day}`}>
                             <X className="h-3 w-3" />
                           </button>
                         </div>
@@ -417,56 +470,42 @@ export default function ServiceScheduleForm({
         {/* Schedule Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {days.map((dayName) => {
-            const currentDaySchedule: DailySchedule = currentWeeklySchedule[dayName] || {}
+            const currentDaySchedule: DailySchedule = currentWeeklySchedule[dayName] || {};
 
             return (
               <div key={dayName} className="border rounded-lg p-4 bg-white">
                 <h3 className="border rounded-md p-1 text-lg text-center font-semibold mb-5">{dayName}</h3>
                 <div className="grid gap-3">
                   {services.length === 0 ? (
-                    <div className="text-center text-sm text-gray-400 py-4">
-                      No services available. Please add a service to manage the schedule.
-                    </div>
+                    <div className="text-center text-sm text-gray-400 py-4">No services available. Please add a service to manage the schedule.</div>
                   ) : (
                     services.map((service) => {
-                      const serviceTimeSlots: ServiceTimeSlots = currentDaySchedule[service] || { AM: false, PM: false }
+                      const serviceTimeSlots: ServiceTimeSlots = currentDaySchedule[service] || { AM: false, PM: false };
 
                       return (
                         <div key={`${dayName}-${service}`} className="grid grid-cols-2 p-1 gap-2">
                           <Label className=" text-base font-medium ">{service}</Label>
                           <div className="flex items-center gap-4 pl-4">
                             <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`${dayName}-${service}-am`}
-                                checked={serviceTimeSlots.AM}
-                                onCheckedChange={(checked) =>
-                                  handleServiceToggle(dayName, service, "AM", checked as boolean)
-                                }
-                              />
+                              <Checkbox id={`${dayName}-${service}-am`} checked={serviceTimeSlots.AM} onCheckedChange={(checked) => handleServiceToggle(dayName, service, "AM", checked as boolean)} />
                               <Label htmlFor={`${dayName}-${service}-am`} className="text-sm text-gray-600">
                                 AM
                               </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`${dayName}-${service}-pm`}
-                                checked={serviceTimeSlots.PM}
-                                onCheckedChange={(checked) =>
-                                  handleServiceToggle(dayName, service, "PM", checked as boolean)
-                                }
-                              />
+                              <Checkbox id={`${dayName}-${service}-pm`} checked={serviceTimeSlots.PM} onCheckedChange={(checked) => handleServiceToggle(dayName, service, "PM", checked as boolean)} />
                               <Label htmlFor={`${dayName}-${service}-pm`} className="text-sm text-gray-600">
                                 PM
                               </Label>
                             </div>
                           </div>
                         </div>
-                      )
+                      );
                     })
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
 
@@ -482,5 +521,5 @@ export default function ServiceScheduleForm({
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

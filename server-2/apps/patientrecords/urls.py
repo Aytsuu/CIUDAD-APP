@@ -11,14 +11,17 @@ from .views.medicalhistory_views import *
 from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
+from .views.mobile_views import *
 from apps.administration.views.staff_views import HealthStaffListView
-
+from.views.family_views import MyChildrenSimpleAPIView
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
-    path('patient/', PatientView.as_view(), name='patient'),
+    path('patients/', PatientListView.as_view(), name='patient-list'),
+    path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
+    path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
     path('transient/address/', TransientAddressView.as_view(), name='transient-address'),
 
@@ -26,7 +29,8 @@ urlpatterns = [
 
 
     path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
-
+    path('vital-signs/latest/<str:pat_id>/', GetLatestVitalSignsView.as_view(), name='latest-vital-signs'),
+    
     path("obstetrical_history/", ObstetricalHistoryView.as_view(), name="obstetricalhistory"),
     
     path("spouse/", SpouseListView.as_view(), name='spouse'),
@@ -37,14 +41,19 @@ urlpatterns = [
     path('follow-up-visits-all/', AllFollowUpVisitsView.as_view(), name='follow-up-visits-all'),
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
+    path('body-measurements/<str:pat_id>/', BodyMeasurementView.as_view(), name='body-measurements-by-patient'),
    
     path("findings/", FindingView.as_view(), name="findings"),
 
     path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<int:patrec_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
+    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='followup-pending'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
+    path('philhealth-formatted-illness/', PHIllnessAPIView.as_view(), name="philhealth-formatted-illness"),
+    path('patientPHIllnessCheck/<str:pat_id>/', PatientPHIllnessCheckSimpleAPIView.as_view(), name="patient-ph-illness-check-simple"),
+   
+   
    
     path('pe-result/', PEResultCreateView.as_view(), name='pe-result'),
     path('pe-section/', PESectionView.as_view(), name='pe_section'),
@@ -62,14 +71,19 @@ urlpatterns = [
    
     path('medical-history/<int:patrec>/', DeleteMedicalHistoryByPatrecView.as_view(), name='updel-medical-history'),
 
-    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view,name='delete-peresults'),
+    path('physical-exam-result/<int:find_id>/', DeletePEResultByFindingView.as_view(), name='delete-peresults'),
 
     #DISABLITY
     
-    path('disability/', ListDisabilityView.as_view(), name='list-disability'),
-    path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
+    # path('disability/', ListDisabilityView.as_view(), name='list-disability'),
+    # path('patient-disability/', PatientDisabilityView.as_view(), name='patient-disability'),
    
     # HEALTH STAFF
+    
+    # Mobile url
+    path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
+    path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
+    path('parent-children/<str:pat_id>/', MyChildrenSimpleAPIView.as_view(), name='parent-children-simple'),
 
+    # path('patient-by-resident/<str:rp_id>/', get_patient_by_resident_id, name='patient-by-resident-id'),
 ]
-

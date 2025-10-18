@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Loader2, Eye, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getPaidServiceCharges, markServiceChargeAsIssued, type ServiceCharge } from "@/pages/record/clearances/queries/certFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
-import { localDateFormatter } from "@/helpers/localDateFormatter";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { toast } from "sonner";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 
 interface ExtendedServiceCharge extends ServiceCharge {}
@@ -32,16 +32,23 @@ function ServiceChargePage() {
     queryFn: getPaidServiceCharges,
   });
 
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      showErrorToast("Failed to load service charge data. Please try again.");
+    }
+  }, [error]);
+
   // Mutation for marking service charge as issued
   const markAsIssuedMutation = useMutation<any, unknown, { sr_id: string }>({
     mutationFn: markServiceChargeAsIssued,
     onSuccess: async (_data, variables) => {
-      toast.success(`Service Charge ${variables.sr_id} marked as printed successfully!`);
+      showSuccessToast(`Service Charge ${variables.sr_id} marked as printed successfully!`);
       queryClient.invalidateQueries({ queryKey: ["paidServiceCharges"] });
       setSelectedSC(null);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to mark service charge as printed");
+      showErrorToast(error.response?.data?.error || "Failed to mark service charge as printed");
     },
   });
 
@@ -141,7 +148,7 @@ function ServiceChargePage() {
     {
       accessorKey: "sr_req_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{localDateFormatter(row.getValue("sr_req_date"))}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("sr_req_date"), "long")}</div>,
     },
     {
       id: "actions",

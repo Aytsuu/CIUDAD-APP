@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import RespondentsForm from "./RespondentsForm";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema2 } from "@/form-schema/family-form-schema";
 
 export default function RespodentsFormLayout({
   form,
@@ -10,7 +10,7 @@ export default function RespodentsFormLayout({
   selectedResidentId,
   setSelectedResidentId
 }: {
-  form: UseFormReturn<z.infer<typeof familyFormSchema>>;
+  form: UseFormReturn<z.infer<typeof familyFormSchema2>>;
   residents: any;
   selectedResidentId: string;
   setSelectedResidentId: React.Dispatch<React.SetStateAction<string>>;

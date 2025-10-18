@@ -1,17 +1,17 @@
 from django.db import models
-from apps.patientrecords.models import PatientRecord,BodyMeasurement,VitalSigns, Finding,FollowUpVisit
+from apps.patientrecords.models import PatientRecord,Patient,BodyMeasurement,VitalSigns, Finding,FollowUpVisit
 from apps.inventory.models import MedicineInventory
 from apps.vaccination.models import VaccinationRecord,VaccinationHistory
 from apps.administration.models import Staff
 from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,MedicineRecord
-
+from simple_history.models import HistoricalRecords
+from simple_history.utils import update_change_reason
+from django.conf import settings
 
 
 # Create your models here.
-class ChildHealthrecord(models.Model):
-    
+class ChildHealthrecord(models.Model):  
     chrec_id =models.BigAutoField(primary_key=True)
-    # chr_date = models.DateField(blank=True, null=True)
     ufc_no = models.CharField(max_length=100, blank=True, null=True)
     family_no=models.CharField(max_length=100, blank=True, null=True)
     mother_occupation = models.CharField(max_length=100, blank=True, null=True)
@@ -28,11 +28,22 @@ class ChildHealthrecord(models.Model):
     )
     birth_order = models.IntegerField(default=0)  # Birth order of the child
     pod_location = models.CharField(max_length=100, blank=True, null=True)  # Location of the place of delivery
-    
+    nbscreening_result = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        choices=[
+            ("normal", "Normal"),
+            ("referred", "Referred"),
+            ("done", "Done"),
+            ("with_results", "With Results"),
+            ("with_positive_results", "With Positive Results"),
+        ]
+    )
+    newbornInitiatedbf=models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='child_health_records')
-    
     class Meta:
         db_table = 'child_healthrecord'
         ordering = ['-created_at']
@@ -44,6 +55,8 @@ class ChildHealth_History(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     chrec = models.ForeignKey(ChildHealthrecord, on_delete=models.CASCADE, related_name='child_health_histories')
     tt_status = models.CharField(max_length=100, blank=True, null=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories', null=True, blank=True)
+
     status = models.CharField(
         max_length=20,
         choices=[
@@ -66,10 +79,14 @@ class ChildHealthNotes(models.Model):
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_notes')
     followv = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_notes', null=True, blank=True) 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True) 
-    
-    
+    history = HistoricalRecords(
+        table_name='child_health_notes_history',
+        cascade_delete_history=True,
+        user_model='administration.Staff',
+        user_db_constraint=False,
+        
+    )
+   
     class Meta:
         db_table = 'child_health_notes'
 
@@ -77,10 +94,8 @@ class ChildHealthVitalSigns(models.Model):
     chvital_id = models.BigAutoField(primary_key=True)
     vital =models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
     bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
-    # temp = models.CharField(max_length=100, blank=True, null=True)  # Temperature
     find =models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='child_health_vital_signs', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_vital_signs')
-    # chnotes = models.ForeignKey(ChildHealthNotes, on_delete=models.CASCADE, related_name='child_health_vital_signs', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'child_health_vital_signs'
@@ -88,8 +103,6 @@ class ChildHealthVitalSigns(models.Model):
 
 class ChildHealthSupplements(models.Model):
     chsupplement_id = models.BigAutoField(primary_key=True)
-    # supplement_summary = models.TextField(blank=True, null=True)
-    # medreq= models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='child_health_supplements', blank=True, null=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_supplements')
     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')
@@ -100,8 +113,6 @@ class ChildHealthSupplements(models.Model):
         
 class ChildHealthSupplementsStatus(models.Model):
     chssupplementstat_id = models.BigAutoField(primary_key=True)
-    # chsupplement = models.ForeignKey(ChildHealthSupplements, on_delete=models.CASCADE, related_name='statuses')
-    # status = models.CharField(max_length=100, blank=True, null=True)
     date_completed = models.DateField(blank=True, null=True)  # Date when the status was completed
     birthwt = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     status_type = models.CharField(choices=[('birthwt', 'Birth Weight'), ('anemic', 'Anemic')])
@@ -122,9 +133,16 @@ class NutritionalStatus(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
     muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
-    # bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories', blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)  # Additional remarks
+    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
+
+    
+    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories')
     # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
-    chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
+    # chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
+    pat = models.ForeignKey(Patient,on_delete=models.CASCADE, related_name='child_health_histories' )
+   
+  
     class Meta:
         db_table = 'nutritional_status'
         

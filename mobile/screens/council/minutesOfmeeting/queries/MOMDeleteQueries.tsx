@@ -9,7 +9,7 @@ export const useDeleteMinutesofMeeting = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: (mom_id: string) => deleteMinutesOfMeeting(mom_id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['momRecords'] });
+            queryClient.invalidateQueries({ queryKey: ['InactivemomRecords'] });
 
             toast.success('Record is deleted successfully')
             

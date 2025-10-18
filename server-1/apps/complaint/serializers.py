@@ -4,7 +4,7 @@ from apps.profiling.serializers.resident_profile_serializers import ResidentProf
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
 from .models import *
 import json
-from django.utils import timezone
+# from django.utils import timezone
 
 class AccusedSerializer(serializers.ModelSerializer):
     res_profile = ResidentProfileBaseSerializer(source='rp_id', read_only=True)  

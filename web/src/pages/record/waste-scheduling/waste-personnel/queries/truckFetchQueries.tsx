@@ -1,25 +1,28 @@
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery} from "@tanstack/react-query";
 import { 
   getAllTrucks, 
   getTruckById, 
   getAllPersonnel,
-  getPersonnelByPosition,
-  getPersonnelById,
 } from "../request/truckGetReq";
-import { Truck, WastePersonnel } from "../waste-personnel-types";
+import { Trucks, WastePersonnel } from "../waste-personnel-types";
 
-// Truck Queries
-export const useGetTrucks = (options = {}) => {
-  return useQuery<Truck[], Error>({
-    queryKey: ["trucks"],
-    queryFn: getAllTrucks,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+export const useGetTrucks = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  isArchive?: boolean,
+  options = {}
+) => {
+  return useQuery<{ results: Trucks[]; count: number }, Error>({
+    queryKey: ["trucks", page, pageSize, searchQuery, isArchive],
+    queryFn: () => getAllTrucks(page, pageSize, searchQuery, isArchive),
+    staleTime: 1000 * 60 * 5,
     ...options
   });
 };
 
 export const useGetTruckById = (truck_id: number, options = {}) => {
-  return useQuery<Truck, Error>({
+  return useQuery<Trucks, Error>({
     queryKey: ["trucks", truck_id],
     queryFn: () => getTruckById(truck_id),
     enabled: !!truck_id,
@@ -27,57 +30,17 @@ export const useGetTruckById = (truck_id: number, options = {}) => {
   });
 };
 
-// Personnel Queries
-export const useGetAllPersonnel = (options = {}) => {
-  return useQuery<WastePersonnel[], Error>({
-    queryKey: ["wastePersonnel"],
-    queryFn: getAllPersonnel,
+export const useGetAllPersonnel = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  position?: string,
+  options = {}
+) => {
+  return useQuery<{ results: WastePersonnel[]; count: number }, Error>({
+    queryKey: ["wastePersonnel", page, pageSize, searchQuery, position],
+    queryFn: () => getAllPersonnel(page, pageSize, searchQuery, position),
     staleTime: 1000 * 60 * 5,
     ...options
-  });
-};
-
-export const useGetPersonnelByPosition = (positionTitle: string, options = {}) => {
-  return useQuery<WastePersonnel[], Error>({
-    queryKey: ["wastePersonnel", positionTitle],
-    queryFn: () => getPersonnelByPosition(positionTitle),
-    enabled: !!positionTitle,
-    staleTime: 1000 * 60 * 5,
-    ...options
-  });
-};
-
-export const useGetPersonnelById = (wstp_id: number, options = {}) => {
-  return useQuery<WastePersonnel, Error>({
-    queryKey: ["personnel", wstp_id],
-    queryFn: () => getPersonnelById(wstp_id),
-    enabled: !!wstp_id,
-    ...options
-  });
-};
-
-// Combined hook for all staff types
-export const useGetAllStaff = () => {
-  const positions = ["WASTE COLLECTOR", "WATCHMAN", "WASTE DRIVER"];
-  
-  const queries = positions.map(position => ({
-    queryKey: ["staff", position],
-    queryFn: () => getPersonnelByPosition(position),
-    staleTime: 1000 * 60 * 5
-  }));
-
-  return useQueries({
-    queries,
-    combine: (results) => {
-      return {
-        data: positions.reduce((acc, position, index) => {
-          acc[position] = results[index].data || [];
-          return acc;
-        }, {} as Record<string, WastePersonnel[]>),
-        isLoading: results.some(result => result.isLoading),
-        isError: results.some(result => result.isError),
-        error: results.find(result => result.error)?.error
-      };
-    }
   });
 };

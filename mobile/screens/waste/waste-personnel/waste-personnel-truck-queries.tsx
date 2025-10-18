@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  fetchTrucks,
-  fetchPersonnel,
+  getAllTrucks,
+  getAllPersonnel,
   addTruck,
   updateTruck,
   deleteTruck,
@@ -9,10 +9,10 @@ import {
   getTruckById,
 } from './waste-personnel-truck-requests';
 import { useToastContext } from '@/components/ui/toast';
-import { Truck, TruckData, PersonnelItem, TruckFormValues } from "./waste-personnel-types";
+import { Trucks, TruckData, WastePersonnel, TruckFormValues } from "./waste-personnel-types";
 
-export const useGetTruckById = (truck_id: string, options = {}) => {
-  return useQuery<Truck, Error>({
+export const useGetTruckById = (truck_id: any, options = {}) => {
+  return useQuery<Trucks, Error>({
     queryKey: ["trucks", truck_id],
     queryFn: () => getTruckById(truck_id),
     enabled: !!truck_id,
@@ -20,20 +20,35 @@ export const useGetTruckById = (truck_id: string, options = {}) => {
   });
 };
 
-export const useTrucks = () => {
-  return useQuery<TruckData[]>({
-    queryKey: ['trucks'],
-    queryFn: fetchTrucks,
+export const useGetTrucks = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  isArchive?: boolean,
+  options = {}
+) => {
+  return useQuery<{ results: Trucks[]; count: number }, Error>({
+    queryKey: ["trucks", page, pageSize, searchQuery, isArchive],
+    queryFn: () => getAllTrucks(page, pageSize, searchQuery, isArchive),
+    staleTime: 1000 * 60 * 5,
+    ...options
   });
 };
 
-export const usePersonnel = () => {
-  return useQuery<PersonnelItem[]>({
-    queryKey: ['personnel'],
-    queryFn: fetchPersonnel,
+export const useGetAllPersonnel = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  position?: string,
+  options = {}
+) => {
+  return useQuery<{ results: WastePersonnel[]; count: number }, Error>({
+    queryKey: ["wastePersonnel", page, pageSize, searchQuery, position],
+    queryFn: () => getAllPersonnel(page, pageSize, searchQuery, position),
+    staleTime: 1000 * 60 * 5,
+    ...options
   });
 };
-
 export const useAddTruck = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();

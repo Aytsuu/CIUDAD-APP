@@ -267,13 +267,13 @@ export default function ReportDocument() {
             <ARDocTemplate
               incident={ARInfo?.ar_title}
               dateTime={getDateTimeFormat(`${ARInfo?.ar_date_completed} ${ARInfo?.ar_time_completed}`)}
-              location={`Sitio ${ARInfo?.ar_sitio}, ${ARInfo?.ar_street}`}
+              location={ARInfo?.ar_area}
               act_taken={ARInfo?.ar_action_taken}
               images={images}
             /> : 
             <WARDocTemplate 
               data={compositions.map((comp: any) => ({
-                incident_area: `Sitio ${comp.ar.ar_sitio}, ${comp.ar.ar_street}`,
+                incident_area: comp.ar.ar_area,
                 act_undertaken: comp.ar.ar_action_taken,
                 time_started: comp.ar.ar_time_started,
                 time_completed: comp.ar.ar_time_completed,

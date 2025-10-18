@@ -8,7 +8,7 @@ export type WasteTruck = {
   truck_is_archive: boolean;
 };
 
-export type PersonnelCategory = "Waste Driver" | "Waste Collector" | "Trucks";
+export type PersonnelCategory = "DRIVER LOADER" | "LOADER" | "Trucks";
 
 export interface PersonnelItem {
   id: string;
@@ -18,15 +18,15 @@ export interface PersonnelItem {
 }
 
 export interface PersonnelData {
-  "Waste Driver": PersonnelItem[];
-  "Waste Collector": PersonnelItem[];
+  "DRIVER LOADER": PersonnelItem[];
+  "LOADER": PersonnelItem[];
   Trucks?: TruckData[];
 }
 
-export type TruckStatus = "Operational" | "Maintenance";
+export type TruckStatus = "Operational" | "Maintenance" | any;
 
 export interface TruckData {
-  truck_id: string;
+  truck_id: any;
   truck_plate_num: string;
   truck_model: string;
   truck_capacity: string;
@@ -38,37 +38,35 @@ export interface TruckData {
 
 export interface Personal {
   per_id: number;
-  lname: string; 
-  fname: string;
-  mname: string | null;
-  suffix: string | null;
-  dob: string; 
-  sex: string;
-  status: string;
-  address: string; 
-  education: string | null;
-  religion: string;
-  contact: string;
+  per_lname: string; 
+  per_fname: string;
+  per_mname: string | null;
+  per_suffix: string | null;
+  per_dob: string; 
+  per_sex: string;
+  per_status: string;
+  per_contact: string;
 }
 
 export interface Position {
   pos_id: number;
-  title: string;
-  max: number;
+  pos_title: string;
+  pos_max: number;
 }
 
 export interface ResidentProfile {
   rp_id: string;
   rp_date_registered: string; 
-  personal: Personal; 
+  per: Personal; 
 }
 
 export interface Staff {
   staff_id: string;
   assign_date: string; 
-  profile: ResidentProfile; 
-  position: Position; 
+  rp: ResidentProfile; 
+  pos: Position;  
   manager?: Staff | null;
+  profile?: any
 }
 
 export interface WastePersonnel {
@@ -76,7 +74,7 @@ export interface WastePersonnel {
   staff: Staff; 
 }
 
-export interface Truck {
+export interface Trucks {
   truck_id: number;
   truck_plate_num: string;
   truck_model: string;
@@ -84,4 +82,10 @@ export interface Truck {
   truck_status: string;
   truck_last_maint: string;
   truck_is_archive?: boolean;
+}
+
+export interface TruckManagementProps {
+  searchTerm: string;
+  currentPage: number;
+  pageSize: number;
 }

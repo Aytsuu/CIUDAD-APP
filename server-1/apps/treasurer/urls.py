@@ -5,7 +5,9 @@ from .views import *
 urlpatterns=[
 
     # Budget Plan and Budget Details URL
-    path('budget-plan/', BudgetPlanView.as_view(), name = 'treasurer-budget-plan'),
+    path('budget-plan-analytics/', BudgetPlanAnalyticsView.as_view(), name='budget-plan-analytics'),
+    path('budget-plan-active/', BudgetPlanActiveView.as_view(), name = 'budget-plan-active'),
+    path('budget-plan-inactive/', BudgetPlanInactiveView.as_view(), name = 'budget-plan-inactive'),
     path('budget-plan-detail/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),
     path('budget-plan/<int:plan_id>/', DeleteRetrieveBudgetPlanAndDetails.as_view(), name='treasurer-manage-budget-plan'),
     path('update-budget-plan/<int:plan_id>/', UpdateBudgetPlan.as_view(), name='treasurer-update-budget-plan'),
@@ -29,7 +31,8 @@ urlpatterns=[
     path('disbursement-files/<int:disf_num>/archive/', DisbursementFileArchiveView.as_view(), name='disbursement-file-archive'),
     path('disbursement-files/<int:disf_num>/restore/', DisbursementFileRestoreView.as_view(), name='disbursement-file-restore'),
     path('disbursement-vouchers/<int:dis_num>/files/', DisbursementFileCreateView.as_view(), name='disbursement-voucher-files'),
-
+    path('disbursement-vouchers/years/', DisbursementVoucherYearsView.as_view(), name='disbursement-voucher-years'),
+    
     #EXPENSE URL
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
     path('update-income-expense-tracking/<int:iet_num>/', UpdateIncomeExpenseView.as_view(), name='treasurer-income-expense-tracking-update'),
@@ -63,9 +66,16 @@ urlpatterns=[
     path('income-expense-file/<int:ief_id>/', IncomeExpenseFileDetailView.as_view(), name='income-expense-file-detail'),
     
     #RATES
-    path('annual-gross-sales/', Annual_Gross_SalesView.as_view(), name='annual-gross-sales-add'),
+    path('annual-gross-sales-active/', Annual_Gross_SalesActiveView.as_view(), name='annual-gross-sales-active'),
+    path('all-annual-gross-sales/', All_Annual_Gross_SalesView.as_view(), name='all-annual-gross-sales-'),
     path('delete-annual-gross-sales/<int:ags_id>/', DeleteUpdate_Annual_Gross_SalesView.as_view(), name='annual-gross-sales-delete'),
     path('purpose-and-rate/', Purpose_And_RatesView.as_view(), name='purpose-and-rate-add'),
+    path('purpose-and-rate-personal-active/', Purpose_And_RatesPersonalActiveView.as_view(), name='purpose-and-rate-personal-active'),
+    path('purpose-and-rate-all-personal/', Purpose_And_RatesAllPersonalView.as_view(), name='purpose-and-rate-all-personal'),
+    path('purpose-and-rate-service-charge-active/', Purpose_And_RatesServiceChargeActiveView.as_view(), name='purpose-and-rate-service-charge-active'),
+    path('purpose-and-rate-all-service-charge/', Purpose_And_RatesAllServiceChargeView.as_view(), name='purpose-and-rate-all-service-charge'),
+    path('purpose-and-rate-barangay-permit-active/', Purpose_And_RatesBarangayPermitActiveView.as_view(), name='purpose-and-rate-barangay-permit-active'),
+    path('purpose-and-rate-all-barangay-permit/', Purpose_And_RatesAllBarangayPermitView.as_view(), name='purpose-and-rate-all-barangay-permit'),
     path('delete-purpose-and-rate/<int:pr_id>/', DeleteUpdate_Purpose_And_RatesView.as_view(), name = 'purpose-and-rate-delete'),
     path('update-annual-gross-sales/<int:ags_id>/', DeleteUpdate_Annual_Gross_SalesView.as_view(), name = 'annual-gross-sales-update'),
     path('update-purpose-and-rate/<int:pr_id>/', DeleteUpdate_Purpose_And_RatesView.as_view(), name='update-purpose-and-rate'),

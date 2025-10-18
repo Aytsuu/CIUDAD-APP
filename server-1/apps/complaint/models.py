@@ -10,13 +10,11 @@ class Complainant(models.Model):
     cpnt_age = models.CharField(max_length=2)
     cpnt_number = models.CharField(max_length=11)
     cpnt_relation_to_respondent = models.CharField(max_length=20)
-    cpnt_address = models.CharField(max_length=255, blank=True, null=True)
+    cpnt_address = models.CharField(max_length=255)
     rp_id = models.ForeignKey(
         'profiling.ResidentProfile', 
         on_delete=models.CASCADE, 
-        db_column='rp_id',
-        null = True,
-        blank = True,
+        db_column='rp_id'
     )
     
     class Meta:
@@ -28,14 +26,8 @@ class Accused(models.Model):
     acsd_age = models.CharField(max_length=2)
     acsd_gender = models.CharField(max_length=20)
     acsd_description = models.TextField()
-    acsd_address = models.CharField(max_length=255, blank=True, null=True)
-    rp_id = models.ForeignKey(
-        'profiling.ResidentProfile',
-        on_delete=models.CASCADE,
-        db_column='rp_id',
-        null=True,
-        blank=True,
-    )
+    acsd_address = models.CharField(max_length=255)
+
     class Meta:
         db_table = 'accused'
 
@@ -123,7 +115,7 @@ class Complaint_File(models.Model):
     comp_file_id = models.BigAutoField(primary_key=True)
     comp_file_name = models.CharField(max_length=100)
     comp_file_type = models.CharField(max_length=50)
-    comp_file_url = models.URLField(max_length=500)
+    # comp_file_url = models.URLField(max_length=500)
     comp = models.ForeignKey(
         Complaint,
         on_delete=models.CASCADE,

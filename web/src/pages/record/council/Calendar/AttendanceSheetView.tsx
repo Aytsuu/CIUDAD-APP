@@ -75,7 +75,7 @@ async function generatePDF(
   { text: "", drawLine: true, size: 14 }, // Removed bold property
   { text: "Office of the Barangay Captain", bold: false, size: 13 },
   { text: "Arellano Boulevard, Cebu City, Cebu, 6000", bold: false, size: 11 },
-  { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
+  // { text: "Barangaysanroquecebu@gmail.com | (032) 231 - 3699", bold: false, size: 11 }
 ];
 
 const centerX = pageWidth / 2;

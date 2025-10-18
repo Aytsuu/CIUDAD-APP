@@ -11,6 +11,7 @@ const AddEventFormSchema = z.object({
     .min(0, "Number of rows cannot be negative")
     .max(1000, "Maximum 1000 attendees allowed")
     .optional(),
+  staff_id: z.string().optional().nullable(),
 });
 
 export default AddEventFormSchema;

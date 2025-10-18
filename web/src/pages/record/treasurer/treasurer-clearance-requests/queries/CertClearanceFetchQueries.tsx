@@ -38,10 +38,10 @@ export type NonResidentReq = {
     amount: string;
 }
 
-export const useGetNonResidentCertReq = () => {
-    return useQuery<NonResidentReq[]>({
-        queryKey: ["nonResidentReq"],  
-        queryFn: getNonResidentCertReq,
+export const useGetNonResidentCertReq = (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
+    return useQuery({
+        queryKey: ["nonResidentReq", search, page, pageSize, status, paymentStatus],  
+        queryFn: () => getNonResidentCertReq(search, page, pageSize, status, paymentStatus),
         staleTime: 1000 * 60 * 30, 
     });
 }
@@ -65,10 +65,10 @@ export type ResidentReq = {
 }
 
 
-export const usegetResidentCertReq = () => {
-    return useQuery<ResidentReq[]>({
-        queryKey: ["residentReq"],  
-        queryFn: getPersonalClearances,
+export const usegetResidentCertReq = (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
+    return useQuery({
+        queryKey: ["residentReq", search, page, pageSize, status, paymentStatus],  
+        queryFn: () => getPersonalClearances(search, page, pageSize, status, paymentStatus),
         staleTime: 1000 * 60 * 30, 
     });
 }

@@ -6,7 +6,6 @@ def default_due_date():
     return timezone.now().date() + timezone.timedelta(days=7)
 spay_due_date = models.DateField(default=default_due_date)
 
-
 class ClerkCertificate(models.Model):
     cr_id = models.CharField(primary_key=True)
     cr_req_request_date = models.DateTimeField(default = datetime.now)
@@ -38,7 +37,6 @@ class ClerkCertificate(models.Model):
     class Meta:
         db_table = 'certification_request'
         managed = False
-
 
 class NonResidentCertificateRequest(models.Model):
     nrc_id = models.BigAutoField(primary_key=True)  
@@ -73,7 +71,7 @@ class IssuedCertificate(models.Model):
 
 # Business Models
 class Business(models.Model):
-    bus_id = models.BigIntegerField(primary_key=True)
+    bus_id = models.CharField(primary_key=True, max_length=50)
     bus_name = models.CharField(max_length=255)
     bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
     bus_location = models.CharField(max_length=255)
@@ -91,7 +89,6 @@ class Business(models.Model):
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(primary_key=True)
     req_request_date = models.DateField()
-    req_sales_proof = models.CharField(max_length=100)
     req_status = models.CharField(max_length=100, default='Pending')
     req_date_completed = models.DateField(null=True, blank=True) 
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
@@ -103,33 +100,31 @@ class BusinessPermitRequest(models.Model):
     rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
     bus_permit_name = models.CharField(max_length=255, null=True, blank=True)  # Add business name field
     bus_permit_address = models.CharField(max_length=500, null=True, blank=True)  # Add business address field
+    bus_clearance_gross_sales = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  # Add inputted gross sales field
 
-    # previous_permit_image = models.CharField(max_length=500, null=True, blank=True)
-    # assessment_image = models.CharField(max_length=500, null=True, blank=True)
+
     class Meta:
         db_table = 'business_permit_request'
         managed = False
 
 class BusinessPermitFile(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
-    bpf_name = models.CharField(max_length=255)
     bpf_type = models.CharField(max_length=100, null=True, blank=True)
-    bpf_path = models.CharField(max_length=500, null=True, blank=True)
     bpf_url = models.CharField(max_length=500)
     bpr_id = models.ForeignKey('BusinessPermitRequest', on_delete=models.CASCADE, null=True, related_name='permit_files', db_column='bpr_id')
     class Meta:
         db_table = 'business_permit_file'
-        managed = False
+        managed = True
 
 class IssuedBusinessPermit(models.Model):
     ibp_id = models.CharField(max_length=10, primary_key=True)
     ibp_date_of_issuance = models.DateField()
-    # file field removed - files are generated dynamically from templates
-    permit_request = models.ForeignKey(BusinessPermitRequest, on_delete=models.CASCADE, db_column='bpr_id')
+    bpr_id = models.ForeignKey(BusinessPermitRequest, on_delete=models.CASCADE, db_column='bpr_id')
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'issued_business_permit'
+        managed = False
 
 class ClerkBusinessPermit(models.Model):
     busi_req_no = models.CharField(max_length=10, primary_key=True)
@@ -150,105 +145,29 @@ class DocumentsPDF(models.Model):
     class Meta:
         db_table = 'clerk_pdf_documents'
 
-# # Address Models
-# class Sitio(models.Model):
-#     sitio_id = models.CharField(max_length=100, primary_key=True)
-#     sitio_name = models.CharField(max_length=100)
-
-#     class Meta:
-#         db_table = 'sitio'
-#         managed = False 
-
-#     def __str__(self):
-#         return self.sitio_id
-
-# class Address(models.Model):
-#     add_id = models.BigAutoField(primary_key=True)  
-#     add_province = models.CharField(max_length=50)
-#     add_city = models.CharField(max_length=50)
-#     add_barangay = models.CharField(max_length=50)
-#     add_street = models.CharField(max_length=50)
-#     add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
-#     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
-
-#     class Meta:
-#         db_table = 'address'
-#         managed = False
-
-#     def __str__(self):
-#         return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
-
-
-
-# ====================== MIGHT DELETE THIS LATER ============================
-# Service Charge Request Models
-# class ServiceChargeRequest(models.Model):
-#     sr_id = models.BigAutoField(primary_key=True)
-#     sr_code = models.CharField(max_length=10, blank=True, null=True) 
-#     sr_req_date = models.DateTimeField(default=datetime.now)
-#     sr_status = models.CharField(null=True, blank=True)
-#     sr_payment_status = models.CharField(null=True, blank=True)
-#     sr_type = models.CharField(null=True, blank=True)
-#     sr_decision_date = models.DateTimeField(null=True, blank=True)
-#     comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True)
-#     staff_id = models.ForeignKey('staff.Administration', on_delete=models.SET_NULL, null = True, blank = True, db_column='staff_id')
-    # parent_summon = models.ForeignKey(
-    #     'self',
-    #     null=True, blank=True,
-    #     on_delete=models.SET_NULL,
-    #     related_name='escalated_file_actions'
-    # )
-    # file_action_file = models.OneToOneField(
-    #     'ServiceChargeRequestFile', null=True, blank=True,
-    #     on_delete=models.SET_NULL,  
-    #     related_name='file_action'
-    # )
-
-    # class Meta:
-    #     db_table = 'service_charge_request'
-
-# class ServiceChargeRequestFile(models.Model):
-#     srf_id = models.BigAutoField(primary_key=True)
-#     srf_name = models.CharField(max_length=255)
-#     srf_type = models.CharField(max_length=100, null=True, blank=True)
-#     srf_path = models.CharField(max_length=500, null=True, blank=True)
-#     srf_url = models.CharField(max_length=500)
-    
-#     class Meta:
-#         db_table = 'service_charge_request_file'
-
-
-
-# # Case Activity Models
-# class CaseActivity(models.Model):
-#     ca_id = models.BigAutoField(primary_key=True)
-#     ca_reason = models.CharField(max_length=100)
-#     ca_hearing_date = models.DateField(null=False)
-#     ca_hearing_time = models.TimeField(null=False)
-#     ca_mediation = models.CharField(max_length=255)
-#     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
-#     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
-#     srf = models.ForeignKey('ServiceChargeRequestFile', on_delete=models.CASCADE, null=True, related_name='case_file')
-
-#     class Meta:
-#         db_table = 'case_activity'
-
-# class CaseSuppDoc(models.Model):
-#     csd_id = models.BigAutoField(primary_key=True)
-#     csd_name = models.CharField(max_length=255)
-#     csd_type = models.CharField(max_length=100)
-#     csd_path = models.CharField(max_length=500)
-#     csd_url = models.CharField(max_length=500)
-#     csd_description = models.TextField(null=False)
-#     csd_upload_date = models.DateTimeField(default=datetime.now)
-#     ca_id = models.ForeignKey('CaseActivity', on_delete=models.CASCADE, null=True, db_column="ca_id", related_name="supporting_docs")
-
-#     class Meta:
-#         db_table = 'case_activity_supp_doc'
-
-# =========================================================
 
 # Service Charge Request Models
+
+class SummonDateAvailability(models.Model):
+    sd_id = models.BigAutoField(primary_key=True)
+    sd_date = models.DateField(default=date.today)
+
+    class Meta:
+        db_table = 'summon_date_availability'
+        managed = False
+
+class SummonTimeAvailability(models.Model):
+    st_id = models.BigAutoField(primary_key=True)
+    st_start_time = models.TimeField()
+    st_is_booked = models.BooleanField(default=False)
+    sd_id = models.ForeignKey('SummonDateAvailability', on_delete=models.CASCADE, null=True, related_name='time_availability')
+
+    class Meta:
+        db_table = 'summon_time_availability'
+        managed = False
+
+# ====================== MIGHT DELETE THESE LATER ============================
+
 class ServiceChargeRequest(models.Model):
     sr_id = models.CharField(primary_key=True, max_length = 200)
     sr_code = models.CharField(max_length=10, blank=True, null=True) 
@@ -330,8 +249,77 @@ class SummonSuppDoc(models.Model):
         db_table = 'summon_supp_doc'
 
 
+# =========================================================
+
+class ServiceChargePaymentRequest(models.Model):
+    pay_id = models.BigAutoField(primary_key=True)
+    pay_sr_type = models.CharField(max_length=200)
+    pay_status = models.CharField(max_length=200)
+    pay_date_req = models.DateTimeField(default=datetime.now)
+    pay_due_date = models.DateField(default = default_due_date())
+    pay_date_paid = models.DateTimeField(null = True, blank = True)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='service_charge_payments')
+    pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete = models.SET_NULL, db_column='pr_id', null = True, blank = True, related_name='payment_requests')
+
+    class Meta:
+        db_table = 'service_charge_payment_request'
 
 
+class SummonCase(models.Model):
+    sc_id = models.BigAutoField(primary_key=True)
+    sc_code = models.CharField(max_length=200, unique=True)
+    sc_mediation_status = models.CharField(max_length=500)
+    sc_conciliation_status = models.CharField(max_length=500, null=True, blank=True)
+    sc_date_marked = models.DateTimeField(null=True, blank=True)
+    sc_reason = models.TextField(null=True, blank=True)
+    comp_id = models.ForeignKey('complaint.Complaint', on_delete=models.SET_NULL, db_column='comp_id', null=True, related_name='summon_cases')
 
+    class Meta:
+        db_table = 'summon_case'
+        managed = False
+
+
+class HearingSchedule(models.Model):
+    hs_id = models.BigAutoField(primary_key=True)
+    hs_level = models.CharField(max_length=500)
+    hs_is_closed = models.BooleanField(default=False)
+    st_id = models.ForeignKey('SummonTimeAvailability', db_column='st_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
+    sd_id = models.ForeignKey('SummonDateAvailability', db_column='sd_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
+    sc_id = models.ForeignKey('SummonCase', db_column='sc_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_schedules')
+
+    class Meta:
+        db_table = 'hearing_schedule'
+
+
+class HearingMinutes(models.Model):
+    hm_id = models.BigAutoField(primary_key=True)
+    hm_name = models.CharField(max_length=255)
+    hm_type = models.CharField(max_length=100, null=True, blank=True)
+    hm_path = models.CharField(max_length=500, null=True, blank=True)
+    hm_url = models.CharField(max_length=500)
+    hs_id = models.ForeignKey('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='hearing_minutes')
+
+    class Meta:
+        db_table = 'hearing_minutes'
+
+
+class Remark(models.Model):
+    rem_id = models.BigAutoField(primary_key=True)
+    rem_remarks = models.TextField()
+    rem_date = models.DateTimeField(default = datetime.now)
+    hs_id = models.OneToOneField('HearingSchedule', db_column='hs_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='remark')
+
+    class Meta:
+        db_table = 'remark'
+
+
+class RemarkSuppDocs(models.Model):
+    rsd_id = models.BigAutoField(primary_key=True)
+    rsd_name = models.CharField(max_length=255)
+    rsd_type = models.CharField(max_length=100, null=True, blank=True)
+    rsd_path = models.CharField(max_length=500, null=True, blank=True)
+    rsd_url = models.CharField(max_length=500)
+    rem_id = models.ForeignKey('Remark', db_column='rem_id', on_delete=models.SET_NULL, null = True, blank = True, related_name='supporting_documents')
     
-
+    class Meta:
+        db_table = 'remark_supp_docs'

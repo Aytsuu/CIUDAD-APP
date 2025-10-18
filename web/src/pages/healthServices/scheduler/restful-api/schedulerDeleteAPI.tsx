@@ -32,3 +32,18 @@ export const deleteDay = async(dayId: number) => {
 		throw error;
 	}
 }
+
+
+export const deleteScheduler = async(ssId: number) => {
+	try {
+		const res = await api2.delete(`servicescheduler/service-scheduler/${ssId}/delete/`);
+		return res.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			console.error("Scheduler deletion error: ", error.response?.data || error.message);
+		} else {
+			console.error("Unexpected error: ", error);
+		}
+		throw error;
+	}
+}

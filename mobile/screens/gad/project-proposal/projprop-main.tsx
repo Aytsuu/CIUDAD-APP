@@ -3,12 +3,9 @@ import { useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
-  SafeAreaView,
-  StatusBar,
   RefreshControl,
+  FlatList,
 } from "react-native";
 import {
   Archive,
@@ -16,7 +13,11 @@ import {
   Trash,
   ChevronLeft,
 } from "lucide-react-native";
-import { useGetProjectProposals } from "./queries/projprop-fetchqueries";
+import {
+  useGetProjectProposals,
+  useGetProjectProposalYears,
+  useGetProjectProposalGrandTotal
+} from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
   useArchiveProjectProposal,
@@ -25,129 +26,104 @@ import {
 import { ProjectProposalView } from "./projprop-view";
 import { useRouter } from "expo-router";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
-import ScreenLayout from "@/screens/_ScreenLayout";
 import { ProjectProposal } from "./projprop-types";
+import { SelectLayout } from "@/components/ui/select-layout";
+import { useDebounce } from "@/hooks/use-debounce";
+import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from "@/components/ui/loading-modal";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Search } from "@/lib/icons/Search";
+import { SearchInput } from "@/components/ui/search-input";
 
 const ProjectProposalList: React.FC = () => {
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [selectedProject, setSelectedProject] =
     useState<ProjectProposal | null>(null);
-  const [pageSize] = useState(5);
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchTerm = useDebounce(searchQuery, 500);
+  const [selectedYear, setSelectedYear] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [showSearch, setShowSearch] = useState(false);
+  const { data: grandTotalData } = useGetProjectProposalGrandTotal();
+  const grandTotal = grandTotalData?.grand_total || 0;
+  const pageSize = 10;
+  const { data: availableYears = [] } = useGetProjectProposalYears();
   const {
-    data: projects = [],
+    data: projectsData,
     isLoading,
     refetch,
     error,
-  } = useGetProjectProposals();
-  const { mutate: deleteProject } = usePermanentDeleteProjectProposal();
-  const { mutate: archiveProject } = useArchiveProjectProposal();
-  const { mutate: restoreProject } = useRestoreProjectProposal();
-
-  const filteredProjects = projects.filter((project: ProjectProposal) => {
-    return viewMode === "active" ? !project.gprIsArchive : project.gprIsArchive;
-  });
-
-  // Calculate pagination values
-  const totalPages = Math.ceil(filteredProjects.length / pageSize);
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    isFetching,
+  } = useGetProjectProposals(
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    viewMode === "archived",
+    selectedYear !== "All" ? selectedYear : undefined
   );
 
-  // Calculate total budget of all displayed projects
-  const totalBudget = filteredProjects.reduce((sum, project) => {
-    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
+  const { mutate: deleteProject, isPending: isDeleting } = usePermanentDeleteProjectProposal();
+  const { mutate: archiveProject, isPending: isArchiving } = useArchiveProjectProposal();
+  const { mutate: restoreProject, isPending: isRestoring } = useRestoreProjectProposal();
 
-    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount =
-        typeof item.amount === "string"
-          ? parseFloat(item.amount) || 0
-          : item.amount || 0;
-      const paxCount =
-        typeof item.pax === "string"
-          ? parseInt(item.pax.replace(/\D/g, "")) || 1
-          : 1;
-      return projectSum + paxCount * amount;
-    }, 0);
+  // Extract data from paginated response
+  const projects = projectsData?.results || [];
+  const totalCount = projectsData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-    return sum + projectTotal;
-  }, 0);
+  // Create year filter options
+  const yearFilterOptions = [
+    { label: "All Years", value: "All" },
+    ...availableYears.map((year) => ({
+      label: year.toString(),
+      value: year.toString(),
+    })),
+  ];
+
+  const handleSearch = () => {
+    setSearchQuery(searchInputVal);
+    setCurrentPage(1);
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
-    setCurrentPage(1); // Reset to first page on refresh
+    setCurrentPage(1);
   };
 
   const handleArchivePress = (project: ProjectProposal, event?: any) => {
     event?.stopPropagation?.();
-    return new Promise<void>((resolve) => {
-      setIsProcessing(true);
-      archiveProject(project.gprId, {
-        onSuccess: () => {
-          refetch();
-          setIsProcessing(false);
-          resolve();
-        },
-        onError: () => {
-          setIsProcessing(false);
-          resolve();
-        },
-      });
+    archiveProject(project.gprId, {
+      onSuccess: () => {
+        refetch();
+      },
     });
   };
 
   const handleRestorePress = (project: ProjectProposal, event?: any) => {
     event?.stopPropagation?.();
-    return new Promise<void>((resolve) => {
-      setIsProcessing(true);
-      restoreProject(project.gprId, {
-        onSuccess: () => {
-          refetch();
-          setIsProcessing(false);
-          resolve();
-        },
-        onError: () => {
-          setIsProcessing(false);
-          resolve();
-        },
-      });
+    restoreProject(project.gprId, {
+      onSuccess: () => {
+        refetch();
+      },
     });
   };
 
   const handleDeletePress = (project: ProjectProposal, event?: any) => {
     event?.stopPropagation?.();
-    return new Promise<void>((resolve) => {
-      setIsProcessing(true);
-      deleteProject(project.gprId, {
-        onSuccess: () => {
-          refetch();
-          setIsProcessing(false);
-          setShowDeleteSuccess(true);
-          resolve();
-        },
-        onError: () => {
-          setIsProcessing(false);
-          resolve();
-        },
-      });
+    deleteProject(project.gprId, {
+      onSuccess: () => {
+        refetch();
+        setShowDeleteSuccess(true);
+      },
     });
-  };
-
-  const handleDeleteSuccessComplete = () => {
-    setShowDeleteSuccess(false);
-  };
-
-  const router = useRouter();
-
-  const handleBackPress = () => {
-    setSelectedProject(null);
   };
 
   const handleProjectPress = (project: ProjectProposal) => {
@@ -156,7 +132,129 @@ const ProjectProposalList: React.FC = () => {
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
-    setCurrentPage(1); // Reset to first page when changing view mode
+    setCurrentPage(1);
+  };
+
+  const handleYearChange = (option: { label: string; value: string }) => {
+    setSelectedYear(option.value);
+    setCurrentPage(1);
+  };
+
+  // Render Project Card (styled like Budget Plan)
+  const RenderProjectCard = ({ project }: { project: ProjectProposal }) => (
+    <TouchableOpacity
+      onPress={() => handleProjectPress(project)}
+      activeOpacity={0.8}
+      className="mb-3"
+    >
+      <Card className="border-2 border-gray-200 shadow-sm bg-white">
+        <CardHeader className="pb-3">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+              <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+                {project.projectTitle || "Untitled"}
+              </Text>
+              <Text className="text-sm text-gray-500">
+                Date: {project.date || "No date provided"}
+              </Text>
+            </View>
+            <View className="flex-row">
+              {viewMode === "active" ? (
+                <ConfirmationModal
+                  trigger={
+                    <TouchableOpacity className="bg-red-50 p-2 rounded-lg ml-2">
+                      <Archive size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  }
+                  title={`Archive "${project.projectTitle}"`}
+                  description="Are you sure you want to archive this project proposal?"
+                  actionLabel="Archive"
+                  onPress={() => handleArchivePress(project)}
+                />
+              ) : (
+                <>
+                  <ConfirmationModal
+                    trigger={
+                      <TouchableOpacity className="bg-green-50 p-2 rounded-lg ml-2">
+                        <ArchiveRestore size={16} color="#10b981" />
+                      </TouchableOpacity>
+                    }
+                    title={`Restore "${project.projectTitle}"`}
+                    description="Are you sure you want to restore this project proposal?"
+                    actionLabel="Restore"
+                    onPress={() => handleRestorePress(project)}
+                  />
+                  <ConfirmationModal
+                    trigger={
+                      <TouchableOpacity className="bg-red-50 p-2 rounded-lg ml-2">
+                        <Trash size={16} color="#ef4444" />
+                      </TouchableOpacity>
+                    }
+                    title={`Delete "${project.projectTitle}"`}
+                    description="Please confirm if you would like to proceed with deleting the proposal. This action cannot be undone."
+                    actionLabel="Delete"
+                    variant="destructive"
+                    onPress={() => handleDeletePress(project)}
+                  />
+                </>
+              )}
+            </View>
+          </View>
+        </CardHeader>
+
+        <CardContent className="pt-3 border-t border-gray-200">
+          <View className="space-y-3">
+            <View className="pb-2">
+              <Text className="text-sm text-gray-600 mb-1">Description:</Text>
+              <Text className="text-base text-black" numberOfLines={2} ellipsizeMode="tail">
+                {project.background || "No description available"}
+              </Text>
+            </View>
+            
+            <View className="flex-row justify-between items-center">
+              <Text className="text-sm text-gray-600">Total Budget:</Text>
+              <Text className="text-lg font-bold text-[#2a3a61]">
+                ₱
+                {project.budgetItems && project.budgetItems.length > 0
+                  ? new Intl.NumberFormat("en-US", {
+                      style: "decimal",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(
+                      project.budgetItems.reduce((grandTotal, item) => {
+                        const amount = item.amount || 0;
+                        const paxCount =
+                          typeof item.pax === "string"
+                            ? parseInt(item.pax) ||
+                              (item.pax.includes("pax")
+                                ? parseInt(item.pax) || 1
+                                : 1)
+                            : 1;
+                        return grandTotal + paxCount * amount;
+                      }, 0)
+                    )
+                  : "N/A"}
+              </Text>
+            </View>
+          </View>
+        </CardContent>
+      </Card>
+    </TouchableOpacity>
+  );
+
+  // Empty state component
+  const renderEmptyState = () => {
+    const emptyMessage = searchQuery || selectedYear !== "All"
+      ? "No project proposals found"
+      : `No ${viewMode === "active" ? "active" : "archived"} project proposals found.`;
+    
+    return (
+      <View className="flex-1 justify-center items-center py-12">
+        <Text className="text-gray-500 text-center">
+          {emptyMessage}
+        </Text>
+      </View>
+    );
   };
 
   if (selectedProject) {
@@ -168,22 +266,25 @@ const ProjectProposalList: React.FC = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="mt-4 text-gray-600">Loading proposals...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-[13px]">Project Proposal</Text>}
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        wrapScroll={false}
+      >
         <View className="flex-1 justify-center items-center p-4">
           <Text className="text-red-500 text-lg font-medium mb-2">
             Error loading proposals
@@ -193,213 +294,226 @@ const ProjectProposalList: React.FC = () => {
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
-            className="bg-blue-500 px-6 py-3 rounded-lg"
+            className="bg-primaryBlue px-6 py-3 rounded-xl"
           >
             <Text className="text-white font-medium">Retry</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={
-        <Text className="text-[13px]">GAD Project Proposal</Text>
-      }
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Loading..."
-    >
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-
-      <View className="mt-5 pt-4 pb-2 p-3">
-        <View className="flex-row justify-center mb-3">
-          <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
-            <TouchableOpacity
-              className={`px-4 py-2 ${viewMode === "active" ? "bg-white" : ""}`}
-              onPress={() => handleViewModeChange("active")}
-            >
-              <Text className="text-sm font-medium">Active</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`px-4 py-2 ${
-                viewMode === "archived" ? "bg-white" : ""
-              }`}
-              onPress={() => handleViewModeChange("archived")}
-            >
-              <Text className="text-sm font-medium">Archived</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View className="flex-row justify-between mb-2">
-          <View className="px-2 py-2 rounded-lg">
-            <Text className="font-medium ">
-              Grand Total:{" "}
-              <Text className="font-bold text-green-700">
-                ₱
-                {new Intl.NumberFormat("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(totalBudget)}
-              </Text>
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+    <>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
         }
+        headerTitle={<Text className="text-gray-900 text-[13px]">Project Proposal</Text>}
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        wrapScroll={false}
       >
-        {paginatedProjects.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-12">
-            <Text className="text-gray-500 text-center">
-              No {viewMode === "active" ? "active" : "archived"} project
-              proposals found.
-            </Text>
-            <Text className="text-gray-400 text-sm mt-2">
-              Total projects: {projects.length} | Active:{" "}
-              {projects.filter((p) => !p.gprIsArchive).length} | Archived:{" "}
-              {projects.filter((p) => p.gprIsArchive).length}
-            </Text>
-          </View>
-        ) : (
-          paginatedProjects.map((project) => (
-            <TouchableOpacity
-              key={project.gprId}
-              onPress={() => handleProjectPress(project)}
-              className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100"
-            >
-              <View className="flex-row justify-between items-start mb-3">
-                <Text className="text-lg font-semibold text-gray-900 flex-1 mr-3">
-                  {project.projectTitle || "Untitled"}
+        <View className="flex-1 bg-white">
+          {/* Search Bar */}
+          {showSearch && (
+            <SearchInput 
+              value={searchInputVal}
+              onChange={setSearchInputVal}
+              onSubmit={handleSearch} 
+            />
+          )}
+
+          <View className="flex-1 px-6">
+            {/* Year Filter */}
+            <View className="py-3">
+              <SelectLayout
+                options={yearFilterOptions}
+                selectedValue={selectedYear}
+                onSelect={handleYearChange}
+                placeholder="Filter by year"
+                isInModal={false}
+              />
+            </View>
+
+            {/* Total Budget Display */}
+            <View className="pb-3">
+              <View className="px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
+                <Text className="font-medium text-sm text-center">
+                  Grand Total:{" "}
+                  <Text className="font-bold text-green-700">
+                    ₱
+                    {new Intl.NumberFormat("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(grandTotal)}
+                  </Text>
                 </Text>
-                <View className="flex-row">
-                  {viewMode === "active" ? (
-                    <ConfirmationModal
-                      trigger={
-                        <TouchableOpacity className="p-1">
-                          <Archive color="#ef4444" size={20} />
-                        </TouchableOpacity>
-                      }
-                      title={`Archive "${project.projectTitle}"`}
-                      description="Are you sure you want to archive this project proposal?"
-                      actionLabel="Archive"
-                      onPress={() => handleArchivePress(project)}
-                      loading={isProcessing}
-                    />
-                  ) : (
-                    <>
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="p-1 mr-2">
-                            <ArchiveRestore color="#10b981" size={20} />
-                          </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Tabs - Styled like Budget Plan */}
+            <Tabs value={viewMode} onValueChange={val => handleViewModeChange(val as "active" | "archived")} className="flex-1">
+              <TabsList className="bg-blue-50 flex-row justify-between">
+                <TabsTrigger 
+                  value="active" 
+                  className={`flex-1 mx-1 ${viewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                >
+                  <Text className={`${viewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                    Active
+                  </Text>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="archived" 
+                  className={`flex-1 mx-1 ${viewMode === 'archived' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                >
+                  <Text className={`${viewMode === 'archived' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                    Archived
+                  </Text>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Active Tab Content */}
+              <TabsContent value="active" className="flex-1 mt-4">
+                {isLoading ? (
+                  <View className="flex-1 justify-center items-center">
+                    <LoadingState/>
+                  </View>
+                ) : (
+                  <View className="flex-1">
+                    {projects.length === 0 ? (
+                      renderEmptyState()
+                    ) : (
+                      <FlatList
+                        data={projects}
+                        renderItem={({ item }) => <RenderProjectCard project={item} />}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                          <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#00a8f0']}
+                          />
                         }
-                        title={`Restore "${project.projectTitle}"`}
-                        description="Are you sure you want to restore this project proposal?"
-                        actionLabel="Restore"
-                        onPress={() => handleRestorePress(project)}
-                        loading={isProcessing}
-                      />
-                      <ConfirmationModal
-                        trigger={
-                          <TouchableOpacity className="p-1">
-                            <Trash color="#ef4444" size={20} />
-                          </TouchableOpacity>
+                        contentContainerStyle={{ 
+                          paddingBottom: 16,
+                          paddingTop: 16
+                        }}
+                        ListFooterComponent={
+                          totalPages > 1 ? (
+                            <View className="flex-row justify-between items-center mt-4 px-4">
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">← Previous</Text>
+                              </TouchableOpacity>
+
+                              <View className="flex-row items-center">
+                                {isFetching && (
+                                  <LoadingState />
+                                )}
+                                <Text className="text-gray-500">
+                                  Page {currentPage} of {totalPages}
+                                </Text>
+                              </View>
+
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">Next →</Text>
+                              </TouchableOpacity>
+                            </View>
+                          ) : null
                         }
-                        title={`Delete "${project.projectTitle}"`}
-                        description="Please confirm if you would like to proceed with deleting the proposal. This action cannot be undone."
-                        actionLabel="Delete"
-                        variant="destructive"
-                        onPress={() => handleDeletePress(project)}
-                        loading={isProcessing}
                       />
-                    </>
-                  )}
-                </View>
-              </View>
+                    )}
+                  </View>
+                )}
+              </TabsContent>
 
-              <Text className="text-sm text-gray-600 mb-3" numberOfLines={2}>
-                {project.background || "No description available"}
-              </Text>
+              {/* Archived Tab Content */}
+              <TabsContent value="archived" className="flex-1 mt-4">
+                {isLoading ? (
+                  <View className="flex-1 justify-center items-center">
+                    <LoadingState/>
+                  </View>
+                ) : (
+                  <View className="flex-1">
+                    {projects.length === 0 ? (
+                      renderEmptyState()
+                    ) : (
+                      <FlatList
+                        data={projects}
+                        renderItem={({ item }) => <RenderProjectCard project={item} />}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                          <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#00a8f0']}
+                          />
+                        }
+                        contentContainerStyle={{ 
+                          paddingBottom: 16,
+                          paddingTop: 16
+                        }}
+                        ListFooterComponent={
+                          totalPages > 1 ? (
+                            <View className="flex-row justify-between items-center mt-4 px-4">
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">← Previous</Text>
+                              </TouchableOpacity>
 
-              <View className="mb-2">
-                <Text className="text-sm text-gray-600">
-                  Date: {project.date || "No date provided"}
-                </Text>
-              </View>
+                              <View className="flex-row items-center">
+                                {isFetching && (
+                                  <LoadingState />
+                                )}
+                                <Text className="text-gray-500">
+                                  Page {currentPage} of {totalPages}
+                                </Text>
+                              </View>
 
-              <View className="mb-2">
-                <Text className="text-sm text-gray-600 underline">
-                  Total Budget: ₱
-                  {project.budgetItems && project.budgetItems.length > 0
-                    ? new Intl.NumberFormat("en-US", {
-                        style: "decimal",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }).format(
-                        project.budgetItems.reduce((grandTotal, item) => {
-                          const amount = item.amount || 0;
-                          const paxCount =
-                            typeof item.pax === "string"
-                              ? parseInt(item.pax) ||
-                                (item.pax.includes("pax")
-                                  ? parseInt(item.pax) || 1
-                                  : 1)
-                              : 1;
-                          return grandTotal + paxCount * amount;
-                        }, 0)
-                      )
-                    : "N/A"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
-
-        {/* Pagination Controls */}
-        {filteredProjects.length > pageSize && (
-          <View className="flex-row justify-between items-center mt-4 px-4 pb-4">
-            <TouchableOpacity
-              onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-            >
-              <Text className="text-primaryBlue font-bold">← Previous</Text>
-            </TouchableOpacity>
-
-            <Text className="text-gray-500">
-              Page {currentPage} of {totalPages}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className={`p-2 ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
-            >
-              <Text className="text-primaryBlue font-bold">Next →</Text>
-            </TouchableOpacity>
+                              <TouchableOpacity
+                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
+                              >
+                                <Text className="text-primaryBlue font-bold">Next →</Text>
+                              </TouchableOpacity>
+                            </View>
+                          ) : null
+                        }
+                      />
+                    )}
+                  </View>
+                )}
+              </TabsContent>
+            </Tabs>
           </View>
-        )}
-      </ScrollView>
-    </ScreenLayout>
+        </View>
+      </PageLayout>
+
+      {/* Loading Modal for mutations */}
+      <LoadingModal 
+        visible={isArchiving || isRestoring || isDeleting} 
+      />
+    </>
   );
 };
 

@@ -19,7 +19,7 @@ export const FormSelect = <T extends FieldValues>({
   name,
   options,
   label,
-  placeholder = "Select...",
+  placeholder = "Select",
   disabled = false,
   maxHeight = 300,
   className,

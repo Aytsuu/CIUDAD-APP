@@ -24,7 +24,6 @@ class Feature(AbstractModels):
 
 class Assignment(models.Model):
     assi_id = models.BigAutoField(primary_key=True)
-    assi_permission = models.CharField(max_length=20, default="VIEW ONLY")
     feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
     assi_date = models.DateField(default=date.today)

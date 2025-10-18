@@ -54,8 +54,8 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={LIGHT_THEME}>
-        <Provider store={store}>
-          <PersistGate loading={null} persistor={persistor}>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
             <ToastProvider>
             <FCMTokenInitializer/>
@@ -85,8 +85,8 @@ export default function RootLayout() {
             </Stack>
           </ToastProvider>
           </QueryClientProvider>
-          </PersistGate>
-        </Provider>
+        </PersistGate>
+      </Provider>
       <PortalHost />
     </ThemeProvider>
   );

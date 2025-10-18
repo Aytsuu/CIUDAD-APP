@@ -15,12 +15,15 @@ import { useUpdateIncome } from './queries/income-expense-UpdateQueries';
 import { useAddParticular } from './request/particular-PostRequest';
 import { useDeleteParticular } from './request/particular-DeleteRequest';
 import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
-import { useIncomeExpenseMainCard } from './queries/income-expense-FetchQueries';
+import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
 import _ScreenLayout from '@/screens/_ScreenLayout';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 
 function IncomeEditForm() {
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -60,9 +63,9 @@ function IncomeEditForm() {
 
 
   const { data: IncomeParticularItems = [] } = useIncomeParticular();
-  const { data: fetchedData = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-  const matchedYearData = fetchedData.find(item => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
 
   console.log("TOTAL INCOME: ", totInc)
@@ -108,6 +111,7 @@ function IncomeEditForm() {
             ...values,
             totalIncome,
             year: Number(year),
+            staff_id: user?.staff?.staff_id              
         }
         
         updateEntry(allValues);
@@ -135,7 +139,7 @@ function IncomeEditForm() {
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -143,7 +147,7 @@ function IncomeEditForm() {
           ) : (
             <View className="flex-row gap-2">
               <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-md items-center"
+                className="flex-1 bg-white border border-primaryBlue py-4 rounded-xl items-center"
                 onPress={() => {
                   setIsEditing(false);
                   form.reset();
@@ -155,7 +159,7 @@ function IncomeEditForm() {
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-md items-center flex-row justify-center"
+                    className="flex-1 bg-primaryBlue py-4 rounded-xl items-center flex-row justify-center"
                     disabled={isPending}
                   >
                     {isPending ? (
@@ -179,7 +183,7 @@ function IncomeEditForm() {
       }
       stickyFooter={true}
     >
-      <View className="w-full px-4 pt-5">
+      <View className="w-full px-6 pt-5">
         {/* Date Input */}
         <View className="relative">
           <FormDateAndTimeInput

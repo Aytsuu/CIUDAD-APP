@@ -16,12 +16,15 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 import resolutionFormSchema from '@/form-schema/council/resolutionFormSchema';
 import { usingUpdateResolution } from './queries/resolution-update-queries';
 import { useApprovedProposals } from './queries/resolution-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 interface ResolutionCreateFormProps {
     onSuccess?: () => void; 
 }
 
 function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
+    const { user } = useAuth(); 
     const {
         res_num,
         res_title,
@@ -136,7 +139,8 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             ...values, 
             resFiles,
             resSuppDocs,
-            res_num: String(res_num) 
+            res_num: String(res_num),
+            staff_id: user?.staff?.staff_id      
         });
     };
 
@@ -158,7 +162,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             loadingMessage="Saving resolution..."
             footer={
                 <TouchableOpacity
-                    className="bg-primaryBlue py-3 rounded-md w-full items-center"
+                    className="bg-primaryBlue py-4 rounded-xl w-full items-center"
                     onPress={form.handleSubmit(onSubmit)}
                 >
                     <Text className="text-white text-base font-semibold">Save Resolution</Text>
@@ -166,7 +170,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
             }
             stickyFooter={true}
         >
-            <View className="w-full space-y-4 px-4 pt-5">
+            <View className="w-full space-y-4 px-6 pt-5">
 
                 <FormInput
                     control={form.control}
@@ -228,8 +232,7 @@ function ResolutionEdit({ onSuccess }: ResolutionCreateFormProps) {
                     <MediaPicker
                         selectedImages={selectedImages}
                         setSelectedImages={setSelectedImages}
-                        multiple={true}
-                        maxImages={5}
+                        limit={5}
                     />  
                 </View>
             </View>

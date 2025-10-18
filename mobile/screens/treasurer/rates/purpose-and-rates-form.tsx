@@ -42,10 +42,10 @@ export default function PurposeAndRateCreateForm() {
             loading={isPending}
             loadingMessage='Submitting Record...'
         >
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             
                 {/* Form Section */}
-                <View className="mb-8">
+                <View className="p-6">
 
                     <View className="space-y-4">
                         <FormInput

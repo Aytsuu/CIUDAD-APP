@@ -13,11 +13,13 @@ import _ScreenLayout from '@/screens/_ScreenLayout';
 import WasteColSchedSchema from '@/form-schema/waste/waste-collection';
 import { useGetWasteCollectors } from './queries/waste-col-fetch-queries';
 import { useGetWasteDrivers } from './queries/waste-col-fetch-queries';
-import { useGetWasteTrucks } from './queries/waste-col-fetch-queries';
+import { useGetWasteTrucks, type Trucks } from './queries/waste-col-fetch-queries';
 import { useGetWasteSitio } from './queries/waste-col-fetch-queries';
 import { useCreateWasteSchedule } from './queries/waste-col-add-queries';
 import { useAssignCollectors } from './queries/waste-col-add-queries';
 import { useGetWasteCollectionSchedFull } from './queries/waste-col-fetch-queries';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 const dayOptions = [
   { label: "Monday", value: "Monday" },
@@ -33,6 +35,7 @@ const dayOptions = [
 
 function WasteColCreate() {
   const router = useRouter();
+  const { user } = useAuth(); 
 
   //ADD QUERY MUTATIONS
   const { mutate: createSchedule, } = useCreateWasteSchedule();
@@ -44,34 +47,40 @@ function WasteColCreate() {
   const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
   const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
   const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio(); 
-  const { data: wasteCollectionData = [], isLoading: isLoadingWasteData} = useGetWasteCollectionSchedFull();
+  const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
-  const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
-
-
-    //Options
-    const collectorOptions = collectors.map(collector => ({
-        id: collector.id,  
-        name: `${collector.firstname} ${collector.lastname}`  
-    }));
+  const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
 
-    const driverOptions = drivers.map(driver => ({
-        label: `${driver.firstname} ${driver.lastname}`,  
-        value: driver.id  
-    }));
+  // Extract the actual data array
+  const wasteSchedules = wasteCollectionData.results || [];
+  
+  //Options
+  const collectorOptions = collectors.map(collector => ({
+      id: collector.id,  
+      name: `${collector.firstname} ${collector.lastname}`  
+  }));
 
 
-    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
-        value: String(truck.truck_id)
-    }));
+  const driverOptions = drivers.map(driver => ({
+      label: `${driver.firstname} ${driver.lastname}`,  
+      value: driver.id  
+  }));
 
 
-    const sitioOptions = sitios.map(sitio => ({
-        label: sitio.sitio_name,  
-        value: String(sitio.sitio_id)  
-    }));
+  const truckOptions = (trucks as Trucks[])
+      .filter(truck => truck.truck_status === "Operational")
+      .map(truck => ({
+          label: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+          value: String(truck.truck_id)
+  }));
+
+
+
+  const sitioOptions = sitios.map(sitio => ({
+      label: sitio.sitio_name,  
+      value: String(sitio.sitio_id)  
+  }));
 
 
   const form = useForm<z.infer<typeof WasteColSchedSchema>>({
@@ -97,16 +106,16 @@ function WasteColCreate() {
         const selectedSitioName = sitioOptions.find(sitio => sitio.value === values.selectedSitios)?.label; 
         
 
-        const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+        const hasSameSitioSameDay = wasteSchedules.some(schedule => 
             schedule.wc_day === values.day &&
             schedule.sitio_name === selectedSitioName
         );
 
         //checks for overlapping day and time
-        const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+        const hasDuplicateSchedule = wasteSchedules.some(schedule => 
             schedule.wc_day === values.day && 
             schedule.wc_time === formattedTime
-        );     
+        );  
         
         //return if there is overlapping schedule
         if (hasDuplicateSchedule) {
@@ -144,6 +153,7 @@ function WasteColCreate() {
         createSchedule(
             {
             ...values,
+            staff: user?.staff?.staff_id
             },
             {
                 onSuccess: (wc_num) => {
@@ -186,7 +196,7 @@ function WasteColCreate() {
 
       footer={
             <TouchableOpacity
-              className="bg-primaryBlue py-4 rounded-md w-full items-center"
+              className="bg-primaryBlue py-5 rounded-xl w-full items-center"
               onPress={form.handleSubmit(onSubmit)}
             >
               <Text className="text-white text-base font-semibold">Schedule</Text>
@@ -194,7 +204,7 @@ function WasteColCreate() {
       }
       stickyFooter={true}
     >
-        <View className="w-full px-4">
+        <View className="w-full px-6">
 
             <FormSelect
                 control={form.control}

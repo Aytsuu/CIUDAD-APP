@@ -4,7 +4,7 @@ import { capitalize } from "@/helpers/capitalize";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
-// POST request for personal
+// POST request for personal        
 export const addPersonal = async (data: Record<string, any>) => {
   
   try {
@@ -25,6 +25,7 @@ export const addPersonal = async (data: Record<string, any>) => {
 
     return res.data;
   } catch (err) {
+    console.error(err);
     throw err;
   }
 };
@@ -88,7 +89,9 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
     await api2.post("health-profiling/resident/create/combined/", data);
     
     return res.data
-  } catch (err) {     throw err;
+  } catch (err) { 
+    console.error(err)
+    throw err;
   }
 }
 
@@ -106,7 +109,6 @@ export const addFamily = async (
       staff: staffId,
     }
     const res = await api.post("profiling/family/create/", data);
-    await api2.post("health-profiling/family/create/", data);
 
     return res.data;
   } catch (err) {
@@ -118,7 +120,6 @@ export const addFamily = async (
 export const addFamilyComposition = async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/family/composition/bulk/create/", data);
-    await api2.post("health-profiling/family/composition/bulk/create/", data);
 
     return res.data
   } catch (err) {

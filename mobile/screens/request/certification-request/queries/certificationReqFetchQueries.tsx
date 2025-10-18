@@ -70,7 +70,9 @@ export interface Business {
     bus_id: number;
     bus_name: string;
     bus_gross_sales: number;
-    bus_location?: string;
+    bus_street: string;
+    bus_location: string;
+    sitio: string;
     bus_date_verified: string | null;
     bus_status: string;
 }

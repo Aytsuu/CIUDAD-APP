@@ -14,7 +14,8 @@ def sync_income_expense_main(sender, instance, created, **kwargs):
             'ie_main_tot_budget': instance.plan_budgetaryObligations,
             'ie_main_inc': 0.0,
             'ie_main_exp': 0.0,
-            'ie_is_archive': instance.plan_is_archive
+            'ie_is_archive': instance.plan_is_archive,
+            'ie_remaining_bal': instance.plan_budgetaryObligations
         }
     )
 
@@ -43,6 +44,27 @@ def sync_gad_budget_year(sender, instance, **kwargs):
         obj.gbudy_budget = instance.dtl_proposed_budget
         obj.gbudy_is_archive = is_archived
         obj.save(update_fields=['gbudy_budget', 'gbudy_is_archive'])
+
+@receiver(post_save, sender='treasurer.Budget_Plan_Detail')
+def sync_expense_particular(sender, instance, created, **kwargs):
+    Expense_Particular = apps.get_model('treasurer', 'Expense_Particular')
+    
+    defaults = {
+        'exp_proposed_budget': instance.dtl_proposed_budget
+    }
+    
+    # Use get_or_create to handle both creation and updates
+    expense_particular, created = Expense_Particular.objects.get_or_create(
+        exp_budget_item=instance.dtl_budget_item,
+        plan=instance.plan,
+        defaults=defaults
+    )
+    
+    # If it already existed, update it
+    if not created:
+        for key, value in defaults.items():
+            setattr(expense_particular, key, value)
+        expense_particular.save()
 
 
 @receiver(post_save, sender='treasurer.Budget_Plan')

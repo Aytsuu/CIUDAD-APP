@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export default function EmailOTP({ params }: { params: Record<string, any> }) {
   // ====================== STATE INITIALIZATION ======================
-  const { control, getValues, trigger, setValue } =
+  const { control, getValues, trigger, setValue, setError } =
     useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [modalVisible, setModalVisible] = React.useState<boolean>(false);
@@ -59,7 +59,6 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
 
   const send = async () => {
     if (!(await trigger("accountFormSchema.email"))) {
-      toast.error("Failed to send. Please try again.");
       return;
     }
 
@@ -74,8 +73,17 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
       if (response) {
         setModalVisible(true);
       }
-    } catch (err) {
-      toast.error("Failed to send. Please try again.");
+    } catch (err: any) {
+      if(axios.isAxiosError(err) && err.response){
+          const errors = err.response.data
+
+          if(errors.email){
+            setError('accountFormSchema.email', {
+              type: "server",
+              message: Array.isArray(errors.email) ? errors.email[0] : errors.email,
+            })
+          }
+        }
     } finally {
       setIsSubmitting(false);
     }
@@ -107,8 +115,14 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
           />
         </View>
 
-        <Button
-          className={`bg-primaryBlue native:h-[45px] py-4 rounded-lg ${
+        <SubmitButton 
+          submittingLabel="Sending Code..."
+          buttonLabel="Send Verification Code"
+          isSubmitting={isSubmitting}
+          handleSubmit={send}
+        />
+        {/* <Button
+          className={`bg-primaryBlue native:h-[45px] py-4 rounded-full ${
             isSubmitting ? "opacity-70" : ""
           }`}
           onPress={send}
@@ -117,7 +131,7 @@ export default function EmailOTP({ params }: { params: Record<string, any> }) {
           <Text className="text-white font-semibold text-base">
             {isSubmitting ? "Sending Code..." : "Send Verification Code"}
           </Text>
-        </Button>
+        </Button> */}
 
         <View className="flex-row items-center justify-center mt-8 gap-1">
           {params.signin ? (

@@ -1,33 +1,36 @@
 // Format date (YYYY-MM-DD) or (July 10, 2025)
 export const formatDate = (date: string | Date, type?: string) => {
-  if(!date) return null;
-  
-  switch(type) {
+  if (!date) return null;
+  const d = new Date(date);
+
+  switch (type) {
     case 'short':
-      return (new Date(date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              }))
+      return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
     case 'long':
-      return (new Date(date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }))
+      return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     default:
-      return new Date(date).toISOString().split('T')[0]
+      // Format YYYY-MM-DD in local time
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
   }
-}
+};
 
 // Get week number based on a given date format (YYYY-MM-DD)
 // Example: date = 2025-06-11 --> returns 2
 export const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);
-  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-  return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
+  return Math.ceil(dayOfMonth / 7);
 };
 
 // Get month in text based on a given date format (YYYY-MM-DD)
@@ -153,3 +156,102 @@ export const hasWeekPassed = (month: string, weekNo: number, year?: number) => {
 
   return weekEndDate < currentDate
 }
+
+interface TimeAgoOptions {
+  detailed?: boolean;
+  includeWeeks?: boolean;
+}
+
+export const formatTimeAgo = (
+  timestamp: string | Date, 
+  options: TimeAgoOptions = {}
+): string => {
+  const { detailed = false, includeWeeks = false } = options;
+  
+  if (!timestamp) return 'Unknown';
+  
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diffInMs = now.getTime() - past.getTime();
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+  
+  // Just now
+  if (diffInSeconds < 10) {
+    return detailed ? 'Just now' : 'Now';
+  }
+  
+  // Seconds
+  if (diffInSeconds < 60) {
+    if (detailed) {
+      return `${diffInSeconds} second${diffInSeconds !== 1 ? 's' : ''} ago`;
+    }
+    return `${diffInSeconds}s ago`;
+  }
+  
+  // Minutes
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    if (detailed) {
+      return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
+    }
+    return `${diffInMinutes}m ago`;
+  }
+  
+  // Hours
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    if (detailed) {
+      return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
+    }
+    return `${diffInHours}h ago`;
+  }
+  
+  // Days
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (!includeWeeks || diffInDays < 7) {
+    if (detailed) {
+      return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+    }
+    return `${diffInDays}d ago`;
+  }
+  
+  // Weeks (optional)
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInWeeks < 4) {
+    if (detailed) {
+      return `${diffInWeeks} week${diffInWeeks !== 1 ? 's' : ''} ago`;
+    }
+    return `${diffInWeeks}w ago`;
+  }
+  
+  // Months
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    if (detailed) {
+      return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`;
+    }
+    return `${diffInMonths}mo ago`;
+  }
+  
+  // Years
+  const diffInYears = Math.floor(diffInDays / 365);
+  if (detailed) {
+    return `${diffInYears} year${diffInYears !== 1 ? 's' : ''} ago`;
+  }
+  return `${diffInYears}y ago`;
+};
+
+export const formatTableDate = (dateString: string | null | undefined): string => {
+  if (!dateString || dateString === "N/A") return "N/A";
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "Invalid Date";
+  }
+};

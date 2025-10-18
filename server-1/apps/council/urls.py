@@ -13,6 +13,7 @@ urlpatterns = [
     path("attendance-sheets/<int:att_id>/", AttendanceSheetDetailView.as_view(), name="attendance-sheet-detail"),
     path("attendance-sheets/<int:att_id>/restore/", RestoreAttendanceView.as_view(), name="attendance-sheet-restore"),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
+    path("event-meeting/years/", CouncilEventYearsView.as_view(), name="council-event-years"),
     # path('staff-attendance-ranking/', StaffAttendanceRankingView.as_view(), name='staff-attendance-ranking'),
 
     # TEMPLATE
@@ -33,7 +34,8 @@ urlpatterns = [
 
     # MINUTES OF MEETING
     # mobile and web
-    path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
+    path('minutes-of-meeting-active/', MinutesOfMeetingActiveView.as_view(), name="minutes-of-meeting-active"),
+    path('minutes-of-meeting-inactive/', MinutesOfMeetingInactiveView.as_view(), name="minutes-of-meeting-inactive"),
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),

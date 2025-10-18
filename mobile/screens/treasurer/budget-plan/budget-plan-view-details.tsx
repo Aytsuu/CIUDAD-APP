@@ -9,6 +9,7 @@ import { useState } from "react";
 import BudgetPlanHistory from "./budget-plan-history";
 import BudgetPlanSuppDocs from "./budget-plan-suppdocs";
 import PageLayout from "@/screens/_PageLayout";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function BudgetPlanView() {
     const router = useRouter();
@@ -18,9 +19,9 @@ export default function BudgetPlanView() {
 
     if (isLoading) {
         return (
-            <SafeAreaView className="flex-1 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-            </SafeAreaView>
+            <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+            </View>
         );
     }
 
@@ -86,17 +87,22 @@ export default function BudgetPlanView() {
             {/* Scrollable Content Area */}
             <View className="flex-1">
                 {activeTab === "plan" && (
-                    <ScrollView className="flex-1 pt-2 px-4">
+                    <ScrollView className="flex-1">
                         <MobileBudgetPlanView budgetData={fetchedData} />
                     </ScrollView>
                 )}
 
                 {activeTab === "history" && (
-                    <BudgetPlanHistory planId={plan_id as string} />
+                    <View className="flex-1">
+                        <BudgetPlanHistory planId={plan_id as string} />
+                    </View>
                 )}
 
                 {activeTab === "documents" && (
-                    <BudgetPlanSuppDocs plan_id = {plan_id as string}/>
+                    <BudgetPlanSuppDocs 
+                        plan_id={plan_id as string} 
+                        isArchive={fetchedData?.plan_is_archive || false}
+                    />
                 )}
             </View>
           </View>

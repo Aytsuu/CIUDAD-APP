@@ -8,12 +8,15 @@ import ImageCarousel from '@/components/ui/imageCarousel';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUpdateWasteReport } from '../queries/illegal-dump-update-queries';
 import { ActivityIndicator } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 export default function WasteIllegalDumpingDetails() {
   // Get all params from the route
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useAuth(); 
+
   
   // Parse all params
   const {
@@ -105,6 +108,7 @@ export default function WasteIllegalDumpingDetails() {
       const updateData = {
           rep_status: "resolved",
           files: files,
+          staff_id: user?.staff?.staff_id
       };
       
       updateRep(updateData, {
@@ -145,7 +149,7 @@ export default function WasteIllegalDumpingDetails() {
         }
         stickyFooter={true}
       >
-        <ScrollView className="p-4 pb-8">
+        <ScrollView className="px-6 pb-8 pt-8">
           {/* Header */}
           <View className="items-center pb-10">
             <View className="bg-gray-100 px-3 py-2 rounded-md">
@@ -280,8 +284,7 @@ export default function WasteIllegalDumpingDetails() {
                         <MediaPicker
                           selectedImages={selectedImages}
                           setSelectedImages={setSelectedImages}
-                          multiple={true}
-                          maxImages={5}
+                          limit={3}
                         />  
 
                         {/* Submit Button */}

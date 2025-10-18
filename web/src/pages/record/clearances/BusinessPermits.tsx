@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 // import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {Search, ArrowUpDown, Loader2, CheckCircle, Eye } from "lucide-react";
+import {Search, ArrowUpDown, CheckCircle, Eye } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -13,14 +14,16 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getBusinessPermit, markBusinessPermitAsIssued, type BusinessPermit, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busFetchQueries";
-import { toast } from "sonner";
 import TemplateMainPage from "../council/templates/template-main";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAuth } from "@/context/AuthContext";
+import { useLoading } from "@/context/LoadingContext";
+import { formatDate } from "@/helpers/dateHelper";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 function BusinessDocumentPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
@@ -30,16 +33,39 @@ function BusinessDocumentPage() {
     queryFn: getBusinessPermit,
   });
 
+  // Show only paid permits
+  const paidPermits = useMemo(() => {
+    return (businessPermits || [])
+      .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
+      .filter((p) => String(p.req_status || "").toLowerCase() !== "completed");
+  }, [businessPermits]);
+
+  // Handle loading state
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
+
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      showErrorToast("Failed to load business permit data. Please try again.");
+    }
+  }, [error]);
+
   
   const markAsIssuedMutation = useMutation<any, unknown, MarkBusinessPermitVariables>({
     mutationFn: markBusinessPermitAsIssued,
     onSuccess: (_data, variables) => {
-      toast.success(`Business permit ${variables.bpr_id} marked as printed successfully!`);
+      showSuccessToast(`Business permit ${variables.bpr_id} marked as printed successfully!`);
       
       queryClient.invalidateQueries({ queryKey: ["businessPermits"] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to mark business permit as printed");
+      showErrorToast(error.response?.data?.error || "Failed to mark business permit as printed");
     },
   });
 
@@ -92,34 +118,90 @@ function BusinessDocumentPage() {
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
-      cell: ({ row }) => <div className="capitalize">{row.getValue("bpr_id")}</div>,
+      cell: ({ row }) => (
+        <div className="capitalize flex justify-center items-center">
+          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+            {row.getValue("bpr_id")}
+          </span>
+        </div>
+      ),
     },
     {
       accessorKey: "business_name",
       header: "Business Name",
       cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
     },
+    // {
+    //   accessorKey: "business_gross_sales",
+    //   header: "Gross Sales",
+    //   cell: ({ row }) => {
+    //     const original = row.original as any;
+    //     const agsId = original?.ags_id;
+    //     const inputtedGrossSales = original?.bus_clearance_gross_sales;
+    //     const businessGrossSales = original?.business_gross_sales;
+
+    //     let displayAmount: number | null = null;
+
+    //     // Priority 1: Show inputted gross sales (for new businesses with barangay clearance)
+    //     if (inputtedGrossSales && agsId) {
+    //       const parsed = parseFloat(inputtedGrossSales.toString());
+    //       displayAmount = isNaN(parsed) ? null : parsed;
+    //     }
+    //     // Priority 2: Show business gross sales if available (for existing businesses)
+    //     else if (businessGrossSales !== undefined && businessGrossSales !== null && businessGrossSales !== "") {
+    //       const parsed = typeof businessGrossSales === 'string' ? parseFloat(businessGrossSales) : businessGrossSales;
+    //       displayAmount = isNaN(parsed as number) ? null : (parsed as number);
+    //     }
+
+    //     if (displayAmount === null) {
+    //       return <div className="text-center text-gray-500">Not Set</div>;
+    //     }
+
+    //     return (
+    //       <div className="text-center">
+    //         ₱{displayAmount.toLocaleString()}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
-      accessorKey: "req_sales_proof",
-      header: "Gross Sales",
-      cell: ({ row }) => <div>₱ {row.getValue("req_sales_proof")}</div>,
-    },
-    {
-      accessorKey: "req_pay_method",
-      header: "Payment Method",
-      cell: ({ }) => {
-        // Display "Walk-in" for all business permit requests
-        const value = "Walk-in";
-        const bg = "bg-[#eaffea]"; 
-        const text = "text-[#15803d]"; 
-        const border = "border border-[#b6e7c3]";
-        
+      accessorKey: "purpose",
+      header: "Purpose",
+      cell: ({ row }) => {
+        const raw = (row.original as any)?.purpose as string | undefined;
+        const value = raw ? raw.toString() : "";
+        const capitalizedValue = value
+          ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+          : "";
+
+        let bg = "bg-[#eaf4ff]";
+        let text = "text-[#2563eb]";
+        let border = "border border-[#b6d6f7]";
+
+        if (capitalizedValue === "Business clearance") {
+          // blue (default)
+        } else if (capitalizedValue === "Barangay sinulog permit") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        } else if (capitalizedValue === "Barangay Fiesta Permit") {
+          bg = "bg-[#fffaf0]";
+          text = "text-[#b45309]";
+          border = "border border-[#fcd34d]";
+        } else if (capitalizedValue) {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
+        }
+
+        const label = capitalizedValue || "Not Set";
+
         return (
           <span
             className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
             style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
           >
-            {value}
+            {label}
           </span>
         );
       },
@@ -127,7 +209,7 @@ function BusinessDocumentPage() {
     {
       accessorKey: "req_request_date",
       header: "Date Requested",
-      cell: ({ row }) => <div>{row.getValue("req_request_date")}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     // {
     //   accessorKey: "req_claim_date",
@@ -226,14 +308,14 @@ function BusinessDocumentPage() {
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1273B8]" />
+              <Spinner size="lg" />
             </div>
           ) : error ? (
             <div className="text-center py-5 text-red-500">Error loading data</div>
           ) : (
             <DataTable 
             columns={columns} 
-            data={businessPermits || []}
+            data={paidPermits}
             header={true} />
           )}
         </div>
@@ -243,37 +325,27 @@ function BusinessDocumentPage() {
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         {/* Showing Rows Info */}
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-10 of {businessPermits ? businessPermits.length : 0} rows
+          Showing 1-10 of {paidPermits.length} rows
         </p>
 
         {/* Pagination */}
         <div className="w-full sm:w-auto flex justify-center">
           <PaginationLayout
-            totalPages={Math.ceil((businessPermits?.length || 1) / 10)}
+            totalPages={Math.ceil((paidPermits.length || 1) / 10)}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />
         </div>
       </div>
 
-      {/* Render Business Permit Template when a permit is selected */}
+      {/* Render Business Permit Template like Certification: component manages its own dialog */}
       {selectedPermit && (
-        <DialogLayout
-          isOpen={!!selectedPermit}
-          onOpenChange={(open) => !open && setSelectedPermit(null)}
-          className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
-          title=""
-          description=""
-          mainContent={
-            <div className="w-full h-full">
-              <TemplateMainPage
-                businessName={selectedPermit.business_name || "Business"}
-                address={selectedPermit.business_address || "Address not available"}
-                purpose="bussClear"
-                issuedDate={new Date().toISOString()}
-              />
-            </div>
-          }
+        <TemplateMainPage
+          businessName={selectedPermit.business_name}
+          address={selectedPermit.business_address}
+          purpose={selectedPermit.purpose}
+          issuedDate={new Date().toISOString()}
+          showAddDetails={false}
         />
       )}
     </div>

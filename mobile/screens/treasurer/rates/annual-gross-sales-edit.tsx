@@ -58,7 +58,7 @@ export default function AnnualGrossSalesEdit() {
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
         <View className="mb-8">
-          <View className="space-y-4 p-4">
+          <View className="space-y-4 p-6">
             <FormInput
               control={control}
               label="Minimum Annual Gross Sales"

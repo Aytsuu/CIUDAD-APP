@@ -1,223 +1,500 @@
-import { useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
-// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
-import ReferralFormModal from "@/pages/animalbites/referralform";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { Eye, Search, Trash } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Link } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Loader2, Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useLoading } from "@/context/LoadingContext";
+import { ExportButton } from "@/components/ui/export";
+import { useDebounce } from "@/hooks/use-debounce";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
+import ReferralFormModal from "./referralform";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { getAnimalBitePatientDetails } from "./api/get-api";
+import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
+import ViewButton from "@/components/ui/view-button";
+import { ProtectedComponentButton } from "@/ProtectedComponentButton";
 
-// Define Patient Type
-type Patient = {
-  id: number;
+// Type definition for table display
+type UniquePatientDisplay = {
+  id: string;
   fname: string;
   lname: string;
   gender: string;
   age: string;
   date: string;
   transient: boolean;
+  patientType: string;
   exposure: string;
   siteOfExposure: string;
   bitingAnimal: string;
-  actions: string;
+  actions_taken: string;
+  referredby: string;
+  recordCount: number;
 };
 
-// Sample Data
-const samplePatients: Patient[] = [
-  {
-    id: 1,
-    fname: "Jane",
-    lname: "Bil",
-    age: "25",
-    gender: "Female",
-    date: "2024-02-06",
-    exposure: "Non-bite",
-    transient: true,
-    siteOfExposure: "Feet",
-    bitingAnimal: "Cat",
-    actions: "Wound Cleaned",
-  },
-  {
-    id: 2,
-    fname: "Kurt",
-    lname: "Cobain",
-    age: "25",
-    gender: "Male",
-    date: "2024-02-06",
-    exposure: "Non-bite",
-    transient: true,
-    siteOfExposure: "Feet",
-    bitingAnimal: "Cat",
-    actions: "Wound Cleaned",
-  },
-];
+type PatientCountStats = {
+  total: number;
+  residents: number;
+  transients: number;
+  residentPercentage: number;
+  transientPercentage: number;
+};
 
-function AnimalBites() {
-  const [patients, setPatients] = useState<Patient[]>(samplePatients);
+const Overall: React.FC = () => {
+  const { showLoading, hideLoading } = useLoading();
+  const navigate = useNavigate();
+
+  // State management
+  const [patients, setPatients] = useState<UniquePatientDisplay[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterValue, setFilterValue] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filterValue, setFilterValue] = useState("all");
+  const [isReferralFormOpen, setIsReferralFormOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Define Columns for DataTable
-  const columns: ColumnDef<Patient>[] = [
-    { accessorKey: "id", header: "#" },
+  // Debounce search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, filterValue]);
+
+  const fetchAnimalBiteRecords = async () => {
+    setLoading(true);
+    showLoading();
+    setError(null);
+    try {
+      const allRecords = await getAnimalBitePatientDetails();
+      console.log("Fetched records:", allRecords);
+
+      const patientGroups = new Map<string, any[]>();
+
+      allRecords.forEach((record: any) => {
+        const patientId = record.patient_id;
+        if (!patientGroups.has(patientId)) {
+          patientGroups.set(patientId, []);
+        }
+        patientGroups.get(patientId)?.push(record);
+      });
+
+      const uniquePatients: UniquePatientDisplay[] = [];
+
+      patientGroups.forEach((recordsForPatient, patientId) => {
+        const latestRecord = recordsForPatient[0];
+
+        if (latestRecord) {
+          uniquePatients.push({
+            id: patientId,
+            fname: latestRecord.patient_fname || "N/A",
+            lname: latestRecord.patient_lname || "N/A",
+            gender: latestRecord.patient_sex || "N/A",
+            age: latestRecord.patient_age?.toString() || "N/A",
+            date: latestRecord.referral_date,
+            transient: latestRecord.referral_transient,
+            patientType: latestRecord.patient_type || "N/A",
+            exposure: latestRecord.exposure_type,
+            siteOfExposure: latestRecord.exposure_site,
+            bitingAnimal: latestRecord.biting_animal,
+            actions_taken: latestRecord.actions_taken || "",
+            referredby: latestRecord.referredby || "",
+            recordCount: recordsForPatient.length
+          });
+        }
+      });
+      setPatients(uniquePatients);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError("Failed to load animal bite records. Please try again.");
+      toast.error("Failed to load animal bite records.");
+    } finally {
+      setLoading(false);
+      hideLoading();
+    }
+  };
+
+  useEffect(() => {
+    fetchAnimalBiteRecords();
+  }, []);
+
+  // Calculate patient statistics
+  const calculatePatientStats = useCallback((): PatientCountStats => {
+    const total = patients.length;
+    const residents = patients.filter((p) => p.patientType === "Resident").length;
+    const transients = patients.filter((p) => p.patientType === "Transient").length;
+    const residentPercentage = total > 0 ? Math.round((residents / total) * 100) : 0;
+    const transientPercentage = total > 0 ? Math.round((transients / total) * 100) : 0;
+
+    return {
+      total,
+      residents,
+      transients,
+      residentPercentage,
+      transientPercentage
+    };
+  }, [patients]);
+
+  const stats = calculatePatientStats();
+
+  // Filter and paginate data
+  const filteredPatients = useMemo(() => {
+    return patients.filter((p) => {
+      const searchTerms = `${p.fname} ${p.lname} ${p.age} ${p.gender} ${p.date} ${p.exposure} ${p.siteOfExposure} ${p.bitingAnimal} ${p.patientType}`.toLowerCase();
+      const matchesSearch = searchTerms.includes(debouncedSearchQuery.toLowerCase());
+      const matchesFilter = filterValue === "all" || (filterValue === "bite" && p.exposure === "Bite") || (filterValue === "non-bite" && p.exposure === "Non-bite") || (filterValue === "transient" && p.patientType === "Transient") || (filterValue === "resident" && p.patientType === "Resident");
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [patients, debouncedSearchQuery, filterValue]);
+
+  // Pagination
+  const paginatedPatients = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredPatients.slice(startIndex, startIndex + pageSize);
+  }, [filteredPatients, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(filteredPatients.length / pageSize);
+
+  // Table columns with sorting and ViewButton
+  const columns: ColumnDef<UniquePatientDisplay>[] = [
     {
-      accessorKey: "fullName",
-      header: "Patient",
+      accessorKey: "patient",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient <ArrowUpDown size={15} />
+        </div>
+      ),
       cell: ({ row }) => {
-        const patient = row.original;
-        const fullName = `${patient.lname}, ${patient.fname}`;
+        const p = row.original;
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
+              <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
               <div className="text-sm text-darkGray">
-                {patient.gender}, {patient.age} years old
+                {p.gender}, {p.age} years old
+                {p.recordCount > 1 && <span className="ml-2 bg-green-100 text-green-800 text-sm font-bold p-1 rounded">{p.recordCount} records</span>}
               </div>
             </div>
           </div>
         );
-      },
+      }
     },
-    { accessorKey: "age", header: "Age" },
-    { accessorKey: "gender", header: "Gender" },
-    { accessorKey: "date", header: "Date" },
-    { accessorKey: "exposure", header: "Exposure" },
-    { accessorKey: "siteOfExposure", header: "Site of Exposure" },
     {
-      accessorKey: "transient",
-      header: "Transient",
-      cell: ({ row }) => (row.original.transient ? "Yes" : "No"),
-    },
-    { accessorKey: "bitingAnimal", header: "Biting Animal" },
-    { accessorKey: "actions", header: "Actions Taken" },
-    
-    {
-      accessorKey: "button",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <TooltipLayout
-            trigger={
-              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                <Link to={`/Animalbite_individual/`}>
-                  <Eye size={15} />
-                </Link>
-              </div>
-            }
-            content="View"
-          />
-
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                className=""
-                mainContent={<></>}
-              />
-            }
-            content="Delete"
-          />
+      accessorKey: "patientType",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient Type <ArrowUpDown size={15} />
         </div>
       ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.patientType}</div>
+        </div>
+      )
     },
+    // {
+    //   accessorKey: "date",
+    //   header: ({ column }) => (
+    //     <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+    //       Date <ArrowUpDown size={15} />
+    //     </div>
+    //   ),
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center min-w-[100px] px-2">
+    //       <div className="text-center w-full">{row.original.date}</div>
+    //     </div>
+    //   )
+    // },
+    {
+      accessorKey: "exposure",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Exposure Type <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.exposure}</div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "siteOfExposure",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Site of Exposure <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[120px] px-2">
+          <div className="text-center w-full">{row.original.siteOfExposure}</div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "bitingAnimal",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Biting Animal <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[120px] px-2">
+          <div className="text-center w-full">{row.original.bitingAnimal}</div>
+        </div>
+      )
+    },
+
+    {
+      accessorKey: "actions_taken",
+      header: "Actions Taken",
+      cell: ({ row }) => {
+        const actions = row.original.actions_taken;
+        return (
+          <div className="flex justify-center min-w-[150px] px-2">
+            <div className="text-center w-full">{actions && actions.length > 30 ? `${actions.substring(0, 30)}...` : actions}</div>
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "referredby",
+      header: "Referred by",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[120px] px-2">
+          <div className="text-center w-full">{row.original.referredby}</div>
+        </div>
+      )
+    },
+    {
+      accessorKey: "norecords",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          No if Records <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[80px] px-2">
+          <span className="text-center w-full">{row.original.recordCount}</span>
+        </div>
+      )
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => {
+        const p = row.original;
+        const patientData = {
+          pat_id: p.id,
+          pat_type: p.patientType,
+          age: p.age,
+          personal_info: {
+            per_fname: p.fname,
+            per_lname: p.lname,
+            per_sex: p.gender
+          }
+        };
+
+        return (
+          <ViewButton
+            onClick={() => {
+              navigate(`/Animalbite_individual/${p.id}`, {
+                state: {
+                  params: {
+                    patientData
+                  }
+                }
+              });
+            }}
+          />
+        );
+      }
+    }
   ];
 
-  // Function to handle search input change
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
+  // Export columns
+  const exportColumns = [
+    { key: "fname", header: "First Name" },
+    { key: "lname", header: "Last Name" },
+    { key: "gender", header: "Gender" },
+    { key: "age", header: "Age" },
+    { key: "patientType", header: "Patient Type" },
+    { key: "date", header: "Date" },
+    { key: "exposure", header: "Exposure Type" },
+    { key: "siteOfExposure", header: "Site of Exposure" },
+    { key: "bitingAnimal", header: "Biting Animal" },
+    { key: "actions_taken", header: "Actions Taken" },
+    { key: "referredby", header: "Referred By" }
+  ];
+
+  const handleReferralFormClose = () => {
+    setIsReferralFormOpen(false);
+    fetchAnimalBiteRecords();
   };
 
-  // Filtering logic
-  const filteredPatients = patients.filter((patient) => {
-    const searchString = `${patient.fname} ${patient.lname} ${patient.age} ${patient.gender} ${patient.date} ${patient.exposure} ${patient.siteOfExposure} ${patient.transient} ${patient.bitingAnimal}`.toLowerCase();
-    return searchString.includes(searchQuery.toLowerCase());
-  });
-
-
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Header Section */}
-      <div className="flex-col items-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Animal Bite Records
-        </h1>
-        <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view patient information
-        </p>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
+    <MainLayoutComponent title="Animal Bite Records" description="Manage and view animal bite records">
+      <div className="w-full h-full flex flex-col">
+        {/* Summary Cards */}
+        <div className="w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <EnhancedCardLayout
+              title="Total Animal Bite Cases"
+              description="All recorded animal bite cases"
+              value={stats.total}
+              valueDescription="Total records"
+              icon={<Users className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
 
-      {/* Search, Filter & Button Section */}
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
+            <EnhancedCardLayout
+              title="Resident Cases"
+              description="Permanent residents with animal bites"
+              value={stats.residents}
+              valueDescription={`${stats.residentPercentage}% of total`}
+              icon={<Home className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
+
+            <EnhancedCardLayout
+              title="Transient Cases"
+              description="Temporary patients with animal bites"
+              value={stats.transients}
+              valueDescription={`${stats.transientPercentage}% of total`}
+              icon={<UserCog className="h-5 w-5 text-muted-foreground" />}
+              cardClassName="border shadow-sm rounded-lg"
+              headerClassName="pb-2"
+              contentClassName="pt-0"
+            />
+          </div>
+        </div>
+
+        {/* Filters Section */}
+        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-72 bg-white"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search by patient name, exposure type, biting animal..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-
             <SelectLayout
-              placeholder="Filter by"
+              placeholder="Filter records"
               label=""
-              className="w-full md:w-[200px] bg-white"
+              className="bg-white w-full sm:w-48"
               options={[
-                { id: "All", name: "All" },
-                { id: "Bite", name: "Bite" },
-                { id: "Non-bite", name: "Non-bite" },
+                { id: "all", name: "All Records" },
+                { id: "bite", name: "Bite" },
+                { id: "non-bite", name: "Non-bite" },
+                { id: "resident", name: "Resident" },
+                { id: "transient", name: "Transient" }
               ]}
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
           </div>
+
+          <ProtectedComponentButton exclude={["DOCTOR"]}>
+            <div className="w-full sm:w-auto">
+              <Button onClick={() => setIsReferralFormOpen(true)} className="w-full sm:w-auto font-medium py-2 px-4 rounded-md shadow-sm">
+                New Record
+              </Button>
+            </div>
+          </ProtectedComponentButton>
         </div>
 
-        {/* New Record Button */}
-        <div className="flex justify-end">
-          <DialogLayout
-            trigger={
-              <Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>
-            }
-            className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
-            mainContent={
-              <ReferralFormModal
-                onClose={() => console.log("Closing modal")} // Ensure onClose is passed
+        <div className="h-full w-full rounded-md">
+          {/* Table Controls */}
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                  setCurrentPage(1);
+                }}
+                min="1"
               />
-            }
-            title={""}
-            description={""}
-          />
-        </div>
-      </div>
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
+                    <FileInput className="h-4 w-4" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>
+                    <ExportButton data={filteredPatients} filename="animal-bite-records" columns={exportColumns} />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
-      {/* Table Container */}
-      <div className="h-full w-full rounded-md">
-        <div className="w-full bg-white overflow-x-auto">
-          <DataTable columns={columns} data={filteredPatients} />
+          {/* Data Table */}
+          <div className="bg-white w-full overflow-x-auto border">
+            {loading ? (
+              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading animal bite records...</span>
+              </div>
+            ) : error ? (
+              <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
+                <span>{error}</span>
+              </div>
+            ) : (
+              <DataTable columns={columns} data={paginatedPatients} />
+            )}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing {paginatedPatients.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{Math.min(currentPage * pageSize, filteredPatients.length)} of {filteredPatients.length} rows
+            </p>
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => setCurrentPage(page)} />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-{filteredPatients.length} of {filteredPatients.length} rows
-          </p>
-        </div>
+
+        {/* Referral Form Modal */}
+        <DialogLayout
+          isOpen={isReferralFormOpen}
+          onOpenChange={handleReferralFormClose}
+          className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
+          title=""
+          description=""
+          mainContent={
+            <ReferralFormModal
+              onClose={handleReferralFormClose}
+              onAddPatient={(newPatient) => {
+                console.log("New patient added:", newPatient);
+                fetchAnimalBiteRecords();
+              }}
+            />
+          }
+        />
       </div>
-    </div>
+    </MainLayoutComponent>
   );
-}
+};
 
-export default AnimalBites;
+export default Overall;

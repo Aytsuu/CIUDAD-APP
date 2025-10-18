@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, TouchableOpacity} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-or-time-input"
 import PageLayout from "@/screens/_PageLayout";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { EventFormValues } from "./ce-att-typeFile";
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 const CLSchedulePreview = () => {
   const router = useRouter();
@@ -21,8 +22,6 @@ const CLSchedulePreview = () => {
   const event = useMemo(
   () => {
     const parsedEvent = params.event ? JSON.parse(params.event as string) : null;
-    console.log("🔍 Parsed event object:", parsedEvent);
-    console.log("🔍 Available fields:", Object.keys(parsedEvent || {}));
     return parsedEvent;
   },
   [params.event]
@@ -41,6 +40,7 @@ const CLSchedulePreview = () => {
       eventTime: event?.ce_time || format(new Date(), "HH:mm"),
       eventDescription: event?.description || event?.ce_description || "",
       numRows: event?.ce_rows || 0,
+      staff_id: event?.staff_id,
     },
   });
 
@@ -68,7 +68,7 @@ const CLSchedulePreview = () => {
         "",
       ce_is_archive: isArchived,
       ce_rows: data.numRows || 0,
-      staff_id: null,
+      staff_id: data.staff_id || '00005250925',
     };
 
     if (isAdding) {
@@ -91,206 +91,201 @@ const CLSchedulePreview = () => {
       );
     }
   };
-  
 
   return (
-    <PageLayout
-      leftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
-        </TouchableOpacity>
-      }
-      headerTitle={<Text>Schedule Events</Text>}
-      rightAction={
-        <TouchableOpacity>
-          <ChevronLeft size={30} color="black" className="text-white" />
-        </TouchableOpacity>
-      }
-      footer={
-        <View>
-          {isEditMode ? (
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
-                onPress={() => router.back()}
-              >
-                <Text className="text-primaryBlue text-base font-semibold text-center">
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <ConfirmationModal
-                trigger={
-                  <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
-                    disabled={
-                      addEventMutation.isPending ||
-                      updateEventMutation.isPending
-                    }
-                  >
-                    {addEventMutation.isPending ||
-                    updateEventMutation.isPending ? (
-                      <>
-                        <Text className="text-white text-base font-semibold">
-                          {addEventMutation.isPending
-                            ? "Creating..."
-                            : "Updating..."}
-                        </Text>
-                      </>
-                    ) : (
-                      <Text className="text-white text-base font-semibold">
-                        Save
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                }
-                title="Confirm Changes"
-                description="Are you sure you want to save these changes?"
-                actionLabel="Save"
-                onPress={() => handleSubmit(onSubmit)()}
-                loading={
-                  addEventMutation.isPending || updateEventMutation.isPending
-                }
-              />
-            </View>
-          ) : (
-            !isArchived && (
-              <TouchableOpacity
-                className="bg-primaryBlue py-3 rounded-lg"
-                onPress={() => setIsEditMode(true)}
-              >
-                <Text className="text-white text-base font-semibold text-center">
-                  Edit
-                </Text>
-              </TouchableOpacity>
-            )
-          )}
-        </View>
-      }
-    >
-      {isArchived && (
-        <View className="bg-yellow-100 p-4 mb-4 rounded-md">
-          <Text className="text-yellow-800 text-center">
-            This event is archived and cannot be modified
-          </Text>
-        </View>
-      )}
-
-      <View className="flex-1 p-4">
-        <View className="space-y-4">
-          <View className="relative">
-            <FormInput
-              control={control}
-              name="eventTitle"
-              label="Event Title"
-              placeholder="Enter event title"
-              editable={isEditMode && !isArchived}
-            />
-            {(!isEditMode || isArchived) && (
-              <TouchableOpacity
-                className="absolute top-0 left-0 right-0 bottom-0"
-                style={{ backgroundColor: "transparent" }}
-                onPress={() => {}}
-              />
-            )}
-          </View>
-
-          <View className="relative">
-            <FormDateInput
-              control={control}
-              name="eventDate"
-              label="Event Date"
-            />
-            {(!isEditMode || isArchived) && (
-              <TouchableOpacity
-                className="absolute top-0 left-0 right-0 bottom-0"
-                style={{ backgroundColor: "transparent" }}
-                onPress={() => {}}
-              />
-            )}
-          </View>
-
-          <View className="relative">
-            <FormInput
-              control={control}
-              name="roomPlace"
-              label="Room/Place"
-              placeholder="Enter room or place"
-              editable={isEditMode && !isArchived}
-            />
-            {(!isEditMode || isArchived) && (
-              <TouchableOpacity
-                className="absolute top-0 left-0 right-0 bottom-0"
-                style={{ backgroundColor: "transparent" }}
-                onPress={() => {}}
-              />
-            )}
-          </View>
-
-          <View className="relative">
-            <FormDateTimeInput
-              control={control}
-              name="eventTime"
-              label="Event Time"
-              type="time"
-            />
-            {(!isEditMode || isArchived) && (
-              <TouchableOpacity
-                className="absolute top-0 left-0 right-0 bottom-0"
-                style={{ backgroundColor: "transparent" }}
-                onPress={() => {}}
-              />
-            )}
-          </View>
-
-          <View className="relative">
-            <FormTextArea
-              control={control}
-              name="eventDescription"
-              label="Event Description"
-              placeholder="Enter description"
-            />
-            {(!isEditMode || isArchived) && (
-              <TouchableOpacity
-                className="absolute top-0 left-0 right-0 bottom-0"
-                style={{ backgroundColor: "transparent" }}
-                onPress={() => {}}
-              />
-            )}
-          </View>
-
+    <>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={30} color="black" className="text-black" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-[13px]">Schedule Events</Text>}
+        rightAction={
+          <TouchableOpacity>
+            <ChevronLeft size={30} color="black" className="text-white" />
+          </TouchableOpacity>
+        }
+        footer={
           <View>
-            {isEditMode && !isArchived ? (
-              <View className="flex flex-col gap-2">
-                <Text className="text-sm font-medium text-gray-700">
-                  Expected number of attendees
-                </Text>
-                <FormInput
-                  control={control}
-                  name="numRows"
-                  label=""
-                  placeholder="Enter number of rows needed"
-                  keyboardType="numeric"
+            {isEditMode ? (
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  className="flex-1 bg-white border border-primaryBlue py-3 rounded-lg"
+                  onPress={() => router.back()}
+                >
+                  <Text className="text-primaryBlue text-base font-semibold text-center">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <ConfirmationModal
+                  trigger={
+                    <TouchableOpacity
+                      className="flex-1 bg-primaryBlue py-3 rounded-lg flex-row justify-center items-center"
+                      disabled={
+                        addEventMutation.isPending ||
+                        updateEventMutation.isPending
+                      }
+                    >
+                      <Text className="text-white text-base font-semibold">
+                        {isAdding ? "Create" : "Save"}
+                      </Text>
+                    </TouchableOpacity>
+                  }
+                  title="Confirm Changes"
+                  description="Are you sure you want to save these changes?"
+                  actionLabel="Save"
+                  onPress={() => handleSubmit(onSubmit)()}
+                  loading={
+                    addEventMutation.isPending || updateEventMutation.isPending
+                  }
                 />
-                <Text className="text-sm text-gray-500">
-                  This will create rows for attendees to fill out manually
-                </Text>
               </View>
             ) : (
-              <View className="flex flex-col gap-2">
-                <Text className="text-sm font-medium text-gray-700">
-                  Expected Attendees
-                </Text>
-                <View className="border border-gray-300 rounded-md px-3 py-2 bg-gray-50">
-                  <Text className="text-base text-gray-900">
-                    {(numRows || 0) > 0 ? numRows : "No attendees expected"}
+              !isArchived && (
+                <TouchableOpacity
+                  className="bg-primaryBlue py-3 rounded-lg"
+                  onPress={() => setIsEditMode(true)}
+                >
+                  <Text className="text-white text-base font-semibold text-center">
+                    Edit
                   </Text>
-                </View>
-              </View>
+                </TouchableOpacity>
+              )
             )}
           </View>
+        }
+      >
+        {isArchived && (
+          <View className="bg-yellow-100 p-4 mb-4 rounded-md">
+            <Text className="text-yellow-800 text-center">
+              This event is archived and cannot be modified
+            </Text>
+          </View>
+        )}
+
+        <View className="flex-1 p-4 px-6">
+          <View className="space-y-4">
+            <View className="relative">
+              <FormInput
+                control={control}
+                name="eventTitle"
+                label="Event Title"
+                placeholder="Enter event title"
+                editable={isEditMode && !isArchived}
+              />
+              {(!isEditMode || isArchived) && (
+                <TouchableOpacity
+                  className="absolute top-0 left-0 right-0 bottom-0"
+                  style={{ backgroundColor: "transparent" }}
+                  onPress={() => {}}
+                />
+              )}
+            </View>
+
+            <View className="relative">
+              <FormDateInput
+                control={control}
+                name="eventDate"
+                label="Event Date"
+              />
+              {(!isEditMode || isArchived) && (
+                <TouchableOpacity
+                  className="absolute top-0 left-0 right-0 bottom-0"
+                  style={{ backgroundColor: "transparent" }}
+                  onPress={() => {}}
+                />
+              )}
+            </View>
+
+            <View className="relative">
+              <FormInput
+                control={control}
+                name="roomPlace"
+                label="Room/Place"
+                placeholder="Enter room or place"
+                editable={isEditMode && !isArchived}
+              />
+              {(!isEditMode || isArchived) && (
+                <TouchableOpacity
+                  className="absolute top-0 left-0 right-0 bottom-0"
+                  style={{ backgroundColor: "transparent" }}
+                  onPress={() => {}}
+                />
+              )}
+            </View>
+
+            <View className="relative">
+              <FormDateTimeInput
+                control={control}
+                name="eventTime"
+                label="Event Time"
+                type="time"
+              />
+              {(!isEditMode || isArchived) && (
+                <TouchableOpacity
+                  className="absolute top-0 left-0 right-0 bottom-0"
+                  style={{ backgroundColor: "transparent" }}
+                  onPress={() => {}}
+                />
+              )}
+            </View>
+
+            <View className="relative">
+              <FormTextArea
+                control={control}
+                name="eventDescription"
+                label="Event Description"
+                placeholder="Enter description"
+              />
+              {(!isEditMode || isArchived) && (
+                <TouchableOpacity
+                  className="absolute top-0 left-0 right-0 bottom-0"
+                  style={{ backgroundColor: "transparent" }}
+                  onPress={() => {}}
+                />
+              )}
+            </View>
+
+            <View>
+              {isEditMode && !isArchived ? (
+                <View className="flex flex-col gap-2">
+                  <Text className="text-sm font-medium text-gray-700">
+                    Expected number of attendees
+                  </Text>
+                  <FormInput
+                    control={control}
+                    name="numRows"
+                    label=""
+                    placeholder="Enter number of rows needed"
+                    keyboardType="numeric"
+                  />
+                  <Text className="text-sm text-gray-500">
+                    This will create rows for attendees to fill out manually
+                  </Text>
+                </View>
+              ) : (
+                <View className="flex flex-col gap-2">
+                  <Text className="text-sm font-medium text-gray-700">
+                    Expected Attendees
+                  </Text>
+                  <View className="border border-gray-300 rounded-xl px-3 py-2">
+                    <Text className="text-base text-gray-900">
+                      {(numRows || 0) > 0 ? numRows : "No attendees expected"}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
         </View>
-      </View>
-    </PageLayout>
+      </PageLayout>
+
+      {/* Loading Modal for mutations */}
+      <LoadingModal 
+        visible={addEventMutation.isPending || updateEventMutation.isPending} 
+      />
+    </>
   );
 };
 

@@ -101,6 +101,7 @@ class CompleteRegistrationView(APIView):
     if account:
         self.create_account(account, rp)
 
+
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
 
@@ -130,7 +131,7 @@ class CompleteRegistrationView(APIView):
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):
-    addresses = personal.pop("per_addresses", None)
+    addresses = personal.pop("per_addresses", [])
     add_instances = [
       Address.objects.get_or_create(
         add_province=add["add_province"],

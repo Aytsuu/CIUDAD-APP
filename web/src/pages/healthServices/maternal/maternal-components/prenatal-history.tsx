@@ -72,9 +72,15 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
       label: "Leopold's Findings",
       accessor: (visit) => (
         <div className="text-sm leading-relaxed space-y-1">
-          <div><span className="font-medium">Fundal Height:</span> {visit.leopoldsFindings.fundalHeight}</div>
-          <div><span className="font-medium">Fetal HR:</span> {visit.leopoldsFindings.fetalHeartbeat}</div>
-          <div><span className="font-medium">Position:</span> {visit.leopoldsFindings.fetalPosition}</div>
+          <div>
+            <span className="font-medium">Fundal Height:</span> {visit.leopoldsFindings.fundalHeight}
+          </div>
+          <div>
+            <span className="font-medium">Fetal HR:</span> {visit.leopoldsFindings.fetalHeartbeat}
+          </div>
+          <div>
+            <span className="font-medium">Position:</span> {visit.leopoldsFindings.fetalPosition}
+          </div>
         </div>
       ),
       cellClassName: "text-center max-w-xs"
@@ -106,14 +112,9 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
           <Table className={hasMoreVisits ? "w-max" : "w-full"}>
             <TableHeader className="bg-slate-100">
               <TableRow className="border-slate-200">
-                <TableHead className={`font-semibold text-slate-700 text-xs uppercase tracking-wide w-44 ${hasMoreVisits ? 'sticky left-0 bg-slate-100 z-10' : ''}`}>
-                  Clinical Parameter
-                </TableHead>
+                <TableHead className={`font-semibold text-slate-700 text-xs uppercase tracking-wide w-44 ${hasMoreVisits ? "sticky left-0 bg-slate-100 z-10" : ""}`}>Clinical Parameter</TableHead>
                 {sortedData.map((_, index) => (
-                  <TableHead 
-                    key={index} 
-                    className={`font-semibold text-slate-700 p-5 text-xs uppercase tracking-wide text-center ${hasMoreVisits ? 'min-w-48' : 'w-auto'}`}
-                  >
+                  <TableHead key={index} className={`font-semibold text-slate-700 p-5 text-xs uppercase tracking-wide text-center ${hasMoreVisits ? "min-w-48" : "w-auto"}`}>
                     Visit {sortedData.length - index}
                     {index === 0 && <span className="text-blue-500 ml-1">[CURRENT]</span>}
                   </TableHead>
@@ -123,17 +124,14 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
             <TableBody>
               {tableRows.map((row, rowIndex) => (
                 <TableRow key={rowIndex} className="border-slate-100 hover:bg-slate-50/50">
-                  <TableCell className={`font-semibold 0text-slate-70 bg-slate-50 align-middle p-5 ${hasMoreVisits ? 'sticky left-0 z-5' : ''}`}>
+                  <TableCell className={`font-semibold 0text-slate-70 bg-slate-50 align-middle p-5 ${hasMoreVisits ? "sticky left-0 z-5" : ""}`}>
                     <div className="flex items-center gap-2">
                       {row.icon}
                       <span>{row.label}</span>
                     </div>
                   </TableCell>
                   {sortedData.map((visit, visitIndex) => (
-                    <TableCell 
-                      key={visitIndex} 
-                      className={`${row.cellClassName} ${hasMoreVisits ? 'min-w-48' : ''}`}
-                    >
+                    <TableCell key={visitIndex} className={`${row.cellClassName} ${hasMoreVisits ? "min-w-48" : ""}`}>
                       {row.accessor(visit)}
                     </TableCell>
                   ))}
@@ -142,11 +140,7 @@ export function PrenatalHistoryTable({ data, className = "" }: PrenatalHistoryTa
             </TableBody>
           </Table>
         </div>
-        {hasMoreVisits && (
-          <div className="bg-slate-50 border-t border-slate-200 p-3 text-center text-sm text-slate-600">
-            Showing all {sortedData.length} visits. Scroll left/right to see all records.
-          </div>
-        )}
+        {hasMoreVisits && <div className="bg-slate-50 border-t border-slate-200 p-3 text-center text-sm text-slate-600">Showing all {sortedData.length} visits. Scroll left/right to see all records.</div>}
       </CardContent>
     </Card>
   );

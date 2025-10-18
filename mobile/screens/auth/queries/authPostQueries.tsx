@@ -4,6 +4,7 @@ import { api } from "@/api/api";
 import { useRouter } from "expo-router";
 import { useToastContext } from "@/components/ui/toast";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import axios from "axios";
 
 // export const useAddAddress = () => {
 //   return useMutation({
@@ -138,9 +139,17 @@ export const useSendOTP = () => {
       try {
         const res = await api.post("account/phone-verification", data)
         return res.data
-      } catch (err) {
-        console.error(err);
-        throw err
+      } catch (err: any) {
+        if (axios.isAxiosError(err) && err.response) {
+          const errors = err.response.data;
+
+          if (errors.phone) {
+            setError("accountFormSchema.phone", {
+              type: "server",
+              message: errors.phone, // "Phone already in use"
+            });
+          }
+        }
       }
     }
   })

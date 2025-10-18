@@ -28,6 +28,8 @@ import {
 } from "lucide-react-native";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { FormattedCouncilEvent } from "./ce-att-typeFile";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const { width } = Dimensions.get("window");
 const DAY_SIZE = width / 7 - 10;
@@ -41,43 +43,70 @@ const CouncilCalendarPage = () => {
     "active"
   );
   const isArchived = eventViewMode === "archive";
-  const {
-    data: events = [],
-    isLoading,
-    error,
-    refetch,
-  } = useGetCouncilEvents(isArchived);
+  
+  // Fetch ACTIVE events for active tab
+  const { 
+    data: activeEventsData, 
+    isLoading: isActiveEventsLoading, 
+    error, 
+    refetch: refetchActive 
+  } = useGetCouncilEvents(
+    1, 
+    1000, 
+    undefined, 
+    "all", 
+    false  // is_archive=false for active events
+  );
+  
+  // Fetch ARCHIVED events for archive tab
+  const { 
+    data: archivedEventsData, 
+    isLoading: isArchivedEventsLoading,
+    refetch: refetchArchived 
+  } = useGetCouncilEvents(
+    1,
+    1000,
+    undefined,
+    "all",
+    true, 
+  );
+
+  // Use the appropriate data based on active tab
+  const events = eventViewMode === "archive" 
+    ? archivedEventsData?.results || [] 
+    : activeEventsData?.results || [];
+
+  const isLoading = eventViewMode === "archive" ? isArchivedEventsLoading : isActiveEventsLoading;
   const [refreshing, setRefreshing] = useState(false);
   const deleteEventMutation = useDeleteCouncilEvent();
   const restoreEventMutation = useRestoreCouncilEvent();
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    if (eventViewMode === "archive") {
+      await refetchArchived();
+    } else {
+      await refetchActive();
+    }
     setRefreshing(false);
   };
 
-  // Format and filter events
-  const formattedEvents: FormattedCouncilEvent[] = events
-    .filter((event) => {
-      const matchesArchiveStatus = event.ce_is_archive === isArchived;
-      return matchesArchiveStatus;
-    })
-    .map((event) => ({
-      id: event.ce_id.toString(),
-      title: event.ce_title,
-      date: format(parseISO(event.ce_date), "MM-dd"),
-      time: format(parseISO(`${event.ce_date}T${event.ce_time}`), "h:mm a"),
-      day: format(parseISO(event.ce_date), "EEEE"),
-      rawDate: parseISO(event.ce_date),
-      place: event.ce_place,
-      description: event.ce_description,
-      is_archive: event.ce_is_archive,
-      ce_id: event.ce_id,
-      ce_date: event.ce_date,
-      ce_time: event.ce_time,
-      ce_rows: event.ce_rows,
-    }));
+  // Format events (no need to filter by archive status since we're already getting the right data)
+  const formattedEvents: FormattedCouncilEvent[] = events.map((event) => ({
+    id: event.ce_id.toString(),
+    title: event.ce_title,
+    date: format(parseISO(event.ce_date), "MM-dd"),
+    time: format(parseISO(`${event.ce_date}T${event.ce_time}`), "h:mm a"),
+    day: format(parseISO(event.ce_date), "EEEE"),
+    rawDate: parseISO(event.ce_date),
+    place: event.ce_place,
+    description: event.ce_description,
+    is_archive: event.ce_is_archive,
+    ce_id: event.ce_id,
+    ce_date: event.ce_date,
+    ce_time: event.ce_time,
+    ce_rows: event.ce_rows,
+  }));
 
   // Filter events for current month
   const currentMonthEvents = formattedEvents.filter((event) =>
@@ -170,12 +199,12 @@ const CouncilCalendarPage = () => {
       className="mb-3"
     >
       <View
-        className={`bg-white shadow-sm rounded-lg p-4 mx-2 ${
+        className={`bg-white shadow-sm rounded-lg p-4 mx-2 border-2 border-gray-200 ${
           item.is_archive ? "bg-gray-50" : ""
         }`}
       >
         <View className="flex-row justify-between items-start">
-          <Text className="text-primaryBlue text-lg font-semibold flex-1">
+          <Text className="text-[#1a2332] text-lg font-semibold flex-1">
             {item.title}
           </Text>
         </View>
@@ -273,10 +302,17 @@ const CouncilCalendarPage = () => {
     isSameDay(event.rawDate, selectedDate)
   );
 
+  const handleTabChange = (tab: "active" | "archive") => {
+    setEventViewMode(tab);
+    queryClient.invalidateQueries({
+      queryKey: ["councilEvents", tab === "archive"],
+    });
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#3B82F6" />
+        <LoadingState/>
       </SafeAreaView>
     );
   }
@@ -294,51 +330,19 @@ const CouncilCalendarPage = () => {
   return (
     <ScreenLayout
       customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" className="text-black" />
+        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Council Events</Text>}
+      headerBetweenAction={<Text className="text-gray-900 text-[13px]">Council Events</Text>}
       showExitButton={false}
       headerAlign="left"
       keyboardAvoiding={true}
       contentPadding="medium"
       scrollable={false}
     >
-      {/* View Mode Toggle */}
-      <View className="flex-row justify-center my-3">
-        <View className="flex-row border border-gray-300 rounded-full bg-gray-100 overflow-hidden">
-          <TouchableOpacity
-            className={`px-4 py-2 ${
-              eventViewMode === "active" ? "bg-white" : ""
-            }`}
-            onPress={() => {
-              setEventViewMode("active");
-              queryClient.invalidateQueries({
-                queryKey: ["councilEvents", false],
-              });
-            }}
-          >
-            <Text className="text-sm font-medium">Active</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`px-4 py-2 ${
-              eventViewMode === "archive" ? "bg-white" : ""
-            }`}
-            onPress={() => {
-              setEventViewMode("archive");
-              queryClient.invalidateQueries({
-                queryKey: ["councilEvents", true],
-              });
-            }}
-          >
-            <Text className="text-sm font-medium">Archived</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       {/* Calendar Header */}
-      <View className="bg-white shadow-sm py-4 px-2">
+      <View className="bg-white shadow-sm py-4 px-6">
         <View className="flex-row justify-between items-center mb-4 px-2">
           <TouchableOpacity
             onPress={() => handleMonthChange(-1)}
@@ -369,8 +373,32 @@ const CouncilCalendarPage = () => {
         </View>
       </View>
 
+      {/* Tabs - Styled like Budget Plan */}
+      <View className="px-6 mt-4">
+        <Tabs value={eventViewMode} onValueChange={val => handleTabChange(val as "active" | "archive")}>
+          <TabsList className="bg-blue-50 flex-row justify-between">
+            <TabsTrigger 
+              value="active" 
+              className={`flex-1 mx-1 ${eventViewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${eventViewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Active
+              </Text>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="archive" 
+              className={`flex-1 mx-1 ${eventViewMode === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+            >
+              <Text className={`${eventViewMode === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                Archive
+              </Text>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </View>
+
       {/* Events Section */}
-      <View className="flex-1 px-4 pt-4">
+      <View className="flex-1 px-6 pt-4">
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-lg font-bold text-gray-800">
             {format(selectedDate, "EEEE, MMMM d")}
@@ -380,14 +408,16 @@ const CouncilCalendarPage = () => {
               {filteredEvents.length}{" "}
               {filteredEvents.length === 1 ? "Event" : "Events"}
             </Text>
-            <TouchableOpacity
-              className="bg-primaryBlue p-2 rounded-full"
-              onPress={() =>
-                router.push("/(council)/council-events/schedule?isAdding=true")
-              }
-            >
-              <Plus size={20} color="#ffffff" />
-            </TouchableOpacity>
+            {eventViewMode === "active" && (
+              <TouchableOpacity
+                className="bg-primaryBlue p-2 rounded-full"
+                onPress={() =>
+                  router.push("/(council)/council-events/schedule?isAdding=true")
+                }
+              >
+                <Plus size={20} color="#ffffff" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -406,7 +436,7 @@ const CouncilCalendarPage = () => {
           <View className="flex-1 justify-center items-center">
             <MaterialIcons name="event-busy" size={48} color="#d1d5db" />
             <Text className="text-gray-400 mt-4 text-lg">
-              No events scheduled
+              No {eventViewMode} events scheduled
             </Text>
           </View>
         )}

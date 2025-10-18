@@ -24,7 +24,7 @@ export const RequestSummary = ({
     totalSelectedQuantity,
 }: RequestSummaryProps) => {
     return (
-        <div className="p-10  rounded-sm border border-gray-300 mx-4 mt-4">
+        <div className="p-10  rounded-sm border border-gray-300 mt-4">
             <h3 className="font-bold text-xl text-center mb-4"> Summary</h3>
             <div className="space-y-4">
                 {selectedMedicines.map((medicine) => {
@@ -54,7 +54,7 @@ export const RequestSummary = ({
                     );
                 })}
             </div>
-            <div className="mt-6 pt-4 border-t border-gray-300">
+            <div className="mt-6 pt-4 ">
                 <div className="flex justify-between items-center">
                     <p className="font-medium text-lg">Total Items:</p>
                     <p className="font-bold text-lg">{totalSelectedQuantity}</p>

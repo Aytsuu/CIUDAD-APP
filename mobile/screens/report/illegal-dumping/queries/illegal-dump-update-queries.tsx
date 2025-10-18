@@ -22,10 +22,12 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
     mutationFn: async (values: { 
       rep_status: string;
       files?: FileData[] 
+      staff_id: string;
     }) => {
       // 1. Update the main report status and date
       await updateWasteReport(rep_id, {
         rep_status: values.rep_status,
+        staff_id: values.staff_id
       });
       
       // 2. Upload all resolution images in parallel (if any)

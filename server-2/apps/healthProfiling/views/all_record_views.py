@@ -110,7 +110,7 @@ class CompleteRegistrationView(APIView):
     return Response(results, status=status.HTTP_200_OK)
   
   def create_resident_profile(self, personal, staff):
-    addresses = personal.pop("per_addresses", None)
+    addresses = personal.pop("per_addresses", [])
     add_instances = [
       Address.objects.get_or_create(
         add_province=add["add_province"],

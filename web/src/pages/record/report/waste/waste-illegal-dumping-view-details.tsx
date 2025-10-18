@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import WasteReportResolved from "./waste-illegal-dumping-update";
 import { FileText } from "lucide-react";
+import { capitalize } from "@/helpers/capitalize";
+
 
 interface WasteReportDetailsProps {
   rep_id: number;
@@ -264,8 +266,12 @@ function WasteIllegalDumpingDetails({
               <div>
                 <p className="font-semibold pb-2">Report Status</p>
                 <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusStyle(rep_status)}`}>
-                  {rep_status || "No status provided"}
-                </div>      
+                  {rep_status
+                    ? rep_status.toLowerCase() === "pending"
+                      ? "In Progress"
+                      : capitalize(rep_status)
+                    : "No status provided"}
+                </div>
               </div>
             </div>
 
@@ -302,7 +308,7 @@ function WasteIllegalDumpingDetails({
                     className={`px-4 py-2 rounded-md text-sm border ${
                       isResolved || isCancelled
                         ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
-                        : "bg-green-100 text-green-800 text-12px border border-green-500 hover:bg-green-200 hover:text-green-900"
+                        : "bg-green-100 text-green-800 text-12px border border-green-500 hover:bg-green-200 hover:text-green-900 cursor-pointer"
                     }`}
                   >
                     ✓ Mark as Resolved

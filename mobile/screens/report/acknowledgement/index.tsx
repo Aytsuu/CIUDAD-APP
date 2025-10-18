@@ -76,7 +76,7 @@ export default () => {
     }
   };
 
-  const RenderDataCard = React.memo(({ item, index }: { item: any; index: number }) => {
+  const RenderDataCard = React.memo(({ item, index }: { item: Record<string, any>; index: number }) => {
     const hasFiles = item.ar_files && item.ar_files.length > 0;
     const isCompleted = item.status?.toLowerCase() === 'completed';
     
@@ -108,7 +108,7 @@ export default () => {
                 <View className="flex-row items-center">
                   <MapPin size={14} className="text-gray-400 mr-1" />
                   <Text className="text-gray-600 text-sm">
-                    {item.ar_sitio}, {item.ar_street}
+                    {item.ar_area}
                   </Text>
                 </View>
                 
@@ -241,6 +241,7 @@ export default () => {
           <Search size={22} className="text-gray-700" />
         </TouchableOpacity>
       }
+      wrapScroll={false}
     >
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}

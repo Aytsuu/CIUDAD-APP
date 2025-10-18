@@ -2,7 +2,6 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import Count, F
 from ..models import Position, Staff
 from ..serializers.position_serializers import *
 
@@ -14,7 +13,7 @@ class PositionView(generics.ListCreateAPIView):
         staff_type = self.request.query_params.get('staff_type', None)
         
         if staff_type:
-            pos_category = 'BARANGAY POSITION' if staff_type == 'Barangay Staff' \
+            pos_category = 'BARANGAY POSITION' if staff_type == 'BARANGAY STAFF' \
                             else 'HEALTH POSITION'
             queryset = Position.objects.filter(pos_category=pos_category)
             return queryset
@@ -34,17 +33,12 @@ class PositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        instances = [
-            Position(**item)
-            for item in serializer.validated_data
-        ]
+        for item in serializer.validated_data:
+            instance = Position(**item)
+            instance.save()
 
-        created_instances = Position.objects.bulk_create(instances)
 
-        if len(created_instances) > 0:
-            return Response(status=status.HTTP_201_CREATED)
-        
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED) 
 
 class PositionUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PositionBaseSerializer
@@ -72,4 +66,4 @@ class PositionGroupsListView(APIView):
                 .distinct()
         if queryset:
             return Response(queryset)
-        return None
+        return Response(status=status.HTTP_404_NOT_FOUND)

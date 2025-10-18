@@ -2,13 +2,12 @@ import { Control } from "react-hook-form";
 import { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { Patient } from "@/components/ui/patientSearch";
 
 interface FormSectionsProps {
   control: Control<FormData>;
   isTransient: boolean;
   isAddNewMode: boolean;
-  selectedPatient: Patient | null;
+  selectedPatient: any | null;
 }
 
 
@@ -60,7 +59,6 @@ export const FatherInfoSection = ({ control, isAddNewMode, selectedPatient, isTr
         label="Occupation"
         placeholder="Enter Occupation"
         type="text"
-        readOnly={isAddNewMode || (!isTransient && !!selectedPatient)}
       />
     </div>
   </div>

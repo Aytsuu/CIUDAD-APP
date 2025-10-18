@@ -1,18 +1,12 @@
 from django.urls import path
-from .views import (
-    AnnouncementView, AnnouncementDetailView,
-    AnnouncementRecipientView, AnnouncementRecipientDetailView,
-    AnnouncementRecipientByTypeView,
-    AnnouncementFileCreateView,
-    AnnouncementCreatedReceivedView
-)
+from .views import *
 
 urlpatterns = [
     # Announcement
     path("create/", AnnouncementView.as_view(), name="create-announcements"),
     path("<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-detail"),
-    path("list/", AnnouncementView.as_view(), name="retrieve-announcements"),
-    path('created-received/<str:staff_id>/', AnnouncementCreatedReceivedView.as_view(), name='created-received-announcements'),
+    # path("list/", AnnouncementView.as_view(), name="retrieve-announcements"),
+    path('list/', AnnouncementListView.as_view(), name='announcements-list'),
     
     # Recipients
     path("create-recipient/", AnnouncementRecipientView.as_view(), name="recipient"),

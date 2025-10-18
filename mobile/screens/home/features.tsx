@@ -7,6 +7,7 @@ import Health from '@/assets/icons/features/health.svg'
 import Report from '@/assets/icons/features/report.svg'
 import Securado from '@/assets/icons/features/securado.svg'
 import { Feature, User } from "../_Enums";
+import { Circle } from "react-native-svg";
 
 type FeatureType = {
   name: string;
@@ -49,8 +50,8 @@ export const features: FeatureType[] = [
   {
     name: "Health",
     icon: <Health width={30} height={30}/>,
-    route: "",
-    users:  []
+    route: "/(health)",
+    users: [User.resident]
   },
   // {
   //   name: "Securado",
@@ -58,4 +59,40 @@ export const features: FeatureType[] = [
   //   route: "/(securado)",
   //   users: [User.resident]
   // },
+    {
+    name: "Council",
+    icon: <Circle />,
+    route: "/(council)",
+    users: []
+  },
+  {
+    name: "Donation",
+    icon: <Circle />,
+    route: "/(donation)/staffDonationMain",
+    users: []
+  },
+  {
+    name: "Finance",
+    icon: <Circle />,
+    route: "/(treasurer)",
+    users: []
+  },
+  {
+    name: "Waste",
+    icon: <Circle />,
+    route: "/(waste)",
+    users: []
+  },
+  {
+    name: "GAD",
+    icon: <Circle />,
+    route: "/(gad)",
+    users: []
+  },
+  {
+    name: "Certificates",
+    icon: <Circle />,
+    route: "/(certificates)/cert-main",
+    users: []
+  },
 ]

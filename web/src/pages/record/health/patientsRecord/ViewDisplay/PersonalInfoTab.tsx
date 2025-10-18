@@ -1,16 +1,12 @@
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-  } from "@/components/ui/form/form";import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { Button } from "@/components/ui/button/button";
 import CardLayout from "@/components/ui/card/card-layout";
 import { UseFormReturn } from "react-hook-form";
 import { TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+
 
 interface PatientData {
   lastName: string;
@@ -33,6 +29,7 @@ interface PatientData {
   chronicConditions: string;
   lastVisit: string;
   visits: Array<{ date: string; reason: string; doctor: string }>;
+  philhealthId?: string;
 }
 
 interface PersonalInfoTabProps {
@@ -44,14 +41,9 @@ interface PersonalInfoTabProps {
   handleCancelEdit: () => void;
 }
 
-export default function PersonalInfoTab({
-  form,
-  isEditable,
-  isTransient,
-  // patientData,
-  handleSaveEdit,
-  handleCancelEdit,
-}: PersonalInfoTabProps) {
+export default function PersonalInfoTab({ form, isEditable, isTransient, handleSaveEdit, handleCancelEdit }: PersonalInfoTabProps) {
+  form.setValue("philhealthId", form.getValues("philhealthId") || "");
+
   return (
     <TabsContent value="personal" className="mt-0">
       <CardLayout
@@ -63,7 +55,7 @@ export default function PersonalInfoTab({
                 <div className="pt-4">
                   <Form {...form}>
                     <form className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <FormField
                           control={form.control}
                           name="lastName"
@@ -118,219 +110,180 @@ export default function PersonalInfoTab({
                             </FormItem>
                           )}
                         />
+                        <FormField
+                          control={form.control}
+                          name="philhealthId"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">
+                                PhilHealth ID
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="sex"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Sex
-                              </FormLabel>
-                              <Select disabled={!isEditable} value={field.value} onValueChange={field.onChange}>
-                                <FormControl>
-                                  <SelectTrigger className={!isEditable ? "bg-muted/30" : ""}>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Male">Male</SelectItem>
-                                  <SelectItem value="Female">Female</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="contact"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Contact Number
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="dateOfBirth"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Date of Birth
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="date"
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="patientType"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Patient Type
-                              </FormLabel>
-                              <Select disabled value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="bg-muted/30">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Resident">
-                                    Resident
-                                  </SelectItem>
-                                  <SelectItem value="Transient">
-                                    Transient
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="sex"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Sex</FormLabel>
+                          <Select 
+                            disabled={!isEditable} 
+                            value={field.value?.toLowerCase()} 
+                            onValueChange={field.onChange}
+                          >
+                            <FormControl>
+                              <SelectTrigger className={!isEditable ? "bg-muted/30" : ""}>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="contact"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Contact Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Date of Birth</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="patientType"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Patient Type</FormLabel>
+                          <Select disabled value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="bg-muted/30">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Resident">Resident</SelectItem>
+                              <SelectItem value="Transient">Transient</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                      <h3 className="text-md font-medium pt-4">
-                        Address Information
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="address.street"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Street
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="address.sitio"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Sitio
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="address.barangay"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Barangay
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  disabled={!isEditable}
-                                  className={!isEditable ? "bg-muted/30" : ""}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                  <h3 className="text-md font-medium pt-4">Address Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="address.street"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Street</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address.sitio"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Sitio</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address.barangay"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Barangay</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                      {/* city and province */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="address.city"
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="text-sm font-medium">
-                                  City
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    disabled={!isEditable}
-                                    className={!isEditable ? "bg-muted/30" : ""}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="address.province"
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="text-sm font-medium">
-                                  Province
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    disabled={!isEditable}
-                                    className={!isEditable ? "bg-muted/30" : ""}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                      </div>
-                    </form>
-                  </Form>
-                </div>
-              </div>
-            }
-            cardClassName="border shadow-sm rounded-lg"
-            headerClassName="pb-2"
-            contentClassName="pt-0"
-          />
+                  {/* city and province */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="address.city"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">City</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address.province"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium">Province</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditable} className={!isEditable ? "bg-muted/30" : ""} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
+        }
+        cardClassName="border shadow-sm rounded-lg"
+        headerClassName="pb-2"
+        contentClassName="pt-0"
+      />
       {isTransient && isEditable && (
-        <div className="flex justify-end mt-6 space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCancelEdit}
-            className="bg-white text-gray-700 hover:bg-gray-50"
-          >
+        <div className="flex justify-end mt-6 space-x-2 pb-6">
+          <Button variant="outline" size="sm" onClick={handleCancelEdit} className="bg-white text-gray-700 hover:bg-gray-50">
             Cancel
           </Button>
-          <Button
-            size="sm"
-            className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
-            onClick={handleSaveEdit}
-          >
+          <Button size="sm" className="bg-buttonBlue hover:bg-buttonBlue/90 text-white" onClick={handleSaveEdit}>
             Save Changes
           </Button>
         </div>
